@@ -133,7 +133,10 @@ fun AmaScreen(
             }
             if (questionCount >= GameConfig.AMA_MAX_QUESTIONS) {
                 item {
-                    SessionEndBanner(onInvest = viewModel::showInvestSheet)
+                    SessionEndBanner(
+                        onInvest = viewModel::showInvestSheet,
+                        onSkip = onBack
+                    )
                 }
             }
         }
@@ -203,7 +206,7 @@ private fun WelcomeMessage(projectName: String, devName: String) {
 }
 
 @Composable
-private fun SessionEndBanner(onInvest: () -> Unit) {
+private fun SessionEndBanner(onInvest: () -> Unit, onSkip: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
@@ -212,6 +215,9 @@ private fun SessionEndBanner(onInvest: () -> Unit) {
             Text("AMA завершена. Ваш вердикт?", style = MaterialTheme.typography.titleMedium)
             Button(onClick = onInvest, modifier = Modifier.fillMaxWidth()) {
                 Text("Инвестировать TON")
+            }
+            OutlinedButton(onClick = onSkip, modifier = Modifier.fillMaxWidth()) {
+                Text("Не инвестировать")
             }
         }
     }

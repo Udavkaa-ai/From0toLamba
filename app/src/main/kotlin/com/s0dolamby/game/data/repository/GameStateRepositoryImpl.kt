@@ -43,10 +43,11 @@ class GameStateRepositoryImpl @Inject constructor(
 
     override suspend fun getGameState(): GameState {
         val state = playerDao.getGameState() ?: GameStateEntity()
+        val active = projectDao.getActiveProjects().map { it.toDomain(gson) }
         return GameState(
             balance = state.balance,
             currentDay = state.currentDay,
-            activeProjects = emptyList(),
+            activeProjects = active,
             pendingInbox = emptyList(),
             investorRank = InvestorRank.valueOf(state.investorRank),
             totalInvested = state.totalInvested,

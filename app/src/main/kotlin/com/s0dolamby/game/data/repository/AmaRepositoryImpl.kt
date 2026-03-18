@@ -6,6 +6,7 @@ import com.s0dolamby.game.data.db.entity.*
 import com.s0dolamby.game.domain.model.*
 import com.s0dolamby.game.domain.repository.AmaRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
@@ -15,8 +16,19 @@ class AmaRepositoryImpl @Inject constructor(
 ) : AmaRepository {
 
     override fun observeSession(sessionId: String): Flow<AmaSession?> =
-        dao.observeSession(sessionId).map { entity ->
-            entity?.let { buildSession(it) }
+        combine(
+            dao.observeSession(sessionId),
+            dao.observeMessages(sessionId)
+        ) { entity, messages ->
+            entity?.let {
+                AmaSession(
+                    id = it.id,
+                    projectId = it.projectId,
+                    messages = messages.map { m -> m.toDomain() },
+                    questionCount = it.questionCount,
+                    isComplete = it.isComplete
+                )
+            }
         }
 
     override suspend fun getSession(sessionId: String): AmaSession? =

@@ -38,4 +38,6 @@ class ProjectRepositoryImpl @Inject constructor(
 
     override suspend fun updateBannerUrl(projectId: String, url: String, promptUsed: String) =
         dao.updateBanner(projectId, url, promptUsed)
+
+    override suspend fun closeAllInboxProjects() = dao.closeAllInboxProjects()
 }
