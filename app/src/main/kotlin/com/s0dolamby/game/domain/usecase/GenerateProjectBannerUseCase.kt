@@ -63,7 +63,12 @@ class GenerateProjectBannerUseCase @Inject constructor(
             )
         )
 
-        val dataUrl = response.choices.firstOrNull()?.message?.images?.firstOrNull()?.imageUrl?.url
+        // OpenRouter can return image in two ways:
+        // 1. message.images[0].image_url.url  (image-only models)
+        // 2. message.content as JSON array: [{"type":"image_url","image_url":{"url":"..."}}]
+        val msg = response.choices.firstOrNull()?.message ?: return null
+        val dataUrl = msg.images?.firstOrNull()?.imageUrl?.url
+            ?: extractImageUrlFromContent(msg.content)
             ?: return null
 
         if (dataUrl.startsWith("data:image")) {
@@ -80,18 +85,29 @@ class GenerateProjectBannerUseCase @Inject constructor(
             dataUrl
         }
     } catch (e: Exception) {
-        AppLogger.i("GenerateProjectBannerUseCase", "OpenRouter image gen failed, using fallback: ${e.message}")
+        AppLogger.i("GenerateProjectBannerUseCase",
+            "OpenRouter image gen failed (${e.javaClass.simpleName}: ${e.message}), using Pollinations fallback")
         null
     }
 
-    /** Fallback: Pollinations.ai constructs image URL from prompt. Free, no key needed. */
+    /**
+     * Some models return image as a JSON content array:
+     * content = "[{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/png;base64,...\"}}]"
+     */
+    private fun extractImageUrlFromContent(content: String): String? = try {
+        if (!content.trimStart().startsWith("[")) return null
+        // Simple regex — avoids full Gson dependency in this use case
+        Regex(""""url"\s*:\s*"(data:image[^"]+)"""").find(content)?.groupValues?.get(1)
+    } catch (_: Exception) { null }
+
+    /** Fallback: Pollinations.ai — free, no key. Uses proper percent-encoding so 400 never happens. */
     private fun buildPollinationsFallbackUrl(project: Project, prompt: String): String {
-        val encoded = prompt
-            .replace(" ", "%20")
-            .replace(",", "%2C")
-            .replace("\"", "%22")
-            .replace("'", "%27")
+        // Limit length — very long URLs can trigger 400/414 on some proxies
+        val safePrompt = prompt.take(400)
+        // URLEncoder encodes spaces as '+'; replace with %20 for RFC-3986 path segment
+        val encoded = java.net.URLEncoder.encode(safePrompt, "UTF-8").replace("+", "%20")
         val seed = kotlin.math.abs(project.id.hashCode())
-        return "https://image.pollinations.ai/prompt/$encoded?width=512&height=256&nologo=true&seed=$seed"
+        return "https://image.pollinations.ai/prompt/$encoded" +
+               "?width=512&height=512&seed=$seed&model=flux&nologo=true"
     }
 }

@@ -19,7 +19,8 @@ object GameConfig {
     const val MAX_TOKENS_BANNER_CONCEPT = 120
 
     // Image generation via /chat/completions + modalities:["image"]
-    // flux-schnell = cheapest FLUX model (~$0.003/image), confirmed on OpenRouter modalities API
-    const val IMAGE_MODEL = "black-forest-labs/flux-schnell"
+    // flux.2-flex = cheapest FLUX model that actually supports OpenRouter modalities API
+    // (flux-schnell only worked on the deprecated /images/generations endpoint)
+    const val IMAGE_MODEL = "black-forest-labs/flux.2-flex"
     const val BANNER_IMAGE_SIZE = "512x512"
 }
