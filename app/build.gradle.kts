@@ -52,6 +52,17 @@ android {
         compose = true
         buildConfig = true
     }
+
+    lint {
+        abortOnError = true
+        lintConfig = file("lint.xml")
+        htmlReport = true
+        htmlOutput = file("build/reports/lint/lint-report.html")
+        // Проверять ресурсы и зависимости
+        checkDependencies = true
+        // Не останавливать сборку на warning, только на error
+        warningsAsErrors = false
+    }
 }
 
 dependencies {

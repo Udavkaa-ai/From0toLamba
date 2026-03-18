@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- Ошибка сборки: ссылки на несуществующие ресурсы -->
+    <issue id="MissingResourceImportAlias" severity="error" />
+
+    <!-- Несовместимые атрибуты темы -->
+    <issue id="ResourceType" severity="error" />
+
+    <!-- Использование устаревших или недоступных API -->
+    <issue id="NewApi" severity="error" />
+    <issue id="ObsoleteSdkInt" severity="warning" />
+
+    <!-- Безопасность -->
+    <issue id="HardcodedDebugMode" severity="warning" />
+    <issue id="AllowBackup" severity="warning" />
+
+    <!-- Игнорируем: проект на русском, переводы не нужны -->
+    <issue id="MissingTranslation" severity="ignore" />
+    <issue id="ExtraTranslation" severity="ignore" />
+
+    <!-- Игнорируем: Compose не использует стандартный ContentDescription -->
+    <issue id="ContentDescription" severity="ignore" />
+</lint>
