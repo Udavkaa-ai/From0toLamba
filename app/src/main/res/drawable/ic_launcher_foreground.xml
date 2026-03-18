@@ -4,7 +4,70 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!-- Car body - sleek low sports car silhouette -->
     <path
-        android:fillColor="#0088CC"
-        android:pathData="M54,20 L70,50 L90,50 L76,66 L82,88 L54,74 L26,88 L32,66 L18,50 L38,50 Z"/>
+        android:fillColor="#FFD700"
+        android:pathData="M10,72 L10,62 L22,48 L42,40 L66,40 L84,46 L96,58 L98,72 Z"/>
+
+    <!-- Car roof / cabin -->
+    <path
+        android:fillColor="#FFC200"
+        android:pathData="M26,62 L32,50 L46,43 L64,43 L78,50 L82,62 Z"/>
+
+    <!-- Windshield -->
+    <path
+        android:fillColor="#A8D8EA"
+        android:pathData="M34,60 L39,51 L56,45 L56,60 Z"/>
+
+    <!-- Rear window -->
+    <path
+        android:fillColor="#A8D8EA"
+        android:pathData="M58,60 L58,45 L72,50 L76,60 Z"/>
+
+    <!-- Left wheel (dark) -->
+    <path
+        android:fillColor="#222222"
+        android:pathData="M28,72 m-14,0 a14,14 0 1,0 28,0 a14,14 0 1,0 -28,0"/>
+
+    <!-- Left wheel rim -->
+    <path
+        android:fillColor="#888888"
+        android:pathData="M28,72 m-9,0 a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0"/>
+
+    <!-- Left wheel center -->
+    <path
+        android:fillColor="#CCCCCC"
+        android:pathData="M28,72 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0"/>
+
+    <!-- Right wheel (dark) -->
+    <path
+        android:fillColor="#222222"
+        android:pathData="M80,72 m-14,0 a14,14 0 1,0 28,0 a14,14 0 1,0 -28,0"/>
+
+    <!-- Right wheel rim -->
+    <path
+        android:fillColor="#888888"
+        android:pathData="M80,72 m-9,0 a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0"/>
+
+    <!-- Right wheel center -->
+    <path
+        android:fillColor="#CCCCCC"
+        android:pathData="M80,72 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0"/>
+
+    <!-- Headlight -->
+    <path
+        android:fillColor="#FFFDE0"
+        android:pathData="M88,60 L96,62 L96,68 L88,67 Z"/>
+
+    <!-- Tail light -->
+    <path
+        android:fillColor="#FF3333"
+        android:pathData="M10,63 L16,62 L16,68 L10,68 Z"/>
+
+    <!-- Side stripe -->
+    <path
+        android:fillColor="#FFA000"
+        android:pathData="M18,68 L90,68 L90,70 L18,70 Z"/>
+
 </vector>

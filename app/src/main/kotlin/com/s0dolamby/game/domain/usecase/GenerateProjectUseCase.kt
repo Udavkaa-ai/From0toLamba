@@ -74,7 +74,12 @@ class GenerateProjectUseCase @Inject constructor(
                 maxTokens = GameConfig.MAX_TOKENS_NAME_GEN
             )
         )
-        response.choices.first().message.content.trim().take(40)
+        response.choices.first().message.content.trim()
+            .replace(Regex("\\*\\*(.+?)\\*\\*"), "$1")
+            .replace(Regex("\\*(.+?)\\*"), "$1")
+            .replace(Regex("`(.+?)`"), "$1")
+            .replace("\"", "").replace("'", "").trim()
+            .take(40)
     } catch (e: Exception) {
         "Аноним"
     }

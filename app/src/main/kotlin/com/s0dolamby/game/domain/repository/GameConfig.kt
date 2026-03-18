@@ -2,7 +2,7 @@ package com.s0dolamby.game.domain.repository
 
 object GameConfig {
     const val STARTING_BALANCE = 0.0
-    const val ONBOARDING_BONUS_TON = 0.5
+    const val ONBOARDING_BONUS_TON = 10.0
     const val MAX_ACTIVE_PROJECTS = 5
     const val AMA_MAX_QUESTIONS = 10
     const val MIN_INVESTMENT_TON = 0.1

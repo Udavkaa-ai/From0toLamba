@@ -6,6 +6,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,20 +29,26 @@ fun ProjectBannerImage(
     val shape = RoundedCornerShape(12.dp)
 
     if (bannerUrl != null) {
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(bannerUrl)
-                .diskCachePolicy(CachePolicy.ENABLED)
-                .memoryCachePolicy(CachePolicy.ENABLED)
-                .crossfade(true)
-                .build(),
-            contentDescription = "Баннер $projectName",
-            contentScale = ContentScale.Crop,
-            modifier = modifier
-                .fillMaxWidth()
-                .height(180.dp)
-                .clip(shape)
-        )
+        var loadFailed by remember(bannerUrl) { mutableStateOf(false) }
+        if (loadFailed) {
+            BannerPlaceholder(projectName = projectName, modifier = modifier, shape = shape)
+        } else {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(bannerUrl)
+                    .diskCachePolicy(CachePolicy.ENABLED)
+                    .memoryCachePolicy(CachePolicy.ENABLED)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = "Баннер $projectName",
+                contentScale = ContentScale.Crop,
+                onError = { loadFailed = true },
+                modifier = modifier
+                    .fillMaxWidth()
+                    .height(180.dp)
+                    .clip(shape)
+            )
+        }
     } else {
         BannerPlaceholder(projectName = projectName, modifier = modifier, shape = shape)
     }

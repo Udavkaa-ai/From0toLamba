@@ -92,4 +92,5 @@ class AmaViewModel @Inject constructor(
     }
 
     fun clearError() = _uiState.update { it.copy(error = null) }
+    fun clearInvestResult() = _uiState.update { it.copy(investResult = null) }
 }

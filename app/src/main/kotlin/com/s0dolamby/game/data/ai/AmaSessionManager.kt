@@ -43,9 +43,15 @@ class AmaSessionManager @Inject constructor(
             id = UUID.randomUUID().toString(),
             sessionId = history.firstOrNull()?.sessionId ?: "",
             role = MessageRole.ASSISTANT,
-            content = response.choices.first().message.content.trim()
+            content = response.choices.first().message.content.trim().stripMarkdown()
         )
     }
+
+    private fun String.stripMarkdown(): String = this
+        .replace(Regex("\\*\\*(.+?)\\*\\*"), "$1")
+        .replace(Regex("\\*(.+?)\\*"), "$1")
+        .replace(Regex("_(.+?)_"), "$1")
+        .replace(Regex("`(.+?)`"), "$1")
 
     private fun buildMessageList(
         systemPrompt: String,
