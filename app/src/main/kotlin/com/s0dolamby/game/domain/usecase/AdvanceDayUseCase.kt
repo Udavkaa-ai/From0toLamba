@@ -4,6 +4,8 @@ import com.s0dolamby.game.data.logging.AppLogger
 import com.s0dolamby.game.domain.model.ProjectFate
 import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.s0dolamby.game.domain.repository.ProjectRepository
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.random.Random
 
@@ -11,7 +13,8 @@ class AdvanceDayUseCase @Inject constructor(
     private val gameStateRepository: GameStateRepository,
     private val projectRepository: ProjectRepository,
     private val generateProjectUseCase: GenerateProjectUseCase,
-    private val generateDailyUpdatesUseCase: GenerateDailyUpdatesUseCase
+    private val generateDailyUpdatesUseCase: GenerateDailyUpdatesUseCase,
+    private val generateProjectBannerUseCase: GenerateProjectBannerUseCase
 ) {
     suspend operator fun invoke(): Result<Unit> = runCatching {
         val state = gameStateRepository.getGameState()
@@ -50,19 +53,32 @@ class AdvanceDayUseCase @Inject constructor(
 
                 // Generate daily update text
                 generateDailyUpdatesUseCase(updatedProject)
+                    .onFailure { e -> AppLogger.e("AdvanceDayUseCase", "Update generation failed: ${e.message}") }
             }
         }
 
-        // Update balance
+        // Update balance and day counter
         val newBalance = state.balance + balanceDelta
         gameStateRepository.updateBalance(newBalance)
         gameStateRepository.advanceDay()
 
-        // Generate new projects for inbox
+        // Close yesterday's inbox offers, then generate fresh ones
+        projectRepository.closeAllInboxProjects()
+
         val newProjectCount = Random.nextInt(1, 4)
-        repeat(newProjectCount) {
-            generateProjectUseCase()
-                .onFailure { e -> AppLogger.e("AdvanceDayUseCase", "Failed to generate project: ${e.message}") }
+        coroutineScope {
+            repeat(newProjectCount) {
+                val project = generateProjectUseCase().getOrNull()
+                if (project != null) {
+                    // Generate banner in parallel — doesn't block the day advance result
+                    launch {
+                        generateProjectBannerUseCase(project)
+                            .onFailure { e -> AppLogger.e("AdvanceDayUseCase", "Banner generation failed: ${e.message}") }
+                    }
+                } else {
+                    AppLogger.e("AdvanceDayUseCase", "Failed to generate project")
+                }
+            }
         }
     }
 

@@ -9,8 +9,14 @@ interface ProjectDao {
     @Query("SELECT * FROM projects WHERE isActive = 1 AND isClosed = 0")
     fun observeActiveProjects(): Flow<List<ProjectEntity>>
 
+    @Query("SELECT * FROM projects WHERE isActive = 1 AND isClosed = 0")
+    suspend fun getActiveProjects(): List<ProjectEntity>
+
     @Query("SELECT * FROM projects WHERE isActive = 0 AND isClosed = 0")
     fun observeInboxProjects(): Flow<List<ProjectEntity>>
+
+    @Query("UPDATE projects SET isClosed = 1, closureReason = 'Предложение не принято' WHERE isActive = 0 AND isClosed = 0")
+    suspend fun closeAllInboxProjects()
 
     @Query("SELECT * FROM projects WHERE isClosed = 1")
     fun observeClosedProjects(): Flow<List<ProjectEntity>>

@@ -20,6 +20,9 @@ interface AmaDao {
     @Query("SELECT * FROM ama_messages WHERE sessionId = :sessionId ORDER BY timestamp ASC")
     suspend fun getMessages(sessionId: String): List<AmaMessageEntity>
 
+    @Query("SELECT * FROM ama_messages WHERE sessionId = :sessionId ORDER BY timestamp ASC")
+    fun observeMessages(sessionId: String): Flow<List<AmaMessageEntity>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSession(session: AmaSessionEntity)
 

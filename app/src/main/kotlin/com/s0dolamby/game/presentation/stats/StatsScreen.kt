@@ -144,7 +144,8 @@ private fun LogCard(onShowLog: () -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Логи приложения", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text("Логи приложения", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = onShowLog) { Text("Просмотр") }
                 Button(onClick = { AppLogger.share(context) }) { Text("Поделиться") }
