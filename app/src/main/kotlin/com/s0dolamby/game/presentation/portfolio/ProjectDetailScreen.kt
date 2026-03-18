@@ -1,5 +1,6 @@
 package com.s0dolamby.game.presentation.portfolio
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -11,6 +12,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -25,6 +29,7 @@ import com.s0dolamby.game.presentation.common.components.ProjectBannerImage
 import com.s0dolamby.game.presentation.common.theme.Error
 import com.s0dolamby.game.presentation.common.theme.Success
 import com.s0dolamby.game.presentation.common.theme.Warning
+import com.s0dolamby.game.presentation.registry.displayName
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -52,15 +57,20 @@ class ProjectDetailViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            val project = projectRepository.getProjectById(projectId)
-            val updates = updateRepository.getUpdatesForProject(projectId)
-            val postMortem = if (project?.isClosed == true) amaRepository.getPostMortem(projectId) else null
-            _uiState.value = ProjectDetailUiState(
-                project = project,
-                updates = updates,
-                postMortem = postMortem,
-                isLoading = false
-            )
+            projectRepository.getActiveProjects()
+                .combine(projectRepository.getClosedProjects()) { active, closed -> active + closed }
+                .collect { all ->
+                    val project = all.find { it.id == projectId }
+                        ?: projectRepository.getProjectById(projectId)
+                    val updates = updateRepository.getUpdatesForProject(projectId)
+                    val postMortem = if (project?.isClosed == true) amaRepository.getPostMortem(projectId) else null
+                    _uiState.value = ProjectDetailUiState(
+                        project = project,
+                        updates = updates,
+                        postMortem = postMortem,
+                        isLoading = false
+                    )
+                }
         }
     }
 }
@@ -104,6 +114,10 @@ fun ProjectDetailScreen(
                 item { PostMortemCard(project = project, postMortem = uiState.postMortem) }
             } else {
                 item { LiveStatsCard(project = project) }
+                // Show charts only when we have enough history
+                if (project.userCountHistory.size >= 2 || project.apyHistory.size >= 2) {
+                    item { DynamicsCard(project = project) }
+                }
             }
 
             if (uiState.updates.isNotEmpty()) {
@@ -115,6 +129,78 @@ fun ProjectDetailScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun DynamicsCard(project: Project) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("Динамика", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+
+            if (project.userCountHistory.size >= 2) {
+                val first = project.userCountHistory.first()
+                val last = project.userCountHistory.last()
+                val delta = last - first
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically) {
+                    Text("Пользователи", style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("%+d за период".format(delta), style = MaterialTheme.typography.labelSmall,
+                        color = if (delta >= 0) Success else Error)
+                }
+                SparklineChart(
+                    values = project.userCountHistory.map { it.toFloat() },
+                    color = if (delta >= 0) Success else Error,
+                    modifier = Modifier.fillMaxWidth().height(60.dp)
+                )
+            }
+
+            if (project.apyHistory.size >= 2) {
+                val avgApy = project.apyHistory.average().toFloat()
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically) {
+                    Text("Доходность в день", style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("~%.2f%% / день".format(avgApy), style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary)
+                }
+                SparklineChart(
+                    values = project.apyHistory,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.fillMaxWidth().height(60.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SparklineChart(
+    values: List<Float>,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    if (values.size < 2) return
+    Canvas(modifier = modifier) {
+        val min = values.min()
+        val max = values.max()
+        val range = (max - min).coerceAtLeast(0.0001f)
+        val path = Path()
+        values.forEachIndexed { i, v ->
+            val x = i.toFloat() / (values.size - 1) * size.width
+            val y = (1f - (v - min) / range) * size.height
+            if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+        }
+        drawPath(path, color, style = Stroke(width = 2.dp.toPx()))
+        // Fill under the line
+        val fillPath = Path().apply {
+            addPath(path)
+            lineTo(size.width, size.height)
+            lineTo(0f, size.height)
+            close()
+        }
+        drawPath(fillPath, color.copy(alpha = 0.15f))
     }
 }
 
@@ -163,13 +249,26 @@ private fun LiveStatsCard(project: Project) {
     val pnl = project.currentValueTON - project.investedAmountTON
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Текущее состояние", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically) {
+                Text("Текущее состояние", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                if (project.isWithdrawalLocked) {
+                    Row(verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Icon(Icons.Default.Lock, null, tint = Warning, modifier = Modifier.size(14.dp))
+                        Text("Вывод закрыт", style = MaterialTheme.typography.labelSmall, color = Warning)
+                    }
+                }
+            }
             StatRow("Вложено", "%.2f TON".format(project.investedAmountTON))
             StatRow("Текущая стоимость", "%.2f TON".format(project.currentValueTON))
             StatRow("P&L", "%+.2f TON".format(pnl), color = if (pnl >= 0) Success else Error)
             StatRow("Дней в портфеле", "${project.daysSinceJoined}")
             StatRow("Заявленный APY", "${project.claimedAPY.toInt()}%")
             StatRow("Юзеров (заявлено)", formatCount(project.claimedUserCount))
+            if (project.currentUserCount > 0) {
+                StatRow("Юзеров (сейчас)", formatCount(project.currentUserCount))
+            }
         }
     }
 }
@@ -183,27 +282,19 @@ private fun PostMortemCard(project: Project, postMortem: PostMortemReport?) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("PostMortem — Разбор", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
 
-            // Reveal archetype
-            Surface(
-                color = MaterialTheme.colorScheme.surface,
-                shape = MaterialTheme.shapes.medium
-            ) {
+            Surface(color = MaterialTheme.colorScheme.surface, shape = MaterialTheme.shapes.medium) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text("Архетип разработчика", style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
-                        project.personaArchetype.name.replace("_", " "),
+                        project.personaArchetype.displayName,   // fixed: use Russian display name
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                 }
             }
 
-            // Fate
-            Surface(
-                color = MaterialTheme.colorScheme.surface,
-                shape = MaterialTheme.shapes.medium
-            ) {
+            Surface(color = MaterialTheme.colorScheme.surface, shape = MaterialTheme.shapes.medium) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text("Судьба проекта", style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -216,7 +307,6 @@ private fun PostMortemCard(project: Project, postMortem: PostMortemReport?) {
                 }
             }
 
-            // Lie topics revealed
             if (project.lieTopics.isNotEmpty()) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text("Темы лжи", style = MaterialTheme.typography.labelSmall,
@@ -269,7 +359,7 @@ private fun UpdateHistoryItem(update: DailyUpdate) {
 }
 
 @Composable
-private fun StatRow(label: String, value: String, color: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface) {
+private fun StatRow(label: String, value: String, color: Color = MaterialTheme.colorScheme.onSurface) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = color)
@@ -287,7 +377,7 @@ val ProjectType.displayName: String get() = when (this) {
     ProjectType.P2E_RPG -> "P2E RPG"
     ProjectType.FARMING_BOT -> "Фарм-бот"
     ProjectType.REFERRAL_PYRAMID -> "Реферальная пирамида"
-    ProjectType.HONEST_GAMEFI -> "Honest GameFi"
+    ProjectType.HONEST_GAMEFI -> "Честный GameFi"
 }
 
 val ProjectFate.displayName: String get() = when (this) {

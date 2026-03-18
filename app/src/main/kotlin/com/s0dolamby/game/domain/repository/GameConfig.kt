@@ -13,11 +13,13 @@ object GameConfig {
     const val OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1/"
     const val TEXT_MODEL = "deepseek/deepseek-chat-v3-0324"
     const val MAX_TOKENS_AMA = 512
-    const val MAX_TOKENS_UPDATE = 400
+    const val MAX_TOKENS_UPDATE = 650    // enough for complete JSON with 2-4 sentences
     const val MAX_TOKENS_POSTMORTEM = 600
     const val MAX_TOKENS_NAME_GEN = 20
     const val MAX_TOKENS_BANNER_CONCEPT = 120
 
+    // Image generation via /chat/completions + modalities:["image"]
+    // flux-schnell = cheapest FLUX model (~$0.003/image), confirmed on OpenRouter modalities API
     const val IMAGE_MODEL = "black-forest-labs/flux-schnell"
     const val BANNER_IMAGE_SIZE = "512x512"
 }

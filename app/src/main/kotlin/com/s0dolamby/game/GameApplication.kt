@@ -6,8 +6,12 @@ import android.app.NotificationManager
 import android.os.Build
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import coil.Coil
+import coil.ImageLoader
 import com.s0dolamby.game.data.logging.AppLogger
 import dagger.hilt.android.HiltAndroidApp
+import okhttp3.OkHttpClient
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -26,6 +30,22 @@ class GameApplication : Application(), Configuration.Provider {
         AppLogger.init(this)
         installCrashHandler()
         createNotificationChannels()
+        configureCoil()
+    }
+
+    private fun configureCoil() {
+        Coil.setImageLoader {
+            ImageLoader.Builder(this)
+                .okHttpClient {
+                    OkHttpClient.Builder()
+                        .connectTimeout(30, TimeUnit.SECONDS)
+                        .readTimeout(120, TimeUnit.SECONDS)  // Pollinations.ai generates on-demand
+                        .writeTimeout(30, TimeUnit.SECONDS)
+                        .build()
+                }
+                .crossfade(true)
+                .build()
+        }
     }
 
     private fun installCrashHandler() {
