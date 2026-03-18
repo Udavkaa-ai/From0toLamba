@@ -3,11 +3,9 @@ package com.s0dolamby.game.domain.usecase
 import com.s0dolamby.game.BuildConfig
 import com.s0dolamby.game.data.ai.ChatMessage
 import com.s0dolamby.game.data.ai.ChatRequest
-import com.s0dolamby.game.data.ai.ImageRequest
 import com.s0dolamby.game.data.ai.OpenRouterApiService
 import com.s0dolamby.game.data.ai.PromptBuilder
 import com.s0dolamby.game.domain.model.Project
-import com.s0dolamby.game.domain.repository.GameConfig
 import com.s0dolamby.game.domain.repository.ProjectRepository
 import javax.inject.Inject
 
@@ -31,15 +29,11 @@ class GenerateProjectBannerUseCase @Inject constructor(
         )
         val concept = conceptResponse.choices.first().message.content.trim()
 
-        // Step 2: generate image with FLUX
-        val imageResponse = api.generateImage(
-            auth = "Bearer ${BuildConfig.OPENROUTER_API_KEY}",
-            request = ImageRequest(
-                prompt = promptBuilder.buildFinalImagePrompt(concept),
-                size = GameConfig.BANNER_IMAGE_SIZE
-            )
-        )
-        val url = imageResponse.data.first().url
+        // Step 2: build Pollinations.ai URL (free, no API key needed)
+        val finalPrompt = promptBuilder.buildFinalImagePrompt(concept)
+        val encoded = java.net.URLEncoder.encode(finalPrompt, "UTF-8")
+        val seed = kotlin.math.abs(project.id.hashCode())
+        val url = "https://image.pollinations.ai/prompt/$encoded?width=512&height=512&nologo=true&seed=$seed"
 
         projectRepository.updateBannerUrl(project.id, url, concept)
         url

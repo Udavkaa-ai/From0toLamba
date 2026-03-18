@@ -52,9 +52,11 @@ class GenerateDailyUpdatesUseCase @Inject constructor(
     private fun parseUpdate(project: Project, json: String): DailyUpdate {
         return try {
             // Extract JSON from potential markdown code blocks
-            val cleanJson = json.substringAfter("```json").substringAfter("```")
-                .substringBefore("```").trim()
-                .let { if (it.startsWith("{")) it else json }
+            val cleanJson = when {
+                json.contains("```json") -> json.substringAfter("```json").substringBefore("```").trim()
+                json.contains("```") -> json.substringAfter("```").substringBefore("```").trim()
+                else -> json.trim()
+            }
 
             val parsed = gson.fromJson(cleanJson, UpdateJson::class.java)
             DailyUpdate(

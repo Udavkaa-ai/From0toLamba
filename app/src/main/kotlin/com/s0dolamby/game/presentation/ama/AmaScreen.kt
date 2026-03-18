@@ -157,6 +157,14 @@ fun AmaScreen(
             viewModel.clearError()
         }
     }
+
+    // Invest result snackbar
+    uiState.investResult?.let { result ->
+        LaunchedEffect(result) {
+            snackbarHostState.showSnackbar(message = result, duration = SnackbarDuration.Short)
+            viewModel.clearInvestResult()
+        }
+    }
 }
 
 @Composable
