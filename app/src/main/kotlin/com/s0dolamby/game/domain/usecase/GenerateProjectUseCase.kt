@@ -1,7 +1,6 @@
 package com.s0dolamby.game.domain.usecase
 
 import com.s0dolamby.game.BuildConfig
-import com.s0dolamby.game.data.ai.AmaSessionManager
 import com.s0dolamby.game.data.ai.ChatRequest
 import com.s0dolamby.game.data.ai.ChatMessage
 import com.s0dolamby.game.data.ai.OpenRouterApiService
@@ -20,8 +19,7 @@ class GenerateProjectUseCase @Inject constructor(
     private val promptBuilder: PromptBuilder,
     private val projectRegistry: ProjectRegistry,
     private val personaRegistry: PersonaRegistry,
-    private val projectRepository: ProjectRepository,
-    private val generateBannerUseCase: GenerateProjectBannerUseCase
+    private val projectRepository: ProjectRepository
 ) {
     suspend operator fun invoke(isOnboarding: Boolean = false): Result<Project> = runCatching {
         val template = if (isOnboarding) {

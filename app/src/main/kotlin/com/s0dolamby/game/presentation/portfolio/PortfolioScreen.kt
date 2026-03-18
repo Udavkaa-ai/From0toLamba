@@ -19,6 +19,7 @@ import com.s0dolamby.game.presentation.common.theme.Success
 @Composable
 fun PortfolioScreen(
     onBack: () -> Unit,
+    onProjectClick: (String) -> Unit = {},
     viewModel: PortfolioViewModel = hiltViewModel()
 ) {
     val activeProjects by viewModel.activeProjects.collectAsState()
@@ -42,6 +43,7 @@ fun PortfolioScreen(
                 items(activeProjects) { project ->
                     PortfolioProjectCard(
                         project = project,
+                        onClick = { onProjectClick(project.id) },
                         onExit = { viewModel.exitProject(project.id) }
                     )
                 }
@@ -49,7 +51,7 @@ fun PortfolioScreen(
             if (closedProjects.isNotEmpty()) {
                 item { Text("История", style = MaterialTheme.typography.titleMedium) }
                 items(closedProjects) { project ->
-                    ClosedProjectCard(project = project)
+                    ClosedProjectCard(project = project, onClick = { onProjectClick(project.id) })
                 }
             }
         }
@@ -57,9 +59,9 @@ fun PortfolioScreen(
 }
 
 @Composable
-private fun PortfolioProjectCard(project: Project, onExit: () -> Unit) {
+private fun PortfolioProjectCard(project: Project, onClick: () -> Unit, onExit: () -> Unit) {
     val pnl = project.currentValueTON - project.investedAmountTON
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(project.claimedName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -78,9 +80,10 @@ private fun PortfolioProjectCard(project: Project, onExit: () -> Unit) {
 }
 
 @Composable
-private fun ClosedProjectCard(project: Project) {
+private fun ClosedProjectCard(project: Project, onClick: () -> Unit) {
     val pnl = project.currentValueTON - project.investedAmountTON
     Card(
+        onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {

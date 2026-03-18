@@ -11,6 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.s0dolamby.game.domain.model.GameState
 import com.s0dolamby.game.domain.repository.GameStateRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,6 +31,7 @@ class StatsViewModel @Inject constructor(
 @Composable
 fun StatsScreen(
     onBack: () -> Unit,
+    onRegistryClick: () -> Unit = {},
     viewModel: StatsViewModel = hiltViewModel()
 ) {
     val state by viewModel.gameState.collectAsState()
@@ -37,7 +40,10 @@ fun StatsScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Статистика") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Назад") } }
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Назад") } },
+                actions = {
+                    TextButton(onClick = onRegistryClick) { Text("Энциклопедия") }
+                }
             )
         }
     ) { padding ->

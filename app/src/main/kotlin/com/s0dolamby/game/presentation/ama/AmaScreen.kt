@@ -21,8 +21,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.s0dolamby.game.domain.model.AmaMessage
 import com.s0dolamby.game.domain.model.MessageRole
 import com.s0dolamby.game.domain.repository.GameConfig
-import com.s0dolamby.game.presentation.common.theme.Surface
-import com.s0dolamby.game.presentation.common.theme.SurfaceVariant
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
