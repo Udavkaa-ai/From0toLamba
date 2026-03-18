@@ -58,7 +58,8 @@ class GenerateProjectUseCase @Inject constructor(
             claimedTeamSize = Random.nextInt(3, 20),
             roadmap = template.roadmapTemplates.random(),
             description = template.descriptionTemplate,
-            isActive = false
+            isActive = false,
+            currentUserCount = Random.nextInt(template.claimedUserCountRange.first(), template.claimedUserCountRange.last())
         )
 
         projectRepository.saveProject(project)

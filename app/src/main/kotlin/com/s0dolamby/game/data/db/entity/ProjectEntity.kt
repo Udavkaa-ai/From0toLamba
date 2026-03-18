@@ -39,7 +39,13 @@ data class ProjectEntity(
 
     // Media
     val bannerImageUrl: String? = null,
-    val bannerPromptUsed: String? = null
+    val bannerPromptUsed: String? = null,
+
+    // Dynamic state
+    val isWithdrawalLocked: Boolean = false,
+    val currentUserCount: Int = 0,
+    val userCountHistory: String = "[]",
+    val apyHistory: String = "[]"
 )
 
 fun ProjectEntity.toDomain(gson: com.google.gson.Gson): Project = Project(
@@ -68,7 +74,11 @@ fun ProjectEntity.toDomain(gson: com.google.gson.Gson): Project = Project(
     isClosed = isClosed,
     closureReason = closureReason,
     bannerImageUrl = bannerImageUrl,
-    bannerPromptUsed = bannerPromptUsed
+    bannerPromptUsed = bannerPromptUsed,
+    isWithdrawalLocked = isWithdrawalLocked,
+    currentUserCount = currentUserCount,
+    userCountHistory = gson.fromJson(userCountHistory, Array<Int>::class.java).toList(),
+    apyHistory = gson.fromJson(apyHistory, Array<Float>::class.java).toList()
 )
 
 fun Project.toEntity(gson: com.google.gson.Gson): ProjectEntity = ProjectEntity(
@@ -97,5 +107,9 @@ fun Project.toEntity(gson: com.google.gson.Gson): ProjectEntity = ProjectEntity(
     isClosed = isClosed,
     closureReason = closureReason,
     bannerImageUrl = bannerImageUrl,
-    bannerPromptUsed = bannerPromptUsed
+    bannerPromptUsed = bannerPromptUsed,
+    isWithdrawalLocked = isWithdrawalLocked,
+    currentUserCount = currentUserCount,
+    userCountHistory = gson.toJson(userCountHistory),
+    apyHistory = gson.toJson(apyHistory)
 )

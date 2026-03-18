@@ -19,16 +19,21 @@ class InvestUseCase @Inject constructor(
 
         val state = gameStateRepository.getGameState()
         require(state.balance >= amountTON) { "Недостаточно TON на балансе" }
-        require(state.activeProjects.size < GameConfig.MAX_ACTIVE_PROJECTS) {
-            "Максимум ${GameConfig.MAX_ACTIVE_PROJECTS} активных проектов"
-        }
 
         val project = projectRepository.getProjectById(projectId)
             ?: error("Проект не найден")
 
+        // Only check project cap when investing for the first time
+        if (!project.isActive) {
+            require(state.activeProjects.size < GameConfig.MAX_ACTIVE_PROJECTS) {
+                "Максимум ${GameConfig.MAX_ACTIVE_PROJECTS} активных проектов"
+            }
+        }
+        require(!project.isWithdrawalLocked) { "Довложение невозможно — вывод средств заблокирован" }
+
         val updated = project.copy(
             investedAmountTON = project.investedAmountTON + amountTON,
-            currentValueTON = project.investedAmountTON + amountTON,
+            currentValueTON = project.currentValueTON + amountTON,
             isActive = true
         )
         projectRepository.updateProject(updated)

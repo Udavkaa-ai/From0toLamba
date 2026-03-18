@@ -51,5 +51,11 @@ data class Project(
 
     // Media
     val bannerImageUrl: String? = null,
-    val bannerPromptUsed: String? = null
+    val bannerPromptUsed: String? = null,
+
+    // Dynamic state (tracked each day)
+    val isWithdrawalLocked: Boolean = false,
+    val currentUserCount: Int = 0,
+    val userCountHistory: List<Int> = emptyList(),
+    val apyHistory: List<Float> = emptyList()
 )
