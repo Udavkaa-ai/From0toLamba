@@ -31,7 +31,9 @@ class GenerateDailyUpdatesUseCase @Inject constructor(
         )
 
         val json = response.choices.first().message.content.trim()
-        parseUpdate(project, json)
+        val update = parseUpdate(project, json)
+        updateRepository.saveUpdate(update)
+        update
     }
 
     private data class UpdateJson(

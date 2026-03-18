@@ -33,6 +33,7 @@ fun AmaScreen(
     var inputText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     val messages = uiState.session?.messages ?: emptyList()
     val questionCount = uiState.session?.questionCount ?: 0
@@ -45,6 +46,7 @@ fun AmaScreen(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -148,6 +150,7 @@ fun AmaScreen(
     // Error snackbar
     uiState.error?.let { error ->
         LaunchedEffect(error) {
+            snackbarHostState.showSnackbar(message = error, duration = SnackbarDuration.Short)
             viewModel.clearError()
         }
     }

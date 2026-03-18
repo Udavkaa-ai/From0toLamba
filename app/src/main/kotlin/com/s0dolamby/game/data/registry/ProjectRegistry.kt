@@ -20,7 +20,8 @@ class ProjectRegistry @Inject constructor(
         templates.filter { it.templateId != "onboarding" }.random()
 
     fun getOnboardingTemplate(): ProjectTemplate =
-        templates.first { it.type == ProjectType.HONEST_GAMEFI }
+        templates.firstOrNull { it.type == ProjectType.HONEST_GAMEFI }
+            ?: templates.first()
 
     private fun loadTemplates(): List<ProjectTemplate> {
         val json = context.assets.open("registry/projects.json").bufferedReader().readText()

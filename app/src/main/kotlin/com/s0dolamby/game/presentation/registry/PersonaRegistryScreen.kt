@@ -15,12 +15,11 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+
 import com.s0dolamby.game.domain.model.PersonaArchetype
-import com.s0dolamby.game.domain.repository.AmaRepository
 import com.s0dolamby.game.domain.repository.ProjectRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class PersonaEntry(

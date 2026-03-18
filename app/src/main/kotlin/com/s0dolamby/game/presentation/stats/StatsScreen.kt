@@ -91,8 +91,8 @@ private fun FinancialStats(state: GameState?) {
             StatRow("Баланс", "%.2f TON".format(state?.balance ?: 0.0))
             StatRow("Всего вложено", "%.2f TON".format(state?.totalInvested ?: 0.0))
             StatRow("Всего получено", "%.2f TON".format(state?.totalReturned ?: 0.0))
-            val roi = if ((state?.totalInvested ?: 0.0) > 0) {
-                ((state!!.totalReturned - state.totalInvested) / state.totalInvested * 100)
+            val roi = if (state != null && state.totalInvested > 0) {
+                (state.totalReturned - state.totalInvested) / state.totalInvested * 100
             } else 0.0
             StatRow("ROI", "%+.1f%%".format(roi))
         }
@@ -107,7 +107,7 @@ private fun ScamStats(state: GameState?) {
             StatRow("Скамов распознано", "${state?.scamsDetected ?: 0}")
             StatRow("Скамов пропущено", "${state?.scamsMissed ?: 0}")
             val total = (state?.scamsDetected ?: 0) + (state?.scamsMissed ?: 0)
-            val accuracy = if (total > 0) state!!.scamsDetected.toFloat() / total * 100 else 0f
+            val accuracy = if (total > 0 && state != null) state.scamsDetected.toFloat() / total * 100 else 0f
             StatRow("Точность", "%.0f%%".format(accuracy))
         }
     }
