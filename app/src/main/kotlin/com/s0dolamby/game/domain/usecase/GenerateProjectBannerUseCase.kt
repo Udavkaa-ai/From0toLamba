@@ -6,6 +6,7 @@ import com.s0dolamby.game.data.ai.ChatRequest
 import com.s0dolamby.game.data.ai.OpenRouterApiService
 import com.s0dolamby.game.data.ai.PromptBuilder
 import com.s0dolamby.game.domain.model.Project
+import com.s0dolamby.game.domain.repository.GameConfig
 import com.s0dolamby.game.domain.repository.ProjectRepository
 import javax.inject.Inject
 
