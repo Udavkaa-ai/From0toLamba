@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.os.Build
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import com.s0dolamby.game.data.logging.AppLogger
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
@@ -22,7 +23,17 @@ class GameApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        AppLogger.init(this)
+        installCrashHandler()
         createNotificationChannels()
+    }
+
+    private fun installCrashHandler() {
+        val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            AppLogger.crash(throwable)
+            defaultHandler?.uncaughtException(thread, throwable)
+        }
     }
 
     private fun createNotificationChannels() {

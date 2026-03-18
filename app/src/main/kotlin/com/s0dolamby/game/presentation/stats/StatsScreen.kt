@@ -1,18 +1,24 @@
 package com.s0dolamby.game.presentation.stats
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.s0dolamby.game.data.logging.AppLogger
 import com.s0dolamby.game.domain.model.GameState
 import com.s0dolamby.game.domain.repository.GameStateRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -47,6 +53,8 @@ fun StatsScreen(
             )
         }
     ) { padding ->
+        var showLog by remember { mutableStateOf(false) }
+
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(16.dp),
@@ -55,6 +63,11 @@ fun StatsScreen(
             item { RankCard(state = state) }
             item { FinancialStats(state = state) }
             item { ScamStats(state = state) }
+            item { LogCard(onShowLog = { showLog = true }) }
+        }
+
+        if (showLog) {
+            LogDialog(onDismiss = { showLog = false })
         }
     }
 }
@@ -119,4 +132,51 @@ private fun StatRow(label: String, value: String) {
         Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
     }
+}
+
+@Composable
+private fun LogCard(onShowLog: () -> Unit) {
+    val context = LocalContext.current
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Логи приложения", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = onShowLog) { Text("Просмотр") }
+                Button(onClick = { AppLogger.share(context) }) { Text("Поделиться") }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LogDialog(onDismiss: () -> Unit) {
+    val log = remember { AppLogger.readLog() }
+    val scrollState = rememberScrollState(Int.MAX_VALUE)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Лог приложения") },
+        text = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 400.dp)
+            ) {
+                Text(
+                    text = log,
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 10.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .verticalScroll(scrollState)
+                )
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Закрыть") } }
+    )
 }

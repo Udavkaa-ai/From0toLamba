@@ -1,5 +1,6 @@
 package com.s0dolamby.game.domain.usecase
 
+import com.s0dolamby.game.data.logging.AppLogger
 import com.s0dolamby.game.domain.model.ProjectFate
 import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.s0dolamby.game.domain.repository.ProjectRepository
@@ -14,6 +15,7 @@ class AdvanceDayUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(): Result<Unit> = runCatching {
         val state = gameStateRepository.getGameState()
+        AppLogger.i("AdvanceDayUseCase", "day=${state.currentDay} activeProjects=${state.activeProjects.size}")
         var balanceDelta = 0.0
 
         // Process each active project
