@@ -20,7 +20,7 @@ class PersonaRegistry @Inject constructor(
     private val personas: List<PersonaTemplate> by lazy { loadPersonas() }
 
     fun getPersona(archetype: PersonaArchetype): DeveloperPersona {
-        val template = personas.first { it.archetype == archetype.name.lowercase() }
+        val template = personas.first { it.archetype.equals(archetype.name, ignoreCase = true) }
         return template.toDomain()
     }
 

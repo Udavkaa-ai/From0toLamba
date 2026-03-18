@@ -62,6 +62,7 @@ class AdvanceDayUseCase @Inject constructor(
         val newProjectCount = Random.nextInt(1, 4)
         repeat(newProjectCount) {
             generateProjectUseCase()
+                .onFailure { e -> AppLogger.e("AdvanceDayUseCase", "Failed to generate project: ${e.message}") }
         }
     }
 
