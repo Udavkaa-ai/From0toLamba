@@ -94,11 +94,12 @@ class GenerateProjectBannerUseCase @Inject constructor(
      * Some models return image as a JSON content array:
      * content = "[{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/png;base64,...\"}}]"
      */
-    private fun extractImageUrlFromContent(content: String): String? = try {
-        if (!content.trimStart().startsWith("[")) return null
-        // Simple regex — avoids full Gson dependency in this use case
-        Regex(""""url"\s*:\s*"(data:image[^"]+)"""").find(content)?.groupValues?.get(1)
-    } catch (_: Exception) { null }
+    private fun extractImageUrlFromContent(content: String): String? {
+        return try {
+            if (!content.trimStart().startsWith("[")) null
+            else Regex(""""url"\s*:\s*"(data:image[^"]+)"""").find(content)?.groupValues?.get(1)
+        } catch (_: Exception) { null }
+    }
 
     /** Fallback: Pollinations.ai — free, no key. Uses proper percent-encoding so 400 never happens. */
     private fun buildPollinationsFallbackUrl(project: Project, prompt: String): String {
