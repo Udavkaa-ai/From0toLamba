@@ -1,0 +1,87 @@
+package com.s0dolamby.game.domain.usecase
+
+import com.s0dolamby.game.domain.model.*
+import com.s0dolamby.game.domain.repository.GameStateRepository
+import com.s0dolamby.game.domain.repository.ProjectRepository
+import io.mockk.*
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.*
+import org.junit.Before
+import org.junit.Test
+
+class InvestUseCaseTest {
+
+    private val gameStateRepo = mockk<GameStateRepository>()
+    private val projectRepo = mockk<ProjectRepository>()
+    private lateinit var useCase: InvestUseCase
+
+    private val testProject = Project(
+        id = "p1", name = "TestProject", type = ProjectType.CLICKER,
+        developerPersonaId = "d1", fate = ProjectFate.SLOW_DRAIN,
+        personaArchetype = PersonaArchetype.CLASSIC_SCAMMER,
+        daysUntilCollapse = 10, realDailyYieldTON = 0.005,
+        lieTopics = listOf(LieTopic.USER_COUNT), truthTopics = emptyList(),
+        developerName = "Паша", developerAvatarSeed = "seed",
+        claimedName = "TestProject", claimedAPY = 300f,
+        claimedUserCount = 10000, claimedTeamSize = 5,
+        roadmap = listOf("Launch", "Token"), description = "Test",
+        investedAmountTON = 0.0, isActive = false
+    )
+
+    private val testGameState = GameState(
+        balance = 5.0, currentDay = 1, activeProjects = emptyList(),
+        pendingInbox = emptyList(), investorRank = InvestorRank.NEWBIE,
+        totalInvested = 0.0, totalReturned = 0.0,
+        scamsDetected = 0, scamsMissed = 0, dayStreak = 1
+    )
+
+    @Before
+    fun setup() {
+        useCase = InvestUseCase(gameStateRepo, projectRepo)
+    }
+
+    @Test
+    fun `invest success updates balance and project`() = runTest {
+        coEvery { gameStateRepo.getGameState() } returns testGameState
+        coEvery { projectRepo.getProjectById("p1") } returns testProject
+        coEvery { projectRepo.updateProject(any()) } just Runs
+        coEvery { gameStateRepo.updateBalance(any()) } just Runs
+        coEvery { gameStateRepo.recordInvestment(any()) } just Runs
+
+        val result = useCase("p1", 2.0)
+
+        assertTrue(result.isSuccess)
+        coVerify { gameStateRepo.updateBalance(3.0) }
+        coVerify { gameStateRepo.recordInvestment(2.0) }
+        coVerify { projectRepo.updateProject(match { it.investedAmountTON == 2.0 && it.isActive }) }
+    }
+
+    @Test
+    fun `invest fails when balance insufficient`() = runTest {
+        coEvery { gameStateRepo.getGameState() } returns testGameState.copy(balance = 0.5)
+        coEvery { projectRepo.getProjectById("p1") } returns testProject
+
+        val result = useCase("p1", 2.0)
+
+        assertTrue(result.isFailure)
+        assertTrue(result.exceptionOrNull()?.message?.contains("Недостаточно") == true)
+    }
+
+    @Test
+    fun `invest fails when amount below minimum`() = runTest {
+        val result = useCase("p1", 0.05)
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `invest fails when max active projects reached`() = runTest {
+        val fullState = testGameState.copy(
+            activeProjects = List(5) { testProject.copy(id = "p$it") }
+        )
+        coEvery { gameStateRepo.getGameState() } returns fullState
+        coEvery { projectRepo.getProjectById("p1") } returns testProject
+
+        val result = useCase("p1", 1.0)
+        assertTrue(result.isFailure)
+    }
+}

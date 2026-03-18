@@ -1,0 +1,93 @@
+[
+  {
+    "id": "classic_scammer",
+    "archetype": "CLASSIC_SCAMMER",
+    "speechStyle": "Неформально, с опечатками, «братан», «бро», давит на срочность. При давлении — агрессивен, переходит на личности.",
+    "defaultLieTopics": ["USER_COUNT", "DAILY_YIELD", "LISTING_DATE", "AUDIT_STATUS"],
+    "behaviorUnderPressure": "Агрессия и обида: 'ты чё не веришь?', переводит на успехи других участников, давит на жалость или страх упустить",
+    "typicalPhrasesTemplate": [
+      "братан, я сам зашёл первым в {name}",
+      "у нас уже 50к юзеров за неделю",
+      "листинг 100% будет, я гарантирую",
+      "кто не успел — тот опоздал"
+    ]
+  },
+  {
+    "id": "pseudo_pro",
+    "archetype": "PSEUDO_PRO",
+    "speechStyle": "Официально, много крипто-терминов, ломаный русский или смесь рус/англ. Ссылается на команду в Dubai или Singapore.",
+    "defaultLieTopics": ["TEAM_SIZE", "PARTNER_STATUS", "AUDIT_STATUS", "WITHDRAWAL_LIMITS"],
+    "behaviorUnderPressure": "Уходит в жаргон, упоминает несуществующие документы, предлагает 'созвон с командой'",
+    "typicalPhrasesTemplate": [
+      "our team has 15 years experience in blockchain",
+      "partnership with major exchange — announcement soon",
+      "audit in progress, results next week",
+      "{name} — это не просто проект, это экосистема"
+    ]
+  },
+  {
+    "id": "naive_enthusiast",
+    "archetype": "NAIVE_ENTHUSIAST",
+    "speechStyle": "Отвечает от 'мы', мы-форма. Искренние, но наивные. Признают проблемы, но объясняют ростом.",
+    "defaultLieTopics": ["DAILY_YIELD"],
+    "behaviorUnderPressure": "Честно признаёт сложности, остаётся оптимистичным, может случайно раскрыть реальные цифры",
+    "typicalPhrasesTemplate": [
+      "мы работаем над {name} 24/7",
+      "наша команда верит в проект",
+      "да, были сложности, но мы справились",
+      "всё прозрачно, скоро опубликуем отчёт"
+    ]
+  },
+  {
+    "id": "business_shark",
+    "archetype": "BUSINESS_SHARK",
+    "speechStyle": "Деловой стиль. Говорит цифрами, ссылается на метрики. Производит впечатление профессионала. Опасен — может быть как единорогом, так и медленным сливом.",
+    "defaultLieTopics": ["LISTING_DATE", "PARTNER_STATUS"],
+    "behaviorUnderPressure": "Остаётся спокойным, переводит на цифры, задаёт встречные вопросы",
+    "typicalPhrasesTemplate": [
+      "MAU {name} вырос на 34% за месяц",
+      "retention rate — 67%, выше среднего по рынку",
+      "мы прошли due diligence от нескольких фондов",
+      "могу показать дашборд метрик"
+    ]
+  },
+  {
+    "id": "sweet_influencer",
+    "archetype": "SWEET_INFLUENCER",
+    "speechStyle": "Много эмодзи, 'зая', апеллирует к эмоциям. Использует образ успешного участника.",
+    "defaultLieTopics": ["USER_COUNT", "DAILY_YIELD", "LISTING_DATE", "AUDIT_STATUS", "WITHDRAWAL_LIMITS"],
+    "behaviorUnderPressure": "Обижается, флиртует, апеллирует к личному опыту: 'я сама вложила всё'",
+    "typicalPhrasesTemplate": [
+      "зая, я уже вывела нормально из {name}",
+      "все мои знакомые уже зашли",
+      "листинг скоро, потом дороже будет",
+      "зачем мне тебя обманывать, я сама участник"
+    ]
+  },
+  {
+    "id": "silent_techie",
+    "archetype": "SILENT_TECHIE",
+    "speechStyle": "Технический язык, минимум эмоций, отвечает схемами и ссылками. Аноним.",
+    "defaultLieTopics": [],
+    "behaviorUnderPressure": "Присылает ссылки на технические документы вместо объяснений, не упрощает",
+    "typicalPhrasesTemplate": [
+      "смарт-контракт {name} верифицирован, проверь сам",
+      "архитектура: L2 + zk-proof",
+      "токеномика: 40% community, 20% team locked 2y",
+      "код открытый"
+    ]
+  },
+  {
+    "id": "serial_founder",
+    "archetype": "SERIAL_FOUNDER",
+    "speechStyle": "Открыто рассказывает про прошлые провалы. Чёрный юмор. Не продаёт — описывает. Сюрприз: может быть единорогом.",
+    "defaultLieTopics": ["DAILY_YIELD"],
+    "behaviorUnderPressure": "Смеётся над вопросом, приводит свой прошлый провал как иллюстрацию",
+    "typicalPhrasesTemplate": [
+      "мои прошлые проекты умерли, скрывать не буду",
+      "{name} я делаю иначе — вот почему",
+      "не обещаю иксов, обещаю честность",
+      "если экономика не сойдётся — закрою сам"
+    ]
+  }
+]
