@@ -1,0 +1,69 @@
+[
+  {
+    "templateId": "clicker_basic",
+    "type": "CLICKER",
+    "namePatterns": ["[Name]Tap", "Tap2Earn [Name]", "[Name] Clicker"],
+    "descriptionTemplate": "Тапай монеты, приглашай друзей, получай токен на листинге.",
+    "claimedAPYRange": [200, 1500],
+    "claimedUserCountRange": [10000, 500000],
+    "roadmapTemplates": [
+      ["Запуск бота", "100к юзеров", "Листинг на Gate", "CEX-листинг"],
+      ["Тап-фаза", "Реферальная система", "Токен-дроп", "Биржа"]
+    ],
+    "compatiblePersonas": ["classic_scammer", "sweet_influencer", "naive_enthusiast"],
+    "fateWeights": {"INSTANT_SCAM": 40, "SLOW_DRAIN": 35, "HONEST_FAIL": 15, "SURVIVOR": 8, "UNICORN": 2}
+  },
+  {
+    "templateId": "p2e_rpg",
+    "type": "P2E_RPG",
+    "namePatterns": ["[Name] Heroes", "Crypto [Name] War", "[Name] Quest"],
+    "descriptionTemplate": "Купи NFT-героя, участвуй в битвах, зарабатывай токены.",
+    "claimedAPYRange": [50, 300],
+    "claimedUserCountRange": [5000, 100000],
+    "roadmapTemplates": [
+      ["Альфа-тест", "Продажа NFT", "Сезон 1", "Токен на DEX", "CEX"],
+      ["Открытый бета", "PvP-режим", "Гильдии", "Маркетплейс NFT"]
+    ],
+    "compatiblePersonas": ["pseudo_pro", "silent_techie", "business_shark", "serial_founder"],
+    "fateWeights": {"INSTANT_SCAM": 20, "SLOW_DRAIN": 25, "HONEST_FAIL": 25, "SURVIVOR": 20, "UNICORN": 10}
+  },
+  {
+    "templateId": "farming_bot",
+    "type": "FARMING_BOT",
+    "namePatterns": ["[Name] Farm", "[Name] Yield Bot", "Auto[Name]"],
+    "descriptionTemplate": "Бот автоматически фармит токены. Пассивный доход без действий.",
+    "claimedAPYRange": [500, 5000],
+    "claimedUserCountRange": [1000, 30000],
+    "roadmapTemplates": [
+      ["Запуск бота", "Добавление пулов", "Токен управления", "DAO"]
+    ],
+    "compatiblePersonas": ["pseudo_pro", "classic_scammer"],
+    "fateWeights": {"INSTANT_SCAM": 50, "SLOW_DRAIN": 30, "HONEST_FAIL": 10, "SURVIVOR": 8, "UNICORN": 2}
+  },
+  {
+    "templateId": "referral_pyramid",
+    "type": "REFERRAL_PYRAMID",
+    "namePatterns": ["[Name] Network", "[Name] Community Earn", "Team[Name]"],
+    "descriptionTemplate": "Экосистема взаимного заработка. 3 уровня рефералов.",
+    "claimedAPYRange": [30, 150],
+    "claimedUserCountRange": [20000, 200000],
+    "roadmapTemplates": [
+      ["Набор команды", "Запуск маркетплейса", "Токен", "Стейкинг"]
+    ],
+    "compatiblePersonas": ["sweet_influencer", "classic_scammer", "pseudo_pro"],
+    "fateWeights": {"INSTANT_SCAM": 25, "SLOW_DRAIN": 50, "HONEST_FAIL": 15, "SURVIVOR": 9, "UNICORN": 1}
+  },
+  {
+    "templateId": "honest_gamefi",
+    "type": "HONEST_GAMEFI",
+    "namePatterns": ["[Name] Protocol", "[Name] Finance Game", "[Name] DAO"],
+    "descriptionTemplate": "Честная GameFi с открытым кодом, аудитом и рабочей токеномикой.",
+    "claimedAPYRange": [15, 80],
+    "claimedUserCountRange": [2000, 50000],
+    "roadmapTemplates": [
+      ["Аудит", "Тест-сеть", "Основная сеть", "DAO-управление", "Мультичейн"]
+    ],
+    "compatiblePersonas": ["silent_techie", "serial_founder", "naive_enthusiast", "business_shark"],
+    "fateWeights": {"INSTANT_SCAM": 5, "SLOW_DRAIN": 10, "HONEST_FAIL": 30, "SURVIVOR": 40, "UNICORN": 15}
+  }
+]

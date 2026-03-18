@@ -1,0 +1,3 @@
+-keep class com.s0dolamby.game.data.ai.** { *; }
+-keepattributes Signature
+-keepattributes *Annotation*
