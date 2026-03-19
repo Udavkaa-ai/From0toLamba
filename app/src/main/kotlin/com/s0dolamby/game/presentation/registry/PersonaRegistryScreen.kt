@@ -287,33 +287,33 @@ private val glossaryItems = listOf(
 )
 
 val PersonaArchetype.displayName: String get() = when (this) {
-    PersonaArchetype.CLASSIC_SCAMMER -> "Классический скамер"
-    PersonaArchetype.PSEUDO_PRO -> "Псевдо-профессионал"
-    PersonaArchetype.NAIVE_ENTHUSIAST -> "Наивный энтузиаст"
-    PersonaArchetype.BUSINESS_SHARK -> "Бизнес-акула"
-    PersonaArchetype.SWEET_INFLUENCER -> "Сладкий инфлюенсер"
-    PersonaArchetype.SILENT_TECHIE -> "Молчаливый технарь"
-    PersonaArchetype.SERIAL_FOUNDER -> "Серийный основатель"
+    PersonaArchetype.BURATINO -> "Буратино"
+    PersonaArchetype.KOT_V_SAPOGAKH -> "Кот в сапогах"
+    PersonaArchetype.KARLSSON -> "Карлсон"
+    PersonaArchetype.KOSCHEI -> "Кощей"
+    PersonaArchetype.ZOLUSHKA -> "Золушка"
+    PersonaArchetype.BABA_YAGA -> "Баба Яга"
+    PersonaArchetype.IVAN_DURAK -> "Иван-дурак"
 }
 
 val PersonaArchetype.emoji: String get() = when (this) {
-    PersonaArchetype.CLASSIC_SCAMMER -> "🐍"
-    PersonaArchetype.PSEUDO_PRO -> "👔"
-    PersonaArchetype.NAIVE_ENTHUSIAST -> "🌱"
-    PersonaArchetype.BUSINESS_SHARK -> "🦈"
-    PersonaArchetype.SWEET_INFLUENCER -> "💅"
-    PersonaArchetype.SILENT_TECHIE -> "💻"
-    PersonaArchetype.SERIAL_FOUNDER -> "🔄"
+    PersonaArchetype.BURATINO -> "🪆"
+    PersonaArchetype.KOT_V_SAPOGAKH -> "🐱"
+    PersonaArchetype.KARLSSON -> "🚁"
+    PersonaArchetype.KOSCHEI -> "💀"
+    PersonaArchetype.ZOLUSHKA -> "👠"
+    PersonaArchetype.BABA_YAGA -> "🏚️"
+    PersonaArchetype.IVAN_DURAK -> "🎲"
 }
 
 val PersonaArchetype.description: String get() = when (this) {
-    PersonaArchetype.CLASSIC_SCAMMER -> "Давит на срочность. При давлении — агрессивен, переходит на личности."
-    PersonaArchetype.PSEUDO_PRO -> "Много терминов, ссылается на Dubai. Уходит в жаргон под давлением."
-    PersonaArchetype.NAIVE_ENTHUSIAST -> "Мы-форма, искренний но некомпетентный. Может случайно раскрыть правду."
-    PersonaArchetype.BUSINESS_SHARK -> "Говорит метриками. Убедителен — может быть как скамом, так и единорогом."
-    PersonaArchetype.SWEET_INFLUENCER -> "Много эмодзи, апелляция к эмоциям. Всегда «уже вложила сама»."
-    PersonaArchetype.SILENT_TECHIE -> "Технический язык, избегает простых ответов. Аноним."
-    PersonaArchetype.SERIAL_FOUNDER -> "Открыт про провалы. Может неожиданно оказаться честным."
+    PersonaArchetype.BURATINO -> "Наивный лжец, верит собственным сказкам. Обещает Поле Чудес, обижается под давлением."
+    PersonaArchetype.KOT_V_SAPOGAKH -> "Пышный и пафосный. Ссылается на «маркизов» и великих партнёров без имён."
+    PersonaArchetype.KARLSSON -> "«Лучший в мире!». Искренний энтузиаст, может случайно проговориться о правде."
+    PersonaArchetype.KOSCHEI -> "Ледяной и цифровой. Говорит метриками-приговорами. Опасен — может быть и честным."
+    PersonaArchetype.ZOLUSHKA -> "Апеллирует к жалости и мечтам. Дедлайны «до полуночи». Много эмодзи."
+    PersonaArchetype.BABA_YAGA -> "Отвечает загадками. Технически подкована — единственный архетип без ложных тем."
+    PersonaArchetype.IVAN_DURAK -> "Открыт про два провала. Третий проект — может реально взлететь."
 }
 
 val ProjectType.description: String get() = when (this) {
