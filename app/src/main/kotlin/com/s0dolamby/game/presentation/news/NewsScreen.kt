@@ -142,14 +142,13 @@ private fun NewsCard(update: DailyUpdate) {
 
             // ── Announcement chip ──
             update.announcement?.let { announcement ->
-                Surface(
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    shape = RoundedCornerShape(16.dp)
-                ) {
+                val (chipBg, chipFg) = announcement.chipColors
+                Surface(color = chipBg, shape = RoundedCornerShape(16.dp)) {
                     Text(
                         announcement.displayText,
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        color = chipFg,
+                        fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                     )
                 }
@@ -238,16 +237,25 @@ private fun StatusBanner(text: String, color: Color) {
 @Composable
 private fun newsCardColors(update: DailyUpdate): Pair<Color, Color> {
     val base = MaterialTheme.colorScheme.surface
-    return when {
-        update.payoutStatus == PayoutStatus.DELAYED && update.redFlags.isNotEmpty() ->
-            Error.copy(alpha = 0.07f) to Error.copy(alpha = 0.3f)
-        update.payoutStatus == PayoutStatus.DELAYED ->
-            Warning.copy(alpha = 0.06f) to Warning.copy(alpha = 0.2f)
-        update.payoutStatus == PayoutStatus.BOOSTED ->
-            Success.copy(alpha = 0.06f) to Success.copy(alpha = 0.2f)
-        update.redFlags.isNotEmpty() ->
-            Warning.copy(alpha = 0.05f) to Warning.copy(alpha = 0.15f)
-        else -> base to Color.Transparent
+    val gold = Color(0xFFFFD700)
+    val purple = Color(0xFF9C27B0)
+    return when (update.announcement) {
+        AnnouncementType.LISTING -> gold.copy(alpha = 0.12f) to gold.copy(alpha = 0.35f)
+        AnnouncementType.VIP_COLLAB -> purple.copy(alpha = 0.09f) to purple.copy(alpha = 0.28f)
+        AnnouncementType.CRIMINAL_CASE -> Error.copy(alpha = 0.13f) to Error.copy(alpha = 0.45f)
+        AnnouncementType.HACK -> Error.copy(alpha = 0.10f) to Error.copy(alpha = 0.38f)
+        AnnouncementType.BAD_RUMOR -> Warning.copy(alpha = 0.09f) to Warning.copy(alpha = 0.28f)
+        else -> when {
+            update.payoutStatus == PayoutStatus.DELAYED && update.redFlags.isNotEmpty() ->
+                Error.copy(alpha = 0.07f) to Error.copy(alpha = 0.3f)
+            update.payoutStatus == PayoutStatus.DELAYED ->
+                Warning.copy(alpha = 0.06f) to Warning.copy(alpha = 0.2f)
+            update.payoutStatus == PayoutStatus.BOOSTED ->
+                Success.copy(alpha = 0.06f) to Success.copy(alpha = 0.2f)
+            update.redFlags.isNotEmpty() ->
+                Warning.copy(alpha = 0.05f) to Warning.copy(alpha = 0.15f)
+            else -> base to Color.Transparent
+        }
     }
 }
 
@@ -256,4 +264,22 @@ private val AnnouncementType.displayText: String get() = when (this) {
     AnnouncementType.NEW_SEASON -> "🎮 Новый сезон"
     AnnouncementType.COLLAB -> "🤝 Партнёрство"
     AnnouncementType.AUDIT -> "🔍 Аудит"
+    AnnouncementType.BAD_RUMOR -> "📉 Слухи о проблемах"
+    AnnouncementType.VIP_COLLAB -> "⭐ VIP-коллаб"
+    AnnouncementType.CRIMINAL_CASE -> "⚖️ Уголовное дело"
+    AnnouncementType.HACK -> "💀 Взлом"
+}
+
+/** Chip background / text color pair per announcement type. */
+private val AnnouncementType.chipColors: Pair<Color, Color> get() {
+    val gold = Color(0xFFFFD700)
+    val purple = Color(0xFF9C27B0)
+    return when (this) {
+        AnnouncementType.LISTING -> gold.copy(alpha = 0.25f) to Color(0xFF7A6000)
+        AnnouncementType.VIP_COLLAB -> purple.copy(alpha = 0.20f) to Color(0xFF6A0DAD)
+        AnnouncementType.CRIMINAL_CASE -> Error.copy(alpha = 0.20f) to Error
+        AnnouncementType.HACK -> Error.copy(alpha = 0.18f) to Error
+        AnnouncementType.BAD_RUMOR -> Warning.copy(alpha = 0.20f) to Warning
+        else -> Success.copy(alpha = 0.18f) to Success
+    }
 }

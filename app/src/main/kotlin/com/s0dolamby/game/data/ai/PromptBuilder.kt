@@ -1,6 +1,7 @@
 package com.s0dolamby.game.data.ai
 
 import com.s0dolamby.game.domain.model.AmaMessage
+import com.s0dolamby.game.domain.model.AnnouncementType
 import com.s0dolamby.game.domain.model.DeveloperPersona
 import com.s0dolamby.game.domain.model.Project
 import javax.inject.Inject
@@ -58,15 +59,22 @@ $phrases
 
     fun buildDailyUpdatePrompt(
         project: Project,
-        daysUntilCollapse: Int?
+        daysUntilCollapse: Int?,
+        event: AnnouncementType? = null
     ): String = """
 Ты генерируешь ежедневный апдейт от лица проекта «${project.claimedName}».
 День с начала: ${project.daysSinceJoined}
 Судьба проекта: ${project.fate}
 Дней до закрытия: ${daysUntilCollapse ?: "не скоро"}
 
+${if (event != null) """
+СЛУЧАЙНОЕ СОБЫТИЕ СЕГОДНЯ: ${event.promptDescription}
+Это событие — центральная тема новости. Отрази его ярко и в стиле источника.
+Поле announcement в metrics = "${event.name.lowercase()}"
+""".trimIndent() else ""}
+
 ИСТОЧНИК НОВОСТИ — выбери один из: telegram_channel, reddit, press_release, fraud_alert, crypto_media, anonymous, official_blog, community, exchange_notice, investor_report
-Подбирай источник органично: fraud_alert/anonymous/reddit — при проблемах; press_release/official_blog — при анонсах; telegram_channel/community — обычные дни.
+${if (event != null) "Для этого события используй: ${event.preferredSource}" else "Подбирай органично: fraud_alert/anonymous/reddit — при проблемах; press_release/official_blog — при анонсах; telegram_channel/community — обычные дни."}
 
 ВАЖНО:
 - Пиши ТОЛЬКО на русском языке
@@ -79,12 +87,30 @@ $phrases
   * anonymous: параноидный, намёки, «источники говорят»
   * exchange_notice: сухой технический язык, статус транзакций
   * investor_report: аналитический стиль, ROI, метрики
-- Если до закрытия 1–2 дня — добавь тревожные сигналы (задержки, «временные трудности»). Не раскрывай напрямую
+- Если до закрытия 1–2 дня (и нет события) — добавь тревожные сигналы (задержки, «временные трудности»). Не раскрывай напрямую
 - Генерируй ТОЛЬКО валидный JSON без markdown-обёрток
 
 Верни JSON ровно в этом формате:
-{"title":"заголовок до 8 слов","body":"3-4 законченных предложения в стиле источника.","source":"telegram_channel","metrics":{"userCountDelta":0,"payoutStatus":"normal","announcement":null},"redFlags":[]}
+{"title":"заголовок до 8 слов","body":"3-4 законченных предложения в стиле источника.","metrics":{"userCountDelta":0,"payoutStatus":"normal","announcement":null},"redFlags":[]}
     """.trimIndent()
+
+    private val AnnouncementType.promptDescription: String get() = when (this) {
+        AnnouncementType.LISTING -> "Проект объявляет официальный листинг токена на крупной бирже! Эйфория, рост числа пользователей, цена взлетает."
+        AnnouncementType.VIP_COLLAB -> "Проект заключил партнёрство с известным VIP-инфлюенсером или крупным фондом. Огромный приток новой аудитории."
+        AnnouncementType.BAD_RUMOR -> "В сообществе и соцсетях распространились тревожные слухи о проекте: неизвестные утверждают о мошенничестве или проблемах. Команда отрицает."
+        AnnouncementType.CRIMINAL_CASE -> "Правоохранительные органы возбудили уголовное дело о мошенничестве против создателей проекта. Вывод средств заморожен. Паника среди пользователей."
+        AnnouncementType.HACK -> "Проект подвергся хакерской атаке. Часть средств пользователей похищена. Команда приостановила все транзакции и работает над ликвидацией уязвимости."
+        else -> name
+    }
+
+    private val AnnouncementType.preferredSource: String get() = when (this) {
+        AnnouncementType.LISTING -> "exchange_notice или press_release"
+        AnnouncementType.VIP_COLLAB -> "press_release или official_blog"
+        AnnouncementType.BAD_RUMOR -> "reddit или anonymous"
+        AnnouncementType.CRIMINAL_CASE -> "fraud_alert или crypto_media"
+        AnnouncementType.HACK -> "anonymous или crypto_media"
+        else -> "telegram_channel"
+    }
 
     fun buildBannerConceptPrompt(projectName: String): String = """
 Придумай визуальный концепт для баннера мобильной игры/приложения.

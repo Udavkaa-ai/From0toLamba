@@ -84,6 +84,7 @@ fun NavGraph() {
                 onPortfolioClick = { navController.navigate(Screen.Portfolio.route) },
                 onNewsClick = { navController.navigate(Screen.News.route) },
                 onStatsClick = { navController.navigate(Screen.Stats.route) },
+                onRegistryClick = { navController.navigate(Screen.PersonaRegistry.route) },
                 onProjectClick = { projectId -> navController.navigate(Screen.ProjectDetail.createRoute(projectId)) }
             )
         }

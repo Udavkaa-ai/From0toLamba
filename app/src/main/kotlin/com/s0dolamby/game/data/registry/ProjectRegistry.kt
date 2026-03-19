@@ -42,8 +42,27 @@ class ProjectRegistry @Inject constructor(
         fun buildName(): String {
             val pattern = namePatterns.random()
             val names = listOf(
-                "Moon", "Star", "Dragon", "Panda", "Wolf", "Iron", "Solar",
-                "Frost", "Void", "Neon", "Fire", "Ocean", "Sky", "Cyber"
+                // Classic crypto vibes
+                "Moon", "Star", "Dragon", "Wolf", "Iron", "Solar", "Frost",
+                "Void", "Neon", "Fire", "Sky", "Cyber", "Nova", "Apex",
+                // Animals (absurd)
+                "Hamster", "Capybara", "Sloth", "Platypus", "Narwhal",
+                "Crab", "Penguin", "Raccoon", "Otter", "Alpaca", "Shrimp",
+                "Hedgehog", "Axolotl", "Flamingo", "Tapir",
+                // Foods & objects
+                "Avocado", "Boba", "Banana", "Mango", "Potato", "Pickle",
+                "Sushi", "Pancake", "Donut", "Nacho", "Toaster", "Pillow",
+                // Crypto meme culture
+                "Sigma", "Chad", "Lambo", "Hodl", "Pepe", "Wojak", "Pump",
+                "Degen", "Based", "Gigabrain", "Diamond",
+                // Geo/aspirational
+                "Dubai", "Bali", "Monaco", "Sahara", "Everest", "Amazon",
+                // Tech-sounding
+                "Quantum", "Pixel", "Vector", "Cipher", "Nexus", "Prism",
+                "Matrix", "Helix", "Proton", "Zenith",
+                // Nature/elemental
+                "Mushroom", "Cactus", "Lotus", "Tornado", "Thunder", "Cobalt",
+                "Obsidian", "Crimson", "Velvet", "Aurora"
             )
             return pattern.replace("[Name]", names.random())
         }

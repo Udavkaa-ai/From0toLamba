@@ -48,6 +48,7 @@ fun HomeScreen(
     onPortfolioClick: () -> Unit,
     onNewsClick: () -> Unit,
     onStatsClick: () -> Unit,
+    onRegistryClick: () -> Unit,
     onProjectClick: (String) -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
@@ -97,6 +98,17 @@ fun HomeScreen(
                         onClick = onNewsClick,
                         icon = { Icon(Icons.Default.Newspaper, null) },
                         label = { Text("Новости") }
+                    )
+                    NavigationBarItem(
+                        selected = false,
+                        onClick = onRegistryClick,
+                        icon = { Icon(Icons.Default.MenuBook, null) },
+                        label = { Text("SCAM-WIKI", fontWeight = FontWeight.Bold) },
+                        colors = NavigationBarItemDefaults.colors(
+                            unselectedIconColor = Error,
+                            unselectedTextColor = Error,
+                            indicatorColor = Error.copy(alpha = 0.15f)
+                        )
                     )
                 }
             }

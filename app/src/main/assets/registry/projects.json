@@ -2,7 +2,7 @@
   {
     "templateId": "clicker_basic",
     "type": "CLICKER",
-    "namePatterns": ["[Name]Tap", "Tap2Earn [Name]", "[Name] Clicker"],
+    "namePatterns": ["[Name]Tap", "Tap2Earn [Name]", "[Name] Clicker", "[Name]Click", "Mega[Name]Tap", "[Name] Tapper", "Just[Name]Tap", "Tap[Name]io"],
     "descriptionTemplate": "Тапай монеты, приглашай друзей, получай токен на листинге.",
     "claimedAPYRange": [200, 1500],
     "claimedUserCountRange": [10000, 500000],
@@ -16,7 +16,7 @@
   {
     "templateId": "p2e_rpg",
     "type": "P2E_RPG",
-    "namePatterns": ["[Name] Heroes", "Crypto [Name] War", "[Name] Quest"],
+    "namePatterns": ["[Name] Heroes", "Crypto [Name] War", "[Name] Quest", "[Name] Arena", "[Name] Legends", "[Name] Strike", "Guild of [Name]", "[Name] Saga"],
     "descriptionTemplate": "Купи NFT-героя, участвуй в битвах, зарабатывай токены.",
     "claimedAPYRange": [50, 300],
     "claimedUserCountRange": [5000, 100000],
@@ -30,7 +30,7 @@
   {
     "templateId": "farming_bot",
     "type": "FARMING_BOT",
-    "namePatterns": ["[Name] Farm", "[Name] Yield Bot", "Auto[Name]"],
+    "namePatterns": ["[Name] Farm", "[Name] Yield Bot", "Auto[Name]", "[Name]Yield", "[Name] Harvest", "Earn[Name]", "[Name]Bot3000", "Smart[Name]Farm"],
     "descriptionTemplate": "Бот автоматически фармит токены. Пассивный доход без действий.",
     "claimedAPYRange": [500, 5000],
     "claimedUserCountRange": [1000, 30000],
@@ -43,7 +43,7 @@
   {
     "templateId": "referral_pyramid",
     "type": "REFERRAL_PYRAMID",
-    "namePatterns": ["[Name] Network", "[Name] Community Earn", "Team[Name]"],
+    "namePatterns": ["[Name] Network", "[Name] Community Earn", "Team[Name]", "[Name] Matrix", "[Name] Clan", "We[Name]", "[Name] Circle", "[Name] Syndicate"],
     "descriptionTemplate": "Экосистема взаимного заработка. 3 уровня рефералов.",
     "claimedAPYRange": [30, 150],
     "claimedUserCountRange": [20000, 200000],
@@ -56,7 +56,7 @@
   {
     "templateId": "honest_gamefi",
     "type": "HONEST_GAMEFI",
-    "namePatterns": ["[Name] Protocol", "[Name] Finance Game", "[Name] DAO"],
+    "namePatterns": ["[Name] Protocol", "[Name] Finance Game", "[Name] DAO", "[Name] Labs", "[Name] Fi", "Open[Name]", "[Name] Chain", "[Name] Ecosystem"],
     "descriptionTemplate": "Честная GameFi с открытым кодом, аудитом и рабочей токеномикой.",
     "claimedAPYRange": [15, 80],
     "claimedUserCountRange": [2000, 50000],

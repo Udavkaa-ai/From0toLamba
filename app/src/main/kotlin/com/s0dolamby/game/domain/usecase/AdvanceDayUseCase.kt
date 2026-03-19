@@ -1,7 +1,9 @@
 package com.s0dolamby.game.domain.usecase
 
 import com.s0dolamby.game.data.logging.AppLogger
+import com.s0dolamby.game.domain.model.AnnouncementType
 import com.s0dolamby.game.domain.model.DailyUpdate
+import com.s0dolamby.game.domain.model.Project
 import com.s0dolamby.game.domain.model.ProjectFate
 import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.s0dolamby.game.domain.repository.ProjectRepository
@@ -16,6 +18,9 @@ class AdvanceDayUseCase @Inject constructor(
 ) {
     // Each game day counts as 10 real days of yield — keeps progression engaging
     private val YIELD_MULTIPLIER = 10.0
+
+    // 10% chance of a random event per project per day
+    private val EVENT_CHANCE = 0.10f
 
     suspend operator fun invoke(): Result<List<DailyUpdate>> = runCatching {
         val state = gameStateRepository.getGameState()
@@ -95,13 +100,13 @@ class AdvanceDayUseCase @Inject constructor(
                     gameStateRepository.recordScamMissed()
                 }
 
-                // Normal day — accrue yield
+                // Normal day — accrue yield, possibly trigger a random event
                 else -> {
                     val dailyYield = project.investedAmountTON * project.realDailyYieldTON * YIELD_MULTIPLIER
                     balanceDelta += dailyYield
                     gameStateRepository.recordReturn(dailyYield)
                     val (newHistory, newApyHistory) = updateHistories(project, dailyYield)
-                    val updatedProject = project.copy(
+                    var updatedProject = project.copy(
                         daysSinceJoined = project.daysSinceJoined + 1,
                         daysUntilCollapse = newDaysUntilCollapse,
                         currentValueTON = project.currentValueTON + dailyYield,
@@ -110,9 +115,31 @@ class AdvanceDayUseCase @Inject constructor(
                         apyHistory = newApyHistory
                     )
                     projectRepository.updateProject(updatedProject)
-                    generateDailyUpdatesUseCase(updatedProject)
-                        .onSuccess { generatedUpdates.add(it) }
-                        .onFailure { e -> AppLogger.e("AdvanceDayUseCase", "Update failed: ${e.message}") }
+
+                    // ── Random event ──────────────────────────────────────
+                    val event = rollEvent(updatedProject)
+                    if (event != null) {
+                        val result = applyEvent(updatedProject, event)
+                        balanceDelta += result.balanceDelta
+                        if (result.balanceDelta < 0) {
+                            gameStateRepository.recordReturn(0.0) // no extra return on losses
+                        } else {
+                            gameStateRepository.recordReturn(result.balanceDelta)
+                        }
+                        projectRepository.updateProject(result.project)
+                        updatedProject = result.project
+                        AppLogger.i("AdvanceDayUseCase", "Event $event on ${project.claimedName}, delta=${result.balanceDelta}")
+
+                        // Generate event news update
+                        generateDailyUpdatesUseCase(updatedProject, event)
+                            .onSuccess { generatedUpdates.add(it) }
+                            .onFailure { e -> AppLogger.e("AdvanceDayUseCase", "Event update failed: ${e.message}") }
+                    } else {
+                        // Regular daily update
+                        generateDailyUpdatesUseCase(updatedProject)
+                            .onSuccess { generatedUpdates.add(it) }
+                            .onFailure { e -> AppLogger.e("AdvanceDayUseCase", "Update failed: ${e.message}") }
+                    }
                 }
             }
         }
@@ -133,9 +160,110 @@ class AdvanceDayUseCase @Inject constructor(
         generatedUpdates
     }
 
-    /** Returns updated (userCountHistory, apyHistory) pair after one day. */
+    // ─── Random event system ──────────────────────────────────────────────────
+
+    private fun rollEvent(project: Project): AnnouncementType? {
+        if (Random.nextFloat() > EVENT_CHANCE) return null
+        val candidates = when (project.fate) {
+            ProjectFate.INSTANT_SCAM -> listOf(
+                AnnouncementType.CRIMINAL_CASE, AnnouncementType.CRIMINAL_CASE,
+                AnnouncementType.HACK, AnnouncementType.BAD_RUMOR
+            )
+            ProjectFate.SLOW_DRAIN -> listOf(
+                AnnouncementType.BAD_RUMOR, AnnouncementType.BAD_RUMOR,
+                AnnouncementType.HACK, AnnouncementType.CRIMINAL_CASE
+            )
+            ProjectFate.UNICORN -> listOf(
+                AnnouncementType.LISTING, AnnouncementType.LISTING,
+                AnnouncementType.VIP_COLLAB, AnnouncementType.VIP_COLLAB,
+                AnnouncementType.BAD_RUMOR
+            )
+            ProjectFate.SURVIVOR -> listOf(
+                AnnouncementType.VIP_COLLAB, AnnouncementType.LISTING,
+                AnnouncementType.BAD_RUMOR, AnnouncementType.BAD_RUMOR
+            )
+            ProjectFate.HONEST_FAIL -> listOf(
+                AnnouncementType.BAD_RUMOR, AnnouncementType.VIP_COLLAB,
+                AnnouncementType.HACK, AnnouncementType.CRIMINAL_CASE
+            )
+        }
+        return candidates.random()
+    }
+
+    private data class EventResult(val project: Project, val balanceDelta: Double)
+
+    private fun applyEvent(project: Project, event: AnnouncementType): EventResult {
+        return when (event) {
+            AnnouncementType.LISTING -> {
+                val multiplier = Random.nextDouble(1.5, 4.0)
+                val gain = project.investedAmountTON * (multiplier - 1)
+                EventResult(
+                    project = project.copy(
+                        currentValueTON = project.currentValueTON * multiplier,
+                        currentUserCount = project.currentUserCount + Random.nextInt(5000, 50000),
+                        daysUntilCollapse = project.daysUntilCollapse?.let { it + Random.nextInt(5, 15) }
+                    ),
+                    balanceDelta = gain
+                )
+            }
+            AnnouncementType.VIP_COLLAB -> {
+                val gain = project.investedAmountTON * Random.nextDouble(0.10, 0.35)
+                EventResult(
+                    project = project.copy(
+                        currentValueTON = project.currentValueTON * Random.nextDouble(1.10, 1.40),
+                        currentUserCount = project.currentUserCount + Random.nextInt(2000, 15000)
+                    ),
+                    balanceDelta = gain
+                )
+            }
+            AnnouncementType.BAD_RUMOR -> {
+                val loss = project.investedAmountTON * Random.nextDouble(0.05, 0.20)
+                EventResult(
+                    project = project.copy(
+                        currentValueTON = maxOf(0.0, project.currentValueTON - loss),
+                        currentUserCount = maxOf(100, project.currentUserCount - Random.nextInt(2000, 10000))
+                    ),
+                    balanceDelta = -loss
+                )
+            }
+            AnnouncementType.CRIMINAL_CASE -> {
+                val loss = project.investedAmountTON * Random.nextDouble(0.20, 0.60)
+                val newCollapse = project.daysUntilCollapse
+                    ?.let { minOf(it, Random.nextInt(2, 5)) }
+                    ?: Random.nextInt(2, 5)
+                EventResult(
+                    project = project.copy(
+                        currentValueTON = maxOf(0.0, project.currentValueTON - loss),
+                        currentUserCount = maxOf(100, project.currentUserCount - Random.nextInt(10000, 50000)),
+                        isWithdrawalLocked = true,
+                        daysUntilCollapse = newCollapse
+                    ),
+                    balanceDelta = -loss
+                )
+            }
+            AnnouncementType.HACK -> {
+                val loss = project.investedAmountTON * Random.nextDouble(0.15, 0.45)
+                val newCollapse = project.daysUntilCollapse
+                    ?.let { minOf(it, Random.nextInt(3, 7)) }
+                    ?: Random.nextInt(3, 7)
+                EventResult(
+                    project = project.copy(
+                        currentValueTON = maxOf(0.0, project.currentValueTON - loss),
+                        currentUserCount = maxOf(100, project.currentUserCount - Random.nextInt(3000, 20000)),
+                        isWithdrawalLocked = true,
+                        daysUntilCollapse = newCollapse
+                    ),
+                    balanceDelta = -loss
+                )
+            }
+            else -> EventResult(project = project, balanceDelta = 0.0)
+        }
+    }
+
+    // ─── Helpers ──────────────────────────────────────────────────────────────
+
     private fun updateHistories(
-        project: com.s0dolamby.game.domain.model.Project,
+        project: Project,
         dailyYield: Double
     ): Pair<List<Int>, List<Float>> {
         val userDelta = when (project.fate) {

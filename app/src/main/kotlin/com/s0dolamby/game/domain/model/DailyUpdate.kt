@@ -15,7 +15,13 @@ data class DailyUpdate(
 )
 
 enum class PayoutStatus { DELAYED, NORMAL, BOOSTED }
-enum class AnnouncementType { LISTING, NEW_SEASON, COLLAB, AUDIT }
+
+enum class AnnouncementType {
+    // Regular announcements
+    LISTING, NEW_SEASON, COLLAB, AUDIT,
+    // Random events
+    BAD_RUMOR, VIP_COLLAB, CRIMINAL_CASE, HACK
+}
 
 enum class NewsSource(val emoji: String, val label: String) {
     TELEGRAM_CHANNEL("📢", "Telegram-канал"),
@@ -30,8 +36,18 @@ enum class NewsSource(val emoji: String, val label: String) {
     INVESTOR_REPORT("📊", "Отчёт инвестора")
 }
 
-/** Deterministic source based on update properties (no DB storage needed). */
+/** Deterministic source based on update properties — no DB storage needed. */
 fun DailyUpdate.computedSource(): NewsSource {
+    // Event types have fixed sources
+    when (announcement) {
+        AnnouncementType.CRIMINAL_CASE -> return NewsSource.FRAUD_ALERT
+        AnnouncementType.HACK -> return NewsSource.ANONYMOUS
+        AnnouncementType.VIP_COLLAB -> return NewsSource.PRESS_RELEASE
+        AnnouncementType.LISTING -> return NewsSource.EXCHANGE_NOTICE
+        AnnouncementType.BAD_RUMOR -> return NewsSource.REDDIT
+        else -> {}
+    }
+
     val hash = id.hashCode()
     return when {
         redFlags.isNotEmpty() && payoutStatus == PayoutStatus.DELAYED ->
