@@ -52,7 +52,7 @@ class GenerateProjectBannerUseCase @Inject constructor(
         val encoded = java.net.URLEncoder.encode(finalPrompt.take(400), "UTF-8")
             .replace("+", "%20")
         val seed = kotlin.math.abs(project.id.hashCode())
-        val url = "https://image.pollinations.ai/prompt/$encoded" +
+        val url = "https://gen.pollinations.ai/image/$encoded" +
                   "?width=512&height=512&seed=$seed&model=flux&nologo=true"
 
         AppLogger.i("GenerateProjectBannerUseCase", "Banner URL saved for ${project.claimedName}")
