@@ -4,8 +4,6 @@ import com.s0dolamby.game.data.logging.AppLogger
 import com.s0dolamby.game.domain.model.ProjectFate
 import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.s0dolamby.game.domain.repository.ProjectRepository
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.random.Random
 
@@ -13,8 +11,7 @@ class AdvanceDayUseCase @Inject constructor(
     private val gameStateRepository: GameStateRepository,
     private val projectRepository: ProjectRepository,
     private val generateProjectUseCase: GenerateProjectUseCase,
-    private val generateDailyUpdatesUseCase: GenerateDailyUpdatesUseCase,
-    private val generateProjectBannerUseCase: GenerateProjectBannerUseCase
+    private val generateDailyUpdatesUseCase: GenerateDailyUpdatesUseCase
 ) {
     // Each game day counts as 10 real days of yield — keeps progression engaging
     private val YIELD_MULTIPLIER = 10.0
@@ -125,15 +122,9 @@ class AdvanceDayUseCase @Inject constructor(
         projectRepository.closeAllInboxProjects()
 
         val newProjectCount = Random.nextInt(1, 4)
-        coroutineScope {
-            repeat(newProjectCount) {
-                val project = generateProjectUseCase().getOrNull()
-                if (project != null) {
-                    launch {
-                        generateProjectBannerUseCase(project)
-                            .onFailure { e -> AppLogger.e("AdvanceDayUseCase", "Banner failed: ${e.message}") }
-                    }
-                }
+        repeat(newProjectCount) {
+            generateProjectUseCase().onFailure { e ->
+                AppLogger.e("AdvanceDayUseCase", "Project gen failed: ${e.message}")
             }
         }
     }
