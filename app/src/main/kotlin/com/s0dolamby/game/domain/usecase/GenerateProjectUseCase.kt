@@ -57,7 +57,7 @@ class GenerateProjectUseCase @Inject constructor(
             claimedUserCount = Random.nextInt(template.claimedUserCountRange.first(), template.claimedUserCountRange.last()),
             claimedTeamSize = Random.nextInt(3, 20),
             roadmap = template.roadmapTemplates.random(),
-            description = template.descriptionTemplate,
+            description = template.descriptionTemplates.random(),
             isActive = false,
             currentUserCount = Random.nextInt(template.claimedUserCountRange.first(), template.claimedUserCountRange.last())
         )

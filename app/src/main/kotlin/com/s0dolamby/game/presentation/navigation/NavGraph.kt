@@ -98,7 +98,13 @@ fun NavGraph() {
             route = Screen.Ama.route,
             arguments = listOf(navArgument("projectId") { type = NavType.StringType })
         ) {
-            AmaScreen(onBack = { navController.popBackStack() })
+            AmaScreen(
+                onBack = { navController.popBackStack() },
+                onOpenRegistry = {
+                    navController.popBackStack()
+                    navController.navigate(Screen.PersonaRegistry.route)
+                }
+            )
         }
         composable(Screen.Portfolio.route) {
             PortfolioScreen(

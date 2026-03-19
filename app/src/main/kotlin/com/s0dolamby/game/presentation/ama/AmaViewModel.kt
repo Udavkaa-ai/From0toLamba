@@ -98,8 +98,7 @@ class AmaViewModel @Inject constructor(
                 .onSuccess {
                     _uiState.update { it.copy(
                         showInvestSheet = false,
-                        investResult = "Инвестировано %.2f TON".format(amountTON),
-                        showLieGuessSheet = true
+                        investResult = "Инвестировано %.2f TON".format(amountTON)
                     ) }
                 }
                 .onFailure { err ->

@@ -62,6 +62,7 @@ private val LieTopic.displayName: String get() = when (this) {
 @Composable
 fun AmaScreen(
     onBack: () -> Unit,
+    onOpenRegistry: () -> Unit = {},
     viewModel: AmaViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -185,6 +186,7 @@ fun AmaScreen(
                     )
                 }
             }
+
         }
     }
 
@@ -204,6 +206,10 @@ fun AmaScreen(
             onClose = {
                 viewModel.closeLieGuessSheet()
                 onBack()
+            },
+            onOpenRegistry = {
+                viewModel.closeLieGuessSheet()
+                onOpenRegistry()
             },
             onDismiss = viewModel::closeLieGuessSheet
         )
@@ -235,25 +241,43 @@ private fun QuestionTemplateRow(
 ) {
     val remaining = questionTemplates.filter { it !in usedTemplates }
     if (remaining.isEmpty()) return
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
+
+    // Split into two rows: even indices top, odd indices bottom
+    val topRow = remaining.filterIndexed { i, _ -> i % 2 == 0 }
+    val bottomRow = remaining.filterIndexed { i, _ -> i % 2 == 1 }
+
+    Column(
+        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        remaining.forEach { question ->
-            SuggestionChip(
-                onClick = { onTemplateClick(question) },
-                label = {
-                    Text(
-                        question.take(32).let { if (question.length > 32) "$it…" else it },
-                        style = MaterialTheme.typography.labelSmall
-                    )
-                }
-            )
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            topRow.forEach { question -> TemplateChip(question, onTemplateClick) }
+        }
+        if (bottomRow.isNotEmpty()) {
+            Row(
+                modifier = Modifier.horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                bottomRow.forEach { question -> TemplateChip(question, onTemplateClick) }
+            }
         }
     }
+}
+
+@Composable
+private fun TemplateChip(question: String, onClick: (String) -> Unit) {
+    SuggestionChip(
+        onClick = { onClick(question) },
+        label = {
+            Text(
+                question.take(34).let { if (question.length > 34) "$it…" else it },
+                style = MaterialTheme.typography.labelSmall
+            )
+        }
+    )
 }
 
 // ─── Lie guess sheet ─────────────────────────────────────────────────────────
@@ -264,6 +288,7 @@ private fun LieGuessSheet(
     result: LieGuessResult?,
     onSubmit: (Set<LieTopic>) -> Unit,
     onClose: () -> Unit,
+    onOpenRegistry: () -> Unit = {},
     onDismiss: () -> Unit
 ) {
     var selectedTopics by remember { mutableStateOf(emptySet<LieTopic>()) }
@@ -330,7 +355,7 @@ private fun LieGuessSheet(
                         shape = MaterialTheme.shapes.medium
                     ) {
                         Text(
-                            "Достижение разблокировано: архетип разработчика добавлен в Энциклопедию",
+                            "Архетип разработчика добавлен в Энциклопедию!",
                             style = MaterialTheme.typography.bodySmall,
                             color = Success,
                             modifier = Modifier.padding(12.dp)
@@ -413,10 +438,21 @@ private fun LieGuessSheet(
                     }
                 }
 
-                Button(
-                    onClick = onClose,
-                    modifier = Modifier.fillMaxWidth()
-                ) { Text("Закрыть") }
+                if (result.isSuccess) {
+                    Button(
+                        onClick = onOpenRegistry,
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("Открыть в энциклопедии") }
+                    OutlinedButton(
+                        onClick = onClose,
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("Закрыть") }
+                } else {
+                    Button(
+                        onClick = onClose,
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("Закрыть") }
+                }
             }
         }
     }
@@ -478,11 +514,16 @@ private fun SessionEndBanner(onInvest: () -> Unit, onSkip: () -> Unit) {
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("AMA завершена. Ваш вердикт?", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "Инвестируй TON или скипни — и попробуй угадать, в чём соврал разраб.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             Button(onClick = onInvest, modifier = Modifier.fillMaxWidth()) {
-                Text("Инвестировать TON")
+                Text("Инвестировать")
             }
             OutlinedButton(onClick = onSkip, modifier = Modifier.fillMaxWidth()) {
-                Text("Не инвестировать")
+                Text("Скипнуть → угадать обман")
             }
         }
     }

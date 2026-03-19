@@ -32,7 +32,7 @@ class ProjectRegistry @Inject constructor(
         val templateId: String,
         val type: ProjectType,
         val namePatterns: List<String>,
-        val descriptionTemplate: String,
+        val descriptionTemplates: List<String>,
         val claimedAPYRange: List<Int>,
         val claimedUserCountRange: List<Int>,
         val roadmapTemplates: List<List<String>>,
