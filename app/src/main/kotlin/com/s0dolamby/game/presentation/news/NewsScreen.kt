@@ -164,7 +164,7 @@ private fun NewsCard(update: DailyUpdate) {
                         ) {
                             Icon(Icons.Default.Warning, null, tint = Warning, modifier = Modifier.size(14.dp))
                             Text(
-                                flag,
+                                flag.cleanRedFlag(),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = Warning
                             )
@@ -271,6 +271,18 @@ private val AnnouncementType.displayText: String get() = when (this) {
 }
 
 /** Chip background / text color pair per announcement type. */
+/**
+ * Приводит строку флага к читаемому виду:
+ * snake_case → слова с пробелами, первая буква заглавная.
+ */
+private fun String.cleanRedFlag(): String =
+    replace('_', ' ')
+        .replace(Regex("([a-z])([A-Z])"), "$1 $2")
+        .lowercase()
+        .replaceFirstChar { it.uppercaseChar() }
+        .trimEnd('.')
+        .let { if (!it.endsWith('.') && !it.endsWith('!')) "$it." else it }
+
 private val AnnouncementType.chipColors: Pair<Color, Color> get() {
     val gold = Color(0xFFFFD700)
     val purple = Color(0xFF9C27B0)

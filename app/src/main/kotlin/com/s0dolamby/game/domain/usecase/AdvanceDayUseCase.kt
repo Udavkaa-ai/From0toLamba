@@ -146,6 +146,7 @@ class AdvanceDayUseCase @Inject constructor(
 
         val newBalance = state.balance + balanceDelta
         gameStateRepository.updateBalance(newBalance)
+        gameStateRepository.appendBalanceSnapshot(newBalance)
         gameStateRepository.advanceDay()
 
         projectRepository.closeAllInboxProjects()

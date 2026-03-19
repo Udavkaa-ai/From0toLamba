@@ -27,5 +27,6 @@ data class GameState(
     val scamsDetected: Int,
     val scamsMissed: Int,
     val dayStreak: Int,
-    val isOnboardingComplete: Boolean = false
+    val isOnboardingComplete: Boolean = false,
+    val balanceHistory: List<Double> = emptyList()
 )

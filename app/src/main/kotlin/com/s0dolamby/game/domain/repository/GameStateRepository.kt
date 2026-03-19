@@ -14,4 +14,5 @@ interface GameStateRepository {
     suspend fun recordScamMissed()
     suspend fun completeOnboarding()
     suspend fun initializeGameState()
+    suspend fun appendBalanceSnapshot(balance: Double)
 }

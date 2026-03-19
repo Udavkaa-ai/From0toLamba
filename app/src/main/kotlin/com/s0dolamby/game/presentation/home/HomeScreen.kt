@@ -15,6 +15,7 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -22,12 +23,14 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.s0dolamby.game.domain.model.DailyUpdate
 import com.s0dolamby.game.domain.model.PayoutStatus
@@ -63,7 +66,20 @@ fun HomeScreen(
                     title = { Text("С 0 до Ламбы", fontWeight = FontWeight.Bold) },
                     actions = {
                         IconButton(onClick = onStatsClick) {
-                            Icon(Icons.Default.BarChart, contentDescription = "Статистика")
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(TonBlue.copy(alpha = 0.18f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Default.BarChart,
+                                    contentDescription = "Статистика",
+                                    tint = TonBlue,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
                         }
                     }
                 )
@@ -73,7 +89,7 @@ fun HomeScreen(
                     NavigationBarItem(
                         selected = true,
                         onClick = {},
-                        icon = { Icon(Icons.Default.Home, null) },
+                        icon = { Icon(Icons.Default.Home, null, modifier = Modifier.size(26.dp)) },
                         label = { Text("Главная") }
                     )
                     NavigationBarItem(
@@ -83,27 +99,27 @@ fun HomeScreen(
                             BadgedBox(badge = {
                                 val count = gameState?.pendingInbox?.size ?: 0
                                 if (count > 0) Badge { Text("$count") }
-                            }) { Icon(Icons.Default.Email, null) }
+                            }) { Icon(Icons.Default.Email, null, modifier = Modifier.size(26.dp)) }
                         },
                         label = { Text("Входящие") }
                     )
                     NavigationBarItem(
                         selected = false,
                         onClick = onPortfolioClick,
-                        icon = { Icon(Icons.Default.AccountBalance, null) },
+                        icon = { Icon(Icons.Default.AccountBalance, null, modifier = Modifier.size(26.dp)) },
                         label = { Text("Портфель") }
                     )
                     NavigationBarItem(
                         selected = false,
                         onClick = onNewsClick,
-                        icon = { Icon(Icons.Default.Newspaper, null) },
+                        icon = { Icon(Icons.Default.Newspaper, null, modifier = Modifier.size(26.dp)) },
                         label = { Text("Новости") }
                     )
                     NavigationBarItem(
                         selected = false,
                         onClick = onRegistryClick,
-                        icon = { Icon(Icons.Default.MenuBook, null) },
-                        label = { Text("SCAM-WIKI", fontWeight = FontWeight.Bold) },
+                        icon = { Icon(Icons.Default.MenuBook, null, modifier = Modifier.size(26.dp)) },
+                        label = { Text("WIKI", fontWeight = FontWeight.Bold) },
                         colors = NavigationBarItemDefaults.colors(
                             unselectedIconColor = Error,
                             unselectedTextColor = Error,
@@ -343,7 +359,7 @@ private fun SwipeableUpdateCard(
                 update.redFlags.take(2).forEach { flag ->
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         Icon(Icons.Default.Warning, null, tint = Warning, modifier = Modifier.size(14.dp))
-                        Text(flag, style = MaterialTheme.typography.labelSmall, color = Warning)
+                        Text(flag.cleanRedFlag(), style = MaterialTheme.typography.labelSmall, color = Warning)
                     }
                 }
             }
@@ -357,6 +373,14 @@ private fun SwipeableUpdateCard(
         }
     }
 }
+
+private fun String.cleanRedFlag(): String =
+    replace('_', ' ')
+        .replace(Regex("([a-z])([A-Z])"), "$1 $2")
+        .lowercase()
+        .replaceFirstChar { it.uppercaseChar() }
+        .trimEnd('.')
+        .let { if (!it.endsWith('.') && !it.endsWith('!')) "$it." else it }
 
 private fun updateCountWord(count: Int): String = when {
     count % 10 == 1 && count % 100 != 11 -> "обновление"
@@ -417,13 +441,45 @@ private fun BalanceCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text("Баланс", style = MaterialTheme.typography.labelSmall)
-                    Text(
-                        "%.2f TON".format(balance),
-                        style = MaterialTheme.typography.headlineLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = TonBlue
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.AccountBalanceWallet,
+                            contentDescription = null,
+                            tint = TonBlue.copy(alpha = 0.7f),
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text("Баланс", style = MaterialTheme.typography.labelSmall)
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(TonBlue),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("TON", style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp),
+                                color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                        Text(
+                            "%.2f".format(balance),
+                            style = MaterialTheme.typography.headlineLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = TonBlue
+                        )
+                        Text(
+                            "TON",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = TonBlue.copy(alpha = 0.7f)
+                        )
+                    }
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text("День $day", style = MaterialTheme.typography.bodyMedium)
