@@ -19,7 +19,7 @@ class InvestUseCaseTest {
     private val testProject = Project(
         id = "p1", name = "TestProject", type = ProjectType.CLICKER,
         developerPersonaId = "d1", fate = ProjectFate.SLOW_DRAIN,
-        personaArchetype = PersonaArchetype.CLASSIC_SCAMMER,
+        personaArchetype = PersonaArchetype.BURATINO,
         daysUntilCollapse = 10, realDailyYieldTON = 0.005,
         lieTopics = listOf(LieTopic.USER_COUNT), truthTopics = emptyList(),
         developerName = "Паша", developerAvatarSeed = "seed",
