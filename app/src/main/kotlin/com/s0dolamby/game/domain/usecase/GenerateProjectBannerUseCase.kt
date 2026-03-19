@@ -38,7 +38,7 @@ class GenerateProjectBannerUseCase @Inject constructor(
                     temperature = 1.0f
                 )
             )
-            resp.choices.first().message.content.trim()
+            resp.choices.first().message.content.trim().trimStart('"').trimEnd('"').trim()
         } catch (e: Exception) {
             // Fallback concept if DeepSeek is unavailable — still gives a decent image
             AppLogger.i("GenerateProjectBannerUseCase", "Concept gen failed, using name: ${e.message}")
@@ -52,8 +52,10 @@ class GenerateProjectBannerUseCase @Inject constructor(
         val encoded = java.net.URLEncoder.encode(finalPrompt.take(400), "UTF-8")
             .replace("+", "%20")
         val seed = kotlin.math.abs(project.id.hashCode())
+        val key = BuildConfig.POLLINATIONS_API_KEY
+        val keyParam = if (key.isNotEmpty()) "&key=$key" else ""
         val url = "https://gen.pollinations.ai/image/$encoded" +
-                  "?width=512&height=512&seed=$seed&model=flux&nologo=true"
+                  "?width=512&height=512&seed=$seed&model=flux&nologo=true$keyParam"
 
         AppLogger.i("GenerateProjectBannerUseCase", "Banner URL saved for ${project.claimedName}")
         projectRepository.updateBannerUrl(project.id, url, concept)
