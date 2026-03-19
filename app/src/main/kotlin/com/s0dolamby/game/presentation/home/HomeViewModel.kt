@@ -2,6 +2,7 @@ package com.s0dolamby.game.presentation.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.s0dolamby.game.domain.model.DailyUpdate
 import com.s0dolamby.game.domain.model.GameState
 import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.s0dolamby.game.domain.usecase.AdvanceDayUseCase
@@ -22,6 +23,9 @@ class HomeViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _pendingUpdateCards = MutableStateFlow<List<DailyUpdate>>(emptyList())
+    val pendingUpdateCards: StateFlow<List<DailyUpdate>> = _pendingUpdateCards.asStateFlow()
+
     init {
         viewModelScope.launch {
             gameStateRepository.initializeGameState()
@@ -31,8 +35,14 @@ class HomeViewModel @Inject constructor(
     fun advanceDay() {
         viewModelScope.launch {
             _isLoading.value = true
-            advanceDayUseCase()
+            advanceDayUseCase().onSuccess { updates ->
+                _pendingUpdateCards.value = updates
+            }
             _isLoading.value = false
         }
+    }
+
+    fun dismissUpdateCard(update: DailyUpdate) {
+        _pendingUpdateCards.update { cards -> cards.filter { it.id != update.id } }
     }
 }

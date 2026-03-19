@@ -1,6 +1,7 @@
 package com.s0dolamby.game.domain.usecase
 
 import com.s0dolamby.game.data.logging.AppLogger
+import com.s0dolamby.game.domain.model.DailyUpdate
 import com.s0dolamby.game.domain.model.ProjectFate
 import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.s0dolamby.game.domain.repository.ProjectRepository
@@ -16,10 +17,11 @@ class AdvanceDayUseCase @Inject constructor(
     // Each game day counts as 10 real days of yield — keeps progression engaging
     private val YIELD_MULTIPLIER = 10.0
 
-    suspend operator fun invoke(): Result<Unit> = runCatching {
+    suspend operator fun invoke(): Result<List<DailyUpdate>> = runCatching {
         val state = gameStateRepository.getGameState()
         AppLogger.i("AdvanceDayUseCase", "day=${state.currentDay} activeProjects=${state.activeProjects.size}")
         var balanceDelta = 0.0
+        val generatedUpdates = mutableListOf<DailyUpdate>()
 
         for (project in state.activeProjects) {
             val newDaysUntilCollapse = project.daysUntilCollapse?.minus(1)
@@ -41,9 +43,9 @@ class AdvanceDayUseCase @Inject constructor(
                         userCountHistory = newHistory,
                         apyHistory = newApyHistory
                     ))
-                    generateDailyUpdatesUseCase(project).onFailure { e ->
-                        AppLogger.e("AdvanceDayUseCase", "Update failed: ${e.message}")
-                    }
+                    generateDailyUpdatesUseCase(project)
+                        .onSuccess { generatedUpdates.add(it) }
+                        .onFailure { e -> AppLogger.e("AdvanceDayUseCase", "Update failed: ${e.message}") }
                 }
 
                 // Collapse moment — chance to recover or close
@@ -108,9 +110,9 @@ class AdvanceDayUseCase @Inject constructor(
                         apyHistory = newApyHistory
                     )
                     projectRepository.updateProject(updatedProject)
-                    generateDailyUpdatesUseCase(updatedProject).onFailure { e ->
-                        AppLogger.e("AdvanceDayUseCase", "Update failed: ${e.message}")
-                    }
+                    generateDailyUpdatesUseCase(updatedProject)
+                        .onSuccess { generatedUpdates.add(it) }
+                        .onFailure { e -> AppLogger.e("AdvanceDayUseCase", "Update failed: ${e.message}") }
                 }
             }
         }
@@ -127,6 +129,8 @@ class AdvanceDayUseCase @Inject constructor(
                 AppLogger.e("AdvanceDayUseCase", "Project gen failed: ${e.message}")
             }
         }
+
+        generatedUpdates
     }
 
     /** Returns updated (userCountHistory, apyHistory) pair after one day. */

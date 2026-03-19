@@ -40,4 +40,6 @@ class ProjectRepositoryImpl @Inject constructor(
         dao.updateBanner(projectId, url, promptUsed)
 
     override suspend fun closeAllInboxProjects() = dao.closeAllInboxProjects()
+
+    override suspend fun markLieGuessCorrect(projectId: String) = dao.markLieGuessCorrect(projectId)
 }

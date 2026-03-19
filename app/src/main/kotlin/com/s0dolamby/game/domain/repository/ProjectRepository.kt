@@ -13,4 +13,5 @@ interface ProjectRepository {
     suspend fun closeProject(projectId: String, reason: String)
     suspend fun updateBannerUrl(projectId: String, url: String, promptUsed: String)
     suspend fun closeAllInboxProjects()
+    suspend fun markLieGuessCorrect(projectId: String)
 }
