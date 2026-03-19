@@ -57,5 +57,7 @@ data class Project(
     val isWithdrawalLocked: Boolean = false,
     val currentUserCount: Int = 0,
     val userCountHistory: List<Int> = emptyList(),
-    val apyHistory: List<Float> = emptyList()
+    val apyHistory: List<Float> = emptyList(),
+
+    val lieGuessCorrect: Boolean = false
 )

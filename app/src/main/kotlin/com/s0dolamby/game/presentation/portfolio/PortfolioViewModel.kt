@@ -9,6 +9,7 @@ import com.s0dolamby.game.domain.usecase.InvestUseCase
 import com.s0dolamby.game.domain.usecase.PartialWithdrawUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -23,7 +24,9 @@ class PortfolioViewModel @Inject constructor(
     val activeProjects: StateFlow<List<Project>> = projectRepository.getActiveProjects()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    // Exclude projects skipped from inbox (never invested in, just dismissed)
     val closedProjects: StateFlow<List<Project>> = projectRepository.getClosedProjects()
+        .map { list -> list.filter { it.closureReason != "Предложение не принято" } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _actionResult = MutableStateFlow<String?>(null)

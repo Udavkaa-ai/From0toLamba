@@ -45,7 +45,11 @@ data class ProjectEntity(
     val isWithdrawalLocked: Boolean = false,
     val currentUserCount: Int = 0,
     val userCountHistory: String = "[]",
-    val apyHistory: String = "[]"
+    val apyHistory: String = "[]",
+
+    // Player progress on this project
+    @androidx.room.ColumnInfo(defaultValue = "0")
+    val lieGuessCorrect: Boolean = false
 )
 
 fun ProjectEntity.toDomain(gson: com.google.gson.Gson): Project = Project(
@@ -78,7 +82,8 @@ fun ProjectEntity.toDomain(gson: com.google.gson.Gson): Project = Project(
     isWithdrawalLocked = isWithdrawalLocked,
     currentUserCount = currentUserCount,
     userCountHistory = gson.fromJson(userCountHistory, Array<Int>::class.java).toList(),
-    apyHistory = gson.fromJson(apyHistory, Array<Float>::class.java).toList()
+    apyHistory = gson.fromJson(apyHistory, Array<Float>::class.java).toList(),
+    lieGuessCorrect = lieGuessCorrect
 )
 
 fun Project.toEntity(gson: com.google.gson.Gson): ProjectEntity = ProjectEntity(
@@ -111,5 +116,6 @@ fun Project.toEntity(gson: com.google.gson.Gson): ProjectEntity = ProjectEntity(
     isWithdrawalLocked = isWithdrawalLocked,
     currentUserCount = currentUserCount,
     userCountHistory = gson.toJson(userCountHistory),
-    apyHistory = gson.toJson(apyHistory)
+    apyHistory = gson.toJson(apyHistory),
+    lieGuessCorrect = lieGuessCorrect
 )

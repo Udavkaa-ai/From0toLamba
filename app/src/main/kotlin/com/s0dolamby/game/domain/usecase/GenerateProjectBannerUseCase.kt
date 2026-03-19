@@ -1,7 +1,5 @@
 package com.s0dolamby.game.domain.usecase
 
-import android.content.Context
-import android.util.Base64
 import com.s0dolamby.game.BuildConfig
 import com.s0dolamby.game.data.ai.ChatMessage
 import com.s0dolamby.game.data.ai.ChatRequest
@@ -11,87 +9,59 @@ import com.s0dolamby.game.data.logging.AppLogger
 import com.s0dolamby.game.domain.model.Project
 import com.s0dolamby.game.domain.repository.GameConfig
 import com.s0dolamby.game.domain.repository.ProjectRepository
-import dagger.hilt.android.qualifiers.ApplicationContext
-import java.io.File
 import javax.inject.Inject
 
+/**
+ * Generates a project banner in two steps:
+ *  1. DeepSeek invents a visual concept (creative, unique per project name) — ~$0.00003
+ *  2. Builds a Pollinations.ai URL from that concept — FREE, FLUX.1-schnell under the hood
+ *
+ * Pollinations.ai generates the image lazily when Coil first loads the URL.
+ * Coil disk-cache ensures the image is only fetched once per device.
+ */
 class GenerateProjectBannerUseCase @Inject constructor(
     private val api: OpenRouterApiService,
     private val promptBuilder: PromptBuilder,
-    private val projectRepository: ProjectRepository,
-    @ApplicationContext private val context: Context
+    private val projectRepository: ProjectRepository
 ) {
     suspend operator fun invoke(project: Project): Result<String> = runCatching {
-        // Step 1: DeepSeek generates a unique visual concept for this project name
-        val conceptResponse = api.chatCompletion(
-            auth = "Bearer ${BuildConfig.OPENROUTER_API_KEY}",
-            request = ChatRequest(
-                model = GameConfig.TEXT_MODEL,
-                messages = listOf(
-                    ChatMessage("user", promptBuilder.buildBannerConceptPrompt(project.claimedName))
-                ),
-                maxTokens = GameConfig.MAX_TOKENS_BANNER_CONCEPT,
-                temperature = 1.0f
+        // Step 1: unique visual concept from DeepSeek — keeps every banner distinct
+        val concept = try {
+            val resp = api.chatCompletion(
+                auth = "Bearer ${BuildConfig.OPENROUTER_API_KEY}",
+                request = ChatRequest(
+                    model = GameConfig.TEXT_MODEL,
+                    messages = listOf(
+                        ChatMessage("user", promptBuilder.buildBannerConceptPrompt(project.claimedName))
+                    ),
+                    maxTokens = GameConfig.MAX_TOKENS_BANNER_CONCEPT,
+                    temperature = 1.0f
+                )
             )
-        )
-        val concept = conceptResponse.choices.first().message.content.trim()
+            resp.choices.first().message.content
+                .trim()
+                .replace(Regex("^[*_\"'`]+|[*_\"'`]+$"), "") // strip markdown bold/italic/quotes
+                .trim()
+        } catch (e: Exception) {
+            // Fallback concept if DeepSeek is unavailable — still gives a decent image
+            AppLogger.i("GenerateProjectBannerUseCase", "Concept gen failed, using name: ${e.message}")
+            "digital art illustration inspired by the name ${project.claimedName}, vibrant colors, mobile game banner"
+        }
+
         val finalPrompt = promptBuilder.buildFinalImagePrompt(concept)
 
-        // Step 2: Generate image via OpenRouter chat/completions + modalities:["image"]
-        // OpenRouter does NOT support /images/generations — the correct endpoint is
-        // /chat/completions with modalities param. Response: message.images[0].image_url.url
-        val url = tryOpenRouterImageGen(project, finalPrompt, concept)
-            ?: buildPollinationsFallbackUrl(project, finalPrompt)
+        // Step 2: Pollinations.ai — FLUX.1-schnell for free, no API key required.
+        // URLEncoder + replace("+","%20") guarantees RFC-3986 compliant path segment.
+        val encoded = java.net.URLEncoder.encode(finalPrompt.take(400), "UTF-8")
+            .replace("+", "%20")
+        val seed = kotlin.math.abs(project.id.hashCode())
+        val key = BuildConfig.POLLINATIONS_API_KEY
+        val extras = if (key.isNotEmpty()) "&nologo=true&key=$key" else ""
+        val url = "https://gen.pollinations.ai/image/$encoded" +
+                  "?width=512&height=512&seed=$seed&model=flux$extras"
 
+        AppLogger.i("GenerateProjectBannerUseCase", "Banner URL saved for ${project.claimedName}")
         projectRepository.updateBannerUrl(project.id, url, concept)
         url
-    }
-
-    private suspend fun tryOpenRouterImageGen(
-        project: Project,
-        prompt: String,
-        concept: String
-    ): String? = try {
-        val response = api.chatCompletion(
-            auth = "Bearer ${BuildConfig.OPENROUTER_API_KEY}",
-            request = ChatRequest(
-                model = GameConfig.IMAGE_MODEL,
-                messages = listOf(ChatMessage("user", prompt)),
-                maxTokens = 1,          // image-only model; text tokens irrelevant
-                temperature = 1.0f,
-                modalities = listOf("image")
-            )
-        )
-
-        val dataUrl = response.choices.firstOrNull()?.message?.images?.firstOrNull()?.imageUrl?.url
-            ?: return null
-
-        if (dataUrl.startsWith("data:image")) {
-            // base64 PNG — decode and save to local file
-            val base64 = dataUrl.substringAfter("base64,")
-            val bytes = Base64.decode(base64, Base64.DEFAULT)
-            val dir = File(context.filesDir, "banners").also { it.mkdirs() }
-            val file = File(dir, "${project.id}.png")
-            file.writeBytes(bytes)
-            AppLogger.i("GenerateProjectBannerUseCase", "Saved banner to ${file.absolutePath}")
-            file.toURI().toString()   // "file:///data/data/.../files/banners/<id>.png"
-        } else {
-            // CDN URL returned directly — use as-is
-            dataUrl
-        }
-    } catch (e: Exception) {
-        AppLogger.i("GenerateProjectBannerUseCase", "OpenRouter image gen failed, using fallback: ${e.message}")
-        null
-    }
-
-    /** Fallback: Pollinations.ai constructs image URL from prompt. Free, no key needed. */
-    private fun buildPollinationsFallbackUrl(project: Project, prompt: String): String {
-        val encoded = prompt
-            .replace(" ", "%20")
-            .replace(",", "%2C")
-            .replace("\"", "%22")
-            .replace("'", "%27")
-        val seed = kotlin.math.abs(project.id.hashCode())
-        return "https://image.pollinations.ai/prompt/$encoded?width=512&height=256&nologo=true&seed=$seed"
     }
 }

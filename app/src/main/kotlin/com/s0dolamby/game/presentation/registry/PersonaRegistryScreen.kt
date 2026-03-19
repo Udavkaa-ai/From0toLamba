@@ -40,30 +40,34 @@ class PersonaRegistryViewModel @Inject constructor(
     private val projectRepository: ProjectRepository
 ) : ViewModel() {
 
-    val uiState: StateFlow<RegistryUiState> = projectRepository.getClosedProjects()
-        .map { closedProjects ->
-            // Only projects the player actually invested in
-            val invested = closedProjects.filter { it.investedAmountTON > 0 }
+    val uiState: StateFlow<RegistryUiState> = combine(
+        projectRepository.getClosedProjects(),
+        projectRepository.getActiveProjects()
+    ) { closed, active ->
+        // Unlock via: invested + closed  OR  correct lie guess (any state)
+        val unlockedByClose = closed.filter { it.investedAmountTON > 0 }
+        val unlockedByGuess = (closed + active).filter { it.lieGuessCorrect }
+        val allUnlocked = (unlockedByClose + unlockedByGuess).distinctBy { it.id }
 
-            val personas = PersonaArchetype.values().map { archetype ->
-                val projects = invested.filter { it.personaArchetype == archetype }
-                PersonaEntry(
-                    archetype = archetype,
-                    encountered = projects.isNotEmpty(),
-                    timesIdentified = 0,
-                    projectsClosed = projects.size
-                )
-            }
-
-            val encounteredTypes = invested.map { it.type }.distinct()
-            val lockedCount = personas.count { !it.encountered }
-
-            RegistryUiState(
-                personas = personas.filter { it.encountered },
-                encounteredTypes = encounteredTypes,
-                lockedCount = lockedCount
+        val personas = PersonaArchetype.values().map { archetype ->
+            val projects = allUnlocked.filter { it.personaArchetype == archetype }
+            PersonaEntry(
+                archetype = archetype,
+                encountered = projects.isNotEmpty(),
+                timesIdentified = projects.count { it.lieGuessCorrect },
+                projectsClosed = unlockedByClose.count { it.personaArchetype == archetype }
             )
         }
+
+        val encounteredTypes = allUnlocked.map { it.type }.distinct()
+        val lockedCount = personas.count { !it.encountered }
+
+        RegistryUiState(
+            personas = personas.filter { it.encountered },
+            encounteredTypes = encounteredTypes,
+            lockedCount = lockedCount
+        )
+    }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), RegistryUiState())
 }
 
@@ -112,7 +116,7 @@ private fun PersonasTab(uiState: RegistryUiState) {
         if (uiState.personas.isEmpty()) {
             item {
                 Text(
-                    "Здесь появятся архетипы разработчиков после того, как ты вложишься в проект и он закроется.",
+                    "Здесь появятся архетипы разработчиков — угадай ложь разраба после AMA или дождись закрытия проекта.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 8.dp)

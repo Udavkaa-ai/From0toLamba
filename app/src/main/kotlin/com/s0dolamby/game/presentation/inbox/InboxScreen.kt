@@ -7,12 +7,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.s0dolamby.game.domain.model.Project
-import com.s0dolamby.game.presentation.common.components.ProjectBannerImage
+import com.s0dolamby.game.domain.model.ProjectType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,12 +45,30 @@ fun InboxScreen(
         ) {
             if (projects.isEmpty()) {
                 item {
-                    Text(
-                        "Новых предложений нет. Начни следующий день.",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 32.dp)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 64.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text("🤷", style = MaterialTheme.typography.displayMedium)
+                            Text(
+                                "Возвращайся завтра,\nпока проектов нет",
+                                style = MaterialTheme.typography.titleMedium,
+                                textAlign = TextAlign.Center
+                            )
+                            Text(
+                                "Нажми «Следующий день» на главной —\nновые предложения появятся в inbox",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
                 }
             }
             items(projects) { project ->
@@ -57,22 +78,54 @@ fun InboxScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun InboxProjectCard(project: Project, onClick: () -> Unit) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            ProjectBannerImage(bannerUrl = project.bannerImageUrl, projectName = project.claimedName)
+        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
 
+            // Genre badge + developer name on same row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    shape = MaterialTheme.shapes.extraSmall
+                ) {
+                    Text(
+                        project.type.displayName(),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                    )
+                }
+                Text(
+                    "от ${project.developerName}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // Project name
             Text(project.claimedName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Text("от ${project.developerName}", style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(project.description, style = MaterialTheme.typography.bodyMedium,
-                maxLines = 2)
 
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            // Description — italic, muted
+            Text(
+                project.description,
+                style = MaterialTheme.typography.bodySmall,
+                fontStyle = FontStyle.Italic,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 3
+            )
+
+            // Stats
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 StatChip(label = "APY", value = "${project.claimedAPY.toInt()}%")
                 StatChip(label = "Юзеры", value = formatCount(project.claimedUserCount))
                 StatChip(label = "Команда", value = "${project.claimedTeamSize}")
@@ -85,15 +138,26 @@ private fun InboxProjectCard(project: Project, onClick: () -> Unit) {
     }
 }
 
+private fun ProjectType.displayName(): String = when (this) {
+    ProjectType.CLICKER -> "Кликер"
+    ProjectType.P2E_RPG -> "P2E RPG"
+    ProjectType.FARMING_BOT -> "Фарм-бот"
+    ProjectType.REFERRAL_PYRAMID -> "Реферальная сеть"
+    ProjectType.HONEST_GAMEFI -> "GameFi"
+}
+
 @Composable
 private fun StatChip(label: String, value: String) {
     Surface(
         color = MaterialTheme.colorScheme.surfaceVariant,
         shape = MaterialTheme.shapes.small
     ) {
-        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
-            Text(label, style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)) {
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
         }
     }

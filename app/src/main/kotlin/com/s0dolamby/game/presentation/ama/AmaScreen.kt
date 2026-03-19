@@ -1,10 +1,12 @@
 package com.s0dolamby.game.presentation.ama
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -15,34 +17,66 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.s0dolamby.game.domain.model.AmaMessage
+import com.s0dolamby.game.domain.model.LieTopic
 import com.s0dolamby.game.domain.model.MessageRole
 import com.s0dolamby.game.domain.repository.GameConfig
-import kotlinx.coroutines.launch
+import com.s0dolamby.game.presentation.common.theme.Error
+import com.s0dolamby.game.presentation.common.theme.Success
+import com.s0dolamby.game.presentation.common.theme.Warning
+
+// ─── Question templates ───────────────────────────────────────────────────────
+
+private val questionTemplates = listOf(
+    "Сколько реально зарабатывают пользователи в день?",
+    "Сколько сейчас активных пользователей?",
+    "Когда точно будет листинг и на какой бирже?",
+    "Кто в команде? Можно проверить?",
+    "Проект прошёл аудит смарт-контракта?",
+    "Есть ли ограничения на вывод средств?",
+    "Кто ваши партнёры и инвесторы?",
+    "Почему доходность такая высокая?",
+    "Что если экономика не взлетит?",
+    "Где можно проверить смарт-контракт?"
+)
+
+// ─── LieTopic helpers ────────────────────────────────────────────────────────
+
+private val LieTopic.displayName: String get() = when (this) {
+    LieTopic.USER_COUNT -> "Кол-во пользователей"
+    LieTopic.DAILY_YIELD -> "Доходность"
+    LieTopic.LISTING_DATE -> "Дата листинга"
+    LieTopic.TEAM_SIZE -> "Размер команды"
+    LieTopic.AUDIT_STATUS -> "Аудит"
+    LieTopic.PARTNER_STATUS -> "Партнёры"
+    LieTopic.WITHDRAWAL_LIMITS -> "Лимиты вывода"
+}
+
+// ─── Screen ──────────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AmaScreen(
     onBack: () -> Unit,
+    onOpenRegistry: () -> Unit = {},
     viewModel: AmaViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var inputText by remember { mutableStateOf("") }
+    var usedTemplates by remember { mutableStateOf(emptySet<String>()) }
     val listState = rememberLazyListState()
-    val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
     val messages = uiState.session?.messages ?: emptyList()
     val questionCount = uiState.session?.questionCount ?: 0
+    val sessionEnded = questionCount >= GameConfig.AMA_MAX_QUESTIONS
 
-    // Scroll to bottom on new messages
     LaunchedEffect(messages.size) {
-        if (messages.isNotEmpty()) {
-            listState.animateScrollToItem(messages.size - 1)
-        }
+        if (messages.isNotEmpty()) listState.animateScrollToItem(messages.size - 1)
     }
 
     Scaffold(
@@ -63,51 +97,69 @@ fun AmaScreen(
                     IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Назад") }
                 },
                 actions = {
-                    TextButton(onClick = viewModel::showInvestSheet) {
-                        Text("Инвестировать")
+                    if (!sessionEnded) {
+                        TextButton(onClick = viewModel::showLieGuessSheet) {
+                            Text("Скипнуть")
+                        }
+                        TextButton(onClick = viewModel::showInvestSheet) {
+                            Text("Инвест.")
+                        }
                     }
                 }
             )
         },
         bottomBar = {
             Surface(tonalElevation = 2.dp) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp)
-                        .navigationBarsPadding()
-                        .imePadding(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    OutlinedTextField(
-                        value = inputText,
-                        onValueChange = { inputText = it },
-                        modifier = Modifier.weight(1f),
-                        placeholder = { Text("Задайте вопрос...") },
-                        maxLines = 3,
-                        enabled = !uiState.isSending && questionCount < GameConfig.AMA_MAX_QUESTIONS,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-                        keyboardActions = KeyboardActions(onSend = {
-                            if (inputText.isNotBlank()) {
-                                viewModel.sendMessage(inputText.trim())
-                                inputText = ""
+                Column {
+                    // Question templates — visible only when session is active
+                    if (!sessionEnded && !uiState.isSending) {
+                        QuestionTemplateRow(
+                            usedTemplates = usedTemplates,
+                            onTemplateClick = { question ->
+                                usedTemplates = usedTemplates + question
+                                viewModel.sendMessage(question)
                             }
-                        })
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    IconButton(
-                        onClick = {
-                            if (inputText.isNotBlank()) {
-                                viewModel.sendMessage(inputText.trim())
-                                inputText = ""
-                            }
-                        },
-                        enabled = inputText.isNotBlank() && !uiState.isSending
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp)
+                            .navigationBarsPadding()
+                            .imePadding(),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        if (uiState.isSending) {
-                            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                        } else {
-                            Icon(Icons.Default.Send, "Отправить")
+                        OutlinedTextField(
+                            value = inputText,
+                            onValueChange = { inputText = it },
+                            modifier = Modifier.weight(1f),
+                            placeholder = { Text("Задайте вопрос...") },
+                            maxLines = 3,
+                            enabled = !uiState.isSending && !sessionEnded,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                            keyboardActions = KeyboardActions(onSend = {
+                                if (inputText.isNotBlank()) {
+                                    viewModel.sendMessage(inputText.trim())
+                                    inputText = ""
+                                }
+                            })
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        IconButton(
+                            onClick = {
+                                if (inputText.isNotBlank()) {
+                                    viewModel.sendMessage(inputText.trim())
+                                    inputText = ""
+                                }
+                            },
+                            enabled = inputText.isNotBlank() && !uiState.isSending
+                        ) {
+                            if (uiState.isSending) {
+                                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                            } else {
+                                Icon(Icons.Default.Send, "Отправить")
+                            }
                         }
                     }
                 }
@@ -131,14 +183,15 @@ fun AmaScreen(
             items(messages) { msg ->
                 MessageBubble(message = msg)
             }
-            if (questionCount >= GameConfig.AMA_MAX_QUESTIONS) {
+            if (sessionEnded) {
                 item {
                     SessionEndBanner(
                         onInvest = viewModel::showInvestSheet,
-                        onSkip = onBack
+                        onSkip = viewModel::showLieGuessSheet
                     )
                 }
             }
+
         }
     }
 
@@ -150,6 +203,24 @@ fun AmaScreen(
         )
     }
 
+    // Lie guess sheet
+    if (uiState.showLieGuessSheet) {
+        LieGuessSheet(
+            result = uiState.lieGuessResult,
+            maxSelectable = uiState.project?.lieTopics?.size ?: 3,
+            onSubmit = { guesses -> viewModel.submitLieGuess(guesses) },
+            onClose = {
+                viewModel.closeLieGuessSheet()
+                onBack()
+            },
+            onOpenRegistry = {
+                viewModel.closeLieGuessSheet()
+                onOpenRegistry()
+            },
+            onDismiss = viewModel::closeLieGuessSheet
+        )
+    }
+
     // Error snackbar
     uiState.error?.let { error ->
         LaunchedEffect(error) {
@@ -158,14 +229,264 @@ fun AmaScreen(
         }
     }
 
-    // Invest result snackbar
+    // Invest result: show snackbar then close screen
     uiState.investResult?.let { result ->
         LaunchedEffect(result) {
             snackbarHostState.showSnackbar(message = result, duration = SnackbarDuration.Short)
             viewModel.clearInvestResult()
+            onBack()
         }
     }
 }
+
+// ─── Question template row ────────────────────────────────────────────────────
+
+@Composable
+private fun QuestionTemplateRow(
+    usedTemplates: Set<String>,
+    onTemplateClick: (String) -> Unit
+) {
+    val remaining = questionTemplates.filter { it !in usedTemplates }
+    if (remaining.isEmpty()) return
+
+    // Split into two rows: even indices top, odd indices bottom
+    val topRow = remaining.filterIndexed { i, _ -> i % 2 == 0 }
+    val bottomRow = remaining.filterIndexed { i, _ -> i % 2 == 1 }
+
+    Column(
+        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            topRow.forEach { question -> TemplateChip(question, onTemplateClick) }
+        }
+        if (bottomRow.isNotEmpty()) {
+            Row(
+                modifier = Modifier.horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                bottomRow.forEach { question -> TemplateChip(question, onTemplateClick) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TemplateChip(question: String, onClick: (String) -> Unit) {
+    SuggestionChip(
+        onClick = { onClick(question) },
+        label = {
+            Text(
+                question.take(34).let { if (question.length > 34) "$it…" else it },
+                style = MaterialTheme.typography.labelSmall
+            )
+        }
+    )
+}
+
+// ─── Lie guess sheet ─────────────────────────────────────────────────────────
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+private fun LieGuessSheet(
+    result: LieGuessResult?,
+    maxSelectable: Int,
+    onSubmit: (Set<LieTopic>) -> Unit,
+    onClose: () -> Unit,
+    onOpenRegistry: () -> Unit = {},
+    onDismiss: () -> Unit
+) {
+    var selectedTopics by remember { mutableStateOf(emptySet<LieTopic>()) }
+
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 40.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            if (result == null) {
+                // ── Selection mode ──
+                Text("В чём соврал разраб?", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "Выбери темы, по которым тебя обманули",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        "${selectedTopics.size}/$maxSelectable",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = if (selectedTopics.size == maxSelectable)
+                            MaterialTheme.colorScheme.primary
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    LieTopic.entries.forEach { topic ->
+                        val isSelected = topic in selectedTopics
+                        val atLimit = selectedTopics.size >= maxSelectable
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = {
+                                selectedTopics = if (isSelected)
+                                    selectedTopics - topic
+                                else if (!atLimit)
+                                    selectedTopics + topic
+                                else
+                                    selectedTopics
+                            },
+                            enabled = isSelected || !atLimit,
+                            label = { Text(topic.displayName) }
+                        )
+                    }
+                }
+
+                Button(
+                    onClick = { onSubmit(selectedTopics) },
+                    enabled = selectedTopics.isNotEmpty(),
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text("Проверить") }
+
+                OutlinedButton(
+                    onClick = onClose,
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text("Пропустить") }
+
+            } else {
+                // ── Result mode ──
+                val isSuccess = result.isSuccess
+                Text(
+                    if (isSuccess) "Отличный анализ!" else "Неплохо, но не всё",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isSuccess) Success else MaterialTheme.colorScheme.onSurface
+                )
+
+                if (isSuccess) {
+                    Surface(
+                        color = Success.copy(alpha = 0.12f),
+                        shape = MaterialTheme.shapes.medium
+                    ) {
+                        Text(
+                            "Архетип разработчика добавлен в Энциклопедию!",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Success,
+                            modifier = Modifier.padding(12.dp)
+                        )
+                    }
+                }
+
+                // Correct guesses
+                if (result.correct.isNotEmpty()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Угадал:", style = MaterialTheme.typography.labelMedium, color = Success)
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            result.correct.forEach { topic ->
+                                Surface(
+                                    color = Success.copy(alpha = 0.15f),
+                                    shape = RoundedCornerShape(16.dp)
+                                ) {
+                                    Text(
+                                        topic.displayName,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Success,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Missed (actual lies not guessed)
+                if (result.missed.isNotEmpty()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Пропустил:", style = MaterialTheme.typography.labelMedium, color = Error)
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            result.missed.forEach { topic ->
+                                Surface(
+                                    color = Error.copy(alpha = 0.15f),
+                                    shape = RoundedCornerShape(16.dp)
+                                ) {
+                                    Text(
+                                        topic.displayName,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Error,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // False positives
+                if (result.falsePositives.isNotEmpty()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Лишнее:", style = MaterialTheme.typography.labelMedium, color = Warning)
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            result.falsePositives.forEach { topic ->
+                                Surface(
+                                    color = Warning.copy(alpha = 0.15f),
+                                    shape = RoundedCornerShape(16.dp)
+                                ) {
+                                    Text(
+                                        topic.displayName,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Warning,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (result.isSuccess) {
+                    Button(
+                        onClick = onOpenRegistry,
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("Открыть в энциклопедии") }
+                    OutlinedButton(
+                        onClick = onClose,
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("Закрыть") }
+                } else {
+                    Button(
+                        onClick = onClose,
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("Закрыть") }
+                }
+            }
+        }
+    }
+}
+
+// ─── Supporting composables ───────────────────────────────────────────────────
 
 @Composable
 private fun MessageBubble(message: AmaMessage) {
@@ -221,11 +542,16 @@ private fun SessionEndBanner(onInvest: () -> Unit, onSkip: () -> Unit) {
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("AMA завершена. Ваш вердикт?", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "Инвестируй TON или скипни — и попробуй угадать, в чём соврал разраб.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             Button(onClick = onInvest, modifier = Modifier.fillMaxWidth()) {
-                Text("Инвестировать TON")
+                Text("Инвестировать")
             }
             OutlinedButton(onClick = onSkip, modifier = Modifier.fillMaxWidth()) {
-                Text("Не инвестировать")
+                Text("Скипнуть → угадать обман")
             }
         }
     }

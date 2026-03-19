@@ -84,6 +84,7 @@ fun NavGraph() {
                 onPortfolioClick = { navController.navigate(Screen.Portfolio.route) },
                 onNewsClick = { navController.navigate(Screen.News.route) },
                 onStatsClick = { navController.navigate(Screen.Stats.route) },
+                onRegistryClick = { navController.navigate(Screen.PersonaRegistry.route) },
                 onProjectClick = { projectId -> navController.navigate(Screen.ProjectDetail.createRoute(projectId)) }
             )
         }
@@ -97,7 +98,13 @@ fun NavGraph() {
             route = Screen.Ama.route,
             arguments = listOf(navArgument("projectId") { type = NavType.StringType })
         ) {
-            AmaScreen(onBack = { navController.popBackStack() })
+            AmaScreen(
+                onBack = { navController.popBackStack() },
+                onOpenRegistry = {
+                    navController.popBackStack()
+                    navController.navigate(Screen.PersonaRegistry.route)
+                }
+            )
         }
         composable(Screen.Portfolio.route) {
             PortfolioScreen(
@@ -109,7 +116,10 @@ fun NavGraph() {
             route = Screen.ProjectDetail.route,
             arguments = listOf(navArgument("projectId") { type = NavType.StringType })
         ) {
-            ProjectDetailScreen(onBack = { navController.popBackStack() })
+            ProjectDetailScreen(
+                onBack = { navController.popBackStack() },
+                onManageClick = { navController.navigate(Screen.Portfolio.route) }
+            )
         }
         composable(Screen.News.route) {
             NewsScreen(onBack = { navController.popBackStack() })

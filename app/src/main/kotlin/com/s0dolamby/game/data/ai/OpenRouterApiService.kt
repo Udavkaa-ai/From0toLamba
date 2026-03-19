@@ -10,7 +10,8 @@ interface OpenRouterApiService {
     @POST("chat/completions")
     suspend fun chatCompletion(
         @Header("Authorization") auth: String,
-        @Header("HTTP-Referer") referer: String = "com.s0dolamby.game",
+        @Header("HTTP-Referer") referer: String = "https://github.com/s0dolamby",
+        @Header("X-Title") title: String = "S0doLamby Game",
         @Body request: ChatRequest
     ): ChatResponse
 }

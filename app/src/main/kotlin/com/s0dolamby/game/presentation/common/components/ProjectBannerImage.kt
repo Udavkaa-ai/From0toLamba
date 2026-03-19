@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
+import com.s0dolamby.game.data.logging.AppLogger
 
 @Composable
 fun ProjectBannerImage(
@@ -42,7 +43,10 @@ fun ProjectBannerImage(
                     .build(),
                 contentDescription = "Баннер $projectName",
                 contentScale = ContentScale.Crop,
-                onError = { loadFailed = true },
+                onError = { err ->
+                    AppLogger.e("BannerImage", "Coil failed url=$bannerUrl err=${err.result.throwable}")
+                    loadFailed = true
+                },
                 modifier = modifier
                     .fillMaxWidth()
                     .height(180.dp)

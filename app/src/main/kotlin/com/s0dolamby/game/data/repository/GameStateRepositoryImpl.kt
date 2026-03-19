@@ -19,6 +19,10 @@ class GameStateRepositoryImpl @Inject constructor(
     private val gson: Gson
 ) : GameStateRepository {
 
+    private fun parseBalanceHistory(json: String): List<Double> = runCatching {
+        gson.fromJson(json, Array<Double>::class.java).toList()
+    }.getOrDefault(emptyList())
+
     override fun observeGameState(): Flow<GameState> =
         combine(
             playerDao.observeGameState(),
@@ -37,7 +41,8 @@ class GameStateRepositoryImpl @Inject constructor(
                 scamsDetected = state.scamsDetected,
                 scamsMissed = state.scamsMissed,
                 dayStreak = state.dayStreak,
-                isOnboardingComplete = state.isOnboardingComplete
+                isOnboardingComplete = state.isOnboardingComplete,
+                balanceHistory = parseBalanceHistory(state.balanceHistory)
             )
         }
 
@@ -55,8 +60,15 @@ class GameStateRepositoryImpl @Inject constructor(
             scamsDetected = state.scamsDetected,
             scamsMissed = state.scamsMissed,
             dayStreak = state.dayStreak,
-            isOnboardingComplete = state.isOnboardingComplete
+            isOnboardingComplete = state.isOnboardingComplete,
+            balanceHistory = parseBalanceHistory(state.balanceHistory)
         )
+    }
+
+    override suspend fun appendBalanceSnapshot(balance: Double) {
+        val state = playerDao.getGameState() ?: return
+        val history = parseBalanceHistory(state.balanceHistory).takeLast(59) + balance
+        playerDao.update(state.copy(balanceHistory = gson.toJson(history)))
     }
 
     override suspend fun updateBalance(newBalance: Double) =

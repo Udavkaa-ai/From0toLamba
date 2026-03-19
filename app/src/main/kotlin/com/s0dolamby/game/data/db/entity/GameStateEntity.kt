@@ -15,5 +15,6 @@ data class GameStateEntity(
     val scamsDetected: Int = 0,
     val scamsMissed: Int = 0,
     val dayStreak: Int = 0,
-    val isOnboardingComplete: Boolean = false
+    val isOnboardingComplete: Boolean = false,
+    val balanceHistory: String = "[]"   // JSON array of Double snapshots per game day
 )

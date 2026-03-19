@@ -29,6 +29,7 @@ jobs:
         run: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" >> local.properties
           echo "OPENROUTER_API_KEY=" >> local.properties
+          echo "POLLINATIONS_API_KEY=" >> local.properties
 
       - name: Run Lint
         run: ./gradlew lintDebug --stacktrace
@@ -64,6 +65,7 @@ jobs:
         run: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" >> local.properties
           echo "OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}" >> local.properties
+          echo "POLLINATIONS_API_KEY=${{ secrets.POLLINATIONS_API_KEY }}" >> local.properties
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug --stacktrace
