@@ -97,8 +97,13 @@ fun AmaScreen(
                     IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Назад") }
                 },
                 actions = {
-                    TextButton(onClick = viewModel::showInvestSheet) {
-                        Text("Инвестировать")
+                    if (!sessionEnded) {
+                        TextButton(onClick = viewModel::showLieGuessSheet) {
+                            Text("Скипнуть")
+                        }
+                        TextButton(onClick = viewModel::showInvestSheet) {
+                            Text("Инвест.")
+                        }
                     }
                 }
             )
@@ -223,11 +228,12 @@ fun AmaScreen(
         }
     }
 
-    // Invest result snackbar
+    // Invest result: show snackbar then close screen
     uiState.investResult?.let { result ->
         LaunchedEffect(result) {
             snackbarHostState.showSnackbar(message = result, duration = SnackbarDuration.Short)
             viewModel.clearInvestResult()
+            onBack()
         }
     }
 }
