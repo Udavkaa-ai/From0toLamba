@@ -11,7 +11,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -159,6 +161,8 @@ private fun LogCard(onShowLog: () -> Unit) {
 private fun LogDialog(onDismiss: () -> Unit) {
     val log = remember { AppLogger.readLog() }
     val scrollState = rememberScrollState(Int.MAX_VALUE)
+    val clipboard = LocalClipboardManager.current
+    var copied by remember { mutableStateOf(false) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Лог приложения") },
@@ -179,6 +183,12 @@ private fun LogDialog(onDismiss: () -> Unit) {
                 )
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Закрыть") } }
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Закрыть") } },
+        dismissButton = {
+            TextButton(onClick = {
+                clipboard.setText(AnnotatedString(log))
+                copied = true
+            }) { Text(if (copied) "Скопировано ✓" else "Копировать") }
+        }
     )
 }
