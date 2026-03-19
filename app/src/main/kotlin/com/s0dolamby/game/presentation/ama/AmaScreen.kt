@@ -207,6 +207,7 @@ fun AmaScreen(
     if (uiState.showLieGuessSheet) {
         LieGuessSheet(
             result = uiState.lieGuessResult,
+            maxSelectable = uiState.project?.lieTopics?.size ?: 3,
             onSubmit = { guesses -> viewModel.submitLieGuess(guesses) },
             onClose = {
                 viewModel.closeLieGuessSheet()
@@ -292,6 +293,7 @@ private fun TemplateChip(question: String, onClick: (String) -> Unit) {
 @Composable
 private fun LieGuessSheet(
     result: LieGuessResult?,
+    maxSelectable: Int,
     onSubmit: (Set<LieTopic>) -> Unit,
     onClose: () -> Unit,
     onOpenRegistry: () -> Unit = {},
@@ -309,11 +311,26 @@ private fun LieGuessSheet(
             if (result == null) {
                 // ── Selection mode ──
                 Text("В чём соврал разраб?", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text(
-                    "Выбери темы, по которым тебя обманули. Угадаешь — получишь достижение.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "Выбери темы, по которым тебя обманули",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        "${selectedTopics.size}/$maxSelectable",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = if (selectedTopics.size == maxSelectable)
+                            MaterialTheme.colorScheme.primary
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
 
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
@@ -321,14 +338,19 @@ private fun LieGuessSheet(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     LieTopic.entries.forEach { topic ->
+                        val isSelected = topic in selectedTopics
+                        val atLimit = selectedTopics.size >= maxSelectable
                         FilterChip(
-                            selected = topic in selectedTopics,
+                            selected = isSelected,
                             onClick = {
-                                selectedTopics = if (topic in selectedTopics)
+                                selectedTopics = if (isSelected)
                                     selectedTopics - topic
-                                else
+                                else if (!atLimit)
                                     selectedTopics + topic
+                                else
+                                    selectedTopics
                             },
+                            enabled = isSelected || !atLimit,
                             label = { Text(topic.displayName) }
                         )
                     }
