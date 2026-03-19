@@ -13,6 +13,7 @@ class InvestUseCaseTest {
 
     private val gameStateRepo = mockk<GameStateRepository>()
     private val projectRepo = mockk<ProjectRepository>()
+    private val bannerUseCase = mockk<GenerateProjectBannerUseCase>(relaxed = true)
     private lateinit var useCase: InvestUseCase
 
     private val testProject = Project(
@@ -37,7 +38,7 @@ class InvestUseCaseTest {
 
     @Before
     fun setup() {
-        useCase = InvestUseCase(gameStateRepo, projectRepo)
+        useCase = InvestUseCase(gameStateRepo, projectRepo, bannerUseCase)
     }
 
     @Test
