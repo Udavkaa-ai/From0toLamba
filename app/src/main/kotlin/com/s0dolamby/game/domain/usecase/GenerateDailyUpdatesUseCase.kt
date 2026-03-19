@@ -6,6 +6,7 @@ import com.s0dolamby.game.data.ai.ChatMessage
 import com.s0dolamby.game.data.ai.ChatRequest
 import com.s0dolamby.game.data.ai.OpenRouterApiService
 import com.s0dolamby.game.data.ai.PromptBuilder
+import com.s0dolamby.game.data.logging.AppLogger
 import com.s0dolamby.game.domain.model.*
 import com.s0dolamby.game.domain.repository.GameConfig
 import com.s0dolamby.game.domain.repository.UpdateRepository
@@ -49,22 +50,26 @@ class GenerateDailyUpdatesUseCase @Inject constructor(
         val announcement: String? = null
     )
 
-    private fun parseUpdate(project: Project, json: String): DailyUpdate {
-        return try {
-            // Extract JSON from potential markdown code blocks
-            val cleanJson = when {
-                json.contains("```json") -> json.substringAfter("```json").substringBefore("```").trim()
-                json.contains("```") -> json.substringAfter("```").substringBefore("```").trim()
-                else -> json.trim()
-            }
+    private fun extractJson(raw: String): String {
+        // 1. Markdown code blocks
+        if (raw.contains("```json")) return raw.substringAfter("```json").substringBefore("```").trim()
+        if (raw.contains("```")) return raw.substringAfter("```").substringBefore("```").trim()
+        // 2. Find first '{' … last '}' — handles explanatory text before/after JSON
+        val start = raw.indexOf('{')
+        val end = raw.lastIndexOf('}')
+        if (start != -1 && end > start) return raw.substring(start, end + 1)
+        return raw.trim()
+    }
 
-            val parsed = gson.fromJson(cleanJson, UpdateJson::class.java)
+    private fun parseUpdate(project: Project, raw: String): DailyUpdate {
+        return try {
+            val parsed = gson.fromJson(extractJson(raw), UpdateJson::class.java)
             DailyUpdate(
                 id = UUID.randomUUID().toString(),
                 projectId = project.id,
                 projectName = project.claimedName,
                 day = project.daysSinceJoined,
-                title = parsed.title,
+                title = parsed.title.ifBlank { "Обновление проекта" },
                 body = parsed.body,
                 userCountDelta = parsed.metrics.userCountDelta,
                 payoutStatus = runCatching { PayoutStatus.valueOf(parsed.metrics.payoutStatus.uppercase()) }
@@ -75,13 +80,14 @@ class GenerateDailyUpdatesUseCase @Inject constructor(
                 redFlags = parsed.redFlags
             )
         } catch (e: Exception) {
+            AppLogger.e("GenerateDailyUpdatesUseCase", "Parse failed for ${project.claimedName}: ${e.message}\nRaw: ${raw.take(300)}")
             DailyUpdate(
                 id = UUID.randomUUID().toString(),
                 projectId = project.id,
                 projectName = project.claimedName,
                 day = project.daysSinceJoined,
                 title = "Обновление проекта",
-                body = json.take(200),
+                body = "Проект работает в штатном режиме.",
                 userCountDelta = 0,
                 payoutStatus = PayoutStatus.NORMAL,
                 announcement = null,
