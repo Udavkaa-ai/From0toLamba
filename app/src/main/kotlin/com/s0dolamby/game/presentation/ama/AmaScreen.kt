@@ -106,7 +106,12 @@ fun AmaScreen(
                 Column {
                     // Question templates — visible only when session is active
                     if (!sessionEnded && !uiState.isSending) {
+                        val sentMessages = messages
+                            .filter { it.role == MessageRole.USER }
+                            .map { it.content }
+                            .toSet()
                         QuestionTemplateRow(
+                            sentMessages = sentMessages,
                             onTemplateClick = { question ->
                                 viewModel.sendMessage(question)
                             }
@@ -226,7 +231,12 @@ fun AmaScreen(
 // ─── Question template row ────────────────────────────────────────────────────
 
 @Composable
-private fun QuestionTemplateRow(onTemplateClick: (String) -> Unit) {
+private fun QuestionTemplateRow(
+    sentMessages: Set<String>,
+    onTemplateClick: (String) -> Unit
+) {
+    val remaining = questionTemplates.filter { it !in sentMessages }
+    if (remaining.isEmpty()) return
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -234,12 +244,11 @@ private fun QuestionTemplateRow(onTemplateClick: (String) -> Unit) {
             .padding(horizontal = 8.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        questionTemplates.forEach { question ->
+        remaining.forEach { question ->
             SuggestionChip(
                 onClick = { onTemplateClick(question) },
                 label = {
                     Text(
-                        // Show first ~30 chars in chip
                         question.take(32).let { if (question.length > 32) "$it…" else it },
                         style = MaterialTheme.typography.labelSmall
                     )
