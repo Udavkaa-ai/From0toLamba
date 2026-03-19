@@ -109,7 +109,10 @@ fun NavGraph() {
             route = Screen.ProjectDetail.route,
             arguments = listOf(navArgument("projectId") { type = NavType.StringType })
         ) {
-            ProjectDetailScreen(onBack = { navController.popBackStack() })
+            ProjectDetailScreen(
+                onBack = { navController.popBackStack() },
+                onManageClick = { navController.navigate(Screen.Portfolio.route) }
+            )
         }
         composable(Screen.News.route) {
             NewsScreen(onBack = { navController.popBackStack() })

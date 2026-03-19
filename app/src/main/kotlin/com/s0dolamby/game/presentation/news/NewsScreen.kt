@@ -3,17 +3,21 @@ package com.s0dolamby.game.presentation.news
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.s0dolamby.game.domain.model.DailyUpdate
-import com.s0dolamby.game.domain.model.PayoutStatus
+import com.s0dolamby.game.domain.model.*
 import com.s0dolamby.game.presentation.common.theme.Error
 import com.s0dolamby.game.presentation.common.theme.Success
 import com.s0dolamby.game.presentation.common.theme.Warning
@@ -41,49 +45,215 @@ fun NewsScreen(
         ) {
             if (updates.isEmpty()) {
                 item {
-                    Text("Новостей пока нет. Начни следующий день.",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 32.dp))
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(top = 48.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text("📭", style = MaterialTheme.typography.displaySmall)
+                            Text(
+                                "Новостей пока нет",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                "Нажми «Следующий день» — проекты начнут публиковать апдейты",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
             }
             items(updates) { update ->
-                UpdateCard(update = update)
+                NewsCard(update = update)
             }
         }
     }
 }
 
 @Composable
-private fun UpdateCard(update: DailyUpdate) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(update.projectName, style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("День ${update.day}", style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            Text(update.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text(update.body, style = MaterialTheme.typography.bodyMedium)
+private fun NewsCard(update: DailyUpdate) {
+    val source = update.computedSource()
+    val (cardColor, borderColor) = newsCardColors(update)
 
-            if (update.payoutStatus == PayoutStatus.DELAYED) {
-                Surface(color = Error.copy(alpha = 0.15f), shape = MaterialTheme.shapes.small) {
-                    Text("⚠️ Выплаты задержаны", style = MaterialTheme.typography.labelSmall,
-                        color = Error, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = cardColor),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+
+            // ── Header: source badge + project name + day ──
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                SourceBadge(source = source)
+                Text(
+                    "День ${update.day}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // ── Project name ──
+            Text(
+                update.projectName,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            // ── Title ──
+            Text(
+                update.title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            // ── Body (styled per source) ──
+            Text(
+                update.body,
+                style = when (source) {
+                    NewsSource.ANONYMOUS, NewsSource.REDDIT ->
+                        MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic)
+                    NewsSource.EXCHANGE_NOTICE ->
+                        MaterialTheme.typography.bodySmall.copy(fontFamily = null)
+                    else -> MaterialTheme.typography.bodyMedium
+                }
+            )
+
+            // ── Payout status banner ──
+            when (update.payoutStatus) {
+                PayoutStatus.DELAYED -> StatusBanner(
+                    text = "⚠ Выплаты задержаны",
+                    color = Error
+                )
+                PayoutStatus.BOOSTED -> StatusBanner(
+                    text = "↑ Выплаты ускорены",
+                    color = Success
+                )
+                PayoutStatus.NORMAL -> {}
+            }
+
+            // ── Announcement chip ──
+            update.announcement?.let { announcement ->
+                Surface(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Text(
+                        announcement.displayText,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
                 }
             }
 
+            // ── Red flags ──
             if (update.redFlags.isNotEmpty()) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     update.redFlags.forEach { flag ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Icon(Icons.Default.Warning, null, tint = Warning, modifier = Modifier.size(14.dp))
-                            Text(flag, style = MaterialTheme.typography.labelSmall, color = Warning)
+                            Text(
+                                flag,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Warning
+                            )
                         }
                     }
                 }
             }
+
+            // ── User count delta (if significant) ──
+            if (update.userCountDelta != 0) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.TrendingUp, null,
+                        tint = if (update.userCountDelta > 0) Success else Error,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Text(
+                        "%+d пользователей".format(update.userCountDelta),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (update.userCountDelta > 0) Success else Error
+                    )
+                }
+            }
         }
     }
+}
+
+@Composable
+private fun SourceBadge(source: NewsSource) {
+    val (bg, fg) = when (source) {
+        NewsSource.FRAUD_ALERT -> Error.copy(alpha = 0.15f) to Error
+        NewsSource.ANONYMOUS -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
+        NewsSource.PRESS_RELEASE, NewsSource.OFFICIAL_BLOG ->
+            MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
+        NewsSource.EXCHANGE_NOTICE ->
+            MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer
+        NewsSource.REDDIT, NewsSource.COMMUNITY ->
+            Warning.copy(alpha = 0.12f) to Warning
+        else -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    Surface(color = bg, shape = RoundedCornerShape(12.dp)) {
+        Text(
+            "${source.emoji} ${source.label}",
+            style = MaterialTheme.typography.labelSmall,
+            color = fg,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+        )
+    }
+}
+
+@Composable
+private fun StatusBanner(text: String, color: Color) {
+    Surface(color = color.copy(alpha = 0.12f), shape = RoundedCornerShape(6.dp)) {
+        Text(
+            text,
+            style = MaterialTheme.typography.labelSmall,
+            color = color,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp, vertical = 5.dp)
+        )
+    }
+}
+
+@Composable
+private fun newsCardColors(update: DailyUpdate): Pair<Color, Color> {
+    val base = MaterialTheme.colorScheme.surface
+    return when {
+        update.payoutStatus == PayoutStatus.DELAYED && update.redFlags.isNotEmpty() ->
+            Error.copy(alpha = 0.07f) to Error.copy(alpha = 0.3f)
+        update.payoutStatus == PayoutStatus.DELAYED ->
+            Warning.copy(alpha = 0.06f) to Warning.copy(alpha = 0.2f)
+        update.payoutStatus == PayoutStatus.BOOSTED ->
+            Success.copy(alpha = 0.06f) to Success.copy(alpha = 0.2f)
+        update.redFlags.isNotEmpty() ->
+            Warning.copy(alpha = 0.05f) to Warning.copy(alpha = 0.15f)
+        else -> base to Color.Transparent
+    }
+}
+
+private val AnnouncementType.displayText: String get() = when (this) {
+    AnnouncementType.LISTING -> "🏦 Анонс листинга"
+    AnnouncementType.NEW_SEASON -> "🎮 Новый сезон"
+    AnnouncementType.COLLAB -> "🤝 Партнёрство"
+    AnnouncementType.AUDIT -> "🔍 Аудит"
 }

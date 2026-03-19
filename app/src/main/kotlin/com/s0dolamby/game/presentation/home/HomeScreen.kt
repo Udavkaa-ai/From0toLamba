@@ -1,6 +1,10 @@
 package com.s0dolamby.game.presentation.home
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -15,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,6 +37,7 @@ import com.s0dolamby.game.presentation.common.theme.Error
 import com.s0dolamby.game.presentation.common.theme.Success
 import com.s0dolamby.game.presentation.common.theme.TonBlue
 import com.s0dolamby.game.presentation.common.theme.Warning
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -346,6 +352,29 @@ private fun updateCountWord(count: Int): String = when {
     else -> "обновлений"
 }
 
+private val loadingPhrases = listOf(
+    "Экономика делает свой ход...",
+    "Финансовые манипуляции в процессе...",
+    "Улучшаем код на фрилансе...",
+    "Ищем спонсоров в Дубае...",
+    "Считаем скамы за тебя...",
+    "Разраб пишет апдейт в 3 ночи...",
+    "Листинг вот-вот, обещаем...",
+    "Закрываем токсичных инвесторов...",
+    "Аудит почти готов (нет)...",
+    "Пампим метрики для отчёта...",
+    "Команда из 50 человек работает...",
+    "Ребалансируем пулы ликвидности...",
+    "CEO летит из Дубая на конференцию...",
+    "Тестируем зкпруфы в продакшне...",
+    "Биржа ждёт нашего листинга...",
+    "Инвесторы довольны (публично)...",
+    "Смотрим графики и не паникуем...",
+    "Пишем whitepaper на 80 страниц...",
+    "Считаем комиссии за вывод...",
+    "DAO голосует за наш бюджет..."
+)
+
 @Composable
 private fun BalanceCard(
     balance: Double,
@@ -354,6 +383,17 @@ private fun BalanceCard(
     onAdvanceDayClick: () -> Unit,
     isLoading: Boolean
 ) {
+    var phraseIndex by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(isLoading) {
+        if (isLoading) {
+            while (true) {
+                delay(2000)
+                phraseIndex = (phraseIndex + 1) % loadingPhrases.size
+            }
+        }
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
@@ -384,10 +424,21 @@ private fun BalanceCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 if (isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                    Spacer(Modifier.width(8.dp))
+                    AnimatedContent(
+                        targetState = phraseIndex,
+                        transitionSpec = {
+                            slideInVertically { it } togetherWith slideOutVertically { -it }
+                        },
+                        label = "loadingPhrase"
+                    ) { idx ->
+                        Text(
+                            loadingPhrases[idx],
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                } else {
+                    Text("Следующий день →")
                 }
-                Text("Следующий день →")
             }
         }
     }

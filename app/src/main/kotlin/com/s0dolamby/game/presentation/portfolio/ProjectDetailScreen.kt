@@ -79,6 +79,7 @@ class ProjectDetailViewModel @Inject constructor(
 @Composable
 fun ProjectDetailScreen(
     onBack: () -> Unit,
+    onManageClick: (() -> Unit)? = null,
     viewModel: ProjectDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -113,7 +114,7 @@ fun ProjectDetailScreen(
             if (project.isClosed) {
                 item { PostMortemCard(project = project, postMortem = uiState.postMortem) }
             } else {
-                item { LiveStatsCard(project = project) }
+                item { LiveStatsCard(project = project, onManageClick = onManageClick) }
                 // Show charts only when we have enough history
                 if (project.userCountHistory.size >= 2 || project.apyHistory.size >= 2) {
                     item { DynamicsCard(project = project) }
@@ -245,7 +246,7 @@ private fun ProjectInfoCard(project: Project) {
 }
 
 @Composable
-private fun LiveStatsCard(project: Project) {
+private fun LiveStatsCard(project: Project, onManageClick: (() -> Unit)?) {
     val pnl = project.currentValueTON - project.investedAmountTON
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -268,6 +269,23 @@ private fun LiveStatsCard(project: Project) {
             StatRow("Юзеров (заявлено)", formatCount(project.claimedUserCount))
             if (project.currentUserCount > 0) {
                 StatRow("Юзеров (сейчас)", formatCount(project.currentUserCount))
+            }
+            if (onManageClick != null && project.investedAmountTON > 0) {
+                Spacer(Modifier.height(4.dp))
+                Button(
+                    onClick = onManageClick,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !project.isWithdrawalLocked
+                ) {
+                    Text("Управление инвестицией →")
+                }
+                if (project.isWithdrawalLocked) {
+                    Text(
+                        "Вывод и пополнение временно недоступны",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Warning
+                    )
+                }
             }
         }
     }

@@ -65,14 +65,25 @@ $phrases
 Судьба проекта: ${project.fate}
 Дней до закрытия: ${daysUntilCollapse ?: "не скоро"}
 
+ИСТОЧНИК НОВОСТИ — выбери один из: telegram_channel, reddit, press_release, fraud_alert, crypto_media, anonymous, official_blog, community, exchange_notice, investor_report
+Подбирай источник органично: fraud_alert/anonymous/reddit — при проблемах; press_release/official_blog — при анонсах; telegram_channel/community — обычные дни.
+
 ВАЖНО:
 - Пиши ТОЛЬКО на русском языке
-- Поле "body" должно содержать 2–3 ПОЛНЫХ, законченных предложения (не обрывай на середине)
-- Если до закрытия 1–2 дня — добавь тревожные сигналы (задержки выплат, «временные трудности»). Не раскрывай напрямую
+- "body" — 3–4 ПОЛНЫХ, законченных предложения в стиле выбранного источника (не обрывай на середине)
+  * telegram_channel: неформально, от лица проекта, с энтузиазмом или тревогой
+  * reddit/community: от первого лица участника, скептично или поддерживающе
+  * press_release/official_blog: официальный тон, конкретные цифры
+  * fraud_alert: предупреждающий тон, факты, призыв к осторожности
+  * crypto_media: журналистский стиль, нейтральный, со ссылками на источники
+  * anonymous: параноидный, намёки, «источники говорят»
+  * exchange_notice: сухой технический язык, статус транзакций
+  * investor_report: аналитический стиль, ROI, метрики
+- Если до закрытия 1–2 дня — добавь тревожные сигналы (задержки, «временные трудности»). Не раскрывай напрямую
 - Генерируй ТОЛЬКО валидный JSON без markdown-обёрток
 
 Верни JSON ровно в этом формате:
-{"title":"заголовок до 8 слов","body":"2-3 законченных предложения.","metrics":{"userCountDelta":0,"payoutStatus":"normal","announcement":null},"redFlags":[]}
+{"title":"заголовок до 8 слов","body":"3-4 законченных предложения в стиле источника.","source":"telegram_channel","metrics":{"userCountDelta":0,"payoutStatus":"normal","announcement":null},"redFlags":[]}
     """.trimIndent()
 
     fun buildBannerConceptPrompt(projectName: String): String = """
