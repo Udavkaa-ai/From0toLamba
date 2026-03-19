@@ -66,6 +66,7 @@ fun AmaScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var inputText by remember { mutableStateOf("") }
+    var usedTemplates by remember { mutableStateOf(emptySet<String>()) }
     val listState = rememberLazyListState()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -106,13 +107,10 @@ fun AmaScreen(
                 Column {
                     // Question templates — visible only when session is active
                     if (!sessionEnded && !uiState.isSending) {
-                        val sentMessages = messages
-                            .filter { it.role == MessageRole.USER }
-                            .map { it.content }
-                            .toSet()
                         QuestionTemplateRow(
-                            sentMessages = sentMessages,
+                            usedTemplates = usedTemplates,
                             onTemplateClick = { question ->
+                                usedTemplates = usedTemplates + question
                                 viewModel.sendMessage(question)
                             }
                         )
@@ -232,10 +230,10 @@ fun AmaScreen(
 
 @Composable
 private fun QuestionTemplateRow(
-    sentMessages: Set<String>,
+    usedTemplates: Set<String>,
     onTemplateClick: (String) -> Unit
 ) {
-    val remaining = questionTemplates.filter { it !in sentMessages }
+    val remaining = questionTemplates.filter { it !in usedTemplates }
     if (remaining.isEmpty()) return
     Row(
         modifier = Modifier
