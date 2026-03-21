@@ -30,7 +30,7 @@ class InvestUseCaseTest {
     )
 
     private val testGameState = GameState(
-        balance = 5.0, currentDay = 1, activeProjects = emptyList(),
+        balance = 100.0, currentDay = 1, activeProjects = emptyList(),
         pendingInbox = emptyList(), investorRank = InvestorRank.NEWBIE,
         totalInvested = 0.0, totalReturned = 0.0,
         scamsDetected = 0, scamsMissed = 0, dayStreak = 1
@@ -49,20 +49,20 @@ class InvestUseCaseTest {
         coEvery { gameStateRepo.updateBalance(any()) } just Runs
         coEvery { gameStateRepo.recordInvestment(any()) } just Runs
 
-        val result = useCase("p1", 2.0)
+        val result = useCase("p1", 10.0)
 
         assertTrue(result.isSuccess)
-        coVerify { gameStateRepo.updateBalance(3.0) }
-        coVerify { gameStateRepo.recordInvestment(2.0) }
-        coVerify { projectRepo.updateProject(match { it.investedAmountRubles == 2.0 && it.isActive }) }
+        coVerify { gameStateRepo.updateBalance(90.0) }
+        coVerify { gameStateRepo.recordInvestment(10.0) }
+        coVerify { projectRepo.updateProject(match { it.investedAmountRubles == 10.0 && it.isActive }) }
     }
 
     @Test
     fun `invest fails when balance insufficient`() = runTest {
-        coEvery { gameStateRepo.getGameState() } returns testGameState.copy(balance = 0.5)
+        coEvery { gameStateRepo.getGameState() } returns testGameState.copy(balance = 3.0)
         coEvery { projectRepo.getProjectById("p1") } returns testProject
 
-        val result = useCase("p1", 2.0)
+        val result = useCase("p1", 10.0)
 
         assertTrue(result.isFailure)
         assertTrue(result.exceptionOrNull()?.message?.contains("Недостаточно") == true)
@@ -70,7 +70,7 @@ class InvestUseCaseTest {
 
     @Test
     fun `invest fails when amount below minimum`() = runTest {
-        val result = useCase("p1", 0.05)
+        val result = useCase("p1", 1.0)
         assertTrue(result.isFailure)
     }
 
@@ -82,7 +82,7 @@ class InvestUseCaseTest {
         coEvery { gameStateRepo.getGameState() } returns fullState
         coEvery { projectRepo.getProjectById("p1") } returns testProject
 
-        val result = useCase("p1", 1.0)
+        val result = useCase("p1", 5.0)
         assertTrue(result.isFailure)
     }
 }
