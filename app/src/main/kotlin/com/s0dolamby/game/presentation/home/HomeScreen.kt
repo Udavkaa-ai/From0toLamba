@@ -110,7 +110,7 @@ fun HomeScreen(
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Text("✦", color = FairyGold, fontSize = 12.sp)
-                            Text("С 0 до Ламбы", fontWeight = FontWeight.Bold)
+                            Text("Из грязи в князи", fontWeight = FontWeight.Bold)
                             Text("✦", color = FairyGold, fontSize = 12.sp)
                         }
                     },
