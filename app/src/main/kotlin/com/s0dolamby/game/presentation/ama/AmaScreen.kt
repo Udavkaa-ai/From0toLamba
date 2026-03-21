@@ -38,14 +38,14 @@ import com.s0dolamby.game.presentation.common.theme.Warning
 // ─── Background selection ─────────────────────────────────────────────────────
 
 private fun besedaBackground(archetype: PersonaArchetype?): Int = when (archetype) {
-    PersonaArchetype.BURATINO    -> R.drawable.beseda_bg_1
-    PersonaArchetype.BOYARIN     -> R.drawable.beseda_bg_2
-    PersonaArchetype.KOLOBOK     -> R.drawable.beseda_bg_3
-    PersonaArchetype.KOSCHEI     -> R.drawable.beseda_bg_4
-    PersonaArchetype.ZOLUSHKA    -> R.drawable.beseda_bg_5
-    PersonaArchetype.BABA_YAGA   -> R.drawable.beseda_bg_1  // таинственная — как BURATINO
-    PersonaArchetype.IVAN_DURAK  -> R.drawable.beseda_bg_3  // добродушный — как KOLOBOK
-    null                         -> R.drawable.beseda_bg_1
+    PersonaArchetype.BURATINO   -> R.drawable.beseda_buratino
+    PersonaArchetype.BOYARIN    -> R.drawable.beseda_boyarin
+    PersonaArchetype.KOLOBOK    -> R.drawable.beseda_kolobok
+    PersonaArchetype.KOSCHEI    -> R.drawable.beseda_koschei
+    PersonaArchetype.ZOLUSHKA   -> R.drawable.beseda_zolushka
+    PersonaArchetype.BABA_YAGA  -> R.drawable.beseda_baba_yaga
+    PersonaArchetype.IVAN_DURAK -> R.drawable.beseda_ivan_durak
+    null                        -> R.drawable.beseda_buratino
 }
 
 // ─── Question templates ───────────────────────────────────────────────────────
