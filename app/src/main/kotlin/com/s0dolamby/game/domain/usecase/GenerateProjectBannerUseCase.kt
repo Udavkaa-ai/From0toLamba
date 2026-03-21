@@ -50,13 +50,15 @@ class GenerateProjectBannerUseCase @Inject constructor(
 
         val finalPrompt = promptBuilder.buildFinalImagePrompt(concept)
 
-        // Step 2: Pollinations.ai — FLUX.1-schnell, free tier (no API key needed).
+        // Step 2: Pollinations.ai — FLUX.1-schnell under the hood.
         // URLEncoder + replace("+","%20") guarantees RFC-3986 compliant path segment.
         val encoded = java.net.URLEncoder.encode(finalPrompt.take(400), "UTF-8")
             .replace("+", "%20")
         val seed = kotlin.math.abs(project.id.hashCode())
-        val url = "https://image.pollinations.ai/prompt/$encoded" +
-                  "?width=512&height=512&seed=$seed&model=flux&nologo=true"
+        val key = BuildConfig.POLLINATIONS_API_KEY
+        val extras = if (key.isNotEmpty()) "&nologo=true&key=$key" else ""
+        val url = "https://gen.pollinations.ai/image/$encoded" +
+                  "?width=512&height=512&seed=$seed&model=flux$extras"
 
         AppLogger.i("GenerateProjectBannerUseCase", "Banner URL saved for ${project.claimedName}")
         projectRepository.updateBannerUrl(project.id, url, concept)
