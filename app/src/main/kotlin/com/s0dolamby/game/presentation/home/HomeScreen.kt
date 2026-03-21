@@ -29,10 +29,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.s0dolamby.game.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.s0dolamby.game.domain.model.DailyUpdate
 import com.s0dolamby.game.domain.model.PayoutStatus
@@ -68,18 +71,28 @@ fun HomeScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val pendingUpdateCards by viewModel.pendingUpdateCards.collectAsState()
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colorStops = arrayOf(
-                        0f to Color(0xFF0A0818),
-                        0.35f to Background
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Фоновая картинка кабака
+        androidx.compose.foundation.Image(
+            painter = painterResource(id = R.drawable.tavern_bg),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+        // Тёмный оверлей для читаемости UI
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colorStops = arrayOf(
+                            0f to Color(0xD9060412),
+                            0.4f to Color(0xBF0A0818),
+                            1f to Color(0xF0060412)
+                        )
                     )
                 )
-            )
-    ) {
+        )
         // Мерцающие искры в верхней части фона
         SparklesOverlay(
             modifier = Modifier
