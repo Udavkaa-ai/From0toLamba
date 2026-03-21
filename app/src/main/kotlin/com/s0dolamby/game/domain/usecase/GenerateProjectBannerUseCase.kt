@@ -14,10 +14,9 @@ import javax.inject.Inject
 /**
  * Generates a project banner in two steps:
  *  1. DeepSeek invents a visual concept (creative, unique per project name) — ~$0.00003
- *  2. Builds a Pollinations.ai URL from that concept — FREE, FLUX.1-schnell under the hood
+ *  2. OpenRouter + flux.2-flex generates the image, returns a CDN URL — ~$0.003
  *
- * Pollinations.ai generates the image lazily when Coil first loads the URL.
- * Coil disk-cache ensures the image is only fetched once per device.
+ * The CDN URL is stored in Room; Coil disk-cache ensures it's only fetched once per device.
  */
 class GenerateProjectBannerUseCase @Inject constructor(
     private val api: OpenRouterApiService,
@@ -25,7 +24,7 @@ class GenerateProjectBannerUseCase @Inject constructor(
     private val projectRepository: ProjectRepository
 ) {
     suspend operator fun invoke(project: Project): Result<String> = runCatching {
-        // Step 1: unique visual concept from DeepSeek — keeps every banner distinct
+        // Step 1: unique visual concept from DeepSeek
         val concept = try {
             val resp = api.chatCompletion(
                 auth = "Bearer ${BuildConfig.OPENROUTER_API_KEY}",
@@ -40,25 +39,27 @@ class GenerateProjectBannerUseCase @Inject constructor(
             )
             resp.choices.first().message.content
                 .trim()
-                .replace(Regex("^[*_\"'`]+|[*_\"'`]+$"), "") // strip markdown bold/italic/quotes
+                .replace(Regex("^[*_\"'`]+|[*_\"'`]+$"), "")
                 .trim()
         } catch (e: Exception) {
-            // Fallback concept if DeepSeek is unavailable — still gives a decent image
             AppLogger.i("GenerateProjectBannerUseCase", "Concept gen failed, using name: ${e.message}")
             "digital art illustration inspired by the name ${project.claimedName}, vibrant colors, mobile game banner"
         }
 
         val finalPrompt = promptBuilder.buildFinalImagePrompt(concept)
 
-        // Step 2: Pollinations.ai — FLUX.1-schnell for free, no API key required.
-        // URLEncoder + replace("+","%20") guarantees RFC-3986 compliant path segment.
-        val encoded = java.net.URLEncoder.encode(finalPrompt.take(400), "UTF-8")
-            .replace("+", "%20")
-        val seed = kotlin.math.abs(project.id.hashCode())
-        val key = BuildConfig.POLLINATIONS_API_KEY
-        val extras = if (key.isNotEmpty()) "&nologo=true&key=$key" else ""
-        val url = "https://gen.pollinations.ai/image/$encoded" +
-                  "?width=512&height=512&seed=$seed&model=flux$extras"
+        // Step 2: OpenRouter image generation — returns CDN URL
+        val imageResp = api.chatCompletion(
+            auth = "Bearer ${BuildConfig.OPENROUTER_API_KEY}",
+            request = ChatRequest(
+                model = GameConfig.IMAGE_MODEL,
+                messages = listOf(ChatMessage("user", finalPrompt)),
+                maxTokens = 1,
+                modalities = listOf("image")
+            )
+        )
+        val url = imageResp.choices.firstOrNull()?.message?.images?.firstOrNull()?.imageUrl?.url
+            ?: throw Exception("No image URL in OpenRouter response")
 
         AppLogger.i("GenerateProjectBannerUseCase", "Banner URL saved for ${project.claimedName}")
         projectRepository.updateBannerUrl(project.id, url, concept)
