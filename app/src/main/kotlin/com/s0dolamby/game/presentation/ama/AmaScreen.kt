@@ -75,18 +75,6 @@ private val questionTemplates = listOf(
     "Покажи книгу учёта доходов и расходов?"
 )
 
-// ─── LieTopic helpers ────────────────────────────────────────────────────────
-
-private val LieTopic.displayName: String get() = when (this) {
-    LieTopic.PATRON_COUNT -> "Кол-во вкладчиков"
-    LieTopic.DAILY_PROFIT -> "Дневной доход"
-    LieTopic.PAYOUT_DATE -> "Дата выплат"
-    LieTopic.GUILD_SIZE -> "Размер артели"
-    LieTopic.ELDER_BLESSING -> "Проверка старейшин"
-    LieTopic.NOBLE_BACKING -> "Покровители"
-    LieTopic.WITHDRAWAL_LIMITS -> "Лимиты вывода"
-}
-
 // ─── Screen ──────────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)

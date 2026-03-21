@@ -265,11 +265,11 @@ private fun StackedBarChart(
         freeHistory.indices.forEach { i ->
             val cx = gap * i + gap / 2f
             val left = cx - barWidth / 2f
-            val freeVal = freeHistory[i].coerceAtLeast(0.0)
-            val investedVal = investedHistory[i].coerceAtLeast(0.0)
-            val totalVal = (freeVal + investedVal).coerceAtLeast(0.001)
+            val freeVal = freeHistory[i].coerceAtLeast(0.0).toFloat()
+            val investedVal = investedHistory[i].coerceAtLeast(0.0).toFloat()
+            val totalVal = (freeVal + investedVal).coerceAtLeast(0.001f)
 
-            val totalBarH = (totalVal / maxTotal * chartH).toFloat().coerceAtLeast(2f)
+            val totalBarH = (totalVal / maxTotal.toFloat() * chartH).coerceAtLeast(2f)
             val freeBarH = (freeVal / totalVal * totalBarH).coerceAtLeast(0f)
             val investedBarH = (totalBarH - freeBarH).coerceAtLeast(0f)
 
