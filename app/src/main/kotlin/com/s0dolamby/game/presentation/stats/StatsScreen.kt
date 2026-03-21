@@ -68,10 +68,11 @@ fun StatsScreen(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("Статистика") },
+                title = { Text("Успехи инвестора") },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Назад") } },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 actions = {
-                    TextButton(onClick = onRegistryClick) { Text("Энциклопедия") }
+                    TextButton(onClick = onRegistryClick) { Text("Летопись") }
                 }
             )
         }

@@ -34,12 +34,13 @@ fun InboxScreen(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("Входящие предложения") },
+                title = { Text("Входящие грамоты") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, "Назад")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         }
     ) { padding ->
@@ -67,7 +68,7 @@ fun InboxScreen(
                                 textAlign = TextAlign.Center
                             )
                             Text(
-                                "Нажми «Следующий день» на главной —\nновые предложения появятся в inbox",
+                                "Нажми «Следующий день» на главной —\nновые грамоты появятся утром",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center

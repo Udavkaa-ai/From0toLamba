@@ -37,8 +37,9 @@ fun NewsScreen(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("Новости проектов") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Назад") } }
+                title = { Text("Вести с ярмарки") },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Назад") } },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         }
     ) { padding ->
@@ -63,7 +64,7 @@ fun NewsScreen(
                                 style = MaterialTheme.typography.titleMedium
                             )
                             Text(
-                                "Нажми «Следующий день» — проекты начнут публиковать апдейты",
+                                "Нажми «Следующий день» — дела начнут посылать вести",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

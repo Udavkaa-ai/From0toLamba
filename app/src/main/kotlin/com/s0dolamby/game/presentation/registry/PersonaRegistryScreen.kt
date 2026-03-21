@@ -82,17 +82,18 @@ fun PersonaRegistryScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedTab by remember { mutableStateOf(0) }
-    val tabs = listOf("Разработчики", "Типы проектов", "Словарь")
+    val tabs = listOf("Типажи", "Виды дел", "Словарь")
 
     ScreenBackground(R.drawable.registry_bg) {
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("Энциклопедия") },
+                title = { Text("Летопись") },
                 navigationIcon = {
                     IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Назад") }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         }
     ) { padding ->

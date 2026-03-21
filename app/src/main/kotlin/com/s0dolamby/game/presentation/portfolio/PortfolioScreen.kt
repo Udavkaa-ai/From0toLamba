@@ -46,8 +46,9 @@ fun PortfolioScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Портфель") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Назад") } }
+                title = { Text("Казна") },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Назад") } },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         }
     ) { padding ->
@@ -57,7 +58,7 @@ fun PortfolioScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             if (activeProjects.isNotEmpty()) {
-                item { Text("Активные", style = MaterialTheme.typography.titleMedium) }
+                item { Text("Текущие вложения", style = MaterialTheme.typography.titleMedium) }
                 items(activeProjects) { project ->
                     PortfolioProjectCard(
                         project = project,
@@ -69,7 +70,7 @@ fun PortfolioScreen(
                 }
             }
             if (closedProjects.isNotEmpty()) {
-                item { Text("История", style = MaterialTheme.typography.titleMedium) }
+                item { Text("Летопись сделок", style = MaterialTheme.typography.titleMedium) }
                 items(closedProjects) { project ->
                     ClosedProjectCard(project = project, onClick = { onProjectClick(project.id) })
                 }
