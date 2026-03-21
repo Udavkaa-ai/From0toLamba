@@ -41,27 +41,63 @@ class ProjectRegistry @Inject constructor(
     ) {
         fun buildName(): String {
             val pattern = namePatterns.random()
-            val names = listOf(
-                // Сказочные персонажи (русские народные)
-                "Колобок", "Василиса", "Аленушка", "Финист", "Добрыня", "Иванушка",
-                "Марья", "Снегурка", "Алёнка", "Богатырь", "Дюймовочка", "Русалка",
-                // Волшебные существа
-                "Жар", "Дракон", "Феникс", "Домовой", "Леший", "Жарптица",
-                "Кикимора", "Водяной", "Светлячок", "Единорог",
-                // Сказочные предметы
-                "Ковёр", "Горшочек", "Клубок", "Ключик", "Зеркало",
-                "Перо", "Яблоко", "Хрусталь", "Жемчуг", "Злато",
-                // Сказочные места и миры
-                "Тридевятый", "Лукоморье", "Берендей", "Беловодье", "Буян",
-                // Братья Гримм / мировые сказки
-                "Рапунцель", "Гензель", "Бременский", "Дюймо", "Румпель",
-                // Советские сказочные персонажи
-                "Буратино", "Карлсон", "Чебурашка", "Незнайка", "Мурзилка",
-                // Природные / волшебные образы
-                "Заря", "Звезда", "Луна", "Вьюга", "Гроза", "Радуга",
-                "Гром", "Туман", "Роса", "Иней"
-            )
-            return pattern.replace("[Name]", names.random())
+            val name = fairyTaleNames.random()
+            return pattern
+                .replace("[Name]", name.nom)
+                .replace("[NameGen]", name.gen)
         }
     }
+
+    private data class FairyTaleName(val nom: String, val gen: String)
+
+    private val fairyTaleNames = listOf(
+        // Русские народные персонажи
+        FairyTaleName("Колобок", "Колобка"),
+        FairyTaleName("Василиса", "Василисы"),
+        FairyTaleName("Аленушка", "Аленушки"),
+        FairyTaleName("Финист", "Финиста"),
+        FairyTaleName("Добрыня", "Добрыни"),
+        FairyTaleName("Иванушка", "Иванушки"),
+        FairyTaleName("Марья", "Марьи"),
+        FairyTaleName("Снегурка", "Снегурки"),
+        FairyTaleName("Богатырь", "Богатыря"),
+        FairyTaleName("Дюймовочка", "Дюймовочки"),
+        FairyTaleName("Русалка", "Русалки"),
+        // Волшебные существа
+        FairyTaleName("Жар-Птица", "Жар-Птицы"),
+        FairyTaleName("Дракон", "Дракона"),
+        FairyTaleName("Феникс", "Феникса"),
+        FairyTaleName("Домовой", "Домового"),
+        FairyTaleName("Леший", "Лешего"),
+        FairyTaleName("Кикимора", "Кикиморы"),
+        FairyTaleName("Водяной", "Водяного"),
+        FairyTaleName("Светлячок", "Светлячка"),
+        FairyTaleName("Единорог", "Единорога"),
+        // Волшебные предметы
+        FairyTaleName("Горшочек", "Горшочка"),
+        FairyTaleName("Ключик", "Ключика"),
+        FairyTaleName("Зеркало", "Зеркала"),
+        FairyTaleName("Перо", "Пера"),
+        FairyTaleName("Яблоко", "Яблока"),
+        FairyTaleName("Злато", "Злата"),
+        FairyTaleName("Клубок", "Клубка"),
+        FairyTaleName("Жемчуг", "Жемчуга"),
+        // Сказочные места
+        FairyTaleName("Лукоморье", "Лукоморья"),
+        FairyTaleName("Берендей", "Берендея"),
+        FairyTaleName("Беловодье", "Беловодья"),
+        FairyTaleName("Буян", "Буяна"),
+        // Советские сказочные персонажи
+        FairyTaleName("Буратино", "Буратино"),
+        FairyTaleName("Карлсон", "Карлсона"),
+        FairyTaleName("Чебурашка", "Чебурашки"),
+        FairyTaleName("Незнайка", "Незнайки"),
+        // Природные образы
+        FairyTaleName("Заря", "Зари"),
+        FairyTaleName("Гром", "Грома"),
+        FairyTaleName("Роса", "Росы"),
+        FairyTaleName("Иней", "Инея"),
+        FairyTaleName("Вьюга", "Вьюги"),
+        FairyTaleName("Снежок", "Снежка"),
+    )
 }

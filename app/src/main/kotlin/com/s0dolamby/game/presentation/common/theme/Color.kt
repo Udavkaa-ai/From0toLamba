@@ -22,3 +22,8 @@ val RedFlag = Color(0xFFFF3D3D)
 val ScamRed = Color(0xFFCC2222)
 val SurvivorGreen = Color(0xFF22AA55)
 val UnicornPurple = Color(0xFF9933FF)
+
+// Fairy tale palette
+val FairyGold = Color(0xFFFFB800)
+val EnchantedPurple = Color(0xFF2A1960)
+val NightBlue = Color(0xFF0D1735)

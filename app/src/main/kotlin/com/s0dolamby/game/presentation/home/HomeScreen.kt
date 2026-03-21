@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -24,6 +25,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -36,7 +38,11 @@ import com.s0dolamby.game.domain.model.DailyUpdate
 import com.s0dolamby.game.domain.model.PayoutStatus
 import com.s0dolamby.game.domain.model.Project
 import com.s0dolamby.game.presentation.common.components.ProjectBannerImage
+import com.s0dolamby.game.presentation.common.theme.Background
+import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
 import com.s0dolamby.game.presentation.common.theme.Error
+import com.s0dolamby.game.presentation.common.theme.FairyGold
+import com.s0dolamby.game.presentation.common.theme.NightBlue
 import com.s0dolamby.game.presentation.common.theme.Success
 import com.s0dolamby.game.presentation.common.theme.TonBlue
 import com.s0dolamby.game.presentation.common.theme.Warning
@@ -59,11 +65,35 @@ fun HomeScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val pendingUpdateCards by viewModel.pendingUpdateCards.collectAsState()
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    colorStops = arrayOf(
+                        0f to Color(0xFF0A0818),
+                        0.35f to Background
+                    )
+                )
+            )
+    ) {
         Scaffold(
+            containerColor = Color.Transparent,
             topBar = {
                 TopAppBar(
-                    title = { Text("С 0 до Ламбы", fontWeight = FontWeight.Bold) },
+                    title = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text("✦", color = FairyGold, fontSize = 12.sp)
+                            Text("С 0 до Ламбы", fontWeight = FontWeight.Bold)
+                            Text("✦", color = FairyGold, fontSize = 12.sp)
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent
+                    ),
                     actions = {
                         IconButton(onClick = onStatsClick) {
                             Box(
@@ -149,11 +179,27 @@ fun HomeScreen(
                 val activeProjects = gameState?.activeProjects ?: emptyList()
                 if (activeProjects.isNotEmpty()) {
                     item {
-                        Text(
-                            "Активные проекты (${activeProjects.size}/5)",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                "✦",
+                                color = FairyGold.copy(alpha = 0.6f),
+                                fontSize = 10.sp
+                            )
+                            Text(
+                                "Активные владения",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                "${activeProjects.size}/5",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = FairyGold.copy(alpha = 0.7f)
+                            )
+                        }
                     }
                     items(activeProjects) { project ->
                         ActiveProjectCard(project = project, onClick = { onProjectClick(project.id) })
@@ -389,26 +435,26 @@ private fun updateCountWord(count: Int): String = when {
 }
 
 private val loadingPhrases = listOf(
-    "Экономика делает свой ход...",
+    "Домовой пересчитывает монеты...",
+    "Жар-Птица несёт свежие данные...",
+    "Кот учёный обходит дуб кругом...",
+    "Кощей прячет доходность...",
+    "Баба Яга читает байт-код...",
+    "Колобок катится к листингу...",
+    "Водяной замораживает ликвидность...",
+    "Зеркальце считает лучшие проекты...",
     "Финансовые манипуляции в процессе...",
-    "Улучшаем код на фрилансе...",
     "Ищем спонсоров в Дубае...",
     "Считаем скамы за тебя...",
     "Разраб пишет апдейт в 3 ночи...",
     "Листинг вот-вот, обещаем...",
-    "Закрываем токсичных инвесторов...",
     "Аудит почти готов (нет)...",
     "Пампим метрики для отчёта...",
-    "Команда из 50 человек работает...",
-    "Ребалансируем пулы ликвидности...",
     "CEO летит из Дубая на конференцию...",
-    "Тестируем зкпруфы в продакшне...",
     "Биржа ждёт нашего листинга...",
-    "Инвесторы довольны (публично)...",
     "Смотрим графики и не паникуем...",
-    "Пишем whitepaper на 80 страниц...",
     "Считаем комиссии за вывод...",
-    "DAO голосует за наш бюджет..."
+    "ДАО голосует за наш бюджет..."
 )
 
 @Composable
@@ -432,80 +478,127 @@ private fun BalanceCard(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(EnchantedPurple, NightBlue)
+                    )
+                )
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Column {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.AccountBalanceWallet,
-                            contentDescription = null,
-                            tint = TonBlue.copy(alpha = 0.7f),
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Text("Баланс", style = MaterialTheme.typography.labelSmall)
-                    }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(28.dp)
-                                .clip(CircleShape)
-                                .background(TonBlue),
-                            contentAlignment = Alignment.Center
+                // Decorative top row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("✦", color = FairyGold.copy(alpha = 0.25f), fontSize = 10.sp)
+                    Text("✦  ✦  ✦", color = FairyGold.copy(alpha = 0.15f), fontSize = 10.sp)
+                    Text("✦", color = FairyGold.copy(alpha = 0.25f), fontSize = 10.sp)
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            Text("TON", style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp),
-                                color = Color.White, fontWeight = FontWeight.Bold)
+                            Icon(
+                                Icons.Default.AccountBalanceWallet,
+                                contentDescription = null,
+                                tint = FairyGold.copy(alpha = 0.7f),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                "Казна",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White.copy(alpha = 0.65f)
+                            )
                         }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .clip(CircleShape)
+                                    .background(TonBlue),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    "TON",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp),
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Text(
+                                "%.2f".format(balance),
+                                style = MaterialTheme.typography.headlineLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = FairyGold
+                            )
+                            Text(
+                                "TON",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = FairyGold.copy(alpha = 0.65f)
+                            )
+                        }
+                    }
+                    Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            "%.2f".format(balance),
-                            style = MaterialTheme.typography.headlineLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = TonBlue
+                            "День $day",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White
                         )
                         Text(
-                            "TON",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Medium,
-                            color = TonBlue.copy(alpha = 0.7f)
+                            rank,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White.copy(alpha = 0.55f)
                         )
                     }
                 }
-                Column(horizontalAlignment = Alignment.End) {
-                    Text("День $day", style = MaterialTheme.typography.bodyMedium)
-                    Text(rank, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-            Button(
-                onClick = onAdvanceDayClick,
-                enabled = !isLoading,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                if (isLoading) {
-                    AnimatedContent(
-                        targetState = phraseIndex,
-                        transitionSpec = {
-                            slideInVertically { it } togetherWith slideOutVertically { -it }
-                        },
-                        label = "loadingPhrase"
-                    ) { idx ->
-                        Text(
-                            loadingPhrases[idx],
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+
+                Button(
+                    onClick = onAdvanceDayClick,
+                    enabled = !isLoading,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = FairyGold,
+                        contentColor = Color(0xFF1A0A00),
+                        disabledContainerColor = FairyGold.copy(alpha = 0.35f),
+                        disabledContentColor = Color(0xFF1A0A00).copy(alpha = 0.5f)
+                    )
+                ) {
+                    if (isLoading) {
+                        AnimatedContent(
+                            targetState = phraseIndex,
+                            transitionSpec = {
+                                slideInVertically { it } togetherWith slideOutVertically { -it }
+                            },
+                            label = "loadingPhrase"
+                        ) { idx ->
+                            Text(
+                                loadingPhrases[idx],
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    } else {
+                        Text("Следующая страница  ✦")
                     }
-                } else {
-                    Text("Следующий день →")
                 }
             }
         }
@@ -526,14 +619,18 @@ private fun ActiveProjectCard(project: Project, onClick: () -> Unit) {
             ) {
                 Column {
                     Text(project.claimedName, style = MaterialTheme.typography.titleMedium)
-                    Text(project.developerName, style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        project.developerName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
                         "%.2f TON".format(project.currentValueTON),
                         style = MaterialTheme.typography.titleMedium,
-                        color = if (project.currentValueTON >= project.investedAmountTON) Success else MaterialTheme.colorScheme.error
+                        color = if (project.currentValueTON >= project.investedAmountTON) Success
+                                else MaterialTheme.colorScheme.error
                     )
                     Text("День ${project.daysSinceJoined}", style = MaterialTheme.typography.labelSmall)
                 }
@@ -544,19 +641,54 @@ private fun ActiveProjectCard(project: Project, onClick: () -> Unit) {
 
 @Composable
 private fun EmptyProjectsCard(onInboxClick: () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(24.dp).fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            EnchantedPurple.copy(alpha = 0.5f),
+                            NightBlue.copy(alpha = 0.8f)
+                        )
+                    )
+                )
         ) {
-            Text("Нет активных проектов", style = MaterialTheme.typography.titleMedium)
-            Text(
-                "Зайди во Входящие, проведи AMA с разработчиком и реши, стоит ли инвестировать",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            OutlinedButton(onClick = onInboxClick) { Text("Открыть входящие") }
+            Column(
+                modifier = Modifier
+                    .padding(28.dp)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    "✦",
+                    color = FairyGold.copy(alpha = 0.4f),
+                    fontSize = 28.sp
+                )
+                Text(
+                    "Казна пуста",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    "Загляни во Входящие — там ждут новые разработчики. Поговори с каждым, разгадай кто из них скамер, и реши, достоин ли проект твоих монет.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.65f)
+                )
+                OutlinedButton(
+                    onClick = onInboxClick,
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f))
+                ) {
+                    Text("Открыть входящие")
+                }
+            }
         }
     }
 }
