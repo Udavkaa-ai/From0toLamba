@@ -289,7 +289,7 @@ private val glossaryItems = listOf(
 val PersonaArchetype.displayName: String get() = when (this) {
     PersonaArchetype.BURATINO -> "Буратино"
     PersonaArchetype.KOT_V_SAPOGAKH -> "Кот в сапогах"
-    PersonaArchetype.KARLSSON -> "Карлсон"
+    PersonaArchetype.KOLOBOK -> "Колобок"
     PersonaArchetype.KOSCHEI -> "Кощей"
     PersonaArchetype.ZOLUSHKA -> "Золушка"
     PersonaArchetype.BABA_YAGA -> "Баба Яга"
@@ -299,7 +299,7 @@ val PersonaArchetype.displayName: String get() = when (this) {
 val PersonaArchetype.emoji: String get() = when (this) {
     PersonaArchetype.BURATINO -> "🪆"
     PersonaArchetype.KOT_V_SAPOGAKH -> "🐱"
-    PersonaArchetype.KARLSSON -> "🚁"
+    PersonaArchetype.KOLOBOK -> "🟠"
     PersonaArchetype.KOSCHEI -> "💀"
     PersonaArchetype.ZOLUSHKA -> "👠"
     PersonaArchetype.BABA_YAGA -> "🏚️"
@@ -309,9 +309,9 @@ val PersonaArchetype.emoji: String get() = when (this) {
 val PersonaArchetype.description: String get() = when (this) {
     PersonaArchetype.BURATINO -> "Наивный лжец, верит собственным сказкам. Обещает Поле Чудес, обижается под давлением."
     PersonaArchetype.KOT_V_SAPOGAKH -> "Пышный и пафосный. Ссылается на «маркизов» и великих партнёров без имён."
-    PersonaArchetype.KARLSSON -> "«Лучший в мире!». Искренний энтузиаст, может случайно проговориться о правде."
+    PersonaArchetype.KOLOBOK -> "Хвастун-оптимист. От всех проблем уходит с песней — пока не встретит Лису."
     PersonaArchetype.KOSCHEI -> "Ледяной и цифровой. Говорит метриками-приговорами. Опасен — может быть и честным."
-    PersonaArchetype.ZOLUSHKA -> "Апеллирует к жалости и мечтам. Дедлайны «до полуночи». Много эмодзи."
+    PersonaArchetype.ZOLUSHKA -> "Апеллирует к жалости и мечтам. Дедлайны «до полуночи». Искусственная срочность."
     PersonaArchetype.BABA_YAGA -> "Отвечает загадками. Технически подкована — единственный архетип без ложных тем."
     PersonaArchetype.IVAN_DURAK -> "Открыт про два провала. Третий проект — может реально взлететь."
 }

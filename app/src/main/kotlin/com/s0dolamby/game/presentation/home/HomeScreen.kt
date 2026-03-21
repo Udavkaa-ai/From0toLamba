@@ -131,25 +131,25 @@ fun HomeScreen(
                                 if (count > 0) Badge { Text("$count") }
                             }) { Icon(Icons.Default.Email, null, modifier = Modifier.size(26.dp)) }
                         },
-                        label = { Text("Входящие") }
+                        label = { Text("Грамоты") }
                     )
                     NavigationBarItem(
                         selected = false,
                         onClick = onPortfolioClick,
                         icon = { Icon(Icons.Default.AccountBalance, null, modifier = Modifier.size(26.dp)) },
-                        label = { Text("Портфель") }
+                        label = { Text("Казна") }
                     )
                     NavigationBarItem(
                         selected = false,
                         onClick = onNewsClick,
                         icon = { Icon(Icons.Default.Newspaper, null, modifier = Modifier.size(26.dp)) },
-                        label = { Text("Новости") }
+                        label = { Text("Вести") }
                     )
                     NavigationBarItem(
                         selected = false,
                         onClick = onRegistryClick,
                         icon = { Icon(Icons.Default.MenuBook, null, modifier = Modifier.size(26.dp)) },
-                        label = { Text("WIKI", fontWeight = FontWeight.Bold) },
+                        label = { Text("Летопись", fontWeight = FontWeight.Bold) },
                         colors = NavigationBarItemDefaults.colors(
                             unselectedIconColor = Error,
                             unselectedTextColor = Error,

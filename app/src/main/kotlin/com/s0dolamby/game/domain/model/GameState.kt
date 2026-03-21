@@ -8,11 +8,11 @@ enum class InvestorRank {
     LAMBO_SENSEI;
 
     val displayName: String get() = when (this) {
-        NEWBIE -> "Новичок"
-        AMBASSADOR -> "Амбассадор"
-        ANALYST -> "Аналитик"
-        SHARK -> "Акула"
-        LAMBO_SENSEI -> "Ламбо-Сенсей"
+        NEWBIE -> "Скоморох"
+        AMBASSADOR -> "Купец"
+        ANALYST -> "Мудрец"
+        SHARK -> "Богатырь"
+        LAMBO_SENSEI -> "Царь"
     }
 }
 

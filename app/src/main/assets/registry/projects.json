@@ -17,7 +17,7 @@
       ["Запуск бота", "100к тапальщиков", "Листинг на Gate", "CEX-листинг"],
       ["Тап-фаза", "Сказочная реферальная система", "Токен-дроп", "Биржа"]
     ],
-    "compatiblePersonas": ["buratino", "zolushka", "karlsson"],
+    "compatiblePersonas": ["buratino", "zolushka", "kolobok"],
     "fateWeights": {"INSTANT_SCAM": 40, "SLOW_DRAIN": 35, "HONEST_FAIL": 15, "SURVIVOR": 8, "UNICORN": 2}
   },
   {
@@ -98,7 +98,7 @@
     "roadmapTemplates": [
       ["Аудит", "Тест-сеть", "Основная сеть", "ДАО-управление", "Мультичейн"]
     ],
-    "compatiblePersonas": ["baba_yaga", "ivan_durak", "karlsson", "koschei"],
+    "compatiblePersonas": ["baba_yaga", "ivan_durak", "kolobok", "koschei"],
     "fateWeights": {"INSTANT_SCAM": 5, "SLOW_DRAIN": 10, "HONEST_FAIL": 30, "SURVIVOR": 40, "UNICORN": 15}
   }
 ]

@@ -89,7 +89,7 @@ class ProjectRegistry @Inject constructor(
         FairyTaleName("Буян", "Буяна"),
         // Советские сказочные персонажи
         FairyTaleName("Буратино", "Буратино"),
-        FairyTaleName("Карлсон", "Карлсона"),
+        FairyTaleName("Конёк", "Конька"),
         FairyTaleName("Чебурашка", "Чебурашки"),
         FairyTaleName("Незнайка", "Незнайки"),
         // Природные образы
