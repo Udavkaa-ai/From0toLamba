@@ -74,7 +74,7 @@ fun StatsScreen(
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text("✦", color = FairyGold, fontSize = 12.sp)
-                        Text("Успехи инвестора", fontWeight = FontWeight.Bold)
+                        Text("Успехи купца", fontWeight = FontWeight.Bold)
                         Text("✦", color = FairyGold, fontSize = 12.sp)
                     }
                 },
@@ -123,7 +123,7 @@ private fun RankCard(state: GameState?) {
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    "Ранг инвестора",
+                    "Купеческий чин",
                     style = MaterialTheme.typography.labelSmall,
                     color = FairyGold.copy(alpha = 0.7f)
                 )
@@ -165,7 +165,7 @@ private fun BalanceChartCard(state: GameState?) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "График казны",
+                "Ведомость казны",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
@@ -197,7 +197,7 @@ private fun BalanceChartCard(state: GameState?) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("📈", style = MaterialTheme.typography.displaySmall)
                     Text(
-                        "Пройди несколько дней —\nграфик появится здесь",
+                        "Пройди несколько дней —\nведомость появится здесь",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.6f)
                     )
@@ -285,7 +285,7 @@ private fun FinancialStats(state: GameState?) {
     val roiPositive = roi >= 0
 
     FairyCard(modifier = Modifier.fillMaxWidth()) {
-        Text("Финансы", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+        Text("Злато", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
 
         Surface(
             color = if (roiPositive) Success.copy(alpha = 0.15f) else Error.copy(alpha = 0.15f),

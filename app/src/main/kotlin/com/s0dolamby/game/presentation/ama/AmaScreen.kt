@@ -134,7 +134,7 @@ fun AmaScreen(
                 actions = {
                     if (!sessionEnded) {
                         TextButton(onClick = viewModel::showLieGuessSheet) {
-                            Text("Скипнуть")
+                            Text("Миновать")
                         }
                         TextButton(onClick = viewModel::showInvestSheet) {
                             Text("Инвест.")
@@ -587,7 +587,7 @@ private fun SessionEndBanner(onInvest: () -> Unit, onSkip: () -> Unit) {
                 Text("Инвестировать")
             }
             OutlinedButton(onClick = onSkip, modifier = Modifier.fillMaxWidth()) {
-                Text("Скипнуть → угадать обман")
+                Text("Миновать → угадать обман")
             }
         }
     }

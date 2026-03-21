@@ -216,7 +216,7 @@ private fun PortfolioProjectCard(
             enabled = !project.isWithdrawalLocked,
             colors = ButtonDefaults.outlinedButtonColors(contentColor = Error),
             border = androidx.compose.foundation.BorderStroke(1.dp, Error.copy(alpha = 0.4f))
-        ) { Text("Выйти из проекта") }
+        ) { Text("Покинуть дело") }
     }
 
     if (showAddFunds) {

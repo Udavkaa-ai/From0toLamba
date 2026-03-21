@@ -251,7 +251,7 @@ private fun LiveStatsCard(project: Project, onManageClick: (() -> Unit)?) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically) {
-                Text("Текущее состояние", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text("Нынешнее положение", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 if (project.isWithdrawalLocked) {
                     Row(verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -263,8 +263,8 @@ private fun LiveStatsCard(project: Project, onManageClick: (() -> Unit)?) {
             StatRow("Вложено", "%.0f ₽".format(project.investedAmountRubles))
             StatRow("Текущая стоимость", "%.0f ₽".format(project.currentValueRubles))
             StatRow("П&У", "%+.0f ₽".format(pnl), color = if (pnl >= 0) Success else Error)
-            StatRow("Дней в портфеле", "${project.daysSinceJoined}")
-            StatRow("Заявленный APY", "${project.claimedAPY.toInt()}%")
+            StatRow("Дней в деле", "${project.daysSinceJoined}")
+            StatRow("Посул (APY)", "${project.claimedAPY.toInt()}%")
             StatRow("Участников (заявлено)", formatCount(project.claimedUserCount))
             if (project.currentUserCount > 0) {
                 StatRow("Участников (сейчас)", formatCount(project.currentUserCount))
@@ -276,7 +276,7 @@ private fun LiveStatsCard(project: Project, onManageClick: (() -> Unit)?) {
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !project.isWithdrawalLocked
                 ) {
-                    Text("Управление инвестицией →")
+                    Text("Распорядиться вложением →")
                 }
                 if (project.isWithdrawalLocked) {
                     Text(
