@@ -38,7 +38,7 @@
       ["Альфа-тест", "Продажа NFT-богатырей", "Сезон 1", "Токен на DEX", "CEX"],
       ["Открытый бета", "PvP-режим", "Гильдии-дружины", "Маркетплейс артефактов"]
     ],
-    "compatiblePersonas": ["kot_v_sapogakh", "baba_yaga", "koschei", "ivan_durak"],
+    "compatiblePersonas": ["boyarin", "baba_yaga", "koschei", "ivan_durak"],
     "fateWeights": {"INSTANT_SCAM": 20, "SLOW_DRAIN": 25, "HONEST_FAIL": 25, "SURVIVOR": 20, "UNICORN": 10}
   },
   {
@@ -58,7 +58,7 @@
     "roadmapTemplates": [
       ["Запуск горшочка", "Добавление волшебных пулов", "Токен управления", "ДАО-лесное собрание"]
     ],
-    "compatiblePersonas": ["kot_v_sapogakh", "buratino"],
+    "compatiblePersonas": ["boyarin", "buratino"],
     "fateWeights": {"INSTANT_SCAM": 50, "SLOW_DRAIN": 30, "HONEST_FAIL": 10, "SURVIVOR": 8, "UNICORN": 2}
   },
   {
@@ -78,7 +78,7 @@
     "roadmapTemplates": [
       ["Набор дружины", "Запуск маркетплейса", "Токен", "Стейкинг"]
     ],
-    "compatiblePersonas": ["zolushka", "buratino", "kot_v_sapogakh"],
+    "compatiblePersonas": ["zolushka", "buratino", "boyarin"],
     "fateWeights": {"INSTANT_SCAM": 25, "SLOW_DRAIN": 50, "HONEST_FAIL": 15, "SURVIVOR": 9, "UNICORN": 1}
   },
   {

@@ -288,7 +288,7 @@ private val glossaryItems = listOf(
 
 val PersonaArchetype.displayName: String get() = when (this) {
     PersonaArchetype.BURATINO -> "Буратино"
-    PersonaArchetype.KOT_V_SAPOGAKH -> "Кот в сапогах"
+    PersonaArchetype.BOYARIN -> "Боярин"
     PersonaArchetype.KOLOBOK -> "Колобок"
     PersonaArchetype.KOSCHEI -> "Кощей"
     PersonaArchetype.ZOLUSHKA -> "Золушка"
@@ -298,7 +298,7 @@ val PersonaArchetype.displayName: String get() = when (this) {
 
 val PersonaArchetype.emoji: String get() = when (this) {
     PersonaArchetype.BURATINO -> "🪆"
-    PersonaArchetype.KOT_V_SAPOGAKH -> "🐱"
+    PersonaArchetype.BOYARIN -> "🎩"
     PersonaArchetype.KOLOBOK -> "🟠"
     PersonaArchetype.KOSCHEI -> "💀"
     PersonaArchetype.ZOLUSHKA -> "👠"
@@ -308,7 +308,7 @@ val PersonaArchetype.emoji: String get() = when (this) {
 
 val PersonaArchetype.description: String get() = when (this) {
     PersonaArchetype.BURATINO -> "Наивный лжец, верит собственным сказкам. Обещает Поле Чудес, обижается под давлением."
-    PersonaArchetype.KOT_V_SAPOGAKH -> "Пышный и пафосный. Ссылается на «маркизов» и великих партнёров без имён."
+    PersonaArchetype.BOYARIN -> "Пышно-официальный. Ссылается на связи при дворе и государевых партнёров без имён."
     PersonaArchetype.KOLOBOK -> "Хвастун-оптимист. От всех проблем уходит с песней — пока не встретит Лису."
     PersonaArchetype.KOSCHEI -> "Ледяной и цифровой. Говорит метриками-приговорами. Опасен — может быть и честным."
     PersonaArchetype.ZOLUSHKA -> "Апеллирует к жалости и мечтам. Дедлайны «до полуночи». Искусственная срочность."
