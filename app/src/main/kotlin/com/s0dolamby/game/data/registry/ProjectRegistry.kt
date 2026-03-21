@@ -47,10 +47,11 @@ class ProjectRegistry @Inject constructor(
                 .replace("[NameGen]", name.gen)
         }
     }
+}
 
-    private data class FairyTaleName(val nom: String, val gen: String)
+private data class FairyTaleName(val nom: String, val gen: String)
 
-    private val fairyTaleNames = listOf(
+private val fairyTaleNames = listOf(
         // Русские народные персонажи
         FairyTaleName("Колобок", "Колобка"),
         FairyTaleName("Василиса", "Василисы"),
@@ -100,4 +101,3 @@ class ProjectRegistry @Inject constructor(
         FairyTaleName("Вьюга", "Вьюги"),
         FairyTaleName("Снежок", "Снежка"),
     )
-}
