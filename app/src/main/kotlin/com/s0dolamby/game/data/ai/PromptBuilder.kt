@@ -64,11 +64,26 @@ $phrases
         project: Project,
         daysUntilCollapse: Int?,
         event: AnnouncementType? = null
-    ): String = """
+    ): String {
+        // Derive a semantic tone — never expose raw daysUntilCollapse to the AI
+        // «критично» only after the project has been active ≥ 3 days to avoid
+        // immediate red flags on day-1 for short-lived scam projects
+        val tone = when {
+            event != null -> null  // event overrides tone
+            daysUntilCollapse == null -> "спокойно — дело стабильно, без ограничений по сроку"
+            daysUntilCollapse >= 5 || project.daysSinceJoined < 3 ->
+                "спокойно — дело работает, никаких тревожных сигналов"
+            daysUntilCollapse in 3..4 ->
+                "лёгкое напряжение — кое-что идёт не по плану, но хозяин держит лицо"
+            else ->
+                "тревожно — явные признаки проблем: задержки, неразбериха, уклончивые ответы хозяина"
+        }
+
+        return """
 Ты генерируешь ежедневное сообщение о деле «${project.claimedName}».
 День с начала: ${project.daysSinceJoined}
 Судьба дела: ${project.fate}
-Дней до краха: ${daysUntilCollapse ?: "не скоро"}
+${if (tone != null) "Общий тон: $tone" else ""}
 
 ${if (event != null) """
 СОБЫТИЕ СЕГОДНЯ: ${event.promptDescription}
@@ -82,12 +97,12 @@ ${if (event != null) "Для этого события используй: ${eve
 ЯЗЫК: Современный живой русский. Иногда можно добавить образный оборот или поговорку — но в меру, не делай текст архаичным.
 СУММЫ: Только в рублях (₽). Никаких TON, крипты, блокчейна.
 ФОРМАТ body: 3–4 полных законченных предложения от лица источника (не обрывай на середине).
-- Если до краха 1–2 дня (и нет события) — добавь тревожные нотки (задержки выплат, «временные трудности»). Не раскрывай напрямую.
 Генерируй ТОЛЬКО валидный JSON без markdown-обёрток.
 
 Верни JSON ровно в этом формате:
 {"title":"заголовок до 8 слов","body":"3-4 законченных предложения.","metrics":{"userCountDelta":0,"payoutStatus":"normal","announcement":null},"redFlags":[]}
-    """.trimIndent()
+        """.trimIndent()
+    }
 
     private val AnnouncementType.promptDescription: String get() = when (this) {
         AnnouncementType.LISTING -> "Дело объявляет о большом торге на ярмарке! Слава растёт, вкладчики ликуют, доходы взлетают."
