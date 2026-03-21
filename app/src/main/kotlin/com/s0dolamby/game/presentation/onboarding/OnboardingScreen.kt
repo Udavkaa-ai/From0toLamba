@@ -14,16 +14,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.s0dolamby.game.R
-import com.s0dolamby.game.presentation.common.components.ScreenBackground
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.s0dolamby.game.R
 import com.s0dolamby.game.domain.model.Project
 import com.s0dolamby.game.domain.repository.GameConfig
 import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.s0dolamby.game.domain.usecase.GenerateProjectUseCase
 import com.s0dolamby.game.domain.usecase.InvestUseCase
+import com.s0dolamby.game.presentation.common.components.FairyCard
+import com.s0dolamby.game.presentation.common.components.OrnamentDivider
+import com.s0dolamby.game.presentation.common.components.ScreenBackground
+import com.s0dolamby.game.presentation.common.theme.FairyGold
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -47,7 +51,6 @@ class OnboardingViewModel @Inject constructor(
     fun finishOnboarding(onDone: () -> Unit) {
         viewModelScope.launch {
             _isLoading.value = true
-            // Даём игроку стартовый капитал за первую беседу в кабаке
             val state = gameStateRepository.getGameState()
             gameStateRepository.updateBalance(state.balance + GameConfig.ONBOARDING_BONUS_RUBLES)
             gameStateRepository.completeOnboarding()
@@ -77,7 +80,7 @@ fun OnboardingScreen(
             emoji = "💬"
         ),
         OnboardingStep(
-            title = "Распознавай сказочные архетипы",
+            title = "Распознавай сказочные типажи",
             body = "«Буратино» верит своим сказкам и давит на срочность.\n«Боярин» говорит пышно, ссылается на государевых мужей без имён.\n«Колобок» весело уходит от любых вопросов.\n«Кощей» убедителен и опасен — говорит цифрами.\n«Иван-дурак» честен про прошлые провалы и может неожиданно взлететь.\n\nПосле закрытия каждого дела — разбор ошибок.",
             emoji = "🔍"
         ),
@@ -107,16 +110,11 @@ fun OnboardingScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 steps.indices.forEach { i ->
-                    Box(
-                        modifier = Modifier
-                            .size(if (i == step) 12.dp else 8.dp)
-                            .padding(2.dp)
-                    ) {
+                    Box(modifier = Modifier.size(if (i == step) 12.dp else 8.dp).padding(2.dp)) {
                         Surface(
                             modifier = Modifier.fillMaxSize(),
                             shape = MaterialTheme.shapes.small,
-                            color = if (i == step) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.surfaceVariant
+                            color = if (i == step) FairyGold else Color.White.copy(alpha = 0.25f)
                         ) {}
                     }
                 }
@@ -137,22 +135,19 @@ fun OnboardingScreen(
                             style = MaterialTheme.typography.headlineLarge,
                             modifier = Modifier.padding(top = 24.dp)
                         )
+                        OrnamentDivider()
                         Text(
                             current.title,
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
+                            color = Color.White
                         )
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant
-                            )
-                        ) {
+                        FairyCard(modifier = Modifier.fillMaxWidth()) {
                             Text(
                                 current.body,
                                 style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.padding(20.dp)
+                                color = Color.White.copy(alpha = 0.9f)
                             )
                         }
                     }
@@ -166,13 +161,22 @@ fun OnboardingScreen(
                         else viewModel.finishOnboarding(onDone)
                     },
                     enabled = !isLoading,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = FairyGold,
+                        contentColor = Color(0xFF1A0A00),
+                        disabledContainerColor = FairyGold.copy(alpha = 0.35f),
+                        disabledContentColor = Color(0xFF1A0A00).copy(alpha = 0.5f)
+                    )
                 ) {
                     if (isLoading) {
-                        CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                        CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = Color(0xFF1A0A00))
                         Spacer(Modifier.width(8.dp))
                     }
-                    Text(if (step < steps.size - 1) "Далее →" else "Войти в кабак")
+                    Text(
+                        if (step < steps.size - 1) "Далее  ✦" else "Войти в кабак  ✦",
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
                 Spacer(Modifier.height(24.dp))
             }

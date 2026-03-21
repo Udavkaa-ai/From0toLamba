@@ -1,7 +1,6 @@
 package com.s0dolamby.game.presentation.stats
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
@@ -10,8 +9,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import com.s0dolamby.game.R
-import com.s0dolamby.game.presentation.common.components.ScreenBackground
 import androidx.compose.material.icons.filled.TrendingDown
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.*
@@ -34,17 +31,20 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.s0dolamby.game.R
 import com.s0dolamby.game.data.logging.AppLogger
 import com.s0dolamby.game.domain.model.GameState
 import com.s0dolamby.game.domain.repository.GameStateRepository
+import com.s0dolamby.game.presentation.common.components.FairyCard
+import com.s0dolamby.game.presentation.common.components.OrnamentDivider
+import com.s0dolamby.game.presentation.common.components.ScreenBackground
 import com.s0dolamby.game.presentation.common.theme.Error
+import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.Success
-import com.s0dolamby.game.presentation.common.theme.TonBlue
 import com.s0dolamby.game.presentation.common.theme.Warning
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import javax.inject.Inject
-import kotlin.math.roundToInt
 
 @HiltViewModel
 class StatsViewModel @Inject constructor(
@@ -68,11 +68,22 @@ fun StatsScreen(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("Успехи инвестора") },
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text("✦", color = FairyGold, fontSize = 12.sp)
+                        Text("Успехи инвестора", fontWeight = FontWeight.Bold)
+                        Text("✦", color = FairyGold, fontSize = 12.sp)
+                    }
+                },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Назад") } },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 actions = {
-                    TextButton(onClick = onRegistryClick) { Text("Летопись") }
+                    TextButton(onClick = onRegistryClick) {
+                        Text("Летопись", color = FairyGold)
+                    }
                 }
             )
         }
@@ -85,8 +96,10 @@ fun StatsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item { RankCard(state = state) }
+            item { OrnamentDivider() }
             item { BalanceChartCard(state = state) }
             item { FinancialStats(state = state) }
+            item { OrnamentDivider() }
             item { ScamStats(state = state) }
             item { LogCard(onShowLog = { showLog = true }) }
         }
@@ -102,30 +115,30 @@ fun StatsScreen(
 
 @Composable
 private fun RankCard(state: GameState?) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-    ) {
+    FairyCard(modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier.padding(20.dp).fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Ранг инвестора", style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    "Ранг инвестора",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = FairyGold.copy(alpha = 0.7f)
+                )
                 Text(
                     state?.investorRank?.displayName ?: "—",
                     style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
                 )
                 Text(
                     "День ${state?.currentDay ?: 1} • Стрик ${state?.dayStreak ?: 0} дн.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color.White.copy(alpha = 0.6f)
                 )
             }
-            // Rank emoji badge
             val emoji = when (state?.investorRank?.name) {
                 "NEWBIE" -> "🐣"
                 "AMBASSADOR" -> "📣"
@@ -145,57 +158,56 @@ private fun RankCard(state: GameState?) {
 private fun BalanceChartCard(state: GameState?) {
     val history = state?.balanceHistory ?: emptyList()
 
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically) {
-                Text("График баланса", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                if (history.size >= 2) {
-                    val delta = history.last() - history.first()
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Icon(
-                            if (delta >= 0) Icons.Default.TrendingUp else Icons.Default.TrendingDown,
-                            contentDescription = null,
-                            tint = if (delta >= 0) Success else Error,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Text(
-                            "%+.0f ₽".format(delta),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = if (delta >= 0) Success else Error,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
+    FairyCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "График казны",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+            if (history.size >= 2) {
+                val delta = history.last() - history.first()
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Icon(
+                        if (delta >= 0) Icons.Default.TrendingUp else Icons.Default.TrendingDown,
+                        contentDescription = null,
+                        tint = if (delta >= 0) Success else Error,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        "%+.0f ₽".format(delta),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (delta >= 0) Success else Error,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             }
+        }
 
-            if (history.size < 2) {
-                Box(
-                    modifier = Modifier.fillMaxWidth().height(140.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("📈", style = MaterialTheme.typography.displaySmall)
-                        Text(
-                            "Пройди несколько дней —\nграфик появится здесь",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+        if (history.size < 2) {
+            Box(
+                modifier = Modifier.fillMaxWidth().height(140.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("📈", style = MaterialTheme.typography.displaySmall)
+                    Text(
+                        "Пройди несколько дней —\nграфик появится здесь",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White.copy(alpha = 0.6f)
+                    )
                 }
-            } else {
-                BalanceLineChart(
-                    history = history,
-                    modifier = Modifier.fillMaxWidth().height(160.dp)
-                )
-                // X-axis labels
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("День 1", style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("День ${history.size}", style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
+            }
+        } else {
+            BalanceLineChart(history = history, modifier = Modifier.fillMaxWidth().height(160.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("День 1", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
+                Text("День ${history.size}", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
             }
         }
     }
@@ -225,7 +237,6 @@ private fun BalanceLineChart(history: List<Double>, modifier: Modifier = Modifie
         fun xAt(i: Int) = i * stepX
         fun yAt(v: Double) = padTop + ((maxVal - v) / range * chartH).toFloat()
 
-        // Gradient fill under the curve
         val fillPath = Path().apply {
             moveTo(xAt(0), h)
             lineTo(xAt(0), yAt(history[0]))
@@ -238,19 +249,14 @@ private fun BalanceLineChart(history: List<Double>, modifier: Modifier = Modifie
             lineTo(xAt(history.size - 1), h)
             close()
         }
-        drawPath(
-            fillPath,
-            brush = Brush.verticalGradient(gradientColors, startY = padTop, endY = h)
-        )
+        drawPath(fillPath, brush = Brush.verticalGradient(gradientColors, startY = padTop, endY = h))
 
-        // Grid lines (3 horizontal)
         val gridColor = Color.White.copy(alpha = 0.06f)
         for (i in 0..2) {
             val y = padTop + chartH / 2 * i
             drawLine(gridColor, Offset(0f, y), Offset(w, y), strokeWidth = 1f)
         }
 
-        // Line
         val linePath = Path().apply {
             moveTo(xAt(0), yAt(history[0]))
             for (i in 1 until history.size) {
@@ -262,7 +268,6 @@ private fun BalanceLineChart(history: List<Double>, modifier: Modifier = Modifie
         }
         drawPath(linePath, color = lineColor, style = Stroke(width = 3f, cap = StrokeCap.Round))
 
-        // Dot at last point
         val lastX = xAt(history.size - 1)
         val lastY = yAt(history.last())
         drawCircle(color = lineColor, radius = 6f, center = Offset(lastX, lastY))
@@ -279,36 +284,32 @@ private fun FinancialStats(state: GameState?) {
     } else 0.0
     val roiPositive = roi >= 0
 
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Финансы", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+    FairyCard(modifier = Modifier.fillMaxWidth()) {
+        Text("Финансы", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
 
-            // ROI highlighted
-            Surface(
-                color = if (roiPositive) Success.copy(alpha = 0.12f) else Error.copy(alpha = 0.12f),
-                shape = RoundedCornerShape(8.dp)
+        Surface(
+            color = if (roiPositive) Success.copy(alpha = 0.15f) else Error.copy(alpha = 0.15f),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("ROI", style = MaterialTheme.typography.titleSmall,
-                        color = if (roiPositive) Success else Error)
-                    Text(
-                        "%+.1f%%".format(roi),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = if (roiPositive) Success else Error
-                    )
-                }
+                Text("ROI", style = MaterialTheme.typography.titleSmall, color = if (roiPositive) Success else Error)
+                Text(
+                    "%+.1f%%".format(roi),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = if (roiPositive) Success else Error
+                )
             }
-
-            HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
-            StatRow("Баланс", "%.0f ₽".format(state?.balance ?: 0.0))
-            StatRow("Всего вложено", "%.0f ₽".format(state?.totalInvested ?: 0.0))
-            StatRow("Всего получено", "%.0f ₽".format(state?.totalReturned ?: 0.0))
         }
+
+        HorizontalDivider(color = Color.White.copy(alpha = 0.10f))
+        StatRow("Баланс", "%.0f ₽".format(state?.balance ?: 0.0))
+        StatRow("Всего вложено", "%.0f ₽".format(state?.totalInvested ?: 0.0))
+        StatRow("Всего получено", "%.0f ₽".format(state?.totalReturned ?: 0.0))
     }
 }
 
@@ -321,91 +322,96 @@ private fun ScamStats(state: GameState?) {
     val total = detected + missed
     val accuracy = if (total > 0) detected.toFloat() / total else 0f
 
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Детекция скама", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+    FairyCard(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            "Распознавание обманщиков",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = Color.White
+        )
 
-            // Accuracy progress bar
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Точность", style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("%.0f%%".format(accuracy * 100), style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = when {
-                            accuracy >= 0.7f -> Success
-                            accuracy >= 0.4f -> Warning
-                            else -> Error
-                        })
-                }
-                LinearProgressIndicator(
-                    progress = { accuracy },
-                    modifier = Modifier.fillMaxWidth().height(8.dp),
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("Точность", style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.7f))
+                Text(
+                    "%.0f%%".format(accuracy * 100),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
                     color = when {
                         accuracy >= 0.7f -> Success
                         accuracy >= 0.4f -> Warning
                         else -> Error
-                    },
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                    }
                 )
             }
+            LinearProgressIndicator(
+                progress = { accuracy },
+                modifier = Modifier.fillMaxWidth().height(8.dp),
+                color = when {
+                    accuracy >= 0.7f -> Success
+                    accuracy >= 0.4f -> Warning
+                    else -> Error
+                },
+                trackColor = Color.White.copy(alpha = 0.10f)
+            )
+        }
 
-            HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                ScamStatBox(label = "Распознано", value = "$detected", color = Success,
-                    modifier = Modifier.weight(1f))
-                ScamStatBox(label = "Пропущено", value = "$missed", color = Error,
-                    modifier = Modifier.weight(1f))
-            }
+        HorizontalDivider(color = Color.White.copy(alpha = 0.10f))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            ScamStatBox(label = "Распознано", value = "$detected", color = Success, modifier = Modifier.weight(1f))
+            ScamStatBox(label = "Пропущено", value = "$missed", color = Error, modifier = Modifier.weight(1f))
         }
     }
 }
 
 @Composable
 private fun ScamStatBox(label: String, value: String, color: Color, modifier: Modifier = Modifier) {
-    Surface(
-        color = color.copy(alpha = 0.10f),
-        shape = RoundedCornerShape(8.dp),
-        modifier = modifier
-    ) {
+    Surface(color = color.copy(alpha = 0.12f), shape = RoundedCornerShape(8.dp), modifier = modifier) {
         Column(
             modifier = Modifier.padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Text(value, style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold, color = color)
-            Text(label, style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(value, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = color)
+            Text(label, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f))
         }
     }
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 @Composable
 private fun StatRow(label: String, value: String) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(label, style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.6f))
+        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = Color.White)
     }
 }
 
 @Composable
 private fun LogCard(onShowLog: () -> Unit) {
     val context = LocalContext.current
-    Card(modifier = Modifier.fillMaxWidth()) {
+    FairyCard(modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Логи приложения", style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+            Text(
+                "Журнал приложения",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                modifier = Modifier.weight(1f)
+            )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onShowLog) { Text("Просмотр") }
-                Button(onClick = { AppLogger.share(context) }) { Text("Поделиться") }
+                OutlinedButton(
+                    onClick = onShowLog,
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.4f))
+                ) { Text("Просмотр") }
+                Button(
+                    onClick = { AppLogger.share(context) },
+                    colors = ButtonDefaults.buttonColors(containerColor = FairyGold, contentColor = Color(0xFF1A0A00))
+                ) { Text("Поделиться") }
             }
         }
     }
@@ -420,7 +426,7 @@ private fun LogDialog(onDismiss: () -> Unit) {
     var copied by remember { mutableStateOf(false) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Лог приложения") },
+        title = { Text("Журнал приложения") },
         text = {
             Box(modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp)) {
                 Text(
