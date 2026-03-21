@@ -139,11 +139,11 @@ private fun InboxProjectCard(project: Project, onClick: () -> Unit) {
 }
 
 private fun ProjectType.displayName(): String = when (this) {
-    ProjectType.CLICKER -> "Кликер"
-    ProjectType.P2E_RPG -> "P2E RPG"
-    ProjectType.FARMING_BOT -> "Фарм-бот"
-    ProjectType.REFERRAL_PYRAMID -> "Реферальная сеть"
-    ProjectType.HONEST_GAMEFI -> "GameFi"
+    ProjectType.CARD_GAME -> "Азартная игра"
+    ProjectType.TREASURE_HUNT -> "Поиск клада"
+    ProjectType.POTION_BREW -> "Зелейное дело"
+    ProjectType.GUILD_SCHEME -> "Артель / Гильдия"
+    ProjectType.HONEST_TRADE -> "Честная торговля"
 }
 
 @Composable

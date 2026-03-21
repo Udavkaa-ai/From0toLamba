@@ -119,9 +119,9 @@ private fun NewsCard(update: DailyUpdate) {
             Text(
                 update.body,
                 style = when (source) {
-                    NewsSource.ANONYMOUS, NewsSource.REDDIT ->
+                    NewsSource.TAVERN_RUMOR, NewsSource.MYSTERIOUS_TRAVELER ->
                         MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic)
-                    NewsSource.EXCHANGE_NOTICE ->
+                    NewsSource.ROYAL_DECREE ->
                         MaterialTheme.typography.bodySmall.copy(fontFamily = null)
                     else -> MaterialTheme.typography.bodyMedium
                 }
@@ -198,13 +198,13 @@ private fun NewsCard(update: DailyUpdate) {
 @Composable
 private fun SourceBadge(source: NewsSource) {
     val (bg, fg) = when (source) {
-        NewsSource.FRAUD_ALERT -> Error.copy(alpha = 0.15f) to Error
-        NewsSource.ANONYMOUS -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
-        NewsSource.PRESS_RELEASE, NewsSource.OFFICIAL_BLOG ->
+        NewsSource.GUARD_WARNING -> Error.copy(alpha = 0.15f) to Error
+        NewsSource.MYSTERIOUS_TRAVELER -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
+        NewsSource.ROYAL_DECREE, NewsSource.CHRONICLE ->
             MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
-        NewsSource.EXCHANGE_NOTICE ->
+        NewsSource.MERCHANT_NOTICE ->
             MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer
-        NewsSource.REDDIT, NewsSource.COMMUNITY ->
+        NewsSource.TAVERN_RUMOR, NewsSource.MARKET_SQUARE ->
             Warning.copy(alpha = 0.12f) to Warning
         else -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
     }

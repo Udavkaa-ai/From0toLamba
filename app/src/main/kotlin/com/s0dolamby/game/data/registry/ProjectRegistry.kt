@@ -20,7 +20,7 @@ class ProjectRegistry @Inject constructor(
         templates.filter { it.templateId != "onboarding" }.random()
 
     fun getOnboardingTemplate(): ProjectTemplate =
-        templates.firstOrNull { it.type == ProjectType.HONEST_GAMEFI }
+        templates.firstOrNull { it.type == ProjectType.HONEST_TRADE }
             ?: templates.first()
 
     private fun loadTemplates(): List<ProjectTemplate> {

@@ -317,17 +317,17 @@ val PersonaArchetype.description: String get() = when (this) {
 }
 
 val ProjectType.description: String get() = when (this) {
-    ProjectType.CLICKER -> "Тапай монеты, приглашай друзей — классическая схема привлечения пользователей. Листинг токена редко реализуется."
-    ProjectType.P2E_RPG -> "Купи NFT-героя, участвуй в битвах. Доход зависит от игровой экономики — если она сломается, токен обесценится."
-    ProjectType.FARMING_BOT -> "Пассивный доход без действий. Обещания 500–5000% APY почти всегда скам — бот не генерирует реальную ценность."
-    ProjectType.REFERRAL_PYRAMID -> "Заработок через рефералов 3 уровней. Устойчив пока растёт, рушится при замедлении притока новых участников."
-    ProjectType.HONEST_GAMEFI -> "Открытый код, аудит, реальная токеномика. Низкий APY, но выше шанс долгосрочной работы."
+    ProjectType.CARD_GAME -> "Карточные игры и азартные дела. Обещают быстрый доход — почти всегда скам или пирамида."
+    ProjectType.TREASURE_HUNT -> "Поиск кладов и сокровищ. Романтичная обёртка скрывает риски: половина дел так и не находит клад."
+    ProjectType.POTION_BREW -> "Алхимия и зелья — пассивный доход без усилий. Обещания сверхприбыли почти всегда ложь."
+    ProjectType.GUILD_SCHEME -> "Артели и гильдии через рефералов. Работает пока растёт, рушится при замедлении притока участников."
+    ProjectType.HONEST_TRADE -> "Честная торговля с открытыми счётными книгами. Низкая прибыль, но выше шанс долгосрочной работы."
 }
 
 val ProjectType.riskLevel: String get() = when (this) {
-    ProjectType.CLICKER -> "Очень высокий"
-    ProjectType.P2E_RPG -> "Высокий"
-    ProjectType.FARMING_BOT -> "Критически высокий"
-    ProjectType.REFERRAL_PYRAMID -> "Высокий"
-    ProjectType.HONEST_GAMEFI -> "Средний"
+    ProjectType.CARD_GAME -> "Очень высокий"
+    ProjectType.TREASURE_HUNT -> "Высокий"
+    ProjectType.POTION_BREW -> "Критически высокий"
+    ProjectType.GUILD_SCHEME -> "Высокий"
+    ProjectType.HONEST_TRADE -> "Средний"
 }
