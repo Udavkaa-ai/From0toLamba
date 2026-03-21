@@ -18,7 +18,7 @@
       ["Первый сезон", "Реферальные бонусы", "Турнир чемпионов", "Всероссийский котёл"]
     ],
     "compatiblePersonas": ["buratino", "zolushka", "kolobok"],
-    "fateWeights": {"INSTANT_SCAM": 40, "SLOW_DRAIN": 35, "HONEST_FAIL": 15, "SURVIVOR": 8, "UNICORN": 2}
+    "fateWeights": {"INSTANT_SCAM": 12, "SLOW_DRAIN": 55, "HONEST_FAIL": 17, "SURVIVOR": 13, "UNICORN": 3}
   },
   {
     "templateId": "treasure_hunt",
@@ -39,7 +39,7 @@
       ["Разведка маршрута", "Набор вкладчиков", "Экспедиция", "Возвращение с кладом"]
     ],
     "compatiblePersonas": ["boyarin", "baba_yaga", "koschei", "ivan_durak"],
-    "fateWeights": {"INSTANT_SCAM": 20, "SLOW_DRAIN": 25, "HONEST_FAIL": 25, "SURVIVOR": 20, "UNICORN": 10}
+    "fateWeights": {"INSTANT_SCAM": 8, "SLOW_DRAIN": 27, "HONEST_FAIL": 30, "SURVIVOR": 25, "UNICORN": 10}
   },
   {
     "templateId": "potion_brew",
@@ -59,7 +59,7 @@
       ["Запуск зельеварни", "Добавление новых рецептов", "Своя лавка", "Сеть по всей Руси"]
     ],
     "compatiblePersonas": ["boyarin", "buratino"],
-    "fateWeights": {"INSTANT_SCAM": 50, "SLOW_DRAIN": 30, "HONEST_FAIL": 10, "SURVIVOR": 8, "UNICORN": 2}
+    "fateWeights": {"INSTANT_SCAM": 18, "SLOW_DRAIN": 50, "HONEST_FAIL": 15, "SURVIVOR": 14, "UNICORN": 3}
   },
   {
     "templateId": "guild_scheme",
@@ -79,7 +79,7 @@
       ["Набор дружины", "Открытие лавки", "Расширение сети", "Всероссийская гильдия"]
     ],
     "compatiblePersonas": ["zolushka", "buratino", "boyarin"],
-    "fateWeights": {"INSTANT_SCAM": 25, "SLOW_DRAIN": 50, "HONEST_FAIL": 15, "SURVIVOR": 9, "UNICORN": 1}
+    "fateWeights": {"INSTANT_SCAM": 10, "SLOW_DRAIN": 60, "HONEST_FAIL": 17, "SURVIVOR": 11, "UNICORN": 2}
   },
   {
     "templateId": "honest_trade",

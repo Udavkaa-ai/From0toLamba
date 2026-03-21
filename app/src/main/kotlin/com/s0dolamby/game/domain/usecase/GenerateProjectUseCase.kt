@@ -96,7 +96,7 @@ class GenerateProjectUseCase @Inject constructor(
     }
 
     private fun calcDaysUntilCollapse(fate: ProjectFate): Int? = when (fate) {
-        ProjectFate.INSTANT_SCAM -> Random.nextInt(3, 6)
+        ProjectFate.INSTANT_SCAM -> Random.nextInt(1, 4)
         ProjectFate.SLOW_DRAIN -> Random.nextInt(7, 22)
         ProjectFate.HONEST_FAIL -> Random.nextInt(14, 30)
         ProjectFate.SURVIVOR, ProjectFate.UNICORN -> null
