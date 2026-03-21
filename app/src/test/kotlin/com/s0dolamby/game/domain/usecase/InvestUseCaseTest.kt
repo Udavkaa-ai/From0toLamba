@@ -17,16 +17,16 @@ class InvestUseCaseTest {
     private lateinit var useCase: InvestUseCase
 
     private val testProject = Project(
-        id = "p1", name = "TestProject", type = ProjectType.CLICKER,
+        id = "p1", name = "TestProject", type = ProjectType.CARD_GAME,
         developerPersonaId = "d1", fate = ProjectFate.SLOW_DRAIN,
         personaArchetype = PersonaArchetype.BURATINO,
-        daysUntilCollapse = 10, realDailyYieldTON = 0.005,
-        lieTopics = listOf(LieTopic.USER_COUNT), truthTopics = emptyList(),
+        daysUntilCollapse = 10, realDailyYieldRubles = 0.005,
+        lieTopics = listOf(LieTopic.PATRON_COUNT), truthTopics = emptyList(),
         developerName = "Паша", developerAvatarSeed = "seed",
         claimedName = "TestProject", claimedAPY = 300f,
         claimedUserCount = 10000, claimedTeamSize = 5,
         roadmap = listOf("Launch", "Token"), description = "Test",
-        investedAmountTON = 0.0, isActive = false
+        investedAmountRubles = 0.0, isActive = false
     )
 
     private val testGameState = GameState(
@@ -54,7 +54,7 @@ class InvestUseCaseTest {
         assertTrue(result.isSuccess)
         coVerify { gameStateRepo.updateBalance(3.0) }
         coVerify { gameStateRepo.recordInvestment(2.0) }
-        coVerify { projectRepo.updateProject(match { it.investedAmountTON == 2.0 && it.isActive }) }
+        coVerify { projectRepo.updateProject(match { it.investedAmountRubles == 2.0 && it.isActive }) }
     }
 
     @Test
