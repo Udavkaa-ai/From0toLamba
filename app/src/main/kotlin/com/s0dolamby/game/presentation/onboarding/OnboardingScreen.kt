@@ -10,10 +10,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.s0dolamby.game.R
+import com.s0dolamby.game.presentation.common.components.ScreenBackground
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.s0dolamby.game.domain.model.Project
@@ -85,7 +88,8 @@ fun OnboardingScreen(
         )
     )
 
-    Scaffold { padding ->
+    ScreenBackground(R.drawable.onboarding_bg) {
+    Scaffold(containerColor = Color.Transparent) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -174,6 +178,7 @@ fun OnboardingScreen(
             }
         }
     }
+    } // ScreenBackground
 }
 
 private data class OnboardingStep(val title: String, val body: String, val emoji: String)

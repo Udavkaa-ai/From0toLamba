@@ -74,7 +74,7 @@ fun HomeScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         // Фоновая картинка кабака
         androidx.compose.foundation.Image(
-            painter = painterResource(id = R.drawable.tavern_bg),
+            painter = painterResource(id = R.drawable.home_bg),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop

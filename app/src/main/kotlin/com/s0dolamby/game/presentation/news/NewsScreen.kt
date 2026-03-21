@@ -13,6 +13,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import com.s0dolamby.game.R
+import com.s0dolamby.game.presentation.common.components.ScreenBackground
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -30,7 +32,9 @@ fun NewsScreen(
 ) {
     val updates by viewModel.updates.collectAsState()
 
+    ScreenBackground(R.drawable.news_bg) {
     Scaffold(
+        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
                 title = { Text("Новости проектов") },
@@ -72,6 +76,7 @@ fun NewsScreen(
             }
         }
     }
+    } // ScreenBackground
 }
 
 @Composable

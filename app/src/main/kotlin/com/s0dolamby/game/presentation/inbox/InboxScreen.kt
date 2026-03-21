@@ -9,13 +9,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.s0dolamby.game.R
 import com.s0dolamby.game.domain.model.Project
 import com.s0dolamby.game.domain.model.ProjectType
+import com.s0dolamby.game.presentation.common.components.ScreenBackground
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,7 +29,9 @@ fun InboxScreen(
 ) {
     val projects by viewModel.inboxProjects.collectAsState()
 
+    ScreenBackground(R.drawable.inbox_bg) {
     Scaffold(
+        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
                 title = { Text("Входящие предложения") },
@@ -76,6 +81,7 @@ fun InboxScreen(
             }
         }
     }
+    } // ScreenBackground
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

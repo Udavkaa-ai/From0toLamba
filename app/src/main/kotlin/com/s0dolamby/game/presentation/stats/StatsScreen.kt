@@ -10,6 +10,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import com.s0dolamby.game.R
+import com.s0dolamby.game.presentation.common.components.ScreenBackground
 import androidx.compose.material.icons.filled.TrendingDown
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.*
@@ -61,7 +63,9 @@ fun StatsScreen(
 ) {
     val state by viewModel.gameState.collectAsState()
 
+    ScreenBackground(R.drawable.stats_bg) {
     Scaffold(
+        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
                 title = { Text("Статистика") },
@@ -90,6 +94,7 @@ fun StatsScreen(
             LogDialog(onDismiss = { showLog = false })
         }
     }
+    } // ScreenBackground
 }
 
 // ─── Rank card ────────────────────────────────────────────────────────────────
