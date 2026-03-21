@@ -17,17 +17,36 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.s0dolamby.game.R
 import com.s0dolamby.game.domain.model.AmaMessage
 import com.s0dolamby.game.domain.model.LieTopic
 import com.s0dolamby.game.domain.model.MessageRole
+import com.s0dolamby.game.domain.model.PersonaArchetype
 import com.s0dolamby.game.domain.repository.GameConfig
 import com.s0dolamby.game.presentation.common.theme.Error
 import com.s0dolamby.game.presentation.common.theme.Success
 import com.s0dolamby.game.presentation.common.theme.Warning
+
+// ─── Background selection ─────────────────────────────────────────────────────
+
+private fun besedaBackground(archetype: PersonaArchetype?): Int = when (archetype) {
+    PersonaArchetype.BURATINO    -> R.drawable.beseda_bg_1
+    PersonaArchetype.BOYARIN     -> R.drawable.beseda_bg_2
+    PersonaArchetype.KOLOBOK     -> R.drawable.beseda_bg_3
+    PersonaArchetype.KOSCHEI     -> R.drawable.beseda_bg_4
+    PersonaArchetype.ZOLUSHKA    -> R.drawable.beseda_bg_5
+    PersonaArchetype.BABA_YAGA   -> R.drawable.beseda_bg_1  // таинственная — как BURATINO
+    PersonaArchetype.IVAN_DURAK  -> R.drawable.beseda_bg_3  // добродушный — как KOLOBOK
+    null                         -> R.drawable.beseda_bg_1
+}
 
 // ─── Question templates ───────────────────────────────────────────────────────
 
@@ -79,7 +98,23 @@ fun AmaScreen(
         if (messages.isNotEmpty()) listState.animateScrollToItem(messages.size - 1)
     }
 
+    val bgRes = besedaBackground(uiState.project?.personaArchetype)
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(bgRes),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.55f))
+        )
+
     Scaffold(
+        containerColor = Color.Transparent,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
@@ -237,6 +272,7 @@ fun AmaScreen(
             onBack()
         }
     }
+    } // Box background
 }
 
 // ─── Question template row ────────────────────────────────────────────────────
