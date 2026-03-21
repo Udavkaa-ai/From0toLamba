@@ -45,7 +45,7 @@ class PersonaRegistryViewModel @Inject constructor(
         projectRepository.getActiveProjects()
     ) { closed, active ->
         // Unlock via: invested + closed  OR  correct lie guess (any state)
-        val unlockedByClose = closed.filter { it.investedAmountTON > 0 }
+        val unlockedByClose = closed.filter { it.investedAmountRubles > 0 }
         val unlockedByGuess = (closed + active).filter { it.lieGuessCorrect }
         val allUnlocked = (unlockedByClose + unlockedByGuess).distinctBy { it.id }
 

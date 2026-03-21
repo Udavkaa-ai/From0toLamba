@@ -10,10 +10,10 @@ class ExitProjectUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(projectId: String): Result<Double> = runCatching {
         val project = projectRepository.getProjectById(projectId)
-            ?: error("Проект не найден")
+            ?: error("Дело не найдено")
 
-        val returned = project.currentValueTON
-        projectRepository.closeProject(projectId, "Игрок вышел из проекта")
+        val returned = project.currentValueRubles
+        projectRepository.closeProject(projectId, "Игрок вышел из дела")
 
         val state = gameStateRepository.getGameState()
         gameStateRepository.updateBalance(state.balance + returned)

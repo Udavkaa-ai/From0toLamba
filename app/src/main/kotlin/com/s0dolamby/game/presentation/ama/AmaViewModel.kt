@@ -92,13 +92,13 @@ class AmaViewModel @Inject constructor(
     fun showInvestSheet() = _uiState.update { it.copy(showInvestSheet = true) }
     fun hideInvestSheet() = _uiState.update { it.copy(showInvestSheet = false) }
 
-    fun invest(amountTON: Double) {
+    fun invest(amountRubles: Double) {
         viewModelScope.launch {
-            investUseCase(projectId, amountTON)
+            investUseCase(projectId, amountRubles)
                 .onSuccess {
                     _uiState.update { it.copy(
                         showInvestSheet = false,
-                        investResult = "Инвестировано %.2f TON".format(amountTON)
+                        investResult = "Вложено %.0f ₽".format(amountRubles)
                     ) }
                 }
                 .onFailure { err ->

@@ -76,14 +76,14 @@ class GameStateRepositoryImpl @Inject constructor(
 
     override suspend fun advanceDay() = playerDao.advanceDay()
 
-    override suspend fun recordInvestment(amountTON: Double) {
+    override suspend fun recordInvestment(amountRubles: Double) {
         val state = playerDao.getGameState() ?: return
-        playerDao.update(state.copy(totalInvested = state.totalInvested + amountTON))
+        playerDao.update(state.copy(totalInvested = state.totalInvested + amountRubles))
     }
 
-    override suspend fun recordReturn(amountTON: Double) {
+    override suspend fun recordReturn(amountRubles: Double) {
         val state = playerDao.getGameState() ?: return
-        playerDao.update(state.copy(totalReturned = state.totalReturned + amountTON))
+        playerDao.update(state.copy(totalReturned = state.totalReturned + amountRubles))
     }
 
     override suspend fun recordScamDetected() {

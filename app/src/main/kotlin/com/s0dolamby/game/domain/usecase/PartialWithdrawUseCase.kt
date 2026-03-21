@@ -9,29 +9,28 @@ class PartialWithdrawUseCase @Inject constructor(
     private val gameStateRepository: GameStateRepository,
     private val projectRepository: ProjectRepository
 ) {
-    suspend operator fun invoke(projectId: String, amountTON: Double): Result<Double> = runCatching {
+    suspend operator fun invoke(projectId: String, amountRubles: Double): Result<Double> = runCatching {
         val project = projectRepository.getProjectById(projectId)
-            ?: error("Проект не найден")
-        require(project.isActive) { "Проект не активен" }
-        require(!project.isWithdrawalLocked) { "Вывод заблокирован — дождитесь восстановления или закрытия проекта" }
-        require(amountTON >= 0.1) { "Минимум 0.1 TON" }
-        require(amountTON <= project.currentValueTON) {
-            "Недостаточно средств: %.2f TON доступно".format(project.currentValueTON)
+            ?: error("Дело не найдено")
+        require(project.isActive) { "Дело не активно" }
+        require(!project.isWithdrawalLocked) { "Вывод заблокирован — ждите восстановления или закрытия" }
+        require(amountRubles >= 5.0) { "Минимум 5 ₽" }
+        require(amountRubles <= project.currentValueRubles) {
+            "Недостаточно средств: %.0f ₽ доступно".format(project.currentValueRubles)
         }
 
-        // Reduce invested proportionally so daily yield reflects remaining stake
-        val withdrawRatio = amountTON / project.currentValueTON
-        val newInvested = max(0.0, project.investedAmountTON * (1.0 - withdrawRatio))
-        val newCurrentValue = project.currentValueTON - amountTON
+        val withdrawRatio = amountRubles / project.currentValueRubles
+        val newInvested = max(0.0, project.investedAmountRubles * (1.0 - withdrawRatio))
+        val newCurrentValue = project.currentValueRubles - amountRubles
 
         projectRepository.updateProject(project.copy(
-            investedAmountTON = newInvested,
-            currentValueTON = newCurrentValue
+            investedAmountRubles = newInvested,
+            currentValueRubles = newCurrentValue
         ))
 
         val state = gameStateRepository.getGameState()
-        gameStateRepository.updateBalance(state.balance + amountTON)
-        gameStateRepository.recordReturn(amountTON)
-        amountTON
+        gameStateRepository.updateBalance(state.balance + amountRubles)
+        gameStateRepository.recordReturn(amountRubles)
+        amountRubles
     }
 }

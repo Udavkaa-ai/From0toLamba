@@ -44,9 +44,9 @@ class OnboardingViewModel @Inject constructor(
     fun finishOnboarding(onDone: () -> Unit) {
         viewModelScope.launch {
             _isLoading.value = true
-            // Give player onboarding bonus
+            // Даём игроку стартовый капитал за первую беседу в кабаке
             val state = gameStateRepository.getGameState()
-            gameStateRepository.updateBalance(state.balance + GameConfig.ONBOARDING_BONUS_TON)
+            gameStateRepository.updateBalance(state.balance + GameConfig.ONBOARDING_BONUS_RUBLES)
             gameStateRepository.completeOnboarding()
             _isLoading.value = false
             onDone()
@@ -64,23 +64,23 @@ fun OnboardingScreen(
 
     val steps = listOf(
         OnboardingStep(
-            title = "Добро пожаловать в симулятор",
-            body = "Ты — инвестор в мире Telegram-проектов.\n\nКаждый день получаешь новые предложения: кликеры, P2E, боты, фармилки. Большинство — скам. Твоя задача — научиться отличать одно от другого.",
-            emoji = "🎮"
+            title = "Добро пожаловать в кабак!",
+            body = "Ты — прохожий с пустым кошелём, попавший в кабак на большой ярмарке.\n\nКаждый день за соседними столами сидят разные предприниматели: алхимики, кладоискатели, картёжники, купцы. Большинство — жулики. Твоя задача — научиться отличать честное дело от обмана.",
+            emoji = "🍺"
         ),
         OnboardingStep(
-            title = "AMA-сессия",
-            body = "Перед каждой инвестицией ты проводишь AMA с разработчиком.\n\nУ тебя до 10 вопросов. Разработчик знает судьбу проекта, но скрывает это. Умей читать между строк.",
+            title = "Беседа в кабаке",
+            body = "Прежде чем вложить рубли, ты разговариваешь с хозяином дела.\n\nУ тебя до 10 вопросов. Хозяин знает судьбу своего дела, но скрывает это. Умей читать между строк — ищи красные флаги.",
             emoji = "💬"
         ),
         OnboardingStep(
-            title = "Распознавай архетипы",
-            body = "«Классический скамер» давит на срочность и агрессивен под давлением.\n«Псевдо-профессионал» оперирует терминами, ссылается на Dubai.\n«Наивный энтузиаст» искренен, но некомпетентен.\n«Бизнес-акула» убедителен и опасен — может быть и скамом, и единорогом.\n\nПосле закрытия каждого проекта — разбор ошибок.",
+            title = "Распознавай сказочные архетипы",
+            body = "«Буратино» верит своим сказкам и давит на срочность.\n«Боярин» говорит пышно, ссылается на государевых мужей без имён.\n«Колобок» весело уходит от любых вопросов.\n«Кощей» убедителен и опасен — говорит цифрами.\n«Иван-дурак» честен про прошлые провалы и может неожиданно взлететь.\n\nПосле закрытия каждого дела — разбор ошибок.",
             emoji = "🔍"
         ),
         OnboardingStep(
-            title = "Удача улыбнулась!",
-            body = "Ты участвовал в розыгрыше крипто-сообщества и выиграл ${GameConfig.ONBOARDING_BONUS_TON} TON!\n\nТеперь ты думаешь: куда бы их вложить? Впереди — десятки Telegram-проектов, каждый обещает иксы. Твоя задача — не потерять всё и приехать на Ламборджини.",
+            title = "Первый заработок!",
+            body = "Добрый трактирщик угощает тебя первой беседой и даёт стартовые ${GameConfig.ONBOARDING_BONUS_RUBLES.toInt()} рублей за участие.\n\nТеперь думай: куда вложить? Впереди десятки дел в кабаке. Каждый обещает золотые горы. Твоя задача — не потерять всё и приехать на Ламборджини.",
             emoji = "🎉"
         )
     )
@@ -96,7 +96,7 @@ fun OnboardingScreen(
         ) {
             Spacer(Modifier.height(40.dp))
 
-            // Step indicator
+            // Индикатор шагов
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
@@ -168,7 +168,7 @@ fun OnboardingScreen(
                         CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                         Spacer(Modifier.width(8.dp))
                     }
-                    Text(if (step < steps.size - 1) "Далее →" else "Начать игру")
+                    Text(if (step < steps.size - 1) "Далее →" else "Войти в кабак")
                 }
                 Spacer(Modifier.height(24.dp))
             }

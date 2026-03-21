@@ -17,39 +17,37 @@ class InvestUseCase @Inject constructor(
 ) {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
-    suspend operator fun invoke(projectId: String, amountTON: Double): Result<Unit> = runCatching {
-        require(amountTON >= GameConfig.MIN_INVESTMENT_TON) {
-            "Минимальная инвестиция ${GameConfig.MIN_INVESTMENT_TON} TON"
+    suspend operator fun invoke(projectId: String, amountRubles: Double): Result<Unit> = runCatching {
+        require(amountRubles >= GameConfig.MIN_INVESTMENT_RUBLES) {
+            "Минимальный вклад ${GameConfig.MIN_INVESTMENT_RUBLES.toInt()} ₽"
         }
-        require(amountTON <= GameConfig.MAX_INVESTMENT_TON) {
-            "Максимальная инвестиция ${GameConfig.MAX_INVESTMENT_TON} TON"
+        require(amountRubles <= GameConfig.MAX_INVESTMENT_RUBLES) {
+            "Максимальный вклад ${GameConfig.MAX_INVESTMENT_RUBLES.toInt()} ₽"
         }
 
         val state = gameStateRepository.getGameState()
-        require(state.balance >= amountTON) { "Недостаточно TON на балансе" }
+        require(state.balance >= amountRubles) { "Недостаточно рублей в кошеле" }
 
         val project = projectRepository.getProjectById(projectId)
-            ?: error("Проект не найден")
+            ?: error("Дело не найдено")
 
-        // Only check project cap when investing for the first time
         if (!project.isActive) {
             require(state.activeProjects.size < GameConfig.MAX_ACTIVE_PROJECTS) {
-                "Максимум ${GameConfig.MAX_ACTIVE_PROJECTS} активных проектов"
+                "Не более ${GameConfig.MAX_ACTIVE_PROJECTS} активных дел"
             }
         }
-        require(!project.isWithdrawalLocked) { "Довложение невозможно — вывод средств заблокирован" }
+        require(!project.isWithdrawalLocked) { "Довложение невозможно — деньги заморожены" }
 
         val isFirstInvestment = !project.isActive
         val updated = project.copy(
-            investedAmountTON = project.investedAmountTON + amountTON,
-            currentValueTON = project.currentValueTON + amountTON,
+            investedAmountRubles = project.investedAmountRubles + amountRubles,
+            currentValueRubles = project.currentValueRubles + amountRubles,
             isActive = true
         )
         projectRepository.updateProject(updated)
-        gameStateRepository.updateBalance(state.balance - amountTON)
-        gameStateRepository.recordInvestment(amountTON)
+        gameStateRepository.updateBalance(state.balance - amountRubles)
+        gameStateRepository.recordInvestment(amountRubles)
 
-        // Generate banner only on first investment — saves API calls for projects player ignores
         if (isFirstInvestment && project.bannerImageUrl == null) {
             scope.launch {
                 generateProjectBannerUseCase(updated)

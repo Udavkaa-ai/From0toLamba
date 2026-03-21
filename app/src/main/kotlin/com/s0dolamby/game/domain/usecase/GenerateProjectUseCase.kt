@@ -47,7 +47,7 @@ class GenerateProjectUseCase @Inject constructor(
             fate = fate,
             personaArchetype = archetype,
             daysUntilCollapse = daysUntilCollapse,
-            realDailyYieldTON = calcRealYield(fate),
+            realDailyYieldRubles = calcRealYield(fate),
             lieTopics = lieTopics,
             truthTopics = truthTopics,
             developerName = developerName,

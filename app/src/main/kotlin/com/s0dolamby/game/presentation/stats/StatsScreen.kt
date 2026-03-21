@@ -154,7 +154,7 @@ private fun BalanceChartCard(state: GameState?) {
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
-                            "%+.2f TON".format(delta),
+                            "%+.0f ₽".format(delta),
                             style = MaterialTheme.typography.labelMedium,
                             color = if (delta >= 0) Success else Error,
                             fontWeight = FontWeight.SemiBold
@@ -299,9 +299,9 @@ private fun FinancialStats(state: GameState?) {
             }
 
             HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
-            StatRow("Баланс", "%.2f TON".format(state?.balance ?: 0.0))
-            StatRow("Всего вложено", "%.2f TON".format(state?.totalInvested ?: 0.0))
-            StatRow("Всего получено", "%.2f TON".format(state?.totalReturned ?: 0.0))
+            StatRow("Баланс", "%.0f ₽".format(state?.balance ?: 0.0))
+            StatRow("Всего вложено", "%.0f ₽".format(state?.totalInvested ?: 0.0))
+            StatRow("Всего получено", "%.0f ₽".format(state?.totalReturned ?: 0.0))
         }
     }
 }

@@ -1,20 +1,29 @@
 package com.s0dolamby.game.domain.model
 
 enum class ProjectType {
-    CLICKER, P2E_RPG, FARMING_BOT, REFERRAL_PYRAMID, HONEST_GAMEFI
+    CARD_GAME,       // Карточные игры и азартные дела
+    TREASURE_HUNT,   // Поиск кладов и сокровищ
+    POTION_BREW,     // Алхимия, зелья, снадобья
+    GUILD_SCHEME,    // Артели, гильдии — пирамида
+    HONEST_TRADE     // Честная торговля и ремесло
 }
 
 enum class ProjectFate {
-    INSTANT_SCAM,
-    SLOW_DRAIN,
-    HONEST_FAIL,
-    SURVIVOR,
-    UNICORN
+    INSTANT_SCAM,    // Бежит с деньгами на 1–3 день, вероятность 30%
+    SLOW_DRAIN,      // Держится 1–3 недели, тихо исчезает, 25%
+    HONEST_FAIL,     // Честно старался, не взлетело, 15%
+    SURVIVOR,        // Долгожитель, стабильный маленький доход, 20%
+    UNICORN          // Взлетел по-настоящему: слава, иксы, 10%
 }
 
 enum class LieTopic {
-    USER_COUNT, DAILY_YIELD, LISTING_DATE, TEAM_SIZE,
-    AUDIT_STATUS, PARTNER_STATUS, WITHDRAWAL_LIMITS
+    PATRON_COUNT,      // Количество вкладчиков/участников
+    DAILY_PROFIT,      // Ежедневный доход
+    PAYOUT_DATE,       // Дата выплат или листинга
+    GUILD_SIZE,        // Размер артели/команды
+    ELDER_BLESSING,    // Одобрение старейшин / проверка
+    NOBLE_BACKING,     // Поддержка знатных покровителей
+    WITHDRAWAL_LIMITS  // Ограничения на вывод средств
 }
 
 data class Project(
@@ -23,15 +32,15 @@ data class Project(
     val type: ProjectType,
     val developerPersonaId: String,
 
-    // Hidden until PostMortem
+    // Скрытые параметры — до PostMortem не показывать
     val fate: ProjectFate,
     val personaArchetype: PersonaArchetype,
     val daysUntilCollapse: Int?,
-    val realDailyYieldTON: Double,
+    val realDailyYieldRubles: Double,
     val lieTopics: List<LieTopic>,
     val truthTopics: List<LieTopic>,
 
-    // Visible to player
+    // Публичные параметры — видит игрок
     val developerName: String,
     val developerAvatarSeed: String,
     val claimedName: String,
@@ -41,19 +50,19 @@ data class Project(
     val roadmap: List<String>,
     val description: String,
 
-    // State
-    val investedAmountTON: Double = 0.0,
-    val currentValueTON: Double = 0.0,
+    // Состояние
+    val investedAmountRubles: Double = 0.0,
+    val currentValueRubles: Double = 0.0,
     val daysSinceJoined: Int = 0,
     val isActive: Boolean = false,
     val isClosed: Boolean = false,
     val closureReason: String? = null,
 
-    // Media
+    // Медиа
     val bannerImageUrl: String? = null,
     val bannerPromptUsed: String? = null,
 
-    // Dynamic state (tracked each day)
+    // Динамическое состояние (обновляется каждый день)
     val isWithdrawalLocked: Boolean = false,
     val currentUserCount: Int = 0,
     val userCountHistory: List<Int> = emptyList(),

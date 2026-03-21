@@ -11,15 +11,15 @@ data class ProjectEntity(
     val type: String,
     val developerPersonaId: String,
 
-    // Hidden fields
+    // Скрытые поля
     val fate: String,
     val personaArchetype: String,
     val daysUntilCollapse: Int?,
-    val realDailyYieldTON: Double,
+    val realDailyYieldRubles: Double,
     val lieTopics: String,       // JSON array as string
     val truthTopics: String,     // JSON array as string
 
-    // Public fields
+    // Публичные поля
     val developerName: String,
     val developerAvatarSeed: String,
     val claimedName: String,
@@ -29,25 +29,24 @@ data class ProjectEntity(
     val roadmap: String,         // JSON array as string
     val description: String,
 
-    // State
-    val investedAmountTON: Double = 0.0,
-    val currentValueTON: Double = 0.0,
+    // Состояние
+    val investedAmountRubles: Double = 0.0,
+    val currentValueRubles: Double = 0.0,
     val daysSinceJoined: Int = 0,
     val isActive: Boolean = false,
     val isClosed: Boolean = false,
     val closureReason: String? = null,
 
-    // Media
+    // Медиа
     val bannerImageUrl: String? = null,
     val bannerPromptUsed: String? = null,
 
-    // Dynamic state
+    // Динамическое состояние
     val isWithdrawalLocked: Boolean = false,
     val currentUserCount: Int = 0,
     val userCountHistory: String = "[]",
     val apyHistory: String = "[]",
 
-    // Player progress on this project
     @androidx.room.ColumnInfo(defaultValue = "0")
     val lieGuessCorrect: Boolean = false
 )
@@ -60,7 +59,7 @@ fun ProjectEntity.toDomain(gson: com.google.gson.Gson): Project = Project(
     fate = ProjectFate.valueOf(fate),
     personaArchetype = PersonaArchetype.valueOf(personaArchetype),
     daysUntilCollapse = daysUntilCollapse,
-    realDailyYieldTON = realDailyYieldTON,
+    realDailyYieldRubles = realDailyYieldRubles,
     lieTopics = gson.fromJson(lieTopics, Array<LieTopic>::class.java).toList(),
     truthTopics = gson.fromJson(truthTopics, Array<LieTopic>::class.java).toList(),
     developerName = developerName,
@@ -71,8 +70,8 @@ fun ProjectEntity.toDomain(gson: com.google.gson.Gson): Project = Project(
     claimedTeamSize = claimedTeamSize,
     roadmap = gson.fromJson(roadmap, Array<String>::class.java).toList(),
     description = description,
-    investedAmountTON = investedAmountTON,
-    currentValueTON = currentValueTON,
+    investedAmountRubles = investedAmountRubles,
+    currentValueRubles = currentValueRubles,
     daysSinceJoined = daysSinceJoined,
     isActive = isActive,
     isClosed = isClosed,
@@ -94,7 +93,7 @@ fun Project.toEntity(gson: com.google.gson.Gson): ProjectEntity = ProjectEntity(
     fate = fate.name,
     personaArchetype = personaArchetype.name,
     daysUntilCollapse = daysUntilCollapse,
-    realDailyYieldTON = realDailyYieldTON,
+    realDailyYieldRubles = realDailyYieldRubles,
     lieTopics = gson.toJson(lieTopics),
     truthTopics = gson.toJson(truthTopics),
     developerName = developerName,
@@ -105,8 +104,8 @@ fun Project.toEntity(gson: com.google.gson.Gson): ProjectEntity = ProjectEntity(
     claimedTeamSize = claimedTeamSize,
     roadmap = gson.toJson(roadmap),
     description = description,
-    investedAmountTON = investedAmountTON,
-    currentValueTON = currentValueTON,
+    investedAmountRubles = investedAmountRubles,
+    currentValueRubles = currentValueRubles,
     daysSinceJoined = daysSinceJoined,
     isActive = isActive,
     isClosed = isClosed,

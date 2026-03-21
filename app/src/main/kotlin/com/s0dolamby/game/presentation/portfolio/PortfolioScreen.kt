@@ -82,7 +82,7 @@ private fun PortfolioProjectCard(
     onAddFunds: (Double) -> Unit,
     onWithdraw: (Double) -> Unit
 ) {
-    val pnl = project.currentValueTON - project.investedAmountTON
+    val pnl = project.currentValueRubles - project.investedAmountRubles
     var showAddFunds by remember { mutableStateOf(false) }
     var showWithdraw by remember { mutableStateOf(false) }
 
@@ -96,14 +96,14 @@ private fun PortfolioProjectCard(
                         Icon(Icons.Default.Lock, contentDescription = "Вывод заблокирован",
                             tint = Warning, modifier = Modifier.size(16.dp))
                     }
-                    Text("%.2f TON".format(project.currentValueTON),
+                    Text("%.0f ₽".format(project.currentValueRubles),
                         style = MaterialTheme.typography.titleMedium,
                         color = if (pnl >= 0) Success else Error)
                 }
             }
-            Text("Вложено: %.2f TON • День ${project.daysSinceJoined}".format(project.investedAmountTON),
+            Text("Вложено: %.0f ₽ • День ${project.daysSinceJoined}".format(project.investedAmountRubles),
                 style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text("P&L: %+.2f TON".format(pnl), style = MaterialTheme.typography.bodyMedium,
+            Text("П&У: %+.0f ₽".format(pnl), style = MaterialTheme.typography.bodyMedium,
                 color = if (pnl >= 0) Success else Error)
 
             if (project.isWithdrawalLocked) {
@@ -147,7 +147,7 @@ private fun PortfolioProjectCard(
         FundsBottomSheet(
             title = "Вывести часть средств",
             confirmLabel = "Вывести",
-            maxAmount = project.currentValueTON,
+            maxAmount = project.currentValueRubles,
             onDismiss = { showWithdraw = false },
             onConfirm = { amount -> onWithdraw(amount); showWithdraw = false }
         )
@@ -165,7 +165,7 @@ private fun FundsBottomSheet(
 ) {
     var amountText by remember { mutableStateOf("") }
     val amount = amountText.toDoubleOrNull()
-    val isValid = amount != null && amount >= 0.1 && (maxAmount == null || amount <= maxAmount)
+    val isValid = amount != null && amount >= 5.0 && (maxAmount == null || amount <= maxAmount)
 
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
@@ -176,12 +176,12 @@ private fun FundsBottomSheet(
             OutlinedTextField(
                 value = amountText,
                 onValueChange = { amountText = it.filter { c -> c.isDigit() || c == '.' } },
-                label = { Text("Сумма в TON") },
-                suffix = { Text("TON") },
+                label = { Text("Сумма в рублях") },
+                suffix = { Text("₽") },
                 modifier = Modifier.fillMaxWidth()
             )
             if (maxAmount != null) {
-                Text("Доступно: %.2f TON".format(maxAmount),
+                Text("Доступно: %.0f ₽".format(maxAmount),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -196,7 +196,7 @@ private fun FundsBottomSheet(
 
 @Composable
 private fun ClosedProjectCard(project: Project, onClick: () -> Unit) {
-    val pnl = project.currentValueTON - project.investedAmountTON
+    val pnl = project.currentValueRubles - project.investedAmountRubles
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
@@ -204,9 +204,9 @@ private fun ClosedProjectCard(project: Project, onClick: () -> Unit) {
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(project.claimedName, style = MaterialTheme.typography.titleMedium)
-            Text(project.closureReason ?: "Закрыт", style = MaterialTheme.typography.bodyMedium,
+            Text(project.closureReason ?: "Закрыто", style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text("P&L: %+.2f TON".format(pnl), style = MaterialTheme.typography.bodyMedium,
+            Text("П&У: %+.0f ₽".format(pnl), style = MaterialTheme.typography.bodyMedium,
                 color = if (pnl >= 0) Success else Error, fontWeight = FontWeight.Medium)
         }
     }

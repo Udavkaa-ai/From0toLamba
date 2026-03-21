@@ -442,26 +442,26 @@ private fun updateCountWord(count: Int): String = when {
 }
 
 private val loadingPhrases = listOf(
-    "Домовой пересчитывает монеты...",
-    "Жар-Птица несёт свежие данные...",
+    "Домовой пересчитывает монеты в казне...",
+    "Жар-Птица летит с новостями с ярмарки...",
     "Кот учёный обходит дуб кругом...",
-    "Кощей прячет доходность...",
-    "Баба Яга читает байт-код...",
-    "Колобок катится к листингу...",
-    "Водяной замораживает ликвидность...",
-    "Зеркальце считает лучшие проекты...",
-    "Финансовые манипуляции в процессе...",
-    "Ищем спонсоров в Дубае...",
-    "Считаем скамы за тебя...",
-    "Разраб пишет апдейт в 3 ночи...",
-    "Листинг вот-вот, обещаем...",
-    "Аудит почти готов (нет)...",
-    "Пампим метрики для отчёта...",
-    "CEO летит из Дубая на конференцию...",
-    "Биржа ждёт нашего листинга...",
-    "Смотрим графики и не паникуем...",
-    "Считаем комиссии за вывод...",
-    "ДАО голосует за наш бюджет..."
+    "Кощей прячет свои рубли в игле...",
+    "Баба Яга читает книгу учёта...",
+    "Колобок катится за новым вкладчиком...",
+    "Водяной замораживает чужие рубли...",
+    "Зеркальце ищет честных хозяев...",
+    "Хитрая лиса считает долги в кабаке...",
+    "Буратино закапывает монеты на Поле Чудес...",
+    "Иван ищет третью попытку...",
+    "Боярин составляет пышную грамоту...",
+    "Карабас гарантирует выплаты лично...",
+    "Леший путает следы должников...",
+    "Мудрый старец разбирает кейс...",
+    "Глашатай кричит о новом деле...",
+    "Стражники допрашивают хозяина...",
+    "Купцы торгуются на площади...",
+    "Кузнец кует новые монеты...",
+    "Странник шепчет страшные слухи..."
 )
 
 @Composable
@@ -541,24 +541,24 @@ private fun BalanceCard(
                                 modifier = Modifier
                                     .size(28.dp)
                                     .clip(CircleShape)
-                                    .background(TonBlue),
+                                    .background(FairyGold.copy(alpha = 0.8f)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    "TON",
-                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp),
-                                    color = Color.White,
+                                    "₽",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp),
+                                    color = Color(0xFF1A0A00),
                                     fontWeight = FontWeight.Bold
                                 )
                             }
                             Text(
-                                "%.2f".format(balance),
+                                "%.0f".format(balance),
                                 style = MaterialTheme.typography.headlineLarge,
                                 fontWeight = FontWeight.Bold,
                                 color = FairyGold
                             )
                             Text(
-                                "TON",
+                                "₽",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Medium,
                                 color = FairyGold.copy(alpha = 0.65f)
@@ -636,9 +636,9 @@ private fun ActiveProjectCard(project: Project, onClick: () -> Unit) {
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        "%.2f TON".format(project.currentValueTON),
+                        "%.0f ₽".format(project.currentValueRubles),
                         style = MaterialTheme.typography.titleMedium,
-                        color = if (project.currentValueTON >= project.investedAmountTON) Success
+                        color = if (project.currentValueRubles >= project.investedAmountRubles) Success
                                 else MaterialTheme.colorScheme.error
                     )
                     Text("День ${project.daysSinceJoined}", style = MaterialTheme.typography.labelSmall)
@@ -686,7 +686,7 @@ private fun EmptyProjectsCard(onInboxClick: () -> Unit) {
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    "Загляни во Входящие — там ждут новые разработчики. Поговори с каждым, разгадай кто из них скамер, и реши, достоин ли проект твоих монет.",
+                    "Загляни в Грамоты — там ждут новые хозяева дел. Поговори с каждым в кабаке, разгадай кто из них обманщик, и реши, достойно ли дело твоих рублей.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White.copy(alpha = 0.65f)
                 )

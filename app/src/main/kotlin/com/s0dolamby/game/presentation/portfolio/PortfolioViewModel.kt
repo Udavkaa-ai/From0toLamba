@@ -24,7 +24,6 @@ class PortfolioViewModel @Inject constructor(
     val activeProjects: StateFlow<List<Project>> = projectRepository.getActiveProjects()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Exclude projects skipped from inbox (never invested in, just dismissed)
     val closedProjects: StateFlow<List<Project>> = projectRepository.getClosedProjects()
         .map { list -> list.filter { it.closureReason != "Предложение не принято" } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -35,23 +34,23 @@ class PortfolioViewModel @Inject constructor(
     fun exitProject(projectId: String) {
         viewModelScope.launch {
             exitProjectUseCase(projectId)
-                .onSuccess { returned -> _actionResult.value = "Получено %.2f TON".format(returned) }
+                .onSuccess { returned -> _actionResult.value = "Получено %.0f ₽".format(returned) }
                 .onFailure { _actionResult.value = "Ошибка: ${it.message}" }
         }
     }
 
-    fun addFunds(projectId: String, amountTON: Double) {
+    fun addFunds(projectId: String, amountRubles: Double) {
         viewModelScope.launch {
-            investUseCase(projectId, amountTON)
-                .onSuccess { _actionResult.value = "Довложено %.2f TON".format(amountTON) }
+            investUseCase(projectId, amountRubles)
+                .onSuccess { _actionResult.value = "Довложено %.0f ₽".format(amountRubles) }
                 .onFailure { _actionResult.value = "Ошибка: ${it.message}" }
         }
     }
 
-    fun partialWithdraw(projectId: String, amountTON: Double) {
+    fun partialWithdraw(projectId: String, amountRubles: Double) {
         viewModelScope.launch {
-            partialWithdrawUseCase(projectId, amountTON)
-                .onSuccess { amount -> _actionResult.value = "Выведено %.2f TON".format(amount) }
+            partialWithdrawUseCase(projectId, amountRubles)
+                .onSuccess { amount -> _actionResult.value = "Выведено %.0f ₽".format(amount) }
                 .onFailure { _actionResult.value = "Ошибка: ${it.message}" }
         }
     }

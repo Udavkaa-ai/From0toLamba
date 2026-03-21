@@ -32,27 +32,27 @@ import com.s0dolamby.game.presentation.common.theme.Warning
 // ─── Question templates ───────────────────────────────────────────────────────
 
 private val questionTemplates = listOf(
-    "Сколько реально зарабатывают пользователи в день?",
-    "Сколько сейчас активных пользователей?",
-    "Когда точно будет листинг и на какой бирже?",
-    "Кто в команде? Можно проверить?",
-    "Проект прошёл аудит смарт-контракта?",
-    "Есть ли ограничения на вывод средств?",
-    "Кто ваши партнёры и инвесторы?",
+    "Сколько реально зарабатывают участники в день?",
+    "Сколько сейчас вкладчиков в деле?",
+    "Когда точно будут первые выплаты?",
+    "Кто в артели? Можно проверить?",
+    "Дело проверено старейшинами или воеводой?",
+    "Есть ли ограничения на вывод рублей?",
+    "Кто ваши покровители и партнёры?",
     "Почему доходность такая высокая?",
-    "Что если экономика не взлетит?",
-    "Где можно проверить смарт-контракт?"
+    "Что будет, если дело не пойдёт?",
+    "Покажи книгу учёта доходов и расходов?"
 )
 
 // ─── LieTopic helpers ────────────────────────────────────────────────────────
 
 private val LieTopic.displayName: String get() = when (this) {
-    LieTopic.USER_COUNT -> "Кол-во пользователей"
-    LieTopic.DAILY_YIELD -> "Доходность"
-    LieTopic.LISTING_DATE -> "Дата листинга"
-    LieTopic.TEAM_SIZE -> "Размер команды"
-    LieTopic.AUDIT_STATUS -> "Аудит"
-    LieTopic.PARTNER_STATUS -> "Партнёры"
+    LieTopic.PATRON_COUNT -> "Кол-во вкладчиков"
+    LieTopic.DAILY_PROFIT -> "Дневной доход"
+    LieTopic.PAYOUT_DATE -> "Дата выплат"
+    LieTopic.GUILD_SIZE -> "Размер артели"
+    LieTopic.ELDER_BLESSING -> "Проверка старейшин"
+    LieTopic.NOBLE_BACKING -> "Покровители"
     LieTopic.WITHDRAWAL_LIMITS -> "Лимиты вывода"
 }
 
@@ -87,7 +87,7 @@ fun AmaScreen(
                     Column {
                         Text(uiState.project?.developerName ?: "AMA сессия")
                         Text(
-                            "${uiState.project?.claimedName} • вопрос $questionCount/${GameConfig.AMA_MAX_QUESTIONS}",
+                            "${uiState.project?.claimedName} • беседа $questionCount/${GameConfig.AMA_MAX_QUESTIONS}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -310,7 +310,7 @@ private fun LieGuessSheet(
         ) {
             if (result == null) {
                 // ── Selection mode ──
-                Text("В чём соврал разраб?", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text("В чём соврал хозяин?", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -525,9 +525,9 @@ private fun WelcomeMessage(projectName: String, devName: String) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Text(
-            "Привет! Это AMA-сессия с разработчиком проекта «$projectName».\n" +
-                    "Разработчик: $devName\n\n" +
-                    "У тебя есть ${GameConfig.AMA_MAX_QUESTIONS} вопросов, чтобы понять — стоит ли инвестировать.",
+            "В кабаке тебя ждёт хозяин дела «$projectName».\n" +
+                    "Зовут его: $devName\n\n" +
+                    "У тебя есть ${GameConfig.AMA_MAX_QUESTIONS} вопросов, чтобы понять — стоит ли вкладывать рубли.",
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(16.dp)
         )
@@ -541,9 +541,9 @@ private fun SessionEndBanner(onInvest: () -> Unit, onSkip: () -> Unit) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("AMA завершена. Ваш вердикт?", style = MaterialTheme.typography.titleMedium)
+            Text("Беседа окончена. Ваш вердикт?", style = MaterialTheme.typography.titleMedium)
             Text(
-                "Инвестируй TON или скипни — и попробуй угадать, в чём соврал разраб.",
+                "Вложи рубли или откажись — и попробуй угадать, в чём соврал хозяин.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -568,25 +568,25 @@ private fun InvestBottomSheet(onDismiss: () -> Unit, onInvest: (Double) -> Unit)
             modifier = Modifier.padding(horizontal = 24.dp).padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Инвестировать TON", style = MaterialTheme.typography.titleLarge)
+            Text("Вложить рубли", style = MaterialTheme.typography.titleLarge)
             OutlinedTextField(
                 value = amountText,
                 onValueChange = { amountText = it.filter { c -> c.isDigit() || c == '.' } },
-                label = { Text("Сумма в TON") },
-                suffix = { Text("TON") },
+                label = { Text("Сумма в рублях") },
+                suffix = { Text("₽") },
                 modifier = Modifier.fillMaxWidth()
             )
             Text(
-                "Минимум 0.1 TON • Максимум 50 TON",
+                "Минимум 5 ₽ • Максимум 5 000 ₽",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Button(
                 onClick = { amount?.let { onInvest(it) } },
-                enabled = amount != null && amount >= 0.1 && amount <= 50.0,
+                enabled = amount != null && amount >= 5.0 && amount <= 5000.0,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Подтвердить инвестицию")
+                Text("Вложить")
             }
         }
     }

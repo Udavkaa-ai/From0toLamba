@@ -123,7 +123,7 @@ fun ProjectDetailScreen(
 
             if (uiState.updates.isNotEmpty()) {
                 item {
-                    Text("История апдейтов", style = MaterialTheme.typography.titleMedium)
+                    Text("История вестей", style = MaterialTheme.typography.titleMedium)
                 }
                 items(uiState.updates.reversed()) { update ->
                     UpdateHistoryItem(update = update)
@@ -247,7 +247,7 @@ private fun ProjectInfoCard(project: Project) {
 
 @Composable
 private fun LiveStatsCard(project: Project, onManageClick: (() -> Unit)?) {
-    val pnl = project.currentValueTON - project.investedAmountTON
+    val pnl = project.currentValueRubles - project.investedAmountRubles
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
@@ -261,16 +261,16 @@ private fun LiveStatsCard(project: Project, onManageClick: (() -> Unit)?) {
                     }
                 }
             }
-            StatRow("Вложено", "%.2f TON".format(project.investedAmountTON))
-            StatRow("Текущая стоимость", "%.2f TON".format(project.currentValueTON))
-            StatRow("P&L", "%+.2f TON".format(pnl), color = if (pnl >= 0) Success else Error)
+            StatRow("Вложено", "%.0f ₽".format(project.investedAmountRubles))
+            StatRow("Текущая стоимость", "%.0f ₽".format(project.currentValueRubles))
+            StatRow("П&У", "%+.0f ₽".format(pnl), color = if (pnl >= 0) Success else Error)
             StatRow("Дней в портфеле", "${project.daysSinceJoined}")
             StatRow("Заявленный APY", "${project.claimedAPY.toInt()}%")
-            StatRow("Юзеров (заявлено)", formatCount(project.claimedUserCount))
+            StatRow("Участников (заявлено)", formatCount(project.claimedUserCount))
             if (project.currentUserCount > 0) {
-                StatRow("Юзеров (сейчас)", formatCount(project.currentUserCount))
+                StatRow("Участников (сейчас)", formatCount(project.currentUserCount))
             }
-            if (onManageClick != null && project.investedAmountTON > 0) {
+            if (onManageClick != null && project.investedAmountRubles > 0) {
                 Spacer(Modifier.height(4.dp))
                 Button(
                     onClick = onManageClick,
@@ -298,11 +298,11 @@ private fun PostMortemCard(project: Project, postMortem: PostMortemReport?) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("PostMortem — Разбор", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text("Итог — Разбор дела", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
 
             Surface(color = MaterialTheme.colorScheme.surface, shape = MaterialTheme.shapes.medium) {
                 Column(modifier = Modifier.padding(12.dp)) {
-                    Text("Архетип разработчика", style = MaterialTheme.typography.labelSmall,
+                    Text("Архетип хозяина", style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
                         project.personaArchetype.displayName,   // fixed: use Russian display name
@@ -314,7 +314,7 @@ private fun PostMortemCard(project: Project, postMortem: PostMortemReport?) {
 
             Surface(color = MaterialTheme.colorScheme.surface, shape = MaterialTheme.shapes.medium) {
                 Column(modifier = Modifier.padding(12.dp)) {
-                    Text("Судьба проекта", style = MaterialTheme.typography.labelSmall,
+                    Text("Судьба дела", style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
                         project.fate.displayName,
@@ -391,11 +391,11 @@ private fun formatCount(count: Int): String = when {
 }
 
 val ProjectType.displayName: String get() = when (this) {
-    ProjectType.CLICKER -> "Кликер"
-    ProjectType.P2E_RPG -> "P2E RPG"
-    ProjectType.FARMING_BOT -> "Фарм-бот"
-    ProjectType.REFERRAL_PYRAMID -> "Реферальная пирамида"
-    ProjectType.HONEST_GAMEFI -> "Честный GameFi"
+    ProjectType.CARD_GAME -> "Азартная игра"
+    ProjectType.TREASURE_HUNT -> "Поиск клада"
+    ProjectType.POTION_BREW -> "Зелейное дело"
+    ProjectType.GUILD_SCHEME -> "Артель / Гильдия"
+    ProjectType.HONEST_TRADE -> "Честная торговля"
 }
 
 val ProjectFate.displayName: String get() = when (this) {
@@ -415,11 +415,11 @@ val ProjectFate.color: androidx.compose.ui.graphics.Color @Composable get() = wh
 }
 
 val LieTopic.displayName: String get() = when (this) {
-    LieTopic.USER_COUNT -> "Количество пользователей"
-    LieTopic.DAILY_YIELD -> "Дневная доходность"
-    LieTopic.LISTING_DATE -> "Дата листинга"
-    LieTopic.TEAM_SIZE -> "Размер команды"
-    LieTopic.AUDIT_STATUS -> "Статус аудита"
-    LieTopic.PARTNER_STATUS -> "Партнёрства"
+    LieTopic.PATRON_COUNT -> "Количество вкладчиков"
+    LieTopic.DAILY_PROFIT -> "Дневной доход"
+    LieTopic.PAYOUT_DATE -> "Дата выплат"
+    LieTopic.GUILD_SIZE -> "Размер артели"
+    LieTopic.ELDER_BLESSING -> "Проверка старейшин"
+    LieTopic.NOBLE_BACKING -> "Покровители"
     LieTopic.WITHDRAWAL_LIMITS -> "Лимиты вывода"
 }
