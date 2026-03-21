@@ -137,7 +137,11 @@ class AdvanceDayUseCase @Inject constructor(
         val newBalance = state.balance + balanceDelta
         gameStateRepository.updateBalance(newBalance)
         gameStateRepository.appendBalanceSnapshot(newBalance)
+        // Record invested value (sum of all active project currentValueRubles after updates)
+        val totalActiveValue = projectRepository.getActiveProjectsTotalValue()
+        gameStateRepository.appendInvestedSnapshot(totalActiveValue)
         gameStateRepository.advanceDay()
+        gameStateRepository.updateRankIfNeeded()
 
         projectRepository.closeAllInboxProjects()
 

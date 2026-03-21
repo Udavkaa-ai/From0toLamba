@@ -699,7 +699,7 @@ private fun EmptyProjectsCard(onInboxClick: () -> Unit) {
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    "Загляни в Грамоты — там ждут новые хозяева дел. Поговори с каждым в кабаке, разгадай кто из них обманщик, и реши, достойно ли дело твоих рублей.",
+                    "Загляни во Входящие грамоты — там ждут новые Дельцы. Поговори с каждым, разгадай кто из них мошенник, и реши, достойно ли дело твоих рублей.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White.copy(alpha = 0.65f)
                 )

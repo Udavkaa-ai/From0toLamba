@@ -88,7 +88,7 @@ fun PortfolioScreen(
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
-                                "Поговори с хозяевами дел во Входящих грамотах и вложи рубли",
+                                "Поговори с Дельцами во Входящих грамотах и вложи рубли",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color.White.copy(alpha = 0.65f)
                             )

@@ -19,9 +19,12 @@ class GameStateRepositoryImpl @Inject constructor(
     private val gson: Gson
 ) : GameStateRepository {
 
-    private fun parseBalanceHistory(json: String): List<Double> = runCatching {
+    private fun parseDoubleHistory(json: String): List<Double> = runCatching {
         gson.fromJson(json, Array<Double>::class.java).toList()
     }.getOrDefault(emptyList())
+
+    // Keep old name as alias for migration compatibility
+    private fun parseBalanceHistory(json: String) = parseDoubleHistory(json)
 
     override fun observeGameState(): Flow<GameState> =
         combine(
@@ -42,7 +45,8 @@ class GameStateRepositoryImpl @Inject constructor(
                 scamsMissed = state.scamsMissed,
                 dayStreak = state.dayStreak,
                 isOnboardingComplete = state.isOnboardingComplete,
-                balanceHistory = parseBalanceHistory(state.balanceHistory)
+                balanceHistory = parseBalanceHistory(state.balanceHistory),
+                investedHistory = parseDoubleHistory(state.investedHistory)
             )
         }
 
@@ -61,7 +65,8 @@ class GameStateRepositoryImpl @Inject constructor(
             scamsMissed = state.scamsMissed,
             dayStreak = state.dayStreak,
             isOnboardingComplete = state.isOnboardingComplete,
-            balanceHistory = parseBalanceHistory(state.balanceHistory)
+            balanceHistory = parseBalanceHistory(state.balanceHistory),
+            investedHistory = parseDoubleHistory(state.investedHistory)
         )
     }
 
@@ -69,6 +74,29 @@ class GameStateRepositoryImpl @Inject constructor(
         val state = playerDao.getGameState() ?: return
         val history = parseBalanceHistory(state.balanceHistory).takeLast(59) + balance
         playerDao.update(state.copy(balanceHistory = gson.toJson(history)))
+    }
+
+    override suspend fun appendInvestedSnapshot(invested: Double) {
+        val state = playerDao.getGameState() ?: return
+        val history = parseDoubleHistory(state.investedHistory).takeLast(59) + invested
+        playerDao.update(state.copy(investedHistory = gson.toJson(history)))
+    }
+
+    override suspend fun updateRankIfNeeded() {
+        val state = playerDao.getGameState() ?: return
+        val newRank = computeRank(state.currentDay, state.scamsDetected, state.totalInvested)
+        val currentRank = InvestorRank.valueOf(state.investorRank)
+        if (newRank.ordinal > currentRank.ordinal) {
+            playerDao.update(state.copy(investorRank = newRank.name))
+        }
+    }
+
+    private fun computeRank(day: Int, scamsDetected: Int, totalInvested: Double): InvestorRank = when {
+        day >= 20 && scamsDetected >= 8 -> InvestorRank.LAMBO_SENSEI
+        day >= 10 && scamsDetected >= 4 -> InvestorRank.SHARK
+        day >= 5  && scamsDetected >= 2 -> InvestorRank.ANALYST
+        day >= 2  || totalInvested >= 5.0 -> InvestorRank.AMBASSADOR
+        else -> InvestorRank.NEWBIE
     }
 
     override suspend fun updateBalance(newBalance: Double) =

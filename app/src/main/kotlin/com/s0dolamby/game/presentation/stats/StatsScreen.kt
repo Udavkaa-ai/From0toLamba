@@ -1,6 +1,7 @@
 package com.s0dolamby.game.presentation.stats
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
@@ -16,11 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
@@ -123,7 +120,7 @@ private fun RankCard(state: GameState?) {
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    "Купеческий чин",
+                    "Чин",
                     style = MaterialTheme.typography.labelSmall,
                     color = FairyGold.copy(alpha = 0.7f)
                 )
@@ -156,9 +153,13 @@ private fun RankCard(state: GameState?) {
 
 @Composable
 private fun BalanceChartCard(state: GameState?) {
-    val history = state?.balanceHistory ?: emptyList()
+    val freeHistory = state?.balanceHistory ?: emptyList()
+    val investedHistory = state?.investedHistory ?: emptyList()
+    val n = minOf(freeHistory.size, investedHistory.size)
+    val hasBoth = n >= 2
 
     FairyCard(modifier = Modifier.fillMaxWidth()) {
+        // Title + legend
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -170,8 +171,10 @@ private fun BalanceChartCard(state: GameState?) {
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )
-            if (history.size >= 2) {
-                val delta = history.last() - history.first()
+            if (hasBoth) {
+                val totalFirst = freeHistory[freeHistory.size - n] + investedHistory[investedHistory.size - n]
+                val totalLast = freeHistory.last() + investedHistory.last()
+                val delta = totalLast - totalFirst
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     Icon(
                         if (delta >= 0) Icons.Default.TrendingUp else Icons.Default.TrendingDown,
@@ -189,13 +192,13 @@ private fun BalanceChartCard(state: GameState?) {
             }
         }
 
-        if (history.size < 2) {
+        if (!hasBoth) {
             Box(
                 modifier = Modifier.fillMaxWidth().height(140.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("📈", style = MaterialTheme.typography.displaySmall)
+                    Text("📊", style = MaterialTheme.typography.displaySmall)
                     Text(
                         "Пройди несколько дней —\nведомость появится здесь",
                         style = MaterialTheme.typography.bodyMedium,
@@ -204,74 +207,90 @@ private fun BalanceChartCard(state: GameState?) {
                 }
             }
         } else {
-            BalanceLineChart(history = history, modifier = Modifier.fillMaxWidth().height(160.dp))
+            val freeSlice = freeHistory.takeLast(n)
+            val investedSlice = investedHistory.takeLast(n)
+            StackedBarChart(
+                freeHistory = freeSlice,
+                investedHistory = investedSlice,
+                modifier = Modifier.fillMaxWidth().height(160.dp)
+            )
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("День 1", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
-                Text("День ${history.size}", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
+                Text("День $n", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
+            }
+            // Legend
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                LegendDot(color = FairyGold, label = "Казна")
+                LegendDot(color = Color(0xFF6B4FCB), label = "Вложено")
             }
         }
     }
 }
 
 @Composable
-private fun BalanceLineChart(history: List<Double>, modifier: Modifier = Modifier) {
-    val minVal = history.min()
-    val maxVal = history.max()
-    val range = (maxVal - minVal).coerceAtLeast(0.01)
-    val isPositive = history.last() >= history.first()
-    val lineColor = if (isPositive) Success else Error
-    val gradientColors = if (isPositive) {
-        listOf(Success.copy(alpha = 0.35f), Success.copy(alpha = 0.0f))
-    } else {
-        listOf(Error.copy(alpha = 0.35f), Error.copy(alpha = 0.0f))
+private fun LegendDot(color: Color, label: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Box(modifier = Modifier.size(8.dp).background(color, shape = RoundedCornerShape(2.dp)))
+        Text(label, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f))
     }
+}
+
+@Composable
+private fun StackedBarChart(
+    freeHistory: List<Double>,
+    investedHistory: List<Double>,
+    modifier: Modifier = Modifier
+) {
+    val totals = freeHistory.zip(investedHistory).map { (f, i) -> f + i }
+    val maxTotal = totals.max().coerceAtLeast(1.0)
+    val barColor = FairyGold
+    val investedColor = Color(0xFF6B4FCB)
 
     Canvas(modifier = modifier) {
         val w = size.width
         val h = size.height
-        val padTop = 12f
-        val padBottom = 12f
+        val padTop = 8f
+        val padBottom = 8f
         val chartH = h - padTop - padBottom
-        val stepX = if (history.size > 1) w / (history.size - 1).toFloat() else w
-
-        fun xAt(i: Int) = i * stepX
-        fun yAt(v: Double) = padTop + ((maxVal - v) / range * chartH).toFloat()
-
-        val fillPath = Path().apply {
-            moveTo(xAt(0), h)
-            lineTo(xAt(0), yAt(history[0]))
-            for (i in 1 until history.size) {
-                val x0 = xAt(i - 1); val y0 = yAt(history[i - 1])
-                val x1 = xAt(i);     val y1 = yAt(history[i])
-                val cx = (x0 + x1) / 2f
-                cubicTo(cx, y0, cx, y1, x1, y1)
-            }
-            lineTo(xAt(history.size - 1), h)
-            close()
-        }
-        drawPath(fillPath, brush = Brush.verticalGradient(gradientColors, startY = padTop, endY = h))
+        val n = freeHistory.size
+        val barWidth = (w / n * 0.65f)
+        val gap = w / n
 
         val gridColor = Color.White.copy(alpha = 0.06f)
-        for (i in 0..2) {
-            val y = padTop + chartH / 2 * i
+        for (i in 0..3) {
+            val y = padTop + chartH / 3 * i
             drawLine(gridColor, Offset(0f, y), Offset(w, y), strokeWidth = 1f)
         }
 
-        val linePath = Path().apply {
-            moveTo(xAt(0), yAt(history[0]))
-            for (i in 1 until history.size) {
-                val x0 = xAt(i - 1); val y0 = yAt(history[i - 1])
-                val x1 = xAt(i);     val y1 = yAt(history[i])
-                val cx = (x0 + x1) / 2f
-                cubicTo(cx, y0, cx, y1, x1, y1)
+        freeHistory.indices.forEach { i ->
+            val cx = gap * i + gap / 2f
+            val left = cx - barWidth / 2f
+            val freeVal = freeHistory[i].coerceAtLeast(0.0)
+            val investedVal = investedHistory[i].coerceAtLeast(0.0)
+            val totalVal = (freeVal + investedVal).coerceAtLeast(0.001)
+
+            val totalBarH = (totalVal / maxTotal * chartH).toFloat().coerceAtLeast(2f)
+            val freeBarH = (freeVal / totalVal * totalBarH).coerceAtLeast(0f)
+            val investedBarH = (totalBarH - freeBarH).coerceAtLeast(0f)
+
+            val barBottom = h - padBottom
+            // Draw invested portion (bottom)
+            if (investedBarH > 0f) {
+                drawRect(
+                    color = investedColor,
+                    topLeft = Offset(left, barBottom - investedBarH),
+                    size = androidx.compose.ui.geometry.Size(barWidth, investedBarH)
+                )
+            }
+            // Draw free portion (top)
+            if (freeBarH > 0f) {
+                drawRect(
+                    color = barColor,
+                    topLeft = Offset(left, barBottom - investedBarH - freeBarH),
+                    size = androidx.compose.ui.geometry.Size(barWidth, freeBarH)
+                )
             }
         }
-        drawPath(linePath, color = lineColor, style = Stroke(width = 3f, cap = StrokeCap.Round))
-
-        val lastX = xAt(history.size - 1)
-        val lastY = yAt(history.last())
-        drawCircle(color = lineColor, radius = 6f, center = Offset(lastX, lastY))
-        drawCircle(color = Color.White, radius = 3f, center = Offset(lastX, lastY))
     }
 }
 

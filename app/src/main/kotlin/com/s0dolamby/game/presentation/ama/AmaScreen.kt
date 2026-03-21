@@ -38,18 +38,14 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.s0dolamby.game.R
 import com.s0dolamby.game.domain.model.AmaMessage
-import com.s0dolamby.game.domain.model.LieTopic
 import com.s0dolamby.game.domain.model.MessageRole
 import com.s0dolamby.game.domain.model.PersonaArchetype
 import com.s0dolamby.game.domain.repository.GameConfig
 import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
-import com.s0dolamby.game.presentation.common.theme.Error
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.NightBlue
-import com.s0dolamby.game.presentation.common.theme.Success
-import com.s0dolamby.game.presentation.common.theme.Warning
 
 // ─── Background selection ─────────────────────────────────────────────────────
 
@@ -110,8 +106,13 @@ fun AmaScreen(
     val questionCount = uiState.session?.questionCount ?: 0
     val sessionEnded = questionCount >= GameConfig.AMA_MAX_QUESTIONS
 
-    LaunchedEffect(messages.size) {
-        if (messages.isNotEmpty()) listState.animateScrollToItem(messages.size - 1)
+    // Scroll so the latest message is visible above the bottom bar
+    LaunchedEffect(messages.size, sessionEnded) {
+        if (messages.isNotEmpty()) {
+            // items layout: [messages..., sessionEndBanner? (if ended), trailingSpacer]
+            val targetIndex = messages.size // spacer after last message (or banner when ended)
+            listState.animateScrollToItem(targetIndex)
+        }
     }
 
     val bgRes = besedaBackground(uiState.project?.personaArchetype)
@@ -157,9 +158,6 @@ fun AmaScreen(
                 },
                 actions = {
                     if (!sessionEnded) {
-                        TextButton(onClick = viewModel::showLieGuessSheet) {
-                            Text("Миновать", color = Color.White.copy(alpha = 0.7f))
-                        }
                         TextButton(onClick = viewModel::showInvestSheet) {
                             Text("Вложить", color = FairyGold, fontWeight = FontWeight.SemiBold)
                         }
@@ -288,11 +286,12 @@ fun AmaScreen(
                 item {
                     SessionEndBanner(
                         onInvest = viewModel::showInvestSheet,
-                        onSkip = viewModel::showLieGuessSheet
+                        onBack = onBack
                     )
                 }
             }
-
+            // Trailing spacer — ensures last message stays above the bottom bar
+            item { Spacer(Modifier.height(24.dp)) }
         }
     }
 
@@ -301,24 +300,6 @@ fun AmaScreen(
         InvestBottomSheet(
             onDismiss = viewModel::hideInvestSheet,
             onInvest = { amount -> viewModel.invest(amount) }
-        )
-    }
-
-    // Lie guess sheet
-    if (uiState.showLieGuessSheet) {
-        LieGuessSheet(
-            result = uiState.lieGuessResult,
-            maxSelectable = uiState.project?.lieTopics?.size ?: 3,
-            onSubmit = { guesses -> viewModel.submitLieGuess(guesses) },
-            onClose = {
-                viewModel.closeLieGuessSheet()
-                onBack()
-            },
-            onOpenRegistry = {
-                viewModel.closeLieGuessSheet()
-                onOpenRegistry()
-            },
-            onDismiss = viewModel::closeLieGuessSheet
         )
     }
 
@@ -397,205 +378,6 @@ private fun TemplateChip(question: String, onClick: (String) -> Unit) {
     )
 }
 
-// ─── Lie guess sheet ─────────────────────────────────────────────────────────
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
-@Composable
-private fun LieGuessSheet(
-    result: LieGuessResult?,
-    maxSelectable: Int,
-    onSubmit: (Set<LieTopic>) -> Unit,
-    onClose: () -> Unit,
-    onOpenRegistry: () -> Unit = {},
-    onDismiss: () -> Unit
-) {
-    var selectedTopics by remember { mutableStateOf(emptySet<LieTopic>()) }
-
-    ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(
-            modifier = Modifier
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 40.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            if (result == null) {
-                // ── Selection mode ──
-                Text("В чём соврал хозяин?", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        "Выбери темы, по которым тебя обманули",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Text(
-                        "${selectedTopics.size}/$maxSelectable",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = if (selectedTopics.size == maxSelectable)
-                            MaterialTheme.colorScheme.primary
-                        else
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    LieTopic.entries.forEach { topic ->
-                        val isSelected = topic in selectedTopics
-                        val atLimit = selectedTopics.size >= maxSelectable
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = {
-                                selectedTopics = if (isSelected)
-                                    selectedTopics - topic
-                                else if (!atLimit)
-                                    selectedTopics + topic
-                                else
-                                    selectedTopics
-                            },
-                            enabled = isSelected || !atLimit,
-                            label = { Text(topic.displayName) }
-                        )
-                    }
-                }
-
-                Button(
-                    onClick = { onSubmit(selectedTopics) },
-                    enabled = selectedTopics.isNotEmpty(),
-                    modifier = Modifier.fillMaxWidth()
-                ) { Text("Проверить") }
-
-                OutlinedButton(
-                    onClick = onClose,
-                    modifier = Modifier.fillMaxWidth()
-                ) { Text("Пропустить") }
-
-            } else {
-                // ── Result mode ──
-                val isSuccess = result.isSuccess
-                Text(
-                    if (isSuccess) "Отличный анализ!" else "Неплохо, но не всё",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isSuccess) Success else MaterialTheme.colorScheme.onSurface
-                )
-
-                if (isSuccess) {
-                    Surface(
-                        color = Success.copy(alpha = 0.12f),
-                        shape = MaterialTheme.shapes.medium
-                    ) {
-                        Text(
-                            "Архетип разработчика добавлен в Энциклопедию!",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Success,
-                            modifier = Modifier.padding(12.dp)
-                        )
-                    }
-                }
-
-                // Correct guesses
-                if (result.correct.isNotEmpty()) {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("Угадал:", style = MaterialTheme.typography.labelMedium, color = Success)
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            result.correct.forEach { topic ->
-                                Surface(
-                                    color = Success.copy(alpha = 0.15f),
-                                    shape = RoundedCornerShape(16.dp)
-                                ) {
-                                    Text(
-                                        topic.displayName,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = Success,
-                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Missed (actual lies not guessed)
-                if (result.missed.isNotEmpty()) {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("Пропустил:", style = MaterialTheme.typography.labelMedium, color = Error)
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            result.missed.forEach { topic ->
-                                Surface(
-                                    color = Error.copy(alpha = 0.15f),
-                                    shape = RoundedCornerShape(16.dp)
-                                ) {
-                                    Text(
-                                        topic.displayName,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = Error,
-                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // False positives
-                if (result.falsePositives.isNotEmpty()) {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("Лишнее:", style = MaterialTheme.typography.labelMedium, color = Warning)
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            result.falsePositives.forEach { topic ->
-                                Surface(
-                                    color = Warning.copy(alpha = 0.15f),
-                                    shape = RoundedCornerShape(16.dp)
-                                ) {
-                                    Text(
-                                        topic.displayName,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = Warning,
-                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (result.isSuccess) {
-                    Button(
-                        onClick = onOpenRegistry,
-                        modifier = Modifier.fillMaxWidth()
-                    ) { Text("Открыть в энциклопедии") }
-                    OutlinedButton(
-                        onClick = onClose,
-                        modifier = Modifier.fillMaxWidth()
-                    ) { Text("Закрыть") }
-                } else {
-                    Button(
-                        onClick = onClose,
-                        modifier = Modifier.fillMaxWidth()
-                    ) { Text("Закрыть") }
-                }
-            }
-        }
-    }
-}
-
 // ─── Supporting composables ───────────────────────────────────────────────────
 
 @Composable
@@ -667,7 +449,7 @@ private fun WelcomeMessage(projectName: String, devName: String) {
         OrnamentDivider()
         Spacer(Modifier.height(8.dp))
         Text(
-            "Тебя ждёт хозяин дела «$projectName».\nЗовут его: $devName",
+            "Тебя ждёт Делец, хозяин дела «$projectName».\nЗовут его: $devName",
             style = MaterialTheme.typography.bodyMedium,
             color = Color.White
         )
@@ -681,14 +463,14 @@ private fun WelcomeMessage(projectName: String, devName: String) {
 }
 
 @Composable
-private fun SessionEndBanner(onInvest: () -> Unit, onSkip: () -> Unit) {
+private fun SessionEndBanner(onInvest: () -> Unit, onBack: () -> Unit) {
     FairyCard(modifier = Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("✦", color = FairyGold, fontSize = 16.sp)
             Text("Беседа окончена", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
         }
         Text(
-            "Ваш вердикт? Вложите рубли или откажитесь — и угадайте, в чём соврал хозяин.",
+            "Ваш вердикт? Вложите рубли или откажитесь.",
             style = MaterialTheme.typography.bodySmall,
             color = Color.White.copy(alpha = 0.7f)
         )
@@ -701,11 +483,11 @@ private fun SessionEndBanner(onInvest: () -> Unit, onSkip: () -> Unit) {
             Text("Вложить рубли", color = NightBlue, fontWeight = FontWeight.Bold)
         }
         OutlinedButton(
-            onClick = onSkip,
+            onClick = onBack,
             modifier = Modifier.fillMaxWidth(),
             border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f))
         ) {
-            Text("Миновать → угадать обман", color = FairyGold)
+            Text("Не вкладывать", color = FairyGold)
         }
     }
 }

@@ -15,4 +15,6 @@ interface GameStateRepository {
     suspend fun completeOnboarding()
     suspend fun initializeGameState()
     suspend fun appendBalanceSnapshot(balance: Double)
+    suspend fun appendInvestedSnapshot(invested: Double)
+    suspend fun updateRankIfNeeded()
 }

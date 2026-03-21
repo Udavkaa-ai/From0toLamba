@@ -175,7 +175,7 @@ private fun PersonasTab(uiState: RegistryUiState) {
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
-                            "Поговори с хозяевами дел и угадай их ложь — типажи откроются",
+                            "Поговори с Дельцами — типажи откроются после закрытия дел",
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color.White.copy(alpha = 0.65f)
                         )
