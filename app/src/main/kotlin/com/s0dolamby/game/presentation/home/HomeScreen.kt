@@ -37,7 +37,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.s0dolamby.game.domain.model.DailyUpdate
 import com.s0dolamby.game.domain.model.PayoutStatus
 import com.s0dolamby.game.domain.model.Project
+import com.s0dolamby.game.presentation.common.components.CardCornerOrnaments
+import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.components.ProjectBannerImage
+import com.s0dolamby.game.presentation.common.components.SparklesOverlay
 import com.s0dolamby.game.presentation.common.theme.Background
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
 import com.s0dolamby.game.presentation.common.theme.Error
@@ -77,6 +80,13 @@ fun HomeScreen(
                 )
             )
     ) {
+        // Мерцающие искры в верхней части фона
+        SparklesOverlay(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(320.dp)
+        )
+
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
@@ -179,16 +189,13 @@ fun HomeScreen(
                 val activeProjects = gameState?.activeProjects ?: emptyList()
                 if (activeProjects.isNotEmpty()) {
                     item {
+                        OrnamentDivider()
+                        Spacer(Modifier.height(4.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text(
-                                "✦",
-                                color = FairyGold.copy(alpha = 0.6f),
-                                fontSize = 10.sp
-                            )
                             Text(
                                 "Активные владения",
                                 style = MaterialTheme.typography.titleMedium,
@@ -494,7 +501,7 @@ private fun BalanceCard(
                 modifier = Modifier.padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Decorative top row
+                // Декоративная верхняя строка
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -601,6 +608,8 @@ private fun BalanceCard(
                     }
                 }
             }
+            // Угловые орнаменты поверх содержимого карточки
+            CardCornerOrnaments(modifier = Modifier.matchParentSize())
         }
     }
 }
