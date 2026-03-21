@@ -36,8 +36,7 @@ class AdvanceDayUseCase @Inject constructor(
                 // Блокируем вывод за 2 дня до краха для скам-судеб
                 isScamFate && newDaysUntilCollapse != null && newDaysUntilCollapse == 2 && !project.isWithdrawalLocked -> {
                     val dailyYield = project.investedAmountRubles * project.realDailyYieldRubles * YIELD_MULTIPLIER
-                    balanceDelta += dailyYield
-                    gameStateRepository.recordReturn(dailyYield)
+                    // Доход остаётся внутри проекта — не добавляем в свободный баланс
                     val (newHistory, newApyHistory) = updateHistories(project, dailyYield)
                     projectRepository.updateProject(project.copy(
                         daysSinceJoined = project.daysSinceJoined + 1,
@@ -59,8 +58,7 @@ class AdvanceDayUseCase @Inject constructor(
                         // Счастливое спасение — дело продолжается ещё немного
                         val recoveryDays = Random.nextInt(3, 8)
                         val dailyYield = project.investedAmountRubles * project.realDailyYieldRubles * YIELD_MULTIPLIER
-                        balanceDelta += dailyYield
-                        gameStateRepository.recordReturn(dailyYield)
+                        // Доход остаётся внутри проекта
                         val (newHistory, newApyHistory) = updateHistories(project, dailyYield)
                         projectRepository.updateProject(project.copy(
                             daysSinceJoined = project.daysSinceJoined + 1,
@@ -73,13 +71,13 @@ class AdvanceDayUseCase @Inject constructor(
                         ))
                         AppLogger.i("AdvanceDayUseCase", "Project ${project.id} recovered for $recoveryDays more days")
                     } else {
-                        // Дело рухнуло
+                        // Дело рухнуло — возвращаем часть текущей стоимости в свободный баланс
                         val lossPercent = when (project.fate) {
                             ProjectFate.INSTANT_SCAM -> Random.nextDouble(0.80, 1.0)
                             ProjectFate.SLOW_DRAIN -> Random.nextDouble(0.30, 0.70)
                             else -> 0.0
                         }
-                        val returned = project.investedAmountRubles * (1 - lossPercent)
+                        val returned = project.currentValueRubles * (1 - lossPercent)
                         balanceDelta += returned
                         gameStateRepository.recordReturn(returned)
                         projectRepository.closeProject(project.id, buildClosureReason(project.fate))
@@ -93,18 +91,17 @@ class AdvanceDayUseCase @Inject constructor(
                         ProjectFate.HONEST_FAIL -> Random.nextDouble(0.10, 0.40)
                         else -> 0.0
                     }
-                    val returned = project.investedAmountRubles * (1 - lossPercent)
+                    val returned = project.currentValueRubles * (1 - lossPercent)
                     balanceDelta += returned
                     gameStateRepository.recordReturn(returned)
                     projectRepository.closeProject(project.id, buildClosureReason(project.fate))
                     gameStateRepository.recordScamMissed()
                 }
 
-                // Обычный день — начисляем доход, возможно случайное событие
+                // Обычный день — начисляем доход внутри проекта, возможно случайное событие
                 else -> {
                     val dailyYield = project.investedAmountRubles * project.realDailyYieldRubles * YIELD_MULTIPLIER
-                    balanceDelta += dailyYield
-                    gameStateRepository.recordReturn(dailyYield)
+                    // Доход прирастает в currentValueRubles, не в свободном балансе
                     val (newHistory, newApyHistory) = updateHistories(project, dailyYield)
                     var updatedProject = project.copy(
                         daysSinceJoined = project.daysSinceJoined + 1,
@@ -120,12 +117,7 @@ class AdvanceDayUseCase @Inject constructor(
                     val event = rollEvent(updatedProject)
                     if (event != null) {
                         val result = applyEvent(updatedProject, event)
-                        balanceDelta += result.balanceDelta
-                        if (result.balanceDelta < 0) {
-                            gameStateRepository.recordReturn(0.0)
-                        } else {
-                            gameStateRepository.recordReturn(result.balanceDelta)
-                        }
+                        // Событие меняет currentValueRubles проекта, а не свободный баланс
                         projectRepository.updateProject(result.project)
                         updatedProject = result.project
                         AppLogger.i("AdvanceDayUseCase", "Event $event on ${project.claimedName}, delta=${result.balanceDelta}")
