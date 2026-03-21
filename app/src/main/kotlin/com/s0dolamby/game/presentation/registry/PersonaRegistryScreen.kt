@@ -20,6 +20,7 @@ import com.s0dolamby.game.domain.model.ProjectType
 import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
 import com.s0dolamby.game.presentation.common.theme.FairyGold
+import androidx.compose.foundation.background
 import com.s0dolamby.game.presentation.portfolio.displayName
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -114,10 +115,17 @@ fun PersonaRegistryScreen(
                 containerColor = Color.Transparent,
                 contentColor = FairyGold,
                 indicator = { tabPositions ->
-                    TabRowDefaults.SecondaryIndicator(
-                        modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
-                        color = FairyGold
-                    )
+                    val tab = tabPositions[selectedTab]
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .offset(x = tab.left)
+                                .width(tab.width)
+                                .height(2.dp)
+                                .background(FairyGold)
+                        )
+                    }
                 }
             ) {
                 tabs.forEachIndexed { i, title ->
@@ -342,3 +350,49 @@ private val glossaryItems = listOf(
         "• Выживший — долгосрочный, стабильный небольшой доход\n" +
         "• Единорог — редкость, реальный рост и доходность до 10% в день"
 )
+
+val PersonaArchetype.emoji: String get() = when (this) {
+    PersonaArchetype.BURATINO -> "🤥"
+    PersonaArchetype.BOYARIN -> "👑"
+    PersonaArchetype.KOLOBOK -> "😊"
+    PersonaArchetype.KOSCHEI -> "💀"
+    PersonaArchetype.ZOLUSHKA -> "✨"
+    PersonaArchetype.BABA_YAGA -> "🧙"
+    PersonaArchetype.IVAN_DURAK -> "🎲"
+}
+
+val PersonaArchetype.displayName: String get() = when (this) {
+    PersonaArchetype.BURATINO -> "Буратино"
+    PersonaArchetype.BOYARIN -> "Боярин"
+    PersonaArchetype.KOLOBOK -> "Колобок"
+    PersonaArchetype.KOSCHEI -> "Кощей"
+    PersonaArchetype.ZOLUSHKA -> "Золушка"
+    PersonaArchetype.BABA_YAGA -> "Баба-Яга"
+    PersonaArchetype.IVAN_DURAK -> "Иван-дурак"
+}
+
+val PersonaArchetype.description: String get() = when (this) {
+    PersonaArchetype.BURATINO -> "Очевидный лжец, верит в свои же сказки"
+    PersonaArchetype.BOYARIN -> "Пафосный, ссылается на великих покровителей"
+    PersonaArchetype.KOLOBOK -> "Хвастун-энтузиаст, от всех убегает с улыбкой"
+    PersonaArchetype.KOSCHEI -> "Холодный и уверенный, говорит только цифрами"
+    PersonaArchetype.ZOLUSHKA -> "Апеллирует к жалости и эмоциям, давит дедлайнами"
+    PersonaArchetype.BABA_YAGA -> "Отвечает загадками, технически подкована"
+    PersonaArchetype.IVAN_DURAK -> "Открыт про провалы — третий раз может взлететь"
+}
+
+val ProjectType.description: String get() = when (this) {
+    ProjectType.CARD_GAME -> "Азартные игры на удачу с ставками"
+    ProjectType.TREASURE_HUNT -> "Поиск клада с командой или в одиночку"
+    ProjectType.POTION_BREW -> "Пассивный доход с варки зелий и ресурсов"
+    ProjectType.GUILD_SCHEME -> "Реферальная артель: зарабатывай на новичках"
+    ProjectType.HONEST_TRADE -> "Прозрачная торговля с открытыми условиями"
+}
+
+val ProjectType.riskLevel: String get() = when (this) {
+    ProjectType.CARD_GAME -> "Очень высокий"
+    ProjectType.TREASURE_HUNT -> "Высокий"
+    ProjectType.POTION_BREW -> "Очень высокий"
+    ProjectType.GUILD_SCHEME -> "Высокий"
+    ProjectType.HONEST_TRADE -> "Умеренный"
+}

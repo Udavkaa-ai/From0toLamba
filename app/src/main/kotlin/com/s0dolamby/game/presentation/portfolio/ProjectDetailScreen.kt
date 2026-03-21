@@ -29,7 +29,6 @@ import com.s0dolamby.game.presentation.common.components.ProjectBannerImage
 import com.s0dolamby.game.presentation.common.theme.Error
 import com.s0dolamby.game.presentation.common.theme.Success
 import com.s0dolamby.game.presentation.common.theme.Warning
-import com.s0dolamby.game.presentation.registry.displayName
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -422,4 +421,14 @@ val LieTopic.displayName: String get() = when (this) {
     LieTopic.ELDER_BLESSING -> "Проверка старейшин"
     LieTopic.NOBLE_BACKING -> "Покровители"
     LieTopic.WITHDRAWAL_LIMITS -> "Лимиты вывода"
+}
+
+val PersonaArchetype.displayName: String get() = when (this) {
+    PersonaArchetype.BURATINO -> "Буратино"
+    PersonaArchetype.BOYARIN -> "Боярин"
+    PersonaArchetype.KOLOBOK -> "Колобок"
+    PersonaArchetype.KOSCHEI -> "Кощей"
+    PersonaArchetype.ZOLUSHKA -> "Золушка"
+    PersonaArchetype.BABA_YAGA -> "Баба-Яга"
+    PersonaArchetype.IVAN_DURAK -> "Иван-дурак"
 }
