@@ -6,6 +6,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -14,7 +15,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -221,8 +222,24 @@ fun HomeScreen(
                             )
                         }
                     }
-                    items(activeProjects) { project ->
-                        ActiveProjectCard(project = project, onClick = { onProjectClick(project.id) })
+                    itemsIndexed(activeProjects) { index, project ->
+                        var visible by remember(project.id) { mutableStateOf(false) }
+                        LaunchedEffect(project.id) {
+                            delay(index * 80L)
+                            visible = true
+                        }
+                        AnimatedVisibility(
+                            visible = visible,
+                            enter = slideInVertically(
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                    stiffness = Spring.StiffnessMedium
+                                ),
+                                initialOffsetY = { it }
+                            ) + fadeIn(tween(280))
+                        ) {
+                            ActiveProjectCard(project = project, onClick = { onProjectClick(project.id) })
+                        }
                     }
                 } else {
                     item {
@@ -564,12 +581,22 @@ private fun BalanceCard(
                                     fontWeight = FontWeight.Bold
                                 )
                             }
-                            Text(
-                                "%.0f".format(balance),
-                                style = MaterialTheme.typography.headlineLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = FairyGold
-                            )
+                            // Balance scrolls up/down when value changes
+                            AnimatedContent(
+                                targetState = "%.0f".format(balance),
+                                transitionSpec = {
+                                    slideInVertically(tween(350)) { it } + fadeIn(tween(250)) togetherWith
+                                        slideOutVertically(tween(250)) { -it } + fadeOut(tween(200))
+                                },
+                                label = "balance_counter"
+                            ) { balanceText ->
+                                Text(
+                                    balanceText,
+                                    style = MaterialTheme.typography.headlineLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = FairyGold
+                                )
+                            }
                             Text(
                                 "₽",
                                 style = MaterialTheme.typography.titleMedium,

@@ -1,7 +1,16 @@
 package com.s0dolamby.game.presentation.stats
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
@@ -10,12 +19,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.TrendingDown
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -110,15 +121,44 @@ fun StatsScreen(
 
 // ─── Rank card ────────────────────────────────────────────────────────────────
 
+private data class RankTier(
+    val rankName: String,
+    val emoji: String,
+    val displayName: String,
+    val requirement: String
+)
+
+private val rankTiers = listOf(
+    RankTier("NEWBIE",       "🐣", "Скоморох",  "Начало пути — просто открой приложение"),
+    RankTier("AMBASSADOR",   "📣", "Купец",      "День 2+ или первое вложение от 5 ₽"),
+    RankTier("ANALYST",      "🔍", "Мудрец",     "День 5+ и 2 разоблачённых мошенника"),
+    RankTier("SHARK",        "🦈", "Богатырь",   "День 10+ и 4 разоблачения"),
+    RankTier("LAMBO_SENSEI", "👑", "Царь",       "День 20+ и 8 разоблачений"),
+)
+
 @Composable
 private fun RankCard(state: GameState?) {
-    FairyCard(modifier = Modifier.fillMaxWidth()) {
+    var expanded by remember { mutableStateOf(false) }
+    val chevronRotation by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        animationSpec = tween(250),
+        label = "chevron"
+    )
+    val currentRankName = state?.investorRank?.name ?: "NEWBIE"
+    val currentEmoji = rankTiers.find { it.rankName == currentRankName }?.emoji ?: "🐣"
+
+    FairyCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { expanded = !expanded }
+            .animateContentSize()
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.weight(1f)) {
                 Text(
                     "Чин",
                     style = MaterialTheme.typography.labelSmall,
@@ -136,15 +176,84 @@ private fun RankCard(state: GameState?) {
                     color = Color.White.copy(alpha = 0.6f)
                 )
             }
-            val emoji = when (state?.investorRank?.name) {
-                "NEWBIE" -> "🐣"
-                "AMBASSADOR" -> "📣"
-                "ANALYST" -> "🔍"
-                "SHARK" -> "🦈"
-                "LAMBO_SENSEI" -> "🏎️"
-                else -> "🐣"
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(currentEmoji, style = MaterialTheme.typography.displaySmall)
+                Icon(
+                    Icons.Default.ExpandMore,
+                    contentDescription = if (expanded) "Свернуть" else "Развернуть иерархию чинов",
+                    tint = FairyGold.copy(alpha = 0.6f),
+                    modifier = Modifier.size(20.dp).rotate(chevronRotation)
+                )
             }
-            Text(emoji, style = MaterialTheme.typography.displaySmall)
+        }
+
+        AnimatedVisibility(
+            visible = expanded,
+            enter = expandVertically(tween(280)) + fadeIn(tween(200)),
+            exit = shrinkVertically(tween(220)) + fadeOut(tween(150))
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(0.dp)
+            ) {
+                HorizontalDivider(
+                    color = FairyGold.copy(alpha = 0.2f),
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                rankTiers.forEach { tier ->
+                    val isCurrent = tier.rankName == currentRankName
+                    val isPast    = rankTiers.indexOfFirst { it.rankName == currentRankName }
+                                        .let { cur -> rankTiers.indexOf(tier) < cur }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Text(
+                            tier.emoji,
+                            fontSize = 20.sp,
+                            modifier = Modifier.width(28.dp)
+                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                tier.displayName,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
+                                color = when {
+                                    isCurrent -> FairyGold
+                                    isPast    -> Color.White.copy(alpha = 0.45f)
+                                    else      -> Color.White.copy(alpha = 0.75f)
+                                }
+                            )
+                            Text(
+                                tier.requirement,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White.copy(alpha = if (isCurrent) 0.8f else 0.4f)
+                            )
+                        }
+                        if (isCurrent) {
+                            Surface(
+                                color = FairyGold.copy(alpha = 0.18f),
+                                shape = RoundedCornerShape(4.dp)
+                            ) {
+                                Text(
+                                    "сейчас",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = FairyGold,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -439,30 +548,37 @@ private fun StatRow(label: String, value: String) {
 @Composable
 private fun LogCard(onShowLog: () -> Unit) {
     val context = LocalContext.current
-    FairyCard(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            "Логи",
+            style = MaterialTheme.typography.labelSmall,
+            color = Color.White.copy(alpha = 0.25f)
+        )
+        TextButton(
+            onClick = onShowLog,
+            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
         ) {
             Text(
-                "Журнал приложения",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                modifier = Modifier.weight(1f)
+                "просмотр",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.White.copy(alpha = 0.25f)
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(
-                    onClick = onShowLog,
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.4f))
-                ) { Text("Просмотр") }
-                Button(
-                    onClick = { AppLogger.share(context) },
-                    colors = ButtonDefaults.buttonColors(containerColor = FairyGold, contentColor = Color(0xFF1A0A00))
-                ) { Text("Поделиться") }
-            }
+        }
+        TextButton(
+            onClick = { AppLogger.share(context) },
+            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+        ) {
+            Text(
+                "поделиться",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.White.copy(alpha = 0.25f)
+            )
         }
     }
 }

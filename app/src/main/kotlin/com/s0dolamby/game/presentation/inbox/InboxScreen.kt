@@ -1,12 +1,17 @@
 package com.s0dolamby.game.presentation.inbox
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -92,8 +97,21 @@ fun InboxScreen(
                     OrnamentDivider()
                 }
             }
-            items(projects) { project ->
-                InboxProjectCard(project = project, onClick = { onProjectClick(project.id) })
+            itemsIndexed(projects) { index, project ->
+                var visible by remember(project.id) { mutableStateOf(false) }
+                LaunchedEffect(project.id) {
+                    delay(index * 70L)
+                    visible = true
+                }
+                AnimatedVisibility(
+                    visible = visible,
+                    enter = slideInVertically(
+                        animationSpec = tween(320),
+                        initialOffsetY = { it / 2 }
+                    ) + fadeIn(tween(280))
+                ) {
+                    InboxProjectCard(project = project, onClick = { onProjectClick(project.id) })
+                }
             }
         }
     }

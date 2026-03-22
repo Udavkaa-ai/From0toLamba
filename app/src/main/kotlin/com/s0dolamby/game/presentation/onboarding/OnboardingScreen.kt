@@ -1,10 +1,14 @@
 package com.s0dolamby.game.presentation.onboarding
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -29,6 +33,7 @@ import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -103,7 +108,7 @@ fun OnboardingScreen(
         ) {
             Spacer(Modifier.height(40.dp))
 
-            // Индикатор шагов
+            // Step indicator dots
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
@@ -113,7 +118,7 @@ fun OnboardingScreen(
                     Box(modifier = Modifier.size(if (i == step) 12.dp else 8.dp).padding(2.dp)) {
                         Surface(
                             modifier = Modifier.fillMaxSize(),
-                            shape = MaterialTheme.shapes.small,
+                            shape = RoundedCornerShape(50),
                             color = if (i == step) FairyGold else Color.White.copy(alpha = 0.25f)
                         ) {}
                     }
@@ -122,33 +127,77 @@ fun OnboardingScreen(
 
             if (step < steps.size) {
                 val current = steps[step]
-                AnimatedVisibility(
-                    visible = true,
-                    enter = fadeIn() + slideInVertically()
-                ) {
+
+                // Re-key on step so animations replay on every step change
+                key(step) {
+                    var emojiVisible  by remember { mutableStateOf(false) }
+                    var titleVisible  by remember { mutableStateOf(false) }
+                    var cardVisible   by remember { mutableStateOf(false) }
+
+                    LaunchedEffect(Unit) {
+                        emojiVisible = true
+                        delay(100)
+                        titleVisible = true
+                        delay(100)
+                        cardVisible = true
+                    }
+
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Text(
-                            current.emoji,
-                            style = MaterialTheme.typography.headlineLarge,
-                            modifier = Modifier.padding(top = 24.dp)
-                        )
-                        OrnamentDivider()
-                        Text(
-                            current.title,
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center,
-                            color = Color.White
-                        )
-                        FairyCard(modifier = Modifier.fillMaxWidth()) {
+                        // Emoji — bounces down from above
+                        AnimatedVisibility(
+                            visible = emojiVisible,
+                            enter = slideInVertically(
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                    stiffness = Spring.StiffnessMediumLow
+                                ),
+                                initialOffsetY = { -it * 2 }
+                            ) + fadeIn(tween(200))
+                        ) {
                             Text(
-                                current.body,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = Color.White.copy(alpha = 0.9f)
+                                current.emoji,
+                                style = MaterialTheme.typography.headlineLarge,
+                                modifier = Modifier.padding(top = 24.dp)
                             )
+                        }
+
+                        OrnamentDivider()
+
+                        // Title — fades in
+                        AnimatedVisibility(
+                            visible = titleVisible,
+                            enter = fadeIn(tween(280))
+                        ) {
+                            Text(
+                                current.title,
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                color = Color.White
+                            )
+                        }
+
+                        // Card — slides up from below
+                        AnimatedVisibility(
+                            visible = cardVisible,
+                            enter = slideInVertically(
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                    stiffness = Spring.StiffnessMedium
+                                ),
+                                initialOffsetY = { it / 2 }
+                            ) + fadeIn(tween(320))
+                        ) {
+                            FairyCard(modifier = Modifier.fillMaxWidth()) {
+                                Text(
+                                    current.body,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = Color.White.copy(alpha = 0.9f)
+                                )
+                            }
                         }
                     }
                 }
