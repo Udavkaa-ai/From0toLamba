@@ -16,10 +16,10 @@ class AdvanceDayUseCase @Inject constructor(
     private val generateProjectUseCase: GenerateProjectUseCase,
     private val generateDailyUpdatesUseCase: GenerateDailyUpdatesUseCase
 ) {
-    // Each game day counts as 10 real days of yield — keeps progression engaging
+    // Каждый игровой день засчитывается как 10 реальных — держит прогресс интересным
     private val YIELD_MULTIPLIER = 10.0
 
-    // 10% chance of a random event per project per day
+    // 10% шанс случайного события на проект в день
     private val EVENT_CHANCE = 0.10f
 
     suspend operator fun invoke(): Result<List<DailyUpdate>> = runCatching {
@@ -33,16 +33,15 @@ class AdvanceDayUseCase @Inject constructor(
             val isScamFate = project.fate == ProjectFate.INSTANT_SCAM || project.fate == ProjectFate.SLOW_DRAIN
 
             when {
-                // Lock withdrawals 2 days before collapse for scam-type fates
+                // Блокируем вывод за 2 дня до краха для скам-судеб
                 isScamFate && newDaysUntilCollapse != null && newDaysUntilCollapse == 2 && !project.isWithdrawalLocked -> {
-                    val dailyYield = project.investedAmountTON * project.realDailyYieldTON * YIELD_MULTIPLIER
-                    balanceDelta += dailyYield
-                    gameStateRepository.recordReturn(dailyYield)
+                    val dailyYield = project.investedAmountRubles * project.realDailyYieldRubles * YIELD_MULTIPLIER
+                    // Доход остаётся внутри проекта — не добавляем в свободный баланс
                     val (newHistory, newApyHistory) = updateHistories(project, dailyYield)
                     projectRepository.updateProject(project.copy(
                         daysSinceJoined = project.daysSinceJoined + 1,
                         daysUntilCollapse = newDaysUntilCollapse,
-                        currentValueTON = project.currentValueTON + dailyYield,
+                        currentValueRubles = project.currentValueRubles + dailyYield,
                         isWithdrawalLocked = true,
                         currentUserCount = newHistory.lastOrNull() ?: project.currentUserCount,
                         userCountHistory = newHistory,
@@ -53,19 +52,18 @@ class AdvanceDayUseCase @Inject constructor(
                         .onFailure { e -> AppLogger.e("AdvanceDayUseCase", "Update failed: ${e.message}") }
                 }
 
-                // Collapse moment — chance to recover or close
+                // Момент краха — шанс на спасение
                 newDaysUntilCollapse != null && newDaysUntilCollapse <= 0 && isScamFate -> {
                     if (Random.nextFloat() < 0.20f) {
-                        // Lucky recovery — project resumes for a few more days
+                        // Счастливое спасение — дело продолжается ещё немного
                         val recoveryDays = Random.nextInt(3, 8)
-                        val dailyYield = project.investedAmountTON * project.realDailyYieldTON * YIELD_MULTIPLIER
-                        balanceDelta += dailyYield
-                        gameStateRepository.recordReturn(dailyYield)
+                        val dailyYield = project.investedAmountRubles * project.realDailyYieldRubles * YIELD_MULTIPLIER
+                        // Доход остаётся внутри проекта
                         val (newHistory, newApyHistory) = updateHistories(project, dailyYield)
                         projectRepository.updateProject(project.copy(
                             daysSinceJoined = project.daysSinceJoined + 1,
                             daysUntilCollapse = recoveryDays,
-                            currentValueTON = project.currentValueTON + dailyYield,
+                            currentValueRubles = project.currentValueRubles + dailyYield,
                             isWithdrawalLocked = false,
                             currentUserCount = newHistory.lastOrNull() ?: project.currentUserCount,
                             userCountHistory = newHistory,
@@ -73,69 +71,61 @@ class AdvanceDayUseCase @Inject constructor(
                         ))
                         AppLogger.i("AdvanceDayUseCase", "Project ${project.id} recovered for $recoveryDays more days")
                     } else {
-                        // Project collapses
+                        // Дело рухнуло — возвращаем часть текущей стоимости в свободный баланс
                         val lossPercent = when (project.fate) {
                             ProjectFate.INSTANT_SCAM -> Random.nextDouble(0.80, 1.0)
                             ProjectFate.SLOW_DRAIN -> Random.nextDouble(0.30, 0.70)
                             else -> 0.0
                         }
-                        val returned = project.investedAmountTON * (1 - lossPercent)
+                        val returned = project.currentValueRubles * (1 - lossPercent)
                         balanceDelta += returned
                         gameStateRepository.recordReturn(returned)
-                        projectRepository.closeProject(project.id, buildClosureReason(project.fate))
+                        projectRepository.closeProject(project.id, buildClosureReason(project.fate), returned)
                         gameStateRepository.recordScamMissed()
                     }
                 }
 
-                // Normal collapse (non-scam fates)
+                // Обычный крах (не скам-судьбы)
                 newDaysUntilCollapse != null && newDaysUntilCollapse <= 0 -> {
                     val lossPercent = when (project.fate) {
                         ProjectFate.HONEST_FAIL -> Random.nextDouble(0.10, 0.40)
                         else -> 0.0
                     }
-                    val returned = project.investedAmountTON * (1 - lossPercent)
+                    val returned = project.currentValueRubles * (1 - lossPercent)
                     balanceDelta += returned
                     gameStateRepository.recordReturn(returned)
-                    projectRepository.closeProject(project.id, buildClosureReason(project.fate))
+                    projectRepository.closeProject(project.id, buildClosureReason(project.fate), returned)
                     gameStateRepository.recordScamMissed()
                 }
 
-                // Normal day — accrue yield, possibly trigger a random event
+                // Обычный день — начисляем доход внутри проекта, возможно случайное событие
                 else -> {
-                    val dailyYield = project.investedAmountTON * project.realDailyYieldTON * YIELD_MULTIPLIER
-                    balanceDelta += dailyYield
-                    gameStateRepository.recordReturn(dailyYield)
+                    val dailyYield = project.investedAmountRubles * project.realDailyYieldRubles * YIELD_MULTIPLIER
+                    // Доход прирастает в currentValueRubles, не в свободном балансе
                     val (newHistory, newApyHistory) = updateHistories(project, dailyYield)
                     var updatedProject = project.copy(
                         daysSinceJoined = project.daysSinceJoined + 1,
                         daysUntilCollapse = newDaysUntilCollapse,
-                        currentValueTON = project.currentValueTON + dailyYield,
+                        currentValueRubles = project.currentValueRubles + dailyYield,
                         currentUserCount = newHistory.lastOrNull() ?: project.currentUserCount,
                         userCountHistory = newHistory,
                         apyHistory = newApyHistory
                     )
                     projectRepository.updateProject(updatedProject)
 
-                    // ── Random event ──────────────────────────────────────
+                    // ── Случайное событие ──────────────────────────────────────
                     val event = rollEvent(updatedProject)
                     if (event != null) {
                         val result = applyEvent(updatedProject, event)
-                        balanceDelta += result.balanceDelta
-                        if (result.balanceDelta < 0) {
-                            gameStateRepository.recordReturn(0.0) // no extra return on losses
-                        } else {
-                            gameStateRepository.recordReturn(result.balanceDelta)
-                        }
+                        // Событие меняет currentValueRubles проекта, а не свободный баланс
                         projectRepository.updateProject(result.project)
                         updatedProject = result.project
                         AppLogger.i("AdvanceDayUseCase", "Event $event on ${project.claimedName}, delta=${result.balanceDelta}")
 
-                        // Generate event news update
                         generateDailyUpdatesUseCase(updatedProject, event)
                             .onSuccess { generatedUpdates.add(it) }
                             .onFailure { e -> AppLogger.e("AdvanceDayUseCase", "Event update failed: ${e.message}") }
                     } else {
-                        // Regular daily update
                         generateDailyUpdatesUseCase(updatedProject)
                             .onSuccess { generatedUpdates.add(it) }
                             .onFailure { e -> AppLogger.e("AdvanceDayUseCase", "Update failed: ${e.message}") }
@@ -147,7 +137,11 @@ class AdvanceDayUseCase @Inject constructor(
         val newBalance = state.balance + balanceDelta
         gameStateRepository.updateBalance(newBalance)
         gameStateRepository.appendBalanceSnapshot(newBalance)
+        // Record invested value (sum of all active project currentValueRubles after updates)
+        val totalActiveValue = projectRepository.getActiveProjectsTotalValue()
+        gameStateRepository.appendInvestedSnapshot(totalActiveValue)
         gameStateRepository.advanceDay()
+        gameStateRepository.updateRankIfNeeded()
 
         projectRepository.closeAllInboxProjects()
 
@@ -161,7 +155,7 @@ class AdvanceDayUseCase @Inject constructor(
         generatedUpdates
     }
 
-    // ─── Random event system ──────────────────────────────────────────────────
+    // ─── Система случайных событий ────────────────────────────────────────────
 
     private fun rollEvent(project: Project): AnnouncementType? {
         if (Random.nextFloat() > EVENT_CHANCE) return null
@@ -197,10 +191,10 @@ class AdvanceDayUseCase @Inject constructor(
         return when (event) {
             AnnouncementType.LISTING -> {
                 val multiplier = Random.nextDouble(1.5, 4.0)
-                val gain = project.investedAmountTON * (multiplier - 1)
+                val gain = project.investedAmountRubles * (multiplier - 1)
                 EventResult(
                     project = project.copy(
-                        currentValueTON = project.currentValueTON * multiplier,
+                        currentValueRubles = project.currentValueRubles * multiplier,
                         currentUserCount = project.currentUserCount + Random.nextInt(5000, 50000),
                         daysUntilCollapse = project.daysUntilCollapse?.let { it + Random.nextInt(5, 15) }
                     ),
@@ -208,33 +202,33 @@ class AdvanceDayUseCase @Inject constructor(
                 )
             }
             AnnouncementType.VIP_COLLAB -> {
-                val gain = project.investedAmountTON * Random.nextDouble(0.10, 0.35)
+                val gain = project.investedAmountRubles * Random.nextDouble(0.10, 0.35)
                 EventResult(
                     project = project.copy(
-                        currentValueTON = project.currentValueTON * Random.nextDouble(1.10, 1.40),
+                        currentValueRubles = project.currentValueRubles * Random.nextDouble(1.10, 1.40),
                         currentUserCount = project.currentUserCount + Random.nextInt(2000, 15000)
                     ),
                     balanceDelta = gain
                 )
             }
             AnnouncementType.BAD_RUMOR -> {
-                val loss = project.investedAmountTON * Random.nextDouble(0.05, 0.20)
+                val loss = project.investedAmountRubles * Random.nextDouble(0.05, 0.20)
                 EventResult(
                     project = project.copy(
-                        currentValueTON = maxOf(0.0, project.currentValueTON - loss),
+                        currentValueRubles = maxOf(0.0, project.currentValueRubles - loss),
                         currentUserCount = maxOf(100, project.currentUserCount - Random.nextInt(2000, 10000))
                     ),
                     balanceDelta = -loss
                 )
             }
             AnnouncementType.CRIMINAL_CASE -> {
-                val loss = project.investedAmountTON * Random.nextDouble(0.20, 0.60)
+                val loss = project.investedAmountRubles * Random.nextDouble(0.20, 0.60)
                 val newCollapse = project.daysUntilCollapse
                     ?.let { minOf(it, Random.nextInt(2, 5)) }
                     ?: Random.nextInt(2, 5)
                 EventResult(
                     project = project.copy(
-                        currentValueTON = maxOf(0.0, project.currentValueTON - loss),
+                        currentValueRubles = maxOf(0.0, project.currentValueRubles - loss),
                         currentUserCount = maxOf(100, project.currentUserCount - Random.nextInt(10000, 50000)),
                         isWithdrawalLocked = true,
                         daysUntilCollapse = newCollapse
@@ -243,13 +237,13 @@ class AdvanceDayUseCase @Inject constructor(
                 )
             }
             AnnouncementType.HACK -> {
-                val loss = project.investedAmountTON * Random.nextDouble(0.15, 0.45)
+                val loss = project.investedAmountRubles * Random.nextDouble(0.15, 0.45)
                 val newCollapse = project.daysUntilCollapse
                     ?.let { minOf(it, Random.nextInt(3, 7)) }
                     ?: Random.nextInt(3, 7)
                 EventResult(
                     project = project.copy(
-                        currentValueTON = maxOf(0.0, project.currentValueTON - loss),
+                        currentValueRubles = maxOf(0.0, project.currentValueRubles - loss),
                         currentUserCount = maxOf(100, project.currentUserCount - Random.nextInt(3000, 20000)),
                         isWithdrawalLocked = true,
                         daysUntilCollapse = newCollapse
@@ -261,7 +255,7 @@ class AdvanceDayUseCase @Inject constructor(
         }
     }
 
-    // ─── Helpers ──────────────────────────────────────────────────────────────
+    // ─── Вспомогательные ──────────────────────────────────────────────────────
 
     private fun updateHistories(
         project: Project,
@@ -277,8 +271,8 @@ class AdvanceDayUseCase @Inject constructor(
         val newUserCount = maxOf(100, project.currentUserCount + userDelta)
         val newUserHistory = (project.userCountHistory + newUserCount).takeLast(30)
 
-        val effectiveDailyAPYPct = if (project.investedAmountTON > 0) {
-            (dailyYield / project.investedAmountTON * 100).toFloat()
+        val effectiveDailyAPYPct = if (project.investedAmountRubles > 0) {
+            (dailyYield / project.investedAmountRubles * 100).toFloat()
         } else {
             project.claimedAPY / 365f
         }
@@ -289,9 +283,9 @@ class AdvanceDayUseCase @Inject constructor(
     }
 
     private fun buildClosureReason(fate: ProjectFate): String = when (fate) {
-        ProjectFate.INSTANT_SCAM -> "Проект исчез вместе с деньгами"
-        ProjectFate.SLOW_DRAIN -> "Проект тихо закрылся без объяснений"
-        ProjectFate.HONEST_FAIL -> "Разработчик объявил о закрытии из-за экономики"
-        else -> "Проект завершил работу"
+        ProjectFate.INSTANT_SCAM -> "Пропал с деньгами вкладчиков"
+        ProjectFate.SLOW_DRAIN -> "Дело тихо закрылось без объяснений"
+        ProjectFate.HONEST_FAIL -> "Хозяин объявил о закрытии — не сошлась экономика"
+        else -> "Дело завершило работу"
     }
 }

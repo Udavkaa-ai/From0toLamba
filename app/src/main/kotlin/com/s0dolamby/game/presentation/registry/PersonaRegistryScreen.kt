@@ -9,18 +9,25 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import com.s0dolamby.game.R
 import com.s0dolamby.game.domain.model.PersonaArchetype
 import com.s0dolamby.game.domain.model.ProjectType
-import com.s0dolamby.game.domain.repository.ProjectRepository
+import com.s0dolamby.game.presentation.common.components.FairyCard
+import com.s0dolamby.game.presentation.common.components.ScreenBackground
+import com.s0dolamby.game.presentation.common.theme.FairyGold
+import androidx.compose.foundation.background
 import com.s0dolamby.game.presentation.portfolio.displayName
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import javax.inject.Inject
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.s0dolamby.game.domain.repository.ProjectRepository
 
 data class PersonaEntry(
     val archetype: PersonaArchetype,
@@ -44,8 +51,7 @@ class PersonaRegistryViewModel @Inject constructor(
         projectRepository.getClosedProjects(),
         projectRepository.getActiveProjects()
     ) { closed, active ->
-        // Unlock via: invested + closed  OR  correct lie guess (any state)
-        val unlockedByClose = closed.filter { it.investedAmountTON > 0 }
+        val unlockedByClose = closed.filter { it.investedAmountRubles > 0 }
         val unlockedByGuess = (closed + active).filter { it.lieGuessCorrect }
         val allUnlocked = (unlockedByClose + unlockedByGuess).distinctBy { it.id }
 
@@ -79,22 +85,61 @@ fun PersonaRegistryScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedTab by remember { mutableStateOf(0) }
-    val tabs = listOf("Разработчики", "Типы проектов", "Словарь")
+    val tabs = listOf("Типажи", "Виды дел", "Словарь")
 
+    ScreenBackground(R.drawable.registry_bg) {
     Scaffold(
+        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("Энциклопедия") },
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text("✦", color = FairyGold, fontSize = 12.sp)
+                        Text("Летопись", fontWeight = FontWeight.Bold)
+                        Text("✦", color = FairyGold, fontSize = 12.sp)
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Назад") }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            TabRow(selectedTabIndex = selectedTab) {
+            TabRow(
+                selectedTabIndex = selectedTab,
+                containerColor = Color.Transparent,
+                contentColor = FairyGold,
+                indicator = { tabPositions ->
+                    val tab = tabPositions[selectedTab]
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .offset(x = tab.left)
+                                .width(tab.width)
+                                .height(2.dp)
+                                .background(FairyGold)
+                        )
+                    }
+                }
+            ) {
                 tabs.forEachIndexed { i, title ->
-                    Tab(selected = selectedTab == i, onClick = { selectedTab = i }, text = { Text(title) })
+                    Tab(
+                        selected = selectedTab == i,
+                        onClick = { selectedTab = i },
+                        text = {
+                            Text(
+                                title,
+                                color = if (selectedTab == i) FairyGold else Color.White.copy(alpha = 0.6f),
+                                fontWeight = if (selectedTab == i) FontWeight.SemiBold else FontWeight.Normal
+                            )
+                        }
+                    )
                 }
             }
             when (selectedTab) {
@@ -104,6 +149,7 @@ fun PersonaRegistryScreen(
             }
         }
     }
+    } // ScreenBackground
 }
 
 @Composable
@@ -115,19 +161,33 @@ private fun PersonasTab(uiState: RegistryUiState) {
     ) {
         if (uiState.personas.isEmpty()) {
             item {
-                Text(
-                    "Здесь появятся архетипы разработчиков — угадай ложь разраба после AMA или дождись закрытия проекта.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
+                FairyCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text("✦", color = FairyGold.copy(alpha = 0.4f), fontSize = 24.sp)
+                        Text(
+                            "Летопись пуста",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.White,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            "Поговори с Дельцами — типажи откроются после закрытия дел",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.65f)
+                        )
+                    }
+                }
             }
         } else {
             item {
                 Text(
-                    "Открыто ${uiState.personas.size} из ${uiState.personas.size + uiState.lockedCount} архетипов",
+                    "Открыто ${uiState.personas.size} из ${uiState.personas.size + uiState.lockedCount} типажей",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = FairyGold.copy(alpha = 0.7f)
                 )
             }
             items(uiState.personas) { entry ->
@@ -136,16 +196,11 @@ private fun PersonasTab(uiState: RegistryUiState) {
         }
         if (uiState.lockedCount > 0) {
             item {
-                Surface(
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = MaterialTheme.shapes.medium,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                FairyCard(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        "Ещё ${uiState.lockedCount} архетипов скрыто — инвестируй в новые проекты",
+                        "Ещё ${uiState.lockedCount} типажей скрыто — инвестируй в новые дела",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(16.dp)
+                        color = Color.White.copy(alpha = 0.65f)
                     )
                 }
             }
@@ -155,30 +210,39 @@ private fun PersonasTab(uiState: RegistryUiState) {
 
 @Composable
 private fun PersonaCard(entry: PersonaEntry) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    FairyCard(modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Surface(
                 modifier = Modifier.size(44.dp),
                 shape = MaterialTheme.shapes.medium,
-                color = MaterialTheme.colorScheme.primary
+                color = FairyGold.copy(alpha = 0.15f)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(entry.archetype.emoji, style = MaterialTheme.typography.titleLarge)
                 }
             }
             Column(modifier = Modifier.weight(1f)) {
-                Text(entry.archetype.displayName, style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold)
-                Text(entry.archetype.description, style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    entry.archetype.displayName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                Text(
+                    entry.archetype.description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.65f)
+                )
                 if (entry.projectsClosed > 0) {
-                    Text("Встречено проектов: ${entry.projectsClosed}",
+                    Text(
+                        "Встречено дел: ${entry.projectsClosed}",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        color = FairyGold.copy(alpha = 0.7f)
+                    )
                 }
             }
         }
@@ -194,9 +258,13 @@ private fun ProjectTypesTab(types: List<ProjectType>) {
     ) {
         if (types.isEmpty()) {
             item {
-                Text("Здесь появятся типы проектов после твоего участия в них.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                FairyCard(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        "Здесь появятся виды дел после твоего участия в них.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White.copy(alpha = 0.65f)
+                    )
+                }
             }
         } else {
             items(types) { type ->
@@ -208,14 +276,14 @@ private fun ProjectTypesTab(types: List<ProjectType>) {
 
 @Composable
 private fun ProjectTypeCard(type: ProjectType) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(type.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text(type.description, style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text("Типичный риск: ${type.riskLevel}", style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
+    FairyCard(modifier = Modifier.fillMaxWidth()) {
+        Text(type.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+        Text(type.description, style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.7f))
+        Text(
+            "Типичный риск: ${type.riskLevel}",
+            style = MaterialTheme.typography.labelSmall,
+            color = FairyGold.copy(alpha = 0.7f)
+        )
     }
 }
 
@@ -234,100 +302,97 @@ private fun GlossaryTab() {
 
 @Composable
 private fun GlossaryCard(title: String, body: String) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text(body, style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
+    FairyCard(modifier = Modifier.fillMaxWidth()) {
+        Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = FairyGold)
+        Spacer(Modifier.height(4.dp))
+        Text(body, style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.8f))
     }
 }
 
 private val glossaryItems = listOf(
-    "APY (годовая доходность)" to
-        "Annual Percentage Yield — процент прибыли в год с учётом сложных процентов.\n" +
-        "Пример: APY 365% = примерно 1% в день. В реальных проектах APY >100% обычно означает высокий риск скама.\n" +
-        "В симуляторе APY показывает заявленную доходность — настоящая может быть в разы ниже или нулевой.",
+    "APY (чужеземное) — годовой прибыток" to
+        "Annual Percentage Yield — по-нашему: обещанный годовой прибыток с учётом накопленных процентов.\n" +
+        "Пример: APY 365% = примерно 1% в день. В честных делах APY выше 100% почти не бывает.\n" +
+        "В симуляторе APY — это посул хозяина дела. Настоящий прибыток может быть в разы ниже или вовсе нулевым.",
 
-    "ROI (возврат инвестиций)" to
-        "Return on Investment — отношение прибыли к вложенным средствам в процентах.\n" +
-        "Формула: ROI = (текущая стоимость − вложено) / вложено × 100%.\n" +
-        "Положительный ROI = прибыль, отрицательный = убыток.",
+    "ROI (чужеземное) — окупаемость вложения" to
+        "Return on Investment — по-нашему: отдача от вложенного злата.\n" +
+        "Считается так: (что получил − что вложил) / что вложил × 100%.\n" +
+        "Положительный ROI = прибыток, отрицательный = убыток.",
 
-    "Количество пользователей" to
-        "График числа участников проекта — важный индикатор здоровья.\n" +
-        "Резкое снижение (−10 000 за день) = тревожный сигнал: люди выходят.\n" +
-        "Стабильный рост = проект живёт. Взрывной рост перед «закрытием» = возможный pump-and-dump.\n" +
-        "Помни: в скам-проектах заявленные цифры часто выдуманы.",
+    "Количество участников" to
+        "Ведомость числа участников дела — важный знак его здоровья.\n" +
+        "Резкое снижение (−10 000 за день) = тревожный знак: люди уходят.\n" +
+        "Стабильный рост = дело живёт. Взрывной рост перед «закрытием» = возможный обман.\n" +
+        "Помни: в скам-делах заявленные цифры часто выдуманы.",
 
-    "Как распознать скам" to
-        "Красные флаги на которые стоит обращать внимание:\n\n" +
-        "• Нереальный APY (>500% годовых) — экономика не выдержит\n" +
+    "Как распознать обманщика" to
+        "Тревожные знаки, на которые стоит обращать внимание:\n\n" +
+        "• Нереальный посул (APY >500% годовых) — такая прибыль не случается\n" +
         "• Давление на срочность: «только сегодня», «осталось мало мест»\n" +
-        "• Расплывчатые ответы на прямые вопросы о выводе средств\n" +
-        "• Задержки выплат в апдейтах — первый признак SLOW_DRAIN\n" +
-        "• Агрессия или обиды в ответ на скептические вопросы\n" +
-        "• Команда анонимна, нет верифицированного аудита\n" +
-        "• Обещание листинга «через неделю» без конкретики\n\n" +
-        "Блокировка вывода — самый серьёзный сигнал. Это значит проект начал скамить.",
+        "• Расплывчатые ответы на прямые вопросы о выводе злата\n" +
+        "• Задержки выплат в вестях — первый признак медленного слива\n" +
+        "• Злость или обиды в ответ на скептические вопросы\n" +
+        "• Артель безымянна, нет проверки старейшин\n" +
+        "• Обещание большой выплаты «через неделю» без конкретики",
 
-    "Временная блокировка вывода" to
-        "Когда проект начинает скамить, вывод средств может быть заблокирован.\n" +
-        "Это означает: разработчик перестал выплачивать и ищет выход.\n\n" +
-        "Есть небольшой шанс (около 20%), что проект «восстановится» и вывод откроется снова — " +
+    "Блокировка вывода" to
+        "Когда хозяин дела начинает скамить, вывод средств может быть заблокирован.\n" +
+        "Это означает: он перестал выплачивать и ищет выход.\n\n" +
+        "Есть небольшой шанс (~20%), что дело «восстановится» и вывод откроется снова — " +
         "это происходит, когда скамеру нужно привлечь новые деньги.\n\n" +
         "Если вывод не открылся — жди закрытия и частичного возврата средств.",
 
-    "Судьбы проектов" to
-        "• Мгновенный скам (INSTANT_SCAM) — закрывается на 1–3 день, потеря 80–100%\n" +
-        "• Медленный слив (SLOW_DRAIN) — живёт 1–3 недели, потеря 30–70%\n" +
-        "• Честный провал (HONEST_FAIL) — разраб старался, экономика не взлетела, потеря 10–40%\n" +
-        "• Выживший (SURVIVOR) — долгосрочный, стабильный небольшой доход\n" +
-        "• Единорог (UNICORN) — редкость, реальный рост токена и доходность до 10% в день"
+    "Судьбы дел" to
+        "• Мгновенный скам — закрывается на 1–3 день, потеря 80–100%\n" +
+        "• Медленный слив — живёт 1–3 недели, потеря 30–70%\n" +
+        "• Честный провал — хозяин старался, экономика не взлетела, потеря 10–40%\n" +
+        "• Выживший — долгосрочный, стабильный небольшой доход\n" +
+        "• Единорог — редкость, реальный рост и доходность до 10% в день"
 )
 
-val PersonaArchetype.displayName: String get() = when (this) {
-    PersonaArchetype.CLASSIC_SCAMMER -> "Классический скамер"
-    PersonaArchetype.PSEUDO_PRO -> "Псевдо-профессионал"
-    PersonaArchetype.NAIVE_ENTHUSIAST -> "Наивный энтузиаст"
-    PersonaArchetype.BUSINESS_SHARK -> "Бизнес-акула"
-    PersonaArchetype.SWEET_INFLUENCER -> "Сладкий инфлюенсер"
-    PersonaArchetype.SILENT_TECHIE -> "Молчаливый технарь"
-    PersonaArchetype.SERIAL_FOUNDER -> "Серийный основатель"
+val PersonaArchetype.emoji: String get() = when (this) {
+    PersonaArchetype.BURATINO -> "🤥"
+    PersonaArchetype.BOYARIN -> "👑"
+    PersonaArchetype.KOLOBOK -> "😊"
+    PersonaArchetype.KOSCHEI -> "💀"
+    PersonaArchetype.ZOLUSHKA -> "✨"
+    PersonaArchetype.BABA_YAGA -> "🧙"
+    PersonaArchetype.IVAN_DURAK -> "🎲"
 }
 
-val PersonaArchetype.emoji: String get() = when (this) {
-    PersonaArchetype.CLASSIC_SCAMMER -> "🐍"
-    PersonaArchetype.PSEUDO_PRO -> "👔"
-    PersonaArchetype.NAIVE_ENTHUSIAST -> "🌱"
-    PersonaArchetype.BUSINESS_SHARK -> "🦈"
-    PersonaArchetype.SWEET_INFLUENCER -> "💅"
-    PersonaArchetype.SILENT_TECHIE -> "💻"
-    PersonaArchetype.SERIAL_FOUNDER -> "🔄"
+val PersonaArchetype.displayName: String get() = when (this) {
+    PersonaArchetype.BURATINO -> "Буратино"
+    PersonaArchetype.BOYARIN -> "Боярин"
+    PersonaArchetype.KOLOBOK -> "Колобок"
+    PersonaArchetype.KOSCHEI -> "Кощей"
+    PersonaArchetype.ZOLUSHKA -> "Золушка"
+    PersonaArchetype.BABA_YAGA -> "Баба-Яга"
+    PersonaArchetype.IVAN_DURAK -> "Иван-дурак"
 }
 
 val PersonaArchetype.description: String get() = when (this) {
-    PersonaArchetype.CLASSIC_SCAMMER -> "Давит на срочность. При давлении — агрессивен, переходит на личности."
-    PersonaArchetype.PSEUDO_PRO -> "Много терминов, ссылается на Dubai. Уходит в жаргон под давлением."
-    PersonaArchetype.NAIVE_ENTHUSIAST -> "Мы-форма, искренний но некомпетентный. Может случайно раскрыть правду."
-    PersonaArchetype.BUSINESS_SHARK -> "Говорит метриками. Убедителен — может быть как скамом, так и единорогом."
-    PersonaArchetype.SWEET_INFLUENCER -> "Много эмодзи, апелляция к эмоциям. Всегда «уже вложила сама»."
-    PersonaArchetype.SILENT_TECHIE -> "Технический язык, избегает простых ответов. Аноним."
-    PersonaArchetype.SERIAL_FOUNDER -> "Открыт про провалы. Может неожиданно оказаться честным."
+    PersonaArchetype.BURATINO -> "Очевидный лжец, верит в свои же сказки"
+    PersonaArchetype.BOYARIN -> "Пафосный, ссылается на великих покровителей"
+    PersonaArchetype.KOLOBOK -> "Хвастун-энтузиаст, от всех убегает с улыбкой"
+    PersonaArchetype.KOSCHEI -> "Холодный и уверенный, говорит только цифрами"
+    PersonaArchetype.ZOLUSHKA -> "Апеллирует к жалости и эмоциям, давит дедлайнами"
+    PersonaArchetype.BABA_YAGA -> "Отвечает загадками, технически подкована"
+    PersonaArchetype.IVAN_DURAK -> "Открыт про провалы — третий раз может взлететь"
 }
 
 val ProjectType.description: String get() = when (this) {
-    ProjectType.CLICKER -> "Тапай монеты, приглашай друзей — классическая схема привлечения пользователей. Листинг токена редко реализуется."
-    ProjectType.P2E_RPG -> "Купи NFT-героя, участвуй в битвах. Доход зависит от игровой экономики — если она сломается, токен обесценится."
-    ProjectType.FARMING_BOT -> "Пассивный доход без действий. Обещания 500–5000% APY почти всегда скам — бот не генерирует реальную ценность."
-    ProjectType.REFERRAL_PYRAMID -> "Заработок через рефералов 3 уровней. Устойчив пока растёт, рушится при замедлении притока новых участников."
-    ProjectType.HONEST_GAMEFI -> "Открытый код, аудит, реальная токеномика. Низкий APY, но выше шанс долгосрочной работы."
+    ProjectType.CARD_GAME -> "Азартные игры на удачу с ставками"
+    ProjectType.TREASURE_HUNT -> "Поиск клада с командой или в одиночку"
+    ProjectType.POTION_BREW -> "Пассивный доход с варки зелий и ресурсов"
+    ProjectType.GUILD_SCHEME -> "Реферальная артель: зарабатывай на новичках"
+    ProjectType.HONEST_TRADE -> "Прозрачная торговля с открытыми условиями"
 }
 
 val ProjectType.riskLevel: String get() = when (this) {
-    ProjectType.CLICKER -> "Очень высокий"
-    ProjectType.P2E_RPG -> "Высокий"
-    ProjectType.FARMING_BOT -> "Критически высокий"
-    ProjectType.REFERRAL_PYRAMID -> "Высокий"
-    ProjectType.HONEST_GAMEFI -> "Средний"
+    ProjectType.CARD_GAME -> "Очень высокий"
+    ProjectType.TREASURE_HUNT -> "Высокий"
+    ProjectType.POTION_BREW -> "Очень высокий"
+    ProjectType.GUILD_SCHEME -> "Высокий"
+    ProjectType.HONEST_TRADE -> "Умеренный"
 }

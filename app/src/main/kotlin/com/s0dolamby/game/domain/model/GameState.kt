@@ -8,11 +8,11 @@ enum class InvestorRank {
     LAMBO_SENSEI;
 
     val displayName: String get() = when (this) {
-        NEWBIE -> "Новичок"
-        AMBASSADOR -> "Амбассадор"
-        ANALYST -> "Аналитик"
-        SHARK -> "Акула"
-        LAMBO_SENSEI -> "Ламбо-Сенсей"
+        NEWBIE -> "Скоморох"
+        AMBASSADOR -> "Купец"
+        ANALYST -> "Мудрец"
+        SHARK -> "Богатырь"
+        LAMBO_SENSEI -> "Царь"
     }
 }
 
@@ -28,5 +28,6 @@ data class GameState(
     val scamsMissed: Int,
     val dayStreak: Int,
     val isOnboardingComplete: Boolean = false,
-    val balanceHistory: List<Double> = emptyList()
+    val balanceHistory: List<Double> = emptyList(),
+    val investedHistory: List<Double> = emptyList()
 )

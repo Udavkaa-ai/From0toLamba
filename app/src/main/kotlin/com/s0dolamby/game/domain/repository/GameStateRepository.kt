@@ -8,11 +8,13 @@ interface GameStateRepository {
     suspend fun getGameState(): GameState
     suspend fun updateBalance(newBalance: Double)
     suspend fun advanceDay()
-    suspend fun recordInvestment(amountTON: Double)
-    suspend fun recordReturn(amountTON: Double)
+    suspend fun recordInvestment(amountRubles: Double)
+    suspend fun recordReturn(amountRubles: Double)
     suspend fun recordScamDetected()
     suspend fun recordScamMissed()
     suspend fun completeOnboarding()
     suspend fun initializeGameState()
     suspend fun appendBalanceSnapshot(balance: Double)
+    suspend fun appendInvestedSnapshot(invested: Double)
+    suspend fun updateRankIfNeeded()
 }

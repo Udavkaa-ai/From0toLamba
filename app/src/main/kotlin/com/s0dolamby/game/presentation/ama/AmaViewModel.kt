@@ -4,7 +4,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.s0dolamby.game.domain.model.AmaSession
-import com.s0dolamby.game.domain.model.LieTopic
 import com.s0dolamby.game.domain.model.Project
 import com.s0dolamby.game.domain.repository.AmaRepository
 import com.s0dolamby.game.domain.repository.GameStateRepository
@@ -17,15 +16,6 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-data class LieGuessResult(
-    val guessed: Set<LieTopic>,
-    val actual: Set<LieTopic>,
-    val correct: Set<LieTopic>,        // guessed correctly
-    val missed: Set<LieTopic>,         // actual but not guessed
-    val falsePositives: Set<LieTopic>, // guessed but not actual
-    val isSuccess: Boolean
-)
-
 data class AmaUiState(
     val project: Project? = null,
     val session: AmaSession? = null,
@@ -33,9 +23,7 @@ data class AmaUiState(
     val isSending: Boolean = false,
     val error: String? = null,
     val showInvestSheet: Boolean = false,
-    val investResult: String? = null,
-    val showLieGuessSheet: Boolean = false,
-    val lieGuessResult: LieGuessResult? = null
+    val investResult: String? = null
 )
 
 @HiltViewModel
@@ -92,13 +80,13 @@ class AmaViewModel @Inject constructor(
     fun showInvestSheet() = _uiState.update { it.copy(showInvestSheet = true) }
     fun hideInvestSheet() = _uiState.update { it.copy(showInvestSheet = false) }
 
-    fun invest(amountTON: Double) {
+    fun invest(amountRubles: Double) {
         viewModelScope.launch {
-            investUseCase(projectId, amountTON)
+            investUseCase(projectId, amountRubles)
                 .onSuccess {
                     _uiState.update { it.copy(
                         showInvestSheet = false,
-                        investResult = "Инвестировано %.2f TON".format(amountTON)
+                        investResult = "Вложено %.0f ₽".format(amountRubles)
                     ) }
                 }
                 .onFailure { err ->
@@ -106,37 +94,6 @@ class AmaViewModel @Inject constructor(
                 }
         }
     }
-
-    fun showLieGuessSheet() = _uiState.update { it.copy(showLieGuessSheet = true) }
-
-    fun submitLieGuess(guessed: Set<LieTopic>) {
-        val actual = _uiState.value.project?.lieTopics?.toSet() ?: return
-        val correct = guessed.intersect(actual)
-        val missed = actual - guessed
-        val falsePositives = guessed - actual
-        // Success: caught ≥ half the lies AND false positives ≤ actual lies count
-        val isSuccess = correct.size >= (actual.size + 1) / 2 && falsePositives.size <= actual.size
-
-        val result = LieGuessResult(
-            guessed = guessed,
-            actual = actual,
-            correct = correct,
-            missed = missed,
-            falsePositives = falsePositives,
-            isSuccess = isSuccess
-        )
-
-        viewModelScope.launch {
-            if (isSuccess) {
-                projectRepository.markLieGuessCorrect(projectId)
-                gameStateRepository.recordScamDetected()
-            }
-        }
-
-        _uiState.update { it.copy(lieGuessResult = result) }
-    }
-
-    fun closeLieGuessSheet() = _uiState.update { it.copy(showLieGuessSheet = false, lieGuessResult = null) }
 
     fun clearError() = _uiState.update { it.copy(error = null) }
     fun clearInvestResult() = _uiState.update { it.copy(investResult = null) }

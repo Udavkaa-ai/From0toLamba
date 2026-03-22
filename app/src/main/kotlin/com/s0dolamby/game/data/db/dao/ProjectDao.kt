@@ -30,8 +30,8 @@ interface ProjectDao {
     @Update
     suspend fun update(project: ProjectEntity)
 
-    @Query("UPDATE projects SET isClosed = 1, isActive = 0, closureReason = :reason WHERE id = :id")
-    suspend fun closeProject(id: String, reason: String)
+    @Query("UPDATE projects SET isClosed = 1, isActive = 0, closureReason = :reason, currentValueRubles = :returnedValue WHERE id = :id")
+    suspend fun closeProject(id: String, reason: String, returnedValue: Double)
 
     @Query("UPDATE projects SET bannerImageUrl = :url, bannerPromptUsed = :prompt WHERE id = :id")
     suspend fun updateBanner(id: String, url: String, prompt: String)

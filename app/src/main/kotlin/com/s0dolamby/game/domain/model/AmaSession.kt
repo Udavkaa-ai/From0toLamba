@@ -26,6 +26,6 @@ data class PostMortemReport(
     val lieTopics: List<LieTopic>,
     val redFlagsFound: List<String>,
     val redFlagsMissed: List<String>,
-    val profitLossTON: Double,
+    val profitLossRubles: Double,
     val analysis: String
 )

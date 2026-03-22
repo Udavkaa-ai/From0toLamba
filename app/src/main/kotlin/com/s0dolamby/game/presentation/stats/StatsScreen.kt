@@ -1,7 +1,16 @@
 package com.s0dolamby.game.presentation.stats
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
@@ -10,18 +19,16 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.TrendingDown
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
@@ -32,17 +39,20 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.s0dolamby.game.R
 import com.s0dolamby.game.data.logging.AppLogger
 import com.s0dolamby.game.domain.model.GameState
 import com.s0dolamby.game.domain.repository.GameStateRepository
+import com.s0dolamby.game.presentation.common.components.FairyCard
+import com.s0dolamby.game.presentation.common.components.OrnamentDivider
+import com.s0dolamby.game.presentation.common.components.ScreenBackground
 import com.s0dolamby.game.presentation.common.theme.Error
+import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.Success
-import com.s0dolamby.game.presentation.common.theme.TonBlue
 import com.s0dolamby.game.presentation.common.theme.Warning
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import javax.inject.Inject
-import kotlin.math.roundToInt
 
 @HiltViewModel
 class StatsViewModel @Inject constructor(
@@ -61,13 +71,27 @@ fun StatsScreen(
 ) {
     val state by viewModel.gameState.collectAsState()
 
+    ScreenBackground(R.drawable.stats_bg) {
     Scaffold(
+        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("Статистика") },
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text("✦", color = FairyGold, fontSize = 12.sp)
+                        Text("Успехи купца", fontWeight = FontWeight.Bold)
+                        Text("✦", color = FairyGold, fontSize = 12.sp)
+                    }
+                },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Назад") } },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 actions = {
-                    TextButton(onClick = onRegistryClick) { Text("Энциклопедия") }
+                    TextButton(onClick = onRegistryClick) {
+                        Text("Летопись", color = FairyGold)
+                    }
                 }
             )
         }
@@ -80,8 +104,10 @@ fun StatsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item { RankCard(state = state) }
+            item { OrnamentDivider() }
             item { BalanceChartCard(state = state) }
             item { FinancialStats(state = state) }
+            item { OrnamentDivider() }
             item { ScamStats(state = state) }
             item { LogCard(onShowLog = { showLog = true }) }
         }
@@ -90,45 +116,144 @@ fun StatsScreen(
             LogDialog(onDismiss = { showLog = false })
         }
     }
+    } // ScreenBackground
 }
 
 // ─── Rank card ────────────────────────────────────────────────────────────────
 
+private data class RankTier(
+    val rankName: String,
+    val emoji: String,
+    val displayName: String,
+    val requirement: String
+)
+
+private val rankTiers = listOf(
+    RankTier("NEWBIE",       "🐣", "Скоморох",  "Начало пути — просто открой приложение"),
+    RankTier("AMBASSADOR",   "📣", "Купец",      "День 2+ или первое вложение от 5 ₽"),
+    RankTier("ANALYST",      "🔍", "Мудрец",     "День 5+ и 2 разоблачённых мошенника"),
+    RankTier("SHARK",        "🦈", "Богатырь",   "День 10+ и 4 разоблачения"),
+    RankTier("LAMBO_SENSEI", "👑", "Царь",       "День 20+ и 8 разоблачений"),
+)
+
 @Composable
 private fun RankCard(state: GameState?) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+    var expanded by remember { mutableStateOf(false) }
+    val chevronRotation by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        animationSpec = tween(250),
+        label = "chevron"
+    )
+    val currentRankName = state?.investorRank?.name ?: "NEWBIE"
+    val currentEmoji = rankTiers.find { it.rankName == currentRankName }?.emoji ?: "🐣"
+
+    FairyCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { expanded = !expanded }
+            .animateContentSize()
     ) {
         Row(
-            modifier = Modifier.padding(20.dp).fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Ранг инвестора", style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.weight(1f)) {
+                Text(
+                    "Чин",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = FairyGold.copy(alpha = 0.7f)
+                )
                 Text(
                     state?.investorRank?.displayName ?: "—",
                     style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
                 )
                 Text(
                     "День ${state?.currentDay ?: 1} • Стрик ${state?.dayStreak ?: 0} дн.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color.White.copy(alpha = 0.6f)
                 )
             }
-            // Rank emoji badge
-            val emoji = when (state?.investorRank?.name) {
-                "NEWBIE" -> "🐣"
-                "AMBASSADOR" -> "📣"
-                "ANALYST" -> "🔍"
-                "SHARK" -> "🦈"
-                "LAMBO_SENSEI" -> "🏎️"
-                else -> "🐣"
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(currentEmoji, style = MaterialTheme.typography.displaySmall)
+                Icon(
+                    Icons.Default.ExpandMore,
+                    contentDescription = if (expanded) "Свернуть" else "Развернуть иерархию чинов",
+                    tint = FairyGold.copy(alpha = 0.6f),
+                    modifier = Modifier.size(20.dp).rotate(chevronRotation)
+                )
             }
-            Text(emoji, style = MaterialTheme.typography.displaySmall)
+        }
+
+        AnimatedVisibility(
+            visible = expanded,
+            enter = expandVertically(tween(280)) + fadeIn(tween(200)),
+            exit = shrinkVertically(tween(220)) + fadeOut(tween(150))
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(0.dp)
+            ) {
+                HorizontalDivider(
+                    color = FairyGold.copy(alpha = 0.2f),
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                rankTiers.forEach { tier ->
+                    val isCurrent = tier.rankName == currentRankName
+                    val isPast    = rankTiers.indexOfFirst { it.rankName == currentRankName }
+                                        .let { cur -> rankTiers.indexOf(tier) < cur }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Text(
+                            tier.emoji,
+                            fontSize = 20.sp,
+                            modifier = Modifier.width(28.dp)
+                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                tier.displayName,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
+                                color = when {
+                                    isCurrent -> FairyGold
+                                    isPast    -> Color.White.copy(alpha = 0.45f)
+                                    else      -> Color.White.copy(alpha = 0.75f)
+                                }
+                            )
+                            Text(
+                                tier.requirement,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White.copy(alpha = if (isCurrent) 0.8f else 0.4f)
+                            )
+                        }
+                        if (isCurrent) {
+                            Surface(
+                                color = FairyGold.copy(alpha = 0.18f),
+                                shape = RoundedCornerShape(4.dp)
+                            ) {
+                                Text(
+                                    "сейчас",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = FairyGold,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -137,130 +262,175 @@ private fun RankCard(state: GameState?) {
 
 @Composable
 private fun BalanceChartCard(state: GameState?) {
-    val history = state?.balanceHistory ?: emptyList()
+    val freeHistory = state?.balanceHistory ?: emptyList()
+    val investedHistory = state?.investedHistory ?: emptyList()
+    val n = minOf(freeHistory.size, investedHistory.size)
+    val hasBoth = n >= 2
 
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically) {
-                Text("График баланса", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                if (history.size >= 2) {
-                    val delta = history.last() - history.first()
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Icon(
-                            if (delta >= 0) Icons.Default.TrendingUp else Icons.Default.TrendingDown,
-                            contentDescription = null,
-                            tint = if (delta >= 0) Success else Error,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Text(
-                            "%+.2f TON".format(delta),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = if (delta >= 0) Success else Error,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
+    FairyCard(modifier = Modifier.fillMaxWidth()) {
+        // Title + legend
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "Ведомость казны",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+            if (hasBoth) {
+                val totalFirst = freeHistory[freeHistory.size - n] + investedHistory[investedHistory.size - n]
+                val totalLast = freeHistory.last() + investedHistory.last()
+                val delta = totalLast - totalFirst
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Icon(
+                        if (delta >= 0) Icons.Default.TrendingUp else Icons.Default.TrendingDown,
+                        contentDescription = null,
+                        tint = if (delta >= 0) Success else Error,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        "%+.0f ₽".format(delta),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (delta >= 0) Success else Error,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             }
+        }
 
-            if (history.size < 2) {
-                Box(
-                    modifier = Modifier.fillMaxWidth().height(140.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("📈", style = MaterialTheme.typography.displaySmall)
-                        Text(
-                            "Пройди несколько дней —\nграфик появится здесь",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+        if (!hasBoth) {
+            Box(
+                modifier = Modifier.fillMaxWidth().height(140.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("📊", style = MaterialTheme.typography.displaySmall)
+                    Text(
+                        "Пройди несколько дней —\nведомость появится здесь",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White.copy(alpha = 0.6f)
+                    )
                 }
-            } else {
-                BalanceLineChart(
-                    history = history,
-                    modifier = Modifier.fillMaxWidth().height(160.dp)
-                )
-                // X-axis labels
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("День 1", style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("День ${history.size}", style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
+            }
+        } else {
+            val freeSlice = freeHistory.takeLast(n)
+            val investedSlice = investedHistory.takeLast(n)
+            StackedBarChart(
+                freeHistory = freeSlice,
+                investedHistory = investedSlice,
+                modifier = Modifier.fillMaxWidth().height(160.dp)
+            )
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("День 1", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
+                Text("День $n", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
+            }
+            // Legend
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                LegendDot(color = FairyGold, label = "Казна")
+                LegendDot(color = Color(0xFF6B4FCB), label = "Вложено")
             }
         }
     }
 }
 
 @Composable
-private fun BalanceLineChart(history: List<Double>, modifier: Modifier = Modifier) {
-    val minVal = history.min()
-    val maxVal = history.max()
-    val range = (maxVal - minVal).coerceAtLeast(0.01)
-    val isPositive = history.last() >= history.first()
-    val lineColor = if (isPositive) Success else Error
-    val gradientColors = if (isPositive) {
-        listOf(Success.copy(alpha = 0.35f), Success.copy(alpha = 0.0f))
-    } else {
-        listOf(Error.copy(alpha = 0.35f), Error.copy(alpha = 0.0f))
+private fun LegendDot(color: Color, label: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Box(modifier = Modifier.size(8.dp).background(color, shape = RoundedCornerShape(2.dp)))
+        Text(label, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f))
+    }
+}
+
+@Composable
+private fun StackedBarChart(
+    freeHistory: List<Double>,
+    investedHistory: List<Double>,
+    modifier: Modifier = Modifier
+) {
+    val totals = freeHistory.zip(investedHistory).map { (f, i) -> f + i }
+    val maxTotal = totals.max().coerceAtLeast(1.0)
+    val barColor = FairyGold
+    val investedColor = Color(0xFF6B4FCB)
+
+    // Format compact ruble label: 1 234 → "1.2к", 500 → "500"
+    fun fmtRub(v: Double): String = when {
+        v >= 1_000_000 -> "%.1fм".format(v / 1_000_000)
+        v >= 1_000     -> "%.1fк".format(v / 1_000)
+        else           -> "%.0f".format(v)
     }
 
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val padTop = 12f
-        val padBottom = 12f
-        val chartH = h - padTop - padBottom
-        val stepX = if (history.size > 1) w / (history.size - 1).toFloat() else w
+    val yLabels = listOf(maxTotal, maxTotal / 2.0, 0.0)
+    val labelWidth = 40.dp
 
-        fun xAt(i: Int) = i * stepX
-        fun yAt(v: Double) = padTop + ((maxVal - v) / range * chartH).toFloat()
-
-        // Gradient fill under the curve
-        val fillPath = Path().apply {
-            moveTo(xAt(0), h)
-            lineTo(xAt(0), yAt(history[0]))
-            for (i in 1 until history.size) {
-                val x0 = xAt(i - 1); val y0 = yAt(history[i - 1])
-                val x1 = xAt(i);     val y1 = yAt(history[i])
-                val cx = (x0 + x1) / 2f
-                cubicTo(cx, y0, cx, y1, x1, y1)
-            }
-            lineTo(xAt(history.size - 1), h)
-            close()
-        }
-        drawPath(
-            fillPath,
-            brush = Brush.verticalGradient(gradientColors, startY = padTop, endY = h)
-        )
-
-        // Grid lines (3 horizontal)
-        val gridColor = Color.White.copy(alpha = 0.06f)
-        for (i in 0..2) {
-            val y = padTop + chartH / 2 * i
-            drawLine(gridColor, Offset(0f, y), Offset(w, y), strokeWidth = 1f)
-        }
-
-        // Line
-        val linePath = Path().apply {
-            moveTo(xAt(0), yAt(history[0]))
-            for (i in 1 until history.size) {
-                val x0 = xAt(i - 1); val y0 = yAt(history[i - 1])
-                val x1 = xAt(i);     val y1 = yAt(history[i])
-                val cx = (x0 + x1) / 2f
-                cubicTo(cx, y0, cx, y1, x1, y1)
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        // Y-axis labels column
+        Box(modifier = Modifier.width(labelWidth).fillMaxHeight()) {
+            yLabels.forEachIndexed { idx, value ->
+                val fraction = when (idx) { 0 -> 0f; 1 -> 0.5f; else -> 1f }
+                Text(
+                    text = fmtRub(value),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontSize = 9.sp,
+                    color = Color.White.copy(alpha = 0.45f),
+                    modifier = Modifier.align(
+                        when (idx) {
+                            0    -> Alignment.TopEnd
+                            1    -> Alignment.CenterEnd
+                            else -> Alignment.BottomEnd
+                        }
+                    )
+                )
             }
         }
-        drawPath(linePath, color = lineColor, style = Stroke(width = 3f, cap = StrokeCap.Round))
+        Spacer(Modifier.width(4.dp))
 
-        // Dot at last point
-        val lastX = xAt(history.size - 1)
-        val lastY = yAt(history.last())
-        drawCircle(color = lineColor, radius = 6f, center = Offset(lastX, lastY))
-        drawCircle(color = Color.White, radius = 3f, center = Offset(lastX, lastY))
+        Canvas(modifier = Modifier.weight(1f).fillMaxHeight()) {
+            val w = size.width
+            val h = size.height
+            val padTop = 8f
+            val padBottom = 8f
+            val chartH = h - padTop - padBottom
+            val n = freeHistory.size
+            val barWidth = (w / n * 0.65f)
+            val gap = w / n
+
+            val gridColor = Color.White.copy(alpha = 0.06f)
+            for (i in 0..2) {
+                val y = padTop + chartH / 2 * i
+                drawLine(gridColor, Offset(0f, y), Offset(w, y), strokeWidth = 1f)
+            }
+
+            freeHistory.indices.forEach { i ->
+                val cx = gap * i + gap / 2f
+                val left = cx - barWidth / 2f
+                val freeVal = freeHistory[i].coerceAtLeast(0.0).toFloat()
+                val investedVal = investedHistory[i].coerceAtLeast(0.0).toFloat()
+                val totalVal = (freeVal + investedVal).coerceAtLeast(0.001f)
+
+                val totalBarH = (totalVal / maxTotal.toFloat() * chartH).coerceAtLeast(2f)
+                val freeBarH = (freeVal / totalVal * totalBarH).coerceAtLeast(0f)
+                val investedBarH = (totalBarH - freeBarH).coerceAtLeast(0f)
+
+                val barBottom = h - padBottom
+                if (investedBarH > 0f) {
+                    drawRect(
+                        color = investedColor,
+                        topLeft = Offset(left, barBottom - investedBarH),
+                        size = androidx.compose.ui.geometry.Size(barWidth, investedBarH)
+                    )
+                }
+                if (freeBarH > 0f) {
+                    drawRect(
+                        color = barColor,
+                        topLeft = Offset(left, barBottom - investedBarH - freeBarH),
+                        size = androidx.compose.ui.geometry.Size(barWidth, freeBarH)
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -273,36 +443,32 @@ private fun FinancialStats(state: GameState?) {
     } else 0.0
     val roiPositive = roi >= 0
 
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Финансы", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+    FairyCard(modifier = Modifier.fillMaxWidth()) {
+        Text("Злато", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
 
-            // ROI highlighted
-            Surface(
-                color = if (roiPositive) Success.copy(alpha = 0.12f) else Error.copy(alpha = 0.12f),
-                shape = RoundedCornerShape(8.dp)
+        Surface(
+            color = if (roiPositive) Success.copy(alpha = 0.15f) else Error.copy(alpha = 0.15f),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("ROI", style = MaterialTheme.typography.titleSmall,
-                        color = if (roiPositive) Success else Error)
-                    Text(
-                        "%+.1f%%".format(roi),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = if (roiPositive) Success else Error
-                    )
-                }
+                Text("ROI", style = MaterialTheme.typography.titleSmall, color = if (roiPositive) Success else Error)
+                Text(
+                    "%+.1f%%".format(roi),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = if (roiPositive) Success else Error
+                )
             }
-
-            HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
-            StatRow("Баланс", "%.2f TON".format(state?.balance ?: 0.0))
-            StatRow("Всего вложено", "%.2f TON".format(state?.totalInvested ?: 0.0))
-            StatRow("Всего получено", "%.2f TON".format(state?.totalReturned ?: 0.0))
         }
+
+        HorizontalDivider(color = Color.White.copy(alpha = 0.10f))
+        StatRow("Баланс", "%.0f ₽".format(state?.balance ?: 0.0))
+        StatRow("Всего вложено", "%.0f ₽".format(state?.totalInvested ?: 0.0))
+        StatRow("Всего получено", "%.0f ₽".format(state?.totalReturned ?: 0.0))
     }
 }
 
@@ -315,92 +481,104 @@ private fun ScamStats(state: GameState?) {
     val total = detected + missed
     val accuracy = if (total > 0) detected.toFloat() / total else 0f
 
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Детекция скама", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+    FairyCard(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            "Распознавание обманщиков",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = Color.White
+        )
 
-            // Accuracy progress bar
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Точность", style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("%.0f%%".format(accuracy * 100), style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = when {
-                            accuracy >= 0.7f -> Success
-                            accuracy >= 0.4f -> Warning
-                            else -> Error
-                        })
-                }
-                LinearProgressIndicator(
-                    progress = { accuracy },
-                    modifier = Modifier.fillMaxWidth().height(8.dp),
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("Точность", style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.7f))
+                Text(
+                    "%.0f%%".format(accuracy * 100),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
                     color = when {
                         accuracy >= 0.7f -> Success
                         accuracy >= 0.4f -> Warning
                         else -> Error
-                    },
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                    }
                 )
             }
+            LinearProgressIndicator(
+                progress = { accuracy },
+                modifier = Modifier.fillMaxWidth().height(8.dp),
+                color = when {
+                    accuracy >= 0.7f -> Success
+                    accuracy >= 0.4f -> Warning
+                    else -> Error
+                },
+                trackColor = Color.White.copy(alpha = 0.10f)
+            )
+        }
 
-            HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                ScamStatBox(label = "Распознано", value = "$detected", color = Success,
-                    modifier = Modifier.weight(1f))
-                ScamStatBox(label = "Пропущено", value = "$missed", color = Error,
-                    modifier = Modifier.weight(1f))
-            }
+        HorizontalDivider(color = Color.White.copy(alpha = 0.10f))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            ScamStatBox(label = "Распознано", value = "$detected", color = Success, modifier = Modifier.weight(1f))
+            ScamStatBox(label = "Пропущено", value = "$missed", color = Error, modifier = Modifier.weight(1f))
         }
     }
 }
 
 @Composable
 private fun ScamStatBox(label: String, value: String, color: Color, modifier: Modifier = Modifier) {
-    Surface(
-        color = color.copy(alpha = 0.10f),
-        shape = RoundedCornerShape(8.dp),
-        modifier = modifier
-    ) {
+    Surface(color = color.copy(alpha = 0.12f), shape = RoundedCornerShape(8.dp), modifier = modifier) {
         Column(
             modifier = Modifier.padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Text(value, style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold, color = color)
-            Text(label, style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(value, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = color)
+            Text(label, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f))
         }
     }
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 @Composable
 private fun StatRow(label: String, value: String) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(label, style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.6f))
+        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = Color.White)
     }
 }
 
 @Composable
 private fun LogCard(onShowLog: () -> Unit) {
     val context = LocalContext.current
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.padding(16.dp).fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            "Логи",
+            style = MaterialTheme.typography.labelSmall,
+            color = Color.White.copy(alpha = 0.25f)
+        )
+        TextButton(
+            onClick = onShowLog,
+            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
         ) {
-            Text("Логи приложения", style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onShowLog) { Text("Просмотр") }
-                Button(onClick = { AppLogger.share(context) }) { Text("Поделиться") }
-            }
+            Text(
+                "просмотр",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.White.copy(alpha = 0.25f)
+            )
+        }
+        TextButton(
+            onClick = { AppLogger.share(context) },
+            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+        ) {
+            Text(
+                "поделиться",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.White.copy(alpha = 0.25f)
+            )
         }
     }
 }
@@ -414,7 +592,7 @@ private fun LogDialog(onDismiss: () -> Unit) {
     var copied by remember { mutableStateOf(false) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Лог приложения") },
+        title = { Text("Журнал приложения") },
         text = {
             Box(modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp)) {
                 Text(

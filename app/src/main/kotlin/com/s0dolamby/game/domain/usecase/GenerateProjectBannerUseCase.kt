@@ -50,7 +50,7 @@ class GenerateProjectBannerUseCase @Inject constructor(
 
         val finalPrompt = promptBuilder.buildFinalImagePrompt(concept)
 
-        // Step 2: Pollinations.ai — FLUX.1-schnell for free, no API key required.
+        // Step 2: Pollinations.ai — FLUX.1-schnell under the hood.
         // URLEncoder + replace("+","%20") guarantees RFC-3986 compliant path segment.
         val encoded = java.net.URLEncoder.encode(finalPrompt.take(400), "UTF-8")
             .replace("+", "%20")

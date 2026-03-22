@@ -33,8 +33,8 @@ class ProjectRepositoryImpl @Inject constructor(
     override suspend fun updateProject(project: Project) =
         dao.update(project.toEntity(gson))
 
-    override suspend fun closeProject(projectId: String, reason: String) =
-        dao.closeProject(projectId, reason)
+    override suspend fun closeProject(projectId: String, reason: String, returnedValueRubles: Double) =
+        dao.closeProject(projectId, reason, returnedValueRubles)
 
     override suspend fun updateBannerUrl(projectId: String, url: String, promptUsed: String) =
         dao.updateBanner(projectId, url, promptUsed)
@@ -42,4 +42,7 @@ class ProjectRepositoryImpl @Inject constructor(
     override suspend fun closeAllInboxProjects() = dao.closeAllInboxProjects()
 
     override suspend fun markLieGuessCorrect(projectId: String) = dao.markLieGuessCorrect(projectId)
+
+    override suspend fun getActiveProjectsTotalValue(): Double =
+        dao.getActiveProjects().sumOf { it.currentValueRubles }
 }

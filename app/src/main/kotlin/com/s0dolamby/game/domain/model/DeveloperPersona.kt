@@ -1,13 +1,13 @@
 package com.s0dolamby.game.domain.model
 
 enum class PersonaArchetype {
-    CLASSIC_SCAMMER,
-    PSEUDO_PRO,
-    NAIVE_ENTHUSIAST,
-    BUSINESS_SHARK,
-    SWEET_INFLUENCER,
-    SILENT_TECHIE,
-    SERIAL_FOUNDER
+    BURATINO,        // Очевидный лжец, верит своим сказкам
+    BOYARIN, // Пафосный, ссылается на великих партнёров
+    KOLOBOK,         // Хвастун-энтузиаст, от всех убегает с улыбкой
+    KOSCHEI,         // Холодный, бессмертно-уверенный, говорит цифрами
+    ZOLUSHKA,        // Апеллирует к жалости и эмоциям, дедлайны
+    BABA_YAGA,       // Отвечает загадками, технически подкована
+    IVAN_DURAK       // Открыт про провалы, третий раз — может взлететь
 }
 
 data class DeveloperPersona(

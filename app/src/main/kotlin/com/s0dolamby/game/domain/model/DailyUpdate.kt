@@ -17,55 +17,54 @@ data class DailyUpdate(
 enum class PayoutStatus { DELAYED, NORMAL, BOOSTED }
 
 enum class AnnouncementType {
-    // Regular announcements
+    // Обычные события
     LISTING, NEW_SEASON, COLLAB, AUDIT,
-    // Random events
+    // Случайные события
     BAD_RUMOR, VIP_COLLAB, CRIMINAL_CASE, HACK
 }
 
 enum class NewsSource(val emoji: String, val label: String) {
-    TELEGRAM_CHANNEL("📢", "Telegram-канал"),
-    REDDIT("🧵", "Reddit / форум"),
-    PRESS_RELEASE("📋", "Пресс-релиз"),
-    FRAUD_ALERT("🚨", "Сигнал о мошенничестве"),
-    CRYPTO_MEDIA("📰", "Крипто-медиа"),
-    ANONYMOUS("👤", "Анонимный источник"),
-    OFFICIAL_BLOG("📝", "Официальный блог"),
-    COMMUNITY("💬", "Сообщество"),
-    EXCHANGE_NOTICE("🏦", "Уведомление биржи"),
-    INVESTOR_REPORT("📊", "Отчёт инвестора")
+    TOWN_CRIER("📯", "Глашатай"),
+    TAVERN_RUMOR("🍺", "Слухи в кабаке"),
+    ROYAL_DECREE("📜", "Царский указ"),
+    GUARD_WARNING("⚔", "Стражники воеводы"),
+    CHRONICLE("📖", "Летопись"),
+    MYSTERIOUS_TRAVELER("🎭", "Таинственный странник"),
+    GUILD_NOTICE("🔔", "Объявление гильдии"),
+    MARKET_SQUARE("🏪", "Торговая площадь"),
+    MERCHANT_NOTICE("💰", "Купеческое уведомление"),
+    WISE_ELDER("🧙", "Мудрый старец")
 }
 
-/** Deterministic source based on update properties — no DB storage needed. */
+/** Детерминированный источник на основе свойств вести — не нужно хранить в БД. */
 fun DailyUpdate.computedSource(): NewsSource {
-    // Event types have fixed sources
     when (announcement) {
-        AnnouncementType.CRIMINAL_CASE -> return NewsSource.FRAUD_ALERT
-        AnnouncementType.HACK -> return NewsSource.ANONYMOUS
-        AnnouncementType.VIP_COLLAB -> return NewsSource.PRESS_RELEASE
-        AnnouncementType.LISTING -> return NewsSource.EXCHANGE_NOTICE
-        AnnouncementType.BAD_RUMOR -> return NewsSource.REDDIT
+        AnnouncementType.CRIMINAL_CASE -> return NewsSource.GUARD_WARNING
+        AnnouncementType.HACK -> return NewsSource.MYSTERIOUS_TRAVELER
+        AnnouncementType.VIP_COLLAB -> return NewsSource.ROYAL_DECREE
+        AnnouncementType.LISTING -> return NewsSource.MERCHANT_NOTICE
+        AnnouncementType.BAD_RUMOR -> return NewsSource.TAVERN_RUMOR
         else -> {}
     }
 
     val hash = id.hashCode()
     return when {
         redFlags.isNotEmpty() && payoutStatus == PayoutStatus.DELAYED ->
-            NewsSource.FRAUD_ALERT
+            NewsSource.GUARD_WARNING
         redFlags.size >= 2 ->
-            if (hash % 2 == 0) NewsSource.ANONYMOUS else NewsSource.FRAUD_ALERT
+            if (hash % 2 == 0) NewsSource.MYSTERIOUS_TRAVELER else NewsSource.GUARD_WARNING
         payoutStatus == PayoutStatus.DELAYED ->
-            listOf(NewsSource.COMMUNITY, NewsSource.REDDIT, NewsSource.ANONYMOUS)[kotlin.math.abs(hash) % 3]
+            listOf(NewsSource.MARKET_SQUARE, NewsSource.TAVERN_RUMOR, NewsSource.MYSTERIOUS_TRAVELER)[kotlin.math.abs(hash) % 3]
         announcement != null ->
-            if (hash % 2 == 0) NewsSource.PRESS_RELEASE else NewsSource.OFFICIAL_BLOG
+            if (hash % 2 == 0) NewsSource.ROYAL_DECREE else NewsSource.GUILD_NOTICE
         payoutStatus == PayoutStatus.BOOSTED ->
-            listOf(NewsSource.OFFICIAL_BLOG, NewsSource.EXCHANGE_NOTICE, NewsSource.INVESTOR_REPORT)[kotlin.math.abs(hash) % 3]
+            listOf(NewsSource.GUILD_NOTICE, NewsSource.MERCHANT_NOTICE, NewsSource.WISE_ELDER)[kotlin.math.abs(hash) % 3]
         redFlags.isNotEmpty() ->
-            listOf(NewsSource.REDDIT, NewsSource.ANONYMOUS, NewsSource.CRYPTO_MEDIA)[kotlin.math.abs(hash) % 3]
+            listOf(NewsSource.TAVERN_RUMOR, NewsSource.MYSTERIOUS_TRAVELER, NewsSource.CHRONICLE)[kotlin.math.abs(hash) % 3]
         else -> {
             val pool = listOf(
-                NewsSource.TELEGRAM_CHANNEL, NewsSource.CRYPTO_MEDIA, NewsSource.COMMUNITY,
-                NewsSource.INVESTOR_REPORT, NewsSource.OFFICIAL_BLOG, NewsSource.TELEGRAM_CHANNEL
+                NewsSource.TOWN_CRIER, NewsSource.CHRONICLE, NewsSource.MARKET_SQUARE,
+                NewsSource.WISE_ELDER, NewsSource.GUILD_NOTICE, NewsSource.TOWN_CRIER
             )
             pool[kotlin.math.abs(hash) % pool.size]
         }

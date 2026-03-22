@@ -5,69 +5,75 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Car body - sleek low sports car silhouette -->
+    <!-- Bag neck (tie knot) -->
+    <path
+        android:fillColor="#C8860A"
+        android:pathData="M42,30 L44,22 L64,22 L66,30 Z"/>
+
+    <!-- Rope tie on neck -->
+    <path
+        android:fillColor="#8B5E0A"
+        android:pathData="M39,32 Q54,28 69,32 L67,36 Q54,33 41,36 Z"/>
+
+    <!-- Main bag body (rounded sack shape) -->
+    <path
+        android:fillColor="#FFB800"
+        android:pathData="M36,36 Q20,42 18,62 Q16,82 54,88 Q92,82 90,62 Q88,42 72,36 Z"/>
+
+    <!-- Bag shading (darker right side) -->
+    <path
+        android:fillColor="#E0A000"
+        android:pathData="M68,38 Q84,46 88,62 Q90,78 72,85 Q84,78 86,62 Q86,46 70,40 Z"/>
+
+    <!-- Bag highlight (lighter left) -->
+    <path
+        android:fillColor="#FFCC40"
+        android:pathData="M36,40 Q24,50 22,64 Q24,50 38,42 Z"/>
+
+    <!-- Coin symbol on bag -->
+    <path
+        android:fillColor="#8B5E0A"
+        android:pathData="M54,52 m-16,0 a16,16 0 1,0 32,0 a16,16 0 1,0 -32,0"/>
     <path
         android:fillColor="#FFD700"
-        android:pathData="M10,72 L10,62 L22,48 L42,40 L66,40 L84,46 L96,58 L98,72 Z"/>
+        android:pathData="M54,52 m-12,0 a12,12 0 1,0 24,0 a12,12 0 1,0 -24,0"/>
 
-    <!-- Car roof / cabin -->
+    <!-- Ruble sign -->
     <path
-        android:fillColor="#FFC200"
-        android:pathData="M26,62 L32,50 L46,43 L64,43 L78,50 L82,62 Z"/>
+        android:fillColor="#8B5E0A"
+        android:pathData="M50,44 L50,60 M50,44 L56,44 Q61,44 61,49 Q61,54 56,54 L48,54 M48,57 L58,57"
+        android:strokeColor="#8B5E0A"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"/>
 
-    <!-- Windshield -->
+    <!-- Coins spilling at bottom -->
     <path
-        android:fillColor="#A8D8EA"
-        android:pathData="M34,60 L39,51 L56,45 L56,60 Z"/>
+        android:fillColor="#FFD700"
+        android:pathData="M34,82 m-6,0 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0"/>
+    <path
+        android:fillColor="#E0A000"
+        android:pathData="M34,82 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0"/>
 
-    <!-- Rear window -->
     <path
-        android:fillColor="#A8D8EA"
-        android:pathData="M58,60 L58,45 L72,50 L76,60 Z"/>
+        android:fillColor="#FFD700"
+        android:pathData="M74,82 m-6,0 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0"/>
+    <path
+        android:fillColor="#E0A000"
+        android:pathData="M74,82 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0"/>
 
-    <!-- Left wheel (dark) -->
     <path
-        android:fillColor="#222222"
-        android:pathData="M28,72 m-14,0 a14,14 0 1,0 28,0 a14,14 0 1,0 -28,0"/>
+        android:fillColor="#FFD700"
+        android:pathData="M54,90 m-5,0 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0"/>
+    <path
+        android:fillColor="#E0A000"
+        android:pathData="M54,90 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0"/>
 
-    <!-- Left wheel rim -->
+    <!-- Sparkles -->
     <path
-        android:fillColor="#888888"
-        android:pathData="M28,72 m-9,0 a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0"/>
-
-    <!-- Left wheel center -->
+        android:fillColor="#FFFFFF"
+        android:pathData="M24,38 L25,34 L26,38 L30,39 L26,40 L25,44 L24,40 L20,39 Z"/>
     <path
-        android:fillColor="#CCCCCC"
-        android:pathData="M28,72 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0"/>
-
-    <!-- Right wheel (dark) -->
-    <path
-        android:fillColor="#222222"
-        android:pathData="M80,72 m-14,0 a14,14 0 1,0 28,0 a14,14 0 1,0 -28,0"/>
-
-    <!-- Right wheel rim -->
-    <path
-        android:fillColor="#888888"
-        android:pathData="M80,72 m-9,0 a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0"/>
-
-    <!-- Right wheel center -->
-    <path
-        android:fillColor="#CCCCCC"
-        android:pathData="M80,72 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0"/>
-
-    <!-- Headlight -->
-    <path
-        android:fillColor="#FFFDE0"
-        android:pathData="M88,60 L96,62 L96,68 L88,67 Z"/>
-
-    <!-- Tail light -->
-    <path
-        android:fillColor="#FF3333"
-        android:pathData="M10,63 L16,62 L16,68 L10,68 Z"/>
-
-    <!-- Side stripe -->
-    <path
-        android:fillColor="#FFA000"
-        android:pathData="M18,68 L90,68 L90,70 L18,70 Z"/>
+        android:fillColor="#FFD700"
+        android:pathData="M82,30 L83,27 L84,30 L87,31 L84,32 L83,35 L82,32 L79,31 Z"/>
 
 </vector>

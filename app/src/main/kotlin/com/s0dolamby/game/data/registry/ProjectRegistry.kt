@@ -20,7 +20,7 @@ class ProjectRegistry @Inject constructor(
         templates.filter { it.templateId != "onboarding" }.random()
 
     fun getOnboardingTemplate(): ProjectTemplate =
-        templates.firstOrNull { it.type == ProjectType.HONEST_GAMEFI }
+        templates.firstOrNull { it.type == ProjectType.HONEST_TRADE }
             ?: templates.first()
 
     private fun loadTemplates(): List<ProjectTemplate> {
@@ -41,30 +41,63 @@ class ProjectRegistry @Inject constructor(
     ) {
         fun buildName(): String {
             val pattern = namePatterns.random()
-            val names = listOf(
-                // Classic crypto vibes
-                "Moon", "Star", "Dragon", "Wolf", "Iron", "Solar", "Frost",
-                "Void", "Neon", "Fire", "Sky", "Cyber", "Nova", "Apex",
-                // Animals (absurd)
-                "Hamster", "Capybara", "Sloth", "Platypus", "Narwhal",
-                "Crab", "Penguin", "Raccoon", "Otter", "Alpaca", "Shrimp",
-                "Hedgehog", "Axolotl", "Flamingo", "Tapir",
-                // Foods & objects
-                "Avocado", "Boba", "Banana", "Mango", "Potato", "Pickle",
-                "Sushi", "Pancake", "Donut", "Nacho", "Toaster", "Pillow",
-                // Crypto meme culture
-                "Sigma", "Chad", "Lambo", "Hodl", "Pepe", "Wojak", "Pump",
-                "Degen", "Based", "Gigabrain", "Diamond",
-                // Geo/aspirational
-                "Dubai", "Bali", "Monaco", "Sahara", "Everest", "Amazon",
-                // Tech-sounding
-                "Quantum", "Pixel", "Vector", "Cipher", "Nexus", "Prism",
-                "Matrix", "Helix", "Proton", "Zenith",
-                // Nature/elemental
-                "Mushroom", "Cactus", "Lotus", "Tornado", "Thunder", "Cobalt",
-                "Obsidian", "Crimson", "Velvet", "Aurora"
-            )
-            return pattern.replace("[Name]", names.random())
+            val name = fairyTaleNames.random()
+            return pattern
+                .replace("[Name]", name.nom)
+                .replace("[NameGen]", name.gen)
         }
     }
 }
+
+private data class FairyTaleName(val nom: String, val gen: String)
+
+private val fairyTaleNames = listOf(
+        // Русские народные персонажи
+        FairyTaleName("Колобок", "Колобка"),
+        FairyTaleName("Василиса", "Василисы"),
+        FairyTaleName("Аленушка", "Аленушки"),
+        FairyTaleName("Финист", "Финиста"),
+        FairyTaleName("Добрыня", "Добрыни"),
+        FairyTaleName("Иванушка", "Иванушки"),
+        FairyTaleName("Марья", "Марьи"),
+        FairyTaleName("Снегурка", "Снегурки"),
+        FairyTaleName("Богатырь", "Богатыря"),
+        FairyTaleName("Дюймовочка", "Дюймовочки"),
+        FairyTaleName("Русалка", "Русалки"),
+        // Волшебные существа
+        FairyTaleName("Жар-Птица", "Жар-Птицы"),
+        FairyTaleName("Дракон", "Дракона"),
+        FairyTaleName("Феникс", "Феникса"),
+        FairyTaleName("Домовой", "Домового"),
+        FairyTaleName("Леший", "Лешего"),
+        FairyTaleName("Кикимора", "Кикиморы"),
+        FairyTaleName("Водяной", "Водяного"),
+        FairyTaleName("Светлячок", "Светлячка"),
+        FairyTaleName("Единорог", "Единорога"),
+        // Волшебные предметы
+        FairyTaleName("Горшочек", "Горшочка"),
+        FairyTaleName("Ключик", "Ключика"),
+        FairyTaleName("Зеркало", "Зеркала"),
+        FairyTaleName("Перо", "Пера"),
+        FairyTaleName("Яблоко", "Яблока"),
+        FairyTaleName("Злато", "Злата"),
+        FairyTaleName("Клубок", "Клубка"),
+        FairyTaleName("Жемчуг", "Жемчуга"),
+        // Сказочные места
+        FairyTaleName("Лукоморье", "Лукоморья"),
+        FairyTaleName("Берендей", "Берендея"),
+        FairyTaleName("Беловодье", "Беловодья"),
+        FairyTaleName("Буян", "Буяна"),
+        // Советские сказочные персонажи
+        FairyTaleName("Буратино", "Буратино"),
+        FairyTaleName("Конёк", "Конька"),
+        FairyTaleName("Чебурашка", "Чебурашки"),
+        FairyTaleName("Незнайка", "Незнайки"),
+        // Природные образы
+        FairyTaleName("Заря", "Зари"),
+        FairyTaleName("Гром", "Грома"),
+        FairyTaleName("Роса", "Росы"),
+        FairyTaleName("Иней", "Инея"),
+        FairyTaleName("Вьюга", "Вьюги"),
+        FairyTaleName("Снежок", "Снежка"),
+    )
