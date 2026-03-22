@@ -246,49 +246,80 @@ private fun StackedBarChart(
     val barColor = FairyGold
     val investedColor = Color(0xFF6B4FCB)
 
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val padTop = 8f
-        val padBottom = 8f
-        val chartH = h - padTop - padBottom
-        val n = freeHistory.size
-        val barWidth = (w / n * 0.65f)
-        val gap = w / n
+    // Format compact ruble label: 1 234 → "1.2к", 500 → "500"
+    fun fmtRub(v: Double): String = when {
+        v >= 1_000_000 -> "%.1fм".format(v / 1_000_000)
+        v >= 1_000     -> "%.1fк".format(v / 1_000)
+        else           -> "%.0f".format(v)
+    }
 
-        val gridColor = Color.White.copy(alpha = 0.06f)
-        for (i in 0..3) {
-            val y = padTop + chartH / 3 * i
-            drawLine(gridColor, Offset(0f, y), Offset(w, y), strokeWidth = 1f)
-        }
+    val yLabels = listOf(maxTotal, maxTotal / 2.0, 0.0)
+    val labelWidth = 40.dp
 
-        freeHistory.indices.forEach { i ->
-            val cx = gap * i + gap / 2f
-            val left = cx - barWidth / 2f
-            val freeVal = freeHistory[i].coerceAtLeast(0.0).toFloat()
-            val investedVal = investedHistory[i].coerceAtLeast(0.0).toFloat()
-            val totalVal = (freeVal + investedVal).coerceAtLeast(0.001f)
-
-            val totalBarH = (totalVal / maxTotal.toFloat() * chartH).coerceAtLeast(2f)
-            val freeBarH = (freeVal / totalVal * totalBarH).coerceAtLeast(0f)
-            val investedBarH = (totalBarH - freeBarH).coerceAtLeast(0f)
-
-            val barBottom = h - padBottom
-            // Draw invested portion (bottom)
-            if (investedBarH > 0f) {
-                drawRect(
-                    color = investedColor,
-                    topLeft = Offset(left, barBottom - investedBarH),
-                    size = androidx.compose.ui.geometry.Size(barWidth, investedBarH)
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        // Y-axis labels column
+        Box(modifier = Modifier.width(labelWidth).fillMaxHeight()) {
+            yLabels.forEachIndexed { idx, value ->
+                val fraction = when (idx) { 0 -> 0f; 1 -> 0.5f; else -> 1f }
+                Text(
+                    text = fmtRub(value),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontSize = 9.sp,
+                    color = Color.White.copy(alpha = 0.45f),
+                    modifier = Modifier.align(
+                        when (idx) {
+                            0    -> Alignment.TopEnd
+                            1    -> Alignment.CenterEnd
+                            else -> Alignment.BottomEnd
+                        }
+                    )
                 )
             }
-            // Draw free portion (top)
-            if (freeBarH > 0f) {
-                drawRect(
-                    color = barColor,
-                    topLeft = Offset(left, barBottom - investedBarH - freeBarH),
-                    size = androidx.compose.ui.geometry.Size(barWidth, freeBarH)
-                )
+        }
+        Spacer(Modifier.width(4.dp))
+
+        Canvas(modifier = Modifier.weight(1f).fillMaxHeight()) {
+            val w = size.width
+            val h = size.height
+            val padTop = 8f
+            val padBottom = 8f
+            val chartH = h - padTop - padBottom
+            val n = freeHistory.size
+            val barWidth = (w / n * 0.65f)
+            val gap = w / n
+
+            val gridColor = Color.White.copy(alpha = 0.06f)
+            for (i in 0..2) {
+                val y = padTop + chartH / 2 * i
+                drawLine(gridColor, Offset(0f, y), Offset(w, y), strokeWidth = 1f)
+            }
+
+            freeHistory.indices.forEach { i ->
+                val cx = gap * i + gap / 2f
+                val left = cx - barWidth / 2f
+                val freeVal = freeHistory[i].coerceAtLeast(0.0).toFloat()
+                val investedVal = investedHistory[i].coerceAtLeast(0.0).toFloat()
+                val totalVal = (freeVal + investedVal).coerceAtLeast(0.001f)
+
+                val totalBarH = (totalVal / maxTotal.toFloat() * chartH).coerceAtLeast(2f)
+                val freeBarH = (freeVal / totalVal * totalBarH).coerceAtLeast(0f)
+                val investedBarH = (totalBarH - freeBarH).coerceAtLeast(0f)
+
+                val barBottom = h - padBottom
+                if (investedBarH > 0f) {
+                    drawRect(
+                        color = investedColor,
+                        topLeft = Offset(left, barBottom - investedBarH),
+                        size = androidx.compose.ui.geometry.Size(barWidth, investedBarH)
+                    )
+                }
+                if (freeBarH > 0f) {
+                    drawRect(
+                        color = barColor,
+                        topLeft = Offset(left, barBottom - investedBarH - freeBarH),
+                        size = androidx.compose.ui.geometry.Size(barWidth, freeBarH)
+                    )
+                }
             }
         }
     }

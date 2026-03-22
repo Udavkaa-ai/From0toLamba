@@ -13,7 +13,7 @@ class ExitProjectUseCase @Inject constructor(
             ?: error("Дело не найдено")
 
         val returned = project.currentValueRubles
-        projectRepository.closeProject(projectId, "Игрок вышел из дела")
+        projectRepository.closeProject(projectId, "Игрок вышел из дела", returned)
 
         val state = gameStateRepository.getGameState()
         gameStateRepository.updateBalance(state.balance + returned)

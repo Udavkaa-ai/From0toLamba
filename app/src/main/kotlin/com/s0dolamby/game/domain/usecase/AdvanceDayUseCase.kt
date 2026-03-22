@@ -80,7 +80,7 @@ class AdvanceDayUseCase @Inject constructor(
                         val returned = project.currentValueRubles * (1 - lossPercent)
                         balanceDelta += returned
                         gameStateRepository.recordReturn(returned)
-                        projectRepository.closeProject(project.id, buildClosureReason(project.fate))
+                        projectRepository.closeProject(project.id, buildClosureReason(project.fate), returned)
                         gameStateRepository.recordScamMissed()
                     }
                 }
@@ -94,7 +94,7 @@ class AdvanceDayUseCase @Inject constructor(
                     val returned = project.currentValueRubles * (1 - lossPercent)
                     balanceDelta += returned
                     gameStateRepository.recordReturn(returned)
-                    projectRepository.closeProject(project.id, buildClosureReason(project.fate))
+                    projectRepository.closeProject(project.id, buildClosureReason(project.fate), returned)
                     gameStateRepository.recordScamMissed()
                 }
 

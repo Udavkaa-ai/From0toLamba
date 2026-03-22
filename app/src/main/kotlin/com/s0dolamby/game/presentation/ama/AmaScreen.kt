@@ -60,20 +60,56 @@ private fun besedaBackground(archetype: PersonaArchetype?): Int = when (archetyp
     null                        -> R.drawable.beseda_buratino
 }
 
-// ─── Question templates ───────────────────────────────────────────────────────
+// ─── Question pool ────────────────────────────────────────────────────────────
+// Large pool — random 10 are picked per session for variety
 
-private val questionTemplates = listOf(
+private val allQuestions = listOf(
+    // Доходность
     "Сколько реально зарабатывают участники в день?",
+    "Назови конкретную цифру дохода — сколько рублей в день на сотню вложенных?",
+    "Откуда берётся такая высокая доходность?",
+    "Почему у вас выгоднее, чем у конкурентов?",
+    "Есть ли участник, готовый подтвердить свой доход?",
+    // Вкладчики
     "Сколько сейчас вкладчиков в деле?",
+    "Как давно самый первый вкладчик с тобой работает?",
+    "Сколько человек вышло из дела за последний месяц и почему?",
+    "Как быстро растёт число участников?",
+    // Выплаты
     "Когда точно будут первые выплаты?",
-    "Кто в артели? Можно проверить?",
+    "Как выглядит процесс вывода рублей — шаги, сроки?",
+    "Были ли когда-нибудь задержки выплат? По какой причине?",
+    "Можно вывести рубли прямо сейчас, не дожидаясь срока?",
+    // Команда
+    "Кто в артели? Можно проверить их имена?",
+    "Где можно найти информацию об основателях дела?",
+    "Сколько человек работает над делом?",
+    // Проверки и документы
     "Дело проверено старейшинами или воеводой?",
+    "Есть ли какой-то официальный документ или грамота о деле?",
+    "Покажи книгу учёта доходов и расходов",
+    "Кто проверял ваши расчёты и подтвердил честность?",
+    // Вывод и ограничения
     "Есть ли ограничения на вывод рублей?",
+    "Почему нельзя вывести всё сразу?",
+    "Что случится, если я захочу выйти из дела раньше срока?",
+    // Покровители
     "Кто ваши покровители и партнёры?",
-    "Почему доходность такая высокая?",
+    "С кем из известных купцов или бояр вы работаете?",
+    "Есть ли у дела поддержка от торговой гильдии или государства?",
+    // Риски
     "Что будет, если дело не пойдёт?",
-    "Покажи книгу учёта доходов и расходов?"
+    "Как вы вернёте мои деньги, если что-то пойдёт не так?",
+    "Были ли у тебя дела, которые провалились? Расскажи.",
+    "Почему я должен тебе доверять?"
 )
+
+/** Per-session random subset — stays stable during one AMA session */
+private fun pickSessionQuestions(sessionId: String?): List<String> {
+    val seed = sessionId?.hashCode()?.toLong() ?: System.currentTimeMillis()
+    val rng = java.util.Random(seed)
+    return allQuestions.shuffled(rng).take(10)
+}
 
 // ─── Screen ──────────────────────────────────────────────────────────────────
 
@@ -94,12 +130,20 @@ fun AmaScreen(
     val questionCount = uiState.session?.questionCount ?: 0
     val sessionEnded = questionCount >= GameConfig.AMA_MAX_QUESTIONS
 
-    // Scroll so the latest message is visible above the bottom bar
-    LaunchedEffect(messages.size, sessionEnded) {
-        if (messages.isNotEmpty()) {
-            // items layout: [messages..., sessionEndBanner? (if ended), trailingSpacer]
-            val targetIndex = messages.size // spacer after last message (or banner when ended)
-            listState.animateScrollToItem(targetIndex)
+    // Per-session question set — changes only when a new session starts
+    val sessionQuestions = remember(uiState.session?.id) {
+        pickSessionQuestions(uiState.session?.id)
+    }
+
+    // Scroll so the last message is fully visible above the bottom bar.
+    // Triggers both on new messages AND when sending state changes (AI response arrives).
+    LaunchedEffect(messages.size, sessionEnded, uiState.isSending) {
+        if (messages.isNotEmpty() && !uiState.isSending) {
+            // Small delay ensures the new item is laid out before we scroll to it
+            kotlinx.coroutines.delay(60)
+            // trailing spacer is always the last item; Compose stops at natural content end
+            val trailingSpacerIndex = messages.size + (if (sessionEnded) 1 else 0)
+            listState.animateScrollToItem(trailingSpacerIndex)
         }
     }
 
@@ -164,6 +208,7 @@ fun AmaScreen(
                     // Question templates
                     if (!sessionEnded && !uiState.isSending) {
                         QuestionTemplateRow(
+                            questions = sessionQuestions,
                             usedTemplates = usedTemplates,
                             onTemplateClick = { question ->
                                 usedTemplates = usedTemplates + question
@@ -278,8 +323,8 @@ fun AmaScreen(
                     )
                 }
             }
-            // Trailing spacer — ensures last message stays above the bottom bar
-            item { Spacer(Modifier.height(24.dp)) }
+            // Trailing spacer — gives room so the last message clears the bottom bar (templates + input)
+            item { Spacer(Modifier.height(160.dp)) }
         }
     }
 
@@ -314,10 +359,11 @@ fun AmaScreen(
 
 @Composable
 private fun QuestionTemplateRow(
+    questions: List<String>,
     usedTemplates: Set<String>,
     onTemplateClick: (String) -> Unit
 ) {
-    val remaining = questionTemplates.filter { it !in usedTemplates }
+    val remaining = questions.filter { it !in usedTemplates }
     if (remaining.isEmpty()) return
 
     // Split into two rows: even indices top, odd indices bottom
