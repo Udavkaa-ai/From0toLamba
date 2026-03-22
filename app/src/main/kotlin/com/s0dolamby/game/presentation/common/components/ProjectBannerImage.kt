@@ -17,9 +17,15 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import coil.network.HttpException
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.s0dolamby.game.data.logging.AppLogger
+
+/** Strips &nologo=true&key=... and ?key=... from a Pollinations URL */
+private fun urlWithoutKey(url: String): String =
+    url.replace(Regex("&nologo=true&key=[^&]+"), "")
+       .replace(Regex("[?&]key=[^&]+"), "")
 
 @Composable
 fun ProjectBannerImage(
@@ -30,13 +36,17 @@ fun ProjectBannerImage(
     val shape = RoundedCornerShape(12.dp)
 
     if (bannerUrl != null) {
-        var loadFailed by remember(bannerUrl) { mutableStateOf(false) }
-        if (loadFailed) {
-            BannerPlaceholder(projectName = projectName, modifier = modifier, shape = shape)
-        } else {
-            AsyncImage(
+        // null = loading/first try, true = key-url failed, false = placeholder needed
+        var keyFailed  by remember(bannerUrl) { mutableStateOf(false) }
+        var allFailed  by remember(bannerUrl) { mutableStateOf(false) }
+
+        val activeUrl = if (keyFailed) urlWithoutKey(bannerUrl) else bannerUrl
+
+        when {
+            allFailed -> BannerPlaceholder(projectName, modifier, shape)
+            else -> AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data(bannerUrl)
+                    .data(activeUrl)
                     .diskCachePolicy(CachePolicy.ENABLED)
                     .memoryCachePolicy(CachePolicy.ENABLED)
                     .crossfade(true)
@@ -44,8 +54,14 @@ fun ProjectBannerImage(
                 contentDescription = "Баннер $projectName",
                 contentScale = ContentScale.Crop,
                 onError = { err ->
-                    AppLogger.e("BannerImage", "Coil failed url=$bannerUrl err=${err.result.throwable}")
-                    loadFailed = true
+                    val is402 = (err.result.throwable as? HttpException)?.response?.code == 402
+                    if (!keyFailed && is402) {
+                        AppLogger.i("BannerImage", "402 with key → retry without key: $activeUrl")
+                        keyFailed = true
+                    } else {
+                        AppLogger.e("BannerImage", "Coil failed url=$activeUrl err=${err.result.throwable}")
+                        allFailed = true
+                    }
                 },
                 modifier = modifier
                     .fillMaxWidth()
@@ -54,7 +70,7 @@ fun ProjectBannerImage(
             )
         }
     } else {
-        BannerPlaceholder(projectName = projectName, modifier = modifier, shape = shape)
+        BannerPlaceholder(projectName, modifier, shape)
     }
 }
 
