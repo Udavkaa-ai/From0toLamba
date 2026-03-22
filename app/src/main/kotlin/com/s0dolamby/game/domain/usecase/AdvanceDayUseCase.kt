@@ -5,6 +5,7 @@ import com.s0dolamby.game.domain.model.AnnouncementType
 import com.s0dolamby.game.domain.model.DailyUpdate
 import com.s0dolamby.game.domain.model.Project
 import com.s0dolamby.game.domain.model.ProjectFate
+import com.s0dolamby.game.domain.repository.AmaRepository
 import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.s0dolamby.game.domain.repository.ProjectRepository
 import javax.inject.Inject
@@ -13,6 +14,7 @@ import kotlin.random.Random
 class AdvanceDayUseCase @Inject constructor(
     private val gameStateRepository: GameStateRepository,
     private val projectRepository: ProjectRepository,
+    private val amaRepository: AmaRepository,
     private val generateProjectUseCase: GenerateProjectUseCase,
     private val generateDailyUpdatesUseCase: GenerateDailyUpdatesUseCase
 ) {
@@ -85,7 +87,7 @@ class AdvanceDayUseCase @Inject constructor(
                     }
                 }
 
-                // Обычный крах (не скам-судьбы)
+                // Обычный крах (не скам-судьбы) — HONEST_FAIL не считается пропущенным мошенником
                 newDaysUntilCollapse != null && newDaysUntilCollapse <= 0 -> {
                     val lossPercent = when (project.fate) {
                         ProjectFate.HONEST_FAIL -> Random.nextDouble(0.10, 0.40)
@@ -95,7 +97,7 @@ class AdvanceDayUseCase @Inject constructor(
                     balanceDelta += returned
                     gameStateRepository.recordReturn(returned)
                     projectRepository.closeProject(project.id, buildClosureReason(project.fate), returned)
-                    gameStateRepository.recordScamMissed()
+                    // Только INSTANT_SCAM/SLOW_DRAIN с вложениями = пропущенный мошенник
                 }
 
                 // Обычный день — начисляем доход внутри проекта, возможно случайное событие
@@ -142,6 +144,26 @@ class AdvanceDayUseCase @Inject constructor(
         gameStateRepository.appendInvestedSnapshot(totalActiveValue)
         gameStateRepository.advanceDay()
         gameStateRepository.updateRankIfNeeded()
+
+        // ── Подсчёт распознанных мошенников ──────────────────────────────────
+        // Игрок "распознал" скам если: поговорил (≥1 вопрос в AMA) и отказался вкладывать.
+        // Проверяем прямо перед тем, как входящие грамоты закроются.
+        val inboxProjects = projectRepository.getInboxProjectsList()
+        var detectedCount = 0
+        for (inboxProject in inboxProjects) {
+            val isScamFate = inboxProject.fate == ProjectFate.INSTANT_SCAM ||
+                             inboxProject.fate == ProjectFate.SLOW_DRAIN
+            if (isScamFate && inboxProject.investedAmountRubles == 0.0) {
+                val session = amaRepository.getSessionByProjectId(inboxProject.id)
+                if (session != null && session.questionCount > 0) {
+                    gameStateRepository.recordScamDetected()
+                    detectedCount++
+                }
+            }
+        }
+        if (detectedCount > 0) {
+            AppLogger.i("AdvanceDayUseCase", "Scams detected today: $detectedCount")
+        }
 
         projectRepository.closeAllInboxProjects()
 
