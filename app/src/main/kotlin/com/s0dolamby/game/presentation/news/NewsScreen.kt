@@ -1,17 +1,28 @@
 package com.s0dolamby.game.presentation.news
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -95,27 +106,55 @@ fun NewsScreen(
     } // ScreenBackground
 }
 
+// Important announcements that start expanded
+private fun AnnouncementType.isImportant() = this == AnnouncementType.LISTING ||
+        this == AnnouncementType.CRIMINAL_CASE || this == AnnouncementType.HACK
+
 @Composable
 private fun NewsCard(update: DailyUpdate) {
     val source = update.computedSource()
+    val startExpanded = update.announcement?.isImportant() == true
+    var expanded by remember { mutableStateOf(startExpanded) }
+    val chevronRotation by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        animationSpec = tween(200),
+        label = "chevron"
+    )
 
-    FairyCard(modifier = Modifier.fillMaxWidth()) {
-        // ── Header: source badge + project name + day ──
+    FairyCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { expanded = !expanded }
+            .animateContentSize(tween(280))
+    ) {
+        // ── Header: source badge + day + chevron ──
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             SourceBadge(source = source)
-            Text(
-                "День ${update.day}",
-                style = MaterialTheme.typography.labelSmall,
-                color = Color.White.copy(alpha = 0.5f)
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    "День ${update.day}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.White.copy(alpha = 0.5f)
+                )
+                Icon(
+                    Icons.Default.ExpandMore,
+                    contentDescription = null,
+                    tint = Color.White.copy(alpha = 0.35f),
+                    modifier = Modifier.size(16.dp).rotate(chevronRotation)
+                )
+            }
         }
 
-        Spacer(Modifier.height(6.dp))
+        Spacer(Modifier.height(4.dp))
 
+        // ── Project name + title (always visible) ──
         Text(
             update.projectName,
             style = MaterialTheme.typography.labelMedium,
@@ -125,29 +164,12 @@ private fun NewsCard(update: DailyUpdate) {
 
         Text(
             update.title,
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             color = Color.White
         )
 
-        Text(
-            update.body,
-            style = when (source) {
-                NewsSource.TAVERN_RUMOR, NewsSource.MYSTERIOUS_TRAVELER ->
-                    MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic)
-                else -> MaterialTheme.typography.bodyMedium
-            },
-            color = Color.White.copy(alpha = 0.85f)
-        )
-
-        // ── Payout status ──
-        when (update.payoutStatus) {
-            PayoutStatus.DELAYED -> StatusBanner(text = "⚠ Выплаты задержаны", color = Error)
-            PayoutStatus.BOOSTED -> StatusBanner(text = "↑ Выплаты ускорены", color = Success)
-            PayoutStatus.NORMAL -> {}
-        }
-
-        // ── Announcement chip ──
+        // ── Announcement chip (always visible) ──
         update.announcement?.let { announcement ->
             val (chipBg, chipFg) = announcement.chipColors
             Surface(color = chipBg, shape = RoundedCornerShape(16.dp)) {
@@ -161,37 +183,65 @@ private fun NewsCard(update: DailyUpdate) {
             }
         }
 
-        // ── Red flags ──
-        if (update.redFlags.isNotEmpty()) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                update.redFlags.forEach { flag ->
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.Warning, null, tint = Warning, modifier = Modifier.size(14.dp))
-                        Text(flag.cleanRedFlag(), style = MaterialTheme.typography.labelSmall, color = Warning)
+        // ── Expandable body ──
+        AnimatedVisibility(
+            visible = expanded,
+            enter = expandVertically(tween(260)) + fadeIn(tween(200)),
+            exit = shrinkVertically(tween(220)) + fadeOut(tween(150))
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Spacer(Modifier.height(4.dp))
+
+                Text(
+                    update.body,
+                    style = when (source) {
+                        NewsSource.TAVERN_RUMOR, NewsSource.MYSTERIOUS_TRAVELER ->
+                            MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic)
+                        else -> MaterialTheme.typography.bodyMedium
+                    },
+                    color = Color.White.copy(alpha = 0.85f)
+                )
+
+                // ── Payout status ──
+                when (update.payoutStatus) {
+                    PayoutStatus.DELAYED -> StatusBanner(text = "⚠ Выплаты задержаны", color = Error)
+                    PayoutStatus.BOOSTED -> StatusBanner(text = "↑ Выплаты ускорены", color = Success)
+                    PayoutStatus.NORMAL -> {}
+                }
+
+                // ── Red flags ──
+                if (update.redFlags.isNotEmpty()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        update.redFlags.forEach { flag ->
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.Warning, null, tint = Warning, modifier = Modifier.size(14.dp))
+                                Text(flag.cleanRedFlag(), style = MaterialTheme.typography.labelSmall, color = Warning)
+                            }
+                        }
                     }
                 }
-            }
-        }
 
-        // ── User count delta ──
-        if (update.userCountDelta != 0) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    Icons.Default.TrendingUp, null,
-                    tint = if (update.userCountDelta > 0) Success else Error,
-                    modifier = Modifier.size(14.dp)
-                )
-                Text(
-                    "%+d участников".format(update.userCountDelta),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (update.userCountDelta > 0) Success else Error
-                )
+                // ── User count delta ──
+                if (update.userCountDelta != 0) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.TrendingUp, null,
+                            tint = if (update.userCountDelta > 0) Success else Error,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            "%+d участников".format(update.userCountDelta),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (update.userCountDelta > 0) Success else Error
+                        )
+                    }
+                }
             }
         }
     }

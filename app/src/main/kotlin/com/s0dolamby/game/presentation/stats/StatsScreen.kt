@@ -129,11 +129,11 @@ private data class RankTier(
 )
 
 private val rankTiers = listOf(
-    RankTier("NEWBIE",       "🐣", "Скоморох",  "Начало пути — просто открой приложение"),
-    RankTier("AMBASSADOR",   "📣", "Купец",      "День 2+ или первое вложение от 5 ₽"),
-    RankTier("ANALYST",      "🔍", "Мудрец",     "День 5+ и 2 разоблачённых мошенника"),
-    RankTier("SHARK",        "🦈", "Богатырь",   "День 10+ и 4 разоблачения"),
-    RankTier("LAMBO_SENSEI", "👑", "Царь",       "День 20+ и 8 разоблачений"),
+    RankTier("NEWBIE",       "🐣", "Скоморох",  "Начало пути — открой приложение"),
+    RankTier("AMBASSADOR",   "📣", "Купец",      "День 5+ или баланс от 20 ₽"),
+    RankTier("ANALYST",      "🔍", "Мудрец",     "День 30+, баланс ≥ 300 ₽, чуйка ≥ 10"),
+    RankTier("SHARK",        "🦈", "Богатырь",   "День 50+, баланс ≥ 1 000 ₽, чуйка ≥ 30"),
+    RankTier("LAMBO_SENSEI", "👑", "Царь",       "День 777+, баланс ≥ 7 777 ₽, чуйка ≥ 77"),
 )
 
 @Composable
@@ -174,6 +174,11 @@ private fun RankCard(state: GameState?) {
                     "День ${state?.currentDay ?: 1} • Стрик ${state?.dayStreak ?: 0} дн.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White.copy(alpha = 0.6f)
+                )
+                Text(
+                    "👁 Чуйка: ${state?.intuitionScore ?: 0}  •  баланс: %.0f ₽".format(state?.balance ?: 0.0),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = FairyGold.copy(alpha = 0.7f)
                 )
             }
             Row(

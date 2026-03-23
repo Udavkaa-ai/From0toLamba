@@ -39,6 +39,9 @@ class ProjectRepositoryImpl @Inject constructor(
     override suspend fun updateBannerUrl(projectId: String, url: String, promptUsed: String) =
         dao.updateBanner(projectId, url, promptUsed)
 
+    override suspend fun getInboxProjectsList(): List<Project> =
+        dao.getInboxProjects().map { it.toDomain(gson) }
+
     override suspend fun closeAllInboxProjects() = dao.closeAllInboxProjects()
 
     override suspend fun markLieGuessCorrect(projectId: String) = dao.markLieGuessCorrect(projectId)
