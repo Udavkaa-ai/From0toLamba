@@ -94,6 +94,7 @@ domain/model  ←  domain/repository  ←  domain/usecase
 | `SendAmaMessageUseCase` | `AmaRepository`, `ProjectRepository`, `PersonaRegistry`, `AmaSessionManager` |
 | `InvestUseCase` | `ProjectRepository`, `GameStateRepository` |
 | `ExitProjectUseCase` | `ProjectRepository`, `GameStateRepository` |
+| `PartialWithdrawUseCase` | `ProjectRepository`, `GameStateRepository` |
 | `AdvanceDayUseCase` | `GameStateRepository`, `ProjectRepository`, `GenerateProjectUseCase`, `GenerateDailyUpdatesUseCase` |
 
 ---
@@ -119,13 +120,16 @@ AmaScreen
        ├─ StartAmaSessionUseCase → AmaRepository + ProjectRepository
        ├─ SendAmaMessageUseCase → AmaRepository + ProjectRepository + PersonaRegistry + AmaSessionManager
        ├─ InvestUseCase → ProjectRepository + GameStateRepository
-       ├─ ProjectRepository (getProjectById)
-       └─ AmaRepository (observeSession)
+       ├─ GameStateRepository (recordIntuitionPoints)
+       ├─ AmaRepository (observeSession, markIntuitionEvaluated)
+       └─ ProjectRepository (getProjectById)
 
 PortfolioScreen / ProjectDetailScreen
   └─ PortfolioViewModel
        ├─ ProjectRepository (getActiveProjects, getClosedProjects)
-       └─ ExitProjectUseCase → ProjectRepository + GameStateRepository
+       ├─ ExitProjectUseCase → ProjectRepository + GameStateRepository
+       ├─ InvestUseCase → ProjectRepository + GameStateRepository
+       └─ PartialWithdrawUseCase → ProjectRepository + GameStateRepository
 
 NewsScreen
   └─ NewsViewModel
@@ -208,11 +212,11 @@ Bottom Nav (в HomeScreen): Home | Inbox | Portfolio | News | Stats
 ## База данных
 
 ```
-AppDatabase.kt (Room, version=1, fallbackToDestructiveMigration)
+AppDatabase.kt (Room, version=9, fallbackToDestructiveMigration)
   Таблицы:
   ├─ projects          ← ProjectEntity
-  ├─ game_state        ← GameStateEntity
-  ├─ ama_sessions      ← AmaSessionEntity
+  ├─ game_state        ← GameStateEntity   (+ investedHistory, intuitionScore, pendingRankUp)
+  ├─ ama_sessions      ← AmaSessionEntity  (+ isIntuitionEvaluated)
   ├─ ama_messages      ← AmaMessageEntity  (FK → ama_sessions.id CASCADE DELETE)
   ├─ daily_updates     ← UpdateEntity
   └─ post_mortems      ← PostMortemEntity
@@ -264,6 +268,4 @@ UI: StatsScreen → LogCard → кнопки "Просмотр" (AlertDialog) + 
 |---|---|
 | PostMortem AI-генерация | `ExitProjectUseCase` — вызвать `PromptBuilder.buildPostMortemPrompt` + сохранить через `AmaRepository.savePostMortem` |
 | DailyReminderWorker | Новый файл `data/worker/DailyReminderWorker.kt` с `@HiltWorker`; зарегистрировать через WorkManager в `AdvanceDayUseCase` или `GameApplication` |
-| InvestorRank прогрессия | `GameStateRepositoryImpl` — `advanceDay()` должен пересчитывать `investorRank` по ROI/статистике |
 | Banner placeholder drawable | `res/drawable/banner_placeholder.xml` — нужен для `ProjectBannerImage.kt` |
-| Онбординг бонус | `OnboardingScreen` вызывает `completeOnboarding()` — нужно проверить что `ONBOARDING_BONUS_TON=0.5` начисляется в `GameStateRepositoryImpl.completeOnboarding()` |
