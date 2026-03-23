@@ -28,7 +28,7 @@ import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.NightBlue
-import kotlinx.coroutines.withFrameMillis
+import androidx.compose.runtime.withFrameMillis
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
