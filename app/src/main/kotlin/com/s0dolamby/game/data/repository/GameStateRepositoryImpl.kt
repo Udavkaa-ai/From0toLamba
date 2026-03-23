@@ -47,7 +47,10 @@ class GameStateRepositoryImpl @Inject constructor(
                 isOnboardingComplete = state.isOnboardingComplete,
                 balanceHistory = parseBalanceHistory(state.balanceHistory),
                 investedHistory = parseDoubleHistory(state.investedHistory),
-                intuitionScore = state.intuitionScore
+                intuitionScore = state.intuitionScore,
+                pendingRankUp = state.pendingRankUp?.let {
+                    runCatching { InvestorRank.valueOf(it) }.getOrNull()
+                }
             )
         }
 
@@ -93,9 +96,11 @@ class GameStateRepositoryImpl @Inject constructor(
         val newRank = computeRank(state.currentDay, totalWealth, state.intuitionScore)
         val currentRank = InvestorRank.valueOf(state.investorRank)
         if (newRank.ordinal > currentRank.ordinal) {
-            playerDao.update(state.copy(investorRank = newRank.name))
+            playerDao.update(state.copy(investorRank = newRank.name, pendingRankUp = newRank.name))
         }
     }
+
+    override suspend fun clearRankUpNotification() = playerDao.clearRankUpNotification()
 
     private fun computeRank(day: Int, totalWealth: Double, intuitionScore: Int): InvestorRank = when {
         day >= 777 && totalWealth >= 7777.0 && intuitionScore >= 77 -> InvestorRank.LAMBO_SENSEI

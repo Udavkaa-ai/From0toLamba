@@ -264,6 +264,14 @@ fun HomeScreen(
                 }
             )
         }
+
+        // Rank-up celebration overlay — shown on top of everything
+        gameState?.pendingRankUp?.let { rank ->
+            RankUpCelebrationOverlay(
+                rank = rank,
+                onDismiss = viewModel::clearRankUpNotification
+            )
+        }
     }
 }
 
