@@ -459,7 +459,7 @@ private fun IntuitionStrip(
                     onClick = { onToggle(topic) },
                     label = {
                         Text(
-                            "${topic.emoji} ${topic.label}",
+                            topic.emoji,
                             style = MaterialTheme.typography.labelSmall
                         )
                     },

@@ -250,8 +250,9 @@ private fun FundsBottomSheet(
     var amountText by remember { mutableStateOf("") }
     val amount = amountText.toDoubleOrNull()
     val isValid = amount != null && amount >= 5.0 && (maxAmount == null || amount <= maxAmount)
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(
             modifier = Modifier.padding(horizontal = 24.dp).padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -297,10 +298,11 @@ private fun WithdrawBottomSheet(
         else -> project.currentValueRubles
     }
     val hasFee = project.type == ProjectType.CARD_GAME || project.type == ProjectType.TREASURE_HUNT
-    val effectiveMax = withdrawLimit ?: project.currentValueRubles
+    val effectiveMax = (withdrawLimit ?: project.currentValueRubles).coerceAtLeast(0.0)
     val isValid = amount != null && amount >= 5.0 && amount <= effectiveMax
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(
             modifier = Modifier.padding(horizontal = 24.dp).padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
