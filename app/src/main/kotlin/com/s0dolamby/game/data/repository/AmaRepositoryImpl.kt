@@ -26,7 +26,8 @@ class AmaRepositoryImpl @Inject constructor(
                     projectId = it.projectId,
                     messages = messages.map { m -> m.toDomain() },
                     questionCount = it.questionCount,
-                    isComplete = it.isComplete
+                    isComplete = it.isComplete,
+                    isIntuitionEvaluated = it.isIntuitionEvaluated
                 )
             }
         }
@@ -55,6 +56,9 @@ class AmaRepositoryImpl @Inject constructor(
     override suspend fun completeSession(sessionId: String) =
         dao.completeSession(sessionId)
 
+    override suspend fun markIntuitionEvaluated(sessionId: String) =
+        dao.markIntuitionEvaluated(sessionId)
+
     override suspend fun savePostMortem(report: PostMortemReport) =
         dao.insertPostMortem(report.toEntity(gson))
 
@@ -68,7 +72,8 @@ class AmaRepositoryImpl @Inject constructor(
             projectId = entity.projectId,
             messages = messages,
             questionCount = entity.questionCount,
-            isComplete = entity.isComplete
+            isComplete = entity.isComplete,
+            isIntuitionEvaluated = entity.isIntuitionEvaluated
         )
     }
 }

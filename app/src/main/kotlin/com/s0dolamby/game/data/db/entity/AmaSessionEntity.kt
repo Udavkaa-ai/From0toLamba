@@ -13,7 +13,8 @@ data class AmaSessionEntity(
     @PrimaryKey val id: String,
     val projectId: String,
     val questionCount: Int = 0,
-    val isComplete: Boolean = false
+    val isComplete: Boolean = false,
+    val isIntuitionEvaluated: Boolean = false
 )
 
 @Entity(

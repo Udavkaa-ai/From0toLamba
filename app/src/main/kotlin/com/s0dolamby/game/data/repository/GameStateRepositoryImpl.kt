@@ -86,18 +86,22 @@ class GameStateRepositoryImpl @Inject constructor(
 
     override suspend fun updateRankIfNeeded() {
         val state = playerDao.getGameState() ?: return
-        val newRank = computeRank(state.currentDay, state.balance, state.intuitionScore)
+        // Total wealth = free balance + current value of all active projects
+        val activeProjectsValue = projectDao.getActiveProjects()
+            .sumOf { it.currentValueRubles }
+        val totalWealth = state.balance + activeProjectsValue
+        val newRank = computeRank(state.currentDay, totalWealth, state.intuitionScore)
         val currentRank = InvestorRank.valueOf(state.investorRank)
         if (newRank.ordinal > currentRank.ordinal) {
             playerDao.update(state.copy(investorRank = newRank.name))
         }
     }
 
-    private fun computeRank(day: Int, balance: Double, intuitionScore: Int): InvestorRank = when {
-        day >= 777 && balance >= 7777.0 && intuitionScore >= 77 -> InvestorRank.LAMBO_SENSEI
-        day >= 50  && balance >= 1000.0 && intuitionScore >= 30 -> InvestorRank.SHARK
-        day >= 30  && balance >= 300.0  && intuitionScore >= 10 -> InvestorRank.ANALYST
-        day >= 5   || balance >= 20.0                            -> InvestorRank.AMBASSADOR
+    private fun computeRank(day: Int, totalWealth: Double, intuitionScore: Int): InvestorRank = when {
+        day >= 777 && totalWealth >= 7777.0 && intuitionScore >= 77 -> InvestorRank.LAMBO_SENSEI
+        day >= 50  && totalWealth >= 1000.0 && intuitionScore >= 30 -> InvestorRank.SHARK
+        day >= 30  && totalWealth >= 300.0  && intuitionScore >= 10 -> InvestorRank.ANALYST
+        day >= 5   || totalWealth >= 20.0                            -> InvestorRank.AMBASSADOR
         else -> InvestorRank.NEWBIE
     }
 

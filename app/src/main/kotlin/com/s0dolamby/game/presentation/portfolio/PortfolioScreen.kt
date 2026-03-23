@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Lock
+import com.s0dolamby.game.domain.model.ProjectType
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -229,10 +230,8 @@ private fun PortfolioProjectCard(
         )
     }
     if (showWithdraw) {
-        FundsBottomSheet(
-            title = "Вывести часть средств",
-            confirmLabel = "Вывести",
-            maxAmount = project.currentValueRubles,
+        WithdrawBottomSheet(
+            project = project,
             onDismiss = { showWithdraw = false },
             onConfirm = { amount -> onWithdraw(amount); showWithdraw = false }
         )
@@ -278,6 +277,109 @@ private fun FundsBottomSheet(
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = FairyGold, contentColor = Color(0xFF1A0A00))
             ) { Text(confirmLabel, fontWeight = FontWeight.SemiBold) }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun WithdrawBottomSheet(
+    project: Project,
+    onDismiss: () -> Unit,
+    onConfirm: (Double) -> Unit
+) {
+    var amountText by remember { mutableStateOf("") }
+    val amount = amountText.toDoubleOrNull()
+
+    // Per-type limits
+    val withdrawLimit: Double? = when (project.type) {
+        ProjectType.POTION_BREW, ProjectType.GUILD_SCHEME -> project.investedAmountRubles * 0.25
+        else -> project.currentValueRubles
+    }
+    val hasFee = project.type == ProjectType.CARD_GAME || project.type == ProjectType.TREASURE_HUNT
+    val effectiveMax = withdrawLimit ?: project.currentValueRubles
+    val isValid = amount != null && amount >= 5.0 && amount <= effectiveMax
+
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier.padding(horizontal = 24.dp).padding(bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text("Вывести из дела", style = MaterialTheme.typography.titleLarge)
+
+            // Limit/fee info
+            when (project.type) {
+                ProjectType.POTION_BREW, ProjectType.GUILD_SCHEME -> {
+                    Surface(
+                        color = Warning.copy(alpha = 0.12f),
+                        shape = MaterialTheme.shapes.small
+                    ) {
+                        Text(
+                            "⚠ Лимит: не более 25% от вложенного за раз (%.0f ₽). Остаток выводится частями.".format(effectiveMax),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Warning,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                        )
+                    }
+                }
+                ProjectType.CARD_GAME, ProjectType.TREASURE_HUNT -> {
+                    Surface(
+                        color = Error.copy(alpha = 0.12f),
+                        shape = MaterialTheme.shapes.small
+                    ) {
+                        Text(
+                            "⚠ Комиссия за срочный вывод — 25%. Получишь %.0f%% от суммы.".format(75.0),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Error,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                        )
+                    }
+                }
+                else -> {}
+            }
+
+            OutlinedTextField(
+                value = amountText,
+                onValueChange = { amountText = it.filter { c -> c.isDigit() || c == '.' } },
+                label = { Text("Сумма в рублях") },
+                suffix = { Text("₽") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            // Available / max hint
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    "Доступно: %.0f ₽".format(project.currentValueRubles),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    "Лимит: %.0f ₽".format(effectiveMax),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (effectiveMax < project.currentValueRubles) Warning
+                            else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // Preview of what they'll actually receive
+            if (hasFee && amount != null && amount >= 5.0) {
+                Text(
+                    "Получишь на руки: %.0f ₽".format(amount * 0.75),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = FairyGold,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            Button(
+                onClick = { amount?.let { onConfirm(it) } },
+                enabled = isValid,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = FairyGold, contentColor = Color(0xFF1A0A00))
+            ) { Text("Вывести", fontWeight = FontWeight.SemiBold) }
         }
     }
 }

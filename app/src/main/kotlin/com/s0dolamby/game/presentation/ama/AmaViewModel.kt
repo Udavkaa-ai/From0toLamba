@@ -95,6 +95,8 @@ class AmaViewModel @Inject constructor(
 
     fun evaluateIntuition() {
         val project = _uiState.value.project ?: return
+        val sessionId = _uiState.value.session?.id ?: return
+        if (_uiState.value.session?.isIntuitionEvaluated == true) return
         val selected = _uiState.value.selectedLieTopics
         val actualLies = project.lieTopics.toSet()
 
@@ -105,6 +107,7 @@ class AmaViewModel @Inject constructor(
         viewModelScope.launch {
             gameStateRepository.recordIntuitionPoints(delta)
             gameStateRepository.updateRankIfNeeded()
+            amaRepository.markIntuitionEvaluated(sessionId)
             _uiState.update { it.copy(intuitionResult = IntuitionResult(delta, correct, falseAccusations)) }
         }
     }

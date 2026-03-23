@@ -88,7 +88,7 @@ class GenerateDailyUpdatesUseCase @Inject constructor(
                 projectName = project.claimedName,
                 day = project.daysSinceJoined,
                 title = parsed.title.ifBlank { event?.fallbackTitle ?: "Обновление проекта" },
-                body = parsed.body.ifBlank { "Проект работает в штатном режиме." },
+                body = parsed.body.ifBlank { "Дело идёт, и то ладно." },
                 userCountDelta = parsed.metrics.userCountDelta,
                 payoutStatus = if (event == AnnouncementType.CRIMINAL_CASE || event == AnnouncementType.HACK) {
                     PayoutStatus.DELAYED
@@ -107,7 +107,7 @@ class GenerateDailyUpdatesUseCase @Inject constructor(
                 projectName = project.claimedName,
                 day = project.daysSinceJoined,
                 title = event?.fallbackTitle ?: "Обновление проекта",
-                body = event?.fallbackBody ?: "Проект работает в штатном режиме.",
+                body = event?.fallbackBody ?: "Дело идёт, и то ладно.",
                 userCountDelta = 0,
                 payoutStatus = if (event == AnnouncementType.CRIMINAL_CASE || event == AnnouncementType.HACK)
                     PayoutStatus.DELAYED else PayoutStatus.NORMAL,
@@ -132,6 +132,6 @@ class GenerateDailyUpdatesUseCase @Inject constructor(
         AnnouncementType.BAD_RUMOR -> "В сети распространились слухи о проблемах. Команда отрицает обвинения."
         AnnouncementType.CRIMINAL_CASE -> "Правоохранительные органы начали расследование. Вывод средств приостановлен."
         AnnouncementType.HACK -> "Проект подвергся взлому. Часть средств похищена. Команда работает над восстановлением."
-        else -> "Проект работает в штатном режиме."
+        else -> "Дело идёт, и то ладно."
     }
 }
