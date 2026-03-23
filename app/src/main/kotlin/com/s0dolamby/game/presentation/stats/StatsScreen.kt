@@ -130,10 +130,10 @@ private data class RankTier(
 
 private val rankTiers = listOf(
     RankTier("NEWBIE",       "🐣", "Скоморох",  "Начало пути — открой приложение"),
-    RankTier("AMBASSADOR",   "📣", "Купец",      "День 3+ или баланс от 5 ₽"),
-    RankTier("ANALYST",      "🔍", "Мудрец",     "День 50+, баланс ≥ 10 ₽, чуйка ≥ 5"),
-    RankTier("SHARK",        "🦈", "Богатырь",   "День 200+, баланс ≥ 50 ₽, чуйка ≥ 20"),
-    RankTier("LAMBO_SENSEI", "👑", "Царь",       "День 777+, баланс ≥ 77 ₽, чуйка ≥ 50"),
+    RankTier("AMBASSADOR",   "📣", "Купец",      "День 5+ или баланс от 20 ₽"),
+    RankTier("ANALYST",      "🔍", "Мудрец",     "День 30+, баланс ≥ 300 ₽, чуйка ≥ 10"),
+    RankTier("SHARK",        "🦈", "Богатырь",   "День 50+, баланс ≥ 1 000 ₽, чуйка ≥ 30"),
+    RankTier("LAMBO_SENSEI", "👑", "Царь",       "День 777+, баланс ≥ 7 777 ₽, чуйка ≥ 77"),
 )
 
 @Composable

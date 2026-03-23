@@ -94,10 +94,10 @@ class GameStateRepositoryImpl @Inject constructor(
     }
 
     private fun computeRank(day: Int, balance: Double, intuitionScore: Int): InvestorRank = when {
-        day >= 777 && balance >= 77.0  && intuitionScore >= 50 -> InvestorRank.LAMBO_SENSEI
-        day >= 200 && balance >= 50.0  && intuitionScore >= 20 -> InvestorRank.SHARK
-        day >= 50  && balance >= 10.0  && intuitionScore >= 5  -> InvestorRank.ANALYST
-        day >= 3   || balance >= 5.0                            -> InvestorRank.AMBASSADOR
+        day >= 777 && balance >= 7777.0 && intuitionScore >= 77 -> InvestorRank.LAMBO_SENSEI
+        day >= 50  && balance >= 1000.0 && intuitionScore >= 30 -> InvestorRank.SHARK
+        day >= 30  && balance >= 300.0  && intuitionScore >= 10 -> InvestorRank.ANALYST
+        day >= 5   || balance >= 20.0                            -> InvestorRank.AMBASSADOR
         else -> InvestorRank.NEWBIE
     }
 
