@@ -160,8 +160,7 @@ private fun InboxProjectCard(project: Project, onClick: () -> Unit) {
             project.description,
             style = MaterialTheme.typography.bodySmall,
             fontStyle = FontStyle.Italic,
-            color = Color.White.copy(alpha = 0.65f),
-            maxLines = 3
+            color = Color.White.copy(alpha = 0.65f)
         )
 
         Spacer(Modifier.height(4.dp))

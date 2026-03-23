@@ -84,18 +84,18 @@ class GameStateRepositoryImpl @Inject constructor(
 
     override suspend fun updateRankIfNeeded() {
         val state = playerDao.getGameState() ?: return
-        val newRank = computeRank(state.currentDay, state.scamsDetected, state.totalInvested)
+        val newRank = computeRank(state.currentDay, state.scamsDetected, state.balance)
         val currentRank = InvestorRank.valueOf(state.investorRank)
         if (newRank.ordinal > currentRank.ordinal) {
             playerDao.update(state.copy(investorRank = newRank.name))
         }
     }
 
-    private fun computeRank(day: Int, scamsDetected: Int, totalInvested: Double): InvestorRank = when {
-        day >= 20 && scamsDetected >= 8 -> InvestorRank.LAMBO_SENSEI
-        day >= 10 && scamsDetected >= 4 -> InvestorRank.SHARK
-        day >= 5  && scamsDetected >= 2 -> InvestorRank.ANALYST
-        day >= 2  || totalInvested >= 5.0 -> InvestorRank.AMBASSADOR
+    private fun computeRank(day: Int, scamsDetected: Int, balance: Double): InvestorRank = when {
+        day >= 777 && balance >= 77.0                              -> InvestorRank.LAMBO_SENSEI
+        day >= 200 && scamsDetected >= 10 && balance >= 50.0      -> InvestorRank.SHARK
+        day >= 50  && scamsDetected >= 2  && balance >= 10.0      -> InvestorRank.ANALYST
+        day >= 3   || balance >= 5.0                               -> InvestorRank.AMBASSADOR
         else -> InvestorRank.NEWBIE
     }
 

@@ -18,6 +18,10 @@ class PartialWithdrawUseCase @Inject constructor(
         require(amountRubles <= project.currentValueRubles) {
             "Недостаточно средств: %.0f ₽ доступно".format(project.currentValueRubles)
         }
+        val dailyLimit = project.investedAmountRubles * 0.25
+        require(amountRubles <= dailyLimit) {
+            "Суточный лимит вывода: %.0f ₽ (25%% от вложенного)".format(dailyLimit)
+        }
 
         val withdrawRatio = amountRubles / project.currentValueRubles
         val newInvested = max(0.0, project.investedAmountRubles * (1.0 - withdrawRatio))

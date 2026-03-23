@@ -546,13 +546,13 @@ private fun InvestBottomSheet(onDismiss: () -> Unit, onInvest: (Double) -> Unit)
                 modifier = Modifier.fillMaxWidth()
             )
             Text(
-                "Минимум 5 ₽ • Максимум 5 000 ₽",
+                "Минимум 5 ₽",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Button(
                 onClick = { amount?.let { onInvest(it) } },
-                enabled = amount != null && amount >= 5.0 && amount <= 5000.0,
+                enabled = amount != null && amount >= 5.0,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Вложить")
