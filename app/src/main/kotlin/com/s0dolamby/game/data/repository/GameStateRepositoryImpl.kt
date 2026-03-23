@@ -46,7 +46,8 @@ class GameStateRepositoryImpl @Inject constructor(
                 dayStreak = state.dayStreak,
                 isOnboardingComplete = state.isOnboardingComplete,
                 balanceHistory = parseBalanceHistory(state.balanceHistory),
-                investedHistory = parseDoubleHistory(state.investedHistory)
+                investedHistory = parseDoubleHistory(state.investedHistory),
+                intuitionScore = state.intuitionScore
             )
         }
 
@@ -66,7 +67,8 @@ class GameStateRepositoryImpl @Inject constructor(
             dayStreak = state.dayStreak,
             isOnboardingComplete = state.isOnboardingComplete,
             balanceHistory = parseBalanceHistory(state.balanceHistory),
-            investedHistory = parseDoubleHistory(state.investedHistory)
+            investedHistory = parseDoubleHistory(state.investedHistory),
+            intuitionScore = state.intuitionScore
         )
     }
 
@@ -84,19 +86,24 @@ class GameStateRepositoryImpl @Inject constructor(
 
     override suspend fun updateRankIfNeeded() {
         val state = playerDao.getGameState() ?: return
-        val newRank = computeRank(state.currentDay, state.scamsDetected, state.balance)
+        val newRank = computeRank(state.currentDay, state.balance, state.intuitionScore)
         val currentRank = InvestorRank.valueOf(state.investorRank)
         if (newRank.ordinal > currentRank.ordinal) {
             playerDao.update(state.copy(investorRank = newRank.name))
         }
     }
 
-    private fun computeRank(day: Int, scamsDetected: Int, balance: Double): InvestorRank = when {
-        day >= 777 && balance >= 77.0                              -> InvestorRank.LAMBO_SENSEI
-        day >= 200 && scamsDetected >= 10 && balance >= 50.0      -> InvestorRank.SHARK
-        day >= 50  && scamsDetected >= 2  && balance >= 10.0      -> InvestorRank.ANALYST
-        day >= 3   || balance >= 5.0                               -> InvestorRank.AMBASSADOR
+    private fun computeRank(day: Int, balance: Double, intuitionScore: Int): InvestorRank = when {
+        day >= 777 && balance >= 77.0  && intuitionScore >= 50 -> InvestorRank.LAMBO_SENSEI
+        day >= 200 && balance >= 50.0  && intuitionScore >= 20 -> InvestorRank.SHARK
+        day >= 50  && balance >= 10.0  && intuitionScore >= 5  -> InvestorRank.ANALYST
+        day >= 3   || balance >= 5.0                            -> InvestorRank.AMBASSADOR
         else -> InvestorRank.NEWBIE
+    }
+
+    override suspend fun recordIntuitionPoints(delta: Int) {
+        val state = playerDao.getGameState() ?: return
+        playerDao.update(state.copy(intuitionScore = state.intuitionScore + delta))
     }
 
     override suspend fun updateBalance(newBalance: Double) =

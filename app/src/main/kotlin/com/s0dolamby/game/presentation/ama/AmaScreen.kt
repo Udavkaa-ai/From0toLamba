@@ -33,11 +33,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.s0dolamby.game.R
 import com.s0dolamby.game.domain.model.AmaMessage
+import com.s0dolamby.game.domain.model.LieTopic
 import com.s0dolamby.game.domain.model.MessageRole
 import com.s0dolamby.game.domain.model.PersonaArchetype
 import com.s0dolamby.game.domain.repository.GameConfig
@@ -46,6 +48,30 @@ import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.NightBlue
+import com.s0dolamby.game.presentation.common.theme.Error
+import com.s0dolamby.game.presentation.common.theme.Success
+
+// ─── LieTopic display helpers ────────────────────────────────────────────────
+
+private val LieTopic.emoji: String get() = when (this) {
+    LieTopic.PATRON_COUNT      -> "👥"
+    LieTopic.DAILY_PROFIT      -> "💰"
+    LieTopic.PAYOUT_DATE       -> "📅"
+    LieTopic.GUILD_SIZE        -> "🏰"
+    LieTopic.ELDER_BLESSING    -> "🔍"
+    LieTopic.NOBLE_BACKING     -> "🤝"
+    LieTopic.WITHDRAWAL_LIMITS -> "🔒"
+}
+
+private val LieTopic.label: String get() = when (this) {
+    LieTopic.PATRON_COUNT      -> "Участники"
+    LieTopic.DAILY_PROFIT      -> "Доход"
+    LieTopic.PAYOUT_DATE       -> "Выплаты"
+    LieTopic.GUILD_SIZE        -> "Артель"
+    LieTopic.ELDER_BLESSING    -> "Проверка"
+    LieTopic.NOBLE_BACKING     -> "Покровитель"
+    LieTopic.WITHDRAWAL_LIMITS -> "Вывод"
+}
 
 // ─── Background selection ─────────────────────────────────────────────────────
 
@@ -61,7 +87,6 @@ private fun besedaBackground(archetype: PersonaArchetype?): Int = when (archetyp
 }
 
 // ─── Question pool ────────────────────────────────────────────────────────────
-// Large pool — random 10 are picked per session for variety
 
 private val allQuestions = listOf(
     // Доходность
@@ -130,18 +155,13 @@ fun AmaScreen(
     val questionCount = uiState.session?.questionCount ?: 0
     val sessionEnded = questionCount >= GameConfig.AMA_MAX_QUESTIONS
 
-    // Per-session question set — changes only when a new session starts
     val sessionQuestions = remember(uiState.session?.id) {
         pickSessionQuestions(uiState.session?.id)
     }
 
-    // Scroll so the last message is fully visible above the bottom bar.
-    // Triggers both on new messages AND when sending state changes (AI response arrives).
     LaunchedEffect(messages.size, sessionEnded, uiState.isSending) {
         if (messages.isNotEmpty() && !uiState.isSending) {
-            // Small delay ensures the new item is laid out before we scroll to it
             kotlinx.coroutines.delay(60)
-            // trailing spacer is always the last item; Compose stops at natural content end
             val trailingSpacerIndex = messages.size + (if (sessionEnded) 1 else 0)
             listState.animateScrollToItem(trailingSpacerIndex)
         }
@@ -205,7 +225,6 @@ fun AmaScreen(
                 )
             ) {
                 Column {
-                    // Question templates
                     if (!sessionEnded && !uiState.isSending) {
                         QuestionTemplateRow(
                             questions = sessionQuestions,
@@ -298,33 +317,41 @@ fun AmaScreen(
             }
         }
     ) { padding ->
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            if (messages.isEmpty()) {
-                item {
-                    WelcomeMessage(
-                        projectName = uiState.project?.claimedName ?: "",
-                        devName = uiState.project?.developerName ?: ""
-                    )
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            // ── Чуйка strip — always visible ──────────────────────────────────
+            IntuitionStrip(
+                selectedTopics = uiState.selectedLieTopics,
+                onToggle = viewModel::toggleLieTopic
+            )
+
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (messages.isEmpty()) {
+                    item {
+                        WelcomeMessage(
+                            projectName = uiState.project?.claimedName ?: "",
+                            devName = uiState.project?.developerName ?: ""
+                        )
+                    }
                 }
-            }
-            items(messages) { msg ->
-                MessageBubble(message = msg)
-            }
-            if (sessionEnded) {
-                item {
-                    SessionEndBanner(
-                        onInvest = viewModel::showInvestSheet,
-                        onBack = onBack
-                    )
+                items(messages) { msg ->
+                    MessageBubble(message = msg)
                 }
+                if (sessionEnded) {
+                    item {
+                        SessionEndBanner(
+                            onInvest = viewModel::showInvestSheet,
+                            onEvaluate = viewModel::evaluateIntuition,
+                            onBack = onBack
+                        )
+                    }
+                }
+                item { Spacer(Modifier.height(160.dp)) }
             }
-            // Trailing spacer — gives room so the last message clears the bottom bar (templates + input)
-            item { Spacer(Modifier.height(160.dp)) }
         }
     }
 
@@ -333,6 +360,17 @@ fun AmaScreen(
         InvestBottomSheet(
             onDismiss = viewModel::hideInvestSheet,
             onInvest = { amount -> viewModel.invest(amount) }
+        )
+    }
+
+    // IntuitionResult dialog
+    uiState.intuitionResult?.let { result ->
+        IntuitionResultDialog(
+            result = result,
+            onDismiss = {
+                viewModel.clearIntuitionResult()
+                onBack()
+            }
         )
     }
 
@@ -355,6 +393,134 @@ fun AmaScreen(
     } // Box background
 }
 
+// ─── Intuition strip ──────────────────────────────────────────────────────────
+
+@Composable
+private fun IntuitionStrip(
+    selectedTopics: Set<LieTopic>,
+    onToggle: (LieTopic) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.Black.copy(alpha = 0.30f))
+            .padding(horizontal = 8.dp, vertical = 6.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text(
+                "👁 Чуйка",
+                style = MaterialTheme.typography.labelSmall,
+                color = FairyGold.copy(alpha = 0.8f),
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                "— отметь в чём врёт делец:",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.White.copy(alpha = 0.45f)
+            )
+        }
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            LieTopic.entries.forEach { topic ->
+                val selected = topic in selectedTopics
+                FilterChip(
+                    selected = selected,
+                    onClick = { onToggle(topic) },
+                    label = {
+                        Text(
+                            "${topic.emoji} ${topic.label}",
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = Error.copy(alpha = 0.25f),
+                        selectedLabelColor = Error,
+                        containerColor = Color.White.copy(alpha = 0.06f),
+                        labelColor = Color.White.copy(alpha = 0.55f)
+                    ),
+                    border = FilterChipDefaults.filterChipBorder(
+                        enabled = true,
+                        selected = selected,
+                        selectedBorderColor = Error.copy(alpha = 0.5f),
+                        borderColor = Color.White.copy(alpha = 0.15f)
+                    )
+                )
+            }
+        }
+    }
+}
+
+// ─── Intuition result dialog ──────────────────────────────────────────────────
+
+@Composable
+private fun IntuitionResultDialog(result: IntuitionResult, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                when {
+                    result.deltaPoints > 0 -> "⚡ Чуйка не подвела!"
+                    result.deltaPoints < 0 -> "💸 Чуйка подвела"
+                    else -> "🤔 Без изменений"
+                },
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Score delta
+                val scoreColor = when {
+                    result.deltaPoints > 0 -> Success
+                    result.deltaPoints < 0 -> Error
+                    else -> Color.White
+                }
+                Text(
+                    "%+d очков чуйки".format(result.deltaPoints),
+                    fontWeight = FontWeight.Bold,
+                    color = scoreColor,
+                    fontSize = 18.sp
+                )
+
+                if (result.correct.isNotEmpty()) {
+                    Text(
+                        "✓ Угадал: " + result.correct.joinToString(", ") { "${it.emoji} ${it.label}" },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Success
+                    )
+                }
+                if (result.falseAccusations.isNotEmpty()) {
+                    Text(
+                        "✗ Напрасно обвинил: " + result.falseAccusations.joinToString(", ") { "${it.emoji} ${it.label}" },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Error
+                    )
+                    Text(
+                        "Ты навредил доброму имени честного дельца.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
+                    )
+                }
+                if (result.correct.isEmpty() && result.falseAccusations.isEmpty()) {
+                    Text(
+                        "Ты ничего не отметил — чуйка не получила ни испытания, ни оценки.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Понял") }
+        }
+    )
+}
+
 // ─── Question template row ────────────────────────────────────────────────────
 
 @Composable
@@ -366,7 +532,6 @@ private fun QuestionTemplateRow(
     val remaining = questions.filter { it !in usedTemplates }
     if (remaining.isEmpty()) return
 
-    // Split into two rows: even indices top, odd indices bottom
     val topRow = remaining.filterIndexed { i, _ -> i % 2 == 0 }
     val bottomRow = remaining.filterIndexed { i, _ -> i % 2 == 1 }
 
@@ -493,18 +658,28 @@ private fun WelcomeMessage(projectName: String, devName: String) {
             style = MaterialTheme.typography.bodySmall,
             color = Color.White.copy(alpha = 0.65f)
         )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            "Отмечай в полоске «Чуйка» вверху, в чём подозреваешь ложь — и проверь себя в конце.",
+            style = MaterialTheme.typography.bodySmall,
+            color = FairyGold.copy(alpha = 0.7f)
+        )
     }
 }
 
 @Composable
-private fun SessionEndBanner(onInvest: () -> Unit, onBack: () -> Unit) {
+private fun SessionEndBanner(
+    onInvest: () -> Unit,
+    onEvaluate: () -> Unit,
+    onBack: () -> Unit
+) {
     FairyCard(modifier = Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("✦", color = FairyGold, fontSize = 16.sp)
             Text("Беседа окончена", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
         }
         Text(
-            "Ваш вердикт? Вложите рубли или откажитесь.",
+            "Что делаешь дальше?",
             style = MaterialTheme.typography.bodySmall,
             color = Color.White.copy(alpha = 0.7f)
         )
@@ -514,14 +689,21 @@ private fun SessionEndBanner(onInvest: () -> Unit, onBack: () -> Unit) {
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(containerColor = FairyGold)
         ) {
-            Text("Вложить рубли", color = NightBlue, fontWeight = FontWeight.Bold)
+            Text("💰 Вложить рубли", color = NightBlue, fontWeight = FontWeight.Bold)
+        }
+        Button(
+            onClick = onEvaluate,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A1A8A))
+        ) {
+            Text("👁 Оценить чуйку", color = Color.White, fontWeight = FontWeight.Bold)
         }
         OutlinedButton(
             onClick = onBack,
             modifier = Modifier.fillMaxWidth(),
             border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f))
         ) {
-            Text("Не вкладывать", color = FairyGold)
+            Text("Уйти без оценки", color = FairyGold)
         }
     }
 }

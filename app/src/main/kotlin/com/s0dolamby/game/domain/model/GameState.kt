@@ -29,5 +29,6 @@ data class GameState(
     val dayStreak: Int,
     val isOnboardingComplete: Boolean = false,
     val balanceHistory: List<Double> = emptyList(),
-    val investedHistory: List<Double> = emptyList()
+    val investedHistory: List<Double> = emptyList(),
+    val intuitionScore: Int = 0
 )

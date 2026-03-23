@@ -17,5 +17,6 @@ data class GameStateEntity(
     val dayStreak: Int = 0,
     val isOnboardingComplete: Boolean = false,
     val balanceHistory: String = "[]",  // JSON array of Double — free balance per day
-    val investedHistory: String = "[]"  // JSON array of Double — active projects total value per day
+    val investedHistory: String = "[]", // JSON array of Double — active projects total value per day
+    val intuitionScore: Int = 0
 )

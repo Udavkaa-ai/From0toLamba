@@ -131,9 +131,9 @@ private data class RankTier(
 private val rankTiers = listOf(
     RankTier("NEWBIE",       "🐣", "Скоморох",  "Начало пути — открой приложение"),
     RankTier("AMBASSADOR",   "📣", "Купец",      "День 3+ или баланс от 5 ₽"),
-    RankTier("ANALYST",      "🔍", "Мудрец",     "День 50+, баланс ≥ 10 ₽, 2 разоблачения"),
-    RankTier("SHARK",        "🦈", "Богатырь",   "День 200+, баланс ≥ 50 ₽, 10 разоблачений"),
-    RankTier("LAMBO_SENSEI", "👑", "Царь",       "День 777+, баланс ≥ 77 ₽"),
+    RankTier("ANALYST",      "🔍", "Мудрец",     "День 50+, баланс ≥ 10 ₽, чуйка ≥ 5"),
+    RankTier("SHARK",        "🦈", "Богатырь",   "День 200+, баланс ≥ 50 ₽, чуйка ≥ 20"),
+    RankTier("LAMBO_SENSEI", "👑", "Царь",       "День 777+, баланс ≥ 77 ₽, чуйка ≥ 50"),
 )
 
 @Composable
@@ -174,6 +174,11 @@ private fun RankCard(state: GameState?) {
                     "День ${state?.currentDay ?: 1} • Стрик ${state?.dayStreak ?: 0} дн.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White.copy(alpha = 0.6f)
+                )
+                Text(
+                    "👁 Чуйка: ${state?.intuitionScore ?: 0}  •  баланс: %.0f ₽".format(state?.balance ?: 0.0),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = FairyGold.copy(alpha = 0.7f)
                 )
             }
             Row(

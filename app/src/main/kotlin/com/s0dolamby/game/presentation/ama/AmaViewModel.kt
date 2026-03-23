@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.s0dolamby.game.domain.model.AmaSession
+import com.s0dolamby.game.domain.model.LieTopic
 import com.s0dolamby.game.domain.model.Project
 import com.s0dolamby.game.domain.repository.AmaRepository
 import com.s0dolamby.game.domain.repository.GameStateRepository
@@ -16,6 +17,12 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+data class IntuitionResult(
+    val deltaPoints: Int,
+    val correct: List<LieTopic>,
+    val falseAccusations: List<LieTopic>
+)
+
 data class AmaUiState(
     val project: Project? = null,
     val session: AmaSession? = null,
@@ -23,7 +30,9 @@ data class AmaUiState(
     val isSending: Boolean = false,
     val error: String? = null,
     val showInvestSheet: Boolean = false,
-    val investResult: String? = null
+    val investResult: String? = null,
+    val selectedLieTopics: Set<LieTopic> = emptySet(),
+    val intuitionResult: IntuitionResult? = null
 )
 
 @HiltViewModel
@@ -76,6 +85,31 @@ class AmaViewModel @Inject constructor(
             _uiState.update { it.copy(isSending = false) }
         }
     }
+
+    fun toggleLieTopic(topic: LieTopic) {
+        _uiState.update { state ->
+            val current = state.selectedLieTopics
+            state.copy(selectedLieTopics = if (topic in current) current - topic else current + topic)
+        }
+    }
+
+    fun evaluateIntuition() {
+        val project = _uiState.value.project ?: return
+        val selected = _uiState.value.selectedLieTopics
+        val actualLies = project.lieTopics.toSet()
+
+        val correct = selected.filter { it in actualLies }
+        val falseAccusations = selected.filter { it !in actualLies }
+        val delta = correct.size - falseAccusations.size
+
+        viewModelScope.launch {
+            gameStateRepository.recordIntuitionPoints(delta)
+            gameStateRepository.updateRankIfNeeded()
+            _uiState.update { it.copy(intuitionResult = IntuitionResult(delta, correct, falseAccusations)) }
+        }
+    }
+
+    fun clearIntuitionResult() = _uiState.update { it.copy(intuitionResult = null) }
 
     fun showInvestSheet() = _uiState.update { it.copy(showInvestSheet = true) }
     fun hideInvestSheet() = _uiState.update { it.copy(showInvestSheet = false) }
