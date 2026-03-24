@@ -1,5 +1,5 @@
 import { prisma } from '../db/prisma'
-import { LieTopic } from './types'
+import { LieTopic, PersonaArchetype, ProjectType } from './types'
 import { startAmaSession, sendAmaMessage } from '../ai/openRouterClient'
 
 const MAX_QUESTIONS = 10
@@ -34,10 +34,10 @@ export async function startSession(userId: number, projectId: string): Promise<{
 
   const firstMessage = await startAmaSession({
     projectId,
-    archetype: project.personaArchetype,
+    archetype: project.personaArchetype as PersonaArchetype,
     developerName: project.developerName,
     projectName: project.name,
-    type: project.type,
+    type: project.type as ProjectType,
     claimedAPY: project.claimedAPY,
     description: project.description,
     lieTopics: project.lieTopics as LieTopic[],
@@ -80,10 +80,10 @@ export async function sendMessage(userId: number, projectId: string, userMessage
   })
 
   const reply = await sendAmaMessage({
-    archetype: project.personaArchetype,
+    archetype: project.personaArchetype as PersonaArchetype,
     developerName: project.developerName,
     projectName: project.name,
-    type: project.type,
+    type: project.type as ProjectType,
     lieTopics: project.lieTopics as LieTopic[],
     truthTopics: project.truthTopics as LieTopic[],
     history: history.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),

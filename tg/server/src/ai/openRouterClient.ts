@@ -135,7 +135,7 @@ export async function generateProjectBanner(
       n: 1,
     } as Parameters<typeof client.images.generate>[0])
 
-    const imageUrl = (imageResp.data[0] as { url?: string })?.url
+    const imageUrl = (imageResp.data?.[0] as { url?: string } | undefined)?.url
     if (imageUrl) {
       await prisma.project.update({
         where: { id: projectId },
