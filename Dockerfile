@@ -1,22 +1,20 @@
 FROM node:20-alpine
 
-# OpenSSL нужен для Prisma на alpine
 RUN apk add --no-cache openssl
 
-WORKDIR /app/tg/server
-
-# Install dependencies (включая devDeps для tsx)
+# Устанавливаем зависимости в /deps — вне пути монтирования bothost
+WORKDIR /deps
 COPY tg/server/package*.json ./
 COPY tg/server/prisma ./prisma/
-RUN npm install
+RUN npm install && npx prisma generate
 
-# Copy source
+# Копируем исходники (на случай если bothost не монтирует)
+WORKDIR /app/tg/server
 COPY tg/server ./
 
-# Generate Prisma client
-RUN npx prisma generate
+# NODE_PATH указывает Node искать модули в /deps/node_modules
+ENV NODE_PATH=/deps/node_modules
 
 EXPOSE 3000
 
-# Запуск через tsx — не нужна компиляция в dist
-CMD ["sh", "-c", "npm install && npx prisma generate && npx tsx src/index.ts"]
+CMD ["node", "/deps/node_modules/.bin/tsx", "src/index.ts"]
