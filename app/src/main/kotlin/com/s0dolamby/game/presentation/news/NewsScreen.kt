@@ -87,7 +87,7 @@ fun NewsScreen(
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
-                                "Нажми «Следующая страница» — дела начнут посылать вести",
+                                "Нажми «Следующий день» — дела начнут посылать вести",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color.White.copy(alpha = 0.65f)
                             )

@@ -171,11 +171,11 @@ fun AmaScreen(
         pickSessionQuestions(uiState.session?.id)
     }
 
-    LaunchedEffect(messages.size, sessionEnded, uiState.isSending) {
-        if (messages.isNotEmpty() && !uiState.isSending) {
-            kotlinx.coroutines.delay(60)
+    LaunchedEffect(messages.size, sessionEnded) {
+        if (messages.isNotEmpty()) {
+            kotlinx.coroutines.delay(100)
             val trailingSpacerIndex = messages.size + (if (sessionEnded) 1 else 0)
-            listState.animateScrollToItem(trailingSpacerIndex)
+            listState.scrollToItem(trailingSpacerIndex)
         }
     }
 
@@ -408,7 +408,6 @@ fun AmaScreen(
 
 // ─── Intuition strip ──────────────────────────────────────────────────────────
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun IntuitionStrip(
     selectedTopics: Set<LieTopic>,
@@ -448,9 +447,9 @@ private fun IntuitionStrip(
                     .clickable { showLegend = true }
             )
         }
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             LieTopic.entries.forEach { topic ->
                 val selected = topic in selectedTopics

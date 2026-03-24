@@ -652,7 +652,7 @@ private fun BalanceCard(
                             )
                         }
                     } else {
-                        Text("Следующая страница  ✦")
+                        Text("Следующий день  ✦")
                     }
                 }
             }
