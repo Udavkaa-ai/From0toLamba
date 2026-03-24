@@ -21,6 +21,7 @@ import com.s0dolamby.game.domain.model.Project
 import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
+import com.s0dolamby.game.data.logging.AppLogger
 import com.s0dolamby.game.presentation.common.theme.Error
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.Success
@@ -45,6 +46,18 @@ fun PortfolioScreen(
 
     // Sheet state hoisted outside LazyColumn to avoid ModalBottomSheet-in-LazyColumn crash
     var activeSheet by remember { mutableStateOf<ActiveSheet?>(null) }
+
+    // Show last crash from log on screen open (diagnostic only)
+    LaunchedEffect(Unit) {
+        val log = AppLogger.readLog()
+        val lastCrash = log.substringAfterLast("CRASH/UncaughtException:", "").trim()
+        if (lastCrash.isNotEmpty()) {
+            snackbarHostState.showSnackbar(
+                "Крэш: " + lastCrash.take(120),
+                duration = SnackbarDuration.Indefinite
+            )
+        }
+    }
 
     actionResult?.let { msg ->
         LaunchedEffect(msg) {
@@ -114,13 +127,16 @@ fun PortfolioScreen(
                         fontWeight = FontWeight.SemiBold
                     )
                 }
-                items(activeProjects) { project ->
+                items(activeProjects, key = { it.id }) { project ->
                     PortfolioProjectCard(
                         project = project,
                         onClick = { onProjectClick(project.id) },
                         onExit = { viewModel.exitProject(project.id) },
                         onAddFunds = { activeSheet = ActiveSheet(project, SheetType.ADD_FUNDS) },
-                        onWithdraw = { activeSheet = ActiveSheet(project, SheetType.WITHDRAW) }
+                        onWithdraw = {
+                            AppLogger.i("Portfolio", "Вывести pressed: id=${project.id} type=${project.type} val=${project.currentValueRubles} inv=${project.investedAmountRubles}")
+                            activeSheet = ActiveSheet(project, SheetType.WITHDRAW)
+                        }
                     )
                 }
             }
@@ -299,9 +315,11 @@ private fun WithdrawBottomSheet(
     onDismiss: () -> Unit,
     onConfirm: (Double) -> Unit
 ) {
+    AppLogger.i("Portfolio", "WithdrawBottomSheet composing: type=${project.type}")
     var amountText by remember { mutableStateOf("") }
     val amount = amountText.toDoubleOrNull()
 
+    AppLogger.i("Portfolio", "isLongTerm check")
     val isLongTerm = project.type == ProjectType.POTION_BREW || project.type == ProjectType.GUILD_SCHEME
     val hasFee = project.type == ProjectType.CARD_GAME || project.type == ProjectType.TREASURE_HUNT
     val effectiveMax = if (isLongTerm) {
@@ -311,6 +329,7 @@ private fun WithdrawBottomSheet(
     }
     val isValid = amount != null && amount >= 5.0 && amount <= effectiveMax
 
+    AppLogger.i("Portfolio", "AlertDialog about to compose: effectiveMax=$effectiveMax isLongTerm=$isLongTerm hasFee=$hasFee")
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Вывести из дела") },
