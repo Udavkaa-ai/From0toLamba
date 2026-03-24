@@ -11,7 +11,7 @@ object GameConfig {
     const val NEW_PROJECTS_PER_DAY_MAX = 3
 
     const val OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1/"
-    const val TEXT_MODEL = "deepseek/deepseek-chat-v3-0324"
+    const val TEXT_MODEL = "google/gemini-2.5-flash-preview-05-20"
     const val MAX_TOKENS_AMA = 512
     const val MAX_TOKENS_UPDATE = 650
     const val MAX_TOKENS_POSTMORTEM = 600
