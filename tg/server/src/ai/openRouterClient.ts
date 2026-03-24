@@ -15,7 +15,6 @@ const client = new OpenAI({
 })
 
 const TEXT_MODEL = 'google/gemini-2.5-flash-preview'
-const IMAGE_MODEL = 'black-forest-labs/flux-schnell'
 
 // ─── Генерация данных проекта ────────────────────────────────────────────────
 
@@ -107,45 +106,16 @@ export async function generateProjectData(input: GenerateProjectInput): Promise<
 }
 
 // ─── Баннер проекта ──────────────────────────────────────────────────────────
+// TODO: заменить на pollinations.ai
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function generateProjectBanner(
-  projectId: string,
-  projectName: string,
-  type: ProjectType,
-  archetype: PersonaArchetype,
+  _projectId: string,
+  _projectName: string,
+  _type: ProjectType,
+  _archetype: PersonaArchetype,
 ): Promise<void> {
-  try {
-    // Сначала DeepSeek генерирует концепт промпта для FLUX
-    const conceptPrompt = `Create a short image generation prompt (max 20 words, English) for a fairy-tale Russian merchant game project banner. Project: "${projectName}", type: ${type}, persona: ${archetype}. Style: mystical medieval Russian illustration, gold and purple tones, no text.`
-
-    const conceptResp = await client.chat.completions.create({
-      model: TEXT_MODEL,
-      messages: [{ role: 'user', content: conceptPrompt }],
-      max_tokens: 60,
-    })
-
-    const imagePrompt = conceptResp.choices[0]?.message?.content?.trim()
-      ?? 'Mystical Russian fairy-tale merchant scene, gold purple tones'
-
-    // FLUX генерирует изображение
-    const imageResp = await client.images.generate({
-      model: IMAGE_MODEL,
-      prompt: imagePrompt,
-      size: '512x512',
-      n: 1,
-    } as Parameters<typeof client.images.generate>[0])
-
-    const imageUrl = (imageResp.data?.[0] as { url?: string } | undefined)?.url
-    if (imageUrl) {
-      await prisma.project.update({
-        where: { id: projectId },
-        data: { bannerImageUrl: imageUrl, bannerPromptUsed: imagePrompt },
-      })
-    }
-  } catch (err) {
-    console.error('generateProjectBanner failed:', err)
-    // Не крашим — placeholder покажется в UI
-  }
+  // заглушка — bannerImageUrl остаётся null, UI показывает placeholder
 }
 
 // ─── AMA сессия ──────────────────────────────────────────────────────────────
