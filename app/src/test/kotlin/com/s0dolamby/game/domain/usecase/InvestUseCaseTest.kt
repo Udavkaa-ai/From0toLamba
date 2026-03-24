@@ -22,6 +22,11 @@ class InvestUseCaseTest {
         personaArchetype = PersonaArchetype.BURATINO,
         daysUntilCollapse = 10, realDailyYieldRubles = 0.005,
         lieTopics = listOf(LieTopic.PATRON_COUNT), truthTopics = emptyList(),
+        npcTruthParams = NpcTruthParams(
+            realPatronCount = 100, realDailyProfitDesc = "1%", realPayoutSchedule = "weekly",
+            realGuildSize = 5, elderBlessingPassed = false, nobleBacking = null,
+            withdrawalPolicy = "no limits"
+        ),
         developerName = "Паша", developerAvatarSeed = "seed",
         claimedName = "TestProject", claimedAPY = 300f,
         claimedUserCount = 10000, claimedTeamSize = 5,
