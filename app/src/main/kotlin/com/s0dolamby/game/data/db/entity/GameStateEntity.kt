@@ -18,5 +18,6 @@ data class GameStateEntity(
     val isOnboardingComplete: Boolean = false,
     val balanceHistory: String = "[]",  // JSON array of Double — free balance per day
     val investedHistory: String = "[]", // JSON array of Double — active projects total value per day
-    val intuitionScore: Int = 0
+    val intuitionScore: Int = 0,
+    val pendingRankUp: String? = null   // InvestorRank.name — set when rank increases, cleared after shown
 )

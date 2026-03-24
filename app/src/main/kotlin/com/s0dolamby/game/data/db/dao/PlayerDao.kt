@@ -26,4 +26,7 @@ interface PlayerDao {
 
     @Query("UPDATE game_state SET isOnboardingComplete = 1 WHERE id = 1")
     suspend fun completeOnboarding()
+
+    @Query("UPDATE game_state SET pendingRankUp = NULL WHERE id = 1")
+    suspend fun clearRankUpNotification()
 }

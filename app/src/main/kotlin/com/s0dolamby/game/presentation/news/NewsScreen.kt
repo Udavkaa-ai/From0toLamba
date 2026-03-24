@@ -1,7 +1,6 @@
 package com.s0dolamby.game.presentation.news
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -88,7 +87,7 @@ fun NewsScreen(
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
-                                "Нажми «Следующая страница» — дела начнут посылать вести",
+                                "Нажми «Следующий день» — дела начнут посылать вести",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color.White.copy(alpha = 0.65f)
                             )
@@ -125,7 +124,6 @@ private fun NewsCard(update: DailyUpdate) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable { expanded = !expanded }
-            .animateContentSize(tween(280))
     ) {
         // ── Header: source badge + day + chevron ──
         Row(

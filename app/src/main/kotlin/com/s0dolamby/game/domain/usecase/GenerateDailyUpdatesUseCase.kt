@@ -9,6 +9,7 @@ import com.s0dolamby.game.data.ai.PromptBuilder
 import com.s0dolamby.game.data.logging.AppLogger
 import com.s0dolamby.game.domain.model.*
 import com.s0dolamby.game.domain.repository.GameConfig
+import com.s0dolamby.game.domain.repository.SettingsRepository
 import com.s0dolamby.game.domain.repository.UpdateRepository
 import java.util.UUID
 import javax.inject.Inject
@@ -17,16 +18,18 @@ class GenerateDailyUpdatesUseCase @Inject constructor(
     private val api: OpenRouterApiService,
     private val promptBuilder: PromptBuilder,
     private val updateRepository: UpdateRepository,
-    private val gson: Gson
+    private val gson: Gson,
+    private val settingsRepository: SettingsRepository
 ) {
     suspend operator fun invoke(
         project: Project,
         event: AnnouncementType? = null
     ): Result<DailyUpdate> = runCatching {
+        val model = settingsRepository.getSettings().textModel
         val response = api.chatCompletion(
             auth = "Bearer ${BuildConfig.OPENROUTER_API_KEY}",
             request = ChatRequest(
-                model = GameConfig.TEXT_MODEL,
+                model = model,
                 messages = listOf(
                     ChatMessage("user", promptBuilder.buildDailyUpdatePrompt(project, project.daysUntilCollapse, event))
                 ),
@@ -88,7 +91,7 @@ class GenerateDailyUpdatesUseCase @Inject constructor(
                 projectName = project.claimedName,
                 day = project.daysSinceJoined,
                 title = parsed.title.ifBlank { event?.fallbackTitle ?: "Обновление проекта" },
-                body = parsed.body.ifBlank { "Проект работает в штатном режиме." },
+                body = parsed.body.ifBlank { "Дело идёт, и то ладно." },
                 userCountDelta = parsed.metrics.userCountDelta,
                 payoutStatus = if (event == AnnouncementType.CRIMINAL_CASE || event == AnnouncementType.HACK) {
                     PayoutStatus.DELAYED
@@ -107,7 +110,7 @@ class GenerateDailyUpdatesUseCase @Inject constructor(
                 projectName = project.claimedName,
                 day = project.daysSinceJoined,
                 title = event?.fallbackTitle ?: "Обновление проекта",
-                body = event?.fallbackBody ?: "Проект работает в штатном режиме.",
+                body = event?.fallbackBody ?: "Дело идёт, и то ладно.",
                 userCountDelta = 0,
                 payoutStatus = if (event == AnnouncementType.CRIMINAL_CASE || event == AnnouncementType.HACK)
                     PayoutStatus.DELAYED else PayoutStatus.NORMAL,
@@ -132,6 +135,6 @@ class GenerateDailyUpdatesUseCase @Inject constructor(
         AnnouncementType.BAD_RUMOR -> "В сети распространились слухи о проблемах. Команда отрицает обвинения."
         AnnouncementType.CRIMINAL_CASE -> "Правоохранительные органы начали расследование. Вывод средств приостановлен."
         AnnouncementType.HACK -> "Проект подвергся взлому. Часть средств похищена. Команда работает над восстановлением."
-        else -> "Проект работает в штатном режиме."
+        else -> "Дело идёт, и то ладно."
     }
 }

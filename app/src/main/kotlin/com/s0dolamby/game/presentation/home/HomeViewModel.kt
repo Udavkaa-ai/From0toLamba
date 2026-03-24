@@ -45,4 +45,10 @@ class HomeViewModel @Inject constructor(
     fun dismissUpdateCard(update: DailyUpdate) {
         _pendingUpdateCards.update { cards -> cards.filter { it.id != update.id } }
     }
+
+    fun clearRankUpNotification() {
+        viewModelScope.launch {
+            gameStateRepository.clearRankUpNotification()
+        }
+    }
 }

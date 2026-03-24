@@ -58,11 +58,12 @@ app/
 │   │   ├── SendAmaMessageUseCase.kt
 │   │   ├── InvestUseCase.kt
 │   │   ├── ExitProjectUseCase.kt
+│   │   ├── PartialWithdrawUseCase.kt     # Частичный вывод (тип-зависимые лимиты)
 │   │   ├── AdvanceDayUseCase.kt
 │   │   └── GenerateDailyUpdatesUseCase.kt
 │   └── repository/
 ├── presentation/
-│   ├── home/                # HomeScreen — баланс, активные дела
+│   ├── home/                # HomeScreen — баланс, активные дела; RankUpCelebrationOverlay
 │   ├── inbox/               # ✦ Входящие грамоты ✦
 │   ├── ama/                 # AmaScreen — беседа с хозяином
 │   ├── portfolio/           # ✦ Казна ✦ — активные дела + история
@@ -186,17 +187,44 @@ data class GameState(
     val scamsMissed: Int,
     val dayStreak: Int,
     val isOnboardingComplete: Boolean = false,
-    val balanceHistory: List<Double> = emptyList()
+    val balanceHistory: List<Double> = emptyList(),
+    val investedHistory: List<Double> = emptyList(),  // сумма currentValueRubles активных дел по дням
+    val intuitionScore: Int = 0,                      // накопленные очки Чуйки
+    val pendingRankUp: InvestorRank? = null            // сигнал для показа поздравления
 )
 
 enum class InvestorRank {
     NEWBIE,       // Скоморох
-    AMBASSADOR,   // Купец
-    ANALYST,      // Мудрец
-    SHARK,        // Богатырь
-    LAMBO_SENSEI  // Царь
+    AMBASSADOR,   // Купец — день 5+ или баланс 20+ ₽
+    ANALYST,      // Мудрец — день 30+, баланс 300+, чуйка 10+
+    SHARK,        // Богатырь — день 50+, баланс 1 000+, чуйка 30+
+    LAMBO_SENSEI  // Царь — день 777+, баланс 7 777+, чуйка 77+
 }
 ```
+
+---
+
+## Механика «Чуйка» (IntuitionScore)
+
+В ходе AMA-беседы игрок видит полоску «👁 Чуйка» — набор `FilterChip` по каждой из 7 тем:
+
+| Тема | Emoji |
+|---|---|
+| PATRON_COUNT — Количество вкладчиков | 👥 |
+| DAILY_PROFIT — Ежедневный доход | 💰 |
+| PAYOUT_DATE — Дата выплат | 📅 |
+| GUILD_SIZE — Размер артели | 🏗️ |
+| ELDER_BLESSING — Проверка старейшин | 📜 |
+| NOBLE_BACKING — Покровители | 🏰 |
+| WITHDRAWAL_LIMITS — Ограничения на вывод | 🔒 |
+
+Игрок нажимает на темы, в которых подозревает ложь. После 10 вопросов кнопка «Оценить чуйку» открывает диалог:
+- +1 очко за каждое верное подозрение (тема в `lieTopics` дела)
+- −1 очко за ложное обвинение (тема в `truthTopics` дела)
+
+Повторная оценка невозможна — `AmaSession.isIntuitionEvaluated` персистируется в Room.
+
+`intuitionScore` учитывается в `computeRank()` наряду с днями и балансом (`totalWealth = balance + Σ currentValueRubles`).
 
 ---
 
@@ -224,6 +252,16 @@ enum class InvestorRank {
 - **Баланс меняется только при:** инвестировании (−), выходе из дела или закрытии дела (+)
 - **Дневной доход НЕ уходит в свободный баланс** — он копится в `currentValueRubles` до момента вывода
 - При закрытии дела возвращается `currentValueRubles × (1 − lossPercent)`
+
+### Лимиты вывода по типу дела (`PartialWithdrawUseCase`)
+
+| Тип дела | Правило вывода |
+|---|---|
+| POTION_BREW, GUILD_SCHEME | Максимум 25% от `investedAmountRubles` за раз |
+| CARD_GAME, TREASURE_HUNT | Любая сумма, но −25% комиссии (возвращается 75%) |
+| HONEST_TRADE | Без ограничений и без комиссии |
+
+UI (`WithdrawBottomSheet` в Казне) показывает предупреждение о лимите/комиссии и live-превью «получишь на руки».
 
 ---
 
@@ -343,3 +381,9 @@ val NightBlue = Color(0xFF0D1735)       // тёмно-синий — карто�
 - Язык UI — русский
 - Не использовать `SharedPreferences` — только Room
 - `state.balance` = только свободные рубли; дневной доход копится в `currentValueRubles`
+- `updateRankIfNeeded()` вызывается ТОЛЬКО в `AdvanceDayUseCase` — не при инвестировании/выводе
+- `computeRank()` использует: `totalWealth = balance + Σ activeProject.currentValueRubles`; `intuitionScore`; `currentDay`
+- `pendingRankUp` в Room очищается через `clearRankUpNotification()` после показа `RankUpCelebrationOverlay`
+- `IntuitionStrip` (полоска Чуйки) — FlowRow с emoji-only FilterChip, текстовые подписи — в диалоге «?»
+- `ModalBottomSheet` с текстовым вводом всегда использует `rememberModalBottomSheetState(skipPartiallyExpanded = true)`
+- DB version: **9** (fallbackToDestructiveMigration — данные при смене версии сотрутся, OK для dev)

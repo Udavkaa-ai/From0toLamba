@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Lock
+import com.s0dolamby.game.domain.model.ProjectType
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,12 +21,16 @@ import com.s0dolamby.game.domain.model.Project
 import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
+import com.s0dolamby.game.data.logging.AppLogger
 import com.s0dolamby.game.presentation.common.theme.Error
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.Success
 import com.s0dolamby.game.presentation.common.theme.Warning
 
 fun Project.displayName() = claimedName
+
+private enum class SheetType { ADD_FUNDS, WITHDRAW }
+private data class ActiveSheet(val project: Project, val type: SheetType)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,10 +39,26 @@ fun PortfolioScreen(
     onProjectClick: (String) -> Unit = {},
     viewModel: PortfolioViewModel = hiltViewModel()
 ) {
+    val freeBalance by viewModel.freeBalance.collectAsState()
     val activeProjects by viewModel.activeProjects.collectAsState()
     val closedProjects by viewModel.closedProjects.collectAsState()
     val actionResult by viewModel.actionResult.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // Sheet state hoisted outside LazyColumn to avoid ModalBottomSheet-in-LazyColumn crash
+    var activeSheet by remember { mutableStateOf<ActiveSheet?>(null) }
+
+    // Show last crash from log on screen open (diagnostic only)
+    LaunchedEffect(Unit) {
+        val log = AppLogger.readLog()
+        val lastCrash = log.substringAfterLast("CRASH/UncaughtException:", "").trim()
+        if (lastCrash.isNotEmpty()) {
+            snackbarHostState.showSnackbar(
+                "Крэш: " + lastCrash.take(120),
+                duration = SnackbarDuration.Indefinite
+            )
+        }
+    }
 
     actionResult?.let { msg ->
         LaunchedEffect(msg) {
@@ -107,13 +128,16 @@ fun PortfolioScreen(
                         fontWeight = FontWeight.SemiBold
                     )
                 }
-                items(activeProjects) { project ->
+                items(activeProjects, key = { it.id }) { project ->
                     PortfolioProjectCard(
                         project = project,
                         onClick = { onProjectClick(project.id) },
                         onExit = { viewModel.exitProject(project.id) },
-                        onAddFunds = { amount -> viewModel.addFunds(project.id, amount) },
-                        onWithdraw = { amount -> viewModel.partialWithdraw(project.id, amount) }
+                        onAddFunds = { activeSheet = ActiveSheet(project, SheetType.ADD_FUNDS) },
+                        onWithdraw = {
+                            AppLogger.i("Portfolio", "Вывести pressed: id=${project.id} type=${project.type} val=${project.currentValueRubles} inv=${project.investedAmountRubles}")
+                            activeSheet = ActiveSheet(project, SheetType.WITHDRAW)
+                        }
                     )
                 }
             }
@@ -134,6 +158,31 @@ fun PortfolioScreen(
             }
         }
     }
+
+    // Bottom sheets rendered outside LazyColumn
+    activeSheet?.let { sheet ->
+        when (sheet.type) {
+            SheetType.ADD_FUNDS -> FundsBottomSheet(
+                title = "Довложить в проект",
+                confirmLabel = "Довложить",
+                maxAmount = null,
+                freeBalance = freeBalance,
+                onDismiss = { activeSheet = null },
+                onConfirm = { amount ->
+                    viewModel.addFunds(sheet.project.id, amount)
+                    activeSheet = null
+                }
+            )
+            SheetType.WITHDRAW -> WithdrawBottomSheet(
+                project = sheet.project,
+                onDismiss = { activeSheet = null },
+                onConfirm = { amount ->
+                    viewModel.partialWithdraw(sheet.project.id, amount)
+                    activeSheet = null
+                }
+            )
+        }
+    }
     } // ScreenBackground
 }
 
@@ -143,12 +192,10 @@ private fun PortfolioProjectCard(
     project: Project,
     onClick: () -> Unit,
     onExit: () -> Unit,
-    onAddFunds: (Double) -> Unit,
-    onWithdraw: (Double) -> Unit
+    onAddFunds: () -> Unit,
+    onWithdraw: () -> Unit
 ) {
     val pnl = project.currentValueRubles - project.investedAmountRubles
-    var showAddFunds by remember { mutableStateOf(false) }
-    var showWithdraw by remember { mutableStateOf(false) }
 
     FairyCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -196,14 +243,14 @@ private fun PortfolioProjectCard(
         Spacer(Modifier.height(4.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(
-                onClick = { showAddFunds = true },
+                onClick = onAddFunds,
                 modifier = Modifier.weight(1f),
                 enabled = !project.isWithdrawalLocked,
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
                 border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.4f))
             ) { Text("Довложить") }
             OutlinedButton(
-                onClick = { showWithdraw = true },
+                onClick = onWithdraw,
                 modifier = Modifier.weight(1f),
                 enabled = !project.isWithdrawalLocked,
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
@@ -218,25 +265,12 @@ private fun PortfolioProjectCard(
             border = androidx.compose.foundation.BorderStroke(1.dp, Error.copy(alpha = 0.4f))
         ) { Text("Покинуть дело") }
     }
+}
 
-    if (showAddFunds) {
-        FundsBottomSheet(
-            title = "Довложить в проект",
-            confirmLabel = "Довложить",
-            maxAmount = null,
-            onDismiss = { showAddFunds = false },
-            onConfirm = { amount -> onAddFunds(amount); showAddFunds = false }
-        )
-    }
-    if (showWithdraw) {
-        FundsBottomSheet(
-            title = "Вывести часть средств",
-            confirmLabel = "Вывести",
-            maxAmount = project.currentValueRubles,
-            onDismiss = { showWithdraw = false },
-            onConfirm = { amount -> onWithdraw(amount); showWithdraw = false }
-        )
-    }
+private fun formatRubles(amount: Double): String = when {
+    amount >= 1_000_000 -> "%.1fМ ₽".format(amount / 1_000_000)
+    amount >= 1_000 -> "%.1fТ ₽".format(amount / 1_000)
+    else -> "%.0f ₽".format(amount)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -245,19 +279,38 @@ private fun FundsBottomSheet(
     title: String,
     confirmLabel: String,
     maxAmount: Double?,
+    freeBalance: Double,
     onDismiss: () -> Unit,
     onConfirm: (Double) -> Unit
 ) {
     var amountText by remember { mutableStateOf("") }
     val amount = amountText.toDoubleOrNull()
     val isValid = amount != null && amount >= 5.0 && (maxAmount == null || amount <= maxAmount)
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(
             modifier = Modifier.padding(horizontal = 24.dp).padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(title, style = MaterialTheme.typography.titleLarge)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(title, style = MaterialTheme.typography.titleLarge)
+                Surface(
+                    color = FairyGold.copy(alpha = 0.15f),
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Text(
+                        "Свободно: ${formatRubles(freeBalance)}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = FairyGold,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
+                }
+            }
             OutlinedTextField(
                 value = amountText,
                 onValueChange = { amountText = it.filter { c -> c.isDigit() || c == '.' } },
@@ -280,6 +333,80 @@ private fun FundsBottomSheet(
             ) { Text(confirmLabel, fontWeight = FontWeight.SemiBold) }
         }
     }
+}
+
+@Composable
+private fun WithdrawBottomSheet(
+    project: Project,
+    onDismiss: () -> Unit,
+    onConfirm: (Double) -> Unit
+) {
+    AppLogger.i("Portfolio", "WithdrawBottomSheet composing: type=${project.type}")
+    var amountText by remember { mutableStateOf("") }
+    val amount = amountText.toDoubleOrNull()
+
+    AppLogger.i("Portfolio", "isLongTerm check")
+    val isLongTerm = project.type == ProjectType.POTION_BREW || project.type == ProjectType.GUILD_SCHEME
+    val hasFee = project.type == ProjectType.CARD_GAME || project.type == ProjectType.TREASURE_HUNT
+    val effectiveMax = if (isLongTerm) {
+        (project.investedAmountRubles * 0.25).coerceAtLeast(0.0)
+    } else {
+        project.currentValueRubles.coerceAtLeast(0.0)
+    }
+    val isValid = amount != null && amount >= 5.0 && amount <= effectiveMax
+
+    AppLogger.i("Portfolio", "AlertDialog about to compose: effectiveMax=$effectiveMax isLongTerm=$isLongTerm hasFee=$hasFee")
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Вывести из дела") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                when {
+                    isLongTerm -> Text(
+                        "⚠ Лимит: не более 25%% от вложенного за раз (%.0f ₽)".format(effectiveMax),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Warning
+                    )
+                    hasFee -> Text(
+                        "⚠ Комиссия за срочный вывод — 25%. Получишь 75% от суммы.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Error
+                    )
+                }
+                OutlinedTextField(
+                    value = amountText,
+                    onValueChange = { amountText = it.filter { c -> c.isDigit() || c == '.' } },
+                    label = { Text("Сумма в рублях") },
+                    suffix = { Text("₽") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Text(
+                    "Доступно: %.0f ₽ • Лимит: %.0f ₽".format(project.currentValueRubles, effectiveMax),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                if (hasFee && amount != null && amount >= 5.0) {
+                    Text(
+                        "Получишь на руки: %.0f ₽".format(amount * 0.75),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = FairyGold,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { amount?.let { onConfirm(it) } },
+                enabled = isValid,
+                colors = ButtonDefaults.buttonColors(containerColor = FairyGold, contentColor = Color(0xFF1A0A00))
+            ) { Text("Вывести", fontWeight = FontWeight.SemiBold) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Отмена") }
+        }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

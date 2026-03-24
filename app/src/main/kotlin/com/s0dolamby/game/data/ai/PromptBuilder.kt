@@ -4,6 +4,7 @@ import com.s0dolamby.game.domain.model.AmaMessage
 import com.s0dolamby.game.domain.model.AnnouncementType
 import com.s0dolamby.game.domain.model.DeveloperPersona
 import com.s0dolamby.game.domain.model.Project
+import com.s0dolamby.game.domain.model.ProjectFate
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -18,6 +19,37 @@ class PromptBuilder @Inject constructor() {
         val phrases = persona.typicalPhrasesTemplate
             .joinToString("\n") { "- ${it.replace("{name}", project.claimedName)}" }
 
+        val tp = project.npcTruthParams
+
+        // Build per-topic instructions: truth → canonical fact, lie → vary each time
+        val allTopics = com.s0dolamby.game.domain.model.LieTopic.values()
+        val topicInstructions = allTopics.joinToString("\n") { topic ->
+            val isTruth = topic in project.truthTopics
+            val canonicalFact = when (topic) {
+                com.s0dolamby.game.domain.model.LieTopic.PATRON_COUNT ->
+                    "участников — ровно ${tp.realPatronCount} человек"
+                com.s0dolamby.game.domain.model.LieTopic.DAILY_PROFIT ->
+                    "доходность — ${tp.realDailyProfitDesc}"
+                com.s0dolamby.game.domain.model.LieTopic.PAYOUT_DATE ->
+                    "выплаты — ${tp.realPayoutSchedule}"
+                com.s0dolamby.game.domain.model.LieTopic.GUILD_SIZE ->
+                    "команда — ${tp.realGuildSize} человека"
+                com.s0dolamby.game.domain.model.LieTopic.ELDER_BLESSING ->
+                    if (tp.elderBlessingPassed) "проверку старейшин прошли, всё официально"
+                    else "никакой проверки старейшин не было и не ожидается"
+                com.s0dolamby.game.domain.model.LieTopic.NOBLE_BACKING ->
+                    if (tp.nobleBacking != null) "покровитель — ${tp.nobleBacking}"
+                    else "никакого покровителя нет"
+                com.s0dolamby.game.domain.model.LieTopic.WITHDRAWAL_LIMITS ->
+                    "условия вывода — ${tp.withdrawalPolicy}"
+            }
+            if (isTruth) {
+                "  • $topic [ПРАВДА] → всегда называй ОДНО И ТО ЖЕ: $canonicalFact. Не меняй цифры и факты от вопроса к вопросу."
+            } else {
+                "  • $topic [ЛОЖЬ] → каждый раз говори разное: меняй цифры, даты, формулировки. Никогда не повторяй одну и ту же версию."
+            }
+        }
+
         return """
 Ты — ${project.developerName}, предприниматель, который предлагает собеседнику вложить рубли в своё дело «${project.claimedName}».
 
@@ -30,21 +62,22 @@ $phrases
 ═══ ПОВЕДЕНИЕ ПОД ДАВЛЕНИЕМ ═══
 Если тебя прижимают конкретными вопросами или сомневаются: ${persona.behaviorUnderPressure}
 
-═══ СКРЫТАЯ ПРАВДА О ДЕЛЕ (держи в тайне) ═══
+═══ СКРЫТАЯ ПРАВДА О ДЕЛЕ (держи в тайне от собеседника) ═══
 - Судьба: ${project.fate}
 - Дней до краха: ${project.daysUntilCollapse ?: "дело долгоиграющее, без срока"}
-- Реальная доходность: ${project.realDailyYieldRubles} руб./день на 1 рубль вложений (не раскрывай)
-- Реальное количество участников сейчас: ${project.currentUserCount} (используй только для ориентира, немного варьируй в ответах)
-- Врёшь по темам: ${project.lieTopics.joinToString(", ")}
-- Говоришь правду по темам: ${project.truthTopics.joinToString(", ")}
+- Реальная доходность: ${project.realDailyYieldRubles} руб./день на 1 рубль вложений
+
+═══ ИНСТРУКЦИИ ПО ТЕМАМ — главное правило ═══
+По каждой теме чётко указано: ПРАВДА (говори всегда одинаково) или ЛОЖЬ (каждый раз разное):
+$topicInstructions
 
 ═══ ПРАВИЛА ═══
-1. ПО ТЕМАМ ЛЖИ: Ври убедительно и в своём стиле. Называй конкретные фиктивные цифры — но органично.
-2. ПО ТЕМАМ ПРАВДЫ: Говори честно, но не акцентируй риски.
+1. ПРАВДА = СТАБИЛЬНОСТЬ: По темам [ПРАВДА] — всегда называй ровно те цифры и факты, что указаны выше. Если спросят дважды — ответ тот же самый.
+2. ЛОЖЬ = НЕПОСЛЕДОВАТЕЛЬНОСТЬ: По темам [ЛОЖЬ] — каждый раз называй другие цифры, другие даты, другие объяснения. Противоречь себе между вопросами.
 3. НЕ РАСКРЫВАЙ: Свой архетип, судьбу дела, реальную доходность.
-4. ДЛИНА: 2–4 предложения. Не пиши длинных монологов.
-5. ЯЗЫК: ТОЛЬКО русский язык. Ни одного слова на другом языке — никаких английских слов, транслита, жаргона (no "ок", "лол", "wow", "deal", "profit", "boss" и т.п.). Современный живой русский. Можно изредка вставить народное выражение — только если органично. Никакого нарочитого "старорусского".
-6. СУММЫ: Только в рублях (₽). Никаких TON, крипты, блокчейна, биткоинов, "коинов" любого рода.
+4. ДЛИНА: 2–3 предложения. Без длинных монологов и лишних слов.
+5. ЯЗЫК: ТОЛЬКО русский язык. Никаких английских слов, транслита, жаргона. Современный живой русский. Можно изредка народное выражение — только если органично.
+6. СУММЫ: Только в рублях (₽). Никаких TON, крипты, блокчейна, биткоинов.
 7. РАЗНООБРАЗИЕ: Не начинай каждый ответ одинаково.
 
 КОНТЕКСТ: Вопрос $questionCount из 10. ${if (questionCount >= 7) "Беседа близится к концу — можешь стать настойчивее или занервничать." else ""}
@@ -68,9 +101,12 @@ $phrases
         // Derive a semantic tone — never expose raw daysUntilCollapse to the AI
         // «критично» only after the project has been active ≥ 3 days to avoid
         // immediate red flags on day-1 for short-lived scam projects
+        val isScamFate = project.fate == ProjectFate.INSTANT_SCAM || project.fate == ProjectFate.SLOW_DRAIN
         val tone = when {
             event != null -> null  // event overrides tone
             daysUntilCollapse == null -> "спокойно — дело стабильно, без ограничений по сроку"
+            !isScamFate && daysUntilCollapse <= 5 ->
+                "дело штатно завершает работу через $daysUntilCollapse дн. — хозяин объявляет о плановом закрытии и возврате всех средств вкладчикам"
             daysUntilCollapse >= 5 || project.daysSinceJoined < 3 ->
                 "спокойно — дело работает, никаких тревожных сигналов"
             daysUntilCollapse in 3..4 ->
@@ -97,6 +133,7 @@ ${if (event != null) "Для этого события используй: ${eve
 ЯЗЫК: ТОЛЬКО русский язык — ни одного иностранного слова, транслита или англицизма. Современный живой русский. Иногда образный оборот или поговорка — в меру.
 СУММЫ: Только в рублях (₽). Никаких TON, крипты, блокчейна, биткоинов, "коинов" любого рода.
 ФОРМАТ body: 3–4 полных законченных предложения от лица источника (не обрывай на середине).
+ПОЛЕ redFlags: массив коротких фраз на РУССКОМ языке (например: "Выплаты задержаны", "Хозяин не отвечает", "Участники сообщают о потерях"). Никакого английского.
 Генерируй ТОЛЬКО валидный JSON без markdown-обёрток.
 
 Верни JSON ровно в этом формате:

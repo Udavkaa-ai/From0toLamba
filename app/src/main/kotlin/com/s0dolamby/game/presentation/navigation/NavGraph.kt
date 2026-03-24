@@ -18,6 +18,7 @@ import com.s0dolamby.game.presentation.onboarding.OnboardingScreen
 import com.s0dolamby.game.presentation.portfolio.PortfolioScreen
 import com.s0dolamby.game.presentation.portfolio.ProjectDetailScreen
 import com.s0dolamby.game.presentation.registry.PersonaRegistryScreen
+import com.s0dolamby.game.presentation.settings.SettingsScreen
 import com.s0dolamby.game.presentation.stats.StatsScreen
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -38,6 +39,7 @@ sealed class Screen(val route: String) {
     object News : Screen("news")
     object Stats : Screen("stats")
     object PersonaRegistry : Screen("registry")
+    object Settings : Screen("settings")
 }
 
 @HiltViewModel
@@ -85,7 +87,8 @@ fun NavGraph() {
                 onNewsClick = { navController.navigate(Screen.News.route) },
                 onStatsClick = { navController.navigate(Screen.Stats.route) },
                 onRegistryClick = { navController.navigate(Screen.PersonaRegistry.route) },
-                onProjectClick = { projectId -> navController.navigate(Screen.ProjectDetail.createRoute(projectId)) }
+                onProjectClick = { projectId -> navController.navigate(Screen.ProjectDetail.createRoute(projectId)) },
+                onSettingsClick = { navController.navigate(Screen.Settings.route) }
             )
         }
         composable(Screen.Inbox.route) {
@@ -132,6 +135,16 @@ fun NavGraph() {
         }
         composable(Screen.PersonaRegistry.route) {
             PersonaRegistryScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.Settings.route) {
+            SettingsScreen(
+                onBack = { navController.popBackStack() },
+                onResetDone = {
+                    navController.navigate(Screen.Onboarding.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
         }
     }
 }

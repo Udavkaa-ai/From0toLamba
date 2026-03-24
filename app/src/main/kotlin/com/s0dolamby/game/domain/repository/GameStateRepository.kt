@@ -18,4 +18,5 @@ interface GameStateRepository {
     suspend fun appendInvestedSnapshot(invested: Double)
     suspend fun updateRankIfNeeded()
     suspend fun recordIntuitionPoints(delta: Int)
+    suspend fun clearRankUpNotification()
 }

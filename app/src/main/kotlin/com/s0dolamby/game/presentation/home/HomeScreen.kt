@@ -66,6 +66,7 @@ fun HomeScreen(
     onStatsClick: () -> Unit,
     onRegistryClick: () -> Unit,
     onProjectClick: (String) -> Unit,
+    onSettingsClick: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val gameState by viewModel.gameState.collectAsState()
@@ -132,6 +133,22 @@ fun HomeScreen(
                                     contentDescription = "Статистика",
                                     tint = TonBlue,
                                     modifier = Modifier.size(22.dp)
+                                )
+                            }
+                        }
+                        IconButton(onClick = onSettingsClick) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.White.copy(alpha = 0.08f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Default.Settings,
+                                    contentDescription = "Настройки",
+                                    tint = Color.White.copy(alpha = 0.7f),
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
                         }
@@ -262,6 +279,14 @@ fun HomeScreen(
                     viewModel.dismissUpdateCard(update)
                     onProjectClick(update.projectId)
                 }
+            )
+        }
+
+        // Rank-up celebration overlay — shown on top of everything
+        gameState?.pendingRankUp?.let { rank ->
+            RankUpCelebrationOverlay(
+                rank = rank,
+                onDismiss = viewModel::clearRankUpNotification
             )
         }
     }
@@ -644,7 +669,7 @@ private fun BalanceCard(
                             )
                         }
                     } else {
-                        Text("Следующая страница  ✦")
+                        Text("Следующий день  ✦")
                     }
                 }
             }

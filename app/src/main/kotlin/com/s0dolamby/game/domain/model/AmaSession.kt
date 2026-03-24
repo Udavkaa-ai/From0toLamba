@@ -5,7 +5,8 @@ data class AmaSession(
     val projectId: String,
     val messages: List<AmaMessage>,
     val questionCount: Int = 0,
-    val isComplete: Boolean = false
+    val isComplete: Boolean = false,
+    val isIntuitionEvaluated: Boolean = false
 )
 
 data class AmaMessage(

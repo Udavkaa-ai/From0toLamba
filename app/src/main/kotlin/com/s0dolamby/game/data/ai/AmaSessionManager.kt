@@ -7,6 +7,7 @@ import com.s0dolamby.game.domain.model.DeveloperPersona
 import com.s0dolamby.game.domain.model.MessageRole
 import com.s0dolamby.game.domain.model.Project
 import com.s0dolamby.game.domain.repository.GameConfig
+import com.s0dolamby.game.domain.repository.SettingsRepository
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -14,7 +15,8 @@ import javax.inject.Singleton
 @Singleton
 class AmaSessionManager @Inject constructor(
     private val api: OpenRouterApiService,
-    private val promptBuilder: PromptBuilder
+    private val promptBuilder: PromptBuilder,
+    private val settingsRepository: SettingsRepository
 ) {
     suspend fun sendMessage(
         project: Project,
@@ -23,6 +25,7 @@ class AmaSessionManager @Inject constructor(
         questionCount: Int,
         history: List<AmaMessage>
     ): Result<AmaMessage> = runCatching {
+        val model = settingsRepository.getSettings().textModel
         val systemPrompt = promptBuilder.buildAmaSystemPrompt(project, persona, questionCount)
         val messages = buildMessageList(systemPrompt, history, userText)
 
@@ -31,7 +34,7 @@ class AmaSessionManager @Inject constructor(
             api.chatCompletion(
                 auth = "Bearer ${BuildConfig.OPENROUTER_API_KEY}",
                 request = ChatRequest(
-                    model = GameConfig.TEXT_MODEL,
+                    model = model,
                     messages = messages,
                     maxTokens = GameConfig.MAX_TOKENS_AMA,
                     temperature = 0.85f

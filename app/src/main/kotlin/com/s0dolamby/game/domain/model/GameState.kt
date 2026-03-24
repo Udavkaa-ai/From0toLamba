@@ -11,8 +11,8 @@ enum class InvestorRank {
         NEWBIE -> "Скоморох"
         AMBASSADOR -> "Купец"
         ANALYST -> "Мудрец"
-        SHARK -> "Богатырь"
-        LAMBO_SENSEI -> "Царь"
+        SHARK -> "Боярин"
+        LAMBO_SENSEI -> "Князь"
     }
 }
 
@@ -30,5 +30,6 @@ data class GameState(
     val isOnboardingComplete: Boolean = false,
     val balanceHistory: List<Double> = emptyList(),
     val investedHistory: List<Double> = emptyList(),
-    val intuitionScore: Int = 0
+    val intuitionScore: Int = 0,
+    val pendingRankUp: InvestorRank? = null
 )

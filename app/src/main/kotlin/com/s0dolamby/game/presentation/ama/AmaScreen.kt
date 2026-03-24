@@ -9,17 +9,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -71,6 +73,16 @@ private val LieTopic.label: String get() = when (this) {
     LieTopic.ELDER_BLESSING    -> "Проверка"
     LieTopic.NOBLE_BACKING     -> "Покровитель"
     LieTopic.WITHDRAWAL_LIMITS -> "Вывод"
+}
+
+private val LieTopic.legendHint: String get() = when (this) {
+    LieTopic.PATRON_COUNT      -> "Врёт о числе вкладчиков"
+    LieTopic.DAILY_PROFIT      -> "Завышает дневной доход"
+    LieTopic.PAYOUT_DATE       -> "Называет ложные сроки выплат"
+    LieTopic.GUILD_SIZE        -> "Приукрашивает размер команды"
+    LieTopic.ELDER_BLESSING    -> "Выдуманная проверка старейшин"
+    LieTopic.NOBLE_BACKING     -> "Несуществующие покровители"
+    LieTopic.WITHDRAWAL_LIMITS -> "Скрывает ограничения на вывод"
 }
 
 // ─── Background selection ─────────────────────────────────────────────────────
@@ -159,11 +171,11 @@ fun AmaScreen(
         pickSessionQuestions(uiState.session?.id)
     }
 
-    LaunchedEffect(messages.size, sessionEnded, uiState.isSending) {
-        if (messages.isNotEmpty() && !uiState.isSending) {
-            kotlinx.coroutines.delay(60)
+    LaunchedEffect(messages.size, sessionEnded) {
+        if (messages.isNotEmpty()) {
+            kotlinx.coroutines.delay(100)
             val trailingSpacerIndex = messages.size + (if (sessionEnded) 1 else 0)
-            listState.animateScrollToItem(trailingSpacerIndex)
+            listState.scrollToItem(trailingSpacerIndex)
         }
     }
 
@@ -346,7 +358,8 @@ fun AmaScreen(
                         SessionEndBanner(
                             onInvest = viewModel::showInvestSheet,
                             onEvaluate = viewModel::evaluateIntuition,
-                            onBack = onBack
+                            onBack = onBack,
+                            intuitionEvaluated = uiState.session?.isIntuitionEvaluated == true
                         )
                     }
                 }
@@ -358,6 +371,7 @@ fun AmaScreen(
     // Invest bottom sheet
     if (uiState.showInvestSheet) {
         InvestBottomSheet(
+            freeBalance = uiState.freeBalance,
             onDismiss = viewModel::hideInvestSheet,
             onInvest = { amount -> viewModel.invest(amount) }
         )
@@ -400,6 +414,8 @@ private fun IntuitionStrip(
     selectedTopics: Set<LieTopic>,
     onToggle: (LieTopic) -> Unit
 ) {
+    var showLegend by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -409,7 +425,7 @@ private fun IntuitionStrip(
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
                 "👁 Чуйка",
@@ -418,9 +434,18 @@ private fun IntuitionStrip(
                 fontWeight = FontWeight.SemiBold
             )
             Text(
-                "— отметь в чём врёт делец:",
+                "— в чём врёт делец?",
                 style = MaterialTheme.typography.labelSmall,
                 color = Color.White.copy(alpha = 0.45f)
+            )
+            Spacer(Modifier.weight(1f))
+            Icon(
+                imageVector = Icons.Default.Help,
+                contentDescription = "Легенда чуйки",
+                tint = FairyGold.copy(alpha = 0.55f),
+                modifier = Modifier
+                    .size(16.dp)
+                    .clickable { showLegend = true }
             )
         }
         Row(
@@ -434,7 +459,7 @@ private fun IntuitionStrip(
                     onClick = { onToggle(topic) },
                     label = {
                         Text(
-                            "${topic.emoji} ${topic.label}",
+                            topic.emoji,
                             style = MaterialTheme.typography.labelSmall
                         )
                     },
@@ -454,6 +479,60 @@ private fun IntuitionStrip(
             }
         }
     }
+
+    if (showLegend) {
+        IntuitionLegendDialog(onDismiss = { showLegend = false })
+    }
+}
+
+// ─── Intuition legend dialog ──────────────────────────────────────────────────
+
+@Composable
+private fun IntuitionLegendDialog(onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text("👁 Чуйка — как работает", fontWeight = FontWeight.Bold)
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    "Отмечай пункты, в которых подозреваешь ложь. После беседы нажми «Оценить чуйку».",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.8f)
+                )
+                LieTopic.entries.forEach { topic ->
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Text(topic.emoji, style = MaterialTheme.typography.bodySmall)
+                        Column {
+                            Text(
+                                topic.label,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.White
+                            )
+                            Text(
+                                topic.legendHint,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White.copy(alpha = 0.55f)
+                            )
+                        }
+                    }
+                }
+                Text(
+                    "✓ Угадал — +1 очко чуйки\n✗ Обвинил напрасно — −1 очко чуйки",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = FairyGold.copy(alpha = 0.85f)
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Понятно") }
+        }
+    )
 }
 
 // ─── Intuition result dialog ──────────────────────────────────────────────────
@@ -671,7 +750,8 @@ private fun WelcomeMessage(projectName: String, devName: String) {
 private fun SessionEndBanner(
     onInvest: () -> Unit,
     onEvaluate: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    intuitionEvaluated: Boolean
 ) {
     FairyCard(modifier = Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -694,32 +774,64 @@ private fun SessionEndBanner(
         Button(
             onClick = onEvaluate,
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A1A8A))
+            enabled = !intuitionEvaluated,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF4A1A8A),
+                disabledContainerColor = Color(0xFF4A1A8A).copy(alpha = 0.35f)
+            )
         ) {
-            Text("👁 Оценить чуйку", color = Color.White, fontWeight = FontWeight.Bold)
+            Text(
+                if (intuitionEvaluated) "👁 Чуйка уже оценена" else "👁 Оценить чуйку",
+                color = if (intuitionEvaluated) Color.White.copy(alpha = 0.4f) else Color.White,
+                fontWeight = FontWeight.Bold
+            )
         }
         OutlinedButton(
             onClick = onBack,
             modifier = Modifier.fillMaxWidth(),
             border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f))
         ) {
-            Text("Уйти без оценки", color = FairyGold)
+            Text("Уйти", color = FairyGold)
         }
     }
 }
 
+private fun formatRubles(amount: Double): String = when {
+    amount >= 1_000_000 -> "%.1fМ ₽".format(amount / 1_000_000)
+    amount >= 1_000 -> "%.1fТ ₽".format(amount / 1_000)
+    else -> "%.0f ₽".format(amount)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun InvestBottomSheet(onDismiss: () -> Unit, onInvest: (Double) -> Unit) {
+private fun InvestBottomSheet(freeBalance: Double, onDismiss: () -> Unit, onInvest: (Double) -> Unit) {
     var amountText by remember { mutableStateOf("") }
     val amount = amountText.toDoubleOrNull()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(
             modifier = Modifier.padding(horizontal = 24.dp).padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Вложить рубли", style = MaterialTheme.typography.titleLarge)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Вложить рубли", style = MaterialTheme.typography.titleLarge)
+                Surface(
+                    color = FairyGold.copy(alpha = 0.15f),
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Text(
+                        "Свободно: ${formatRubles(freeBalance)}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = FairyGold,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
+                }
+            }
             OutlinedTextField(
                 value = amountText,
                 onValueChange = { amountText = it.filter { c -> c.isDigit() || c == '.' } },

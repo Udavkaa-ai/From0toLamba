@@ -12,9 +12,10 @@ import com.s0dolamby.game.data.db.entity.*
         AmaSessionEntity::class,
         AmaMessageEntity::class,
         UpdateEntity::class,
-        PostMortemEntity::class
+        PostMortemEntity::class,
+        SettingsEntity::class
     ],
-    version = 7,
+    version = 11,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -22,4 +23,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun playerDao(): PlayerDao
     abstract fun amaDao(): AmaDao
     abstract fun updateDao(): UpdateDao
+    abstract fun settingsDao(): SettingsDao
 }

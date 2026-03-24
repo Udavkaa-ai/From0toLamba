@@ -32,7 +32,8 @@ data class AmaUiState(
     val showInvestSheet: Boolean = false,
     val investResult: String? = null,
     val selectedLieTopics: Set<LieTopic> = emptySet(),
-    val intuitionResult: IntuitionResult? = null
+    val intuitionResult: IntuitionResult? = null,
+    val freeBalance: Double = 0.0
 )
 
 @HiltViewModel
@@ -53,6 +54,11 @@ class AmaViewModel @Inject constructor(
 
     init {
         loadSession()
+        viewModelScope.launch {
+            gameStateRepository.observeGameState().collect { state ->
+                _uiState.update { it.copy(freeBalance = state.balance) }
+            }
+        }
     }
 
     private fun loadSession() {
@@ -95,6 +101,8 @@ class AmaViewModel @Inject constructor(
 
     fun evaluateIntuition() {
         val project = _uiState.value.project ?: return
+        val sessionId = _uiState.value.session?.id ?: return
+        if (_uiState.value.session?.isIntuitionEvaluated == true) return
         val selected = _uiState.value.selectedLieTopics
         val actualLies = project.lieTopics.toSet()
 
@@ -105,6 +113,7 @@ class AmaViewModel @Inject constructor(
         viewModelScope.launch {
             gameStateRepository.recordIntuitionPoints(delta)
             gameStateRepository.updateRankIfNeeded()
+            amaRepository.markIntuitionEvaluated(sessionId)
             _uiState.update { it.copy(intuitionResult = IntuitionResult(delta, correct, falseAccusations)) }
         }
     }
