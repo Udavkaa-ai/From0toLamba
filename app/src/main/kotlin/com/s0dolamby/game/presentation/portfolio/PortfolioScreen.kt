@@ -28,6 +28,9 @@ import com.s0dolamby.game.presentation.common.theme.Warning
 
 fun Project.displayName() = claimedName
 
+private enum class SheetType { ADD_FUNDS, WITHDRAW }
+private data class ActiveSheet(val project: Project, val type: SheetType)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PortfolioScreen(
@@ -39,6 +42,9 @@ fun PortfolioScreen(
     val closedProjects by viewModel.closedProjects.collectAsState()
     val actionResult by viewModel.actionResult.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // Sheet state hoisted outside LazyColumn to avoid ModalBottomSheet-in-LazyColumn crash
+    var activeSheet by remember { mutableStateOf<ActiveSheet?>(null) }
 
     actionResult?.let { msg ->
         LaunchedEffect(msg) {
@@ -113,8 +119,8 @@ fun PortfolioScreen(
                         project = project,
                         onClick = { onProjectClick(project.id) },
                         onExit = { viewModel.exitProject(project.id) },
-                        onAddFunds = { amount -> viewModel.addFunds(project.id, amount) },
-                        onWithdraw = { amount -> viewModel.partialWithdraw(project.id, amount) }
+                        onAddFunds = { activeSheet = ActiveSheet(project, SheetType.ADD_FUNDS) },
+                        onWithdraw = { activeSheet = ActiveSheet(project, SheetType.WITHDRAW) }
                     )
                 }
             }
@@ -135,6 +141,30 @@ fun PortfolioScreen(
             }
         }
     }
+
+    // Bottom sheets rendered outside LazyColumn
+    activeSheet?.let { sheet ->
+        when (sheet.type) {
+            SheetType.ADD_FUNDS -> FundsBottomSheet(
+                title = "Довложить в проект",
+                confirmLabel = "Довложить",
+                maxAmount = null,
+                onDismiss = { activeSheet = null },
+                onConfirm = { amount ->
+                    viewModel.addFunds(sheet.project.id, amount)
+                    activeSheet = null
+                }
+            )
+            SheetType.WITHDRAW -> WithdrawBottomSheet(
+                project = sheet.project,
+                onDismiss = { activeSheet = null },
+                onConfirm = { amount ->
+                    viewModel.partialWithdraw(sheet.project.id, amount)
+                    activeSheet = null
+                }
+            )
+        }
+    }
     } // ScreenBackground
 }
 
@@ -144,12 +174,10 @@ private fun PortfolioProjectCard(
     project: Project,
     onClick: () -> Unit,
     onExit: () -> Unit,
-    onAddFunds: (Double) -> Unit,
-    onWithdraw: (Double) -> Unit
+    onAddFunds: () -> Unit,
+    onWithdraw: () -> Unit
 ) {
     val pnl = project.currentValueRubles - project.investedAmountRubles
-    var showAddFunds by remember { mutableStateOf(false) }
-    var showWithdraw by remember { mutableStateOf(false) }
 
     FairyCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -197,14 +225,14 @@ private fun PortfolioProjectCard(
         Spacer(Modifier.height(4.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(
-                onClick = { showAddFunds = true },
+                onClick = onAddFunds,
                 modifier = Modifier.weight(1f),
                 enabled = !project.isWithdrawalLocked,
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
                 border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.4f))
             ) { Text("Довложить") }
             OutlinedButton(
-                onClick = { showWithdraw = true },
+                onClick = onWithdraw,
                 modifier = Modifier.weight(1f),
                 enabled = !project.isWithdrawalLocked,
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
@@ -218,23 +246,6 @@ private fun PortfolioProjectCard(
             colors = ButtonDefaults.outlinedButtonColors(contentColor = Error),
             border = androidx.compose.foundation.BorderStroke(1.dp, Error.copy(alpha = 0.4f))
         ) { Text("Покинуть дело") }
-    }
-
-    if (showAddFunds) {
-        FundsBottomSheet(
-            title = "Довложить в проект",
-            confirmLabel = "Довложить",
-            maxAmount = null,
-            onDismiss = { showAddFunds = false },
-            onConfirm = { amount -> onAddFunds(amount); showAddFunds = false }
-        )
-    }
-    if (showWithdraw) {
-        WithdrawBottomSheet(
-            project = project,
-            onDismiss = { showWithdraw = false },
-            onConfirm = { amount -> onWithdraw(amount); showWithdraw = false }
-        )
     }
 }
 
