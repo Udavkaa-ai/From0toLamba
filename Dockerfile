@@ -5,15 +5,18 @@ RUN apk add --no-cache openssl
 
 WORKDIR /app/tg/server
 
-# Install dependencies first (cache layer)
+# Install dependencies (включая devDeps для tsx)
 COPY tg/server/package*.json ./
 COPY tg/server/prisma ./prisma/
 RUN npm install
 
-# Copy source and build
+# Copy source
 COPY tg/server ./
-RUN npx prisma generate && npm run build
+
+# Generate Prisma client
+RUN npx prisma generate
 
 EXPOSE 3000
 
-CMD ["node", "dist/index.js"]
+# Запуск через tsx — не нужна компиляция в dist
+CMD ["npx", "tsx", "src/index.ts"]
