@@ -17,4 +17,5 @@ ENV NODE_PATH=/deps/node_modules
 
 EXPOSE 3000
 
-CMD ["node", "/deps/node_modules/.bin/tsx", "src/index.ts"]
+# Синхронизируем схему БД перед стартом, затем запускаем сервер
+CMD ["sh", "-c", "cd /deps && DATABASE_URL=$DATABASE_URL npx prisma db push --accept-data-loss --skip-generate && node /deps/node_modules/.bin/tsx /app/tg/server/src/index.ts"]
