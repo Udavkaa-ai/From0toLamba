@@ -9,6 +9,7 @@ import com.s0dolamby.game.data.logging.AppLogger
 import com.s0dolamby.game.domain.model.Project
 import com.s0dolamby.game.domain.repository.GameConfig
 import com.s0dolamby.game.domain.repository.ProjectRepository
+import com.s0dolamby.game.domain.repository.SettingsRepository
 import javax.inject.Inject
 
 /**
@@ -22,15 +23,20 @@ import javax.inject.Inject
 class GenerateProjectBannerUseCase @Inject constructor(
     private val api: OpenRouterApiService,
     private val promptBuilder: PromptBuilder,
-    private val projectRepository: ProjectRepository
+    private val projectRepository: ProjectRepository,
+    private val settingsRepository: SettingsRepository
 ) {
     suspend operator fun invoke(project: Project): Result<String> = runCatching {
+        if (!settingsRepository.getSettings().imageGenerationEnabled) {
+            return@runCatching ""
+        }
         // Step 1: unique visual concept from DeepSeek — keeps every banner distinct
+        val textModel = settingsRepository.getSettings().textModel
         val concept = try {
             val resp = api.chatCompletion(
                 auth = "Bearer ${BuildConfig.OPENROUTER_API_KEY}",
                 request = ChatRequest(
-                    model = GameConfig.TEXT_MODEL,
+                    model = textModel,
                     messages = listOf(
                         ChatMessage("user", promptBuilder.buildBannerConceptPrompt(project.claimedName))
                     ),

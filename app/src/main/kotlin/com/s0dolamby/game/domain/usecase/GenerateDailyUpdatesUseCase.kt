@@ -9,6 +9,7 @@ import com.s0dolamby.game.data.ai.PromptBuilder
 import com.s0dolamby.game.data.logging.AppLogger
 import com.s0dolamby.game.domain.model.*
 import com.s0dolamby.game.domain.repository.GameConfig
+import com.s0dolamby.game.domain.repository.SettingsRepository
 import com.s0dolamby.game.domain.repository.UpdateRepository
 import java.util.UUID
 import javax.inject.Inject
@@ -17,16 +18,18 @@ class GenerateDailyUpdatesUseCase @Inject constructor(
     private val api: OpenRouterApiService,
     private val promptBuilder: PromptBuilder,
     private val updateRepository: UpdateRepository,
-    private val gson: Gson
+    private val gson: Gson,
+    private val settingsRepository: SettingsRepository
 ) {
     suspend operator fun invoke(
         project: Project,
         event: AnnouncementType? = null
     ): Result<DailyUpdate> = runCatching {
+        val model = settingsRepository.getSettings().textModel
         val response = api.chatCompletion(
             auth = "Bearer ${BuildConfig.OPENROUTER_API_KEY}",
             request = ChatRequest(
-                model = GameConfig.TEXT_MODEL,
+                model = model,
                 messages = listOf(
                     ChatMessage("user", promptBuilder.buildDailyUpdatePrompt(project, project.daysUntilCollapse, event))
                 ),

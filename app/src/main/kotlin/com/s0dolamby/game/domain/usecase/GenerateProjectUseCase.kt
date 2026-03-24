@@ -10,6 +10,7 @@ import com.s0dolamby.game.data.registry.ProjectRegistry
 import com.s0dolamby.game.domain.model.*
 import com.s0dolamby.game.domain.repository.GameConfig
 import com.s0dolamby.game.domain.repository.ProjectRepository
+import com.s0dolamby.game.domain.repository.SettingsRepository
 import java.util.UUID
 import javax.inject.Inject
 import kotlin.random.Random
@@ -19,7 +20,8 @@ class GenerateProjectUseCase @Inject constructor(
     private val promptBuilder: PromptBuilder,
     private val projectRegistry: ProjectRegistry,
     private val personaRegistry: PersonaRegistry,
-    private val projectRepository: ProjectRepository
+    private val projectRepository: ProjectRepository,
+    private val settingsRepository: SettingsRepository
 ) {
     suspend operator fun invoke(isOnboarding: Boolean = false): Result<Project> = runCatching {
         val template = if (isOnboarding) {
@@ -72,10 +74,11 @@ class GenerateProjectUseCase @Inject constructor(
     }
 
     private suspend fun generateDeveloperName(archetype: PersonaArchetype): String = try {
+        val model = settingsRepository.getSettings().textModel
         val response = api.chatCompletion(
             auth = "Bearer ${BuildConfig.OPENROUTER_API_KEY}",
             request = ChatRequest(
-                model = GameConfig.TEXT_MODEL,
+                model = model,
                 messages = listOf(ChatMessage("user", promptBuilder.buildDeveloperNamePrompt(archetype.name))),
                 maxTokens = GameConfig.MAX_TOKENS_NAME_GEN
             )
