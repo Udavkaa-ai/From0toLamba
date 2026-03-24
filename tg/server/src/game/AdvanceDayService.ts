@@ -12,13 +12,6 @@ const NEW_PROJECTS_PER_DAY_MAX = 3
 export async function advanceDay(userId: number): Promise<{ newRank?: InvestorRank }> {
   const gameState = await prisma.gameState.findUniqueOrThrow({ where: { userId } })
 
-  // Проверяем, не прошло ли уже 24 часа с последнего advance
-  if (gameState.lastAdvancedAt) {
-    const hoursSince = (Date.now() - gameState.lastAdvancedAt.getTime()) / 3600000
-    if (hoursSince < 20) {
-      throw new Error('ADVANCE_TOO_SOON')
-    }
-  }
 
   const activeProjects = await prisma.project.findMany({
     where: { userId, isActive: true },
