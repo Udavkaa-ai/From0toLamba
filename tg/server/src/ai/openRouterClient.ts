@@ -179,8 +179,9 @@ export async function startAmaSession(input: AmaSessionInput): Promise<string> {
       max_tokens: 200,
     })
     return response.choices[0]?.message?.content ?? `Здравствуй! Я ${developerName}, хозяин дела «${projectName}». Задавай вопросы!`
-  } catch {
-    return `Здравствуй! Я ${developerName}, хозяин дела «${projectName}». Задавай вопросы!`
+  } catch (err) {
+    console.error('[AMA startSession] OpenRouter error:', err)
+    throw err
   }
 }
 
@@ -229,8 +230,9 @@ export async function sendAmaMessage(input: SendAmaMessageInput): Promise<string
       max_tokens: 200,
     })
     return response.choices[0]?.message?.content ?? 'Хороший вопрос! Дело идёт на лад.'
-  } catch {
-    return 'Хороший вопрос! Дело идёт на лад.'
+  } catch (err) {
+    console.error('[AMA sendMessage] OpenRouter error:', err)
+    throw err
   }
 }
 
