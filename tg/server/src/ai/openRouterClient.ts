@@ -24,7 +24,7 @@ const client = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY ?? '',
   defaultHeaders: {
     'HTTP-Referer': process.env.MINI_APP_URL ?? '',
-    'X-Title': 'Из грязи в князи',
+    'X-Title': 'Iz gryazi v knyazi',
   },
 })
 
