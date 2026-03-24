@@ -293,7 +293,6 @@ private fun FundsBottomSheet(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun WithdrawBottomSheet(
     project: Project,
@@ -303,98 +302,66 @@ private fun WithdrawBottomSheet(
     var amountText by remember { mutableStateOf("") }
     val amount = amountText.toDoubleOrNull()
 
-    // Per-type limits
-    val withdrawLimit: Double? = when (project.type) {
-        ProjectType.POTION_BREW, ProjectType.GUILD_SCHEME -> project.investedAmountRubles * 0.25
-        else -> project.currentValueRubles
-    }
+    val isLongTerm = project.type == ProjectType.POTION_BREW || project.type == ProjectType.GUILD_SCHEME
     val hasFee = project.type == ProjectType.CARD_GAME || project.type == ProjectType.TREASURE_HUNT
-    val effectiveMax = (withdrawLimit ?: project.currentValueRubles).coerceAtLeast(0.0)
+    val effectiveMax = if (isLongTerm) {
+        (project.investedAmountRubles * 0.25).coerceAtLeast(0.0)
+    } else {
+        project.currentValueRubles.coerceAtLeast(0.0)
+    }
     val isValid = amount != null && amount >= 5.0 && amount <= effectiveMax
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
-        Column(
-            modifier = Modifier.padding(horizontal = 24.dp).padding(bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text("Вывести из дела", style = MaterialTheme.typography.titleLarge)
-
-            // Limit/fee info
-            when (project.type) {
-                ProjectType.POTION_BREW, ProjectType.GUILD_SCHEME -> {
-                    Surface(
-                        color = Warning.copy(alpha = 0.12f),
-                        shape = MaterialTheme.shapes.small
-                    ) {
-                        Text(
-                            "⚠ Лимит: не более 25% от вложенного за раз (%.0f ₽). Остаток выводится частями.".format(effectiveMax),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Warning,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                        )
-                    }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Вывести из дела") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                when {
+                    isLongTerm -> Text(
+                        "⚠ Лимит: не более 25% от вложенного за раз (%.0f ₽)".format(effectiveMax),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Warning
+                    )
+                    hasFee -> Text(
+                        "⚠ Комиссия за срочный вывод — 25%. Получишь 75% от суммы.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Error
+                    )
                 }
-                ProjectType.CARD_GAME, ProjectType.TREASURE_HUNT -> {
-                    Surface(
-                        color = Error.copy(alpha = 0.12f),
-                        shape = MaterialTheme.shapes.small
-                    ) {
-                        Text(
-                            "⚠ Комиссия за срочный вывод — 25%. Получишь %.0f%% от суммы.".format(75.0),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Error,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                        )
-                    }
-                }
-                else -> {}
-            }
-
-            OutlinedTextField(
-                value = amountText,
-                onValueChange = { amountText = it.filter { c -> c.isDigit() || c == '.' } },
-                label = { Text("Сумма в рублях") },
-                suffix = { Text("₽") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            // Available / max hint
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
+                OutlinedTextField(
+                    value = amountText,
+                    onValueChange = { amountText = it.filter { c -> c.isDigit() || c == '.' } },
+                    label = { Text("Сумма в рублях") },
+                    suffix = { Text("₽") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
                 Text(
-                    "Доступно: %.0f ₽".format(project.currentValueRubles),
+                    "Доступно: %.0f ₽ • Лимит: %.0f ₽".format(project.currentValueRubles, effectiveMax),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Text(
-                    "Лимит: %.0f ₽".format(effectiveMax),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (effectiveMax < project.currentValueRubles) Warning
-                            else MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                if (hasFee && amount != null && amount >= 5.0) {
+                    Text(
+                        "Получишь на руки: %.0f ₽".format(amount * 0.75),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = FairyGold,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
-
-            // Preview of what they'll actually receive
-            if (hasFee && amount != null && amount >= 5.0) {
-                Text(
-                    "Получишь на руки: %.0f ₽".format(amount * 0.75),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = FairyGold,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
+        },
+        confirmButton = {
             Button(
                 onClick = { amount?.let { onConfirm(it) } },
                 enabled = isValid,
-                modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = FairyGold, contentColor = Color(0xFF1A0A00))
             ) { Text("Вывести", fontWeight = FontWeight.SemiBold) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Отмена") }
         }
-    }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

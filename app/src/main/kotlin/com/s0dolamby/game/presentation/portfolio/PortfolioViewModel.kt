@@ -8,6 +8,7 @@ import com.s0dolamby.game.domain.usecase.ExitProjectUseCase
 import com.s0dolamby.game.domain.usecase.InvestUseCase
 import com.s0dolamby.game.domain.usecase.PartialWithdrawUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -48,8 +49,12 @@ class PortfolioViewModel @Inject constructor(
     }
 
     fun partialWithdraw(projectId: String, amountRubles: Double) {
-        viewModelScope.launch {
-            partialWithdrawUseCase(projectId, amountRubles)
+        val handler = CoroutineExceptionHandler { _, e ->
+            _actionResult.value = "Ошибка: ${e.message}"
+        }
+        viewModelScope.launch(handler) {
+            runCatching { partialWithdrawUseCase(projectId, amountRubles) }
+                .getOrElse { Result.failure(it) }
                 .onSuccess { amount -> _actionResult.value = "Выведено %.0f ₽".format(amount) }
                 .onFailure { _actionResult.value = "Ошибка: ${it.message}" }
         }
