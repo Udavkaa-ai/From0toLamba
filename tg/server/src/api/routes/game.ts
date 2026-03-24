@@ -4,7 +4,6 @@ import { telegramAuthHook } from '../../middleware/telegramAuth'
 import { advanceDay } from '../../game/AdvanceDayService'
 import { generateOnboardingProject } from '../../game/GenerateProjectService'
 import { toPublicDTO } from '../../game/projectUtils'
-import { InvestorRank } from '../../game/types'
 
 export async function gameRoutes(app: FastifyInstance) {
 

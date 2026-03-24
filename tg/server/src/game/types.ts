@@ -145,35 +145,3 @@ export interface ProjectPublicDTO {
   currentUserCount: number
 }
 
-/** DTO проекта с PostMortem (только для закрытых дел) */
-export interface ProjectClosedDTO extends ProjectPublicDTO {
-  postMortem: {
-    revealedArchetype: PersonaArchetype
-    fate: ProjectFate
-    lieTopics: LieTopic[]
-    analysis: string
-    investedAmount: number
-    returnedAmount: number
-    profitPercent: number
-    daysActive: number
-    intuitionDelta: number
-  } | null
-}
-
-/** GameState DTO для клиента */
-export interface GameStateDTO {
-  balance: number
-  currentDay: number
-  investorRank: InvestorRank
-  intuitionScore: number
-  scamsDetected: number
-  scamsMissed: number
-  dayStreak: number
-  isOnboardingComplete: boolean
-  totalInvested: number
-  totalReturned: number
-  balanceHistory: number[]
-  investedHistory: number[]
-  pendingRankUp: InvestorRank | null
-  activeProjects: ProjectPublicDTO[]
-}

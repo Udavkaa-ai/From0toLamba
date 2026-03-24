@@ -1,12 +1,11 @@
 import { prisma } from '../db/prisma'
-import { ProjectFate, ProjectType, FATE_CONFIG, InvestorRank, WITHDRAWAL_RULES } from './types'
+import { ProjectFate, FATE_CONFIG, InvestorRank } from './types'
 import { computeRank } from './rankService'
 import { randomInRange as rng, randomIntInRange as irng } from './projectUtils'
 import { generateDailyUpdate, generatePostMortem } from '../ai/openRouterClient'
 import { generateProject } from './GenerateProjectService'
-import { bot } from '../bot/bot'
+import { getBot } from '../bot/bot'
 
-const MAX_ACTIVE_PROJECTS = 5
 const NEW_PROJECTS_PER_DAY_MIN = 1
 const NEW_PROJECTS_PER_DAY_MAX = 3
 
@@ -181,11 +180,11 @@ export async function advanceDay(userId: number): Promise<{ newRank?: InvestorRa
   // Telegram-уведомление
   try {
     const user = await prisma.user.findUnique({ where: { id: userId }, select: { telegramId: true } })
-    if (user && bot) {
+    if (user && process.env.TELEGRAM_BOT_TOKEN) {
       const msg = rankChanged
         ? `🎉 Новый день ${newDay}! И у тебя новый купеческий чин: *${newRank}*!`
         : `📜 День ${newDay} наступил в Лукоморье! Проверь свои дела и входящие грамоты.`
-      await bot.api.sendMessage(user.telegramId, msg, { parse_mode: 'Markdown' })
+      await getBot().api.sendMessage(user.telegramId, msg, { parse_mode: 'Markdown' })
     }
   } catch {
     // Уведомление не критично

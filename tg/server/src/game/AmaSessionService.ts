@@ -3,7 +3,6 @@ import { LieTopic } from './types'
 import { startAmaSession, sendAmaMessage } from '../ai/openRouterClient'
 
 const MAX_QUESTIONS = 10
-const ONBOARDING_BONUS = 50
 
 export async function startSession(userId: number, projectId: string): Promise<{
   sessionId: string
