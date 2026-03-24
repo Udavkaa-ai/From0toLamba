@@ -17,7 +17,7 @@ export function HomePage() {
   const qc = useQueryClient()
   const { setGameState, gameState } = useGameStore()
 
-  const { isLoading } = useQuery({
+  const { isLoading, isError, error } = useQuery({
     queryKey: ['gameState'],
     queryFn: async () => {
       const data = await api.game.getState()
@@ -32,11 +32,43 @@ export function HomePage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['gameState'] }),
   })
 
-  if (isLoading || !gameState) {
+  if (isLoading) {
     return (
       <ScreenBackground>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100dvh', color: colors.fairyGold, fontSize: '24px' }}>
           ✦
+        </div>
+      </ScreenBackground>
+    )
+  }
+
+  if (isError || !gameState) {
+    return (
+      <ScreenBackground>
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '100dvh', gap: '12px', padding: '24px' }}>
+          <div style={{ color: colors.fairyGold, fontSize: '32px' }}>⚠️</div>
+          <div style={{ color: colors.textPrimary, fontSize: '16px', fontWeight: 600, textAlign: 'center' }}>
+            Не удалось загрузить данные
+          </div>
+          <div style={{ color: colors.textMuted, fontSize: '13px', textAlign: 'center' }}>
+            {(error as Error)?.message ?? 'Ошибка соединения с сервером'}
+          </div>
+          <button
+            onClick={() => qc.invalidateQueries({ queryKey: ['gameState'] })}
+            style={{
+              marginTop: '8px',
+              padding: '10px 24px',
+              background: `linear-gradient(135deg, ${colors.enchantedPurple}, ${colors.nightBlue})`,
+              border: `1px solid ${colors.fairyGold}40`,
+              borderRadius: '12px',
+              color: colors.fairyGold,
+              fontSize: '14px',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Попробовать снова
+          </button>
         </div>
       </ScreenBackground>
     )
