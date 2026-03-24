@@ -20,7 +20,27 @@ export async function startSession(userId: number, projectId: string): Promise<{
       where: { sessionId: existing.id },
       orderBy: { createdAt: 'asc' },
     })
-    return { sessionId: existing.id, firstMessage: messages[0]?.content ?? '' }
+    // Если сессия есть, но сообщений нет — значит AI упал при первом запуске
+    // Генерируем первое сообщение заново
+    if (messages.length === 0) {
+      const firstMessage = await startAmaSession({
+        projectId,
+        archetype: project.personaArchetype as PersonaArchetype,
+        developerName: project.developerName,
+        projectName: project.name,
+        type: project.type as ProjectType,
+        claimedAPY: project.claimedAPY,
+        description: project.description,
+        lieTopics: project.lieTopics as LieTopic[],
+        truthTopics: project.truthTopics as LieTopic[],
+        npcTruthParams: project.npcTruthParams as NpcTruthParams | null,
+      })
+      await prisma.amaMessage.create({
+        data: { sessionId: existing.id, role: 'assistant', content: firstMessage },
+      })
+      return { sessionId: existing.id, firstMessage }
+    }
+    return { sessionId: existing.id, firstMessage: messages[0].content }
   }
 
   // Переносим из Inbox в активный статус (не вложение — просто "открыли беседу")

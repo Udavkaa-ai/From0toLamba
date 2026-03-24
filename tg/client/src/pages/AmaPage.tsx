@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ScreenBackground } from '@/components/ScreenBackground'
 import { FairyCard } from '@/components/FairyCard'
 import { api } from '@/api/client'
+import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing } from '@/theme'
 
 const LIE_TOPICS = [
@@ -21,10 +22,13 @@ export function AmaPage() {
   const { projectId } = useParams<{ projectId: string }>()
   const navigate = useNavigate()
   const qc = useQueryClient()
+  const { gameState, setGameState } = useGameStore()
   const [input, setInput] = useState('')
   const [selectedTopics, setSelectedTopics] = useState<Set<string>>(new Set())
   const [showInvestSheet, setShowInvestSheet] = useState(false)
   const [showIntuitionResult, setShowIntuitionResult] = useState<any>(null)
+  const [onboardingBonus, setOnboardingBonus] = useState<number | null>(null)
+  const onboardingTriggeredRef = useRef(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Инициализируем/получаем сессию
@@ -34,7 +38,7 @@ export function AmaPage() {
       try {
         return await api.ama.getSession(projectId!)
       } catch {
-        const started = await api.ama.start(projectId!)
+        await api.ama.start(projectId!)
         return api.ama.getSession(projectId!)
       }
     },
@@ -56,6 +60,23 @@ export function AmaPage() {
       qc.invalidateQueries({ queryKey: ['ama', projectId] })
     },
   })
+
+  // Онбординг-бонус: выдаём 50 ₽ когда первая беседа завершена
+  useEffect(() => {
+    if (
+      session?.isComplete &&
+      gameState?.isOnboardingComplete === false &&
+      !onboardingTriggeredRef.current
+    ) {
+      onboardingTriggeredRef.current = true
+      api.game.completeOnboarding().then((res: any) => {
+        if (res.bonusAwarded) {
+          setOnboardingBonus(res.bonusAwarded)
+          qc.invalidateQueries({ queryKey: ['gameState'] })
+        }
+      }).catch(() => {})
+    }
+  }, [session?.isComplete, gameState?.isOnboardingComplete])
 
   const handleSend = () => {
     if (!input.trim() || sendMutation.isPending) return
@@ -196,6 +217,29 @@ export function AmaPage() {
 
           <div ref={messagesEndRef} />
         </div>
+
+        {/* Онбординг-бонус */}
+        {onboardingBonus && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            style={{
+              margin: `${spacing.md} ${spacing.lg}`,
+              padding: spacing.md,
+              background: `${colors.fairyGold}20`,
+              border: `1px solid ${colors.fairyGold}`,
+              borderRadius: '12px',
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '16px' }}>
+              🎉 +{onboardingBonus} ₽ на счёт!
+            </div>
+            <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
+              Онбординг-бонус за первую беседу
+            </div>
+          </motion.div>
+        )}
 
         {/* Кнопки действий после завершения */}
         {session.isComplete && (
