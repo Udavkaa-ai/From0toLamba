@@ -65,11 +65,11 @@ private val InvestorRank.congratsTitle: String get() = when (this) {
 }
 
 private val InvestorRank.congratsText: String get() = when (this) {
-    InvestorRank.NEWBIE      -> "Пустой кошель — не приговор. Всякий Царь начинал Скоморохом."
+    InvestorRank.NEWBIE      -> "Пустой кошель — не приговор. Всякий Князь начинал Скоморохом."
     InvestorRank.AMBASSADOR  -> "Ты вступил на купеческий путь. Первые рубли — первые уроки. Слушай чуйку."
     InvestorRank.ANALYST     -> "Твой взгляд острее дьячьего пера. Мошенники дрожат — Мудрец пришёл на ярмарку."
-    InvestorRank.SHARK       -> "Богатырская хватка! Дельцы трижды думают, прежде чем явиться к тебе с ложью."
-    InvestorRank.LAMBO_SENSEI -> "Царь! Отныне имя твоё вписано в Летопись. Никакой обман тебя не проведёт."
+    InvestorRank.SHARK       -> "Боярская хватка! Дельцы трижды думают, прежде чем явиться к тебе с ложью."
+    InvestorRank.LAMBO_SENSEI -> "Князь! Отныне имя твоё вписано в Летопись. Никакой обман тебя не проведёт."
 }
 
 private val burstColors = listOf(

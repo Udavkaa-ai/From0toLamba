@@ -3,6 +3,7 @@ package com.s0dolamby.game.presentation.portfolio
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.s0dolamby.game.domain.model.Project
+import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.s0dolamby.game.domain.repository.ProjectRepository
 import com.s0dolamby.game.domain.usecase.ExitProjectUseCase
 import com.s0dolamby.game.domain.usecase.InvestUseCase
@@ -17,10 +18,15 @@ import javax.inject.Inject
 @HiltViewModel
 class PortfolioViewModel @Inject constructor(
     private val projectRepository: ProjectRepository,
+    private val gameStateRepository: GameStateRepository,
     private val exitProjectUseCase: ExitProjectUseCase,
     private val investUseCase: InvestUseCase,
     private val partialWithdrawUseCase: PartialWithdrawUseCase
 ) : ViewModel() {
+
+    val freeBalance: StateFlow<Double> = gameStateRepository.observeGameState()
+        .map { it.balance }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
     val activeProjects: StateFlow<List<Project>> = projectRepository.getActiveProjects()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())

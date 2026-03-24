@@ -32,7 +32,8 @@ data class AmaUiState(
     val showInvestSheet: Boolean = false,
     val investResult: String? = null,
     val selectedLieTopics: Set<LieTopic> = emptySet(),
-    val intuitionResult: IntuitionResult? = null
+    val intuitionResult: IntuitionResult? = null,
+    val freeBalance: Double = 0.0
 )
 
 @HiltViewModel
@@ -53,6 +54,11 @@ class AmaViewModel @Inject constructor(
 
     init {
         loadSession()
+        viewModelScope.launch {
+            gameStateRepository.observeGameState().collect { state ->
+                _uiState.update { it.copy(freeBalance = state.balance) }
+            }
+        }
     }
 
     private fun loadSession() {

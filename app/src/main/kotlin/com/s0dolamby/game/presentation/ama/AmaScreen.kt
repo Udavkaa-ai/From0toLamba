@@ -371,6 +371,7 @@ fun AmaScreen(
     // Invest bottom sheet
     if (uiState.showInvestSheet) {
         InvestBottomSheet(
+            freeBalance = uiState.freeBalance,
             onDismiss = viewModel::hideInvestSheet,
             onInvest = { amount -> viewModel.invest(amount) }
         )
@@ -795,18 +796,42 @@ private fun SessionEndBanner(
     }
 }
 
+private fun formatRubles(amount: Double): String = when {
+    amount >= 1_000_000 -> "%.1fМ ₽".format(amount / 1_000_000)
+    amount >= 1_000 -> "%.1fТ ₽".format(amount / 1_000)
+    else -> "%.0f ₽".format(amount)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun InvestBottomSheet(onDismiss: () -> Unit, onInvest: (Double) -> Unit) {
+private fun InvestBottomSheet(freeBalance: Double, onDismiss: () -> Unit, onInvest: (Double) -> Unit) {
     var amountText by remember { mutableStateOf("") }
     val amount = amountText.toDoubleOrNull()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(
             modifier = Modifier.padding(horizontal = 24.dp).padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Вложить рубли", style = MaterialTheme.typography.titleLarge)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Вложить рубли", style = MaterialTheme.typography.titleLarge)
+                Surface(
+                    color = FairyGold.copy(alpha = 0.15f),
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Text(
+                        "Свободно: ${formatRubles(freeBalance)}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = FairyGold,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
+                }
+            }
             OutlinedTextField(
                 value = amountText,
                 onValueChange = { amountText = it.filter { c -> c.isDigit() || c == '.' } },

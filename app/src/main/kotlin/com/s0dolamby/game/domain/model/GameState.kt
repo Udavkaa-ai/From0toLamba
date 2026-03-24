@@ -11,8 +11,8 @@ enum class InvestorRank {
         NEWBIE -> "Скоморох"
         AMBASSADOR -> "Купец"
         ANALYST -> "Мудрец"
-        SHARK -> "Богатырь"
-        LAMBO_SENSEI -> "Царь"
+        SHARK -> "Боярин"
+        LAMBO_SENSEI -> "Князь"
     }
 }
 

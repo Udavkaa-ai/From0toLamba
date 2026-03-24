@@ -4,6 +4,7 @@ import com.s0dolamby.game.domain.model.AmaMessage
 import com.s0dolamby.game.domain.model.AnnouncementType
 import com.s0dolamby.game.domain.model.DeveloperPersona
 import com.s0dolamby.game.domain.model.Project
+import com.s0dolamby.game.domain.model.ProjectFate
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -100,9 +101,12 @@ $topicInstructions
         // Derive a semantic tone — never expose raw daysUntilCollapse to the AI
         // «критично» only after the project has been active ≥ 3 days to avoid
         // immediate red flags on day-1 for short-lived scam projects
+        val isScamFate = project.fate == ProjectFate.INSTANT_SCAM || project.fate == ProjectFate.SLOW_DRAIN
         val tone = when {
             event != null -> null  // event overrides tone
             daysUntilCollapse == null -> "спокойно — дело стабильно, без ограничений по сроку"
+            !isScamFate && daysUntilCollapse <= 5 ->
+                "дело штатно завершает работу через $daysUntilCollapse дн. — хозяин объявляет о плановом закрытии и возврате всех средств вкладчикам"
             daysUntilCollapse >= 5 || project.daysSinceJoined < 3 ->
                 "спокойно — дело работает, никаких тревожных сигналов"
             daysUntilCollapse in 3..4 ->

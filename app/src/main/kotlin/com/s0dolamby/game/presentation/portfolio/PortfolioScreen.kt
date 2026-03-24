@@ -39,6 +39,7 @@ fun PortfolioScreen(
     onProjectClick: (String) -> Unit = {},
     viewModel: PortfolioViewModel = hiltViewModel()
 ) {
+    val freeBalance by viewModel.freeBalance.collectAsState()
     val activeProjects by viewModel.activeProjects.collectAsState()
     val closedProjects by viewModel.closedProjects.collectAsState()
     val actionResult by viewModel.actionResult.collectAsState()
@@ -165,6 +166,7 @@ fun PortfolioScreen(
                 title = "Довложить в проект",
                 confirmLabel = "Довложить",
                 maxAmount = null,
+                freeBalance = freeBalance,
                 onDismiss = { activeSheet = null },
                 onConfirm = { amount ->
                     viewModel.addFunds(sheet.project.id, amount)
@@ -265,12 +267,19 @@ private fun PortfolioProjectCard(
     }
 }
 
+private fun formatRubles(amount: Double): String = when {
+    amount >= 1_000_000 -> "%.1fМ ₽".format(amount / 1_000_000)
+    amount >= 1_000 -> "%.1fТ ₽".format(amount / 1_000)
+    else -> "%.0f ₽".format(amount)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FundsBottomSheet(
     title: String,
     confirmLabel: String,
     maxAmount: Double?,
+    freeBalance: Double,
     onDismiss: () -> Unit,
     onConfirm: (Double) -> Unit
 ) {
@@ -284,7 +293,24 @@ private fun FundsBottomSheet(
             modifier = Modifier.padding(horizontal = 24.dp).padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(title, style = MaterialTheme.typography.titleLarge)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(title, style = MaterialTheme.typography.titleLarge)
+                Surface(
+                    color = FairyGold.copy(alpha = 0.15f),
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Text(
+                        "Свободно: ${formatRubles(freeBalance)}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = FairyGold,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
+                }
+            }
             OutlinedTextField(
                 value = amountText,
                 onValueChange = { amountText = it.filter { c -> c.isDigit() || c == '.' } },
