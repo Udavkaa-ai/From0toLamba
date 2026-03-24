@@ -1,5 +1,7 @@
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
+import staticFiles from '@fastify/static'
+import path from 'path'
 
 import { gameRoutes } from './api/routes/game'
 import { projectRoutes } from './api/routes/projects'
@@ -42,6 +44,21 @@ async function main() {
 
   // Health check
   app.get('/health', async () => ({ ok: true, ts: new Date().toISOString() }))
+
+  // Статика клиента (SPA)
+  const publicDir = path.join(__dirname, '..', 'public')
+  await app.register(staticFiles, {
+    root: publicDir,
+    prefix: '/',
+    wildcard: false,
+  })
+  // SPA fallback — все неизвестные GET → index.html
+  app.setNotFoundHandler(async (req, reply) => {
+    if (req.method === 'GET' && !req.url.startsWith('/api') && !req.url.startsWith('/bot')) {
+      return reply.sendFile('index.html', publicDir)
+    }
+    reply.code(404).send({ message: `Route ${req.method}:${req.url} not found`, error: 'Not Found', statusCode: 404 })
+  })
 
   // Graceful shutdown
   const signals = ['SIGTERM', 'SIGINT'] as const
