@@ -337,7 +337,7 @@ private fun WithdrawBottomSheet(
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 when {
                     isLongTerm -> Text(
-                        "⚠ Лимит: не более 25% от вложенного за раз (%.0f ₽)".format(effectiveMax),
+                        "⚠ Лимит: не более 25%% от вложенного за раз (%.0f ₽)".format(effectiveMax),
                         style = MaterialTheme.typography.bodySmall,
                         color = Warning
                     )
