@@ -39,6 +39,8 @@ data class Project(
     val realDailyYieldRubles: Double,
     val lieTopics: List<LieTopic>,
     val truthTopics: List<LieTopic>,
+    /** Канонические факты: по truthTopics делец всегда называет именно эти значения */
+    val npcTruthParams: NpcTruthParams,
 
     // Публичные параметры — видит игрок
     val developerName: String,

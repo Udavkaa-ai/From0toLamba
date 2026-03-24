@@ -14,7 +14,7 @@ import com.s0dolamby.game.data.db.entity.*
         UpdateEntity::class,
         PostMortemEntity::class
     ],
-    version = 9,
+    version = 10,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

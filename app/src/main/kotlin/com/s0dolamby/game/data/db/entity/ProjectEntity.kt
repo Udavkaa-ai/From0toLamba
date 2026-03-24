@@ -18,6 +18,7 @@ data class ProjectEntity(
     val realDailyYieldRubles: Double,
     val lieTopics: String,       // JSON array as string
     val truthTopics: String,     // JSON array as string
+    val npcTruthParams: String = "{}",  // JSON object
 
     // Публичные поля
     val developerName: String,
@@ -62,6 +63,8 @@ fun ProjectEntity.toDomain(gson: com.google.gson.Gson): Project = Project(
     realDailyYieldRubles = realDailyYieldRubles,
     lieTopics = gson.fromJson(lieTopics, Array<LieTopic>::class.java).toList(),
     truthTopics = gson.fromJson(truthTopics, Array<LieTopic>::class.java).toList(),
+    npcTruthParams = runCatching { gson.fromJson(npcTruthParams, NpcTruthParams::class.java) }.getOrNull()
+        ?: NpcTruthParams(0, "", "", 0, false, null, ""),
     developerName = developerName,
     developerAvatarSeed = developerAvatarSeed,
     claimedName = claimedName,
@@ -96,6 +99,7 @@ fun Project.toEntity(gson: com.google.gson.Gson): ProjectEntity = ProjectEntity(
     realDailyYieldRubles = realDailyYieldRubles,
     lieTopics = gson.toJson(lieTopics),
     truthTopics = gson.toJson(truthTopics),
+    npcTruthParams = gson.toJson(npcTruthParams),
     developerName = developerName,
     developerAvatarSeed = developerAvatarSeed,
     claimedName = claimedName,
