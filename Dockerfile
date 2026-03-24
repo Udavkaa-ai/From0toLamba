@@ -19,4 +19,4 @@ RUN npx prisma generate
 EXPOSE 3000
 
 # Запуск через tsx — не нужна компиляция в dist
-CMD ["npx", "tsx", "src/index.ts"]
+CMD ["sh", "-c", "npm install && npx prisma generate && npx tsx src/index.ts"]
