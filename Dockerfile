@@ -1,16 +1,19 @@
 FROM node:20-alpine
 
-WORKDIR /app
+# OpenSSL нужен для Prisma на alpine
+RUN apk add --no-cache openssl
+
+WORKDIR /app/tg/server
 
 # Install dependencies first (cache layer)
-COPY tg/server/package*.json tg/server/
-COPY tg/server/prisma tg/server/prisma/
-RUN cd tg/server && npm install
+COPY tg/server/package*.json ./
+COPY tg/server/prisma ./prisma/
+RUN npm install
 
-# Copy server source and build
-COPY tg/server tg/server/
-RUN cd tg/server && npx prisma generate && npm run build
+# Copy source and build
+COPY tg/server ./
+RUN npx prisma generate && npm run build
 
 EXPOSE 3000
 
-CMD ["node", "tg/server/dist/index.js"]
+CMD ["node", "dist/index.js"]
