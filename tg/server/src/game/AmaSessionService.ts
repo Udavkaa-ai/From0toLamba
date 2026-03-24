@@ -1,6 +1,7 @@
 import { prisma } from '../db/prisma'
 import { LieTopic, PersonaArchetype, ProjectType } from './types'
 import { startAmaSession, sendAmaMessage } from '../ai/openRouterClient'
+import type { NpcTruthParams } from './projectUtils'
 
 const MAX_QUESTIONS = 10
 
@@ -42,6 +43,7 @@ export async function startSession(userId: number, projectId: string): Promise<{
     description: project.description,
     lieTopics: project.lieTopics as LieTopic[],
     truthTopics: project.truthTopics as LieTopic[],
+    npcTruthParams: project.npcTruthParams as NpcTruthParams | null,
   })
 
   await prisma.amaMessage.create({
@@ -86,8 +88,10 @@ export async function sendMessage(userId: number, projectId: string, userMessage
     type: project.type as ProjectType,
     lieTopics: project.lieTopics as LieTopic[],
     truthTopics: project.truthTopics as LieTopic[],
+    npcTruthParams: project.npcTruthParams as NpcTruthParams | null,
     history: history.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
     userMessage,
+    questionCount: session.questionCount + 1,
   })
 
   await prisma.amaMessage.create({

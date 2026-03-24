@@ -75,6 +75,7 @@ model Project {
   realDailyYieldRubles Float
   lieTopics            String[]  @default([]) // LieTopic[]
   truthTopics          String[]  @default([]) // LieTopic[]
+  npcTruthParams       Json?                  // NpcTruthParams — реальные факты для промпта
 
   // ПУБЛИЧНЫЕ поля — видит игрок
   developerName        String

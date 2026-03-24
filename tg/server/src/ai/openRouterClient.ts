@@ -4,6 +4,20 @@ import {
   ProjectType, ProjectFate, PersonaArchetype, LieTopic,
   LIE_TOPIC_LABEL, LIE_TOPIC_EMOJI,
 } from '../game/types'
+import { NpcTruthParams } from '../game/projectUtils'
+import personasData from '../data/personas.json'
+
+interface PersonaTemplate {
+  id: string
+  archetype: string
+  speechStyle: string
+  behaviorUnderPressure: string
+  typicalPhrasesTemplate: string[]
+}
+
+const PERSONA_MAP = new Map<PersonaArchetype, PersonaTemplate>(
+  (personasData as PersonaTemplate[]).map(p => [p.archetype as PersonaArchetype, p])
+)
 
 const client = new OpenAI({
   baseURL: 'https://openrouter.ai/api/v1',
@@ -42,15 +56,6 @@ const PROJECT_TYPE_RU: Record<ProjectType, string> = {
   [ProjectType.HONEST_TRADE]: 'честная торговля',
 }
 
-const ARCHETYPE_SYSTEM: Record<PersonaArchetype, string> = {
-  [PersonaArchetype.BURATINO]: 'Ты Буратино — наивный лжец, который сам верит своим выдумкам. Говоришь с детской непосредственностью.',
-  [PersonaArchetype.BOYARIN]: 'Ты Боярин — пышно-официальный, ссылаешься на великих партнёров без конкретных имён. Говоришь торжественно.',
-  [PersonaArchetype.KOLOBOK]: 'Ты Колобок — хвастун-оптимист, от любых неудобных вопросов укатываешься с улыбкой. Всегда позитивен.',
-  [PersonaArchetype.KOSCHEI]: 'Ты Кощей — холодный и бессмертно-уверенный, оперируешь цифрами и статистикой. Лаконичен и жёсток.',
-  [PersonaArchetype.ZOLUSHKA]: 'Ты Золушка — давишь на жалость и мечты, упоминаешь дедлайны «до полуночи». Говоришь с надеждой и обидой.',
-  [PersonaArchetype.BABA_YAGA]: 'Ты Баба-яга — отвечаешь загадками, технически подкована, сбиваешь с толку. Загадочна и мудра.',
-  [PersonaArchetype.IVAN_DURAK]: 'Ты Иван-дурак — открыт про прошлые провалы, убеждён что на третий раз взлетит. Простодушен.',
-}
 
 export async function generateProjectData(input: GenerateProjectInput): Promise<GeneratedProjectData> {
   const { type, archetype, lieTopics } = input
@@ -130,13 +135,102 @@ interface AmaSessionInput {
   description: string
   lieTopics: LieTopic[]
   truthTopics: LieTopic[]
+  npcTruthParams: NpcTruthParams | null
+}
+
+interface SendAmaMessageInput {
+  archetype: PersonaArchetype
+  developerName: string
+  projectName: string
+  type: ProjectType
+  lieTopics: LieTopic[]
+  truthTopics: LieTopic[]
+  npcTruthParams: NpcTruthParams | null
+  history: Array<{ role: 'user' | 'assistant'; content: string }>
+  userMessage: string
+  questionCount: number
+}
+
+function buildAmaSystemPrompt(input: AmaSessionInput | SendAmaMessageInput, questionNumber = 1): string {
+  const { archetype, developerName, projectName, lieTopics, truthTopics, npcTruthParams } = input
+  const persona = PERSONA_MAP.get(archetype)
+
+  const allTopics = Object.values(LieTopic)
+  const topicInstructions = allTopics.map(topic => {
+    const isTruth = truthTopics.includes(topic)
+    let canonicalFact = '(данные не уточнены)'
+    if (npcTruthParams) {
+      switch (topic) {
+        case LieTopic.PATRON_COUNT:
+          canonicalFact = `участников — ровно ${npcTruthParams.realPatronCount} человек`; break
+        case LieTopic.DAILY_PROFIT:
+          canonicalFact = `доходность — ${npcTruthParams.realDailyProfitDesc}`; break
+        case LieTopic.PAYOUT_DATE:
+          canonicalFact = `выплаты — ${npcTruthParams.realPayoutSchedule}`; break
+        case LieTopic.GUILD_SIZE:
+          canonicalFact = `команда — ${npcTruthParams.realGuildSize} человека`; break
+        case LieTopic.ELDER_BLESSING:
+          canonicalFact = npcTruthParams.elderBlessingPassed
+            ? 'проверку старейшин прошли, всё официально'
+            : 'никакой проверки старейшин не было и не ожидается'; break
+        case LieTopic.NOBLE_BACKING:
+          canonicalFact = npcTruthParams.nobleBacking
+            ? `покровитель — ${npcTruthParams.nobleBacking}`
+            : 'никакого покровителя нет'; break
+        case LieTopic.WITHDRAWAL_LIMITS:
+          canonicalFact = `условия вывода — ${npcTruthParams.withdrawalPolicy}`; break
+      }
+    }
+    if (isTruth) {
+      return `  • ${LIE_TOPIC_LABEL[topic]} [ПРАВДА] → всегда называй ОДНО И ТО ЖЕ: ${canonicalFact}. Не меняй цифры и факты от вопроса к вопросу.`
+    } else {
+      return `  • ${LIE_TOPIC_LABEL[topic]} [ЛОЖЬ] → каждый раз говори разное: меняй цифры, даты, формулировки. Никогда не повторяй одну и ту же версию.`
+    }
+  }).join('\n')
+
+  const phrases = persona
+    ? persona.typicalPhrasesTemplate
+        .map(p => `- ${p.replace('{name}', projectName)}`)
+        .join('\n')
+    : ''
+
+  const speechStyle = persona?.speechStyle ?? 'Говори живым современным русским языком.'
+  const behaviorUnderPressure = persona?.behaviorUnderPressure ?? 'Уклоняйся от прямого ответа.'
+
+  const questionHint = questionNumber >= 7
+    ? 'Беседа близится к концу — можешь стать настойчивее или слегка занервничать.'
+    : ''
+
+  return `Ты — ${developerName}, предприниматель, который предлагает собеседнику вложить рубли в своё дело «${projectName}».
+
+═══ ТВОЙ ХАРАКТЕР ═══
+${speechStyle}
+
+═══ ТИПИЧНЫЕ ФРАЗЫ (вплетай органично, не цитируй дословно каждый раз) ═══
+${phrases}
+
+═══ ПОВЕДЕНИЕ ПОД ДАВЛЕНИЕМ ═══
+Если тебя прижимают конкретными вопросами или сомневаются: ${behaviorUnderPressure}
+
+═══ ИНСТРУКЦИИ ПО ТЕМАМ — главное правило ═══
+По каждой теме чётко указано: ПРАВДА (говори всегда одинаково) или ЛОЖЬ (каждый раз разное):
+${topicInstructions}
+
+═══ ПРАВИЛА ═══
+1. ПРАВДА = СТАБИЛЬНОСТЬ: По темам [ПРАВДА] — всегда называй ровно те цифры и факты, что указаны выше. Если спросят дважды — ответ тот же самый.
+2. ЛОЖЬ = НЕПОСЛЕДОВАТЕЛЬНОСТЬ: По темам [ЛОЖЬ] — каждый раз называй другие цифры, другие даты, другие объяснения. Противоречь себе между вопросами.
+3. НЕ РАСКРЫВАЙ: Свой архетип, судьбу дела, реальную доходность.
+4. ДЛИНА: 2–3 предложения. Без длинных монологов.
+5. ЯЗЫК: ТОЛЬКО русский язык. Никаких английских слов, транслита, жаргона.
+6. СУММЫ: Только в рублях (₽). Никаких TON, крипты, блокчейна.
+7. РАЗНООБРАЗИЕ: Не начинай каждый ответ одинаково.
+
+КОНТЕКСТ: Вопрос ${questionNumber} из 10. ${questionHint}`
 }
 
 export async function startAmaSession(input: AmaSessionInput): Promise<string> {
-  const { archetype, developerName, projectName, type, claimedAPY, description, lieTopics } = input
-
-  const systemPrompt = buildAmaSystemPrompt(input)
-
+  const { developerName, projectName } = input
+  const systemPrompt = buildAmaSystemPrompt(input, 1)
   const firstMessagePrompt = `Поприветствуй потенциального вкладчика как ${developerName}, хозяин дела «${projectName}». Расскажи кратко о деле и предложи задавать вопросы. 2–3 предложения, живой современный русский язык.`
 
   try {
@@ -155,37 +249,8 @@ export async function startAmaSession(input: AmaSessionInput): Promise<string> {
   }
 }
 
-interface SendAmaMessageInput {
-  archetype: PersonaArchetype
-  developerName: string
-  projectName: string
-  type: ProjectType
-  lieTopics: LieTopic[]
-  truthTopics: LieTopic[]
-  history: Array<{ role: 'user' | 'assistant'; content: string }>
-  userMessage: string
-}
-
-function buildAmaSystemPrompt(input: AmaSessionInput | SendAmaMessageInput): string {
-  const { archetype, developerName, lieTopics, truthTopics } = input
-  const lieStr = lieTopics.map(t => `${LIE_TOPIC_EMOJI[t]} ${LIE_TOPIC_LABEL[t]}`).join(', ')
-  const truthStr = truthTopics.map(t => `${LIE_TOPIC_EMOJI[t]} ${LIE_TOPIC_LABEL[t]}`).join(', ')
-
-  return `${ARCHETYPE_SYSTEM[archetype]}
-
-Тебя зовут ${developerName}. Ты отвечаешь на вопросы о своём деле.
-
-ВАЖНО — правила лжи и правды:
-- По темам [${lieStr}] — ты ВРЁШЬ убедительно, но не грубо. Цифры завышай, уклоняйся, выдумывай.
-- По темам [${truthStr}] — отвечаешь честно.
-- Никогда не признавайся что врёшь.
-- Говори современным живым русским языком. Изредка можно народную присказку, но не в каждом ответе.
-- Ответ — не более 3 предложений.
-- Никакого блокчейна, крипты, TON — только рубли (₽).`
-}
-
 export async function sendAmaMessage(input: SendAmaMessageInput): Promise<string> {
-  const systemPrompt = buildAmaSystemPrompt(input)
+  const systemPrompt = buildAmaSystemPrompt(input, input.questionCount)
 
   const messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }> = [
     { role: 'system', content: systemPrompt },

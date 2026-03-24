@@ -1,7 +1,7 @@
 import { prisma } from '../db/prisma'
 import { generateProjectData, generateProjectBanner } from '../ai/openRouterClient'
 import { ProjectType, ProjectFate, PersonaArchetype, FATE_CONFIG } from './types'
-import { randomInRange as rng, randomIntInRange as irng, weightedRandom as wr, selectLieAndTruthTopics as slt } from './projectUtils'
+import { randomInRange as rng, randomIntInRange as irng, weightedRandom as wr, selectLieAndTruthTopics as slt, generateNpcTruthParams } from './projectUtils'
 
 const ALL_FATES = Object.entries(FATE_CONFIG).map(([value, cfg]) => ({
   value: value as ProjectFate,
@@ -25,6 +25,7 @@ export async function generateProject(userId: number, overrideFate?: ProjectFate
   const { lieTopics, truthTopics } = slt(archetype, fate)
 
   const avatarSeed = Math.random().toString(36).slice(2, 10)
+  const npcTruthParams = generateNpcTruthParams(type, fate, realDailyYieldRubles)
 
   // AI генерирует имя, описание, публичные данные
   const aiData = await generateProjectData({ type, fate, archetype, lieTopics })
@@ -49,6 +50,7 @@ export async function generateProject(userId: number, overrideFate?: ProjectFate
       description: aiData.description,
       roadmap: aiData.roadmap,
       currentUserCount: irng(50, 5000),
+      npcTruthParams,
       isInbox: true,
     },
   })
