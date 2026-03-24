@@ -20,7 +20,7 @@ export async function gameRoutes(app: FastifyInstance) {
         lastName: tgUser.last_name,
         username: tgUser.username,
         gameState: {
-          create: { balance: 0 },
+          create: { balance: 10 },
         },
       },
       update: {
