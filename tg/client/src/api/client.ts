@@ -1,0 +1,128 @@
+import axios from 'axios'
+
+// Получаем initData из Telegram WebApp
+function getTelegramInitData(): string {
+  if (typeof window !== 'undefined' && window.Telegram?.WebApp?.initData) {
+    return window.Telegram.WebApp.initData
+  }
+  // Fallback для dev-режима
+  return import.meta.env.DEV ? 'dev' : ''
+}
+
+export const apiClient = axios.create({
+  baseURL: '/api',
+  headers: { 'Content-Type': 'application/json' },
+})
+
+// Автоматически прокидываем initData в каждый запрос
+apiClient.interceptors.request.use(config => {
+  config.headers['X-Telegram-Init-Data'] = getTelegramInitData()
+  return config
+})
+
+apiClient.interceptors.response.use(
+  res => res,
+  err => {
+    const msg = err.response?.data?.error ?? err.message
+    return Promise.reject(new Error(msg))
+  },
+)
+
+// ─── Типы ──────────────────────────────────────────────────────────────────
+
+export interface ProjectDTO {
+  id: string
+  name: string
+  type: string
+  isInbox: boolean
+  isActive: boolean
+  isClosed: boolean
+  developerName: string
+  developerAvatarSeed: string
+  claimedName: string
+  claimedAPY: number
+  claimedUserCount: number
+  claimedTeamSize: number
+  description: string
+  roadmap: string[]
+  investedAmountRubles: number
+  currentValueRubles: number
+  daysSinceJoined: number
+  isWithdrawalLocked: boolean
+  closureReason: string | null
+  bannerImageUrl: string | null
+  currentUserCount: number
+}
+
+export interface PostMortemDTO {
+  revealedArchetype: string
+  fate: string
+  lieTopics: string[]
+  analysis: string
+  investedAmount: number
+  returnedAmount: number
+  profitPercent: number
+  daysActive: number
+  intuitionDelta: number
+}
+
+export interface GameStateDTO {
+  balance: number
+  currentDay: number
+  investorRank: string
+  intuitionScore: number
+  scamsDetected: number
+  scamsMissed: number
+  dayStreak: number
+  isOnboardingComplete: boolean
+  totalInvested: number
+  totalReturned: number
+  balanceHistory: number[]
+  investedHistory: number[]
+  pendingRankUp: string | null
+  activeProjects: ProjectDTO[]
+  inboxProjects: ProjectDTO[]
+}
+
+export interface AmaSessionDTO {
+  sessionId: string
+  questionCount: number
+  isComplete: boolean
+  isIntuitionEvaluated: boolean
+  selectedLieTopics: string[]
+  intuitionDelta: number
+  messages: Array<{ role: string; content: string; createdAt: string }>
+}
+
+// ─── API методы ────────────────────────────────────────────────────────────
+
+export const api = {
+  game: {
+    getState: () => apiClient.get<GameStateDTO>('/game').then(r => r.data),
+    advanceDay: () => apiClient.post('/game/advance-day').then(r => r.data),
+    clearRankUp: () => apiClient.post('/game/clear-rank-up').then(r => r.data),
+    completeOnboarding: () => apiClient.post('/game/complete-onboarding').then(r => r.data),
+  },
+
+  projects: {
+    getInbox: () => apiClient.get<ProjectDTO[]>('/projects/inbox').then(r => r.data),
+    getPortfolio: () => apiClient.get<{ active: ProjectDTO[]; closed: (ProjectDTO & { postMortem: PostMortemDTO | null })[] }>('/projects/portfolio').then(r => r.data),
+    getUpdates: (id: string) => apiClient.get(`/projects/${id}/updates`).then(r => r.data),
+    skip: (id: string) => apiClient.post(`/projects/${id}/skip`).then(r => r.data),
+  },
+
+  ama: {
+    start: (projectId: string) => apiClient.post<{ sessionId: string; firstMessage: string }>(`/ama/${projectId}/start`).then(r => r.data),
+    getSession: (projectId: string) => apiClient.get<AmaSessionDTO>(`/ama/${projectId}`).then(r => r.data),
+    sendMessage: (projectId: string, message: string) =>
+      apiClient.post<{ reply: string; questionCount: number; isSessionComplete: boolean }>(`/ama/${projectId}/message`, { message }).then(r => r.data),
+    evaluateIntuition: (projectId: string, selectedTopics: string[]) =>
+      apiClient.post(`/ama/${projectId}/evaluate-intuition`, { selectedTopics }).then(r => r.data),
+  },
+
+  invest: {
+    invest: (projectId: string, amount: number) => apiClient.post(`/invest/${projectId}`, { amount }).then(r => r.data),
+    withdraw: (projectId: string, amount: number) => apiClient.post(`/invest/${projectId}/withdraw`, { amount }).then(r => r.data),
+    exit: (projectId: string) => apiClient.post(`/invest/${projectId}/exit`).then(r => r.data),
+  },
+}

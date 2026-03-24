@@ -1,0 +1,184 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          Int          @id @default(autoincrement())
+  telegramId  String       @unique
+  username    String?
+  firstName   String
+  lastName    String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  gameState   GameState?
+  projects    Project[]
+  amaSessions AmaSession[]
+  updates     DailyUpdate[]
+  postMortems PostMortem[]
+}
+
+model GameState {
+  id                   Int       @id @default(autoincrement())
+  userId               Int       @unique
+  balance              Float     @default(0)
+  currentDay           Int       @default(0)
+  investorRank         String    @default("NEWBIE")
+  intuitionScore       Int       @default(0)
+  scamsDetected        Int       @default(0)
+  scamsMissed          Int       @default(0)
+  dayStreak            Int       @default(0)
+  isOnboardingComplete Boolean   @default(false)
+  totalInvested        Float     @default(0)
+  totalReturned        Float     @default(0)
+  balanceHistory       Float[]   @default([])
+  investedHistory      Float[]   @default([])
+  pendingRankUp        String?
+  lastAdvancedAt       DateTime?
+  updatedAt            DateTime  @updatedAt
+
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Типы проектов (соответствуют Android-энаму ProjectType)
+// CARD_GAME | TREASURE_HUNT | POTION_BREW | GUILD_SCHEME | HONEST_TRADE
+
+// Судьбы (ProjectFate)
+// INSTANT_SCAM | SLOW_DRAIN | HONEST_FAIL | SURVIVOR | UNICORN
+
+// Архетипы (PersonaArchetype)
+// BURATINO | BOYARIN | KOLOBOK | KOSCHEI | ZOLUSHKA | BABA_YAGA | IVAN_DURAK
+
+// LieTopic
+// PATRON_COUNT | DAILY_PROFIT | PAYOUT_DATE | GUILD_SIZE | ELDER_BLESSING | NOBLE_BACKING | WITHDRAWAL_LIMITS
+
+model Project {
+  id                   String    @id @default(uuid())
+  userId               Int
+  name                 String
+  type                 String    // ProjectType
+
+  // Статус в игре
+  isInbox              Boolean   @default(true)
+  isActive             Boolean   @default(false)
+  isClosed             Boolean   @default(false)
+
+  // СКРЫТЫЕ поля — НИКОГДА не отдавать клиенту до закрытия
+  fate                 String    // ProjectFate
+  personaArchetype     String    // PersonaArchetype
+  daysUntilCollapse    Int?
+  realDailyYieldRubles Float
+  lieTopics            String[]  @default([]) // LieTopic[]
+  truthTopics          String[]  @default([]) // LieTopic[]
+
+  // ПУБЛИЧНЫЕ поля — видит игрок
+  developerName        String
+  developerAvatarSeed  String
+  claimedName          String
+  claimedAPY           Float
+  claimedUserCount     Int
+  claimedTeamSize      Int
+  description          String    @db.Text
+  roadmap              String[]  @default([])
+
+  // СОСТОЯНИЕ
+  investedAmountRubles Float     @default(0)
+  currentValueRubles   Float     @default(0)
+  daysSinceJoined      Int       @default(0)
+  isWithdrawalLocked   Boolean   @default(false)
+  closureReason        String?
+  bannerImageUrl       String?
+  bannerPromptUsed     String?
+
+  // История для графиков (хранить компактно — последние 30 дней)
+  currentUserCount     Int       @default(0)
+  userCountHistory     Int[]     @default([])
+  apyHistory           Float[]   @default([])
+
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amaSession           AmaSession?
+  updates              DailyUpdate[]
+  postMortem           PostMortem?
+}
+
+model AmaSession {
+  id                    String       @id @default(uuid())
+  projectId             String       @unique
+  userId                Int
+  questionCount         Int          @default(0)
+  isComplete            Boolean      @default(false)
+  isIntuitionEvaluated  Boolean      @default(false)
+  selectedLieTopics     String[]     @default([]) // выбранные игроком подозрения
+  intuitionDelta        Int          @default(0)  // итоговый результат оценки
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+
+  project               Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user                  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages              AmaMessage[]
+}
+
+model AmaMessage {
+  id        Int        @id @default(autoincrement())
+  sessionId String
+  role      String     // "user" | "assistant"
+  content   String     @db.Text
+  createdAt DateTime   @default(now())
+
+  session   AmaSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model DailyUpdate {
+  id             Int      @id @default(autoincrement())
+  projectId      String
+  userId         Int
+  day            Int
+  title          String
+  body           String   @db.Text
+  redFlags       String[] @default([])
+  payoutStatus   String   @default("NORMAL") // NORMAL | DELAYED | BOOSTED
+  announcement   String?  // LISTING | HACK | CRIMINAL_CASE | PARTNERSHIP | null
+  userCountDelta Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PostMortem {
+  id               Int      @id @default(autoincrement())
+  projectId        String   @unique
+  userId           Int
+  revealedArchetype String  // PersonaArchetype
+  fate             String   // ProjectFate
+  lieTopics        String[] @default([])
+  analysis         String   @db.Text
+  investedAmount   Float
+  returnedAmount   Float
+  profitPercent    Float    // может быть отрицательным
+  daysActive       Int
+  lieGuessCorrect  Boolean  @default(false)
+  intuitionDelta   Int      @default(0)
+  createdAt        DateTime @default(now())
+
+  project          Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Для монетизации (трекинг дохода от рекламы)
+model AdRevenue {
+  id        Int      @id @default(autoincrement())
+  source    String   // "yandex" | "telegram" | "manual"
+  amount    Float    // в рублях
+  currency  String   @default("RUB")
+  meta      String?  // JSON: доп. данные от рекламной сети
+  recordedAt DateTime @default(now())
+}
