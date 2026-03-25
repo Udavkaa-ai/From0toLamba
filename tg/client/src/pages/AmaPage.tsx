@@ -424,7 +424,25 @@ export function AmaPage() {
               padding: `${spacing.sm} ${spacing.lg}`,
               display: 'flex',
               gap: spacing.sm,
+              alignItems: 'center',
             }}>
+              <button
+                onClick={() => setShowInvestSheet(true)}
+                title="Вложить рубли"
+                style={{
+                  flexShrink: 0,
+                  padding: `${spacing.sm} 10px`,
+                  background: `${colors.enchantedPurple}80`,
+                  border: `1px solid ${colors.fairyGold}50`,
+                  borderRadius: '12px',
+                  color: colors.fairyGold,
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  lineHeight: 1,
+                }}
+              >
+                💰
+              </button>
               <input
                 value={input}
                 onChange={e => setInput(e.target.value)}
