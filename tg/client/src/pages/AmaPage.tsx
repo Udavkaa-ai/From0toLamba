@@ -48,7 +48,35 @@ export function AmaPage() {
 
   const sendMutation = useMutation({
     mutationFn: (message: string) => api.ama.sendMessage(projectId!, message),
-    onSuccess: () => {
+    onMutate: (message: string) => {
+      // Оптимистично добавляем сообщение пользователя
+      qc.setQueryData(['ama', projectId], (old: any) => {
+        if (!old) return old
+        return {
+          ...old,
+          messages: [...old.messages, { role: 'user', content: message, createdAt: new Date().toISOString() }],
+        }
+      })
+    },
+    onSuccess: (data) => {
+      // Добавляем ответ хозяина в кеш
+      qc.setQueryData(['ama', projectId], (old: any) => {
+        if (!old) return old
+        const withoutOptimistic = old.messages.slice(0, -1) // убираем оптимистичный (будет пересохранён через getSession)
+        return {
+          ...old,
+          questionCount: data.questionCount,
+          isComplete: data.isSessionComplete,
+          messages: [
+            ...withoutOptimistic,
+            old.messages[old.messages.length - 1], // возвращаем пользовательское
+            { role: 'assistant', content: data.reply, createdAt: new Date().toISOString() },
+          ],
+        }
+      })
+    },
+    onError: () => {
+      // При ошибке — просто обновляем с сервера
       qc.invalidateQueries({ queryKey: ['ama', projectId] })
     },
   })

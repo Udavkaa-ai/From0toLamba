@@ -113,7 +113,7 @@ const client = new OpenAI({
   },
 })
 
-const TEXT_MODEL = 'google/gemini-2.5-flash-preview'
+const TEXT_MODEL = 'deepseek/deepseek-chat-v3-0324'
 
 // ─── Генерация данных проекта ────────────────────────────────────────────────
 

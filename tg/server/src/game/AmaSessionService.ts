@@ -101,18 +101,24 @@ export async function sendMessage(userId: number, projectId: string, userMessage
     orderBy: { createdAt: 'asc' },
   })
 
-  const reply = await sendAmaMessage({
-    archetype: project.personaArchetype as PersonaArchetype,
-    developerName: project.developerName,
-    projectName: project.name,
-    type: project.type as ProjectType,
-    lieTopics: project.lieTopics as LieTopic[],
-    truthTopics: project.truthTopics as LieTopic[],
-    npcTruthParams: project.npcTruthParams as NpcTruthParams | null,
-    history: history.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
-    userMessage,
-    questionCount: session.questionCount + 1,
-  })
+  let reply: string
+  try {
+    reply = await sendAmaMessage({
+      archetype: project.personaArchetype as PersonaArchetype,
+      developerName: project.developerName,
+      projectName: project.name,
+      type: project.type as ProjectType,
+      lieTopics: project.lieTopics as LieTopic[],
+      truthTopics: project.truthTopics as LieTopic[],
+      npcTruthParams: project.npcTruthParams as NpcTruthParams | null,
+      history: history.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+      userMessage,
+      questionCount: session.questionCount + 1,
+    })
+  } catch (err) {
+    console.error('[AmaSession] AI reply failed, using fallback:', err)
+    reply = 'Хороший вопрос! Дайте подумать... Спросите меня об этом позже.'
+  }
 
   await prisma.amaMessage.create({
     data: { sessionId: session.id, role: 'assistant', content: reply },
