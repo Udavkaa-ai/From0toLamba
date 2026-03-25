@@ -362,17 +362,25 @@ export async function generateDailyUpdate(
   projectId: string,
   userId: number,
   project: { name: string; type: string; personaArchetype: string; daysSinceJoined: number; fate: string },
+  userCountDelta: number = 0,
+  payoutStatus: string = 'NORMAL',
   model = DEFAULT_MODEL,
 ): Promise<void> {
+  const userCountStr = userCountDelta > 0 ? `+${userCountDelta}` : String(userCountDelta)
+  const payoutStatusRu = payoutStatus === 'DELAYED' ? 'ЗАДЕРЖАНЫ' : payoutStatus === 'BOOSTED' ? 'ПОВЫШЕНЫ' : 'ОБЫЧНЫЙ'
+
   const prompt = `Ты — ведущий рубрики «Вести с ярмарки» в игре «Из грязи в князи».
 Напиши короткую весть о деле «${project.name}» (день ${project.daysSinceJoined + 1}).
 Архетип хозяина: ${project.personaArchetype}, тип: ${project.type}, судьба: ${project.fate}.
+Изменение числа вкладчиков сегодня: ${userCountStr} чел.
+Статус выплат: ${payoutStatusRu}
 
 Формат — JSON:
 {
   "title": "Краткий заголовок (до 8 слов)",
-  "body": "2–3 предложения, образно, современный русский, без крипты/блокчейна, только рубли",
-  "redFlags": ["необязательный массив из 0–2 тревожных сигналов (строки)"]
+  "body": "2–3 предложения, образно, современный русский, без крипты/блокчейна, только рубли. Отрази изменение вкладчиков и статус выплат в тексте.",
+  "redFlags": ["необязательный массив из 0–2 тревожных сигналов (строки)"],
+  "payoutStatus": "NORMAL|DELAYED|BOOSTED"
 }
 
 Отвечай ТОЛЬКО валидным JSON.`
@@ -381,7 +389,7 @@ export async function generateDailyUpdate(
     const response = await client.chat.completions.create({
       model: model,
       messages: [{ role: 'user', content: prompt }],
-      max_tokens: 250,
+      max_tokens: 300,
       response_format: { type: 'json_object' },
     })
 
@@ -396,6 +404,8 @@ export async function generateDailyUpdate(
         title: parsed.title ?? 'Новости с ярмарки',
         body: parsed.body ?? 'Дело продолжается.',
         redFlags: parsed.redFlags ?? [],
+        payoutStatus: parsed.payoutStatus ?? payoutStatus,
+        userCountDelta: userCountDelta,
       },
     })
   } catch (err) {

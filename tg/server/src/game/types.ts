@@ -143,5 +143,8 @@ export interface ProjectPublicDTO {
   closureReason: string | null
   bannerImageUrl: string | null
   currentUserCount: number
+  userCountHistory: number[]
+  apyHistory: number[]
+  valueHistory: number[]
 }
 

@@ -109,17 +109,51 @@ export async function advanceDay(userId: number): Promise<{ newRank?: InvestorRa
       }
     }
 
+    // Compute userCountDelta based on fate
+    let userCountDelta = 0
+    if (fate === ProjectFate.INSTANT_SCAM || fate === ProjectFate.SLOW_DRAIN) {
+      const daysLeft2 = project.daysUntilCollapse ?? 0
+      // More users leave as collapse approaches
+      userCountDelta = -irng(2, 15) * (daysLeft2 < 5 ? 3 : 1)
+    } else if (fate === ProjectFate.UNICORN) {
+      userCountDelta = irng(5, 30)
+    } else if (fate === ProjectFate.SURVIVOR) {
+      userCountDelta = irng(-2, 8)
+    } else {
+      userCountDelta = irng(-5, 3)
+    }
+
+    // Determine payoutStatus
+    let payoutStatus = 'NORMAL'
+    if (daysLeft !== null && daysLeft <= 3 && (fate === ProjectFate.INSTANT_SCAM || fate === ProjectFate.SLOW_DRAIN)) {
+      payoutStatus = 'DELAYED'
+    } else if (fate === ProjectFate.UNICORN && project.daysSinceJoined > 0) {
+      payoutStatus = Math.random() < 0.3 ? 'BOOSTED' : 'NORMAL'
+    }
+
+    const newUserCount = Math.max(0, project.currentUserCount + userCountDelta)
+    const apparentAPY = project.investedAmountRubles > 0
+      ? ((updatedValue - project.investedAmountRubles) / project.investedAmountRubles) * 365 / Math.max(1, project.daysSinceJoined) * 100
+      : project.claimedAPY
+    const newUserCountHistory = [...project.userCountHistory, newUserCount].slice(-30)
+    const newApyHistory = [...project.apyHistory, Math.round(apparentAPY)].slice(-30)
+    const newValueHistory = [...project.valueHistory, Math.round(updatedValue)].slice(-30)
+
     await prisma.project.update({
       where: { id: project.id },
       data: {
         currentValueRubles: updatedValue,
         daysSinceJoined: { increment: 1 },
         daysUntilCollapse: daysLeft !== null ? daysLeft - 1 : null,
+        currentUserCount: newUserCount,
+        userCountHistory: newUserCountHistory,
+        apyHistory: newApyHistory,
+        valueHistory: newValueHistory,
       },
     })
 
     // Генерируем весть для проекта
-    generateDailyUpdate(project.id, userId, project).catch(console.error)
+    generateDailyUpdate(project.id, userId, project, userCountDelta, payoutStatus).catch(console.error)
   }
 
   // Обновляем баланс и GameState

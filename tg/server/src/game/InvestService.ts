@@ -39,6 +39,38 @@ export async function invest(userId: number, projectId: string, amount: number):
   ])
 }
 
+export async function addInvestment(userId: number, projectId: string, amount: number): Promise<void> {
+  if (amount < MIN_INVEST) throw new Error('AMOUNT_TOO_SMALL')
+
+  const [gameState, project] = await Promise.all([
+    prisma.gameState.findUniqueOrThrow({ where: { userId } }),
+    prisma.project.findFirstOrThrow({ where: { id: projectId, userId, isActive: true } }),
+  ])
+
+  if (project.isWithdrawalLocked) throw new Error('WITHDRAWAL_LOCKED')
+  if (gameState.balance < amount) throw new Error('INSUFFICIENT_BALANCE')
+
+  const newTotal = project.investedAmountRubles + amount
+  if (newTotal > MAX_INVEST_PER_PROJECT) throw new Error('AMOUNT_TOO_LARGE')
+
+  await prisma.$transaction([
+    prisma.gameState.update({
+      where: { userId },
+      data: {
+        balance: { decrement: amount },
+        totalInvested: { increment: amount },
+      },
+    }),
+    prisma.project.update({
+      where: { id: projectId },
+      data: {
+        investedAmountRubles: { increment: amount },
+        currentValueRubles: { increment: amount },
+      },
+    }),
+  ])
+}
+
 export async function partialWithdraw(userId: number, projectId: string, amount: number): Promise<number> {
   const project = await prisma.project.findFirstOrThrow({ where: { id: projectId, userId, isActive: true } })
 

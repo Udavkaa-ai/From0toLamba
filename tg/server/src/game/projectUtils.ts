@@ -97,6 +97,9 @@ export function toPublicDTO(project: Project): ProjectPublicDTO {
     closureReason: project.closureReason,
     bannerImageUrl: project.bannerImageUrl,
     currentUserCount: project.currentUserCount,
+    userCountHistory: project.userCountHistory,
+    apyHistory: project.apyHistory,
+    valueHistory: project.valueHistory,
   }
 }
 

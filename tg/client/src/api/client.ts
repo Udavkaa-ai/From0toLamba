@@ -52,6 +52,19 @@ export interface ProjectDTO {
   closureReason: string | null
   bannerImageUrl: string | null
   currentUserCount: number
+  userCountHistory: number[]
+  apyHistory: number[]
+  valueHistory: number[]
+}
+
+export interface DailyUpdateDTO {
+  id: number
+  day: number
+  title: string
+  body: string
+  redFlags: string[]
+  payoutStatus: string
+  userCountDelta: number
 }
 
 export interface PostMortemDTO {
@@ -111,7 +124,7 @@ export const api = {
   projects: {
     getInbox: () => apiClient.get<ProjectDTO[]>('/projects/inbox').then(r => r.data),
     getPortfolio: () => apiClient.get<{ active: ProjectDTO[]; closed: (ProjectDTO & { postMortem: PostMortemDTO | null })[] }>('/projects/portfolio').then(r => r.data),
-    getUpdates: (id: string) => apiClient.get(`/projects/${id}/updates`).then(r => r.data),
+    getUpdates: (id: string) => apiClient.get<DailyUpdateDTO[]>(`/projects/${id}/updates`).then(r => r.data),
     skip: (id: string) => apiClient.post(`/projects/${id}/skip`).then(r => r.data),
   },
 
@@ -126,6 +139,7 @@ export const api = {
 
   invest: {
     invest: (projectId: string, amount: number) => apiClient.post(`/invest/${projectId}`, { amount }).then(r => r.data),
+    addInvestment: (projectId: string, amount: number) => apiClient.post(`/invest/${projectId}/add`, { amount }).then(r => r.data),
     withdraw: (projectId: string, amount: number) => apiClient.post(`/invest/${projectId}/withdraw`, { amount }).then(r => r.data),
     exit: (projectId: string) => apiClient.post(`/invest/${projectId}/exit`).then(r => r.data),
   },
