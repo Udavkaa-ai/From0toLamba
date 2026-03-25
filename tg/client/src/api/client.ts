@@ -80,6 +80,7 @@ export interface GameStateDTO {
   balanceHistory: number[]
   investedHistory: number[]
   pendingRankUp: string | null
+  preferredModel: string
   activeProjects: ProjectDTO[]
   inboxProjects: ProjectDTO[]
 }
@@ -102,6 +103,9 @@ export const api = {
     advanceDay: () => apiClient.post('/game/advance-day').then(r => r.data),
     clearRankUp: () => apiClient.post('/game/clear-rank-up').then(r => r.data),
     completeOnboarding: () => apiClient.post('/game/complete-onboarding').then(r => r.data),
+    getSettings: () => apiClient.get<{ preferredModel: string }>('/game/settings').then(r => r.data),
+    updateSettings: (preferredModel: string) => apiClient.post<{ success: boolean; preferredModel: string }>('/game/settings', { preferredModel }).then(r => r.data),
+    resetGame: () => apiClient.post('/game/reset').then(r => r.data),
   },
 
   projects: {

@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify'
+import { z } from 'zod'
 import { prisma } from '../../db/prisma'
 import { telegramAuthHook } from '../../middleware/telegramAuth'
 import { advanceDay } from '../../game/AdvanceDayService'
@@ -37,7 +38,7 @@ export async function gameRoutes(app: FastifyInstance) {
     if (!gameState.isOnboardingComplete) {
       const inboxCount = await prisma.project.count({ where: { userId: user.id, isInbox: true } })
       if (inboxCount === 0) {
-        generateOnboardingProject(user.id).catch(console.error)
+        generateOnboardingProject(user.id, gameState.preferredModel).catch(console.error)
       }
     }
 
@@ -65,6 +66,7 @@ export async function gameRoutes(app: FastifyInstance) {
       balanceHistory: gameState.balanceHistory,
       investedHistory: gameState.investedHistory,
       pendingRankUp: gameState.pendingRankUp,
+      preferredModel: gameState.preferredModel,
       activeProjects: activeProjects.map(toPublicDTO),
       inboxProjects: inboxProjects.map(toPublicDTO),
     }
@@ -123,5 +125,72 @@ export async function gameRoutes(app: FastifyInstance) {
     })
 
     return { success: true, bonusAwarded: ONBOARDING_BONUS }
+  })
+
+  // GET /api/game/settings
+  app.get('/api/game/settings', { preHandler: telegramAuthHook }, async (request, reply) => {
+    const tgUser = request.telegramUser
+    const user = await prisma.user.findUniqueOrThrow({
+      where: { telegramId: String(tgUser.id) },
+      include: { gameState: true },
+    })
+    return {
+      preferredModel: user.gameState?.preferredModel ?? 'deepseek/deepseek-chat-v3-0324',
+    }
+  })
+
+  // POST /api/game/settings
+  app.post('/api/game/settings', { preHandler: telegramAuthHook }, async (request, reply) => {
+    const tgUser = request.telegramUser
+    const body = z.object({
+      preferredModel: z.enum(['deepseek/deepseek-chat-v3-0324', 'google/gemini-2.5-flash-preview']),
+    }).safeParse(request.body)
+    if (!body.success) return reply.status(400).send({ error: 'Неверная модель' })
+
+    const user = await prisma.user.findUniqueOrThrow({
+      where: { telegramId: String(tgUser.id) },
+    })
+    await prisma.gameState.update({
+      where: { userId: user.id },
+      data: { preferredModel: body.data.preferredModel },
+    })
+    return { success: true, preferredModel: body.data.preferredModel }
+  })
+
+  // POST /api/game/reset
+  app.post('/api/game/reset', { preHandler: telegramAuthHook }, async (request, reply) => {
+    const tgUser = request.telegramUser
+    const user = await prisma.user.findUniqueOrThrow({
+      where: { telegramId: String(tgUser.id) },
+      include: { gameState: true },
+    })
+    // Delete all user's projects (cascades to AmaSession, AmaMessage, DailyUpdate, PostMortem)
+    await prisma.project.deleteMany({ where: { userId: user.id } })
+    // Reset game state (keep preferredModel)
+    const preferredModel = user.gameState?.preferredModel ?? 'deepseek/deepseek-chat-v3-0324'
+    await prisma.gameState.update({
+      where: { userId: user.id },
+      data: {
+        balance: 0,
+        currentDay: 0,
+        investorRank: 'NEWBIE',
+        intuitionScore: 0,
+        scamsDetected: 0,
+        scamsMissed: 0,
+        dayStreak: 0,
+        isOnboardingComplete: false,
+        totalInvested: 0,
+        totalReturned: 0,
+        balanceHistory: [],
+        investedHistory: [],
+        pendingRankUp: null,
+        lastAdvancedAt: null,
+        preferredModel,
+      },
+    })
+    // Trigger new onboarding project
+    const { generateOnboardingProject: genOnboarding } = await import('../../game/GenerateProjectService')
+    genOnboarding(user.id, preferredModel).catch(console.error)
+    return { success: true }
   })
 }

@@ -14,7 +14,9 @@ export async function amaRoutes(app: FastifyInstance) {
     const user = await prisma.user.findUniqueOrThrow({ where: { telegramId: String(tgUser.id) } })
 
     try {
-      const result = await startSession(user.id, projectId)
+      const gameState = await prisma.gameState.findUnique({ where: { userId: user.id } })
+      const model = gameState?.preferredModel ?? 'deepseek/deepseek-chat-v3-0324'
+      const result = await startSession(user.id, projectId, model)
       return result
     } catch (err: any) {
       return reply.status(400).send({ error: err.message })
@@ -46,7 +48,9 @@ export async function amaRoutes(app: FastifyInstance) {
     const user = await prisma.user.findUniqueOrThrow({ where: { telegramId: String(tgUser.id) } })
 
     try {
-      const result = await sendMessage(user.id, projectId, body.data.message)
+      const gameState = await prisma.gameState.findUnique({ where: { userId: user.id } })
+      const model = gameState?.preferredModel ?? 'deepseek/deepseek-chat-v3-0324'
+      const result = await sendMessage(user.id, projectId, body.data.message, model)
       return result
     } catch (err: any) {
       if (err.message === 'SESSION_COMPLETE') {
