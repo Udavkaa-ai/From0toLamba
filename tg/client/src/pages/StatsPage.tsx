@@ -47,7 +47,7 @@ export function StatsPage() {
     <ScreenBackground>
       <div style={{ padding: `${spacing.xxl} ${spacing.lg} 80px`, maxWidth: '500px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: spacing.xxl }}>
-          <div style={{ color: colors.fairyGold, fontSize: '20px', fontWeight: 700 }}>✦ Успехи купца ✦</div>
+          <div style={{ color: colors.fairyGold, fontSize: '20px', fontWeight: 700 }}>✦ Успехи ✦</div>
         </div>
 
         {/* Ранг */}

@@ -68,13 +68,13 @@ export function PortfolioPage() {
           </FairyCard>
         )}
 
-        {/* Закрытые */}
-        {data?.closed && data.closed.length > 0 && (
+        {/* Закрытые (только те, куда вкладывался) */}
+        {data?.closed && data.closed.filter(p => p.investedAmountRubles > 0).length > 0 && (
           <section style={{ marginTop: spacing.xl }}>
             <div style={{ color: colors.textMuted, fontSize: '13px', fontWeight: 600, marginBottom: spacing.sm }}>
               История
             </div>
-            {data.closed.map((p, i) => (
+            {data.closed.filter(p => p.investedAmountRubles > 0).map((p, i) => (
               <motion.div key={p.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}>
                 <ClosedProjectCard project={p} postMortem={p.postMortem} />
               </motion.div>

@@ -56,6 +56,7 @@ export function HomePage() {
   const [showSettings, setShowSettings] = useState(false)
   const [localModel, setLocalModel] = useState<string | null>(null)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [showDayNews, setShowDayNews] = useState(false)
 
   const { isLoading, isError, error } = useQuery({
     queryKey: ['gameState'],
@@ -72,7 +73,11 @@ export function HomePage() {
 
   const advanceMutation = useMutation({
     mutationFn: api.game.advanceDay,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['gameState'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['gameState'] })
+      qc.invalidateQueries({ queryKey: ['updates'] })
+      setShowDayNews(true)
+    },
   })
 
   const updateModelMutation = useMutation({
@@ -144,6 +149,9 @@ export function HomePage() {
   return (
     <ScreenBackground>
       {gameState.pendingRankUp && <RankUpOverlay rank={gameState.pendingRankUp} />}
+      {showDayNews && gameState.activeProjects.length > 0 && (
+        <DayNewsOverlay projects={gameState.activeProjects} onClose={() => setShowDayNews(false)} />
+      )}
 
       {/* Settings Sheet */}
       <AnimatePresence>
@@ -538,5 +546,163 @@ function ActiveProjectCard({ project, delay, onPress }: { project: ProjectDTO; d
         </div>
       </FairyCard>
     </motion.div>
+  )
+}
+
+function DayNewsOverlay({ projects, onClose }: { projects: ProjectDTO[]; onClose: () => void }) {
+  const navigate = useNavigate()
+  const [idx, setIdx] = useState(0)
+
+  const total = projects.length
+  const current = projects[idx]
+
+  const dismiss = () => {
+    if (idx < total - 1) setIdx(idx + 1)
+    else onClose()
+  }
+
+  const goToDeal = () => {
+    onClose()
+    navigate('/portfolio')
+  }
+
+  if (!current) return null
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 200,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      {/* Backdrop */}
+      <div
+        style={{ position: 'absolute', inset: 0, background: 'rgba(6, 4, 18, 0.88)' }}
+        onClick={dismiss}
+      />
+
+      {/* Card stack hint */}
+      {total - idx - 1 > 0 && (
+        <div style={{
+          position: 'absolute',
+          width: 'min(360px, calc(100vw - 48px))',
+          height: '200px',
+          background: `linear-gradient(145deg, #1a1040, #0D1735)`,
+          border: `1px solid rgba(255,184,0,0.2)`,
+          borderRadius: '16px',
+          transform: 'translateY(12px) scale(0.95)',
+          zIndex: 201,
+        }} />
+      )}
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={idx}
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.3}
+          onDragEnd={(_, info) => {
+            if (info.offset.x > 80) goToDeal()
+            else if (info.offset.x < -80) dismiss()
+          }}
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, x: -120, scale: 0.85 }}
+          transition={{ type: 'spring', damping: 22, stiffness: 260 }}
+          style={{
+            position: 'relative', zIndex: 202,
+            width: 'min(360px, calc(100vw - 48px))',
+            background: `linear-gradient(145deg, #2A1960, #0D1735)`,
+            border: `1px solid rgba(255,184,0,0.35)`,
+            borderRadius: '16px',
+            padding: '20px',
+            cursor: 'grab',
+          }}
+        >
+          {/* Counter */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <div style={{ color: colors.fairyGold, fontSize: '11px', fontWeight: 600 }}>
+              📜 Вести дня {idx + 1}/{total}
+            </div>
+            <button
+              onClick={onClose}
+              style={{ background: 'none', border: 'none', color: colors.textMuted, fontSize: '18px', cursor: 'pointer', padding: '0 4px', lineHeight: 1 }}
+            >
+              ✕
+            </button>
+          </div>
+
+          <ProjectNewsCardContent project={current} />
+
+          {/* Swipe hints */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px' }}>
+            <div style={{ color: colors.textMuted, fontSize: '10px' }}>← пропустить</div>
+            <div style={{ color: colors.fairyGold, fontSize: '10px', opacity: 0.7 }}>к делу →</div>
+          </div>
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  )
+}
+
+function ProjectNewsCardContent({ project }: { project: ProjectDTO }) {
+  const { data: updates } = useQuery({
+    queryKey: ['updates', project.id],
+    queryFn: () => api.projects.getUpdates(project.id),
+  })
+
+  const latest = updates?.[updates.length - 1]
+  let signal = '⚪'
+  let signalColor: string = colors.textMuted
+  if (latest) {
+    if (latest.payoutStatus === 'BOOSTED' || latest.userCountDelta > 5) { signal = '🟢'; signalColor = colors.success }
+    else if (latest.payoutStatus === 'DELAYED' || latest.userCountDelta < -5) { signal = '🔴'; signalColor = colors.danger }
+  }
+
+  const profit = project.investedAmountRubles > 0
+    ? ((project.currentValueRubles - project.investedAmountRubles) / project.investedAmountRubles * 100)
+    : 0
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+        <div>
+          <div style={{ color: colors.textPrimary, fontWeight: 700, fontSize: '15px' }}>{project.name}</div>
+          <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '2px' }}>{project.developerName}</div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ color: colors.fairyGold, fontWeight: 700 }}>{project.currentValueRubles.toFixed(0)} ₽</div>
+          <div style={{ color: profit >= 0 ? colors.success : colors.danger, fontSize: '11px' }}>
+            {profit >= 0 ? '+' : ''}{profit.toFixed(1)}%
+          </div>
+        </div>
+      </div>
+
+      {latest ? (
+        <div style={{
+          background: 'rgba(255,255,255,0.05)',
+          border: `1px solid ${signalColor}40`,
+          borderRadius: '10px',
+          padding: '10px 12px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+            <span style={{ fontSize: '13px' }}>{signal}</span>
+            <span style={{ color: colors.textSecondary, fontSize: '12px', fontWeight: 600 }}>{latest.title}</span>
+          </div>
+          <div style={{ color: colors.textMuted, fontSize: '11px', lineHeight: 1.5 }}>
+            {latest.body.slice(0, 160)}{latest.body.length > 160 ? '...' : ''}
+          </div>
+          {latest.redFlags.length > 0 && (
+            <div style={{ marginTop: '6px' }}>
+              {latest.redFlags.slice(0, 2).map((flag, i) => (
+                <div key={i} style={{ color: colors.warning, fontSize: '10px' }}>⚠️ {flag}</div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div style={{ color: colors.textMuted, fontSize: '12px', textAlign: 'center', padding: '12px' }}>
+          Вести загружаются...
+        </div>
+      )}
+    </div>
   )
 }

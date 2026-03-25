@@ -49,8 +49,8 @@ function CardCornerOrnaments() {
 
   const Ornament = ({ pos }: { pos: CSSProperties }) => (
     <svg style={pos} viewBox="0 0 16 16" fill="none">
-      <path d="M1 8 L8 1 L15 8" stroke="#FFB800" strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="8" cy="8" r="1.5" fill="#FFB800" />
+      <path d="M9 2 L2 2 L2 9" stroke="#FFB800" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <circle cx="2" cy="2" r="1.5" fill="#FFB800" />
     </svg>
   )
 

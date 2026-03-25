@@ -114,16 +114,6 @@ function InboxCard({ project, onClick }: { project: ProjectDTO; onClick: () => v
       </div>
 
       <div style={{
-        marginTop: spacing.sm,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '4px',
-      }}>
-        <span style={{ fontSize: '10px', color: colors.warning }}>⏳</span>
-        <span style={{ color: colors.warning, fontSize: '10px' }}>Грамота истекает с рассветом</span>
-      </div>
-
-      <div style={{
         marginTop: spacing.md,
         padding: `${spacing.sm} ${spacing.md}`,
         background: `${colors.fairyGold}10`,
