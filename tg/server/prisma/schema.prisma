@@ -16,11 +16,12 @@ model User {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-  gameState   GameState?
-  projects    Project[]
-  amaSessions AmaSession[]
-  updates     DailyUpdate[]
-  postMortems PostMortem[]
+  gameState    GameState?
+  projects     Project[]
+  amaSessions  AmaSession[]
+  updates      DailyUpdate[]
+  postMortems  PostMortem[]
+  transactions Transaction[]
 }
 
 model GameState {
@@ -174,6 +175,19 @@ model PostMortem {
 
   project          Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Transaction {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  projectId   String?
+  projectName String
+  type        String   // INVEST | ADD | WITHDRAW | EXIT | RETURNED
+  amount      Float
+  day         Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // Для монетизации (трекинг дохода от рекламы)

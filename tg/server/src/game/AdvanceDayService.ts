@@ -12,6 +12,11 @@ const NEW_PROJECTS_PER_DAY_MAX = 3
 export async function advanceDay(userId: number): Promise<{ newRank?: InvestorRank }> {
   const gameState = await prisma.gameState.findUniqueOrThrow({ where: { userId } })
 
+  // Истекают все входящие грамоты (живут только один день)
+  await prisma.project.updateMany({
+    where: { userId, isInbox: true },
+    data: { isInbox: false, isClosed: true, closureReason: 'Грамота истекла' },
+  })
 
   const activeProjects = await prisma.project.findMany({
     where: { userId, isActive: true },
@@ -93,6 +98,17 @@ export async function advanceDay(userId: number): Promise<{ newRank?: InvestorRa
           currentValueRubles: returned,
         },
       })
+
+      await prisma.transaction.create({
+        data: {
+          userId,
+          projectId: project.id,
+          projectName: project.name,
+          type: 'RETURNED',
+          amount: returned,
+          day: gameState.currentDay + 1,
+        },
+      }).catch(console.error)
 
       continue
     }

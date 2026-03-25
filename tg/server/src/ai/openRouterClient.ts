@@ -155,7 +155,7 @@ export async function generateProjectData(input: GenerateProjectInput, model = D
 
 Придумай:
 1. name — название дела (2–4 слова, сказочный стиль, на русском)
-2. developerName — имя хозяина (русское народное, не реальное, без фамилии, 1–2 слова)
+2. developerName — имя хозяина с прозвищем или фамилией в народном стиле (ОБЯЗАТЕЛЬНО 2–3 слова: имя + прозвище или фамилия-прилагательное). Примеры: "Емеля Дурило", "Фёдор Казна-Цела", "Никита Золотозуб", "Вахромей Трепетило", "Гаврила Хитрован", "Пётр Кривошей", "Аника-воин", "Степан Ловкач-Рублёв". Имя должно быть колоритным и запоминающимся.
 3. claimedAPY — заявленная доходность в % годовых (число от 50 до 5000, чем мошеннее — тем выше)
 4. description — описание дела (3–4 предложения, от первого лица хозяина, без блокчейна/крипты, только рубли)
 5. roadmap — план дел (ровно 3 пункта, массив строк)
@@ -176,7 +176,7 @@ export async function generateProjectData(input: GenerateProjectInput, model = D
 
     return {
       name: parsed.name ?? 'Тайное дело',
-      developerName: parsed.developerName ?? 'Купец',
+      developerName: parsed.developerName ?? 'Ефим Лукавый',
       claimedName: parsed.name ?? 'Тайное дело',
       claimedAPY: Number(parsed.claimedAPY) || 100,
       description: parsed.description ?? 'Прибыльное дело для смелых вкладчиков.',
@@ -186,7 +186,7 @@ export async function generateProjectData(input: GenerateProjectInput, model = D
     console.error('generateProjectData failed:', err)
     return {
       name: 'Тайное дело',
-      developerName: 'Купец',
+      developerName: 'Ефим Лукавый',
       claimedName: 'Тайное дело',
       claimedAPY: 200,
       description: 'Прибыльное дело для смелых вкладчиков.',
@@ -316,7 +316,7 @@ ${topicInstructions}
 export async function startAmaSession(input: AmaSessionInput, model = DEFAULT_MODEL): Promise<string> {
   const { developerName, projectName } = input
   const systemPrompt = buildAmaSystemPrompt(input, 1)
-  const firstMessagePrompt = `Поприветствуй потенциального вкладчика как ${developerName}, хозяин дела «${projectName}». Расскажи кратко о деле и предложи задавать вопросы. 2–3 предложения, живой современный русский язык.`
+  const firstMessagePrompt = `Поприветствуй потенциального вкладчика как ${developerName}, делец и хозяин дела «${projectName}». Расскажи кратко о деле и предложи задавать вопросы. 2–3 предложения, живой современный русский язык.`
 
   try {
     const response = await client.chat.completions.create({

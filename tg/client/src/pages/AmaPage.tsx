@@ -204,7 +204,7 @@ export function AmaPage() {
             ←
           </button>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ color: colors.fairyGold, fontWeight: 600, fontSize: '14px' }}>Беседа с хозяином</div>
+            <div style={{ color: colors.fairyGold, fontWeight: 600, fontSize: '14px' }}>Беседа с Дельцом</div>
             <div style={{ color: colors.textMuted, fontSize: '11px' }}>
               {session.isComplete ? 'Беседа завершена' : `Вопрос ${session.questionCount}/10`}
             </div>
@@ -306,7 +306,7 @@ export function AmaPage() {
                 color: colors.textMuted,
                 fontSize: '14px',
               }}>
-                Хозяин думает...
+                Делец думает...
               </div>
             </div>
           )}
@@ -388,32 +388,37 @@ export function AmaPage() {
             {/* Шаблоны */}
             {!sendMutation.isPending && (
               <div style={{
-                overflowX: 'auto',
-                padding: `${spacing.sm} ${spacing.lg} 0`,
                 display: 'flex',
-                gap: '6px',
-                scrollbarWidth: 'none',
+                flexWrap: 'wrap',
+                gap: '4px',
+                padding: `${spacing.sm} ${spacing.lg} 0`,
+                maxHeight: '72px',
+                overflowY: 'auto',
+                scrollbarWidth: 'none' as const,
               }}>
                 {sessionQuestions.filter(q => !usedTemplates.has(q)).map((q, i) => (
                   <button
                     key={i}
                     onClick={() => handleSend(q)}
                     style={{
+                      flexBasis: 'calc(50% - 2px)',
+                      flexGrow: 0,
                       flexShrink: 0,
                       background: 'transparent',
                       border: `1px solid ${colors.fairyGold}50`,
                       borderRadius: '14px',
-                      padding: '4px 10px',
+                      padding: '4px 8px',
                       color: `${colors.fairyGold}cc`,
-                      fontSize: '11px',
+                      fontSize: '10px',
                       cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      maxWidth: '200px',
+                      whiteSpace: 'nowrap' as const,
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
+                      textAlign: 'left' as const,
+                      boxSizing: 'border-box' as const,
                     }}
                   >
-                    {q.length > 40 ? q.slice(0, 40) + '…' : q}
+                    {q.length > 34 ? q.slice(0, 34) + '…' : q}
                   </button>
                 ))}
               </div>
@@ -447,7 +452,7 @@ export function AmaPage() {
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSend()}
-                placeholder="Задай вопрос хозяину..."
+                placeholder="Задай вопрос дельцу..."
                 maxLength={500}
                 style={{
                   flex: 1,

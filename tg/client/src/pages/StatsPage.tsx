@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { ScreenBackground } from '@/components/ScreenBackground'
 import { FairyCard, OrnamentDivider } from '@/components/FairyCard'
 import { api } from '@/api/client'
@@ -92,18 +92,29 @@ export function StatsPage() {
               Ведомость баланса
             </div>
             <ResponsiveContainer width="100%" height={160}>
-              <LineChart data={chartData}>
+              <BarChart data={chartData} barSize={8} barCategoryGap={2}>
                 <XAxis dataKey="day" stroke={colors.textMuted} tick={{ fontSize: 10 }} />
-                <YAxis stroke={colors.textMuted} tick={{ fontSize: 10 }} />
+                <YAxis stroke={colors.textMuted} tick={{ fontSize: 10 }} tickFormatter={(v: number) => v >= 1000 ? `${Math.round(v / 1000)}k` : String(v)} width={32} />
                 <Tooltip
                   contentStyle={{ background: colors.nightBlue, border: `1px solid ${colors.cardBorder}`, borderRadius: '8px' }}
-                  labelStyle={{ color: colors.textMuted }}
-                  itemStyle={{ color: colors.fairyGold }}
-                  formatter={(v: number) => [`${v} ₽`]}
+                  labelStyle={{ color: colors.textMuted, fontSize: '11px' }}
+                  formatter={(v: number, name: string) => [`${v} ₽`, name === 'balance' ? 'Свободно' : 'Вложено']}
+                  labelFormatter={(l: number) => `День ${l}`}
                 />
-                <Line type="monotone" dataKey="balance" stroke={colors.fairyGold} strokeWidth={2} dot={false} />
-              </LineChart>
+                <Bar dataKey="balance" stackId="a" fill={colors.fairyGold} />
+                <Bar dataKey="invested" stackId="a" fill="#5B3FC8" radius={[2, 2, 0, 0]} />
+              </BarChart>
             </ResponsiveContainer>
+            <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginTop: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <div style={{ width: '12px', height: '8px', background: colors.fairyGold, borderRadius: '2px' }} />
+                <span style={{ color: colors.textMuted, fontSize: '10px' }}>Свободно</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <div style={{ width: '12px', height: '8px', background: '#5B3FC8', borderRadius: '2px' }} />
+                <span style={{ color: colors.textMuted, fontSize: '10px' }}>Вложено</span>
+              </div>
+            </div>
           </FairyCard>
         )}
       </div>

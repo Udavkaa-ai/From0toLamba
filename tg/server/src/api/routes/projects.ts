@@ -85,4 +85,18 @@ export async function projectRoutes(app: FastifyInstance) {
 
     return { success: true }
   })
+
+  // GET /api/projects/transactions — история движения средств
+  app.get('/api/projects/transactions', { preHandler: telegramAuthHook }, async (request, reply) => {
+    const tgUser = request.telegramUser
+    const user = await prisma.user.findUniqueOrThrow({ where: { telegramId: String(tgUser.id) } })
+
+    const transactions = await prisma.transaction.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    })
+
+    return transactions
+  })
 }

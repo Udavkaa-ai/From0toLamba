@@ -37,6 +37,10 @@ export async function invest(userId: number, projectId: string, amount: number):
       },
     }),
   ])
+
+  await prisma.transaction.create({
+    data: { userId, projectId, projectName: project.name, type: 'INVEST', amount, day: gameState.currentDay },
+  })
 }
 
 export async function addInvestment(userId: number, projectId: string, amount: number): Promise<void> {
@@ -69,9 +73,14 @@ export async function addInvestment(userId: number, projectId: string, amount: n
       },
     }),
   ])
+
+  await prisma.transaction.create({
+    data: { userId, projectId, projectName: project.name, type: 'ADD', amount, day: gameState.currentDay },
+  })
 }
 
 export async function partialWithdraw(userId: number, projectId: string, amount: number): Promise<number> {
+  const gameState = await prisma.gameState.findFirstOrThrow({ where: { userId } })
   const project = await prisma.project.findFirstOrThrow({ where: { id: projectId, userId, isActive: true } })
 
   if (project.isWithdrawalLocked) throw new Error('WITHDRAWAL_LOCKED')
@@ -104,10 +113,15 @@ export async function partialWithdraw(userId: number, projectId: string, amount:
     }),
   ])
 
+  await prisma.transaction.create({
+    data: { userId, projectId, projectName: project.name, type: 'WITHDRAW', amount: received, day: gameState.currentDay },
+  })
+
   return received
 }
 
 export async function exitProject(userId: number, projectId: string): Promise<number> {
+  const gameState = await prisma.gameState.findFirstOrThrow({ where: { userId } })
   const project = await prisma.project.findFirstOrThrow({ where: { id: projectId, userId, isActive: true } })
 
   if (project.isWithdrawalLocked) throw new Error('WITHDRAWAL_LOCKED')
@@ -134,6 +148,10 @@ export async function exitProject(userId: number, projectId: string): Promise<nu
       },
     }),
   ])
+
+  await prisma.transaction.create({
+    data: { userId, projectId, projectName: project.name, type: 'EXIT', amount: received, day: gameState.currentDay },
+  })
 
   return received
 }

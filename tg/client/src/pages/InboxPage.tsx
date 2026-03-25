@@ -94,7 +94,7 @@ function InboxCard({ project, onClick }: { project: ProjectDTO; onClick: () => v
           fontSize: '12px',
           fontWeight: 700,
         }}>
-          {project.claimedAPY}% APY
+          {project.claimedAPY}% посул
         </div>
       </div>
 
@@ -111,6 +111,16 @@ function InboxCard({ project, onClick }: { project: ProjectDTO; onClick: () => v
         <div style={{ color: colors.textMuted, fontSize: '11px' }}>
           👥 {project.claimedUserCount.toLocaleString('ru')} вкладчиков
         </div>
+      </div>
+
+      <div style={{
+        marginTop: spacing.sm,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '4px',
+      }}>
+        <span style={{ fontSize: '10px', color: colors.warning }}>⏳</span>
+        <span style={{ color: colors.warning, fontSize: '10px' }}>Грамота истекает с рассветом</span>
       </div>
 
       <div style={{

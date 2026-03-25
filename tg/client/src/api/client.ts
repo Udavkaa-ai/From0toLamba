@@ -79,6 +79,16 @@ export interface PostMortemDTO {
   intuitionDelta: number
 }
 
+export interface TransactionDTO {
+  id: number
+  projectId: string | null
+  projectName: string
+  type: string  // INVEST | ADD | WITHDRAW | EXIT | RETURNED
+  amount: number
+  day: number
+  createdAt: string
+}
+
 export interface GameStateDTO {
   balance: number
   currentDay: number
@@ -126,6 +136,7 @@ export const api = {
     getPortfolio: () => apiClient.get<{ active: ProjectDTO[]; closed: (ProjectDTO & { postMortem: PostMortemDTO | null })[] }>('/projects/portfolio').then(r => r.data),
     getUpdates: (id: string) => apiClient.get<DailyUpdateDTO[]>(`/projects/${id}/updates`).then(r => r.data),
     skip: (id: string) => apiClient.post(`/projects/${id}/skip`).then(r => r.data),
+    getTransactions: () => apiClient.get<TransactionDTO[]>('/projects/transactions').then(r => r.data),
   },
 
   ama: {

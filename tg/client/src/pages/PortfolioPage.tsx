@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
-import { LineChart, Line, ResponsiveContainer, Tooltip } from 'recharts'
+import { ComposedChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts'
 import { ScreenBackground } from '@/components/ScreenBackground'
 import { FairyCard, OrnamentDivider } from '@/components/FairyCard'
-import { api, type ProjectDTO, type PostMortemDTO, type DailyUpdateDTO } from '@/api/client'
+import { api, type ProjectDTO, type PostMortemDTO, type DailyUpdateDTO, type TransactionDTO } from '@/api/client'
 import { colors, spacing } from '@/theme'
 
 const WITHDRAWAL_INFO: Record<string, string> = {
@@ -20,6 +20,12 @@ export function PortfolioPage() {
     queryKey: ['portfolio'],
     queryFn: api.projects.getPortfolio,
     refetchInterval: 15_000,
+  })
+
+  const { data: transactions = [] } = useQuery({
+    queryKey: ['transactions'],
+    queryFn: api.projects.getTransactions,
+    refetchInterval: 30_000,
   })
 
   return (
@@ -72,6 +78,18 @@ export function PortfolioPage() {
               <motion.div key={p.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}>
                 <ClosedProjectCard project={p} postMortem={p.postMortem} />
               </motion.div>
+            ))}
+          </section>
+        )}
+
+        {/* Движение средств */}
+        {transactions.length > 0 && (
+          <section style={{ marginTop: spacing.xl }}>
+            <div style={{ color: colors.textMuted, fontSize: '13px', fontWeight: 600, marginBottom: spacing.sm }}>
+              Движение средств
+            </div>
+            {transactions.slice(0, 20).map(tx => (
+              <TransactionRow key={tx.id} tx={tx} />
             ))}
           </section>
         )}
@@ -138,31 +156,31 @@ function NewsItem({ update }: { update: DailyUpdateDTO }) {
   )
 }
 
-function MiniChart({ data, color, label }: { data: number[]; color: string; label?: string }) {
-  const chartData = data.map((v, i) => ({ i, v }))
+function MiniDualChart({ valueHistory, userCountHistory }: { valueHistory: number[]; userCountHistory: number[] }) {
+  const len = Math.max(valueHistory.length, userCountHistory.length)
+  if (len < 2) return null
+  const data = Array.from({ length: len }, (_, i) => ({
+    day: i + 1,
+    val: valueHistory[i] ?? null,
+    usr: userCountHistory[i] ?? null,
+  }))
+  const fmtK = (v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)
+
   return (
-    <div style={{ flex: 1 }}>
-      {label && (
-        <div style={{ color: colors.textMuted, fontSize: '10px', marginBottom: '2px' }}>{label}</div>
-      )}
-      <ResponsiveContainer width="100%" height={50}>
-        <LineChart data={chartData}>
-          <Line
-            type="monotone"
-            dataKey="v"
-            stroke={color}
-            strokeWidth={1.5}
-            dot={false}
-            isAnimationActive={false}
-          />
-          <Tooltip
-            contentStyle={{ background: '#0D1735', border: 'none', borderRadius: '6px', fontSize: '10px', color: colors.textPrimary }}
-            formatter={(val: number) => [val, '']}
-            labelFormatter={() => ''}
-          />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
+    <ResponsiveContainer width="100%" height={64}>
+      <ComposedChart data={data} margin={{ top: 4, right: 30, bottom: 0, left: 0 }}>
+        <XAxis dataKey="day" stroke="transparent" tick={{ fontSize: 8, fill: '#6B7A99' }} tickCount={3} interval="preserveStartEnd" />
+        <YAxis yAxisId="left" stroke="transparent" tick={{ fontSize: 8, fill: '#FFB800' }} width={28} tickCount={2} tickFormatter={fmtK} />
+        <YAxis yAxisId="right" orientation="right" stroke="transparent" tick={{ fontSize: 8, fill: '#4a9eff' }} width={28} tickCount={2} tickFormatter={fmtK} />
+        <Tooltip
+          contentStyle={{ background: '#0D1735', border: 'none', borderRadius: '6px', fontSize: '10px', color: '#C8C8FF' }}
+          formatter={(val: number, name: string) => [name === 'val' ? `${val} ₽` : `${val} вкл.`, '']}
+          labelFormatter={(l: number) => `День ${l}`}
+        />
+        <Line yAxisId="left" type="monotone" dataKey="val" stroke="#FFB800" strokeWidth={1.5} dot={false} isAnimationActive={false} />
+        <Line yAxisId="right" type="monotone" dataKey="usr" stroke="#4a9eff" strokeWidth={1.5} dot={false} isAnimationActive={false} />
+      </ComposedChart>
+    </ResponsiveContainer>
   )
 }
 
@@ -215,6 +233,7 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
 
   const hasValueHistory = project.valueHistory.length > 1
   const hasUserCountHistory = project.userCountHistory.length > 1
+  const hasDualHistory = hasValueHistory || hasUserCountHistory
 
   return (
     <FairyCard style={{ marginBottom: spacing.md }}>
@@ -239,25 +258,14 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
       )}
 
       {/* Mini charts */}
-      {(hasValueHistory || hasUserCountHistory) && (
+      {hasDualHistory && (
         <>
           <OrnamentDivider />
-          <div style={{ display: 'flex', gap: spacing.md }}>
-            {hasValueHistory && (
-              <MiniChart
-                data={project.valueHistory}
-                color={colors.fairyGold}
-                label="💰 стоимость"
-              />
-            )}
-            {hasUserCountHistory && (
-              <MiniChart
-                data={project.userCountHistory}
-                color="#4a9eff"
-                label={`👥 вкладчиков: ${project.currentUserCount}`}
-              />
-            )}
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+            <span style={{ color: '#FFB800', fontSize: '9px' }}>₽ стоимость</span>
+            <span style={{ color: '#4a9eff', fontSize: '9px' }}>👥 {project.currentUserCount} вкл.</span>
           </div>
+          <MiniDualChart valueHistory={project.valueHistory} userCountHistory={project.userCountHistory} />
         </>
       )}
 
@@ -474,5 +482,44 @@ function ClosedProjectCard({ project, postMortem }: { project: ProjectDTO; postM
         )}
       </AnimatePresence>
     </FairyCard>
+  )
+}
+
+const TX_TYPE_ICON: Record<string, string> = {
+  INVEST: '⬇️', ADD: '⬇️', WITHDRAW: '⬆️', EXIT: '🚪', RETURNED: '📬',
+}
+const TX_TYPE_LABEL: Record<string, string> = {
+  INVEST: 'Вложено', ADD: 'Довложено', WITHDRAW: 'Выведено', EXIT: 'Выход', RETURNED: 'Возврат',
+}
+
+function TransactionRow({ tx }: { tx: TransactionDTO }) {
+  const isOut = tx.type === 'INVEST' || tx.type === 'ADD'
+  const color = isOut ? '#E86060' : '#60C878'
+  const sign = isOut ? '−' : '+'
+
+  return (
+    <div style={{
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: '7px 10px',
+      marginBottom: '4px',
+      background: 'rgba(42, 25, 96, 0.25)',
+      border: `1px solid ${colors.cardBorder}`,
+      borderRadius: '8px',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ fontSize: '14px' }}>{TX_TYPE_ICON[tx.type] ?? '•'}</span>
+        <div>
+          <div style={{ color: colors.textSecondary, fontSize: '12px' }}>
+            {TX_TYPE_LABEL[tx.type] ?? tx.type}: {tx.projectName}
+          </div>
+          <div style={{ color: colors.textMuted, fontSize: '10px' }}>День {tx.day}</div>
+        </div>
+      </div>
+      <div style={{ color, fontWeight: 700, fontSize: '13px', flexShrink: 0 }}>
+        {sign}{tx.amount.toFixed(0)} ₽
+      </div>
+    </div>
   )
 }
