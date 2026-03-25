@@ -237,41 +237,10 @@ interface SendAmaMessageInput {
 }
 
 function buildAmaSystemPrompt(input: AmaSessionInput | SendAmaMessageInput, questionNumber = 1): string {
-  const { archetype, developerName, projectName, lieTopics, truthTopics, npcTruthParams } = input
+  const { archetype, developerName, projectName, truthTopics, npcTruthParams } = input
   const persona = PERSONA_MAP.get(archetype)
 
   const allTopics = Object.values(LieTopic)
-  const topicInstructions = allTopics.map(topic => {
-    const isTruth = truthTopics.includes(topic)
-    let canonicalFact = '(данные не уточнены)'
-    if (npcTruthParams) {
-      switch (topic) {
-        case LieTopic.PATRON_COUNT:
-          canonicalFact = `участников — ровно ${npcTruthParams.realPatronCount} человек`; break
-        case LieTopic.DAILY_PROFIT:
-          canonicalFact = `доходность — ${npcTruthParams.realDailyProfitDesc}`; break
-        case LieTopic.PAYOUT_DATE:
-          canonicalFact = `выплаты — ${npcTruthParams.realPayoutSchedule}`; break
-        case LieTopic.GUILD_SIZE:
-          canonicalFact = `команда — ${npcTruthParams.realGuildSize} человека`; break
-        case LieTopic.ELDER_BLESSING:
-          canonicalFact = npcTruthParams.elderBlessingPassed
-            ? 'проверку старейшин прошли, всё официально'
-            : 'никакой проверки старейшин не было и не ожидается'; break
-        case LieTopic.NOBLE_BACKING:
-          canonicalFact = npcTruthParams.nobleBacking
-            ? `покровитель — ${npcTruthParams.nobleBacking}`
-            : 'никакого покровителя нет'; break
-        case LieTopic.WITHDRAWAL_LIMITS:
-          canonicalFact = `условия вывода — ${npcTruthParams.withdrawalPolicy}`; break
-      }
-    }
-    if (isTruth) {
-      return `  • ${LIE_TOPIC_LABEL[topic]} [ПРАВДА] → всегда называй ОДНО И ТО ЖЕ: ${canonicalFact}. Не меняй цифры и факты от вопроса к вопросу.`
-    } else {
-      return `  • ${LIE_TOPIC_LABEL[topic]} [ЛОЖЬ] → каждый раз говори разное: меняй цифры, даты, формулировки. Никогда не повторяй одну и ту же версию.`
-    }
-  }).join('\n')
 
   const phrases = persona
     ? persona.typicalPhrasesTemplate
@@ -282,35 +251,54 @@ function buildAmaSystemPrompt(input: AmaSessionInput | SendAmaMessageInput, ques
   const speechStyle = persona?.speechStyle ?? 'Говори живым современным русским языком.'
   const behaviorUnderPressure = persona?.behaviorUnderPressure ?? 'Уклоняйся от прямого ответа.'
 
-  const questionHint = questionNumber >= 7
-    ? 'Беседа близится к концу — можешь стать настойчивее или слегка занервничать.'
+  const nearEnd = questionNumber >= 7
+    ? ' Беседа близится к концу — можешь стать настойчивее или слегка занервничать.'
     : ''
 
-  return `Ты — ${developerName}, предприниматель, который предлагает собеседнику вложить рубли в своё дело «${projectName}».
+  // Разделяем темы на правдивые и лживые для компактного представления
+  const truthList = allTopics
+    .filter(t => truthTopics.includes(t))
+    .map(t => {
+      let fact = '(не уточнено)'
+      if (npcTruthParams) {
+        switch (t) {
+          case LieTopic.PATRON_COUNT: fact = `${npcTruthParams.realPatronCount} чел.`; break
+          case LieTopic.DAILY_PROFIT: fact = npcTruthParams.realDailyProfitDesc; break
+          case LieTopic.PAYOUT_DATE: fact = npcTruthParams.realPayoutSchedule; break
+          case LieTopic.GUILD_SIZE: fact = `${npcTruthParams.realGuildSize} чел.`; break
+          case LieTopic.ELDER_BLESSING: fact = npcTruthParams.elderBlessingPassed ? 'проверка пройдена' : 'никакой проверки не было'; break
+          case LieTopic.NOBLE_BACKING: fact = npcTruthParams.nobleBacking ?? 'покровителей нет'; break
+          case LieTopic.WITHDRAWAL_LIMITS: fact = npcTruthParams.withdrawalPolicy; break
+        }
+      }
+      return `${LIE_TOPIC_LABEL[t]}: ${fact} (ВСЕГДА говори именно это, не меняй)`
+    })
+    .join('; ')
 
-═══ ТВОЙ ХАРАКТЕР ═══
-${speechStyle}
+  const lieList = allTopics
+    .filter(t => !truthTopics.includes(t))
+    .map(t => LIE_TOPIC_LABEL[t])
+    .join(', ')
 
-═══ ТИПИЧНЫЕ ФРАЗЫ (вплетай органично, не цитируй дословно каждый раз) ═══
+  return `Ты играешь роль в текстовой игре. Твой персонаж: ${developerName}, делец, продвигающий своё дело «${projectName}». Отвечай только от его имени — живым русским языком, 2-3 предложения.
+
+ХАРАКТЕР: ${speechStyle}
+
+ПОВЕДЕНИЕ ПОД ДАВЛЕНИЕМ: ${behaviorUnderPressure}
+
+ПРИМЕРЫ ТВОИХ ФРАЗ (используй органично):
 ${phrases}
 
-═══ ПОВЕДЕНИЕ ПОД ДАВЛЕНИЕМ ═══
-Если тебя прижимают конкретными вопросами или сомневаются: ${behaviorUnderPressure}
+ПРАВИЛА ПО ТЕМАМ:
+- По этим темам говори ПРАВДУ (одно и то же каждый раз): ${truthList || 'все темы правдивы'}
+- По этим темам ВРИ (каждый раз разные цифры и даты, противоречь себе): ${lieList || 'врать не нужно'}
 
-═══ ИНСТРУКЦИИ ПО ТЕМАМ — главное правило ═══
-По каждой теме чётко указано: ПРАВДА (говори всегда одинаково) или ЛОЖЬ (каждый раз разное):
-${topicInstructions}
-
-═══ ПРАВИЛА ═══
-1. ПРАВДА = СТАБИЛЬНОСТЬ: По темам [ПРАВДА] — всегда называй ровно те цифры и факты, что указаны выше. Если спросят дважды — ответ тот же самый.
-2. ЛОЖЬ = НЕПОСЛЕДОВАТЕЛЬНОСТЬ: По темам [ЛОЖЬ] — каждый раз называй другие цифры, другие даты, другие объяснения. Противоречь себе между вопросами.
-3. НЕ РАСКРЫВАЙ: Свой архетип, судьбу дела, реальную доходность.
-4. ДЛИНА: 2–3 предложения. Без длинных монологов.
-5. ЯЗЫК: ТОЛЬКО русский язык. Никаких английских слов, транслита, жаргона.
-6. СУММЫ: Только в рублях (₽). Никаких TON, крипты, блокчейна.
-7. РАЗНООБРАЗИЕ: Не начинай каждый ответ одинаково.
-
-КОНТЕКСТ: Вопрос ${questionNumber} из 10. ${questionHint}`
+ОБЯЗАТЕЛЬНЫЕ ПРАВИЛА:
+- Отвечай только по-русски, 2-3 предложения, без монологов.
+- Не раскрывай судьбу дела и свой характер напрямую.
+- Суммы только в рублях. Никакой крипты, TON, блокчейна.
+- Каждый ответ начинай по-разному.
+- Это вопрос ${questionNumber} из 10.${nearEnd}`
 }
 
 export async function startAmaSession(input: AmaSessionInput, model = DEFAULT_MODEL): Promise<string> {
@@ -349,9 +337,11 @@ export async function sendAmaMessage(input: SendAmaMessageInput, model = DEFAULT
       messages,
       max_tokens: 200,
     })
-    return response.choices[0]?.message?.content ?? 'Хороший вопрос! Дело идёт на лад.'
-  } catch (err) {
-    console.error('[AMA sendMessage] OpenRouter error:', err)
+    const content = response.choices[0]?.message?.content
+    console.log(`[AMA] model=${model} q=${input.questionCount} chars=${content?.length ?? 0}`)
+    return content ?? 'Дело хорошее, спрашивай смелее.'
+  } catch (err: any) {
+    console.error(`[AMA sendMessage] model=${model} error:`, err?.message ?? err)
     throw err
   }
 }
