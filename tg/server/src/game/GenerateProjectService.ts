@@ -11,7 +11,7 @@ const ALL_FATES = Object.entries(FATE_CONFIG).map(([value, cfg]) => ({
 const ALL_TYPES = Object.values(ProjectType)
 const ALL_ARCHETYPES = Object.values(PersonaArchetype)
 
-export async function generateProject(userId: number, overrideFate?: ProjectFate): Promise<string> {
+export async function generateProject(userId: number, overrideFate?: ProjectFate, model?: string): Promise<string> {
   // Случайные базовые параметры
   const type = ALL_TYPES[Math.floor(Math.random() * ALL_TYPES.length)]
   const fate = overrideFate ?? wr(ALL_FATES)
@@ -28,7 +28,7 @@ export async function generateProject(userId: number, overrideFate?: ProjectFate
   const npcTruthParams = generateNpcTruthParams(type, fate, realDailyYieldRubles)
 
   // AI генерирует имя, описание, публичные данные
-  const aiData = await generateProjectData({ type, fate, archetype, lieTopics })
+  const aiData = await generateProjectData({ type, fate, archetype, lieTopics }, model)
 
   const project = await prisma.project.create({
     data: {
@@ -62,6 +62,6 @@ export async function generateProject(userId: number, overrideFate?: ProjectFate
 }
 
 /** Онбординг-проект (всегда HONEST_FAIL, гарантированная выплата) */
-export async function generateOnboardingProject(userId: number): Promise<string> {
-  return generateProject(userId, ProjectFate.HONEST_FAIL)
+export async function generateOnboardingProject(userId: number, model?: string): Promise<string> {
+  return generateProject(userId, ProjectFate.HONEST_FAIL, model)
 }

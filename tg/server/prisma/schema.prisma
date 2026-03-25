@@ -39,6 +39,7 @@ model GameState {
   balanceHistory       Float[]   @default([])
   investedHistory      Float[]   @default([])
   pendingRankUp        String?
+  preferredModel       String    @default("deepseek/deepseek-chat-v3-0324")
   lastAdvancedAt       DateTime?
   updatedAt            DateTime  @updatedAt
 

@@ -113,7 +113,7 @@ const client = new OpenAI({
   },
 })
 
-const TEXT_MODEL = 'deepseek/deepseek-chat-v3-0324'
+const DEFAULT_MODEL = 'deepseek/deepseek-chat-v3-0324'
 
 // ─── Генерация данных проекта ────────────────────────────────────────────────
 
@@ -142,7 +142,7 @@ const PROJECT_TYPE_RU: Record<ProjectType, string> = {
 }
 
 
-export async function generateProjectData(input: GenerateProjectInput): Promise<GeneratedProjectData> {
+export async function generateProjectData(input: GenerateProjectInput, model = DEFAULT_MODEL): Promise<GeneratedProjectData> {
   const { type, archetype, lieTopics } = input
   const typeName = PROJECT_TYPE_RU[type]
   const liesStr = lieTopics.map(t => `${LIE_TOPIC_EMOJI[t]} ${LIE_TOPIC_LABEL[t]}`).join(', ')
@@ -165,7 +165,7 @@ export async function generateProjectData(input: GenerateProjectInput): Promise<
 
   try {
     const response = await client.chat.completions.create({
-      model: TEXT_MODEL,
+      model: model,
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 300,
       response_format: { type: 'json_object' },
@@ -313,14 +313,14 @@ ${topicInstructions}
 КОНТЕКСТ: Вопрос ${questionNumber} из 10. ${questionHint}`
 }
 
-export async function startAmaSession(input: AmaSessionInput): Promise<string> {
+export async function startAmaSession(input: AmaSessionInput, model = DEFAULT_MODEL): Promise<string> {
   const { developerName, projectName } = input
   const systemPrompt = buildAmaSystemPrompt(input, 1)
   const firstMessagePrompt = `Поприветствуй потенциального вкладчика как ${developerName}, хозяин дела «${projectName}». Расскажи кратко о деле и предложи задавать вопросы. 2–3 предложения, живой современный русский язык.`
 
   try {
     const response = await client.chat.completions.create({
-      model: TEXT_MODEL,
+      model: model,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: firstMessagePrompt },
@@ -334,7 +334,7 @@ export async function startAmaSession(input: AmaSessionInput): Promise<string> {
   }
 }
 
-export async function sendAmaMessage(input: SendAmaMessageInput): Promise<string> {
+export async function sendAmaMessage(input: SendAmaMessageInput, model = DEFAULT_MODEL): Promise<string> {
   const systemPrompt = buildAmaSystemPrompt(input, input.questionCount)
 
   const messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }> = [
@@ -345,7 +345,7 @@ export async function sendAmaMessage(input: SendAmaMessageInput): Promise<string
 
   try {
     const response = await client.chat.completions.create({
-      model: TEXT_MODEL,
+      model: model,
       messages,
       max_tokens: 200,
     })
@@ -362,6 +362,7 @@ export async function generateDailyUpdate(
   projectId: string,
   userId: number,
   project: { name: string; type: string; personaArchetype: string; daysSinceJoined: number; fate: string },
+  model = DEFAULT_MODEL,
 ): Promise<void> {
   const prompt = `Ты — ведущий рубрики «Вести с ярмарки» в игре «Из грязи в князи».
 Напиши короткую весть о деле «${project.name}» (день ${project.daysSinceJoined + 1}).
@@ -378,7 +379,7 @@ export async function generateDailyUpdate(
 
   try {
     const response = await client.chat.completions.create({
-      model: TEXT_MODEL,
+      model: model,
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 250,
       response_format: { type: 'json_object' },
@@ -417,7 +418,7 @@ interface PostMortemInput {
   intuitionDelta: number
 }
 
-export async function generatePostMortem(input: PostMortemInput): Promise<void> {
+export async function generatePostMortem(input: PostMortemInput, model = DEFAULT_MODEL): Promise<void> {
   const { projectId, userId, archetype, fate, lieTopics, investedAmount, returnedAmount, profitPercent, daysActive, intuitionDelta } = input
 
   const liesStr = lieTopics.map(t => LIE_TOPIC_LABEL[t as LieTopic] ?? t).join(', ')
@@ -434,7 +435,7 @@ export async function generatePostMortem(input: PostMortemInput): Promise<void> 
 
   try {
     const response = await client.chat.completions.create({
-      model: TEXT_MODEL,
+      model: model,
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 300,
     })
