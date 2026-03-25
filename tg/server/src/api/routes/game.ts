@@ -32,7 +32,16 @@ export async function gameRoutes(app: FastifyInstance) {
       include: { gameState: true },
     })
 
-    const gameState = user.gameState!
+    let gameState = user.gameState!
+
+    // Мигрируем устаревший ID модели Gemini
+    if (gameState.preferredModel === 'google/gemini-2.5-flash-preview') {
+      await prisma.gameState.update({
+        where: { userId: user.id },
+        data: { preferredModel: 'google/gemini-2.5-flash-preview-05-20' },
+      })
+      gameState = { ...gameState, preferredModel: 'google/gemini-2.5-flash-preview-05-20' }
+    }
 
     // Запускаем онбординг если не начат
     if (!gameState.isOnboardingComplete) {
@@ -143,7 +152,7 @@ export async function gameRoutes(app: FastifyInstance) {
   app.post('/api/game/settings', { preHandler: telegramAuthHook }, async (request, reply) => {
     const tgUser = request.telegramUser
     const body = z.object({
-      preferredModel: z.enum(['deepseek/deepseek-chat-v3-0324', 'google/gemini-2.5-flash-preview']),
+      preferredModel: z.enum(['deepseek/deepseek-chat-v3-0324', 'google/gemini-2.5-flash-preview-05-20']),
     }).safeParse(request.body)
     if (!body.success) return reply.status(400).send({ error: 'Неверная модель' })
 

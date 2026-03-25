@@ -116,8 +116,8 @@ export async function sendMessage(userId: number, projectId: string, userMessage
       questionCount: session.questionCount + 1,
     }, model)
   } catch (err) {
-    console.error('[AmaSession] AI reply failed, using fallback:', err)
-    reply = 'Хороший вопрос! Дайте подумать... Спросите меня об этом позже.'
+    console.error('[AmaSession] AI reply failed:', err)
+    throw err
   }
 
   await prisma.amaMessage.create({

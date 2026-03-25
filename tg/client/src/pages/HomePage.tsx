@@ -20,7 +20,7 @@ const MODEL_OPTIONS = [
     subtitle: 'быстрый, дешёвый',
   },
   {
-    id: 'google/gemini-2.5-flash-preview',
+    id: 'google/gemini-2.5-flash-preview-05-20',
     label: 'Gemini 2.5 Flash',
     subtitle: 'умнее, медленнее',
   },
