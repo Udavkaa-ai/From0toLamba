@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ScreenBackground } from '@/components/ScreenBackground'
 import { FairyCard, OrnamentDivider } from '@/components/FairyCard'
 import { RankUpOverlay } from '@/components/RankUpOverlay'
-import { api, type ProjectDTO } from '@/api/client'
+import { api, type ProjectDTO, type DailyUpdateDTO } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing, typography } from '@/theme'
 
@@ -473,9 +473,23 @@ export function HomePage() {
 }
 
 function ActiveProjectCard({ project, delay, onPress }: { project: ProjectDTO; delay: number; onPress: () => void }) {
+  const navigate = useNavigate()
   const profit = project.investedAmountRubles > 0
     ? ((project.currentValueRubles - project.investedAmountRubles) / project.investedAmountRubles * 100)
     : 0
+
+  const { data: updates } = useQuery({
+    queryKey: ['updates', project.id],
+    queryFn: () => api.projects.getUpdates(project.id),
+  })
+
+  const latestUpdate: DailyUpdateDTO | undefined = updates?.[updates.length - 1]
+  let newsSignal: string | null = null
+  if (latestUpdate) {
+    if (latestUpdate.payoutStatus === 'BOOSTED' || latestUpdate.userCountDelta > 5) newsSignal = '🟢'
+    else if (latestUpdate.payoutStatus === 'DELAYED' || latestUpdate.userCountDelta < -5) newsSignal = '🔴'
+    else if (latestUpdate.redFlags.length > 0) newsSignal = '⚠️'
+  }
 
   return (
     <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay }}>
@@ -496,11 +510,32 @@ function ActiveProjectCard({ project, delay, onPress }: { project: ProjectDTO; d
             </div>
           </div>
         </div>
-        {project.isWithdrawalLocked && (
-          <div style={{ marginTop: spacing.sm, color: colors.warning, fontSize: '11px' }}>
-            🔒 Вывод заблокирован
+        {(project.isWithdrawalLocked || newsSignal) && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm }}>
+            {project.isWithdrawalLocked && (
+              <div style={{ color: colors.warning, fontSize: '11px' }}>
+                🔒 Вывод заблокирован
+              </div>
+            )}
+            {newsSignal && !project.isWithdrawalLocked && (
+              <div style={{ color: colors.textMuted, fontSize: '11px' }}>
+                {newsSignal} {latestUpdate?.title}
+              </div>
+            )}
           </div>
         )}
+        <div style={{ marginTop: spacing.sm, display: 'flex', justifyContent: 'flex-end' }}>
+          <button
+            onClick={e => { e.stopPropagation(); navigate('/portfolio') }}
+            style={{
+              padding: '4px 10px', background: `${colors.fairyGold}15`,
+              border: `1px solid ${colors.fairyGold}40`, borderRadius: '6px',
+              color: colors.fairyGold, cursor: 'pointer', fontSize: '11px',
+            }}
+          >
+            + Довложить
+          </button>
+        </div>
       </FairyCard>
     </motion.div>
   )

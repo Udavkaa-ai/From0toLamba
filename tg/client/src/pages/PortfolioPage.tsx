@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
+import { LineChart, Line, ResponsiveContainer, Tooltip } from 'recharts'
 import { ScreenBackground } from '@/components/ScreenBackground'
 import { FairyCard, OrnamentDivider } from '@/components/FairyCard'
-import { api, type ProjectDTO, type PostMortemDTO } from '@/api/client'
+import { api, type ProjectDTO, type PostMortemDTO, type DailyUpdateDTO } from '@/api/client'
 import { colors, spacing } from '@/theme'
 
 const WITHDRAWAL_INFO: Record<string, string> = {
@@ -79,10 +80,106 @@ export function PortfolioPage() {
   )
 }
 
+function NewsItem({ update }: { update: DailyUpdateDTO }) {
+  const [expanded, setExpanded] = useState(false)
+
+  let signal = '⚪'
+  if (update.payoutStatus === 'BOOSTED' || update.userCountDelta > 5) signal = '🟢'
+  else if (update.payoutStatus === 'DELAYED' || update.userCountDelta < -5) signal = '🔴'
+
+  return (
+    <div
+      onClick={() => setExpanded(!expanded)}
+      style={{
+        padding: '6px 8px',
+        borderRadius: '6px',
+        background: 'rgba(42, 25, 96, 0.3)',
+        marginBottom: '4px',
+        cursor: 'pointer',
+        border: `1px solid ${colors.cardBorder}`,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <span style={{ fontSize: '12px' }}>{signal}</span>
+        <span style={{
+          color: colors.textSecondary, fontSize: '11px', flex: 1,
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        }}>
+          {update.title}
+        </span>
+        {update.redFlags.length > 0 && (
+          <span style={{ color: colors.warning, fontSize: '10px', flexShrink: 0 }}>
+            ⚠️ {update.redFlags.length} сигн.
+          </span>
+        )}
+      </div>
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            style={{ overflow: 'hidden' }}
+          >
+            <div style={{ marginTop: '6px', color: colors.textMuted, fontSize: '11px', lineHeight: 1.5 }}>
+              {update.body}
+            </div>
+            {update.redFlags.length > 0 && (
+              <div style={{ marginTop: '4px' }}>
+                {update.redFlags.map((flag, i) => (
+                  <div key={i} style={{ color: colors.warning, fontSize: '10px' }}>⚠️ {flag}</div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+function MiniChart({ data, color, label }: { data: number[]; color: string; label?: string }) {
+  const chartData = data.map((v, i) => ({ i, v }))
+  return (
+    <div style={{ flex: 1 }}>
+      {label && (
+        <div style={{ color: colors.textMuted, fontSize: '10px', marginBottom: '2px' }}>{label}</div>
+      )}
+      <ResponsiveContainer width="100%" height={50}>
+        <LineChart data={chartData}>
+          <Line
+            type="monotone"
+            dataKey="v"
+            stroke={color}
+            strokeWidth={1.5}
+            dot={false}
+            isAnimationActive={false}
+          />
+          <Tooltip
+            contentStyle={{ background: '#0D1735', border: 'none', borderRadius: '6px', fontSize: '10px', color: colors.textPrimary }}
+            formatter={(val: number) => [val, '']}
+            labelFormatter={() => ''}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
 function ActiveProjectCard({ project }: { project: ProjectDTO }) {
   const qc = useQueryClient()
   const [showWithdraw, setShowWithdraw] = useState(false)
+  const [showAddInvest, setShowAddInvest] = useState(false)
   const [withdrawAmount, setWithdrawAmount] = useState('')
+  const [addAmount, setAddAmount] = useState('')
+
+  const { data: updates } = useQuery({
+    queryKey: ['updates', project.id],
+    queryFn: () => api.projects.getUpdates(project.id),
+    refetchInterval: 30_000,
+  })
+
+  const recentUpdates = (updates ?? []).slice(-3).reverse()
 
   const profit = project.investedAmountRubles > 0
     ? ((project.currentValueRubles - project.investedAmountRubles) / project.investedAmountRubles * 100)
@@ -100,13 +197,28 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
     mutationFn: () => api.invest.withdraw(project.id, Number(withdrawAmount)),
     onSuccess: () => {
       setShowWithdraw(false)
+      setWithdrawAmount('')
       qc.invalidateQueries({ queryKey: ['portfolio'] })
       qc.invalidateQueries({ queryKey: ['gameState'] })
     },
   })
 
+  const addInvestMutation = useMutation({
+    mutationFn: () => api.invest.addInvestment(project.id, Number(addAmount)),
+    onSuccess: () => {
+      setShowAddInvest(false)
+      setAddAmount('')
+      qc.invalidateQueries({ queryKey: ['portfolio'] })
+      qc.invalidateQueries({ queryKey: ['gameState'] })
+    },
+  })
+
+  const hasValueHistory = project.valueHistory.length > 1
+  const hasUserCountHistory = project.userCountHistory.length > 1
+
   return (
     <FairyCard style={{ marginBottom: spacing.md }}>
+      {/* Header row */}
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <div>
           <div style={{ color: colors.fairyGold, fontWeight: 700 }}>{project.name}</div>
@@ -126,34 +238,82 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
         </div>
       )}
 
+      {/* Mini charts */}
+      {(hasValueHistory || hasUserCountHistory) && (
+        <>
+          <OrnamentDivider />
+          <div style={{ display: 'flex', gap: spacing.md }}>
+            {hasValueHistory && (
+              <MiniChart
+                data={project.valueHistory}
+                color={colors.fairyGold}
+                label="💰 стоимость"
+              />
+            )}
+            {hasUserCountHistory && (
+              <MiniChart
+                data={project.userCountHistory}
+                color="#4a9eff"
+                label={`👥 вкладчиков: ${project.currentUserCount}`}
+              />
+            )}
+          </div>
+        </>
+      )}
+
+      {/* News section */}
+      {recentUpdates.length > 0 && (
+        <>
+          <OrnamentDivider />
+          <div style={{ color: colors.textMuted, fontSize: '11px', fontWeight: 600, marginBottom: '6px' }}>
+            Вести
+          </div>
+          {recentUpdates.map(u => (
+            <NewsItem key={u.id} update={u} />
+          ))}
+        </>
+      )}
+
       <OrnamentDivider />
 
-      <div style={{ display: 'flex', gap: spacing.sm }}>
+      {/* Action buttons */}
+      <div style={{ display: 'flex', gap: spacing.sm, flexWrap: 'wrap' }}>
         {!project.isWithdrawalLocked && (
-          <>
-            <button
-              onClick={() => setShowWithdraw(!showWithdraw)}
-              style={{
-                flex: 1, padding: '8px', background: 'transparent',
-                border: `1px solid ${colors.cardBorder}`, borderRadius: '8px',
-                color: colors.textSecondary, cursor: 'pointer', fontSize: '12px',
-              }}
-            >
-              Вывести часть
-            </button>
-            <button
-              onClick={() => exitMutation.mutate()}
-              disabled={exitMutation.isPending}
-              style={{
-                flex: 1, padding: '8px', background: `${colors.danger}20`,
-                border: `1px solid ${colors.danger}40`, borderRadius: '8px',
-                color: colors.danger, cursor: 'pointer', fontSize: '12px',
-              }}
-            >
-              Покинуть дело
-            </button>
-          </>
+          <button
+            onClick={() => { setShowAddInvest(!showAddInvest); setShowWithdraw(false) }}
+            style={{
+              flex: 1, padding: '8px', background: `${colors.fairyGold}15`,
+              border: `1px solid ${colors.fairyGold}40`, borderRadius: '8px',
+              color: colors.fairyGold, cursor: 'pointer', fontSize: '12px',
+            }}
+          >
+            Довложить
+          </button>
         )}
+        {!project.isWithdrawalLocked && (
+          <button
+            onClick={() => { setShowWithdraw(!showWithdraw); setShowAddInvest(false) }}
+            style={{
+              flex: 1, padding: '8px', background: 'transparent',
+              border: `1px solid ${colors.cardBorder}`, borderRadius: '8px',
+              color: colors.textSecondary, cursor: 'pointer', fontSize: '12px',
+            }}
+          >
+            Вывести часть
+          </button>
+        )}
+        <button
+          onClick={() => exitMutation.mutate()}
+          disabled={exitMutation.isPending || project.isWithdrawalLocked}
+          style={{
+            flex: 1, padding: '8px', background: `${colors.danger}20`,
+            border: `1px solid ${colors.danger}40`, borderRadius: '8px',
+            color: project.isWithdrawalLocked ? colors.textMuted : colors.danger,
+            cursor: project.isWithdrawalLocked ? 'not-allowed' : 'pointer', fontSize: '12px',
+          }}
+        >
+          Покинуть дело
+        </button>
       </div>
 
       {WITHDRAWAL_INFO[project.type] && (
@@ -162,9 +322,49 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
         </div>
       )}
 
+      {/* Add investment input */}
+      <AnimatePresence>
+        {showAddInvest && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
+            <div style={{ marginTop: spacing.md }}>
+              <input
+                type="number"
+                value={addAmount}
+                onChange={e => setAddAmount(e.target.value)}
+                placeholder="Сумма довложения"
+                style={{
+                  width: '100%', boxSizing: 'border-box',
+                  background: 'rgba(42, 25, 96, 0.4)', border: `1px solid ${colors.cardBorder}`,
+                  borderRadius: '8px', padding: '8px', color: colors.textPrimary,
+                  fontSize: '14px', outline: 'none',
+                }}
+              />
+              {addInvestMutation.isError && (
+                <div style={{ color: colors.danger, fontSize: '11px', marginTop: '4px' }}>
+                  {(addInvestMutation.error as Error).message}
+                </div>
+              )}
+              <button
+                onClick={() => addInvestMutation.mutate()}
+                disabled={!addAmount || addInvestMutation.isPending}
+                style={{
+                  width: '100%', marginTop: spacing.sm,
+                  padding: '8px', background: `${colors.enchantedPurple}`,
+                  border: `1px solid ${colors.fairyGold}40`, borderRadius: '8px',
+                  color: colors.fairyGold, fontWeight: 600, cursor: 'pointer', fontSize: '13px',
+                }}
+              >
+                {addInvestMutation.isPending ? 'Вкладываем...' : 'Довложить'}
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Withdraw input */}
       <AnimatePresence>
         {showWithdraw && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
             <div style={{ marginTop: spacing.md }}>
               <input
                 type="number"
