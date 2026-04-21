@@ -104,7 +104,7 @@ tg/
 
 Схема: `tg/server/prisma/schema.prisma`
 
-**Таблицы:** `User`, `GameState`, `Project`, `AmaSession`, `AmaMessage`, `DailyUpdate`, `PostMortem`, `AdRevenue`
+**Таблицы:** `User`, `GameState`, `Project`, `AmaSession`, `AmaMessage`, `DailyUpdate`, `PostMortem`, `Transaction`, `AdRevenue`
 
 **КРИТИЧНО — скрытые поля `Project`:**
 `fate`, `personaArchetype`, `daysUntilCollapse`, `realDailyYieldRubles`, `lieTopics`, `truthTopics`, `npcTruthParams` — **НИКОГДА** не отдавать клиенту напрямую. Использовать `toPublicDTO()` из `projectUtils.ts`.
@@ -133,7 +133,7 @@ InvestorRank:     NEWBIE → AMBASSADOR → ANALYST → SHARK → LAMBO_SENSEI
 ## AI-интеграция
 
 - **Провайдер:** OpenRouter (`https://openrouter.ai/api/v1/`)
-- **Текст по умолчанию:** `deepseek/deepseek-chat-v3-0324` (меняется в настройках через `preferredModel`)
+- **Модели:** `deepseek/deepseek-chat-v3-0324` (по умолчанию) и `google/gemini-3.1-flash-lite-preview` (меняется в настройках через `preferredModel`)
 - **Клиент:** `tg/server/src/ai/openRouterClient.ts`
 - **Функции:** `generateAmaResponse`, `generateProjectName`, `generateDailyUpdate`, `generatePostMortem`
 
@@ -143,36 +143,29 @@ InvestorRank:     NEWBIE → AMBASSADOR → ANALYST → SHARK → LAMBO_SENSEI
 
 ## Деплой
 
-```bash
-docker build -t from0tolamba .
-docker run -p 3000:3000 \
-  -e DATABASE_URL=postgresql://... \
-  -e TELEGRAM_BOT_TOKEN=... \
-  -e MINI_APP_URL=https://your-domain.com \
-  -e OPENROUTER_API_KEY=sk-or-... \
-  from0tolamba
-```
+**Хостинг: Railway** (`https://railway.app`)
+- Сервис: `From0toLamba` — деплой из GitHub `udavkaa-ai/from0tolamba`, Dockerfile в корне
+- БД: PostgreSQL-сервис на Railway, `DATABASE_URL` прокинут через `${{Postgres.DATABASE_URL}}`
+- Домен: `https://from0tolamba-production.up.railway.app`
+- Бот: `@vknyazi_bot`
 
-`Dockerfile` (корень репозитория):
-1. Собирает React-клиент → `server/public/`
-2. Устанавливает зависимости сервера
-3. При старте: `prisma db push --accept-data-loss` → `tsx src/index.ts`
+При деплое Railway сам собирает Docker-образ. При старте контейнера автоматически:
+1. `prisma db push --accept-data-loss` — синхронизирует схему БД
+2. `tsx src/index.ts` — запускает сервер
 
 - `NODE_ENV=production`: webhook Telegram + cron на 21:00 MSK
 - `NODE_ENV=development`: long polling бота
 
 ---
 
-## Переменные окружения (`tg/server/.env`)
+## Переменные окружения (Railway → Variables)
 
 ```
-DATABASE_URL         postgresql://user:pass@host:5432/from0tolamba
+DATABASE_URL         ${{Postgres.DATABASE_URL}}   ← ссылка на Railway Postgres
 TELEGRAM_BOT_TOKEN   123456:ABC...
-MINI_APP_URL         https://xxx.bothost.tech
+MINI_APP_URL         https://from0tolamba-production.up.railway.app
 OPENROUTER_API_KEY   sk-or-...
-ADMIN_JWT_SECRET     change-me-in-production
-PORT                 3000
-NODE_ENV             development | production
+NODE_ENV             production
 ```
 
 ---
