@@ -13,8 +13,7 @@ export function BottomNav() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
 
-  // На экране беседы навигация не нужна — она перекрывает поле ввода
-  if (pathname.startsWith('/ama/')) return null
+  if (pathname.startsWith('/ama/') || pathname === '/registry') return null
 
   return (
     <nav

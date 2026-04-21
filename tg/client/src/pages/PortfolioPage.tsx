@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import { ComposedChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts'
 import { ScreenBackground } from '@/components/ScreenBackground'
 import { FairyCard, OrnamentDivider, SkeletonCard } from '@/components/FairyCard'
@@ -16,6 +17,7 @@ const WITHDRAWAL_INFO: Record<string, string> = {
 }
 
 export function PortfolioPage() {
+  const navigate = useNavigate()
   const { data, isLoading } = useQuery({
     queryKey: ['portfolio'],
     queryFn: api.projects.getPortfolio,
@@ -67,14 +69,36 @@ export function PortfolioPage() {
         {/* Закрытые (только те, куда вкладывался) */}
         {data?.closed && data.closed.filter(p => p.investedAmountRubles > 0).length > 0 && (
           <section style={{ marginTop: spacing.xl }}>
-            <div style={{ color: colors.textMuted, fontSize: '13px', fontWeight: 600, marginBottom: spacing.sm }}>
-              История
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm }}>
+              <div style={{ color: colors.textMuted, fontSize: '13px', fontWeight: 600 }}>
+                История
+              </div>
+              <button
+                onClick={() => navigate('/registry')}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: colors.fairyGold, fontSize: '12px',
+                }}
+              >
+                Вся летопись →
+              </button>
             </div>
-            {data.closed.filter(p => p.investedAmountRubles > 0).map((p, i) => (
+            {data.closed.filter(p => p.investedAmountRubles > 0).slice(0, 3).map((p, i) => (
               <motion.div key={p.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}>
                 <ClosedProjectCard project={p} postMortem={p.postMortem} />
               </motion.div>
             ))}
+            {data.closed.filter(p => p.investedAmountRubles > 0).length > 3 && (
+              <div
+                onClick={() => navigate('/registry')}
+                style={{
+                  textAlign: 'center', color: colors.textMuted, fontSize: '12px',
+                  padding: spacing.sm, cursor: 'pointer',
+                }}
+              >
+                + ещё {data.closed.filter(p => p.investedAmountRubles > 0).length - 3} в летописи
+              </div>
+            )}
           </section>
         )}
 

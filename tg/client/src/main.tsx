@@ -8,6 +8,7 @@ import { AmaPage } from './pages/AmaPage'
 import { PortfolioPage } from './pages/PortfolioPage'
 import { StatsPage } from './pages/StatsPage'
 import { LeaderboardPage } from './pages/LeaderboardPage'
+import { RegistryPage } from './pages/RegistryPage'
 import { BottomNav } from './components/BottomNav'
 import './styles.css'
 
@@ -36,6 +37,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="/portfolio" element={<PortfolioPage />} />
           <Route path="/stats" element={<StatsPage />} />
           <Route path="/leaderboard" element={<LeaderboardPage />} />
+          <Route path="/registry" element={<RegistryPage />} />
         </Routes>
         <BottomNav />
       </BrowserRouter>

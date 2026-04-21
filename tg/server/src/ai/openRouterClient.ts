@@ -174,17 +174,46 @@ export async function generateProjectData(input: GenerateProjectInput, model = D
   }
 }
 
-// ─── Баннер проекта ──────────────────────────────────────────────────────────
-// TODO: заменить на pollinations.ai
+// ─── Баннер проекта (Pollinations.ai) ────────────────────────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const TYPE_THEME: Record<ProjectType, string> = {
+  [ProjectType.CARD_GAME]: 'playing cards gambling medieval tavern candlelight',
+  [ProjectType.TREASURE_HUNT]: 'treasure chest ancient map forest ruins moonlight',
+  [ProjectType.POTION_BREW]: 'alchemy potions cauldron mystical laboratory glowing',
+  [ProjectType.GUILD_SCHEME]: 'guild craftsmen medieval hall workshop banners',
+  [ProjectType.HONEST_TRADE]: 'market bazaar merchants colourful goods stalls',
+}
+
+const ARCHETYPE_THEME: Record<PersonaArchetype, string> = {
+  [PersonaArchetype.BURATINO]: 'puppet marionette magical wooden toy theatre',
+  [PersonaArchetype.BOYARIN]: 'nobleman royal court fur cloak golden throne',
+  [PersonaArchetype.KOLOBOK]: 'round jolly bread rolling cheerful autumn',
+  [PersonaArchetype.KOSCHEI]: 'dark skeletal immortal ominous black skull',
+  [PersonaArchetype.ZOLUSHKA]: 'cinderella carriage pumpkin midnight starlight',
+  [PersonaArchetype.BABA_YAGA]: 'hut on chicken legs forest witch cauldron fog',
+  [PersonaArchetype.IVAN_DURAK]: 'simple peasant lucky wanderer firebird horse',
+}
+
 export async function generateProjectBanner(
-  _projectId: string,
-  _projectName: string,
-  _type: ProjectType,
-  _archetype: PersonaArchetype,
+  projectId: string,
+  projectName: string,
+  type: ProjectType,
+  archetype: PersonaArchetype,
 ): Promise<void> {
-  // заглушка — bannerImageUrl остаётся null, UI показывает placeholder
+  const prompt = [
+    TYPE_THEME[type],
+    ARCHETYPE_THEME[archetype],
+    'russian fairy tale fantasy, dark mystical atmosphere, gold purple blue tones',
+    'wide cinematic banner, painterly illustration, no text, no letters',
+  ].join(', ')
+
+  const seed = parseInt(projectId.replace(/-/g, '').slice(-6), 16) % 99999
+  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=600&height=220&nologo=true&seed=${seed}`
+
+  await prisma.project.update({
+    where: { id: projectId },
+    data: { bannerImageUrl: url },
+  }).catch(err => console.error('[Banner] DB update failed:', err))
 }
 
 // ─── AMA сессия ──────────────────────────────────────────────────────────────
