@@ -107,13 +107,13 @@ export const FATE_CONFIG: Record<ProjectFate, {
     weight: 15,
   },
   [ProjectFate.SURVIVOR]: {
-    daysRange: [30, 90],
+    daysRange: [15, 30],
     dailyYieldRange: [0.003, 0.015],
     lossRange: [0, 0],
     weight: 20,
   },
   [ProjectFate.UNICORN]: {
-    daysRange: [60, 365],
+    daysRange: [20, 30],
     dailyYieldRange: [0.02, 0.1],
     lossRange: [0, 0],
     weight: 10,

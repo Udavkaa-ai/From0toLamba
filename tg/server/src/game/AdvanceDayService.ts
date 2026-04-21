@@ -5,6 +5,20 @@ import { randomInRange as rng, randomIntInRange as irng } from './projectUtils'
 import { generateDailyUpdate, generatePostMortem } from '../ai/openRouterClient'
 import { generateProject } from './GenerateProjectService'
 
+const HANDOVER_REASONS_SURVIVOR = [
+  'Дело выкупил племянник воеводы — прибыль выплачена 📜',
+  'Хозяин уступил дело купеческой артели — расчёт честный',
+  'Дело передано зятю Старосты — вложения возвращены с доходом',
+  'Купеческая гильдия поглотила дело — прибыль выплачена сполна',
+]
+
+const HANDOVER_REASONS_UNICORN = [
+  'Столичные купцы выкупили дело — вложения приумножены в разы 🏆',
+  'Дело приглянулось самому воеводе — честный выкуп произведён 🦄',
+  'Хозяин уплыл за море, оставив расчёт всем вкладчикам честно',
+  'Великая артель купила дело — вкладчики получили свою долю сполна',
+]
+
 const NEW_PROJECTS_PER_DAY_MIN = 1
 const NEW_PROJECTS_PER_DAY_MAX = 3
 
@@ -60,9 +74,9 @@ export async function advanceDay(userId: number): Promise<{ newRank?: InvestorRa
       } else if (fate === ProjectFate.HONEST_FAIL) {
         closureReason = 'Хозяин честно признал провал'
       } else if (fate === ProjectFate.SURVIVOR) {
-        closureReason = 'Дело завершило свой срок'
+        closureReason = HANDOVER_REASONS_SURVIVOR[Math.floor(Math.random() * HANDOVER_REASONS_SURVIVOR.length)]
       } else if (fate === ProjectFate.UNICORN) {
-        closureReason = 'Дело достигло своего пика! 🦄'
+        closureReason = HANDOVER_REASONS_UNICORN[Math.floor(Math.random() * HANDOVER_REASONS_UNICORN.length)]
       }
 
       const returned = updatedValue * (1 - lossPercent)
@@ -112,9 +126,9 @@ export async function advanceDay(userId: number): Promise<{ newRank?: InvestorRa
       continue
     }
 
-    // Начисляем доходность: investedAmount × realDailyYield × 10 (game-time коэффициент)
+    // Начисляем доходность: investedAmount × realDailyYield
     if (project.investedAmountRubles > 0) {
-      const dailyYield = project.investedAmountRubles * project.realDailyYieldRubles * 10
+      const dailyYield = project.investedAmountRubles * project.realDailyYieldRubles
       updatedValue += dailyYield
 
       // 10% шанс случайного события
@@ -212,24 +226,10 @@ export async function advanceDay(userId: number): Promise<{ newRank?: InvestorRa
   })
 
   // Генерируем новые дела в Inbox
-  const currentInboxCount = await prisma.project.count({ where: { userId, isInbox: true } })
   const newProjectsCount = irng(NEW_PROJECTS_PER_DAY_MIN, NEW_PROJECTS_PER_DAY_MAX)
 
   for (let i = 0; i < newProjectsCount; i++) {
     generateProject(userId).catch(console.error)
-  }
-
-  // Telegram-уведомление
-  try {
-    const user = await prisma.user.findUnique({ where: { id: userId }, select: { telegramId: true } })
-    if (user && process.env.TELEGRAM_BOT_TOKEN) {
-      const msg = rankChanged
-        ? `🎉 Новый день ${newDay}! И у тебя новый купеческий чин: *${newRank}*!`
-        : `📜 День ${newDay} наступил в Лукоморье! Проверь свои дела и входящие грамоты.`
-      await getBot().api.sendMessage(user.telegramId, msg, { parse_mode: 'Markdown' })
-    }
-  } catch {
-    // Уведомление не критично
   }
 
   return rankChanged ? { newRank } : {}

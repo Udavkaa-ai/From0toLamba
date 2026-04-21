@@ -17,5 +17,14 @@ export default defineConfig({
   build: {
     outDir: '../server/public',
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          motion: ['framer-motion'],
+          charts: ['recharts'],
+        },
+      },
+    },
   },
 })

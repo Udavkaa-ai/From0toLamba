@@ -18,9 +18,7 @@ export async function generateProject(userId: number, overrideFate?: ProjectFate
   const archetype = ALL_ARCHETYPES[Math.floor(Math.random() * ALL_ARCHETYPES.length)]
 
   const fateCfg = FATE_CONFIG[fate]
-  const daysUntilCollapse = (fate === ProjectFate.SURVIVOR || fate === ProjectFate.UNICORN)
-    ? null
-    : irng(fateCfg.daysRange[0], fateCfg.daysRange[1])
+  const daysUntilCollapse = irng(fateCfg.daysRange[0], fateCfg.daysRange[1])
   const realDailyYieldRubles = rng(fateCfg.dailyYieldRange[0], fateCfg.dailyYieldRange[1])
   const { lieTopics, truthTopics } = slt(archetype, fate)
 

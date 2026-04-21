@@ -291,7 +291,9 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
       {/* Action buttons */}
       <div style={{ display: 'flex', gap: spacing.sm, flexWrap: 'wrap' }}>
         {!project.isWithdrawalLocked && (
-          <button
+          <motion.button
+            whileTap={{ scale: 0.94 }}
+            transition={{ duration: 0.1 }}
             onClick={() => { setShowAddInvest(!showAddInvest); setShowWithdraw(false) }}
             style={{
               flex: 1, padding: '8px', background: `${colors.fairyGold}15`,
@@ -300,10 +302,12 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
             }}
           >
             Довложить
-          </button>
+          </motion.button>
         )}
         {!project.isWithdrawalLocked && (
-          <button
+          <motion.button
+            whileTap={{ scale: 0.94 }}
+            transition={{ duration: 0.1 }}
             onClick={() => { setShowWithdraw(!showWithdraw); setShowAddInvest(false) }}
             style={{
               flex: 1, padding: '8px', background: 'transparent',
@@ -312,9 +316,11 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
             }}
           >
             Вывести часть
-          </button>
+          </motion.button>
         )}
-        <button
+        <motion.button
+          whileTap={{ scale: 0.96, background: `${colors.danger}35` }}
+          transition={{ duration: 0.1 }}
           onClick={() => exitMutation.mutate()}
           disabled={exitMutation.isPending || project.isWithdrawalLocked}
           style={{
@@ -325,7 +331,7 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
           }}
         >
           Покинуть дело
-        </button>
+        </motion.button>
       </div>
 
       {WITHDRAWAL_INFO[project.type] && (
@@ -356,7 +362,9 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
                   {(addInvestMutation.error as Error).message}
                 </div>
               )}
-              <button
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                transition={{ duration: 0.1 }}
                 onClick={() => addInvestMutation.mutate()}
                 disabled={!addAmount || addInvestMutation.isPending}
                 style={{
@@ -367,7 +375,7 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
                 }}
               >
                 {addInvestMutation.isPending ? 'Вкладываем...' : 'Довложить'}
-              </button>
+              </motion.button>
             </div>
           </motion.div>
         )}
@@ -395,7 +403,9 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
                   {(withdrawMutation.error as Error).message}
                 </div>
               )}
-              <button
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                transition={{ duration: 0.1 }}
                 onClick={() => withdrawMutation.mutate()}
                 disabled={!withdrawAmount || withdrawMutation.isPending}
                 style={{
@@ -406,7 +416,7 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
                 }}
               >
                 Вывести
-              </button>
+              </motion.button>
             </div>
           </motion.div>
         )}
