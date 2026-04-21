@@ -19,8 +19,8 @@ RUN npm install && npx prisma generate
 # ─── Исходники сервера ─────────────────────────────────────────────────────────
 WORKDIR /app/tg/server
 COPY tg/server ./
-# Кладём собранный клиент поверх (заменяет старый public из git)
-RUN cp -r /build/tg/server/public ./public
+# Кладём собранный клиент (rm -rf гарантирует чистую замену)
+RUN rm -rf ./public && cp -r /build/tg/server/public ./public
 
 # NODE_PATH указывает Node искать модули в /deps/node_modules
 ENV NODE_PATH=/deps/node_modules
