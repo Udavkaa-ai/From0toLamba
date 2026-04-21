@@ -6,6 +6,7 @@ const TABS = [
   { path: '/inbox', icon: '📜', label: 'Грамоты' },
   { path: '/portfolio', icon: '💰', label: 'Казна' },
   { path: '/stats', icon: '📊', label: 'Успехи' },
+  { path: '/leaderboard', icon: '🏆', label: 'Рейтинг' },
 ]
 
 export function BottomNav() {

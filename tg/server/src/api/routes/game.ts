@@ -162,6 +162,58 @@ export async function gameRoutes(app: FastifyInstance) {
     return { success: true, preferredModel: body.data.preferredModel }
   })
 
+  // GET /api/leaderboard — топ-100 по общему состоянию
+  app.get('/api/leaderboard', { preHandler: telegramAuthHook }, async (request, reply) => {
+    const tgUser = request.telegramUser
+
+    const currentUser = await prisma.user.findUnique({
+      where: { telegramId: String(tgUser.id) },
+      select: { id: true },
+    })
+
+    const [gameStates, projectSums] = await Promise.all([
+      prisma.gameState.findMany({
+        where: { isOnboardingComplete: true },
+        include: {
+          user: { select: { id: true, firstName: true, username: true } },
+        },
+      }),
+      prisma.project.groupBy({
+        by: ['userId'],
+        where: { isActive: true },
+        _sum: { currentValueRubles: true },
+      }),
+    ])
+
+    const sumByUserId = new Map(
+      projectSums.map(p => [p.userId, p._sum.currentValueRubles ?? 0])
+    )
+
+    const ranked = gameStates
+      .map(gs => ({
+        userId: gs.userId,
+        firstName: gs.user.firstName,
+        username: gs.user.username ?? null,
+        investorRank: gs.investorRank,
+        currentDay: gs.currentDay,
+        intuitionScore: gs.intuitionScore,
+        totalWealth: gs.balance + (sumByUserId.get(gs.userId) ?? 0),
+        isMe: currentUser ? gs.userId === currentUser.id : false,
+      }))
+      .sort((a, b) => b.totalWealth - a.totalWealth)
+
+    const totalPlayers = ranked.length
+    const top100 = ranked.slice(0, 100).map((e, i) => ({ ...e, position: i + 1 }))
+
+    let myPosition: number | null = null
+    if (currentUser) {
+      const myIdx = ranked.findIndex(e => e.userId === currentUser.id)
+      if (myIdx >= 0) myPosition = myIdx + 1
+    }
+
+    return reply.send({ entries: top100, myPosition, totalPlayers })
+  })
+
   // POST /api/game/reset
   app.post('/api/game/reset', { preHandler: telegramAuthHook }, async (request, reply) => {
     const tgUser = request.telegramUser

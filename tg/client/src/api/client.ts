@@ -108,6 +108,24 @@ export interface GameStateDTO {
   inboxProjects: ProjectDTO[]
 }
 
+export interface LeaderboardEntryDTO {
+  userId: number
+  firstName: string
+  username: string | null
+  investorRank: string
+  currentDay: number
+  intuitionScore: number
+  totalWealth: number
+  isMe: boolean
+  position: number
+}
+
+export interface LeaderboardDTO {
+  entries: LeaderboardEntryDTO[]
+  myPosition: number | null
+  totalPlayers: number
+}
+
 export interface AmaSessionDTO {
   sessionId: string
   questionCount: number
@@ -146,6 +164,10 @@ export const api = {
       apiClient.post<{ reply: string; questionCount: number; isSessionComplete: boolean }>(`/ama/${projectId}/message`, { message }).then(r => r.data),
     evaluateIntuition: (projectId: string, selectedTopics: string[]) =>
       apiClient.post(`/ama/${projectId}/evaluate-intuition`, { selectedTopics }).then(r => r.data),
+  },
+
+  leaderboard: {
+    get: () => apiClient.get<LeaderboardDTO>('/leaderboard').then(r => r.data),
   },
 
   invest: {
