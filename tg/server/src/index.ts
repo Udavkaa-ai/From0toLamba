@@ -1,5 +1,6 @@
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
+import compress from '@fastify/compress'
 import staticFiles from '@fastify/static'
 import path from 'path'
 
@@ -18,6 +19,8 @@ const app = Fastify({
 })
 
 async function main() {
+  await app.register(compress, { global: true })
+
   // CORS — разрешаем Mini App origin
   await app.register(cors, {
     origin: [

@@ -52,15 +52,10 @@ export async function gameRoutes(app: FastifyInstance) {
       }
     }
 
-    const activeProjects = await prisma.project.findMany({
-      where: { userId: user.id, isActive: true },
-    })
-
-    const inboxProjects = await prisma.project.findMany({
-      where: { userId: user.id, isInbox: true },
-      orderBy: { createdAt: 'desc' },
-      take: 10,
-    })
+    const [activeProjects, inboxProjects] = await Promise.all([
+      prisma.project.findMany({ where: { userId: user.id, isActive: true } }),
+      prisma.project.findMany({ where: { userId: user.id, isInbox: true }, orderBy: { createdAt: 'desc' }, take: 10 }),
+    ])
 
     return {
       balance: gameState.balance,

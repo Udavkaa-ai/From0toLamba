@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ScreenBackground } from '@/components/ScreenBackground'
-import { FairyCard, OrnamentDivider } from '@/components/FairyCard'
+import { FairyCard, OrnamentDivider, SkeletonCard } from '@/components/FairyCard'
 import { api, type ProjectDTO } from '@/api/client'
 import { colors, spacing } from '@/theme'
 
@@ -27,11 +27,7 @@ export function InboxPage() {
           </div>
         </div>
 
-        {isLoading && (
-          <div style={{ textAlign: 'center', color: colors.textMuted, padding: '40px' }}>
-            Разворачиваем грамоты...
-          </div>
-        )}
+        {isLoading && [1, 2, 3].map(i => <SkeletonCard key={i} lines={4} />)}
 
         {!isLoading && projects.length === 0 && (
           <FairyCard style={{ textAlign: 'center' }}>

@@ -64,6 +64,31 @@ function CardCornerOrnaments() {
   )
 }
 
+export function SkeletonCard({ lines = 3 }: { lines?: number }) {
+  return (
+    <div style={{
+      background: 'linear-gradient(145deg, rgba(42,25,96,0.6), rgba(13,23,53,0.8))',
+      border: `1px solid rgba(255,184,0,0.1)`,
+      borderRadius: radius.lg,
+      padding: spacing.lg,
+      marginBottom: spacing.md,
+    }}>
+      <style>{`@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}`}</style>
+      {Array.from({ length: lines }, (_, i) => (
+        <div key={i} style={{
+          height: '12px',
+          width: i === 0 ? '70%' : i === lines - 1 ? '90%' : '50%',
+          borderRadius: '6px',
+          marginBottom: i < lines - 1 ? '10px' : 0,
+          background: 'linear-gradient(90deg,rgba(26,16,64,0.8) 25%,rgba(42,25,96,0.9) 50%,rgba(26,16,64,0.8) 75%)',
+          backgroundSize: '200% 100%',
+          animation: 'shimmer 1.4s infinite',
+        }} />
+      ))}
+    </div>
+  )
+}
+
 // Золотой разделитель с ромбом
 export function OrnamentDivider() {
   return (

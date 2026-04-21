@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -16,6 +16,13 @@ const LIE_TOPICS = [
   { id: 'NOBLE_BACKING', emoji: '🏰', label: 'Покровители', hint: 'Несуществующие покровители' },
   { id: 'WITHDRAWAL_LIMITS', emoji: '🔒', label: 'Вывод', hint: 'Скрывает ограничения на вывод' },
 ]
+
+const TOPIC_LABEL: Record<string, string> = Object.fromEntries(
+  LIE_TOPICS.map(t => [t.id, `${t.emoji} ${t.label}`])
+)
+
+const tg = (window as any).Telegram?.WebApp
+const haptic = tg?.HapticFeedback
 
 const ALL_QUESTIONS = [
   // Доходность
@@ -163,6 +170,7 @@ export function AmaPage() {
   const handleSend = (text?: string) => {
     const msg = text ?? input.trim()
     if (!msg || sendMutation.isPending || session?.isComplete) return
+    haptic?.impactOccurred('light')
     if (text) setUsedTemplates(prev => new Set([...prev, text]))
     else setInput('')
     sendMutation.mutate(msg)
@@ -268,33 +276,36 @@ export function AmaPage() {
 
         {/* Сообщения */}
         <div style={{ flex: 1, overflow: 'auto', padding: `${spacing.md} ${spacing.lg}` }}>
-          {session.messages.map((msg, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              style={{
-                display: 'flex',
-                justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                marginBottom: spacing.md,
-              }}
-            >
-              <div style={{
-                maxWidth: '80%',
-                padding: `${spacing.sm} ${spacing.md}`,
-                borderRadius: msg.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                background: msg.role === 'user'
-                  ? `${colors.enchantedPurple}cc`
-                  : `rgba(42, 25, 96, 0.5)`,
-                border: `1px solid ${msg.role === 'user' ? colors.fairyGold + '30' : colors.cardBorder}`,
-                color: colors.textPrimary,
-                fontSize: '14px',
-                lineHeight: 1.5,
-              }}>
-                {msg.content}
-              </div>
-            </motion.div>
-          ))}
+          {session.messages.map((msg, i) => {
+            const isLastAssistant = msg.role === 'assistant' && i === session.messages.length - 1
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                style={{
+                  display: 'flex',
+                  justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                  marginBottom: spacing.md,
+                }}
+              >
+                <div style={{
+                  maxWidth: '80%',
+                  padding: `${spacing.sm} ${spacing.md}`,
+                  borderRadius: msg.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                  background: msg.role === 'user'
+                    ? `${colors.enchantedPurple}cc`
+                    : `rgba(42, 25, 96, 0.5)`,
+                  border: `1px solid ${msg.role === 'user' ? colors.fairyGold + '30' : colors.cardBorder}`,
+                  color: colors.textPrimary,
+                  fontSize: '14px',
+                  lineHeight: 1.5,
+                }}>
+                  <TypewriterText text={msg.content} animate={isLastAssistant} />
+                </div>
+              </motion.div>
+            )
+          })}
 
           {sendMutation.isPending && (
             <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: spacing.md }}>
@@ -397,8 +408,10 @@ export function AmaPage() {
                 scrollbarWidth: 'none' as const,
               }}>
                 {sessionQuestions.filter(q => !usedTemplates.has(q)).map((q, i) => (
-                  <button
+                  <motion.button
                     key={i}
+                    whileTap={{ scale: 0.92 }}
+                    transition={{ duration: 0.1 }}
                     onClick={() => handleSend(q)}
                     style={{
                       flexBasis: 'calc(50% - 2px)',
@@ -419,7 +432,7 @@ export function AmaPage() {
                     }}
                   >
                     {q.length > 34 ? q.slice(0, 34) + '…' : q}
-                  </button>
+                  </motion.button>
                 ))}
               </div>
             )}
@@ -465,7 +478,9 @@ export function AmaPage() {
                   outline: 'none',
                 }}
               />
-              <button
+              <motion.button
+                whileTap={{ scale: 0.88 }}
+                transition={{ duration: 0.1 }}
                 onClick={() => handleSend()}
                 disabled={!input.trim() || sendMutation.isPending}
                 style={{
@@ -481,7 +496,7 @@ export function AmaPage() {
                 }}
               >
                 →
-              </button>
+              </motion.button>
             </div>
           </div>
         )}
@@ -605,12 +620,12 @@ function IntuitionResultSheet({ result, onClose }: { result: any; onClose: () =>
         </div>
         {result.correctTopics.length > 0 && (
           <div style={{ color: colors.success, fontSize: '13px', marginBottom: spacing.sm }}>
-            Верно угадал: {result.correctTopics.join(', ')}
+            Верно угадал: {result.correctTopics.map((t: string) => TOPIC_LABEL[t] ?? t).join(', ')}
           </div>
         )}
         {result.falseTopics.length > 0 && (
           <div style={{ color: colors.danger, fontSize: '13px' }}>
-            Ошибся: {result.falseTopics.join(', ')}
+            Ошибся: {result.falseTopics.map((t: string) => TOPIC_LABEL[t] ?? t).join(', ')}
           </div>
         )}
         <button
@@ -637,9 +652,11 @@ function InvestSheet({ projectId, onClose, onSuccess }: { projectId: string; onC
   const investMutation = useMutation({
     mutationFn: () => api.invest.invest(projectId, Number(amount)),
     onSuccess: () => {
+      haptic?.notificationOccurred('success')
       qc.invalidateQueries({ queryKey: ['gameState'] })
       onSuccess()
     },
+    onError: () => haptic?.notificationOccurred('error'),
   })
 
   return (
@@ -712,4 +729,20 @@ function InvestSheet({ projectId, onClose, onSuccess }: { projectId: string; onC
       </motion.div>
     </motion.div>
   )
+}
+
+function TypewriterText({ text, animate }: { text: string; animate: boolean }) {
+  const [shown, setShown] = useState(animate ? '' : text)
+  useEffect(() => {
+    if (!animate) { setShown(text); return }
+    setShown('')
+    let i = 0
+    const id = setInterval(() => {
+      i++
+      setShown(text.slice(0, i))
+      if (i >= text.length) clearInterval(id)
+    }, 22)
+    return () => clearInterval(id)
+  }, [text, animate])
+  return <>{shown}</>
 }

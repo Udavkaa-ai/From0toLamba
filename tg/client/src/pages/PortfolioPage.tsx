@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ComposedChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts'
 import { ScreenBackground } from '@/components/ScreenBackground'
-import { FairyCard, OrnamentDivider } from '@/components/FairyCard'
+import { FairyCard, OrnamentDivider, SkeletonCard } from '@/components/FairyCard'
 import { api, type ProjectDTO, type PostMortemDTO, type DailyUpdateDTO, type TransactionDTO } from '@/api/client'
 import { colors, spacing } from '@/theme'
 
@@ -38,11 +38,7 @@ export function PortfolioPage() {
           </div>
         </div>
 
-        {isLoading && (
-          <div style={{ textAlign: 'center', color: colors.textMuted, padding: '40px' }}>
-            Считаем злато...
-          </div>
-        )}
+        {isLoading && [1, 2].map(i => <SkeletonCard key={i} lines={5} />)}
 
         {/* Активные */}
         {data?.active && data.active.length > 0 && (
@@ -203,32 +199,40 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
     ? ((project.currentValueRubles - project.investedAmountRubles) / project.investedAmountRubles * 100)
     : 0
 
+  const portfolioHaptic = (window as any).Telegram?.WebApp?.HapticFeedback
+
   const exitMutation = useMutation({
     mutationFn: () => api.invest.exit(project.id),
     onSuccess: () => {
+      portfolioHaptic?.notificationOccurred('success')
       qc.invalidateQueries({ queryKey: ['portfolio'] })
       qc.invalidateQueries({ queryKey: ['gameState'] })
     },
+    onError: () => portfolioHaptic?.notificationOccurred('error'),
   })
 
   const withdrawMutation = useMutation({
     mutationFn: () => api.invest.withdraw(project.id, Number(withdrawAmount)),
     onSuccess: () => {
+      portfolioHaptic?.notificationOccurred('success')
       setShowWithdraw(false)
       setWithdrawAmount('')
       qc.invalidateQueries({ queryKey: ['portfolio'] })
       qc.invalidateQueries({ queryKey: ['gameState'] })
     },
+    onError: () => portfolioHaptic?.notificationOccurred('error'),
   })
 
   const addInvestMutation = useMutation({
     mutationFn: () => api.invest.addInvestment(project.id, Number(addAmount)),
     onSuccess: () => {
+      portfolioHaptic?.notificationOccurred('success')
       setShowAddInvest(false)
       setAddAmount('')
       qc.invalidateQueries({ queryKey: ['portfolio'] })
       qc.invalidateQueries({ queryKey: ['gameState'] })
     },
+    onError: () => portfolioHaptic?.notificationOccurred('error'),
   })
 
   const hasValueHistory = project.valueHistory.length > 1

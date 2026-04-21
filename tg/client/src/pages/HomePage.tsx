@@ -71,13 +71,17 @@ export function HomePage() {
     refetchInterval: 30_000,
   })
 
+  const tgHaptic = (window as any).Telegram?.WebApp?.HapticFeedback
+
   const advanceMutation = useMutation({
     mutationFn: api.game.advanceDay,
     onSuccess: () => {
+      tgHaptic?.notificationOccurred('success')
       qc.invalidateQueries({ queryKey: ['gameState'] })
       qc.invalidateQueries({ queryKey: ['updates'] })
       setShowDayNews(true)
     },
+    onError: () => tgHaptic?.notificationOccurred('error'),
   })
 
   const updateModelMutation = useMutation({
@@ -449,8 +453,10 @@ export function HomePage() {
 
         {/* Кнопка следующий день */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
-          <button
-            onClick={() => advanceMutation.mutate()}
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            transition={{ duration: 0.1 }}
+            onClick={() => { tgHaptic?.impactOccurred('medium'); advanceMutation.mutate() }}
             disabled={advanceMutation.isPending}
             style={{
               width: '100%',
@@ -467,7 +473,7 @@ export function HomePage() {
             }}
           >
             {advanceMutation.isPending ? '⏳ Течёт время...' : '🌅 Следующий день'}
-          </button>
+          </motion.button>
           {advanceMutation.isError && (
             <div style={{ color: colors.danger, fontSize: '12px', textAlign: 'center', marginTop: '8px' }}>
               {(advanceMutation.error as Error).message}
