@@ -1,8 +1,8 @@
-import { ReactNode } from 'react'
+import { ReactNode, useEffect } from 'react'
 import { SparklesOverlay } from './SparklesOverlay'
 import { gradients, colors } from '@/theme'
 
-const APP_VERSION = '1.0.4'
+const APP_VERSION = '1.0.5'
 
 interface ScreenBackgroundProps {
   children: ReactNode
@@ -10,6 +10,17 @@ interface ScreenBackgroundProps {
 }
 
 export function ScreenBackground({ children, showSparkles = true }: ScreenBackgroundProps) {
+  useEffect(() => {
+    fetch('/api/version')
+      .then(r => r.json())
+      .then(({ version }: { version: string }) => {
+        if (version !== APP_VERSION) {
+          window.location.reload()
+        }
+      })
+      .catch(() => {})
+  }, [])
+
   return (
     <div
       style={{

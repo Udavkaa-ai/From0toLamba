@@ -48,6 +48,9 @@ async function main() {
   // Health check
   app.get('/health', async () => ({ ok: true, ts: new Date().toISOString() }))
 
+  // Version endpoint — клиент сравнивает и перезагружается если устарел
+  app.get('/api/version', async () => ({ version: '1.0.5' }))
+
   // Статика клиента (SPA)
   const publicDir = path.join(__dirname, '..', 'public')
   await app.register(staticFiles, {
