@@ -54,10 +54,18 @@ async function main() {
     root: publicDir,
     prefix: '/',
     wildcard: false,
+    setHeaders: (res: any, filePath: string) => {
+      if (filePath.endsWith('index.html')) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
+        res.setHeader('Pragma', 'no-cache')
+        res.setHeader('Expires', '0')
+      }
+    },
   })
   // SPA fallback — все неизвестные GET → index.html
   app.setNotFoundHandler(async (req, reply) => {
     if (req.method === 'GET' && !req.url.startsWith('/api') && !req.url.startsWith('/bot')) {
+      reply.header('Cache-Control', 'no-cache, no-store, must-revalidate')
       return reply.sendFile('index.html', publicDir)
     }
     reply.code(404).send({ message: `Route ${req.method}:${req.url} not found`, error: 'Not Found', statusCode: 404 })
