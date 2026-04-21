@@ -1,0 +1,9 @@
+{
+  "name": "from0tolamba",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "postinstall": "cd tg/server && npm install && npx prisma generate && npm run build",
+    "start": "cd tg/server && npm start"
+  }
+}
