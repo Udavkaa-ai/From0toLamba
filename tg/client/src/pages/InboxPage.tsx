@@ -44,7 +44,8 @@ export function InboxPage() {
             key={p.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.07 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ delay: i * 0.07, duration: 0.1 }}
           >
             <InboxCard project={p} onClick={() => navigate(`/ama/${p.id}`)} />
           </motion.div>

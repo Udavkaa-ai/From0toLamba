@@ -1,5 +1,6 @@
 import { prisma } from '../db/prisma'
 import { ProjectType, WITHDRAWAL_RULES } from './types'
+import { generatePostMortem } from '../ai/openRouterClient'
 
 const MIN_INVEST = 5
 const MAX_INVEST_PER_PROJECT = 5000
@@ -152,6 +153,24 @@ export async function exitProject(userId: number, projectId: string): Promise<nu
   await prisma.transaction.create({
     data: { userId, projectId, projectName: project.name, type: 'EXIT', amount: received, day: gameState.currentDay },
   })
+
+  const amaSession = await prisma.amaSession.findUnique({ where: { projectId } })
+  const profitPercent = project.investedAmountRubles > 0
+    ? ((received - project.investedAmountRubles) / project.investedAmountRubles) * 100
+    : 0
+
+  generatePostMortem({
+    projectId,
+    userId,
+    archetype: project.personaArchetype,
+    fate: project.fate,
+    lieTopics: project.lieTopics,
+    investedAmount: project.investedAmountRubles,
+    returnedAmount: received,
+    profitPercent,
+    daysActive: project.daysSinceJoined,
+    intuitionDelta: amaSession?.intuitionDelta ?? 0,
+  }).catch(console.error)
 
   return received
 }
