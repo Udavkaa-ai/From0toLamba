@@ -5,7 +5,7 @@
 
 ## Состояние проекта
 
-**Активная версия:** Telegram Mini App (`tg/`) — v1.3.0
+**Активная версия:** Telegram Mini App (`tg/`) — v1.3.1
 **Android:** код в `app/`, разработка заморожена — всё усилие на TG-версию
 **Ветка разработки:** `claude/telegram-game-migration-FDnlX`
 
@@ -134,7 +134,7 @@ ProjectType:      CARD_GAME | TREASURE_HUNT | POTION_BREW | GUILD_SCHEME | HONES
 ProjectFate:      INSTANT_SCAM(30%) | SLOW_DRAIN(25%) | HONEST_FAIL(15%) | SURVIVOR(20%) | UNICORN(10%)
 PersonaArchetype: BURATINO | BOYARIN | KOLOBOK | KOSCHEI | ZOLUSHKA | BABA_YAGA | IVAN_DURAK
 LieTopic:         PATRON_COUNT | DAILY_PROFIT | PAYOUT_DATE | GUILD_SIZE | ELDER_BLESSING | NOBLE_BACKING | WITHDRAWAL_LIMITS
-InvestorRank:     NEWBIE → AMBASSADOR → ANALYST → SHARK → LAMBO_SENSEI
+InvestorRank:     NEWBIE (старт) → AMBASSADOR (100 ₽ + чуйка 10) → ANALYST (1 000 ₽ + чуйка 50) → SHARK (3 000 ₽ + чуйка 100) → LAMBO_SENSEI (10 000 ₽ + чуйка 300)
 ```
 
 Правила вывода (`WITHDRAWAL_RULES`):

@@ -9,12 +9,23 @@ import { api, type ProjectDTO, type PostMortemDTO, type DailyUpdateDTO, type Tra
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing } from '@/theme'
 
-const WITHDRAWAL_INFO: Record<string, string> = {
-  POTION_BREW: 'Макс. 25% за раз',
-  GUILD_SCHEME: 'Макс. 25% за раз',
-  CARD_GAME: 'Комиссия 25%',
-  TREASURE_HUNT: 'Комиссия 25%',
-  HONEST_TRADE: 'Без ограничений',
+/** Конкретная подсказка для вывода: сумма в ₽, а не просто «25%». */
+function withdrawalHint(project: ProjectDTO): string | null {
+  switch (project.type) {
+    case 'POTION_BREW':
+    case 'GUILD_SCHEME': {
+      // Лимит считается от investedAmountRubles, не от currentValue
+      const maxRubles = project.investedAmountRubles * 0.25
+      return `Макс. за раз: ${maxRubles.toFixed(0)} ₽ (25% от вложенных ${project.investedAmountRubles.toFixed(0)} ₽)`
+    }
+    case 'CARD_GAME':
+    case 'TREASURE_HUNT':
+      return 'Комиссия 25% с каждого вывода'
+    case 'HONEST_TRADE':
+      return 'Без ограничений и комиссий'
+    default:
+      return null
+  }
 }
 
 export function PortfolioPage() {
@@ -360,9 +371,9 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
         </motion.button>
       </div>
 
-      {WITHDRAWAL_INFO[project.type] && (
+      {withdrawalHint(project) && (
         <div style={{ color: colors.textMuted, fontSize: '10px', marginTop: '4px' }}>
-          ℹ️ {WITHDRAWAL_INFO[project.type]}
+          ℹ️ {withdrawalHint(project)}
         </div>
       )}
 
@@ -420,6 +431,16 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
                 В деле: <span style={{ color: colors.fairyGold, fontWeight: 600 }}>{project.currentValueRubles.toFixed(0)} ₽</span>
                 {' · '}в казне: <span style={{ color: colors.fairyGold, fontWeight: 600 }}>{(gameState?.balance ?? 0).toFixed(0)} ₽</span>
               </div>
+              {(project.type === 'POTION_BREW' || project.type === 'GUILD_SCHEME') && (
+                <div style={{ color: colors.warning, fontSize: '11px', marginBottom: '4px' }}>
+                  ⚠️ Макс. за раз: {(project.investedAmountRubles * 0.25).toFixed(0)} ₽ (25% от вложенных {project.investedAmountRubles.toFixed(0)} ₽)
+                </div>
+              )}
+              {(project.type === 'CARD_GAME' || project.type === 'TREASURE_HUNT') && (
+                <div style={{ color: colors.warning, fontSize: '11px', marginBottom: '4px' }}>
+                  ⚠️ Комиссия 25% — получишь на руки 75% от введённой суммы
+                </div>
+              )}
               <input
                 type="number"
                 value={withdrawAmount}

@@ -11,10 +11,10 @@ const RANK_DISPLAY: Record<string, string> = {
 }
 
 const RANK_NEXT_HINT: Record<string, string> = {
-  NEWBIE: 'День 5 или 20 ₽ → Купец',
-  AMBASSADOR: 'День 30, 300 ₽, чуйка 5 → Мудрец',
-  ANALYST: 'День 50, 1 000 ₽, чуйка 10 → Богатырь',
-  SHARK: 'День 777, 7 777 ₽, чуйка 20 → Царь',
+  NEWBIE: '100 ₽ и чуйка 10 → Купец',
+  AMBASSADOR: '1 000 ₽ и чуйка 50 → Мудрец',
+  ANALYST: '3 000 ₽ и чуйка 100 → Богатырь',
+  SHARK: '10 000 ₽ и чуйка 300 → Царь',
   LAMBO_SENSEI: 'Ты достиг вершины! 👑',
 }
 

@@ -51,7 +51,7 @@ async function main() {
   app.get('/health', async () => ({ ok: true, ts: new Date().toISOString() }))
 
   // Version endpoint — клиент сравнивает и перезагружается если устарел
-  app.get('/api/version', async () => ({ version: '1.3.0' }))
+  app.get('/api/version', async () => ({ version: '1.3.1' }))
 
   // Статика клиента (SPA)
   const publicDir = path.join(__dirname, '..', 'public')

@@ -38,10 +38,10 @@ export enum LieTopic {
 
 export enum InvestorRank {
   NEWBIE = 'NEWBIE',             // Скоморох — старт
-  AMBASSADOR = 'AMBASSADOR',     // Купец — день 5+ ИЛИ баланс 20+
-  ANALYST = 'ANALYST',           // Мудрец — день 30+, баланс 300+, чуйка 5+
-  SHARK = 'SHARK',               // Богатырь — день 50+, баланс 1000+, чуйка 10+
-  LAMBO_SENSEI = 'LAMBO_SENSEI', // Царь — день 777+, баланс 7777+, чуйка 20+
+  AMBASSADOR = 'AMBASSADOR',     // Купец    — 100 ₽  + чуйка 10
+  ANALYST = 'ANALYST',           // Мудрец   — 1000 ₽ + чуйка 50
+  SHARK = 'SHARK',               // Богатырь — 3000 ₽ + чуйка 100
+  LAMBO_SENSEI = 'LAMBO_SENSEI', // Царь     — 10 000 ₽ + чуйка 300
 }
 
 export const RANK_DISPLAY: Record<InvestorRank, string> = {

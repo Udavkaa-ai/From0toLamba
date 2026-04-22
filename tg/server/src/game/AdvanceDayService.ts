@@ -1,6 +1,6 @@
 import { prisma } from '../db/prisma'
 import { ProjectFate, FATE_CONFIG, InvestorRank } from './types'
-import { computeRank } from './rankService'
+import { computeRank, isRankUp } from './rankService'
 import { randomInRange as rng, randomIntInRange as irng } from './projectUtils'
 import { generateDailyUpdate, generatePostMortem } from '../ai/openRouterClient'
 import { generateProject } from './GenerateProjectService'
@@ -231,7 +231,9 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
     intuitionScore: gameState.intuitionScore,
   })
 
-  const rankChanged = newRank !== (gameState.investorRank as InvestorRank)
+  const oldRank = gameState.investorRank as InvestorRank
+  const rankChanged = newRank !== oldRank
+  const rankUp = rankChanged && isRankUp(oldRank, newRank)
 
   // История (храним последние 30 точек)
   const balanceHistory = [...gameState.balanceHistory, newBalance].slice(-30)
@@ -248,7 +250,7 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
       scamsMissed: { increment: scamsMissedDelta },
       balanceHistory,
       investedHistory,
-      pendingRankUp: rankChanged ? newRank : null,
+      pendingRankUp: rankUp ? newRank : null,
       lastAdvancedAt: new Date(),
       // Сбрасываем флаг — крон должен снова отправить уведомление через 2 часа
       nextDayNotified: false,
@@ -263,5 +265,5 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
     generateProject(userId).catch(console.error)
   }
 
-  return rankChanged ? { newRank } : {}
+  return rankUp ? { newRank } : {}
 }
