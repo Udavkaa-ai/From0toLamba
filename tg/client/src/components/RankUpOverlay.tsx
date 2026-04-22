@@ -15,7 +15,7 @@ const RANK_EMOJI: Record<string, string> = {
   NEWBIE: '🎪',
   AMBASSADOR: '🛒',
   ANALYST: '📖',
-  SHARK: '⚔️',
+  SHARK: '🧥',
   LAMBO_SENSEI: '👑',
 }
 

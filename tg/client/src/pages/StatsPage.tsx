@@ -54,7 +54,7 @@ export function StatsPage() {
         <FairyCard style={{ marginBottom: spacing.lg, textAlign: 'center' }}>
           <div style={{ fontSize: '40px', marginBottom: spacing.sm }}>
             {gameState.investorRank === 'LAMBO_SENSEI' ? '👑' :
-             gameState.investorRank === 'SHARK' ? '⚔️' :
+             gameState.investorRank === 'SHARK' ? '🧥' :
              gameState.investorRank === 'ANALYST' ? '📖' :
              gameState.investorRank === 'AMBASSADOR' ? '🛒' : '🎪'}
           </div>
