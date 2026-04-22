@@ -136,6 +136,31 @@ export interface AmaSessionDTO {
   messages: Array<{ role: string; content: string; createdAt: string }>
 }
 
+export type CharterDifficulty = 'EASY' | 'MEDIUM' | 'HARD'
+
+export interface CharterResultDTO {
+  selectedIndices: number[]
+  truePositives: number[]
+  falsePositives: number[]
+  falseNegatives: number[]
+  delta: number
+}
+
+export interface CharterSubmitDTO extends CharterResultDTO {
+  forgedIndices: number[]
+}
+
+export interface CharterDTO {
+  sessionId: string
+  gridSeed: string
+  gridSize: number
+  difficulty: CharterDifficulty
+  timeLimitSeconds: number
+  forgedIndices: number[]
+  isSubmitted: boolean
+  result?: CharterResultDTO
+}
+
 // ─── API методы ────────────────────────────────────────────────────────────
 
 export const api = {
@@ -164,6 +189,13 @@ export const api = {
       apiClient.post<{ reply: string; questionCount: number; isSessionComplete: boolean }>(`/ama/${projectId}/message`, { message }).then(r => r.data),
     evaluateIntuition: (projectId: string, selectedTopics: string[]) =>
       apiClient.post(`/ama/${projectId}/evaluate-intuition`, { selectedTopics }).then(r => r.data),
+  },
+
+  charter: {
+    start: (projectId: string) => apiClient.post<CharterDTO>(`/charter/${projectId}/start`).then(r => r.data),
+    get: (projectId: string) => apiClient.get<CharterDTO>(`/charter/${projectId}`).then(r => r.data),
+    submit: (projectId: string, selectedIndices: number[]) =>
+      apiClient.post<CharterSubmitDTO>(`/charter/${projectId}/submit`, { selectedIndices }).then(r => r.data),
   },
 
   leaderboard: {

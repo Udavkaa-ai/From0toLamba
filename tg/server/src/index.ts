@@ -7,6 +7,7 @@ import path from 'path'
 import { gameRoutes } from './api/routes/game'
 import { projectRoutes } from './api/routes/projects'
 import { amaRoutes } from './api/routes/ama'
+import { charterRoutes } from './api/routes/charter'
 import { investRoutes } from './api/routes/invest'
 import { createWebhookHandler, getBot } from './bot/bot'
 import { startDailyScheduler } from './scheduler/dailyJob'
@@ -35,6 +36,7 @@ async function main() {
   await app.register(gameRoutes)
   await app.register(projectRoutes)
   await app.register(amaRoutes)
+  await app.register(charterRoutes)
   await app.register(investRoutes)
 
   // Telegram webhook
@@ -49,7 +51,7 @@ async function main() {
   app.get('/health', async () => ({ ok: true, ts: new Date().toISOString() }))
 
   // Version endpoint — клиент сравнивает и перезагружается если устарел
-  app.get('/api/version', async () => ({ version: '1.0.5' }))
+  app.get('/api/version', async () => ({ version: '1.1.0' }))
 
   // Статика клиента (SPA)
   const publicDir = path.join(__dirname, '..', 'public')

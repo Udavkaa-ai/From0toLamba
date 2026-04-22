@@ -13,7 +13,7 @@ export function BottomNav() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
 
-  if (pathname.startsWith('/ama/') || pathname === '/registry') return null
+  if (pathname.startsWith('/ama/') || pathname.startsWith('/charter/') || pathname === '/registry') return null
 
   return (
     <nav

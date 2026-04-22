@@ -123,8 +123,17 @@ model AmaSession {
   questionCount         Int          @default(0)
   isComplete            Boolean      @default(false)
   isIntuitionEvaluated  Boolean      @default(false)
-  selectedLieTopics     String[]     @default([]) // выбранные игроком подозрения
+  selectedLieTopics     String[]     @default([]) // выбранные игроком подозрения (legacy AI-чат)
   intuitionDelta        Int          @default(0)  // итоговый результат оценки
+
+  // Мини-игра «Купеческая грамота» — SKRYTYE от клиента поля помечены
+  gridSeed              String?      // seed для процедурной генерации печатей
+  gridSize              Int          @default(0)
+  difficulty            String?      // EASY | MEDIUM | HARD — сила мутации подделок
+  forgedIndices         Int[]        @default([]) // СКРЫТО: индексы поддельных печатей
+  charterSelectedIndices Int[]       @default([]) // что отметил игрок при сабмите
+  charterSubmittedAt    DateTime?
+
   createdAt             DateTime     @default(now())
   updatedAt             DateTime     @updatedAt
 

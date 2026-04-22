@@ -47,7 +47,7 @@ export function InboxPage() {
             whileTap={{ scale: 0.97 }}
             transition={{ delay: i * 0.07, duration: 0.1 }}
           >
-            <InboxCard project={p} onClick={() => navigate(`/ama/${p.id}`)} />
+            <InboxCard project={p} onClick={() => navigate(`/charter/${p.id}`)} />
           </motion.div>
         ))}
       </div>
@@ -120,7 +120,7 @@ function InboxCard({ project, onClick }: { project: ProjectDTO; onClick: () => v
         textAlign: 'center',
         fontWeight: 600,
       }}>
-        Открыть беседу →
+        Изучить грамоту →
       </div>
     </FairyCard>
   )

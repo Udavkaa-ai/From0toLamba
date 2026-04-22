@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { HomePage } from './pages/HomePage'
 import { InboxPage } from './pages/InboxPage'
 import { AmaPage } from './pages/AmaPage'
+import { CharterPage } from './pages/CharterPage'
 import { PortfolioPage } from './pages/PortfolioPage'
 import { StatsPage } from './pages/StatsPage'
 import { LeaderboardPage } from './pages/LeaderboardPage'
@@ -33,6 +34,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/inbox" element={<InboxPage />} />
+          <Route path="/charter/:projectId" element={<CharterPage />} />
           <Route path="/ama/:projectId" element={<AmaPage />} />
           <Route path="/portfolio" element={<PortfolioPage />} />
           <Route path="/stats" element={<StatsPage />} />

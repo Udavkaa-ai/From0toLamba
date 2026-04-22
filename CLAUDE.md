@@ -5,7 +5,7 @@
 
 ## Состояние проекта
 
-**Активная версия:** Telegram Mini App (`tg/`) — v1.0.5
+**Активная версия:** Telegram Mini App (`tg/`) — v1.1.0
 **Android:** код в `app/`, разработка заморожена — всё усилие на TG-версию
 **Ветка разработки:** `claude/telegram-game-migration-FDnlX`
 
@@ -13,7 +13,7 @@
 
 ## Суть игры
 
-Мобильная игра — симулятор инвестора в сказочной Руси. Игрок вкладывает рубли (₽) в «дела» (аналоги крипто-проектов), большинство из которых обман. Ключевая механика — **AMA-сессия**: чат с AI-хозяином дела (до 10 вопросов). AI знает судьбу дела заранее, но скрывает. Игрок задаёт вопросы и решает, вкладывать ли.
+Мобильная игра — симулятор инвестора в сказочной Руси. Игрок вкладывает рубли (₽) в «дела» (аналоги крипто-проектов), большинство из которых обман. Ключевая механика — **«Купеческая грамота»**: мини-игра на внимательность. Перед принятием решения о вложении игрок изучает свиток с 24 печатями и ищет подделки. Чем больше лжи в деле — тем больше подделок в грамоте. Число подделок и тонкость мутаций определяются судьбой проекта. AI-чат с хозяином остаётся как вторичный инструмент (в будущем откроется за просмотр рекламы).
 
 - **Стартовый баланс:** 0 ₽ → онбординг-бонус ~50 ₽
 - **Валюта:** рубли (₽), отображать `"%.0f ₽"`
@@ -29,9 +29,9 @@ tg/
 │   └── src/
 │       ├── api/client.ts          # Все HTTP-запросы к серверу
 │       ├── stores/gameStore.ts    # Zustand-стор (gameState, проекты)
-│       ├── pages/                 # HomePage, InboxPage, AmaPage, PortfolioPage, StatsPage
+│       ├── pages/                 # HomePage, InboxPage, CharterPage, AmaPage, PortfolioPage, StatsPage
 │       │                          # LeaderboardPage, RegistryPage
-│       ├── components/            # FairyCard, ScreenBackground, SparklesOverlay, BottomNav, RankUpOverlay
+│       ├── components/            # FairyCard, ScreenBackground, SparklesOverlay, BottomNav, RankUpOverlay, Seal
 │       └── theme/colors.ts        # FairyGold, EnchantedPurple, NightBlue
 └── server/          # Fastify + TypeScript + Prisma + PostgreSQL
     └── src/
@@ -39,12 +39,14 @@ tg/
         ├── api/routes/
         │   ├── game.ts            # /api/game, /advance-day, /settings, /reset, /leaderboard, /version
         │   ├── projects.ts        # /api/projects/inbox, /portfolio, /updates, /skip
-        │   ├── ama.ts             # /api/ama/:id/start|message|evaluate-intuition
+        │   ├── ama.ts             # /api/ama/:id/start|message|evaluate-intuition (legacy-чат)
+        │   ├── charter.ts         # /api/charter/:id/start|submit — мини-игра «Грамота»
         │   └── invest.ts          # /api/invest/:id (invest/add/withdraw/exit)
         ├── game/
         │   ├── types.ts           # Все энамы + FATE_CONFIG + WITHDRAWAL_RULES + ProjectPublicDTO
         │   ├── GenerateProjectService.ts  # AI-генерация нового дела + баннер Pollinations.ai
-        │   ├── AmaSessionService.ts       # Чат с хозяином
+        │   ├── AmaSessionService.ts       # Чат с хозяином (legacy)
+        │   ├── CharterService.ts          # Мини-игра «Купеческая грамота» (основная механика чуйки)
         │   ├── AdvanceDayService.ts       # Ежедневный цикл + история
         │   ├── InvestService.ts           # Вложить/довложить/вывести/выйти + PostMortem при выходе
         │   ├── projectUtils.ts            # toPublicDTO (убирает скрытые поля)
@@ -86,13 +88,20 @@ tg/
 | GET | `/api/projects/:id/updates` | Ежедневные вести по делу |
 | POST | `/api/projects/:id/skip` | Миновать (удалить из inbox) |
 
-### AMA
+### Charter (купеческая грамота — основная механика чуйки)
+| Метод | Путь | Описание |
+|---|---|---|
+| POST | `/api/charter/:projectId/start` | Создать/вернуть сессию-грамоту (генерит сетку 24 печати + скрытые индексы подделок) |
+| GET | `/api/charter/:projectId` | Получить состояние (до сабмита — только seed/gridSize/difficulty; после — с разбором) |
+| POST | `/api/charter/:projectId/submit` | Сабмит выбранных индексов, оценка чуйки (одноразово) |
+
+### AMA (legacy — вторичный чат, в будущем за просмотр рекламы)
 | Метод | Путь | Описание |
 |---|---|---|
 | POST | `/api/ama/:projectId/start` | Начать сессию беседы |
 | GET | `/api/ama/:projectId` | Получить историю сессии |
 | POST | `/api/ama/:projectId/message` | Отправить вопрос, получить ответ AI |
-| POST | `/api/ama/:projectId/evaluate-intuition` | Оценить Чуйку (один раз) |
+| POST | `/api/ama/:projectId/evaluate-intuition` | Оценить Чуйку (старый путь — сейчас не используется из UI) |
 
 ### Invest
 | Метод | Путь | Описание |
@@ -222,12 +231,27 @@ npm run build  # outDir = ../server/public  (не коммитить!)
 | Страница | Файл | Назначение |
 |---|---|---|
 | Главная | `HomePage.tsx` | Баланс, активные дела (с новостями и «Довложить»), «Следующий день» |
-| Входящие | `InboxPage.tsx` | Новые предложения из inbox |
-| Беседа | `AmaPage.tsx` | AMA-чат с хозяином + полоска Чуйки |
+| Входящие | `InboxPage.tsx` | Новые предложения из inbox (ведут на `/charter/:id`) |
+| Грамота | `CharterPage.tsx` | Мини-игра «Купеческая грамота»: эталон → 24 печати → разбор → чуйка. Основной путь оценки лжи |
+| Беседа | `AmaPage.tsx` | Legacy AMA-чат с хозяином. Сейчас доступен только по прямой ссылке; в будущем — за просмотр рекламы |
 | Казна | `PortfolioPage.tsx` | Активные дела: графики (Recharts), вести, довложить/вывести/выйти; ссылка на Летопись |
 | Успехи | `StatsPage.tsx` | Статистика, ранг, история баланса |
 | Рейтинг | `LeaderboardPage.tsx` | Топ-100 игроков по состоянию, текущий игрок выделен |
 | Летопись | `RegistryPage.tsx` | Все закрытые дела: архетип, PostMortem, баннер, статистика |
+
+### Мини-игра «Купеческая грамота»
+
+- **Сетка:** 4 × 6 = 24 печати
+- **Таймер:** 20 секунд на поиск, по истечении автосабмит текущего выбора
+- **Число подделок:** `lieTopics.length + extra(fate)` (INSTANT_SCAM +2, SLOW_DRAIN +1, прочие 0)
+- **Difficulty (сила мутации):**
+  - `EASY` (INSTANT_SCAM, HONEST_FAIL) — мутация формы / цвета
+  - `MEDIUM` (SLOW_DRAIN) — класс эмблемы / число колец / поворот
+  - `HARD` (SURVIVOR, UNICORN) — эмблема в том же классе (медведь↔волк, А↔Д) / число точек / стиль ободка
+- **Чистая грамота:** если `fate ∈ {SURVIVOR, UNICORN}` и у дела мало `lieTopics` — подделок может быть 0. Если игрок никого не тапнул и подделок действительно не было — `delta = +2` (верно опознал честность)
+- **Формула чуйки:** `delta = TP − FP`, clamp `[−3, +3]`. Применяется к `gameState.intuitionScore` при сабмите
+- **Генерация печати:** процедурная SVG-компонента `Seal.tsx`, 7 параметров (форма / поворот / цвет / кольца / ободок / точки / эмблема), всё деривируется из `gridSeed` детерминированно. Эмблемы: 6 зверей (медведь, волк, олень, сокол, кабан, рыба) + 7 кириллических букв + 4 знака (якорь, ключ, перо, подкова)
+- **Безопасность:** `forgedIndices` хранятся в `AmaSession` и НИКОГДА не отдаются клиенту до сабмита
 
 ---
 
