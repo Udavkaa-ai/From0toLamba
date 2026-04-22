@@ -1,14 +1,12 @@
 // Процедурная купеческая печать — детерминированная SVG.
-// 7 параметров, полностью деривируются из seed-строки.
+// 6 параметров, полностью деривируются из seed-строки.
+// Динамическое вращение клетки добавляется на уровне страницы (CSS-анимация).
 
 const SHAPES = [
   'circle', 'square', 'diamond', 'hexagon', 'octagon',
   'triangleUp', 'triangleDown', 'shield',
 ] as const
 type Shape = typeof SHAPES[number]
-
-const ROTATIONS = [0, 15, 30, 45] as const
-type Rotation = typeof ROTATIONS[number]
 
 const COLORS = [
   { key: 'gold',    primary: '#D4A017', secondary: '#6B3E00' },
@@ -28,29 +26,24 @@ type BorderStyle = typeof BORDER_STYLES[number]
 const DOT_COUNTS = [0, 4, 6, 8, 12] as const
 type DotCount = typeof DOT_COUNTS[number]
 
-/** Центральная эмблема — объединение трёх классов: зверь | буква | знак */
+/** Центральная эмблема — зверь или знак */
 const ANIMALS = ['bear', 'wolf', 'deer', 'falcon', 'boar', 'fish'] as const
-const LETTERS = ['А', 'Б', 'В', 'К', 'М', 'Р', 'С'] as const
 const MOTIFS  = ['anchor', 'key', 'feather', 'horseshoe'] as const
 
 type Animal = typeof ANIMALS[number]
-type Letter = typeof LETTERS[number]
 type Motif  = typeof MOTIFS[number]
 
 type Emblem =
   | { kind: 'animal'; value: Animal }
-  | { kind: 'letter'; value: Letter }
   | { kind: 'motif';  value: Motif  }
 
 const ALL_EMBLEMS: Emblem[] = [
   ...ANIMALS.map(v => ({ kind: 'animal', value: v } as Emblem)),
-  ...LETTERS.map(v => ({ kind: 'letter', value: v } as Emblem)),
   ...MOTIFS.map(v  => ({ kind: 'motif',  value: v } as Emblem)),
 ]
 
 export interface SealParams {
   shape: Shape
-  rotation: Rotation
   color: SealColor
   rings: RingCount
   border: BorderStyle
@@ -83,7 +76,6 @@ function hashChannel(seed: string, channel: string): number {
 export function generateReferenceSeal(seed: string): SealParams {
   return {
     shape:    pickBy(SHAPES,       hashChannel(seed, 'shape')),
-    rotation: pickBy(ROTATIONS,    hashChannel(seed, 'rot')),
     color:    pickBy(COLORS,       hashChannel(seed, 'color')),
     rings:    pickBy(RING_COUNTS,  hashChannel(seed, 'rings')),
     border:   pickBy(BORDER_STYLES, hashChannel(seed, 'border')),
@@ -94,11 +86,11 @@ export function generateReferenceSeal(seed: string): SealParams {
 
 // ─── Мутация ──────────────────────────────────────────────────────────────
 
-type MutTarget = 'shape' | 'color' | 'rotation' | 'rings' | 'border' | 'dots' | 'emblemClass' | 'emblemSame'
+type MutTarget = 'shape' | 'color' | 'rings' | 'border' | 'dots' | 'emblemClass' | 'emblemSame'
 
 const MUT_POOLS: Record<CharterDifficulty, MutTarget[]> = {
   EASY:   ['shape', 'color'],
-  MEDIUM: ['emblemClass', 'rings', 'rotation'],
+  MEDIUM: ['emblemClass', 'rings'],
   HARD:   ['emblemSame', 'dots', 'border'],
 }
 
@@ -107,11 +99,6 @@ const SIMILAR_ANIMAL: Record<Animal, Animal> = {
   bear: 'wolf',   wolf: 'bear',
   deer: 'falcon', falcon: 'deer',
   boar: 'bear',   fish: 'falcon',
-}
-const SIMILAR_LETTER: Record<Letter, Letter> = {
-  'А': 'Б', 'Б': 'В', 'В': 'А',
-  'К': 'М', 'М': 'К',
-  'Р': 'С', 'С': 'Р',
 }
 const SIMILAR_MOTIF: Record<Motif, Motif> = {
   anchor: 'key',       key: 'anchor',
@@ -143,9 +130,6 @@ export function mutateSeal(
     case 'color':
       out.color = nextInList(COLORS, ref.color, step)
       break
-    case 'rotation':
-      out.rotation = nextInList(ROTATIONS, ref.rotation, step)
-      break
     case 'rings':
       out.rings = nextInList(RING_COUNTS, ref.rings, step)
       break
@@ -156,19 +140,14 @@ export function mutateSeal(
       out.dots = nextInList(DOT_COUNTS, ref.dots, step)
       break
     case 'emblemClass': {
-      // Меняем класс эмблемы (буква→зверь, зверь→знак и т.д.)
-      const classes: Array<Emblem['kind']> = ['animal', 'letter', 'motif']
-      const currentIdx = classes.indexOf(ref.emblem.kind)
-      const nextKind = classes[(currentIdx + 1 + (step % 2)) % 3]
-      if (nextKind === 'animal') out.emblem = { kind: 'animal', value: pickBy(ANIMALS, h >>> 7) }
-      else if (nextKind === 'letter') out.emblem = { kind: 'letter', value: pickBy(LETTERS, h >>> 7) }
-      else out.emblem = { kind: 'motif', value: pickBy(MOTIFS, h >>> 7) }
+      // Меняем класс эмблемы (зверь ↔ знак)
+      if (ref.emblem.kind === 'animal') out.emblem = { kind: 'motif', value: pickBy(MOTIFS, h >>> 7) }
+      else out.emblem = { kind: 'animal', value: pickBy(ANIMALS, h >>> 7) }
       break
     }
     case 'emblemSame': {
       // Меняем эмблему в том же классе на похожую
       if (ref.emblem.kind === 'animal') out.emblem = { kind: 'animal', value: SIMILAR_ANIMAL[ref.emblem.value] }
-      else if (ref.emblem.kind === 'letter') out.emblem = { kind: 'letter', value: SIMILAR_LETTER[ref.emblem.value] }
       else out.emblem = { kind: 'motif', value: SIMILAR_MOTIF[ref.emblem.value] }
       break
     }
@@ -197,23 +176,21 @@ interface SealProps {
 }
 
 export function Seal({ params, size = 72, dim = false, ring = null, selected = false }: SealProps) {
-  const { shape, rotation, color, rings, border, dots, emblem } = params
+  const { shape, color, rings, border, dots, emblem } = params
   const opacity = dim ? 0.35 : 1
   const ringColor = ring === 'tp' ? '#4CAF50' : ring === 'fp' ? '#F44336' : ring === 'fn' ? '#FF9800' : null
 
   return (
     <svg viewBox="0 0 100 100" width={size} height={size} style={{ opacity, display: 'block' }}>
-      {/* Точки-розетка (не поворачиваются — ось симметрии печати) */}
+      {/* Точки-розетка */}
       {renderDots(dots, color)}
 
-      {/* Форма + концентрические кольца + ободок — единая группа, поворачивается */}
-      <g transform={`rotate(${rotation} 50 50)`}>
-        {renderShape(shape, color, 36)}
-        {renderRings(shape, rings, color)}
-        {renderBorderStyle(shape, border, color)}
-      </g>
+      {/* Форма + концентрические кольца + ободок */}
+      {renderShape(shape, color, 36)}
+      {renderRings(shape, rings, color)}
+      {renderBorderStyle(shape, border, color)}
 
-      {/* Центральная эмблема — без поворота, чтобы читаемо */}
+      {/* Центральная эмблема */}
       {renderEmblem(emblem, color)}
 
       {/* Оценочная обводка (TP/FP/FN) */}
@@ -341,20 +318,6 @@ function regularPolygonPoints(cx: number, cy: number, r: number, n: number, star
 
 function renderEmblem(emblem: Emblem, color: SealColor) {
   const fill = color.secondary
-  if (emblem.kind === 'letter') {
-    return (
-      <text
-        x="50" y="51"
-        textAnchor="middle" dominantBaseline="central"
-        fontSize="34"
-        fontFamily="'Times New Roman', serif"
-        fontWeight="700"
-        fill={fill}
-      >
-        {emblem.value}
-      </text>
-    )
-  }
   if (emblem.kind === 'motif') return renderMotif(emblem.value, fill)
   return renderAnimal(emblem.value, fill)
 }

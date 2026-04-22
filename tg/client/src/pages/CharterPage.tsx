@@ -389,6 +389,8 @@ function ScanGrid({
           const ring: 'tp' | 'fp' | 'fn' | null = result
             ? tpSet.has(i) ? 'tp' : fpSet.has(i) ? 'fp' : fnSet.has(i) ? 'fn' : null
             : null
+          // Детерминированный сдвиг фазы вращения для клетки — от 0 до 18с
+          const spinDelaySec = ((i * 2654435761) >>> 0) % 1800 / 100
           return (
             <button
               key={i}
@@ -406,12 +408,17 @@ function ScanGrid({
                 justifyContent: 'center',
               }}
             >
-              <Seal
-                params={params}
-                size={Math.min(78, Math.floor((window.innerWidth - 64) / 4) - 12)}
-                selected={!result && selected.has(i)}
-                ring={ring}
-              />
+              <div
+                className={result ? undefined : 'seal-spin'}
+                style={{ ['--seal-delay' as any]: `-${spinDelaySec}s`, lineHeight: 0 }}
+              >
+                <Seal
+                  params={params}
+                  size={Math.min(78, Math.floor((window.innerWidth - 64) / 4) - 12)}
+                  selected={!result && selected.has(i)}
+                  ring={ring}
+                />
+              </div>
             </button>
           )
         })}

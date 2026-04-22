@@ -37,3 +37,15 @@ input[type=number] {
 body {
   padding-top: env(safe-area-inset-top);
 }
+
+/* Вращение печатей в грамоте — каждая клетка получает своё --seal-delay */
+@keyframes sealSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.seal-spin {
+  animation: sealSpin 18s linear infinite;
+  animation-delay: var(--seal-delay, 0s);
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
