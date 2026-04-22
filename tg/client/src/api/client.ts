@@ -106,6 +106,8 @@ export interface GameStateDTO {
   preferredModel: string
   lastAdvancedAt: string | null
   advanceCooldownMs: number
+  consecutiveAdvances: number
+  maxConsecutiveAdvances: number
   activeProjects: ProjectDTO[]
   inboxProjects: ProjectDTO[]
 }

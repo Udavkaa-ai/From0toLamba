@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { prisma } from '../../db/prisma'
 import { telegramAuthHook } from '../../middleware/telegramAuth'
-import { advanceDay, ADVANCE_COOLDOWN_MS } from '../../game/AdvanceDayService'
+import { advanceDay, ADVANCE_COOLDOWN_MS, MAX_CONSECUTIVE_ADVANCES } from '../../game/AdvanceDayService'
 import { generateOnboardingProject } from '../../game/GenerateProjectService'
 import { toPublicDTO } from '../../game/projectUtils'
 
@@ -74,6 +74,8 @@ export async function gameRoutes(app: FastifyInstance) {
       preferredModel: gameState.preferredModel,
       lastAdvancedAt: gameState.lastAdvancedAt ? gameState.lastAdvancedAt.toISOString() : null,
       advanceCooldownMs: ADVANCE_COOLDOWN_MS,
+      consecutiveAdvances: gameState.consecutiveAdvances,
+      maxConsecutiveAdvances: MAX_CONSECUTIVE_ADVANCES,
       activeProjects: activeProjects.map(toPublicDTO),
       inboxProjects: inboxProjects.map(toPublicDTO),
     }
@@ -264,6 +266,7 @@ export async function gameRoutes(app: FastifyInstance) {
         pendingRankUp: null,
         lastAdvancedAt: null,
         nextDayNotified: true,
+        consecutiveAdvances: 0,
         preferredModel,
       },
     })

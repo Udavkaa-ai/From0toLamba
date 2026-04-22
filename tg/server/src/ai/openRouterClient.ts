@@ -357,6 +357,36 @@ export async function sendAmaMessage(input: SendAmaMessageInput, model = DEFAULT
 
 // ─── Ежедневные вести ─────────────────────────────────────────────────────────
 
+/** Быстрый шаблон-плейсхолдер без AI — пишется в БД мгновенно,
+ *  затем AI-версия обновляет запись. Не раскрывает судьбу дела. */
+function buildPlaceholderUpdate(
+  projectName: string,
+  day: number,
+  userCountDelta: number,
+  payoutStatus: string,
+): { title: string; body: string } {
+  const userCountLine = userCountDelta > 5
+    ? `к делу примкнуло ещё ${userCountDelta} вкладчиков`
+    : userCountDelta > 0
+      ? `пришло ${userCountDelta} новых вкладчиков`
+      : userCountDelta < -5
+        ? `из дела ушло ${-userCountDelta} вкладчиков`
+        : userCountDelta < 0
+          ? `ушло ${-userCountDelta} вкладчиков`
+          : 'число вкладчиков держится'
+
+  const payoutLine = payoutStatus === 'DELAYED'
+    ? 'выплаты, однако, задерживаются'
+    : payoutStatus === 'BOOSTED'
+      ? 'выплаты идут с надбавкой'
+      : 'выплаты идут в обычном порядке'
+
+  return {
+    title: `День ${day} · дело «${projectName}»`,
+    body: `За сутки ${userCountLine}; ${payoutLine}. Хозяин делом доволен.`,
+  }
+}
+
 export async function generateDailyUpdate(
   projectId: string,
   userId: number,
@@ -370,9 +400,31 @@ export async function generateDailyUpdate(
 
   const archetypeLabel = PERSONA_LABEL[project.personaArchetype as PersonaArchetype] ?? project.personaArchetype
   const fateLabel = FATE_LABEL[project.fate as ProjectFate] ?? project.fate
+  const dayNumber = project.daysSinceJoined + 1
 
+  // ─── 1. Синхронно кладём быстрый плейсхолдер, чтобы клиент сразу видел весть ──
+  const placeholder = buildPlaceholderUpdate(project.name, dayNumber, userCountDelta, payoutStatus)
+  const inserted = await prisma.dailyUpdate.create({
+    data: {
+      projectId,
+      userId,
+      day: dayNumber,
+      title: placeholder.title,
+      body: placeholder.body,
+      redFlags: [],
+      payoutStatus,
+      userCountDelta,
+    },
+  }).catch(err => {
+    console.error('[DailyUpdate] placeholder insert failed:', err)
+    return null
+  })
+
+  if (!inserted) return
+
+  // ─── 2. Параллельно идём в AI и перезаписываем ту же запись качественным текстом ──
   const prompt = `Ты — ведущий рубрики «Вести с ярмарки» в игре «Из грязи в князи».
-Напиши короткую весть о деле «${project.name}» (день ${project.daysSinceJoined + 1}).
+Напиши короткую весть о деле «${project.name}» (день ${dayNumber}).
 Архетип хозяина: ${archetypeLabel}, тип: ${project.type}, судьба: ${fateLabel}.
 Изменение числа вкладчиков сегодня: ${userCountStr} чел.
 Статус выплат: ${payoutStatusRu}
@@ -399,16 +451,13 @@ export async function generateDailyUpdate(
     const raw = response.choices[0]?.message?.content ?? '{}'
     const parsed = JSON.parse(raw)
 
-    await prisma.dailyUpdate.create({
+    await prisma.dailyUpdate.update({
+      where: { id: inserted.id },
       data: {
-        projectId,
-        userId,
-        day: project.daysSinceJoined + 1,
-        title: parsed.title ?? 'Новости с ярмарки',
-        body: parsed.body ?? 'Дело продолжается.',
+        title: parsed.title ?? placeholder.title,
+        body: parsed.body ?? placeholder.body,
         redFlags: parsed.redFlags ?? [],
         payoutStatus: parsed.payoutStatus ?? payoutStatus,
-        userCountDelta: userCountDelta,
       },
     })
   } catch (err) {

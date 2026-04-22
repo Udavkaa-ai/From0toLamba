@@ -501,7 +501,12 @@ export function HomePage() {
 function NextDayButton({
   gameState, now, isPending, isError, errorMessage, onAdvance, onWatchAd,
 }: {
-  gameState: { lastAdvancedAt: string | null; advanceCooldownMs: number }
+  gameState: {
+    lastAdvancedAt: string | null
+    advanceCooldownMs: number
+    consecutiveAdvances: number
+    maxConsecutiveAdvances: number
+  }
   now: number
   isPending: boolean
   isError: boolean
@@ -511,14 +516,27 @@ function NextDayButton({
 }) {
   const lastMs = gameState.lastAdvancedAt ? new Date(gameState.lastAdvancedAt).getTime() : 0
   const cooldownMs = gameState.advanceCooldownMs ?? 2 * 60 * 60 * 1000
+  const maxConsec = gameState.maxConsecutiveAdvances ?? 3
+  const usedConsec = gameState.consecutiveAdvances ?? 0
+  const remainingFreePresses = Math.max(0, maxConsec - usedConsec)
   const remainingMs = Math.max(0, lastMs + cooldownMs - now)
-  const isLocked = remainingMs > 0
+  // Блокировка только когда пачка быстрых дней исчерпана И кулдаун ещё идёт
+  const isLocked = remainingFreePresses === 0 && remainingMs > 0
 
   const label = isPending
     ? '⏳ Течёт время...'
     : isLocked
-      ? `⏳ До нового дня: ${formatRemaining(remainingMs)}`
+      ? `⏳ Передышка: ${formatRemaining(remainingMs)}`
       : '🌅 Следующий день'
+
+  // Подпись под кнопкой: только когда пачка уже начала расходоваться
+  let subline: string | null = null
+  if (!isPending) {
+    if (isLocked) subline = `Пачка дней исчерпана · смотри рекламу или жди ${formatRemaining(remainingMs)}`
+    else if (usedConsec > 0 && remainingFreePresses > 0) {
+      subline = `Быстрых переходов осталось: ${remainingFreePresses} из ${maxConsec}`
+    }
+  }
 
   return (
     <>
@@ -543,6 +561,11 @@ function NextDayButton({
       >
         {label}
       </motion.button>
+      {subline && (
+        <div style={{ color: colors.textMuted, fontSize: '11px', textAlign: 'center', marginTop: '6px' }}>
+          {subline}
+        </div>
+      )}
       {isLocked && (
         <button
           onClick={onWatchAd}
@@ -610,8 +633,7 @@ function AdStubOverlay({
           Реклама пока не подключена
         </div>
         <div style={{ color: colors.textSecondary, fontSize: '13px', textAlign: 'center', lineHeight: 1.5, marginBottom: spacing.lg }}>
-          В ближайших обновлениях здесь появится короткий ролик от партнёров — посмотришь и пропустишь двухчасовое ожидание.
-          Пока что можем пропустить просто так — нажимай.
+          Скоро здесь появится короткий ролик от партнёров. После него пачка быстрых дней снова наполнится. Пока что можем пропустить просто так — нажимай.
         </div>
         <button
           onClick={onConfirm}

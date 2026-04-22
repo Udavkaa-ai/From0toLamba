@@ -22,8 +22,10 @@ const HANDOVER_REASONS_UNICORN = [
 const NEW_PROJECTS_PER_DAY_MIN = 1
 const NEW_PROJECTS_PER_DAY_MAX = 3
 
-/** 2 часа реального времени между ручными нажатиями «Следующий день» */
+/** 2 часа реального времени между пачками «Следующий день» */
 export const ADVANCE_COOLDOWN_MS = 2 * 60 * 60 * 1000
+/** Сколько дней подряд можно пройти без ожидания / рекламы */
+export const MAX_CONSECUTIVE_ADVANCES = 3
 
 export interface AdvanceDayOptions {
   /** Если true — пропускает проверку кулдауна (используется крон-jobом и заглушкой рекламы) */
@@ -33,13 +35,16 @@ export interface AdvanceDayOptions {
 export async function advanceDay(userId: number, options: AdvanceDayOptions = {}): Promise<{ newRank?: InvestorRank }> {
   const gameState = await prisma.gameState.findUniqueOrThrow({ where: { userId } })
 
-  // Кулдаун: между ручными advance-day должно пройти не меньше ADVANCE_COOLDOWN_MS
-  if (!options.bypassCooldown && gameState.lastAdvancedAt) {
-    const since = Date.now() - gameState.lastAdvancedAt.getTime()
-    if (since < ADVANCE_COOLDOWN_MS) {
-      throw new Error('ADVANCE_TOO_SOON')
-    }
+  // Кулдаун: после пачки в MAX_CONSECUTIVE_ADVANCES дней должно пройти ADVANCE_COOLDOWN_MS
+  const sinceLastMs = gameState.lastAdvancedAt ? Date.now() - gameState.lastAdvancedAt.getTime() : Infinity
+  const cooldownPassed = sinceLastMs >= ADVANCE_COOLDOWN_MS
+  if (!options.bypassCooldown && !cooldownPassed && gameState.consecutiveAdvances >= MAX_CONSECUTIVE_ADVANCES) {
+    throw new Error('ADVANCE_TOO_SOON')
   }
+
+  // Новая пачка стартует после: 2ч ожидания, просмотра рекламы, или первого перехода
+  const startingNewBucket = cooldownPassed || options.bypassCooldown
+  const newConsecutive = startingNewBucket ? 1 : gameState.consecutiveAdvances + 1
 
   // Истекают все входящие грамоты (живут только один день)
   await prisma.project.updateMany({
@@ -247,6 +252,7 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
       lastAdvancedAt: new Date(),
       // Сбрасываем флаг — крон должен снова отправить уведомление через 2 часа
       nextDayNotified: false,
+      consecutiveAdvances: newConsecutive,
     },
   })
 

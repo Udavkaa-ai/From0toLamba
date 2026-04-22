@@ -46,6 +46,10 @@ model GameState {
   // Сбрасывается в false при advance-day, ставится в true в cron'е, когда уведомление отправлено.
   // Default true чтобы не спамить юзеров, у которых lastAdvancedAt уже давно прошёл.
   nextDayNotified      Boolean   @default(true)
+  // Сколько дней игрок прошёл подряд без ожидания кулдауна.
+  // Сбрасывается в 1 после 2ч-ожидания или после просмотра рекламы.
+  // После 3-го подряд — кнопка «Следующий день» блокируется на 2 часа или разблокируется рекламой.
+  consecutiveAdvances  Int       @default(0)
   updatedAt            DateTime  @updatedAt
 
   user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
