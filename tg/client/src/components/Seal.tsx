@@ -15,7 +15,13 @@ const COLORS = [
   { key: 'emerald', primary: '#2F6F47', secondary: '#0F2E1B' },
   { key: 'indigo',  primary: '#3B4F8A', secondary: '#16223F' },
 ] as const
-type SealColor = typeof COLORS[number]
+
+/** Палитра печати — собрана из COLORS или с мутированным оттенком (shade). */
+interface SealColor {
+  key: string
+  primary: string
+  secondary: string
+}
 
 const RING_COUNTS = [0, 1, 2, 3] as const
 type RingCount = typeof RING_COUNTS[number]
@@ -66,6 +72,19 @@ function hash(s: string): number {
 
 function pickBy<T>(arr: readonly T[], n: number): T {
   return arr[Math.abs(n) % arr.length]
+}
+
+/** Сдвиг оттенка: percent > 0 — светлее, < 0 — темнее. Сохраняет тон, меняет только яркость. */
+function shade(hex: string, percent: number): string {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  const adjust = (v: number) => {
+    const delta = (percent > 0 ? (255 - v) : v) * Math.abs(percent) / 100
+    const out = percent > 0 ? v + delta : v - delta
+    return Math.max(0, Math.min(255, Math.round(out)))
+  }
+  return '#' + [adjust(r), adjust(g), adjust(b)].map(v => v.toString(16).padStart(2, '0')).join('')
 }
 
 /** Несколько «каналов» из одного seed, чтобы параметры не коррелировали */
@@ -127,9 +146,18 @@ export function mutateSeal(
     case 'shape':
       out.shape = nextInList(SHAPES, ref.shape, step)
       break
-    case 'color':
-      out.color = nextInList(COLORS, ref.color, step)
+    case 'color': {
+      // Не меняем сам цвет (это слишком очевидно) — сдвигаем оттенок того же цвета
+      // на ±20% яркости. Игрок должен заметить: «этот оттенок золота чуть темнее».
+      const direction = (h & 1) === 0 ? 1 : -1
+      const pct = 20 * direction
+      out.color = {
+        key: ref.color.key + (direction > 0 ? '-light' : '-dark'),
+        primary: shade(ref.color.primary, pct),
+        secondary: shade(ref.color.secondary, pct),
+      }
       break
+    }
     case 'rings':
       out.rings = nextInList(RING_COUNTS, ref.rings, step)
       break
@@ -171,14 +199,13 @@ interface SealProps {
   params: SealParams
   size?: number
   dim?: boolean
-  ring?: 'tp' | 'fp' | 'fn' | null
-  selected?: boolean
 }
 
-export function Seal({ params, size = 72, dim = false, ring = null, selected = false }: SealProps) {
+/** Рисует только саму печать — обводка TP/FP/FN и selected живёт на ячейке-кнопке,
+ *  чтобы не перекрывать точки-розетку по периметру. */
+export function Seal({ params, size = 72, dim = false }: SealProps) {
   const { shape, color, rings, border, dots, emblem } = params
   const opacity = dim ? 0.35 : 1
-  const ringColor = ring === 'tp' ? '#4CAF50' : ring === 'fp' ? '#F44336' : ring === 'fn' ? '#FF9800' : null
 
   return (
     <svg viewBox="0 0 100 100" width={size} height={size} style={{ opacity, display: 'block' }}>
@@ -192,15 +219,6 @@ export function Seal({ params, size = 72, dim = false, ring = null, selected = f
 
       {/* Центральная эмблема */}
       {renderEmblem(emblem, color)}
-
-      {/* Оценочная обводка (TP/FP/FN) */}
-      {ringColor && (
-        <circle cx="50" cy="50" r="48" fill="none" stroke={ringColor} strokeWidth="3" />
-      )}
-      {/* Выбор игрока */}
-      {selected && !ringColor && (
-        <circle cx="50" cy="50" r="48" fill="none" stroke="#FFB800" strokeWidth="3" strokeDasharray="4 3" />
-      )}
     </svg>
   )
 }

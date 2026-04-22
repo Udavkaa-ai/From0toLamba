@@ -2,7 +2,7 @@ import { prisma } from '../db/prisma'
 import { ProjectFate, LieTopic } from './types'
 
 const GRID_SIZE = 24              // 6×4
-const TIME_LIMIT_SECONDS = 20     // подсказка клиенту; серверная валидация времени не делается
+const TIME_LIMIT_SECONDS = 15     // подсказка клиенту; серверная валидация времени не делается
 const MAX_FORGERIES = GRID_SIZE - 1
 
 /** Сила мутации подделок — чем честнее дело, тем тоньше мутации */

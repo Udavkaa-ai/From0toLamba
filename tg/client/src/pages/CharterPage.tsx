@@ -389,8 +389,21 @@ function ScanGrid({
           const ring: 'tp' | 'fp' | 'fn' | null = result
             ? tpSet.has(i) ? 'tp' : fpSet.has(i) ? 'fp' : fnSet.has(i) ? 'fn' : null
             : null
+          const isSelected = !result && selected.has(i)
           // Детерминированный сдвиг фазы вращения для клетки — от 0 до 18с
           const spinDelaySec = ((i * 2654435761) >>> 0) % 1800 / 100
+
+          // Обводка ячейки — вместо круга в SVG, чтобы не перекрывать точки-розетку
+          const ringColor =
+            ring === 'tp' ? colors.success :
+            ring === 'fp' ? colors.danger :
+            ring === 'fn' ? colors.warning : null
+          const boxShadow = ringColor
+            ? `inset 0 0 0 3px ${ringColor}`
+            : isSelected
+              ? `inset 0 0 0 2px ${colors.fairyGold}`
+              : undefined
+
           return (
             <button
               key={i}
@@ -398,9 +411,10 @@ function ScanGrid({
               disabled={!!result}
               style={{
                 aspectRatio: '1',
-                background: selected.has(i) && !result ? `${colors.fairyGold}25` : 'rgba(10, 8, 24, 0.7)',
-                border: `1px solid ${selected.has(i) && !result ? colors.fairyGold : colors.cardBorder}`,
+                background: isSelected ? `${colors.fairyGold}25` : 'rgba(10, 8, 24, 0.7)',
+                border: `1px solid ${isSelected ? colors.fairyGold : colors.cardBorder}`,
                 borderRadius: '10px',
+                boxShadow,
                 padding: 0,
                 cursor: result ? 'default' : 'pointer',
                 display: 'flex',
@@ -415,8 +429,6 @@ function ScanGrid({
                 <Seal
                   params={params}
                   size={Math.min(78, Math.floor((window.innerWidth - 64) / 4) - 12)}
-                  selected={!result && selected.has(i)}
-                  ring={ring}
                 />
               </div>
             </button>
