@@ -25,11 +25,11 @@ const PERSONAS: PersonaTemplate[] = [
   },
   {
     archetype: 'BOYARIN',
-    speechStyle: 'Пышно-официальный. Ссылается на государевых мужей без единого имени. Смесь архаичных оборотов и деловых терминов.',
-    behaviorUnderPressure: 'Надувается: «Сам думный дьяк проверял сие дело». Намекает что сомневающийся — смерд, не достойный такой сделки.',
+    speechStyle: 'Царь Горох — сказочно-величественный, смешивает «при моём прадеде, царе Горохе» с деловыми терминами. Ссылается на древних предков-царей и забытые указы вместо реальных партнёров. Снисходительно-благодушный.',
+    behaviorUnderPressure: 'Вздыхает с высоты веков: «Эх, молодо-зелено, при моём деде таких вопросов не задавали». Намекает, что сомневающийся просто не застал великих времён.',
     typicalPhrasesTemplate: [
-      'партнёры наши известны в государевых кругах — НДА не дозволяет называть имена',
-      'артель {name} — избранные умы из трёх губерний, сорок семь мастеров высшего разряда',
+      'дело сие — от прадеда моего, самого царя Гороха, третий век в роду ведётся',
+      'артель {name} — сорок семь мастеров, обученных ещё при стародавних царях',
     ],
   },
   {
@@ -186,7 +186,7 @@ const TYPE_THEME: Record<ProjectType, string> = {
 
 const ARCHETYPE_THEME: Record<PersonaArchetype, string> = {
   [PersonaArchetype.BURATINO]: 'puppet marionette magical wooden toy theatre',
-  [PersonaArchetype.BOYARIN]: 'nobleman royal court fur cloak golden throne',
+  [PersonaArchetype.BOYARIN]: 'ancient fairy tale russian tsar long white beard golden crown pea throne old folk king',
   [PersonaArchetype.KOLOBOK]: 'round jolly bread rolling cheerful autumn',
   [PersonaArchetype.KOSCHEI]: 'dark skeletal immortal ominous black skull',
   [PersonaArchetype.ZOLUSHKA]: 'cinderella carriage pumpkin midnight starlight',

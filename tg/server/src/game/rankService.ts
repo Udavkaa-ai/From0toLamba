@@ -7,8 +7,8 @@ import { InvestorRank } from './types'
  *   Скоморох (NEWBIE)       — старт
  *   Купец    (AMBASSADOR)   — 100 ₽   + чуйка 10
  *   Мудрец   (ANALYST)      — 1 000 ₽ + чуйка 50
- *   Богатырь (SHARK)        — 3 000 ₽ + чуйка 100
- *   Царь     (LAMBO_SENSEI) — 10 000 ₽ + чуйка 300
+ *   Боярин   (SHARK)        — 3 000 ₽ + чуйка 100
+ *   Князь    (LAMBO_SENSEI) — 10 000 ₽ + чуйка 300
  */
 export function computeRank(params: {
   currentDay: number

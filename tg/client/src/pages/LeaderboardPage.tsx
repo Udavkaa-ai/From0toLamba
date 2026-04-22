@@ -18,7 +18,7 @@ const RANK_LABEL: Record<string, string> = {
   AMBASSADOR: 'Купец',
   ANALYST: 'Мудрец',
   SHARK: 'Богатырь',
-  LAMBO_SENSEI: 'Царь',
+  LAMBO_SENSEI: 'Князь',
 }
 
 function positionBadge(pos: number) {

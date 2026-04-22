@@ -18,7 +18,7 @@ export enum ProjectFate {
 
 export enum PersonaArchetype {
   BURATINO = 'BURATINO',     // Наивный лжец, верит своим выдумкам
-  BOYARIN = 'BOYARIN',       // Пышно-официальный, ссылается на великих партнёров
+  BOYARIN = 'BOYARIN',       // Царь Горох — пышно-сказочный, ссылается на стародавних предков и «при мне, царе Горохе»
   KOLOBOK = 'KOLOBOK',       // Хвастун-оптимист, укатывается от вопросов
   KOSCHEI = 'KOSCHEI',       // Холодный и уверенный, говорит цифрами
   ZOLUSHKA = 'ZOLUSHKA',     // Давит на жалость и мечты
@@ -40,8 +40,8 @@ export enum InvestorRank {
   NEWBIE = 'NEWBIE',             // Скоморох — старт
   AMBASSADOR = 'AMBASSADOR',     // Купец    — 100 ₽  + чуйка 10
   ANALYST = 'ANALYST',           // Мудрец   — 1000 ₽ + чуйка 50
-  SHARK = 'SHARK',               // Богатырь — 3000 ₽ + чуйка 100
-  LAMBO_SENSEI = 'LAMBO_SENSEI', // Царь     — 10 000 ₽ + чуйка 300
+  SHARK = 'SHARK',               // Боярин   — 3000 ₽ + чуйка 100
+  LAMBO_SENSEI = 'LAMBO_SENSEI', // Князь    — 10 000 ₽ + чуйка 300
 }
 
 export const RANK_DISPLAY: Record<InvestorRank, string> = {
@@ -49,7 +49,7 @@ export const RANK_DISPLAY: Record<InvestorRank, string> = {
   [InvestorRank.AMBASSADOR]: 'Купец',
   [InvestorRank.ANALYST]: 'Мудрец',
   [InvestorRank.SHARK]: 'Богатырь',
-  [InvestorRank.LAMBO_SENSEI]: 'Царь',
+  [InvestorRank.LAMBO_SENSEI]: 'Князь',
 }
 
 export const LIE_TOPIC_EMOJI: Record<LieTopic, string> = {
@@ -74,7 +74,7 @@ export const LIE_TOPIC_LABEL: Record<LieTopic, string> = {
 
 export const PERSONA_LABEL: Record<PersonaArchetype, string> = {
   [PersonaArchetype.BURATINO]:   'Буратино',
-  [PersonaArchetype.BOYARIN]:    'Боярин',
+  [PersonaArchetype.BOYARIN]:    'Царь Горох',
   [PersonaArchetype.KOLOBOK]:    'Колобок',
   [PersonaArchetype.KOSCHEI]:    'Кощей',
   [PersonaArchetype.ZOLUSHKA]:   'Золушка',

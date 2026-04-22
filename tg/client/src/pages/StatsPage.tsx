@@ -7,14 +7,14 @@ import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing } from '@/theme'
 
 const RANK_DISPLAY: Record<string, string> = {
-  NEWBIE: 'Скоморох', AMBASSADOR: 'Купец', ANALYST: 'Мудрец', SHARK: 'Богатырь', LAMBO_SENSEI: 'Царь',
+  NEWBIE: 'Скоморох', AMBASSADOR: 'Купец', ANALYST: 'Мудрец', SHARK: 'Богатырь', LAMBO_SENSEI: 'Князь',
 }
 
 const RANK_NEXT_HINT: Record<string, string> = {
   NEWBIE: '100 ₽ и чуйка 10 → Купец',
   AMBASSADOR: '1 000 ₽ и чуйка 50 → Мудрец',
   ANALYST: '3 000 ₽ и чуйка 100 → Богатырь',
-  SHARK: '10 000 ₽ и чуйка 300 → Царь',
+  SHARK: '10 000 ₽ и чуйка 300 → Князь',
   LAMBO_SENSEI: 'Ты достиг вершины! 👑',
 }
 

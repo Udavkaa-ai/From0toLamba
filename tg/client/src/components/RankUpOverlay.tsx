@@ -8,7 +8,7 @@ const RANK_DISPLAY: Record<string, string> = {
   AMBASSADOR: 'Купец',
   ANALYST: 'Мудрец',
   SHARK: 'Богатырь',
-  LAMBO_SENSEI: 'Царь',
+  LAMBO_SENSEI: 'Князь',
 }
 
 const RANK_EMOJI: Record<string, string> = {
