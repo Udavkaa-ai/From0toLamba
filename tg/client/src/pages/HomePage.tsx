@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -57,6 +57,13 @@ export function HomePage() {
   const [localModel, setLocalModel] = useState<string | null>(null)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
   const [showDayNews, setShowDayNews] = useState(false)
+  const [showAdStub, setShowAdStub] = useState(false)
+  // Тикает каждую секунду, чтобы перерисовывать таймер кулдауна
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [])
 
   const { isLoading, isError, error } = useQuery({
     queryKey: ['gameState'],
@@ -82,6 +89,17 @@ export function HomePage() {
       setShowDayNews(true)
     },
     onError: () => tgHaptic?.notificationOccurred('error'),
+  })
+
+  const skipAdMutation = useMutation({
+    mutationFn: api.game.advanceDaySkip,
+    onSuccess: () => {
+      tgHaptic?.notificationOccurred('success')
+      qc.invalidateQueries({ queryKey: ['gameState'] })
+      qc.invalidateQueries({ queryKey: ['updates'] })
+      setShowAdStub(false)
+      setShowDayNews(true)
+    },
   })
 
   const updateModelMutation = useMutation({
@@ -451,38 +469,187 @@ export function HomePage() {
           </motion.div>
         )}
 
-        {/* Кнопка следующий день */}
+        {/* Кнопка следующий день + кулдаун-таймер */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            transition={{ duration: 0.1 }}
-            onClick={() => { tgHaptic?.impactOccurred('medium'); advanceMutation.mutate() }}
-            disabled={advanceMutation.isPending}
-            style={{
-              width: '100%',
-              marginTop: spacing.xl,
-              padding: `${spacing.md} ${spacing.lg}`,
-              background: `linear-gradient(135deg, ${colors.enchantedPurple}, ${colors.nightBlue})`,
-              border: `1px solid ${colors.fairyGold}40`,
-              borderRadius: '12px',
-              color: colors.fairyGold,
-              fontSize: '14px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              opacity: advanceMutation.isPending ? 0.6 : 1,
-            }}
-          >
-            {advanceMutation.isPending ? '⏳ Течёт время...' : '🌅 Следующий день'}
-          </motion.button>
-          {advanceMutation.isError && (
-            <div style={{ color: colors.danger, fontSize: '12px', textAlign: 'center', marginTop: '8px' }}>
-              {(advanceMutation.error as Error).message}
-            </div>
-          )}
+          <NextDayButton
+            gameState={gameState}
+            now={now}
+            isPending={advanceMutation.isPending}
+            isError={advanceMutation.isError}
+            errorMessage={(advanceMutation.error as Error | undefined)?.message}
+            onAdvance={() => { tgHaptic?.impactOccurred('medium'); advanceMutation.mutate() }}
+            onWatchAd={() => setShowAdStub(true)}
+          />
         </motion.div>
 
       </div>
+
+      {/* Заглушка рекламы для пропуска ожидания */}
+      <AnimatePresence>
+        {showAdStub && (
+          <AdStubOverlay
+            isPending={skipAdMutation.isPending}
+            onConfirm={() => skipAdMutation.mutate()}
+            onClose={() => setShowAdStub(false)}
+          />
+        )}
+      </AnimatePresence>
     </ScreenBackground>
+  )
+}
+
+function NextDayButton({
+  gameState, now, isPending, isError, errorMessage, onAdvance, onWatchAd,
+}: {
+  gameState: { lastAdvancedAt: string | null; advanceCooldownMs: number }
+  now: number
+  isPending: boolean
+  isError: boolean
+  errorMessage: string | undefined
+  onAdvance: () => void
+  onWatchAd: () => void
+}) {
+  const lastMs = gameState.lastAdvancedAt ? new Date(gameState.lastAdvancedAt).getTime() : 0
+  const cooldownMs = gameState.advanceCooldownMs ?? 2 * 60 * 60 * 1000
+  const remainingMs = Math.max(0, lastMs + cooldownMs - now)
+  const isLocked = remainingMs > 0
+
+  const label = isPending
+    ? '⏳ Течёт время...'
+    : isLocked
+      ? `⏳ До нового дня: ${formatRemaining(remainingMs)}`
+      : '🌅 Следующий день'
+
+  return (
+    <>
+      <motion.button
+        whileTap={{ scale: isLocked ? 1 : 0.97 }}
+        transition={{ duration: 0.1 }}
+        onClick={() => { if (!isLocked && !isPending) onAdvance() }}
+        disabled={isPending || isLocked}
+        style={{
+          width: '100%',
+          marginTop: spacing.xl,
+          padding: `${spacing.md} ${spacing.lg}`,
+          background: `linear-gradient(135deg, ${colors.enchantedPurple}, ${colors.nightBlue})`,
+          border: `1px solid ${isLocked ? `${colors.fairyGold}25` : `${colors.fairyGold}40`}`,
+          borderRadius: '12px',
+          color: isLocked ? colors.textMuted : colors.fairyGold,
+          fontSize: '14px',
+          fontWeight: 600,
+          cursor: isLocked || isPending ? 'not-allowed' : 'pointer',
+          opacity: isPending ? 0.6 : 1,
+        }}
+      >
+        {label}
+      </motion.button>
+      {isLocked && (
+        <button
+          onClick={onWatchAd}
+          style={{
+            width: '100%',
+            marginTop: spacing.sm,
+            padding: `${spacing.sm} ${spacing.md}`,
+            background: 'transparent',
+            border: `1px dashed ${colors.fairyGold}50`,
+            borderRadius: '12px',
+            color: colors.fairyGold,
+            fontSize: '13px',
+            fontWeight: 600,
+            cursor: 'pointer',
+          }}
+        >
+          📺 Посмотреть рекламу и пропустить ожидание
+        </button>
+      )}
+      {isError && !isLocked && (
+        <div style={{ color: colors.danger, fontSize: '12px', textAlign: 'center', marginTop: '8px' }}>
+          {errorMessage}
+        </div>
+      )}
+    </>
+  )
+}
+
+function formatRemaining(ms: number): string {
+  const total = Math.ceil(ms / 1000)
+  const h = Math.floor(total / 3600)
+  const m = Math.floor((total % 3600) / 60)
+  const s = total % 60
+  if (h > 0) return `${h}ч ${m.toString().padStart(2, '0')}м`
+  if (m > 0) return `${m}м ${s.toString().padStart(2, '0')}с`
+  return `${s}с`
+}
+
+function AdStubOverlay({
+  isPending, onConfirm, onClose,
+}: { isPending: boolean; onConfirm: () => void; onClose: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 250,
+        background: 'rgba(0,0,0,0.75)',
+        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+      }}
+    >
+      <motion.div
+        initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: '100%', maxWidth: '500px',
+          background: colors.nightBlue,
+          borderRadius: '20px 20px 0 0',
+          border: `1px solid ${colors.cardBorder}`,
+          padding: spacing.xxl,
+        }}
+      >
+        <div style={{ fontSize: '40px', textAlign: 'center', marginBottom: spacing.md }}>📺</div>
+        <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '17px', textAlign: 'center', marginBottom: spacing.sm }}>
+          Реклама пока не подключена
+        </div>
+        <div style={{ color: colors.textSecondary, fontSize: '13px', textAlign: 'center', lineHeight: 1.5, marginBottom: spacing.lg }}>
+          В ближайших обновлениях здесь появится короткий ролик от партнёров — посмотришь и пропустишь двухчасовое ожидание.
+          Пока что можем пропустить просто так — нажимай.
+        </div>
+        <button
+          onClick={onConfirm}
+          disabled={isPending}
+          style={{
+            width: '100%',
+            padding: spacing.md,
+            background: colors.fairyGold,
+            border: 'none',
+            borderRadius: '12px',
+            color: colors.nightBlue,
+            fontWeight: 700,
+            fontSize: '15px',
+            cursor: 'pointer',
+            opacity: isPending ? 0.6 : 1,
+            marginBottom: spacing.sm,
+          }}
+        >
+          {isPending ? 'Пропускаем…' : '🌅 Пропустить ожидание'}
+        </button>
+        <button
+          onClick={onClose}
+          style={{
+            width: '100%',
+            padding: spacing.md,
+            background: 'transparent',
+            border: `1px solid ${colors.cardBorder}`,
+            borderRadius: '12px',
+            color: colors.textMuted,
+            fontWeight: 500,
+            fontSize: '14px',
+            cursor: 'pointer',
+          }}
+        >
+          Подождать ещё
+        </button>
+      </motion.div>
+    </motion.div>
   )
 }
 

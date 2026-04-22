@@ -99,7 +99,7 @@ export const WITHDRAWAL_RULES: Record<ProjectType, { maxPercent: number | null; 
   [ProjectType.HONEST_TRADE]: { maxPercent: null, feePercent: 0 },
 }
 
-/** Доходность по судьбе (в день от вложенного, умножается на 10 для game-time) */
+/** Доходность по судьбе (в день от вложенного) */
 export const FATE_CONFIG: Record<ProjectFate, {
   daysRange: [number, number]
   dailyYieldRange: [number, number]
@@ -107,32 +107,32 @@ export const FATE_CONFIG: Record<ProjectFate, {
   weight: number
 }> = {
   [ProjectFate.INSTANT_SCAM]: {
-    daysRange: [1, 3],
-    dailyYieldRange: [0.002, 0.008],
-    lossRange: [0.8, 1.0],
+    daysRange: [2, 5],            // живёт 2–5 дней — успевает заманить
+    dailyYieldRange: [0.05, 0.20], // приманка: 5–20% в день
+    lossRange: [1.0, 1.0],         // исчезает со ВСЕМИ деньгами
     weight: 30,
   },
   [ProjectFate.SLOW_DRAIN]: {
     daysRange: [7, 21],
-    dailyYieldRange: [0.003, 0.015],
+    dailyYieldRange: [0.015, 0.075], // x5 от прежних 0.003–0.015
     lossRange: [0.3, 0.7],
     weight: 25,
   },
   [ProjectFate.HONEST_FAIL]: {
     daysRange: [14, 30],
-    dailyYieldRange: [0.001, 0.005],
+    dailyYieldRange: [0.005, 0.025], // x5
     lossRange: [0.1, 0.4],
     weight: 15,
   },
   [ProjectFate.SURVIVOR]: {
     daysRange: [15, 30],
-    dailyYieldRange: [0.003, 0.015],
+    dailyYieldRange: [0.015, 0.075], // x5: ~1.5–7.5% в день
     lossRange: [0, 0],
     weight: 20,
   },
   [ProjectFate.UNICORN]: {
     daysRange: [20, 30],
-    dailyYieldRange: [0.02, 0.1],
+    dailyYieldRange: [0.10, 0.50], // x5: 10–50% в день
     lossRange: [0, 0],
     weight: 10,
   },

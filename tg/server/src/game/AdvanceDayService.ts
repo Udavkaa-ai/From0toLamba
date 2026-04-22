@@ -22,8 +22,24 @@ const HANDOVER_REASONS_UNICORN = [
 const NEW_PROJECTS_PER_DAY_MIN = 1
 const NEW_PROJECTS_PER_DAY_MAX = 3
 
-export async function advanceDay(userId: number): Promise<{ newRank?: InvestorRank }> {
+/** 2 часа реального времени между ручными нажатиями «Следующий день» */
+export const ADVANCE_COOLDOWN_MS = 2 * 60 * 60 * 1000
+
+export interface AdvanceDayOptions {
+  /** Если true — пропускает проверку кулдауна (используется крон-jobом и заглушкой рекламы) */
+  bypassCooldown?: boolean
+}
+
+export async function advanceDay(userId: number, options: AdvanceDayOptions = {}): Promise<{ newRank?: InvestorRank }> {
   const gameState = await prisma.gameState.findUniqueOrThrow({ where: { userId } })
+
+  // Кулдаун: между ручными advance-day должно пройти не меньше ADVANCE_COOLDOWN_MS
+  if (!options.bypassCooldown && gameState.lastAdvancedAt) {
+    const since = Date.now() - gameState.lastAdvancedAt.getTime()
+    if (since < ADVANCE_COOLDOWN_MS) {
+      throw new Error('ADVANCE_TOO_SOON')
+    }
+  }
 
   // Истекают все входящие грамоты (живут только один день)
   await prisma.project.updateMany({
@@ -50,8 +66,9 @@ export async function advanceDay(userId: number): Promise<{ newRank?: InvestorRa
 
     const daysLeft = project.daysUntilCollapse
 
-    // За 2 дня до скама — блокируем вывод
-    if (daysLeft !== null && daysLeft === 2 && (fate === ProjectFate.INSTANT_SCAM || fate === ProjectFate.SLOW_DRAIN)) {
+    // За 2 дня до медленного слива — блокируем вывод (тихий сигнал тревоги)
+    // INSTANT_SCAM ничего не сигналит — исчезает внезапно
+    if (daysLeft !== null && daysLeft === 2 && fate === ProjectFate.SLOW_DRAIN) {
       await prisma.project.update({
         where: { id: project.id },
         data: { isWithdrawalLocked: true },
@@ -64,7 +81,7 @@ export async function advanceDay(userId: number): Promise<{ newRank?: InvestorRa
       lossPercent = rng(fateCfg.lossRange[0], fateCfg.lossRange[1])
 
       if (fate === ProjectFate.INSTANT_SCAM) {
-        closureReason = 'Хозяин сбежал с деньгами 💀'
+        closureReason = 'Хозяин исчез вместе со всеми деньгами 💀'
         if (project.investedAmountRubles > 0) scamsMissedDelta++
         else scamsDetectedDelta++
       } else if (fate === ProjectFate.SLOW_DRAIN) {
@@ -140,7 +157,10 @@ export async function advanceDay(userId: number): Promise<{ newRank?: InvestorRa
 
     // Compute userCountDelta based on fate
     let userCountDelta = 0
-    if (fate === ProjectFate.INSTANT_SCAM || fate === ProjectFate.SLOW_DRAIN) {
+    if (fate === ProjectFate.INSTANT_SCAM) {
+      // Скам ничего не сигналит: вкладчики «прибывают» как и в нормальных делах
+      userCountDelta = irng(3, 20)
+    } else if (fate === ProjectFate.SLOW_DRAIN) {
       const daysLeft2 = project.daysUntilCollapse ?? 0
       // More users leave as collapse approaches
       userCountDelta = -irng(2, 15) * (daysLeft2 < 5 ? 3 : 1)
@@ -154,7 +174,8 @@ export async function advanceDay(userId: number): Promise<{ newRank?: InvestorRa
 
     // Determine payoutStatus
     let payoutStatus = 'NORMAL'
-    if (daysLeft !== null && daysLeft <= 3 && (fate === ProjectFate.INSTANT_SCAM || fate === ProjectFate.SLOW_DRAIN)) {
+    // INSTANT_SCAM — никаких сигналов, выплаты «нормальные» до самого исчезновения
+    if (daysLeft !== null && daysLeft <= 3 && fate === ProjectFate.SLOW_DRAIN) {
       payoutStatus = 'DELAYED'
     } else if (fate === ProjectFate.UNICORN && project.daysSinceJoined > 0) {
       payoutStatus = Math.random() < 0.3 ? 'BOOSTED' : 'NORMAL'
@@ -181,8 +202,10 @@ export async function advanceDay(userId: number): Promise<{ newRank?: InvestorRa
       },
     })
 
-    // Генерируем весть для проекта
-    generateDailyUpdate(project.id, userId, project, userCountDelta, payoutStatus).catch(console.error)
+    // Генерируем весть для проекта (кроме INSTANT_SCAM — он молчит до самого исчезновения)
+    if (fate !== ProjectFate.INSTANT_SCAM) {
+      generateDailyUpdate(project.id, userId, project, userCountDelta, payoutStatus).catch(console.error)
+    }
   }
 
   // Обновляем баланс и GameState
@@ -222,6 +245,8 @@ export async function advanceDay(userId: number): Promise<{ newRank?: InvestorRa
       investedHistory,
       pendingRankUp: rankChanged ? newRank : null,
       lastAdvancedAt: new Date(),
+      // Сбрасываем флаг — крон должен снова отправить уведомление через 2 часа
+      nextDayNotified: false,
     },
   })
 

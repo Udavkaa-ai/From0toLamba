@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { prisma } from '../../db/prisma'
 import { telegramAuthHook } from '../../middleware/telegramAuth'
-import { advanceDay } from '../../game/AdvanceDayService'
+import { advanceDay, ADVANCE_COOLDOWN_MS } from '../../game/AdvanceDayService'
 import { generateOnboardingProject } from '../../game/GenerateProjectService'
 import { toPublicDTO } from '../../game/projectUtils'
 
@@ -72,6 +72,8 @@ export async function gameRoutes(app: FastifyInstance) {
       investedHistory: gameState.investedHistory,
       pendingRankUp: gameState.pendingRankUp,
       preferredModel: gameState.preferredModel,
+      lastAdvancedAt: gameState.lastAdvancedAt ? gameState.lastAdvancedAt.toISOString() : null,
+      advanceCooldownMs: ADVANCE_COOLDOWN_MS,
       activeProjects: activeProjects.map(toPublicDTO),
       inboxProjects: inboxProjects.map(toPublicDTO),
     }
@@ -82,6 +84,7 @@ export async function gameRoutes(app: FastifyInstance) {
     const tgUser = request.telegramUser
     const user = await prisma.user.findUniqueOrThrow({
       where: { telegramId: String(tgUser.id) },
+      include: { gameState: true },
     })
 
     try {
@@ -89,10 +92,28 @@ export async function gameRoutes(app: FastifyInstance) {
       return { success: true, newRank: result.newRank ?? null }
     } catch (err: any) {
       if (err.message === 'ADVANCE_TOO_SOON') {
-        return reply.status(429).send({ error: 'Слишком рано — день ещё не прошёл' })
+        const since = user.gameState?.lastAdvancedAt
+          ? Date.now() - user.gameState.lastAdvancedAt.getTime()
+          : 0
+        const secondsRemaining = Math.max(0, Math.ceil((ADVANCE_COOLDOWN_MS - since) / 1000))
+        return reply.status(429).send({
+          error: 'Слишком рано — день ещё не прошёл',
+          secondsRemaining,
+        })
       }
       throw err
     }
+  })
+
+  // POST /api/game/advance-day-skip — заглушка «посмотрел рекламу, пропускаю ожидание»
+  // TODO: впилить реальную проверку показа рекламы Telegram Ads / Yandex
+  app.post('/api/game/advance-day-skip', { preHandler: telegramAuthHook }, async (request, reply) => {
+    const tgUser = request.telegramUser
+    const user = await prisma.user.findUniqueOrThrow({
+      where: { telegramId: String(tgUser.id) },
+    })
+    const result = await advanceDay(user.id, { bypassCooldown: true })
+    return { success: true, newRank: result.newRank ?? null }
   })
 
   // POST /api/game/clear-rank-up — сбросить pendingRankUp после показа
@@ -242,6 +263,7 @@ export async function gameRoutes(app: FastifyInstance) {
         investedHistory: [],
         pendingRankUp: null,
         lastAdvancedAt: null,
+        nextDayNotified: true,
         preferredModel,
       },
     })

@@ -5,7 +5,7 @@
 
 ## Состояние проекта
 
-**Активная версия:** Telegram Mini App (`tg/`) — v1.1.3
+**Активная версия:** Telegram Mini App (`tg/`) — v1.2.0
 **Android:** код в `app/`, разработка заморожена — всё усилие на TG-версию
 **Ветка разработки:** `claude/telegram-game-migration-FDnlX`
 
@@ -53,7 +53,7 @@ tg/
         │   └── rankService.ts             # computeRank()
         ├── ai/openRouterClient.ts  # Запросы к OpenRouter (DeepSeek) + generateProjectBanner
         ├── bot/bot.ts              # Grammy Telegram bot
-        ├── scheduler/dailyJob.ts   # node-cron — advance-day в 21:00 MSK
+        ├── scheduler/dailyJob.ts   # node-cron — advance-day в 09:00 MSK + уведомления о доступности нового дня каждые 5 мин
         ├── middleware/telegramAuth.ts  # Верификация X-Telegram-Init-Data
         ├── db/prisma.ts            # PrismaClient singleton
         └── data/personas.json      # Архетипы персонажей
@@ -71,7 +71,8 @@ tg/
 | Метод | Путь | Описание |
 |---|---|---|
 | GET | `/api/game` | Получить gameState + все проекты пользователя |
-| POST | `/api/game/advance-day` | Прокрутить день вперёд |
+| POST | `/api/game/advance-day` | Прокрутить день вперёд (429 + `secondsRemaining` если кулдаун 2ч ещё не истёк) |
+| POST | `/api/game/advance-day-skip` | Заглушка «посмотрел рекламу» — пропускает кулдаун |
 | POST | `/api/game/clear-rank-up` | Очистить pendingRankUp после показа поздравления |
 | POST | `/api/game/complete-onboarding` | Завершить онбординг (начисляет бонус ~50 ₽) |
 | GET | `/api/game/settings` | Получить настройки (preferredModel) |
@@ -214,10 +215,12 @@ npm run build  # outDir = ../server/public  (не коммитить!)
 | Мин. вложение | 5 ₽ |
 | Макс. вложение | 5 000 ₽ на дело |
 | Активных дел | max 5 |
-| Доходность SURVIVOR | 0.3–1.5% в день, 15–30 дней жизни |
-| Доходность UNICORN | 2–10% в день, 20–30 дней жизни |
-| Потеря INSTANT_SCAM | 80–100% |
-| Потеря SLOW_DRAIN | 30–70% |
+| Кулдаун между днями | 2 часа реального времени; крон шлёт уведомление в бот, плюс заглушка «посмотреть рекламу» для пропуска |
+| Доходность SURVIVOR | 1.5–7.5% в день, 15–30 дней жизни |
+| Доходность UNICORN | 10–50% в день, 20–30 дней жизни |
+| Доходность INSTANT_SCAM | приманка 5–20% в день, 2–5 дней, исчезает со 100% денег и БЕЗ предупреждений (ни вестей, ни блокировки вывода, ни оттока вкладчиков) |
+| Доходность SLOW_DRAIN | 1.5–7.5% в день, 7–21 день, теряет 30–70%; за 2 дня до конца блокирует вывод и шлёт DELAYED-вести |
+| Потеря HONEST_FAIL | 10–40% |
 
 `state.balance` — только свободные рубли. Доход копится в `project.currentValueRubles` до вывода/выхода.
 `computeRank()` использует: `totalWealth = balance + Σ activeProjects.currentValueRubles`, `intuitionScore`, `currentDay`.

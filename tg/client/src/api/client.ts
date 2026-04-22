@@ -104,6 +104,8 @@ export interface GameStateDTO {
   investedHistory: number[]
   pendingRankUp: string | null
   preferredModel: string
+  lastAdvancedAt: string | null
+  advanceCooldownMs: number
   activeProjects: ProjectDTO[]
   inboxProjects: ProjectDTO[]
 }
@@ -167,6 +169,7 @@ export const api = {
   game: {
     getState: () => apiClient.get<GameStateDTO>('/game').then(r => r.data),
     advanceDay: () => apiClient.post('/game/advance-day').then(r => r.data),
+    advanceDaySkip: () => apiClient.post('/game/advance-day-skip').then(r => r.data),
     clearRankUp: () => apiClient.post('/game/clear-rank-up').then(r => r.data),
     completeOnboarding: () => apiClient.post('/game/complete-onboarding').then(r => r.data),
     getSettings: () => apiClient.get<{ preferredModel: string }>('/game/settings').then(r => r.data),
