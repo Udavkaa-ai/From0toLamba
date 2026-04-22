@@ -5,7 +5,7 @@
 
 ## Состояние проекта
 
-**Активная версия:** Telegram Mini App (`tg/`)
+**Активная версия:** Telegram Mini App (`tg/`) — v1.0.5
 **Android:** код в `app/`, разработка заморожена — всё усилие на TG-версию
 **Ветка разработки:** `claude/telegram-game-migration-FDnlX`
 
@@ -30,31 +30,33 @@ tg/
 │       ├── api/client.ts          # Все HTTP-запросы к серверу
 │       ├── stores/gameStore.ts    # Zustand-стор (gameState, проекты)
 │       ├── pages/                 # HomePage, InboxPage, AmaPage, PortfolioPage, StatsPage
+│       │                          # LeaderboardPage, RegistryPage
 │       ├── components/            # FairyCard, ScreenBackground, SparklesOverlay, BottomNav, RankUpOverlay
 │       └── theme/colors.ts        # FairyGold, EnchantedPurple, NightBlue
 └── server/          # Fastify + TypeScript + Prisma + PostgreSQL
     └── src/
         ├── index.ts               # Точка входа, регистрация плагинов и роутов
         ├── api/routes/
-        │   ├── game.ts            # /api/game, /advance-day, /settings, /reset
+        │   ├── game.ts            # /api/game, /advance-day, /settings, /reset, /leaderboard, /version
         │   ├── projects.ts        # /api/projects/inbox, /portfolio, /updates, /skip
         │   ├── ama.ts             # /api/ama/:id/start|message|evaluate-intuition
         │   └── invest.ts          # /api/invest/:id (invest/add/withdraw/exit)
         ├── game/
         │   ├── types.ts           # Все энамы + FATE_CONFIG + WITHDRAWAL_RULES + ProjectPublicDTO
-        │   ├── GenerateProjectService.ts  # AI-генерация нового дела
+        │   ├── GenerateProjectService.ts  # AI-генерация нового дела + баннер Pollinations.ai
         │   ├── AmaSessionService.ts       # Чат с хозяином
         │   ├── AdvanceDayService.ts       # Ежедневный цикл + история
-        │   ├── InvestService.ts           # Вложить/довложить/вывести/выйти
+        │   ├── InvestService.ts           # Вложить/довложить/вывести/выйти + PostMortem при выходе
         │   ├── projectUtils.ts            # toPublicDTO (убирает скрытые поля)
         │   └── rankService.ts             # computeRank()
-        ├── ai/openRouterClient.ts  # Запросы к OpenRouter (DeepSeek)
+        ├── ai/openRouterClient.ts  # Запросы к OpenRouter (DeepSeek) + generateProjectBanner
         ├── bot/bot.ts              # Grammy Telegram bot
         ├── scheduler/dailyJob.ts   # node-cron — advance-day в 21:00 MSK
         ├── middleware/telegramAuth.ts  # Верификация X-Telegram-Init-Data
         ├── db/prisma.ts            # PrismaClient singleton
         └── data/personas.json      # Архетипы персонажей
     └── prisma/schema.prisma        # Полная схема БД
+    └── .gitignore                  # Исключает public/ (сборка клиента — не коммитить!)
 ```
 
 ---
@@ -73,6 +75,8 @@ tg/
 | GET | `/api/game/settings` | Получить настройки (preferredModel) |
 | POST | `/api/game/settings` | Обновить настройки |
 | POST | `/api/game/reset` | Сбросить весь прогресс |
+| GET | `/api/leaderboard` | Топ-100 игроков по totalWealth (без initData) |
+| GET | `/api/version` | Текущая версия приложения (без initData) |
 
 ### Projects
 | Метод | Путь | Описание |
@@ -96,7 +100,7 @@ tg/
 | POST | `/api/invest/:projectId` | Первое вложение |
 | POST | `/api/invest/:projectId/add` | Довложить (max 5000 ₽, не при заблокированном выводе) |
 | POST | `/api/invest/:projectId/withdraw` | Частичный вывод |
-| POST | `/api/invest/:projectId/exit` | Выйти из дела полностью |
+| POST | `/api/invest/:projectId/exit` | Выйти из дела полностью (запускает PostMortem async) |
 
 ---
 
@@ -135,7 +139,9 @@ InvestorRank:     NEWBIE → AMBASSADOR → ANALYST → SHARK → LAMBO_SENSEI
 - **Провайдер:** OpenRouter (`https://openrouter.ai/api/v1/`)
 - **Модели:** `deepseek/deepseek-chat-v3-0324` (по умолчанию) и `google/gemini-3.1-flash-lite-preview` (меняется в настройках через `preferredModel`)
 - **Клиент:** `tg/server/src/ai/openRouterClient.ts`
-- **Функции:** `generateAmaResponse`, `generateProjectName`, `generateDailyUpdate`, `generatePostMortem`
+- **Функции:** `generateAmaResponse`, `generateProjectName`, `generateDailyUpdate`, `generatePostMortem`, `generateProjectBanner`
+
+**Баннеры дел:** генерируются через Pollinations.ai (`https://image.pollinations.ai/prompt/...`) — бесплатно, без API-ключа. Seed вычисляется из projectId. Сохраняются в `project.bannerImageUrl`.
 
 **Язык ответов AI:** современный живой русский. Без нарочитого старорусского. Народные присказки — изредка. Все суммы в рублях. Без слов «блокчейн», «крипто», «TON».
 
@@ -155,6 +161,8 @@ InvestorRank:     NEWBIE → AMBASSADOR → ANALYST → SHARK → LAMBO_SENSEI
 
 - `NODE_ENV=production`: webhook Telegram + cron на 21:00 MSK
 - `NODE_ENV=development`: long polling бота
+
+**ВАЖНО:** `tg/server/public/` в `.gitignore` — никогда не коммитить сборку клиента. Docker сам собирает клиент и копирует в нужное место.
 
 ---
 
@@ -183,7 +191,7 @@ cd tg/client && npm install
 npm run dev    # Vite :5173 → proxy /api → :3000
 
 # Сборка клиента для production
-npm run build  # outDir = ../server/public
+npm run build  # outDir = ../server/public  (не коммитить!)
 ```
 
 ---
@@ -197,13 +205,15 @@ npm run build  # outDir = ../server/public
 | Мин. вложение | 5 ₽ |
 | Макс. вложение | 5 000 ₽ на дело |
 | Активных дел | max 5 |
-| Доходность SURVIVOR | 0.3–1.5% в день |
-| Доходность UNICORN | 2–10% в день |
+| Доходность SURVIVOR | 0.3–1.5% в день, 15–30 дней жизни |
+| Доходность UNICORN | 2–10% в день, 20–30 дней жизни |
 | Потеря INSTANT_SCAM | 80–100% |
 | Потеря SLOW_DRAIN | 30–70% |
 
 `state.balance` — только свободные рубли. Доход копится в `project.currentValueRubles` до вывода/выхода.
 `computeRank()` использует: `totalWealth = balance + Σ activeProjects.currentValueRubles`, `intuitionScore`, `currentDay`.
+
+Успешные дела (SURVIVOR, UNICORN) закрываются по истечении срока с нарративной причиной «дело сменило владельца» — случайная фраза из массива `HANDOVER_REASONS_*` в `AdvanceDayService.ts`.
 
 ---
 
@@ -214,8 +224,20 @@ npm run build  # outDir = ../server/public
 | Главная | `HomePage.tsx` | Баланс, активные дела (с новостями и «Довложить»), «Следующий день» |
 | Входящие | `InboxPage.tsx` | Новые предложения из inbox |
 | Беседа | `AmaPage.tsx` | AMA-чат с хозяином + полоска Чуйки |
-| Казна | `PortfolioPage.tsx` | Активные дела: графики (Recharts), вести, довложить/вывести/выйти |
+| Казна | `PortfolioPage.tsx` | Активные дела: графики (Recharts), вести, довложить/вывести/выйти; ссылка на Летопись |
 | Успехи | `StatsPage.tsx` | Статистика, ранг, история баланса |
+| Рейтинг | `LeaderboardPage.tsx` | Топ-100 игроков по состоянию, текущий игрок выделен |
+| Летопись | `RegistryPage.tsx` | Все закрытые дела: архетип, PostMortem, баннер, статистика |
+
+---
+
+## Версионирование и кэш
+
+Клиент содержит константу `APP_VERSION` в `ScreenBackground.tsx`. При каждом монтировании компонента делается запрос к `/api/version`. Если версии расходятся — `window.location.reload()`.
+
+При обновлении версии менять **в двух местах одновременно**:
+1. `tg/client/src/components/ScreenBackground.tsx` — константа `APP_VERSION`
+2. `tg/server/src/index.ts` — обработчик `GET /api/version`
 
 ---
 
@@ -225,6 +247,8 @@ npm run build  # outDir = ../server/public
 - AI вызывается только через `openRouterClient.ts`, не из роутов напрямую
 - `updateRankIfNeeded()` — только в `AdvanceDayService`, не при инвестировании
 - При закрытии дела — генерировать `PostMortem` с раскрытием архетипа
+- При выходе игрока (`exitProject`) — вызывать `generatePostMortem` асинхронно (`.catch(console.error)`)
+- `tg/server/public/` — **не коммитить**. Он в `.gitignore`
 - Тёмная тема — основная. Язык UI — русский
 
 ---
@@ -238,6 +262,8 @@ npm run build  # outDir = ../server/public
 | выйти из проекта | покинуть дело |
 | заявленный APY | посул (APY) |
 | управление инвестицией | распорядиться вложением |
+| архив закрытых дел | летопись |
+| таблица лидеров | ярмарочный рейтинг |
 
 ---
 
@@ -245,10 +271,7 @@ npm run build  # outDir = ../server/public
 
 | Задача | Где |
 |---|---|
-| PostMortem AI-генерация после выхода | `InvestService.ts` → вызвать `generatePostMortem` |
-| Баннеры дел (изображения) | `GenerateProjectService.ts` → Pollinations / FLUX |
 | Push-уведомления через бота | `bot/bot.ts` |
-| Экран «Летопись» (PersonaRegistry) | новая страница клиента |
 | Экран «Вести с ярмарки» (News) | новая страница клиента |
 | Admin-панель с AdRevenue | отдельный роут/сервис |
 
