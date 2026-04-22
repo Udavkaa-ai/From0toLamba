@@ -94,8 +94,9 @@ export interface GameStateDTO {
   currentDay: number
   investorRank: string
   intuitionScore: number
-  scamsDetected: number
-  scamsMissed: number
+  intuitionAccuracy: number | null  // 0..1 или null если грамот не было
+  chartersSubmitted: number
+  closedProjectsCount: number
   dayStreak: number
   isOnboardingComplete: boolean
   totalInvested: number

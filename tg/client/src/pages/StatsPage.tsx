@@ -73,8 +73,13 @@ export function StatsPage() {
             { label: 'Серия дней', value: gameState.dayStreak + ' 🔥' },
             { label: 'Злато купца', value: totalWealth.toFixed(0) + ' ₽' },
             { label: 'Чуйка 👁', value: gameState.intuitionScore },
-            { label: 'Скамов выявил', value: gameState.scamsDetected + ' ✅' },
-            { label: 'Скамов пропустил', value: gameState.scamsMissed + ' ❌' },
+            {
+              label: 'Точность чуйки',
+              value: gameState.intuitionAccuracy === null
+                ? '—'
+                : Math.round(gameState.intuitionAccuracy * 100) + '%',
+            },
+            { label: 'Дел закрыто', value: gameState.closedProjectsCount + ' 📜' },
             { label: 'Вложено всего', value: gameState.totalInvested.toFixed(0) + ' ₽' },
             { label: 'Доходность', value: (roi >= 0 ? '+' : '') + roi.toFixed(1) + '%' },
           ].map(({ label, value }) => (

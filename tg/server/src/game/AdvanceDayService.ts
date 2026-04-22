@@ -57,8 +57,6 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
   })
 
   let balanceDelta = 0
-  let scamsDetectedDelta = 0
-  let scamsMissedDelta = 0
 
   for (const project of activeProjects) {
     const fate = project.fate as ProjectFate
@@ -87,12 +85,8 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
 
       if (fate === ProjectFate.INSTANT_SCAM) {
         closureReason = 'Хозяин исчез вместе со всеми деньгами 💀'
-        if (project.investedAmountRubles > 0) scamsMissedDelta++
-        else scamsDetectedDelta++
       } else if (fate === ProjectFate.SLOW_DRAIN) {
         closureReason = 'Дело тихо угасло и закрылось'
-        if (project.investedAmountRubles > 0) scamsMissedDelta++
-        else scamsDetectedDelta++
       } else if (fate === ProjectFate.HONEST_FAIL) {
         closureReason = 'Хозяин честно признал провал'
       } else if (fate === ProjectFate.SURVIVOR) {
@@ -246,8 +240,6 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
       currentDay: newDay,
       dayStreak: newStreak,
       investorRank: newRank,
-      scamsDetected: { increment: scamsDetectedDelta },
-      scamsMissed: { increment: scamsMissedDelta },
       balanceHistory,
       investedHistory,
       pendingRankUp: rankUp ? newRank : null,

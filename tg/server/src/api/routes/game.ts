@@ -52,18 +52,35 @@ export async function gameRoutes(app: FastifyInstance) {
       }
     }
 
-    const [activeProjects, inboxProjects] = await Promise.all([
+    const [activeProjects, inboxProjects, closedProjectsCount, charterSessions] = await Promise.all([
       prisma.project.findMany({ where: { userId: user.id, isActive: true } }),
       prisma.project.findMany({ where: { userId: user.id, isInbox: true }, orderBy: { createdAt: 'desc' }, take: 10 }),
+      prisma.project.count({ where: { userId: user.id, isClosed: true } }),
+      prisma.amaSession.findMany({
+        where: { userId: user.id, charterSubmittedAt: { not: null } },
+        select: { forgedIndices: true, charterSelectedIndices: true },
+      }),
     ])
+
+    // Точность чуйки по всем разобранным грамотам: TP / (TP + FP + FN)
+    let tp = 0, fp = 0, fn = 0
+    for (const s of charterSessions) {
+      const forged = new Set(s.forgedIndices)
+      const picked = new Set(s.charterSelectedIndices)
+      for (const i of picked) (forged.has(i) ? tp++ : fp++)
+      for (const i of forged) if (!picked.has(i)) fn++
+    }
+    const evaluatedTotal = tp + fp + fn
+    const intuitionAccuracy = evaluatedTotal > 0 ? tp / evaluatedTotal : null
 
     return {
       balance: gameState.balance,
       currentDay: gameState.currentDay,
       investorRank: gameState.investorRank,
       intuitionScore: gameState.intuitionScore,
-      scamsDetected: gameState.scamsDetected,
-      scamsMissed: gameState.scamsMissed,
+      intuitionAccuracy,       // 0..1 или null, если грамот не было
+      chartersSubmitted: charterSessions.length,
+      closedProjectsCount,
       dayStreak: gameState.dayStreak,
       isOnboardingComplete: gameState.isOnboardingComplete,
       totalInvested: gameState.totalInvested,
@@ -255,8 +272,6 @@ export async function gameRoutes(app: FastifyInstance) {
         currentDay: 0,
         investorRank: 'NEWBIE',
         intuitionScore: 0,
-        scamsDetected: 0,
-        scamsMissed: 0,
         dayStreak: 0,
         isOnboardingComplete: false,
         totalInvested: 0,
