@@ -431,6 +431,15 @@ function ResultFooter({
   result, onInvest, onSkip,
 }: { result: CharterResultDTO; onInvest: () => void; onSkip: () => void }) {
   const emoji = result.delta > 0 ? '🎯' : result.delta === 0 ? '🤔' : '😅'
+  const tp = result.truePositives.length
+  const fp = result.falsePositives.length
+  const fn = result.falseNegatives.length
+  // Бонус за чистую грамоту: подделок не было и игрок никого не обвинил
+  const cleanBonus = tp === 0 && fp === 0 && fn === 0 && result.delta === 2
+  const formula = cleanBonus
+    ? 'Грамота была чистая — +2 за верное чутьё'
+    : `+${tp} найдено${fp > 0 ? ` − ${fp} ошиб${fp === 1 ? 'ка' : fp < 5 ? 'ки' : 'ок'}` : ''} = ${result.delta >= 0 ? '+' : ''}${result.delta}`
+
   return (
     <div style={footerStyle}>
       <div style={{ textAlign: 'center', marginBottom: spacing.md }}>
@@ -438,11 +447,17 @@ function ResultFooter({
         <div style={{ color: colors.fairyGold, fontSize: '18px', fontWeight: 700 }}>
           {result.delta > 0 ? `+${result.delta}` : `${result.delta}`} к чуйке
         </div>
+        <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '2px' }}>
+          {formula}
+        </div>
       </div>
       <div style={resultRowStyle}>
-        <ResultStat color={colors.success} label="Найдено" value={result.truePositives.length} />
-        <ResultStat color={colors.danger}  label="Ошибок"  value={result.falsePositives.length} />
-        <ResultStat color={colors.warning} label="Упущено" value={result.falseNegatives.length} />
+        <ResultStat color={colors.success} label="Найдено" value={tp} />
+        <ResultStat color={colors.danger}  label="Ошибок"  value={fp} />
+        <ResultStat color={colors.warning} label="Упущено" value={fn} />
+      </div>
+      <div style={{ color: colors.textMuted, fontSize: '10px', textAlign: 'center', marginTop: '4px' }}>
+        Упущенные подделки не штрафуют — просто не прибавляют к чуйке
       </div>
       <div style={{ display: 'flex', gap: spacing.sm, marginTop: spacing.md }}>
         <button onClick={onSkip} style={{ ...secondaryBtnStyle, flex: 1, marginTop: 0 }}>

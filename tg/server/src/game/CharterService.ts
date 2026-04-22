@@ -142,12 +142,12 @@ export async function submitCharter(
   const falsePositives = [...selectedSet].filter(i => !forgedSet.has(i)).sort((a, b) => a - b)
   const falseNegatives = [...forgedSet].filter(i => !selectedSet.has(i)).sort((a, b) => a - b)
 
+  // Простая и прозрачная формула: +1 за каждую найденную подделку, −1 за каждую ложную
   let delta = truePositives.length - falsePositives.length
   // Бонус за «чистую грамоту»: подделок не было и игрок никого не обвинил
   if (forgedSet.size === 0 && falsePositives.length === 0) {
     delta = 2
   }
-  delta = Math.max(-3, Math.min(3, delta))
 
   await prisma.$transaction([
     prisma.amaSession.update({

@@ -6,6 +6,7 @@ import { ComposedChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 
 import { ScreenBackground } from '@/components/ScreenBackground'
 import { FairyCard, OrnamentDivider, SkeletonCard } from '@/components/FairyCard'
 import { api, type ProjectDTO, type PostMortemDTO, type DailyUpdateDTO, type TransactionDTO } from '@/api/client'
+import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing } from '@/theme'
 
 const WITHDRAWAL_INFO: Record<string, string> = {
@@ -206,6 +207,7 @@ function MiniDualChart({ valueHistory, userCountHistory }: { valueHistory: numbe
 
 function ActiveProjectCard({ project }: { project: ProjectDTO }) {
   const qc = useQueryClient()
+  const { gameState } = useGameStore()
   const [showWithdraw, setShowWithdraw] = useState(false)
   const [showAddInvest, setShowAddInvest] = useState(false)
   const [withdrawAmount, setWithdrawAmount] = useState('')
@@ -369,6 +371,10 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
         {showAddInvest && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
             <div style={{ marginTop: spacing.md }}>
+              <div style={{ color: colors.textMuted, fontSize: '11px', marginBottom: '4px' }}>
+                В казне: <span style={{ color: colors.fairyGold, fontWeight: 600 }}>{(gameState?.balance ?? 0).toFixed(0)} ₽</span>
+                {' · '}мин. 5 ₽ · макс. 5 000 ₽
+              </div>
               <input
                 type="number"
                 value={addAmount}
@@ -410,6 +416,10 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
         {showWithdraw && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
             <div style={{ marginTop: spacing.md }}>
+              <div style={{ color: colors.textMuted, fontSize: '11px', marginBottom: '4px' }}>
+                В деле: <span style={{ color: colors.fairyGold, fontWeight: 600 }}>{project.currentValueRubles.toFixed(0)} ₽</span>
+                {' · '}в казне: <span style={{ color: colors.fairyGold, fontWeight: 600 }}>{(gameState?.balance ?? 0).toFixed(0)} ₽</span>
+              </div>
               <input
                 type="number"
                 value={withdrawAmount}

@@ -25,6 +25,16 @@ const FATE_DISPLAY: Record<string, { label: string; color: string }> = {
   UNICORN:      { label: '🦄 Взлетел — выкуплен',    color: colors.fairyGold },
 }
 
+const LIE_TOPIC_LABEL: Record<string, string> = {
+  PATRON_COUNT:       '👥 Вкладчики',
+  DAILY_PROFIT:       '💰 Доход',
+  PAYOUT_DATE:        '📅 Выплаты',
+  GUILD_SIZE:         '🏗️ Артель',
+  ELDER_BLESSING:     '📜 Проверка',
+  NOBLE_BACKING:      '🏰 Покровители',
+  WITHDRAWAL_LIMITS:  '🔒 Вывод',
+}
+
 const TYPE_LABEL: Record<string, string> = {
   CARD_GAME: '🃏 Азартная игра',
   TREASURE_HUNT: '🗺️ Поиск клада',
@@ -249,7 +259,7 @@ function RegistryCard({ project, postMortem }: { project: ClosedProject; postMor
                       color: colors.danger,
                       fontSize: '10px',
                     }}>
-                      {t}
+                      {LIE_TOPIC_LABEL[t] ?? t}
                     </span>
                   ))}
                 </div>

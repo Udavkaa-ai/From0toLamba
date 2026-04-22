@@ -2,7 +2,7 @@ import OpenAI from 'openai'
 import { prisma } from '../db/prisma'
 import {
   ProjectType, ProjectFate, PersonaArchetype, LieTopic,
-  LIE_TOPIC_LABEL, LIE_TOPIC_EMOJI,
+  LIE_TOPIC_LABEL, LIE_TOPIC_EMOJI, PERSONA_LABEL, FATE_LABEL,
 } from '../game/types'
 import { NpcTruthParams } from '../game/projectUtils'
 
@@ -129,7 +129,7 @@ export async function generateProjectData(input: GenerateProjectInput, model = D
   const prompt = `Ты придумываешь новое дело для игры «Из грязи в князи» — симулятора купца-инвестора в сказочной Руси.
 
 Тип дела: ${typeName}
-Архетип хозяина: ${archetype}
+Архетип хозяина: ${PERSONA_LABEL[archetype] ?? archetype}
 Темы, по которым хозяин ВРЁТ (игрок должен их угадать): ${liesStr}
 
 Придумай:
@@ -367,11 +367,15 @@ export async function generateDailyUpdate(
   const userCountStr = userCountDelta > 0 ? `+${userCountDelta}` : String(userCountDelta)
   const payoutStatusRu = payoutStatus === 'DELAYED' ? 'ЗАДЕРЖАНЫ' : payoutStatus === 'BOOSTED' ? 'ПОВЫШЕНЫ' : 'ОБЫЧНЫЙ'
 
+  const archetypeLabel = PERSONA_LABEL[project.personaArchetype as PersonaArchetype] ?? project.personaArchetype
+  const fateLabel = FATE_LABEL[project.fate as ProjectFate] ?? project.fate
+
   const prompt = `Ты — ведущий рубрики «Вести с ярмарки» в игре «Из грязи в князи».
 Напиши короткую весть о деле «${project.name}» (день ${project.daysSinceJoined + 1}).
-Архетип хозяина: ${project.personaArchetype}, тип: ${project.type}, судьба: ${project.fate}.
+Архетип хозяина: ${archetypeLabel}, тип: ${project.type}, судьба: ${fateLabel}.
 Изменение числа вкладчиков сегодня: ${userCountStr} чел.
 Статус выплат: ${payoutStatusRu}
+В тексте НЕ употребляй английские кодовые слова (BURATINO, ZOLUSHKA, INSTANT_SCAM, PATRON_COUNT и т.п.) — только русские названия.
 
 Формат — JSON:
 {
@@ -430,16 +434,18 @@ export async function generatePostMortem(input: PostMortemInput, model = DEFAULT
   const { projectId, userId, archetype, fate, lieTopics, investedAmount, returnedAmount, profitPercent, daysActive, intuitionDelta } = input
 
   const liesStr = lieTopics.map(t => LIE_TOPIC_LABEL[t as LieTopic] ?? t).join(', ')
+  const archetypeLabel = PERSONA_LABEL[archetype as PersonaArchetype] ?? archetype
+  const fateLabel = FATE_LABEL[fate as ProjectFate] ?? fate
 
   const prompt = `Ты — летописец игры «Из грязи в князи». Напиши разбор закрытого дела.
 
-Архетип хозяина: ${archetype}
-Судьба: ${fate}
+Архетип хозяина: ${archetypeLabel}
+Судьба: ${fateLabel}
 Темы лжи: ${liesStr || 'нет'}
 Вложено: ${investedAmount.toFixed(0)} ₽, получено обратно: ${returnedAmount.toFixed(0)} ₽ (${profitPercent.toFixed(1)}%)
 Дней в деле: ${daysActive}
 
-Напиши 3–4 предложения: раскрой архетип, объясни что произошло, дай урок для будущих вложений. Современный русский, без крипты.`
+Напиши 3–4 предложения: раскрой архетип, объясни что произошло, дай урок для будущих вложений. В тексте употребляй именно русское имя архетипа («${archetypeLabel}»), а не код. Современный русский, без крипты, без английских слов, без markdown-звёздочек.`
 
   try {
     const response = await client.chat.completions.create({

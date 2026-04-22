@@ -72,6 +72,24 @@ export const LIE_TOPIC_LABEL: Record<LieTopic, string> = {
   [LieTopic.WITHDRAWAL_LIMITS]: 'Вывод',
 }
 
+export const PERSONA_LABEL: Record<PersonaArchetype, string> = {
+  [PersonaArchetype.BURATINO]:   'Буратино',
+  [PersonaArchetype.BOYARIN]:    'Боярин',
+  [PersonaArchetype.KOLOBOK]:    'Колобок',
+  [PersonaArchetype.KOSCHEI]:    'Кощей',
+  [PersonaArchetype.ZOLUSHKA]:   'Золушка',
+  [PersonaArchetype.BABA_YAGA]:  'Баба-яга',
+  [PersonaArchetype.IVAN_DURAK]: 'Иван-дурак',
+}
+
+export const FATE_LABEL: Record<ProjectFate, string> = {
+  [ProjectFate.INSTANT_SCAM]: 'Сбежал с деньгами',
+  [ProjectFate.SLOW_DRAIN]:   'Тихо угас',
+  [ProjectFate.HONEST_FAIL]:  'Честный провал',
+  [ProjectFate.SURVIVOR]:     'Выжил',
+  [ProjectFate.UNICORN]:      'Взлетел',
+}
+
 /** Правила вывода по типу дела */
 export const WITHDRAWAL_RULES: Record<ProjectType, { maxPercent: number | null; feePercent: number }> = {
   [ProjectType.POTION_BREW]: { maxPercent: 0.25, feePercent: 0 },
