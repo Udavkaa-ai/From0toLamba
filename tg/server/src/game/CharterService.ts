@@ -142,8 +142,8 @@ export async function submitCharter(
   const falsePositives = [...selectedSet].filter(i => !forgedSet.has(i)).sort((a, b) => a - b)
   const falseNegatives = [...forgedSet].filter(i => !selectedSet.has(i)).sort((a, b) => a - b)
 
-  // Простая и прозрачная формула: +1 за каждую найденную подделку, −1 за каждую ложную
-  let delta = truePositives.length - falsePositives.length
+  // Формула: +1 за каждую найденную подделку, −1 за каждую ложную, −2 за каждую пропущенную
+  let delta = truePositives.length - falsePositives.length - 2 * falseNegatives.length
   // Бонус за «чистую грамоту»: подделок не было и игрок никого не обвинил
   if (forgedSet.size === 0 && falsePositives.length === 0) {
     delta = 2
