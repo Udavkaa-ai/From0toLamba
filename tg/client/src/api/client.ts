@@ -163,6 +163,7 @@ export interface CharterDTO {
   timeLimitSeconds: number
   forgedIndices: number[]
   isSubmitted: boolean
+  project: ProjectDTO
   result?: CharterResultDTO
 }
 

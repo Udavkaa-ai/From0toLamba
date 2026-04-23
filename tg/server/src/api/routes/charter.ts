@@ -29,9 +29,16 @@ export async function charterRoutes(app: FastifyInstance) {
     const tgUser = request.telegramUser
     const user = await prisma.user.findUniqueOrThrow({ where: { telegramId: String(tgUser.id) } })
 
-    const view = await getCharter(user.id, projectId)
-    if (!view) return reply.status(404).send({ error: 'Грамота ещё не открыта' })
-    return view
+    try {
+      const view = await getCharter(user.id, projectId)
+      if (!view) return reply.status(404).send({ error: 'Грамота ещё не открыта' })
+      return view
+    } catch (err: any) {
+      if (err.message === 'CHARTER_EXPIRED') {
+        return reply.status(410).send({ error: 'Эта грамота истекла', code: 'CHARTER_EXPIRED' })
+      }
+      throw err
+    }
   })
 
   // POST /api/charter/:projectId/submit — сабмит выбранных подделок, оценка чуйки

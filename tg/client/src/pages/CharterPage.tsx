@@ -32,37 +32,18 @@ export function CharterPage() {
   const [onboardingBonus, setOnboardingBonus] = useState<number | null>(null)
   const onboardingTriggeredRef = useRef(false)
 
-  // Данные проекта (для баннера и claimed-полей)
-  const { data: gameStateData } = useQuery({
-    queryKey: ['gameState'],
-    queryFn: api.game.getState,
-  })
-  const project = useMemo(() => {
-    const s = gameStateData
-    if (!s) return null
-    return [...s.activeProjects, ...s.inboxProjects].find(p => p.id === projectId) ?? null
-  }, [gameStateData, projectId])
-
-  // Сессия-грамота: создаём или подтягиваем существующую
+  // Сессия-грамота: create-or-return. startCharter идемпотентен —
+  // существующую сессию вернёт как есть, закрытый проект даст 410 CHARTER_EXPIRED
   const { data: charter, isLoading, error: charterError } = useQuery<CharterDTO>({
     queryKey: ['charter', projectId],
-    queryFn: async () => {
-      try {
-        return await api.charter.get(projectId!)
-      } catch {
-        return api.charter.start(projectId!)
-      }
-    },
+    queryFn: () => api.charter.start(projectId!),
     enabled: !!projectId,
     staleTime: 0,
     retry: false,
   })
 
-  // Грамота истекла: либо сервер вернул CHARTER_EXPIRED, либо у нас есть charter
-  // в БД (старая сессия), но проекта нет ни в inbox, ни в active — значит он закрыт
-  const isExpiredFromServer = !!charterError && /истекла/i.test((charterError as Error).message)
-  const isExpiredFromMissingProject = !!charter && !!gameStateData && !project
-  const isExpired = isExpiredFromServer || isExpiredFromMissingProject
+  const project = charter?.project ?? null
+  const isExpired = !!charterError && /истекла/i.test((charterError as Error).message)
 
   // Если грамота уже сабмичена — сразу на result
   useEffect(() => {
