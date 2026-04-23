@@ -555,10 +555,10 @@ function ClosedProjectCard({ project, postMortem }: { project: ProjectDTO; postM
 }
 
 const TX_TYPE_ICON: Record<string, string> = {
-  INVEST: '⬇️', ADD: '⬇️', WITHDRAW: '⬆️', EXIT: '🚪', RETURNED: '📬',
+  INVEST: '⬇️', ADD: '⬇️', WITHDRAW: '⬆️', EXIT: '🚪', RETURNED: '📬', REFERRAL_BONUS: '🤝',
 }
 const TX_TYPE_LABEL: Record<string, string> = {
-  INVEST: 'Вложено', ADD: 'Довложено', WITHDRAW: 'Выведено', EXIT: 'Выход', RETURNED: 'Возврат',
+  INVEST: 'Вложено', ADD: 'Довложено', WITHDRAW: 'Выведено', EXIT: 'Выход', RETURNED: 'Возврат', REFERRAL_BONUS: 'Сватовство',
 }
 
 function TransactionRow({ tx }: { tx: TransactionDTO }) {

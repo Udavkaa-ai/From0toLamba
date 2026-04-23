@@ -210,7 +210,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     progress: ({ gameState }) => ({ current: Math.min(gameState.referralCount, 5), target: 5 }),
   },
   {
-    id: 'narodny_atamaн',
+    id: 'narodny_ataman',
     name: 'Народный атаман',
     description: 'Привёл 20 купцов',
     emoji: '🎖️',
