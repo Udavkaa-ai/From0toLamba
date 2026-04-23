@@ -453,6 +453,14 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
                   fontSize: '14px', outline: 'none',
                 }}
               />
+              {Number(withdrawAmount) > 0 && (project.type === 'CARD_GAME' || project.type === 'TREASURE_HUNT') && (
+                <div style={{ color: colors.success, fontSize: '12px', marginTop: '6px' }}>
+                  💰 На руки: <span style={{ fontWeight: 700 }}>{(Number(withdrawAmount) * 0.75).toFixed(0)} ₽</span>
+                  <span style={{ color: colors.textMuted, fontSize: '11px' }}>
+                    {' '}(комиссия {(Number(withdrawAmount) * 0.25).toFixed(0)} ₽)
+                  </span>
+                </div>
+              )}
               {withdrawMutation.isError && (
                 <div style={{ color: colors.danger, fontSize: '11px', marginTop: '4px' }}>
                   {(withdrawMutation.error as Error).message}
