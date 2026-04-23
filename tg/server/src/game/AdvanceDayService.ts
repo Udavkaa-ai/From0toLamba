@@ -52,6 +52,12 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
     data: { isInbox: false, isClosed: true, closureReason: 'Грамота истекла' },
   })
 
+  // Предзагруженные дела прошлого дня становятся новым inbox'ом мгновенно
+  const promoted = await prisma.project.updateMany({
+    where: { userId, isPreloaded: true },
+    data: { isPreloaded: false, isInbox: true },
+  })
+
   const activeProjects = await prisma.project.findMany({
     where: { userId, isActive: true },
   })
@@ -250,11 +256,19 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
     },
   })
 
-  // Генерируем новые дела в Inbox
-  const newProjectsCount = irng(NEW_PROJECTS_PER_DAY_MIN, NEW_PROJECTS_PER_DAY_MAX)
+  // Предзагружаем дела на следующий день в фоне — AI успевает сгенерить имена/описания
+  // за время между advance-day'ями (обычно минимум 2 часа кулдауна)
+  const preloadCount = irng(NEW_PROJECTS_PER_DAY_MIN, NEW_PROJECTS_PER_DAY_MAX)
+  for (let i = 0; i < preloadCount; i++) {
+    generateProject(userId, undefined, undefined, { preloaded: true }).catch(console.error)
+  }
 
-  for (let i = 0; i < newProjectsCount; i++) {
-    generateProject(userId).catch(console.error)
+  // Fallback: если из предзагрузки ничего не пришло (первый advance-day игрока),
+  // запускаем обычную синхронную генерацию прямо в inbox как раньше — хоть что-то да появится
+  if (promoted.count === 0) {
+    for (let i = 0; i < preloadCount; i++) {
+      generateProject(userId).catch(console.error)
+    }
   }
 
   return rankUp ? { newRank } : {}

@@ -44,7 +44,7 @@ export function CharterPage() {
   }, [gameStateData, projectId])
 
   // Сессия-грамота: создаём или подтягиваем существующую
-  const { data: charter, isLoading } = useQuery<CharterDTO>({
+  const { data: charter, isLoading, error: charterError } = useQuery<CharterDTO>({
     queryKey: ['charter', projectId],
     queryFn: async () => {
       try {
@@ -55,7 +55,14 @@ export function CharterPage() {
     },
     enabled: !!projectId,
     staleTime: 0,
+    retry: false,
   })
+
+  // Грамота истекла: либо сервер вернул CHARTER_EXPIRED, либо у нас есть charter
+  // в БД (старая сессия), но проекта нет ни в inbox, ни в active — значит он закрыт
+  const isExpiredFromServer = !!charterError && /истекла/i.test((charterError as Error).message)
+  const isExpiredFromMissingProject = !!charter && !!gameStateData && !project
+  const isExpired = isExpiredFromServer || isExpiredFromMissingProject
 
   // Если грамота уже сабмичена — сразу на result
   useEffect(() => {
@@ -136,6 +143,33 @@ export function CharterPage() {
   // Храним выбор в ref, чтобы таймер-автосабмит не замыкался на стейт
   const selectedRef = useRef(selected)
   useEffect(() => { selectedRef.current = selected }, [selected])
+
+  if (isExpired) {
+    return (
+      <ScreenBackground showSparkles={false}>
+        <div style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          minHeight: '100dvh', padding: spacing.xxl, textAlign: 'center', gap: spacing.md,
+        }}>
+          <div style={{ fontSize: '56px' }}>📜</div>
+          <div style={{ color: colors.fairyGold, fontSize: '20px', fontWeight: 700 }}>Грамота истекла</div>
+          <div style={{ color: colors.textSecondary, fontSize: '14px', maxWidth: '320px', lineHeight: 1.5 }}>
+            Это дело было из прошлого дня и уже свернулось. Загляни во «Входящие» — там ждут новые грамоты.
+          </div>
+          <button
+            onClick={() => navigate('/inbox')}
+            style={{
+              marginTop: spacing.md, padding: `${spacing.md} ${spacing.xl}`,
+              background: colors.fairyGold, border: 'none', borderRadius: '12px',
+              color: colors.nightBlue, fontWeight: 700, fontSize: '14px', cursor: 'pointer',
+            }}
+          >
+            К входящим →
+          </button>
+        </div>
+      </ScreenBackground>
+    )
+  }
 
   if (isLoading || !charter) {
     return (

@@ -11,7 +11,12 @@ const ALL_FATES = Object.entries(FATE_CONFIG).map(([value, cfg]) => ({
 const ALL_TYPES = Object.values(ProjectType)
 const ALL_ARCHETYPES = Object.values(PersonaArchetype)
 
-export async function generateProject(userId: number, overrideFate?: ProjectFate, model?: string): Promise<string> {
+export async function generateProject(
+  userId: number,
+  overrideFate?: ProjectFate,
+  model?: string,
+  options: { preloaded?: boolean } = {},
+): Promise<string> {
   // Случайные базовые параметры
   const type = ALL_TYPES[Math.floor(Math.random() * ALL_TYPES.length)]
   const fate = overrideFate ?? wr(ALL_FATES)
@@ -49,7 +54,9 @@ export async function generateProject(userId: number, overrideFate?: ProjectFate
       roadmap: aiData.roadmap,
       currentUserCount: irng(50, 5000),
       npcTruthParams,
-      isInbox: true,
+      // Preloaded ждёт следующий advance-day; обычное дело идёт сразу в inbox
+      isInbox: !options.preloaded,
+      isPreloaded: !!options.preloaded,
     },
   })
 

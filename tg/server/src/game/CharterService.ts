@@ -73,6 +73,11 @@ export async function startCharter(userId: number, projectId: string): Promise<C
     return toPublicView(existing)
   }
 
+  // Грамота закрыта (истекла или дело завершилось) — сессию больше не создаём
+  if (project.isClosed) {
+    throw new Error('CHARTER_EXPIRED')
+  }
+
   const fate = project.fate as ProjectFate
   const lieCount = (project.lieTopics as LieTopic[]).length
   const forgeryCount = computeForgeryCount(lieCount, fate)

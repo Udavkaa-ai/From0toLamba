@@ -16,6 +16,9 @@ export async function charterRoutes(app: FastifyInstance) {
       const view = await startCharter(user.id, projectId)
       return view
     } catch (err: any) {
+      if (err.message === 'CHARTER_EXPIRED') {
+        return reply.status(410).send({ error: 'Эта грамота истекла', code: 'CHARTER_EXPIRED' })
+      }
       return reply.status(400).send({ error: err.message })
     }
   })

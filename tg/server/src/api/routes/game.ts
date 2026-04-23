@@ -52,6 +52,17 @@ export async function gameRoutes(app: FastifyInstance) {
       }
     }
 
+    // Засеиваем предзагруженные дела, если их ещё нет — чтобы первый advance-day
+    // уже был мгновенным, а не ждал AI 25+ секунд
+    const preloadedCount = await prisma.project.count({ where: { userId: user.id, isPreloaded: true } })
+    if (preloadedCount === 0) {
+      const { generateProject } = await import('../../game/GenerateProjectService')
+      for (let i = 0; i < 2; i++) {
+        generateProject(user.id, undefined, gameState.preferredModel, { preloaded: true })
+          .catch(err => console.error('[preload seed]', err))
+      }
+    }
+
     const [activeProjects, inboxProjects, closedProjectsCount, charterSessions] = await Promise.all([
       prisma.project.findMany({ where: { userId: user.id, isActive: true } }),
       prisma.project.findMany({ where: { userId: user.id, isInbox: true }, orderBy: { createdAt: 'desc' }, take: 10 }),

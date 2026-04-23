@@ -77,6 +77,10 @@ model Project {
   isInbox              Boolean   @default(true)
   isActive             Boolean   @default(false)
   isClosed             Boolean   @default(false)
+  // Преgenerированное дело — ждёт следующего advance-day, когда попадёт в inbox.
+  // Позволяет AI успеть написать имя/описание во время 2-часового кулдауна,
+  // чтобы новые грамоты появлялись мгновенно.
+  isPreloaded          Boolean   @default(false)
 
   // СКРЫТЫЕ поля — НИКОГДА не отдавать клиенту до закрытия
   fate                 String    // ProjectFate
