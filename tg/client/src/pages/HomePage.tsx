@@ -876,10 +876,43 @@ function DayNewsOverlay({ projects, onClose }: { projects: ProjectDTO[]; onClose
 
           <ProjectNewsCardContent project={current} />
 
-          {/* Swipe hints */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px' }}>
-            <div style={{ color: colors.textMuted, fontSize: '10px' }}>← пропустить</div>
-            <div style={{ color: colors.fairyGold, fontSize: '10px', opacity: 0.7 }}>к делу →</div>
+          {/* Действия: кнопки + свайп */}
+          <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+            <button
+              onClick={e => { e.stopPropagation(); dismiss() }}
+              style={{
+                flex: 1,
+                padding: '10px 12px',
+                background: 'rgba(255,255,255,0.06)',
+                border: `1px solid ${colors.textMuted}40`,
+                borderRadius: '10px',
+                color: colors.textSecondary,
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              ← Пропустить
+            </button>
+            <button
+              onClick={e => { e.stopPropagation(); goToDeal() }}
+              style={{
+                flex: 1,
+                padding: '10px 12px',
+                background: `${colors.fairyGold}20`,
+                border: `1px solid ${colors.fairyGold}70`,
+                borderRadius: '10px',
+                color: colors.fairyGold,
+                fontSize: '12px',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              К делу →
+            </button>
+          </div>
+          <div style={{ color: colors.textMuted, fontSize: '10px', textAlign: 'center', marginTop: '8px', opacity: 0.7 }}>
+            или смахни карточку
           </div>
         </motion.div>
       </AnimatePresence>
