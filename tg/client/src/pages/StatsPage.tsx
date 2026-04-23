@@ -1,19 +1,20 @@
 import { useQuery } from '@tanstack/react-query'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { ScreenBackground } from '@/components/ScreenBackground'
-import { FairyCard, OrnamentDivider } from '@/components/FairyCard'
+import { FairyCard } from '@/components/FairyCard'
 import { api } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing } from '@/theme'
+import { evaluateAchievements, CATEGORY_LABELS } from '@/game/achievements'
 
 const RANK_DISPLAY: Record<string, string> = {
-  NEWBIE: 'Скоморох', AMBASSADOR: 'Купец', ANALYST: 'Мудрец', SHARK: 'Богатырь', LAMBO_SENSEI: 'Князь',
+  NEWBIE: 'Скоморох', AMBASSADOR: 'Купец', ANALYST: 'Мудрец', SHARK: 'Боярин', LAMBO_SENSEI: 'Князь',
 }
 
 const RANK_NEXT_HINT: Record<string, string> = {
   NEWBIE: '100 ₽ и чуйка 10 → Купец',
   AMBASSADOR: '1 000 ₽ и чуйка 50 → Мудрец',
-  ANALYST: '3 000 ₽ и чуйка 100 → Богатырь',
+  ANALYST: '3 000 ₽ и чуйка 100 → Боярин',
   SHARK: '10 000 ₽ и чуйка 300 → Князь',
   LAMBO_SENSEI: 'Ты достиг вершины! 👑',
 }
@@ -122,7 +123,98 @@ export function StatsPage() {
             </div>
           </FairyCard>
         )}
+
+        {/* Подвиги */}
+        <AchievementsSection />
       </div>
     </ScreenBackground>
+  )
+}
+
+function AchievementsSection() {
+  const gameState = useGameStore(s => s.gameState)
+  if (!gameState) return null
+
+  const items = evaluateAchievements(gameState)
+  const unlocked = items.filter(a => a.unlocked)
+  const locked = items.filter(a => !a.unlocked)
+
+  // Группируем по категориям, заблокированные внутри категории — в конец
+  const categories = [...new Set(items.map(a => a.category))]
+
+  return (
+    <div style={{ marginTop: spacing.xl }}>
+      <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '15px', marginBottom: spacing.sm, textAlign: 'center' }}>
+        🏆 Подвиги — {unlocked.length} из {items.length}
+      </div>
+      {categories.map(cat => {
+        const inCat = items.filter(a => a.category === cat)
+        return (
+          <div key={cat} style={{ marginBottom: spacing.md }}>
+            <div style={{ color: colors.textMuted, fontSize: '11px', fontWeight: 600, marginBottom: '6px', marginLeft: '4px' }}>
+              {CATEGORY_LABELS[cat]}
+            </div>
+            <div style={{ display: 'grid', gap: '6px' }}>
+              {inCat.map(a => (
+                <div
+                  key={a.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: spacing.md,
+                    padding: `${spacing.sm} ${spacing.md}`,
+                    background: a.unlocked ? `${colors.fairyGold}15` : 'rgba(10,8,24,0.5)',
+                    border: `1px solid ${a.unlocked ? colors.fairyGold + '55' : colors.cardBorder}`,
+                    borderRadius: '10px',
+                    opacity: a.unlocked ? 1 : 0.7,
+                  }}
+                >
+                  <div style={{
+                    fontSize: '24px',
+                    width: '32px',
+                    textAlign: 'center',
+                    filter: a.unlocked ? 'none' : 'grayscale(100%)',
+                  }}>
+                    {a.unlocked ? a.emoji : '🔒'}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      color: a.unlocked ? colors.fairyGold : colors.textSecondary,
+                      fontWeight: 600,
+                      fontSize: '13px',
+                    }}>
+                      {a.name}
+                    </div>
+                    <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '1px' }}>
+                      {a.description}
+                    </div>
+                    {!a.unlocked && a.progress && a.progress.target > 1 && (
+                      <div style={{ marginTop: '4px' }}>
+                        <div style={{
+                          height: '4px',
+                          background: 'rgba(255,255,255,0.08)',
+                          borderRadius: '2px',
+                          overflow: 'hidden',
+                        }}>
+                          <div style={{
+                            width: `${Math.min(100, (a.progress.current / a.progress.target) * 100)}%`,
+                            height: '100%',
+                            background: colors.fairyGold,
+                            opacity: 0.6,
+                          }} />
+                        </div>
+                        <div style={{ color: colors.textMuted, fontSize: '10px', marginTop: '2px' }}>
+                          {a.progress.current} / {a.progress.target}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })}
+    </div>
   )
 }

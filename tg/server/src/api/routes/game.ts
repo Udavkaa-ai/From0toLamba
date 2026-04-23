@@ -3,6 +3,8 @@ import { z } from 'zod'
 import { prisma } from '../../db/prisma'
 import { telegramAuthHook } from '../../middleware/telegramAuth'
 import { advanceDay, ADVANCE_COOLDOWN_MS, MAX_CONSECUTIVE_ADVANCES } from '../../game/AdvanceDayService'
+import { tryAttachReferrer, countReferrals } from '../../game/referralService'
+import { ensureWeekStartSnapshot } from '../../game/weeklyService'
 import { generateOnboardingProject } from '../../game/GenerateProjectService'
 import { toPublicDTO } from '../../game/projectUtils'
 
@@ -63,7 +65,14 @@ export async function gameRoutes(app: FastifyInstance) {
       }
     }
 
-    const [activeProjects, inboxProjects, closedProjectsCount, charterSessions] = await Promise.all([
+    // Реферальная программа: если пользователь пришёл по ссылке ref_<id> — привязываем и шлём бонус
+    const refResult = await tryAttachReferrer(user.id, request.telegramStartParam ?? null)
+    if (refResult.bonusGranted) {
+      // Забираем обновлённый gameState (там balance уже увеличен)
+      gameState = (await prisma.gameState.findUniqueOrThrow({ where: { userId: user.id } }))
+    }
+
+    const [activeProjects, inboxProjects, closedProjectsCount, charterSessions, referralCount] = await Promise.all([
       prisma.project.findMany({ where: { userId: user.id, isActive: true } }),
       prisma.project.findMany({ where: { userId: user.id, isInbox: true }, orderBy: { createdAt: 'desc' }, take: 10 }),
       prisma.project.count({ where: { userId: user.id, isClosed: true } }),
@@ -71,7 +80,11 @@ export async function gameRoutes(app: FastifyInstance) {
         where: { userId: user.id, charterSubmittedAt: { not: null } },
         select: { forgedIndices: true, charterSelectedIndices: true },
       }),
+      countReferrals(user.id),
     ])
+
+    const currentWealth = gameState.balance + activeProjects.reduce((s, p) => s + p.currentValueRubles, 0)
+    const weekStartWealth = await ensureWeekStartSnapshot(user.id, currentWealth)
 
     // Точность чуйки по всем разобранным грамотам: TP / (TP + FP + FN)
     let tp = 0, fp = 0, fn = 0
@@ -92,6 +105,9 @@ export async function gameRoutes(app: FastifyInstance) {
       intuitionAccuracy,       // 0..1 или null, если грамот не было
       chartersSubmitted: charterSessions.length,
       closedProjectsCount,
+      referralCount,           // число приведённых купцов
+      weekStartWealth,         // снимок состояния на начало текущей недели
+      userId: user.id,         // нужен для построения пригласительной ссылки
       dayStreak: gameState.dayStreak,
       isOnboardingComplete: gameState.isOnboardingComplete,
       totalInvested: gameState.totalInvested,
@@ -265,6 +281,113 @@ export async function gameRoutes(app: FastifyInstance) {
     return reply.send({ entries: top100, myPosition, totalPlayers })
   })
 
+  // GET /api/leaderboard/week — «ярмарка недели»: рост состояния за текущую неделю (с понедельника МСК)
+  app.get('/api/leaderboard/week', { preHandler: telegramAuthHook }, async (request, reply) => {
+    const tgUser = request.telegramUser
+    const currentUser = await prisma.user.findUnique({
+      where: { telegramId: String(tgUser.id) },
+      select: { id: true },
+    })
+
+    const { getCurrentWeekStart } = await import('../../game/weeklyService')
+    const weekStart = getCurrentWeekStart()
+
+    const [gameStates, projectSums] = await Promise.all([
+      prisma.gameState.findMany({
+        where: { isOnboardingComplete: true },
+        include: { user: { select: { id: true, firstName: true, username: true } } },
+      }),
+      prisma.project.groupBy({
+        by: ['userId'],
+        where: { isActive: true },
+        _sum: { currentValueRubles: true },
+      }),
+    ])
+    const sumByUserId = new Map(projectSums.map(p => [p.userId, p._sum.currentValueRubles ?? 0]))
+
+    const ranked = gameStates
+      .map(gs => {
+        const currentWealth = gs.balance + (sumByUserId.get(gs.userId) ?? 0)
+        // Если snapshot устарел — считаем с текущего состояния (прирост = 0)
+        const snapshotValid = gs.weekStartAt && gs.weekStartAt >= weekStart
+        const weekDelta = snapshotValid ? currentWealth - gs.weekStartWealth : 0
+        return {
+          userId: gs.userId,
+          firstName: gs.user.firstName,
+          username: gs.user.username ?? null,
+          investorRank: gs.investorRank,
+          currentDay: gs.currentDay,
+          intuitionScore: gs.intuitionScore,
+          totalWealth: currentWealth,
+          weekDelta,
+          isMe: currentUser ? gs.userId === currentUser.id : false,
+        }
+      })
+      .filter(e => e.weekDelta > 0) // нулевой прирост — в топ не показываем
+      .sort((a, b) => b.weekDelta - a.weekDelta)
+
+    const totalPlayers = ranked.length
+    const top100 = ranked.slice(0, 100).map((e, i) => ({ ...e, position: i + 1 }))
+
+    let myPosition: number | null = null
+    if (currentUser) {
+      const myIdx = ranked.findIndex(e => e.userId === currentUser.id)
+      if (myIdx >= 0) myPosition = myIdx + 1
+    }
+
+    return reply.send({ entries: top100, myPosition, totalPlayers, weekStart: weekStart.toISOString() })
+  })
+
+  // GET /api/leaderboard/referrals — «сваты»: кто сколько купцов зазвал
+  app.get('/api/leaderboard/referrals', { preHandler: telegramAuthHook }, async (request, reply) => {
+    const tgUser = request.telegramUser
+    const currentUser = await prisma.user.findUnique({
+      where: { telegramId: String(tgUser.id) },
+      select: { id: true },
+    })
+
+    // Группируем рефералов по referrerId
+    const groups = await prisma.user.groupBy({
+      by: ['referrerId'],
+      where: { referrerId: { not: null } },
+      _count: { _all: true },
+    })
+
+    const referrerIds = groups.map(g => g.referrerId as number)
+    const referrers = await prisma.user.findMany({
+      where: { id: { in: referrerIds } },
+      select: { id: true, firstName: true, username: true, gameState: { select: { investorRank: true } } },
+    })
+    const byId = new Map(referrers.map(r => [r.id, r]))
+
+    const ranked = groups
+      .map(g => {
+        const ref = byId.get(g.referrerId as number)
+        if (!ref) return null
+        return {
+          userId: ref.id,
+          firstName: ref.firstName,
+          username: ref.username ?? null,
+          investorRank: ref.gameState?.investorRank ?? 'NEWBIE',
+          referralCount: g._count._all,
+          isMe: currentUser ? ref.id === currentUser.id : false,
+        }
+      })
+      .filter((e): e is NonNullable<typeof e> => e !== null)
+      .sort((a, b) => b.referralCount - a.referralCount)
+
+    const totalPlayers = ranked.length
+    const top100 = ranked.slice(0, 100).map((e, i) => ({ ...e, position: i + 1 }))
+
+    let myPosition: number | null = null
+    if (currentUser) {
+      const myIdx = ranked.findIndex(e => e.userId === currentUser.id)
+      if (myIdx >= 0) myPosition = myIdx + 1
+    }
+
+    return reply.send({ entries: top100, myPosition, totalPlayers })
+  })
+
   // POST /api/game/reset
   app.post('/api/game/reset', { preHandler: telegramAuthHook }, async (request, reply) => {
     const tgUser = request.telegramUser
@@ -293,6 +416,8 @@ export async function gameRoutes(app: FastifyInstance) {
         lastAdvancedAt: null,
         nextDayNotified: true,
         consecutiveAdvances: 0,
+        weekStartWealth: 0,
+        weekStartAt: null,
         preferredModel,
       },
     })

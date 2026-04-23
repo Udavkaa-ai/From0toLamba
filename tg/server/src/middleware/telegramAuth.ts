@@ -13,14 +13,16 @@ export interface TelegramUser {
 declare module 'fastify' {
   interface FastifyRequest {
     telegramUser: TelegramUser
+    telegramStartParam: string | null
   }
 }
 
 /**
- * Верифицирует Telegram WebApp initData по HMAC.
+ * Верифицирует Telegram WebApp initData по HMAC и вытаскивает startParam.
  * Документация: https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app
  */
-export function validateTelegramInitData(initData: string, botToken: string): TelegramUser | null {
+export function validateTelegramInitData(initData: string, botToken: string):
+  { user: TelegramUser; startParam: string | null } | null {
   try {
     const params = new URLSearchParams(initData)
     const hash = params.get('hash')
@@ -46,7 +48,10 @@ export function validateTelegramInitData(initData: string, botToken: string): Te
     const userRaw = params.get('user')
     if (!userRaw) return null
 
-    return JSON.parse(userRaw) as TelegramUser
+    return {
+      user: JSON.parse(userRaw) as TelegramUser,
+      startParam: params.get('start_param'),
+    }
   } catch {
     return null
   }
@@ -71,13 +76,15 @@ export async function telegramAuthHook(request: FastifyRequest, reply: FastifyRe
   // В dev-режиме можно пропустить реальную валидацию (для локального тестирования)
   if (process.env.NODE_ENV === 'development' && initData === 'dev') {
     request.telegramUser = { id: 1, first_name: 'Dev', username: 'devuser' }
+    request.telegramStartParam = null
     return
   }
 
-  const user = validateTelegramInitData(initData, botToken)
-  if (!user) {
+  const result = validateTelegramInitData(initData, botToken)
+  if (!result) {
     return reply.status(401).send({ error: 'Invalid Telegram initData' })
   }
 
-  request.telegramUser = user
+  request.telegramUser = result.user
+  request.telegramStartParam = result.startParam
 }

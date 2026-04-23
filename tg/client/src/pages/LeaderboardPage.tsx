@@ -1,8 +1,14 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { ScreenBackground } from '@/components/ScreenBackground'
 import { SkeletonCard } from '@/components/FairyCard'
-import { api, type LeaderboardEntryDTO } from '@/api/client'
+import {
+  api,
+  type LeaderboardEntryDTO,
+  type WeeklyLeaderboardEntryDTO,
+  type ReferralLeaderboardEntryDTO,
+} from '@/api/client'
 import { colors, spacing } from '@/theme'
 
 const RANK_EMOJI: Record<string, string> = {
@@ -17,7 +23,7 @@ const RANK_LABEL: Record<string, string> = {
   NEWBIE: 'Скоморох',
   AMBASSADOR: 'Купец',
   ANALYST: 'Мудрец',
-  SHARK: 'Богатырь',
+  SHARK: 'Боярин',
   LAMBO_SENSEI: 'Князь',
 }
 
@@ -28,68 +34,219 @@ function positionBadge(pos: number) {
   return `#${pos}`
 }
 
+type Tab = 'all' | 'week' | 'referrals'
+
+const TAB_LABELS: Record<Tab, string> = {
+  all: '✦ Вечная слава',
+  week: '🏪 Ярмарка недели',
+  referrals: '🤝 Сваты',
+}
+
 export function LeaderboardPage() {
-  const { data, isLoading } = useQuery({
-    queryKey: ['leaderboard'],
-    queryFn: api.leaderboard.get,
-    refetchInterval: 60_000,
-  })
+  const [tab, setTab] = useState<Tab>('all')
 
   return (
     <ScreenBackground>
       <div style={{ padding: `${spacing.xxl} ${spacing.lg} 80px`, maxWidth: '500px', margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: spacing.xxl }}>
+        <div style={{ textAlign: 'center', marginBottom: spacing.lg }}>
           <div style={{ color: colors.fairyGold, fontSize: '20px', fontWeight: 700 }}>
             ✦ Ярмарочный Рейтинг ✦
           </div>
-          <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
-            {data ? `${data.totalPlayers} купцов в игре` : 'Купцы всего Лукоморья'}
-          </div>
         </div>
 
-        {isLoading && [1, 2, 3, 4, 5].map(i => <SkeletonCard key={i} lines={2} />)}
+        {/* Tabs */}
+        <div style={{
+          display: 'flex',
+          gap: '4px',
+          marginBottom: spacing.lg,
+          padding: '4px',
+          background: 'rgba(10,8,24,0.7)',
+          border: `1px solid ${colors.cardBorder}`,
+          borderRadius: '12px',
+        }}>
+          {(Object.keys(TAB_LABELS) as Tab[]).map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              style={{
+                flex: 1,
+                padding: '8px 4px',
+                background: tab === t ? `${colors.fairyGold}20` : 'transparent',
+                border: `1px solid ${tab === t ? `${colors.fairyGold}60` : 'transparent'}`,
+                borderRadius: '8px',
+                color: tab === t ? colors.fairyGold : colors.textMuted,
+                fontSize: '11px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              {TAB_LABELS[t]}
+            </button>
+          ))}
+        </div>
 
-        {data?.entries.length === 0 && !isLoading && (
-          <div style={{ textAlign: 'center', color: colors.textMuted, marginTop: spacing.xl }}>
-            <div style={{ fontSize: '32px', marginBottom: spacing.sm }}>🏪</div>
-            <div>Пока никто не вышел на ярмарку</div>
-          </div>
-        )}
-
-        {data && data.entries.map((entry, i) => (
-          <motion.div
-            key={entry.userId}
-            initial={{ opacity: 0, x: -16 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: Math.min(i * 0.03, 0.6) }}
-          >
-            <LeaderboardRow entry={entry} />
-          </motion.div>
-        ))}
-
-        {data && data.myPosition && data.myPosition > 100 && (
-          <div style={{
-            marginTop: spacing.lg,
-            padding: `${spacing.sm} ${spacing.md}`,
-            background: `${colors.fairyGold}12`,
-            border: `1px solid ${colors.fairyGold}30`,
-            borderRadius: '10px',
-            textAlign: 'center',
-          }}>
-            <div style={{ color: colors.fairyGold, fontSize: '13px' }}>
-              Ваше место: #{data.myPosition} из {data.totalPlayers}
-            </div>
-            <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '2px' }}>
-              Копи злато — поднимайся выше!
-            </div>
-          </div>
-        )}
+        {tab === 'all' && <AllTimeTab />}
+        {tab === 'week' && <WeekTab />}
+        {tab === 'referrals' && <ReferralsTab />}
       </div>
     </ScreenBackground>
   )
 }
 
+// ─── Tabs ──────────────────────────────────────────────────────────────────
+
+function AllTimeTab() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['leaderboard', 'all'],
+    queryFn: api.leaderboard.get,
+    refetchInterval: 60_000,
+  })
+
+  return (
+    <>
+      <Caption text={data ? `${data.totalPlayers} купцов в игре` : 'Купцы всего Лукоморья'} />
+      {isLoading && [1, 2, 3, 4, 5].map(i => <SkeletonCard key={i} lines={2} />)}
+      {data?.entries.length === 0 && !isLoading && (
+        <EmptyState icon="🏪" text="Пока никто не вышел на ярмарку" />
+      )}
+      {data?.entries.map((entry, i) => (
+        <motion.div
+          key={entry.userId}
+          initial={{ opacity: 0, x: -16 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: Math.min(i * 0.03, 0.6) }}
+        >
+          <LeaderboardRow entry={entry} />
+        </motion.div>
+      ))}
+      {data && data.myPosition && data.myPosition > 100 && (
+        <MyOutsidePos myPosition={data.myPosition} total={data.totalPlayers} hint="Копи злато — поднимайся выше!" />
+      )}
+    </>
+  )
+}
+
+function WeekTab() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['leaderboard', 'week'],
+    queryFn: api.leaderboard.getWeek,
+    refetchInterval: 60_000,
+  })
+
+  return (
+    <>
+      <Caption text={
+        data
+          ? `${data.totalPlayers} купцов приумножили злато · неделя с ${formatDate(data.weekStart)}`
+          : 'Прирост состояния с понедельника'
+      } />
+      {isLoading && [1, 2, 3, 4, 5].map(i => <SkeletonCard key={i} lines={2} />)}
+      {data?.entries.length === 0 && !isLoading && (
+        <EmptyState icon="📅" text="На этой неделе никто ещё не заработал" />
+      )}
+      {data?.entries.map((entry, i) => (
+        <motion.div
+          key={entry.userId}
+          initial={{ opacity: 0, x: -16 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: Math.min(i * 0.03, 0.6) }}
+        >
+          <WeeklyRow entry={entry} />
+        </motion.div>
+      ))}
+      {data && data.myPosition && data.myPosition > 100 && (
+        <MyOutsidePos myPosition={data.myPosition} total={data.totalPlayers} hint="Прокрути день — и тебя увидят!" />
+      )}
+    </>
+  )
+}
+
+function ReferralsTab() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['leaderboard', 'referrals'],
+    queryFn: api.leaderboard.getReferrals,
+    refetchInterval: 60_000,
+  })
+
+  return (
+    <>
+      <Caption text={
+        data
+          ? `${data.totalPlayers} купцов уже сватают на ярмарку`
+          : 'Кто зазвал больше купцов на Русь'
+      } />
+      {isLoading && [1, 2, 3, 4, 5].map(i => <SkeletonCard key={i} lines={2} />)}
+      {data?.entries.length === 0 && !isLoading && (
+        <EmptyState icon="🤝" text="Сватов пока не нашлось — будь первым" />
+      )}
+      {data?.entries.map((entry, i) => (
+        <motion.div
+          key={entry.userId}
+          initial={{ opacity: 0, x: -16 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: Math.min(i * 0.03, 0.6) }}
+        >
+          <ReferralRow entry={entry} />
+        </motion.div>
+      ))}
+      {data && data.myPosition && data.myPosition > 100 && (
+        <MyOutsidePos myPosition={data.myPosition} total={data.totalPlayers} hint="Пригласи купца — и попадёшь в топ!" />
+      )}
+    </>
+  )
+}
+
+// ─── Row variants ──────────────────────────────────────────────────────────
+
 function LeaderboardRow({ entry }: { entry: LeaderboardEntryDTO }) {
+  return (
+    <BaseRow
+      entry={entry}
+      rightTop={`${Math.round(entry.totalWealth).toLocaleString('ru')} ₽`}
+      rightBottom={entry.intuitionScore > 0 ? `👁 ${entry.intuitionScore}` : null}
+    />
+  )
+}
+
+function WeeklyRow({ entry }: { entry: WeeklyLeaderboardEntryDTO }) {
+  return (
+    <BaseRow
+      entry={entry}
+      rightTop={<span style={{ color: colors.success }}>+{Math.round(entry.weekDelta).toLocaleString('ru')} ₽</span>}
+      rightBottom={`всего: ${Math.round(entry.totalWealth).toLocaleString('ru')} ₽`}
+    />
+  )
+}
+
+function ReferralRow({ entry }: { entry: ReferralLeaderboardEntryDTO }) {
+  return (
+    <BaseRow
+      entry={{
+        userId: entry.userId,
+        firstName: entry.firstName,
+        username: entry.username,
+        investorRank: entry.investorRank,
+        currentDay: 0,
+        intuitionScore: 0,
+        totalWealth: 0,
+        isMe: entry.isMe,
+        position: entry.position,
+      }}
+      hideRankDay
+      rightTop={`🤝 ${entry.referralCount} куп${pluralizeCup(entry.referralCount)}`}
+      rightBottom={null}
+    />
+  )
+}
+
+function BaseRow({
+  entry, rightTop, rightBottom, hideRankDay,
+}: {
+  entry: LeaderboardEntryDTO
+  rightTop: React.ReactNode
+  rightBottom: React.ReactNode
+  hideRankDay?: boolean
+}) {
   const displayName = entry.username ? `@${entry.username}` : entry.firstName
   const rankLabel = RANK_LABEL[entry.investorRank] ?? entry.investorRank
   const rankEmoji = RANK_EMOJI[entry.investorRank] ?? '🎭'
@@ -111,7 +268,6 @@ function LeaderboardRow({ entry }: { entry: LeaderboardEntryDTO }) {
         ? colors.fairyGold + '55'
         : isTop3 ? colors.fairyGold + '30' : colors.cardBorder}`,
     }}>
-      {/* Position badge */}
       <div style={{
         width: '32px',
         textAlign: 'center',
@@ -124,7 +280,6 @@ function LeaderboardRow({ entry }: { entry: LeaderboardEntryDTO }) {
         {positionBadge(pos)}
       </div>
 
-      {/* Name + rank */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
           color: entry.isMe ? colors.fairyGold : isTop3 ? colors.textPrimary : colors.textSecondary,
@@ -134,26 +289,83 @@ function LeaderboardRow({ entry }: { entry: LeaderboardEntryDTO }) {
         }}>
           {displayName}{entry.isMe ? ' (вы)' : ''}
         </div>
-        <div style={{ color: colors.textMuted, fontSize: '10px', marginTop: '2px' }}>
-          {rankEmoji} {rankLabel} · день {entry.currentDay}
-        </div>
+        {!hideRankDay && (
+          <div style={{ color: colors.textMuted, fontSize: '10px', marginTop: '2px' }}>
+            {rankEmoji} {rankLabel} · день {entry.currentDay}
+          </div>
+        )}
+        {hideRankDay && (
+          <div style={{ color: colors.textMuted, fontSize: '10px', marginTop: '2px' }}>
+            {rankEmoji} {rankLabel}
+          </div>
+        )}
       </div>
 
-      {/* Total wealth + intuition */}
       <div style={{ textAlign: 'right', flexShrink: 0 }}>
         <div style={{
           color: isTop3 ? colors.fairyGold : colors.textPrimary,
           fontWeight: 700,
           fontSize: '13px',
         }}>
-          {Math.round(entry.totalWealth).toLocaleString('ru')} ₽
+          {rightTop}
         </div>
-        {entry.intuitionScore > 0 && (
+        {rightBottom && (
           <div style={{ color: colors.textMuted, fontSize: '10px', marginTop: '1px' }}>
-            🔮 {entry.intuitionScore}
+            {rightBottom}
           </div>
         )}
       </div>
     </div>
   )
+}
+
+// ─── Bits ──────────────────────────────────────────────────────────────────
+
+function Caption({ text }: { text: string }) {
+  return (
+    <div style={{ color: colors.textMuted, fontSize: '11px', textAlign: 'center', marginBottom: spacing.md }}>
+      {text}
+    </div>
+  )
+}
+
+function EmptyState({ icon, text }: { icon: string; text: string }) {
+  return (
+    <div style={{ textAlign: 'center', color: colors.textMuted, marginTop: spacing.xl }}>
+      <div style={{ fontSize: '32px', marginBottom: spacing.sm }}>{icon}</div>
+      <div>{text}</div>
+    </div>
+  )
+}
+
+function MyOutsidePos({ myPosition, total, hint }: { myPosition: number; total: number; hint: string }) {
+  return (
+    <div style={{
+      marginTop: spacing.lg,
+      padding: `${spacing.sm} ${spacing.md}`,
+      background: `${colors.fairyGold}12`,
+      border: `1px solid ${colors.fairyGold}30`,
+      borderRadius: '10px',
+      textAlign: 'center',
+    }}>
+      <div style={{ color: colors.fairyGold, fontSize: '13px' }}>
+        Ваше место: #{myPosition} из {total}
+      </div>
+      <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '2px' }}>{hint}</div>
+    </div>
+  )
+}
+
+function formatDate(iso: string): string {
+  const d = new Date(iso)
+  return `${d.getDate()}.${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+function pluralizeCup(n: number): string {
+  const mod10 = n % 10
+  const mod100 = n % 100
+  if (mod100 >= 11 && mod100 <= 14) return 'цов'
+  if (mod10 === 1) return 'ец'
+  if (mod10 >= 2 && mod10 <= 4) return 'ца'
+  return 'цов'
 }

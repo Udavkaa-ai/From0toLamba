@@ -109,6 +109,9 @@ export interface GameStateDTO {
   advanceCooldownMs: number
   consecutiveAdvances: number
   maxConsecutiveAdvances: number
+  referralCount: number
+  weekStartWealth: number
+  userId: number
   activeProjects: ProjectDTO[]
   inboxProjects: ProjectDTO[]
 }
@@ -127,6 +130,33 @@ export interface LeaderboardEntryDTO {
 
 export interface LeaderboardDTO {
   entries: LeaderboardEntryDTO[]
+  myPosition: number | null
+  totalPlayers: number
+}
+
+export interface WeeklyLeaderboardEntryDTO extends LeaderboardEntryDTO {
+  weekDelta: number
+}
+
+export interface WeeklyLeaderboardDTO {
+  entries: WeeklyLeaderboardEntryDTO[]
+  myPosition: number | null
+  totalPlayers: number
+  weekStart: string
+}
+
+export interface ReferralLeaderboardEntryDTO {
+  userId: number
+  firstName: string
+  username: string | null
+  investorRank: string
+  referralCount: number
+  isMe: boolean
+  position: number
+}
+
+export interface ReferralLeaderboardDTO {
+  entries: ReferralLeaderboardEntryDTO[]
   myPosition: number | null
   totalPlayers: number
 }
@@ -207,6 +237,8 @@ export const api = {
 
   leaderboard: {
     get: () => apiClient.get<LeaderboardDTO>('/leaderboard').then(r => r.data),
+    getWeek: () => apiClient.get<WeeklyLeaderboardDTO>('/leaderboard/week').then(r => r.data),
+    getReferrals: () => apiClient.get<ReferralLeaderboardDTO>('/leaderboard/referrals').then(r => r.data),
   },
 
   invest: {
