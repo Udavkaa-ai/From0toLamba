@@ -21,6 +21,10 @@ model User {
   referrer              User?    @relation("Referrals", fields: [referrerId], references: [id])
   referrals             User[]   @relation("Referrals")
   referralBonusGranted  Boolean  @default(false)
+  // Payload из `/start ref_X` — сохраняется ботом и подхватывается /api/game.
+  // Нужно потому, что Telegram доставляет start_param в WebApp initData только
+  // если у бота настроена Main Mini App в BotFather. Через команду бота — надёжнее.
+  pendingReferralParam  String?
 
   gameState    GameState?
   projects     Project[]

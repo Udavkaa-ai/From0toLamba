@@ -65,9 +65,18 @@ export async function gameRoutes(app: FastifyInstance) {
       }
     }
 
-    // Реферальная программа: если пользователь пришёл по ссылке ref_<id> — привязываем и шлём бонус
-    const refResult = await tryAttachReferrer(user.id, request.telegramStartParam ?? null)
+    // Реферальная программа: пробуем привязать реферала.
+    // Источник payload: initData.start_param (если Mini App открыли через
+    // t.me/bot?startapp=ref_X и бот с Main Mini App настроен) ИЛИ
+    // user.pendingReferralParam (если пользователь пришёл по t.me/bot?start=ref_X,
+    // где бот сохранил payload в /start хендлере).
+    const refPayload = request.telegramStartParam ?? user.pendingReferralParam ?? null
+    const refResult = await tryAttachReferrer(user.id, refPayload)
     if (refResult.bonusGranted) {
+      // Подчистим pending — чтобы не пытаться повторно
+      if (user.pendingReferralParam) {
+        await prisma.user.update({ where: { id: user.id }, data: { pendingReferralParam: null } })
+      }
       // Забираем обновлённый gameState (там balance уже увеличен)
       gameState = (await prisma.gameState.findUniqueOrThrow({ where: { userId: user.id } }))
     }

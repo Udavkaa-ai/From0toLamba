@@ -270,6 +270,33 @@ export function HomePage() {
                 </div>
               </div>
 
+              {/* Пригласительная грамота */}
+              <div style={{ marginBottom: '28px' }}>
+                <div style={{ color: colors.textSecondary, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Пригласительная грамота
+                </div>
+                <button
+                  onClick={() => handleInvite(gameState)}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    background: `${colors.fairyGold}18`,
+                    border: `1px solid ${colors.fairyGold}55`,
+                    borderRadius: '12px',
+                    color: colors.fairyGold,
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                  }}
+                >
+                  📜 Зазвать купца на ярмарку
+                  <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '4px', fontWeight: 400 }}>
+                    Обоим по +100 ₽ в казну, когда перейдёт по ссылке
+                  </div>
+                </button>
+              </div>
+
               {/* Danger zone */}
               <div>
                 <div style={{ color: colors.textMuted, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
@@ -485,31 +512,6 @@ export function HomePage() {
           />
         </motion.div>
 
-        {/* Пригласительная грамота */}
-        <motion.button
-          whileTap={{ scale: 0.97 }}
-          transition={{ duration: 0.1 }}
-          onClick={() => handleInvite(gameState)}
-          style={{
-            width: '100%',
-            marginTop: spacing.md,
-            padding: `${spacing.md} ${spacing.lg}`,
-            background: 'transparent',
-            border: `1px dashed ${colors.fairyGold}60`,
-            borderRadius: '12px',
-            color: colors.fairyGold,
-            fontSize: '14px',
-            fontWeight: 600,
-            cursor: 'pointer',
-            lineHeight: 1.3,
-          }}
-        >
-          📜 Пригласительная грамота
-          <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '2px', fontWeight: 400 }}>
-            Зазови купца — обоим +100 ₽ в казну
-          </div>
-        </motion.button>
-
       </div>
 
       {/* Заглушка рекламы для пропуска ожидания */}
@@ -529,7 +531,10 @@ export function HomePage() {
 function handleInvite(gameState: { userId: number; firstName?: string } | any) {
   const userId = gameState?.userId
   if (!userId) return
-  const botLink = `https://t.me/vknyazi_bot?startapp=ref_${userId}`
+  // Используем ?start= (а не ?startapp=) — так payload гарантированно приходит
+  // в /start хендлер бота, который сохранит его в pendingReferralParam.
+  // ?startapp= работает только если у бота настроена Main Mini App в BotFather.
+  const botLink = `https://t.me/vknyazi_bot?start=ref_${userId}`
   const text = [
     '📜 Купеческая грамота для тебя!',
     'Приходи на ярмарку «Из грязи в князи» — будем вкладывать рубли, ловить жуликов и расти в чинах.',
