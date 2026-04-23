@@ -230,13 +230,8 @@ export function CharterPage() {
           </div>
         )}
 
-        {phase === 'result' && result && (
-          <ResultFooter
-            result={result}
-            onInvest={() => setShowInvest(true)}
-            onSkip={() => navigate('/inbox')}
-          />
-        )}
+        {/* Разбор и кнопки действий после мини-игры показываем модальным листом,
+            чтобы игрок не пропустил «Вложить / Миновать», скроллом не уйдя ниже. */}
 
         {/* Онбординг-бонус */}
         {onboardingBonus && (
@@ -254,6 +249,16 @@ export function CharterPage() {
           </motion.div>
         )}
       </div>
+
+      <AnimatePresence>
+        {phase === 'result' && result && !showInvest && (
+          <ResultSheet
+            result={result}
+            onInvest={() => setShowInvest(true)}
+            onSkip={() => navigate('/inbox')}
+          />
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {showInvest && projectId && (
@@ -454,47 +459,76 @@ function ScanGrid({
   )
 }
 
-function ResultFooter({
+function ResultSheet({
   result, onInvest, onSkip,
 }: { result: CharterResultDTO; onInvest: () => void; onSkip: () => void }) {
   const emoji = result.delta > 0 ? '🎯' : result.delta === 0 ? '🤔' : '😅'
   const tp = result.truePositives.length
   const fp = result.falsePositives.length
   const fn = result.falseNegatives.length
-  // Бонус за чистую грамоту: подделок не было и игрок никого не обвинил
   const cleanBonus = tp === 0 && fp === 0 && fn === 0 && result.delta === 2
   const formula = cleanBonus
     ? 'Грамота была чистая — +2 за верное чутьё'
     : `+${tp} найдено${fp > 0 ? ` − ${fp} ошиб${fp === 1 ? 'ка' : fp < 5 ? 'ки' : 'ок'}` : ''}${fn > 0 ? ` − ${2 * fn} упущено (×2)` : ''} = ${result.delta >= 0 ? '+' : ''}${result.delta}`
 
+  // Не используем Sheet helper — у него backdrop закрывается по клику.
+  // Здесь действие обязательно, поэтому backdrop без onClose, выйти можно
+  // только через «Миновать» или «Вложить».
   return (
-    <div style={footerStyle}>
-      <div style={{ textAlign: 'center', marginBottom: spacing.md }}>
-        <div style={{ fontSize: '32px' }}>{emoji}</div>
-        <div style={{ color: colors.fairyGold, fontSize: '18px', fontWeight: 700 }}>
-          {result.delta > 0 ? `+${result.delta}` : `${result.delta}`} к чуйке
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 220,
+        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+        background: 'rgba(0,0,0,0.55)',
+        pointerEvents: 'auto',
+      }}
+    >
+      <motion.div
+        initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+        style={{
+          width: '100%', maxWidth: '500px',
+          background: colors.nightBlue,
+          borderRadius: '20px 20px 0 0',
+          border: `1px solid ${colors.cardBorder}`,
+          padding: `${spacing.xxl} ${spacing.xl} ${spacing.xl}`,
+          paddingBottom: `calc(${spacing.xl} + env(safe-area-inset-bottom))`,
+          boxShadow: '0 -8px 32px rgba(0,0,0,0.6)',
+        }}
+      >
+        <div style={{ textAlign: 'center', marginBottom: spacing.lg }}>
+          <div style={{ fontSize: '40px' }}>{emoji}</div>
+          <div style={{ color: colors.fairyGold, fontSize: '22px', fontWeight: 700, marginTop: '4px' }}>
+            {result.delta > 0 ? `+${result.delta}` : `${result.delta}`} к чуйке
+          </div>
+          <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
+            {formula}
+          </div>
         </div>
-        <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '2px' }}>
-          {formula}
+
+        <div style={resultRowStyle}>
+          <ResultStat color={colors.success} label="Найдено" value={tp} />
+          <ResultStat color={colors.danger}  label="Ошибок"  value={fp} />
+          <ResultStat color={colors.warning} label="Упущено" value={fn} />
         </div>
-      </div>
-      <div style={resultRowStyle}>
-        <ResultStat color={colors.success} label="Найдено" value={tp} />
-        <ResultStat color={colors.danger}  label="Ошибок"  value={fp} />
-        <ResultStat color={colors.warning} label="Упущено" value={fn} />
-      </div>
-      <div style={{ color: colors.textMuted, fontSize: '10px', textAlign: 'center', marginTop: '4px' }}>
-        Каждая пропущенная подделка стоит −2 к чуйке
-      </div>
-      <div style={{ display: 'flex', gap: spacing.sm, marginTop: spacing.md }}>
-        <button onClick={onSkip} style={{ ...secondaryBtnStyle, flex: 1, marginTop: 0 }}>
-          Миновать
-        </button>
-        <button onClick={onInvest} style={{ ...primaryBtnStyle, flex: 1 }}>
-          💰 Вложить
-        </button>
-      </div>
-    </div>
+        <div style={{ color: colors.textMuted, fontSize: '10px', textAlign: 'center', marginTop: '6px' }}>
+          Каждая пропущенная подделка стоит −2 к чуйке
+        </div>
+
+        <div style={{ color: colors.fairyGold, fontSize: '13px', fontWeight: 600, textAlign: 'center', marginTop: spacing.lg }}>
+          Что дальше?
+        </div>
+        <div style={{ display: 'flex', gap: spacing.sm, marginTop: spacing.sm }}>
+          <button onClick={onSkip} style={{ ...secondaryBtnStyle, flex: 1, marginTop: 0 }}>
+            Миновать
+          </button>
+          <button onClick={onInvest} style={{ ...primaryBtnStyle, flex: 1 }}>
+            💰 Вложить
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
   )
 }
 
