@@ -149,10 +149,10 @@ export function mutateSeal(
       out.shape = nextInList(SHAPES, ref.shape, step)
       break
     case 'color': {
-      // Сдвигаем оттенок на ±35% яркости: достаточно заметно на EASY,
-      // но всё ещё в рамках «того же цвета», а не полная смена палитры.
+      // Сдвигаем оттенок на ±20% яркости: заметно, но всё ещё
+      // в рамках «того же цвета», а не полная смена палитры.
       const direction = (h & 1) === 0 ? 1 : -1
-      const pct = 35 * direction
+      const pct = 20 * direction
       out.color = {
         key: ref.color.key + (direction > 0 ? '-light' : '-dark'),
         primary: shade(ref.color.primary, pct),
