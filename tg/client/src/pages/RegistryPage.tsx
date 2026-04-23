@@ -5,7 +5,12 @@ import { useNavigate } from 'react-router-dom'
 import { ScreenBackground } from '@/components/ScreenBackground'
 import { FairyCard, OrnamentDivider, SkeletonCard } from '@/components/FairyCard'
 import { api, type ProjectDTO, type PostMortemDTO } from '@/api/client'
+import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing } from '@/theme'
+
+const RANK_LABEL: Record<string, string> = {
+  NEWBIE: 'Скоморох', AMBASSADOR: 'Купец', ANALYST: 'Мудрец', SHARK: 'Боярин', LAMBO_SENSEI: 'Князь',
+}
 
 const ARCHETYPE_DISPLAY: Record<string, { name: string; emoji: string; desc: string }> = {
   BURATINO:   { name: 'Буратино',   emoji: '🪆', desc: 'Наивный лжец — верил своим выдумкам' },
@@ -47,23 +52,43 @@ type ClosedProject = ProjectDTO & { postMortem: PostMortemDTO | null }
 
 export function RegistryPage() {
   const navigate = useNavigate()
+  const { gameState } = useGameStore()
   const { data, isLoading } = useQuery({
     queryKey: ['portfolio'],
     queryFn: api.projects.getPortfolio,
   })
 
-  const closed: ClosedProject[] = (data?.closed ?? [])
-    .filter(p => p.investedAmountRubles > 0)
-    .sort((a, b) => {
-      if (!a.postMortem && !b.postMortem) return 0
-      if (!a.postMortem) return 1
-      if (!b.postMortem) return -1
-      return b.postMortem.daysActive - a.postMortem.daysActive
-    })
+  // Сервер отдаёт до 10 последних закрытых дел, в которые игрок вкладывался.
+  // Истёкшие/пропущенные грамоты в Летопись не попадают.
+  const closed: ClosedProject[] = data?.closed ?? []
 
   const totalInvested = closed.reduce((s, p) => s + (p.postMortem?.investedAmount ?? 0), 0)
   const totalReturned = closed.reduce((s, p) => s + (p.postMortem?.returnedAmount ?? 0), 0)
   const overallPnl = totalInvested > 0 ? ((totalReturned - totalInvested) / totalInvested) * 100 : 0
+
+  const handleShare = () => {
+    const rank = gameState ? (RANK_LABEL[gameState.investorRank] ?? gameState.investorRank) : null
+    const wealth = gameState
+      ? gameState.balance + gameState.activeProjects.reduce((s, p) => s + p.currentValueRubles, 0)
+      : 0
+
+    const lines = [
+      '📜 Моя Летопись в «Из грязи в князи»:',
+      rank ? `Чин: ${rank} · чуйка ${gameState?.intuitionScore ?? 0}` : null,
+      `Состояние: ${wealth.toFixed(0)} ₽`,
+      closed.length > 0
+        ? `Закрытых дел: ${closed.length} · итог ${overallPnl >= 0 ? '+' : ''}${overallPnl.toFixed(1)}%`
+        : null,
+      '',
+      'Попробуй отличить купца от жулика — @vknyazi_bot',
+    ].filter(Boolean).join('\n')
+
+    const appUrl = 'https://t.me/vknyazi_bot'
+    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(appUrl)}&text=${encodeURIComponent(lines)}`
+    const tg = (window as any).Telegram?.WebApp
+    if (tg?.openTelegramLink) tg.openTelegramLink(shareUrl)
+    else window.open(shareUrl, '_blank')
+  }
 
   return (
     <ScreenBackground>
@@ -87,7 +112,7 @@ export function RegistryPage() {
 
         {/* Summary card */}
         {closed.length > 0 && (
-          <FairyCard style={{ marginBottom: spacing.xl, textAlign: 'center' }}>
+          <FairyCard style={{ marginBottom: spacing.md, textAlign: 'center' }}>
             <div style={{ color: colors.textMuted, fontSize: '12px', marginBottom: spacing.sm }}>
               {closed.length} завершённых дел
             </div>
@@ -108,6 +133,34 @@ export function RegistryPage() {
               </div>
             </div>
           </FairyCard>
+        )}
+
+        {/* Share button */}
+        {closed.length > 0 && (
+          <motion.button
+            whileTap={{ scale: 0.96 }}
+            transition={{ duration: 0.1 }}
+            onClick={handleShare}
+            style={{
+              width: '100%',
+              marginBottom: spacing.xl,
+              padding: `${spacing.md} ${spacing.lg}`,
+              background: `${colors.fairyGold}18`,
+              border: `1px solid ${colors.fairyGold}55`,
+              borderRadius: '12px',
+              color: colors.fairyGold,
+              fontSize: '14px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+            }}
+          >
+            <span style={{ fontSize: '16px' }}>📤</span>
+            Поделиться Летописью
+          </motion.button>
         )}
 
         {isLoading && [1, 2, 3].map(i => <SkeletonCard key={i} lines={4} />)}

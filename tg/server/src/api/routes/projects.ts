@@ -29,9 +29,13 @@ export async function projectRoutes(app: FastifyInstance) {
         orderBy: { updatedAt: 'desc' },
       }),
       prisma.project.findMany({
-        where: { userId: user.id, isClosed: true },
+        where: {
+          userId: user.id,
+          isClosed: true,
+          investedAmountRubles: { gt: 0 }, // только дела с реальным вложением попадают в Летопись
+        },
         orderBy: { updatedAt: 'desc' },
-        take: 30,
+        take: 10,
         include: { postMortem: true },
       }),
     ])
