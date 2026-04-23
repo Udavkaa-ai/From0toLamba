@@ -87,11 +87,8 @@ export async function startCharter(userId: number, projectId: string): Promise<C
   const forgedIndices = pickIndices(gridSeed, GRID_SIZE, forgeryCount)
   const difficulty = difficultyFromFate(fate)
 
-  // Переносим из Inbox: «открыли грамоту» — теперь дело не в инбоксе
-  await prisma.project.update({
-    where: { id: projectId },
-    data: { isInbox: false },
-  })
+  // НЕ трогаем isInbox здесь — иначе игрок, открывший карточку и вышедший, теряет её из
+  // инбокса, не сыграв мини-игру. Inbox-флаг снимется при submit (или при advance-day).
 
   const session = existing
     ? await prisma.amaSession.update({
@@ -173,6 +170,11 @@ export async function submitCharter(
     prisma.gameState.update({
       where: { userId },
       data: { intuitionScore: { increment: delta } },
+    }),
+    // Только сейчас — когда игрок действительно разобрал грамоту — убираем её из инбокса
+    prisma.project.update({
+      where: { id: projectId },
+      data: { isInbox: false },
     }),
   ])
 

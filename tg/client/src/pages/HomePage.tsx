@@ -162,8 +162,11 @@ export function HomePage() {
   }
 
   const totalWealth = gameState.balance + gameState.activeProjects.reduce((s, p) => s + p.currentValueRubles, 0)
+  const activeValue = gameState.activeProjects.reduce((s, p) => s + p.currentValueRubles, 0)
+  // Доход учитывает и уже полученные деньги, и нереализованную прибыль по активным делам —
+  // иначе сразу после первого вложения ROI будет −100%, хотя деньги не потеряны, а «в работе»
   const roi = gameState.totalInvested > 0
-    ? ((gameState.totalReturned - gameState.totalInvested) / gameState.totalInvested * 100)
+    ? ((gameState.totalReturned + activeValue - gameState.totalInvested) / gameState.totalInvested * 100)
     : 0
 
   const currentModel = localModel ?? gameState.preferredModel

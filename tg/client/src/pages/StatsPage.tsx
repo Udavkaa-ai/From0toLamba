@@ -33,9 +33,11 @@ export function StatsPage() {
 
   if (!gameState) return null
 
-  const totalWealth = gameState.balance + gameState.activeProjects.reduce((s, p) => s + p.currentValueRubles, 0)
+  const activeValue = gameState.activeProjects.reduce((s, p) => s + p.currentValueRubles, 0)
+  const totalWealth = gameState.balance + activeValue
+  // Доход включает стоимость активных дел — не «-100%» сразу после первого вложения
   const roi = gameState.totalInvested > 0
-    ? ((gameState.totalReturned - gameState.totalInvested) / gameState.totalInvested * 100)
+    ? ((gameState.totalReturned + activeValue - gameState.totalInvested) / gameState.totalInvested * 100)
     : 0
 
   const chartData = gameState.balanceHistory.map((b, i) => ({
