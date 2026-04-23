@@ -8,12 +8,14 @@ const SHAPES = [
 ] as const
 type Shape = typeof SHAPES[number]
 
+// Primary — заметно ярче фона ячейки (#0A0818), чтобы даже shade(-15%) оставался
+// различимым. Secondary — тёмный, для контрастных линий и эмблемы поверх primary.
 const COLORS = [
-  { key: 'gold',    primary: '#D4A017', secondary: '#6B3E00' },
-  { key: 'bronze',  primary: '#A0522D', secondary: '#4A1F07' },
-  { key: 'crimson', primary: '#8B2E2E', secondary: '#3F1010' },
-  { key: 'emerald', primary: '#2F6F47', secondary: '#0F2E1B' },
-  { key: 'indigo',  primary: '#3B4F8A', secondary: '#16223F' },
+  { key: 'gold',    primary: '#E8B833', secondary: '#5A3100' },
+  { key: 'bronze',  primary: '#C97A3E', secondary: '#4A2208' },
+  { key: 'crimson', primary: '#D14B4B', secondary: '#4D1010' },
+  { key: 'emerald', primary: '#4FA577', secondary: '#123322' },
+  { key: 'indigo',  primary: '#6275C4', secondary: '#1A2348' },
 ] as const
 
 /** Палитра печати — собрана из COLORS или с мутированным оттенком (shade). */
@@ -148,9 +150,9 @@ export function mutateSeal(
       break
     case 'color': {
       // Не меняем сам цвет (это слишком очевидно) — сдвигаем оттенок того же цвета
-      // на ±20% яркости. Игрок должен заметить: «этот оттенок золота чуть темнее».
+      // на ±15% яркости. Меньше, чем было (20%), чтобы тёмный вариант не тонул в фоне.
       const direction = (h & 1) === 0 ? 1 : -1
-      const pct = 20 * direction
+      const pct = 15 * direction
       out.color = {
         key: ref.color.key + (direction > 0 ? '-light' : '-dark'),
         primary: shade(ref.color.primary, pct),
