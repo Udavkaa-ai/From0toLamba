@@ -9,10 +9,10 @@ export enum ProjectType {
 }
 
 export enum ProjectFate {
-  INSTANT_SCAM = 'INSTANT_SCAM',   // 30% — бежит с деньгами на 1–3 день
+  INSTANT_SCAM = 'INSTANT_SCAM',   // 20% — бежит с деньгами на 1–3 день
   SLOW_DRAIN = 'SLOW_DRAIN',       // 25% — держится 1–3 недели, тихо исчезает
   HONEST_FAIL = 'HONEST_FAIL',     // 15% — честно старался, не взлетело
-  SURVIVOR = 'SURVIVOR',           // 20% — долгожитель, стабильный доход
+  SURVIVOR = 'SURVIVOR',           // 30% — долгожитель, стабильный доход
   UNICORN = 'UNICORN',             // 10% — взлетел: слава и иксы
 }
 
@@ -110,7 +110,7 @@ export const FATE_CONFIG: Record<ProjectFate, {
     daysRange: [2, 5],            // живёт 2–5 дней — успевает заманить
     dailyYieldRange: [0.05, 0.20], // приманка: 5–20% в день
     lossRange: [1.0, 1.0],         // исчезает со ВСЕМИ деньгами
-    weight: 30,
+    weight: 20,
   },
   [ProjectFate.SLOW_DRAIN]: {
     daysRange: [7, 21],
@@ -128,7 +128,7 @@ export const FATE_CONFIG: Record<ProjectFate, {
     daysRange: [15, 30],
     dailyYieldRange: [0.015, 0.075], // x5: ~1.5–7.5% в день
     lossRange: [0, 0],
-    weight: 20,
+    weight: 30,
   },
   [ProjectFate.UNICORN]: {
     daysRange: [20, 30],
