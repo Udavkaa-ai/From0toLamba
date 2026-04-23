@@ -25,7 +25,7 @@ const NEW_PROJECTS_PER_DAY_MAX = 3
 /** 2 часа реального времени между пачками «Следующий день» */
 export const ADVANCE_COOLDOWN_MS = 2 * 60 * 60 * 1000
 /** Сколько дней подряд можно пройти без ожидания / рекламы */
-export const MAX_CONSECUTIVE_ADVANCES = 3
+export const MAX_CONSECUTIVE_ADVANCES = 7
 
 export interface AdvanceDayOptions {
   /** Если true — пропускает проверку кулдауна (используется крон-jobом и заглушкой рекламы) */
