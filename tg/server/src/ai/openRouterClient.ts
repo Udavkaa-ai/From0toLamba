@@ -147,12 +147,18 @@ export async function generateProjectData(input: GenerateProjectInput, model = D
     const response = await client.chat.completions.create({
       model: model,
       messages: [{ role: 'user', content: prompt }],
-      max_tokens: 300,
+      max_tokens: 1200,
       response_format: { type: 'json_object' },
     })
 
     const raw = response.choices[0]?.message?.content ?? '{}'
-    const parsed = JSON.parse(raw)
+    let parsed: any
+    try {
+      parsed = JSON.parse(raw)
+    } catch (parseErr) {
+      console.error('[AI:project] JSON.parse failed. raw=', raw.slice(0, 400))
+      throw parseErr
+    }
 
     return {
       name: parsed.name ?? 'Тайное дело',
@@ -325,7 +331,7 @@ export async function startAmaSession(input: AmaSessionInput, model = DEFAULT_MO
         { role: 'system', content: systemPrompt },
         { role: 'user', content: firstMessagePrompt },
       ],
-      max_tokens: 200,
+      max_tokens: 500,
     })
     return response.choices[0]?.message?.content ?? `Здравствуй! Я ${developerName}, хозяин дела «${projectName}». Задавай вопросы!`
   } catch (err) {
@@ -348,7 +354,7 @@ export async function sendAmaMessage(input: SendAmaMessageInput, model = DEFAULT
     const response = await client.chat.completions.create({
       model: model,
       messages,
-      max_tokens: 200,
+      max_tokens: 500,
     })
     const content = response.choices[0]?.message?.content
     console.log(`[AMA] model=${model} q=${input.questionCount} chars=${content?.length ?? 0}`)
@@ -449,12 +455,18 @@ export async function generateDailyUpdate(
     const response = await client.chat.completions.create({
       model: model,
       messages: [{ role: 'user', content: prompt }],
-      max_tokens: 300,
+      max_tokens: 1000,
       response_format: { type: 'json_object' },
     })
 
     const raw = response.choices[0]?.message?.content ?? '{}'
-    const parsed = JSON.parse(raw)
+    let parsed: any
+    try {
+      parsed = JSON.parse(raw)
+    } catch (parseErr) {
+      console.error('[AI:daily] JSON.parse failed. raw=', raw.slice(0, 400))
+      throw parseErr
+    }
 
     await prisma.dailyUpdate.update({
       where: { id: inserted.id },
@@ -507,7 +519,7 @@ export async function generatePostMortem(input: PostMortemInput, model = DEFAULT
     const response = await client.chat.completions.create({
       model: model,
       messages: [{ role: 'user', content: prompt }],
-      max_tokens: 300,
+      max_tokens: 800,
     })
 
     const analysis = response.choices[0]?.message?.content ?? 'Дело закрылось.'
