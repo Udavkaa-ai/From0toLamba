@@ -234,7 +234,11 @@ export async function gameRoutes(app: FastifyInstance) {
   app.post('/api/game/settings', { preHandler: telegramAuthHook }, async (request, reply) => {
     const tgUser = request.telegramUser
     const body = z.object({
-      preferredModel: z.enum(['google/gemma-4-26b-a4b-it:free', 'google/gemini-3.1-flash-lite-preview']),
+      preferredModel: z.enum([
+        'google/gemma-4-26b-a4b-it:free',
+        'qwen/qwen3-next-80b-a3b-instruct:free',
+        'google/gemini-3.1-flash-lite-preview',
+      ]),
     }).safeParse(request.body)
     if (!body.success) return reply.status(400).send({ error: 'Неверная модель' })
 
