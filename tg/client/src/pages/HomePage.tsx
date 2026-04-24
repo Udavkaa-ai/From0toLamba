@@ -15,7 +15,7 @@ import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing, typography } from '@/theme'
 
 const RANK_DISPLAY: Record<string, string> = {
-  NEWBIE: 'Скоморох', AMBASSADOR: 'Купец', ANALYST: 'Мудрец', SHARK: 'Богатырь', LAMBO_SENSEI: 'Князь',
+  NEWBIE: 'Скоморох', AMBASSADOR: 'Купец', ANALYST: 'Мудрец', SHARK: 'Боярин', LAMBO_SENSEI: 'Князь',
 }
 
 const MODEL_OPTIONS = [

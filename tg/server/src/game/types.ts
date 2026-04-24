@@ -48,7 +48,7 @@ export const RANK_DISPLAY: Record<InvestorRank, string> = {
   [InvestorRank.NEWBIE]: 'Скоморох',
   [InvestorRank.AMBASSADOR]: 'Купец',
   [InvestorRank.ANALYST]: 'Мудрец',
-  [InvestorRank.SHARK]: 'Богатырь',
+  [InvestorRank.SHARK]: 'Боярин',
   [InvestorRank.LAMBO_SENSEI]: 'Князь',
 }
 

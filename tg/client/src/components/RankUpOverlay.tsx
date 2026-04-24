@@ -7,7 +7,7 @@ const RANK_DISPLAY: Record<string, string> = {
   NEWBIE: 'Скоморох',
   AMBASSADOR: 'Купец',
   ANALYST: 'Мудрец',
-  SHARK: 'Богатырь',
+  SHARK: 'Боярин',
   LAMBO_SENSEI: 'Князь',
 }
 

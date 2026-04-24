@@ -57,9 +57,6 @@ export interface SealParams {
   border: BorderStyle
   dots: DotCount
   emblem: Emblem
-  /** Отражение эмблемы по вертикальной оси — HARD-мутация (сокол смотрит
-   *  в другую сторону). У эталона всегда false. */
-  emblemFlip: boolean
 }
 
 export type CharterDifficulty = 'EASY' | 'MEDIUM' | 'HARD'
@@ -125,7 +122,6 @@ export function generateReferenceSeal(seed: string): SealParams {
     border:   pickBy(BORDER_STYLES, hashChannel(seed, 'border')),
     dots:     pickBy(DOT_COUNTS,   hashChannel(seed, 'dots')),
     emblem:   pickBy(ALL_EMBLEMS,  hashChannel(seed, 'emblem')),
-    emblemFlip: false,
   }
 }
 
@@ -139,7 +135,6 @@ type MutTarget =
   | 'colorPalette'  // полная смена цвета из палитры (gold → bronze)
   | 'colorHue'      // малый сдвиг тона (±20°, тонко)
   | 'dots'          // число точек-розетки
-  | 'emblemFlip'    // зеркальное отражение эмблемы
 
 const MUT_POOLS: Record<CharterDifficulty, MutTarget[]> = {
   // EASY (простые): форма/геометрия/линии — силуэт меняется радикально
@@ -147,8 +142,8 @@ const MUT_POOLS: Record<CharterDifficulty, MutTarget[]> = {
   // MEDIUM (лёгкий): подмена зверя на похожего или смена палитры целиком —
   // заметно, но не сразу
   MEDIUM: ['emblemSame', 'colorPalette'],
-  // HARD (сложный): точки, малый сдвиг оттенка, зеркальное отражение эмблемы
-  HARD:   ['dots', 'colorHue', 'emblemFlip'],
+  // HARD (сложный): число точек-розетки и малый сдвиг оттенка
+  HARD:   ['dots', 'colorHue'],
 }
 
 /** «Похожие» эмблемы внутри одного класса — для HARD-мутаций */
@@ -211,12 +206,6 @@ export function mutateSeal(
       }
       break
     }
-    case 'emblemFlip':
-      // HARD — зеркалим эмблему. Работает для асимметричных (рыба, сокол,
-      // волк, якорь) — на симметричных (щит, ромб) почти не видно, поэтому
-      // в пуле есть альтернативы dots/colorHue.
-      out.emblemFlip = true
-      break
     case 'emblemClass': {
       // Меняем класс эмблемы (зверь ↔ знак)
       if (ref.emblem.kind === 'animal') out.emblem = { kind: 'motif', value: pickBy(MOTIFS, h >>> 7) }
@@ -254,7 +243,7 @@ interface SealProps {
 /** Рисует только саму печать — обводка TP/FP/FN и selected живёт на ячейке-кнопке,
  *  чтобы не перекрывать точки-розетку по периметру. */
 export function Seal({ params, size = 72, dim = false }: SealProps) {
-  const { shape, color, rings, border, dots, emblem, emblemFlip } = params
+  const { shape, color, rings, border, dots, emblem } = params
   const opacity = dim ? 0.35 : 1
 
   return (
@@ -267,10 +256,8 @@ export function Seal({ params, size = 72, dim = false }: SealProps) {
       {renderRings(shape, rings, color)}
       {renderBorderStyle(shape, border, color)}
 
-      {/* Центральная эмблема (при emblemFlip — зеркалим по вертикальной оси) */}
-      {emblemFlip
-        ? <g transform="translate(100,0) scale(-1,1)">{renderEmblem(emblem, color)}</g>
-        : renderEmblem(emblem, color)}
+      {/* Центральная эмблема */}
+      {renderEmblem(emblem, color)}
     </svg>
   )
 }
