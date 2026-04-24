@@ -20,11 +20,6 @@ const MODEL_OPTIONS = [
     subtitle: 'быстрый и дешёвый, по умолчанию',
   },
   {
-    id: 'qwen/qwen3-next-80b-a3b-instruct:free',
-    label: 'Qwen 3 Next 80B',
-    subtitle: 'бесплатная альтернатива',
-  },
-  {
     id: 'google/gemini-3.1-flash-lite-preview',
     label: 'Gemini 2.5 Flash',
     subtitle: 'умнее, медленнее',

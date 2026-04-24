@@ -93,61 +93,6 @@ const client = new OpenAI({
 })
 
 const DEFAULT_MODEL = 'deepseek/deepseek-v4-flash'
-/** Запасная модель — пробуем если основная вернула ошибку
- *  (5xx, rate-limit, временные сбои). Бесплатная — ни копейки лишнего. */
-const FALLBACK_MODEL = 'google/gemma-3-27b-it:free'
-
-/** Подробно логируем что пришло от OpenRouter — без этого в Railway
- *  видно только «failed» и непонятно: 429? 404? таймаут? */
-function logAiError(scope: string, model: string, err: any) {
-  const status = err?.status ?? err?.response?.status
-  const message = err?.message ?? String(err)
-  const body = err?.error?.message ?? err?.response?.data?.error?.message
-  console.error(`[AI:${scope}] model=${model} status=${status ?? '?'} msg=${message}${body ? ` body=${body}` : ''}`)
-}
-
-/** Один вызов с автоматическим failover: основная модель → запасная.
- *  Возвращает текст ответа или null, если оба провайдера упали. */
-async function chatComplete(
-  scope: string,
-  model: string,
-  messages: { role: 'system' | 'user' | 'assistant'; content: string }[],
-  maxTokens: number,
-): Promise<string | null> {
-  try {
-    const r = await client.chat.completions.create({ model, messages, max_tokens: maxTokens })
-    return r.choices[0]?.message?.content ?? null
-  } catch (err) {
-    logAiError(scope, model, err)
-    if (model === FALLBACK_MODEL) return null
-    try {
-      const r = await client.chat.completions.create({ model: FALLBACK_MODEL, messages, max_tokens: maxTokens })
-      console.warn(`[AI:${scope}] fallback to ${FALLBACK_MODEL} succeeded`)
-      return r.choices[0]?.message?.content ?? null
-    } catch (err2) {
-      logAiError(scope + ':fallback', FALLBACK_MODEL, err2)
-      return null
-    }
-  }
-}
-
-/**
- * Вытаскивает JSON из ответа модели.
- * Бесплатные модели (Gemma/Llama и пр.) обычно не поддерживают
- * `response_format: json_object`, поэтому парсим вручную — ищем первую {..}
- * или [..], с учётом возможной обёртки ```json ... ``` от модели.
- */
-function extractJson(raw: string): any {
-  const trimmed = raw.trim()
-  // Снимаем markdown-fence если есть
-  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
-  const body = fenced ? fenced[1] : trimmed
-  // Ищем границы JSON-объекта
-  const start = body.indexOf('{')
-  const end = body.lastIndexOf('}')
-  if (start < 0 || end <= start) throw new Error('no json object in response: ' + body.slice(0, 120))
-  return JSON.parse(body.slice(start, end + 1))
-}
 
 // ─── Генерация данных проекта ────────────────────────────────────────────────
 
@@ -197,29 +142,35 @@ export async function generateProjectData(input: GenerateProjectInput, model = D
 Отвечай ТОЛЬКО валидным JSON без пояснений:
 {"name":"...","developerName":"...","claimedAPY":...,"description":"...","roadmap":["...","...","..."]}`
 
-  const raw = await chatComplete('project', model, [{ role: 'user', content: prompt }], 300)
-  if (raw) {
-    try {
-      const parsed = extractJson(raw)
-      return {
-        name: parsed.name ?? 'Тайное дело',
-        developerName: parsed.developerName ?? 'Ефим Лукавый',
-        claimedName: parsed.name ?? 'Тайное дело',
-        claimedAPY: Number(parsed.claimedAPY) || 100,
-        description: parsed.description ?? 'Прибыльное дело для смелых вкладчиков.',
-        roadmap: parsed.roadmap ?? ['Открыть дело', 'Собрать рубли', 'Распределить прибыль'],
-      }
-    } catch (err) {
-      console.error('[AI:project] JSON parse failed, raw:', raw.slice(0, 200))
+  try {
+    const response = await client.chat.completions.create({
+      model: model,
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 300,
+      response_format: { type: 'json_object' },
+    })
+
+    const raw = response.choices[0]?.message?.content ?? '{}'
+    const parsed = JSON.parse(raw)
+
+    return {
+      name: parsed.name ?? 'Тайное дело',
+      developerName: parsed.developerName ?? 'Ефим Лукавый',
+      claimedName: parsed.name ?? 'Тайное дело',
+      claimedAPY: Number(parsed.claimedAPY) || 100,
+      description: parsed.description ?? 'Прибыльное дело для смелых вкладчиков.',
+      roadmap: parsed.roadmap ?? ['Открыть дело', 'Собрать рубли', 'Распределить прибыль'],
     }
-  }
-  return {
-    name: 'Тайное дело',
-    developerName: 'Ефим Лукавый',
-    claimedName: 'Тайное дело',
-    claimedAPY: 200,
-    description: 'Прибыльное дело для смелых вкладчиков.',
-    roadmap: ['Открыть дело', 'Собрать рубли', 'Распределить прибыль'],
+  } catch (err) {
+    console.error('generateProjectData failed:', err)
+    return {
+      name: 'Тайное дело',
+      developerName: 'Ефим Лукавый',
+      claimedName: 'Тайное дело',
+      claimedAPY: 200,
+      description: 'Прибыльное дело для смелых вкладчиков.',
+      roadmap: ['Открыть дело', 'Собрать рубли', 'Распределить прибыль'],
+    }
   }
 }
 
@@ -365,11 +316,20 @@ export async function startAmaSession(input: AmaSessionInput, model = DEFAULT_MO
   const systemPrompt = buildAmaSystemPrompt(input, 1)
   const firstMessagePrompt = `Поприветствуй потенциального вкладчика как ${developerName}, делец и хозяин дела «${projectName}». Расскажи кратко о деле и предложи задавать вопросы. 2–3 предложения, живой современный русский язык.`
 
-  const raw = await chatComplete('ama-start', model, [
-    { role: 'system', content: systemPrompt },
-    { role: 'user', content: firstMessagePrompt },
-  ], 200)
-  return raw ?? `Здравствуй! Я ${developerName}, хозяин дела «${projectName}». Задавай вопросы!`
+  try {
+    const response = await client.chat.completions.create({
+      model: model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: firstMessagePrompt },
+      ],
+      max_tokens: 200,
+    })
+    return response.choices[0]?.message?.content ?? `Здравствуй! Я ${developerName}, хозяин дела «${projectName}». Задавай вопросы!`
+  } catch (err) {
+    console.error('[AMA startSession] OpenRouter error:', err)
+    throw err
+  }
 }
 
 export async function sendAmaMessage(input: SendAmaMessageInput, model = DEFAULT_MODEL): Promise<string> {
@@ -381,8 +341,19 @@ export async function sendAmaMessage(input: SendAmaMessageInput, model = DEFAULT
     { role: 'user', content: input.userMessage },
   ]
 
-  const raw = await chatComplete('ama-msg', model, messages, 200)
-  return raw ?? 'Дело хорошее, спрашивай смелее.'
+  try {
+    const response = await client.chat.completions.create({
+      model: model,
+      messages,
+      max_tokens: 200,
+    })
+    const content = response.choices[0]?.message?.content
+    console.log(`[AMA] model=${model} q=${input.questionCount} chars=${content?.length ?? 0}`)
+    return content ?? 'Дело хорошее, спрашивай смелее.'
+  } catch (err: any) {
+    console.error(`[AMA sendMessage] model=${model} error:`, err?.message ?? err)
+    throw err
+  }
 }
 
 // ─── Ежедневные вести ─────────────────────────────────────────────────────────
@@ -470,10 +441,17 @@ export async function generateDailyUpdate(
 
 Отвечай ТОЛЬКО валидным JSON.`
 
-  const raw = await chatComplete('daily', model, [{ role: 'user', content: prompt }], 300)
-  if (!raw) return
   try {
-    const parsed = extractJson(raw)
+    const response = await client.chat.completions.create({
+      model: model,
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 300,
+      response_format: { type: 'json_object' },
+    })
+
+    const raw = response.choices[0]?.message?.content ?? '{}'
+    const parsed = JSON.parse(raw)
+
     await prisma.dailyUpdate.update({
       where: { id: inserted.id },
       data: {
@@ -484,7 +462,7 @@ export async function generateDailyUpdate(
       },
     })
   } catch (err) {
-    console.error('[AI:daily] JSON parse failed, raw:', raw.slice(0, 200))
+    console.error('generateDailyUpdate failed:', err)
   }
 }
 
@@ -520,12 +498,15 @@ export async function generatePostMortem(input: PostMortemInput, model = DEFAULT
 
 Напиши 3–4 предложения: раскрой архетип, объясни что произошло, дай урок для будущих вложений. В тексте употребляй именно русское имя архетипа («${archetypeLabel}»), а не код. Современный русский, без крипты, без английских слов, без markdown-звёздочек.`
 
-  // Создаём запись ВСЕГДА: даже если AI упал, в Летописи должны быть видны
-  // архетип, судьба и базовая статистика — иначе карточка остаётся «пустой»
-  const raw = await chatComplete('postmortem', model, [{ role: 'user', content: prompt }], 300)
-  const analysis = raw ?? `Дело закрылось. ${fateLabel}.`
-
   try {
+    const response = await client.chat.completions.create({
+      model: model,
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 300,
+    })
+
+    const analysis = response.choices[0]?.message?.content ?? 'Дело закрылось.'
+
     await prisma.postMortem.create({
       data: {
         projectId,
@@ -543,6 +524,6 @@ export async function generatePostMortem(input: PostMortemInput, model = DEFAULT
       },
     })
   } catch (err) {
-    console.error('[AI:postmortem] DB insert failed:', err)
+    console.error('generatePostMortem failed:', err)
   }
 }
