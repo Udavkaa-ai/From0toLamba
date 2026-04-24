@@ -132,7 +132,11 @@ type MutTarget = 'shape' | 'color' | 'rings' | 'border' | 'dots' | 'emblemClass'
 const MUT_POOLS: Record<CharterDifficulty, MutTarget[]> = {
   EASY:   ['shape', 'color'],
   MEDIUM: ['emblemClass', 'rings'],
-  HARD:   ['emblemSame', 'dots', 'border'],
+  // HARD — только подмена эмблемы на похожую (fish↔falcon, bear↔wolf,
+  // anchor↔key). Dots/border на мелкой SVG плохо читаются под вращением —
+  // игроки жаловались, что разницу «не видно вообще». Оставляем одну
+  // читаемую мутацию — это и есть дух HARD: найти тонкую подмену зверя.
+  HARD:   ['emblemSame'],
 }
 
 /** «Похожие» эмблемы внутри одного класса — для HARD-мутаций */
