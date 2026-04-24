@@ -209,7 +209,7 @@ function RegistryCard({ project, postMortem }: { project: ClosedProject; postMor
           src={project.bannerImageUrl}
           alt={project.name}
           style={{
-            width: '100%', aspectRatio: '2 / 1', objectFit: 'cover',
+            width: '100%', aspectRatio: '7 / 4', objectFit: 'cover',
             borderRadius: '8px', marginBottom: spacing.md, display: 'block',
           }}
           onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}

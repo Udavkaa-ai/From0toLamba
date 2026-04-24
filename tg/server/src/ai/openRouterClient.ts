@@ -221,12 +221,13 @@ export async function generateProjectBanner(
     TYPE_THEME[type],
     ARCHETYPE_THEME[archetype],
     'russian fairy tale fantasy, dark mystical atmosphere, gold purple blue tones',
-    'cinematic banner 2:1, painterly illustration, no text, no letters',
+    'cinematic banner, painterly illustration, no text, no letters',
   ].join(', ')
 
   const seed = parseInt(projectId.replace(/-/g, '').slice(-6), 16) % 99999
-  // 2:1 aspect ratio — под карточки Летописи, Инбокса и Грамоты
-  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=512&nologo=true&seed=${seed}`
+  // 1344×768 — родное SDXL-разрешение 7:4 (~16:9). На 2:1 модель растягивала
+  // персонажей по горизонтали (сплюснутые лица), здесь композиция корректная.
+  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1344&height=768&nologo=true&seed=${seed}`
 
   await prisma.project.update({
     where: { id: projectId },

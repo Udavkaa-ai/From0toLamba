@@ -290,7 +290,7 @@ function IntroScreen({
         <img
           src={project.bannerImageUrl}
           alt={project.name}
-          style={{ width: '100%', aspectRatio: '2 / 1', objectFit: 'cover', borderRadius: '12px', marginBottom: spacing.md, display: 'block' }}
+          style={{ width: '100%', aspectRatio: '7 / 4', objectFit: 'cover', borderRadius: '12px', marginBottom: spacing.md, display: 'block' }}
           onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
         />
       )}
