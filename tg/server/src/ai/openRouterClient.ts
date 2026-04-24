@@ -92,10 +92,9 @@ const client = new OpenAI({
   },
 })
 
-const DEFAULT_MODEL = 'google/gemma-4-26b-a4b-it:free'
-/** Запасная бесплатная модель — пробуем если основная вернула ошибку
- *  (rate-limit на :free, провайдер 5xx, временные сбои). Тоже Gemma,
- *  тоже бесплатная, поведение похожее. */
+const DEFAULT_MODEL = 'deepseek/deepseek-v4-flash'
+/** Запасная модель — пробуем если основная вернула ошибку
+ *  (5xx, rate-limit, временные сбои). Бесплатная — ни копейки лишнего. */
 const FALLBACK_MODEL = 'google/gemma-3-27b-it:free'
 
 /** Подробно логируем что пришло от OpenRouter — без этого в Railway

@@ -5,7 +5,7 @@
 
 ## Состояние проекта
 
-**Активная версия:** Telegram Mini App (`tg/`) — v1.5.12
+**Активная версия:** Telegram Mini App (`tg/`) — v1.5.13
 **Android:** код в `app/`, разработка заморожена — всё усилие на TG-версию
 **Ветка разработки:** `claude/telegram-game-migration-FDnlX`
 
@@ -51,7 +51,7 @@ tg/
         │   ├── InvestService.ts           # Вложить/довложить/вывести/выйти + PostMortem при выходе
         │   ├── projectUtils.ts            # toPublicDTO (убирает скрытые поля)
         │   └── rankService.ts             # computeRank()
-        ├── ai/openRouterClient.ts  # Запросы к OpenRouter (Gemma free) + generateProjectBanner
+        ├── ai/openRouterClient.ts  # Запросы к OpenRouter (DeepSeek v4 Flash) + generateProjectBanner
         ├── bot/bot.ts              # Grammy Telegram bot
         ├── scheduler/dailyJob.ts   # node-cron — advance-day в 09:00 MSK + уведомления о доступности нового дня каждые 5 мин
         ├── middleware/telegramAuth.ts  # Верификация X-Telegram-Init-Data
@@ -147,7 +147,7 @@ InvestorRank:     NEWBIE (старт) → AMBASSADOR (100 ₽ + чуйка 10) �
 ## AI-интеграция
 
 - **Провайдер:** OpenRouter (`https://openrouter.ai/api/v1/`)
-- **Модели:** `google/gemma-4-26b-a4b-it:free` (по умолчанию, бесплатная) и `google/gemini-3.1-flash-lite-preview` (меняется в настройках через `preferredModel`). Прежний DeepSeek мигрируется на Gemma автоматически при входе
+- **Модели:** `deepseek/deepseek-v4-flash` (по умолчанию, платная, но максимально дешёвая и быстрая), `qwen/qwen3-next-80b-a3b-instruct:free` (бесплатная альтернатива) и `google/gemini-3.1-flash-lite-preview`. Меняется в настройках через `preferredModel`. Старые DeepSeek v3 и Gemma 4 free мигрируются на v4-flash автоматически при входе. Fallback при ошибке — `google/gemma-3-27b-it:free` (см. `chatComplete`)
 - **Клиент:** `tg/server/src/ai/openRouterClient.ts`
 - **Функции:** `generateAmaResponse`, `generateProjectName`, `generateDailyUpdate`, `generatePostMortem`, `generateProjectBanner`
 

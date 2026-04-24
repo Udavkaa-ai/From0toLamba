@@ -46,14 +46,15 @@ export async function gameRoutes(app: FastifyInstance) {
       gameState = { ...gameState, preferredModel: 'google/gemini-3.1-flash-lite-preview' }
     }
 
-    // Старых пользователей с платной DeepSeek переводим на бесплатную Gemma —
-    // чтобы не жечь бюджет, пока реклама не приносит доход
-    if (gameState.preferredModel === 'deepseek/deepseek-chat-v3-0324') {
+    // Пользователи на старых моделях (DeepSeek v3, Gemma 4 free) — переводим
+    // на новый дефолт DeepSeek v4 Flash: быстрее Gemma free и дешевле v3
+    const oldToV4Flash = ['deepseek/deepseek-chat-v3-0324', 'google/gemma-4-26b-a4b-it:free']
+    if (oldToV4Flash.includes(gameState.preferredModel)) {
       await prisma.gameState.update({
         where: { userId: user.id },
-        data: { preferredModel: 'google/gemma-4-26b-a4b-it:free' },
+        data: { preferredModel: 'deepseek/deepseek-v4-flash' },
       })
-      gameState = { ...gameState, preferredModel: 'google/gemma-4-26b-a4b-it:free' }
+      gameState = { ...gameState, preferredModel: 'deepseek/deepseek-v4-flash' }
     }
 
     // Запускаем онбординг если не начат
@@ -226,7 +227,7 @@ export async function gameRoutes(app: FastifyInstance) {
       include: { gameState: true },
     })
     return {
-      preferredModel: user.gameState?.preferredModel ?? 'google/gemma-4-26b-a4b-it:free',
+      preferredModel: user.gameState?.preferredModel ?? 'deepseek/deepseek-v4-flash',
     }
   })
 
@@ -235,7 +236,7 @@ export async function gameRoutes(app: FastifyInstance) {
     const tgUser = request.telegramUser
     const body = z.object({
       preferredModel: z.enum([
-        'google/gemma-4-26b-a4b-it:free',
+        'deepseek/deepseek-v4-flash',
         'qwen/qwen3-next-80b-a3b-instruct:free',
         'google/gemini-3.1-flash-lite-preview',
       ]),
@@ -421,7 +422,7 @@ export async function gameRoutes(app: FastifyInstance) {
     // Delete all user's projects (cascades to AmaSession, AmaMessage, DailyUpdate, PostMortem)
     await prisma.project.deleteMany({ where: { userId: user.id } })
     // Reset game state (keep preferredModel)
-    const preferredModel = user.gameState?.preferredModel ?? 'google/gemma-4-26b-a4b-it:free'
+    const preferredModel = user.gameState?.preferredModel ?? 'deepseek/deepseek-v4-flash'
     await prisma.gameState.update({
       where: { userId: user.id },
       data: {
