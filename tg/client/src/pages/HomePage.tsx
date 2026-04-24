@@ -2,9 +2,13 @@ import { useEffect, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ScreenBackground } from '@/components/ScreenBackground'
+import { ScreenBackground, APP_VERSION } from '@/components/ScreenBackground'
 import { FairyCard, OrnamentDivider } from '@/components/FairyCard'
 import { RankUpOverlay } from '@/components/RankUpOverlay'
+import { OnboardingTutorial } from '@/components/OnboardingTutorial'
+import {
+  WhatsNewOverlay, getPendingChangelog, markChangelogSeen, type ChangelogEntry,
+} from '@/components/WhatsNewOverlay'
 import { api, type ProjectDTO, type DailyUpdateDTO } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing, typography } from '@/theme'
@@ -26,29 +30,6 @@ const MODEL_OPTIONS = [
   },
 ]
 
-const INTRO_CARDS = [
-  {
-    icon: '📜',
-    title: 'Как играть',
-    text: 'Каждый день во «Входящих грамотах» появляются предложения от дельцов. Большинство — обман. Твоя задача — распознать жуликов, не потеряв рубли.',
-  },
-  {
-    icon: '🔍',
-    title: 'Купеческая грамота',
-    text: 'Перед вложением смотри грамоту дельца — сетка из 24 печатей. За 15 секунд найди подделки. Чем больше лжи в деле — тем больше поддельных печатей.',
-  },
-  {
-    icon: '👁',
-    title: 'Чуйка',
-    text: '+1 за каждую найденную подделку, −1 за ложное обвинение, −2 за пропущенную. Чем точнее чуйка — тем выше купеческий чин.',
-  },
-  {
-    icon: '💰',
-    title: 'Вложения',
-    text: 'Вложи рубли → они растут каждый день. Часть дел сбежит с деньгами, часть — принесёт иксы. Начни с малого, расти до Князя.',
-  },
-]
-
 export function HomePage() {
   const navigate = useNavigate()
   const qc = useQueryClient()
@@ -58,6 +39,16 @@ export function HomePage() {
   const [showResetConfirm, setShowResetConfirm] = useState(false)
   const [showDayNews, setShowDayNews] = useState(false)
   const [showAdStub, setShowAdStub] = useState(false)
+  const [showTutorial, setShowTutorial] = useState(false)
+  const [pendingChangelog, setPendingChangelog] = useState<ChangelogEntry | null>(null)
+
+  // При монтировании главной — проверяем, видел ли игрок текущую версию.
+  // Показываем changelog только старым игрокам (у кого уже есть lastSeenVersion);
+  // новичкам вместо него идёт вводный тур.
+  useEffect(() => {
+    const entry = getPendingChangelog(APP_VERSION)
+    if (entry) setPendingChangelog(entry)
+  }, [])
   // Тикает каждую секунду, чтобы перерисовывать таймер кулдауна
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
@@ -108,6 +99,20 @@ export function HomePage() {
       setLocalModel(data.preferredModel)
     },
   })
+
+  const completeOnboardingMutation = useMutation({
+    mutationFn: api.game.completeOnboarding,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['gameState'] }),
+  })
+
+  // Первый вход — показываем вводный тур один раз. После этого
+  // isOnboardingComplete=true и автозапуска больше не будет.
+  useEffect(() => {
+    if (gameState && !gameState.isOnboardingComplete && !showTutorial) {
+      setShowTutorial(true)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameState?.isOnboardingComplete])
 
   const resetMutation = useMutation({
     mutationFn: api.game.resetGame,
@@ -174,6 +179,25 @@ export function HomePage() {
   return (
     <ScreenBackground>
       {gameState.pendingRankUp && <RankUpOverlay rank={gameState.pendingRankUp} />}
+      <AnimatePresence>
+        {showTutorial && (
+          <OnboardingTutorial
+            onClose={() => {
+              setShowTutorial(false)
+              if (!gameState.isOnboardingComplete) completeOnboardingMutation.mutate()
+            }}
+          />
+        )}
+        {pendingChangelog && !showTutorial && (
+          <WhatsNewOverlay
+            entry={pendingChangelog}
+            onClose={() => {
+              markChangelogSeen(APP_VERSION)
+              setPendingChangelog(null)
+            }}
+          />
+        )}
+      </AnimatePresence>
       {showDayNews && gameState.activeProjects.length > 0 && (
         <DayNewsOverlay projects={gameState.activeProjects} onClose={() => setShowDayNews(false)} />
       )}
@@ -268,6 +292,33 @@ export function HomePage() {
                     )
                   })}
                 </div>
+              </div>
+
+              {/* Повторный просмотр вводного рассказа */}
+              <div style={{ marginBottom: '28px' }}>
+                <div style={{ color: colors.textSecondary, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Подсказки
+                </div>
+                <button
+                  onClick={() => { setShowSettings(false); setShowTutorial(true) }}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    background: `${colors.fairyGold}18`,
+                    border: `1px solid ${colors.fairyGold}55`,
+                    borderRadius: '12px',
+                    color: colors.fairyGold,
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                  }}
+                >
+                  📖 Как играть
+                  <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '4px', fontWeight: 400 }}>
+                    Вводный рассказ о делах, хозяевах и судьбах
+                  </div>
+                </button>
               </div>
 
               {/* Пригласительная грамота */}
@@ -394,54 +445,6 @@ export function HomePage() {
             ✦ День {gameState.currentDay} · {RANK_DISPLAY[gameState.investorRank] ?? gameState.investorRank} ✦
           </div>
         </motion.div>
-
-        {/* Обучающие карточки (только до завершения онбординга) */}
-        {!gameState.isOnboardingComplete && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-            style={{ marginBottom: spacing.lg }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                overflowX: 'auto',
-                gap: spacing.sm,
-                paddingBottom: '4px',
-                scrollbarWidth: 'none',
-                msOverflowStyle: 'none',
-              } as React.CSSProperties}
-            >
-              {INTRO_CARDS.map((card, i) => (
-                <div
-                  key={i}
-                  style={{
-                    minWidth: '220px',
-                    maxWidth: '220px',
-                    height: '120px',
-                    flexShrink: 0,
-                    background: `linear-gradient(145deg, ${colors.cardGradientTop}, ${colors.cardGradientBottom})`,
-                    border: `1px solid ${colors.fairyGold}30`,
-                    borderRadius: '14px',
-                    padding: '14px',
-                    boxSizing: 'border-box',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'flex-start',
-                  }}
-                >
-                  <div style={{ fontSize: '16px', marginBottom: '4px' }}>
-                    {card.icon} <span style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '13px' }}>{card.title}</span>
-                  </div>
-                  <div style={{ color: colors.textSecondary, fontSize: '11px', lineHeight: '1.4' }}>
-                    {card.text}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
 
         {/* Баланс */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>

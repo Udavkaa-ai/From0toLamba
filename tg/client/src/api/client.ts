@@ -114,6 +114,11 @@ export interface GameStateDTO {
   userId: number
   activeProjects: ProjectDTO[]
   inboxProjects: ProjectDTO[]
+  // Увиденные породы/личины/судьбы — чтобы подвиги знали, какие справки
+  // уже открыты. Массив строк из enum'ов сервера.
+  seenTypes: string[]
+  seenArchetypes: string[]
+  seenFates: string[]
 }
 
 export interface LeaderboardEntryDTO {

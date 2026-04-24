@@ -5,11 +5,13 @@ export interface Achievement {
   name: string       // старорусское имя подвига
   description: string
   emoji: string
-  category: 'wealth' | 'charter' | 'deals' | 'social' | 'rank'
+  category: 'wealth' | 'charter' | 'deals' | 'social' | 'rank' | 'bestiary'
   /** Если возвращает true — подвиг совершён */
   check: (ctx: AchievementContext) => boolean
   /** Прогресс до цели — для отображения шкалы */
   progress?: (ctx: AchievementContext) => { current: number; target: number }
+  /** Подвиги «зверинца» — по тапу открывают справку о породе/личине/судьбе */
+  revealTopic?: { kind: 'type' | 'archetype' | 'fate'; id: string }
 }
 
 export interface AchievementContext {
@@ -218,6 +220,165 @@ export const ACHIEVEMENTS: Achievement[] = [
     check: ({ gameState }) => gameState.referralCount >= 20,
     progress: ({ gameState }) => ({ current: Math.min(gameState.referralCount, 20), target: 20 }),
   },
+
+  // ─── Зверинец: породы дел ───────────────────────────────────────────────
+  {
+    id: 'seen_card_game',
+    name: 'Картёжный стол',
+    description: 'Закрой дело с породой «Азартная игра»',
+    emoji: '🎴',
+    category: 'bestiary',
+    revealTopic: { kind: 'type', id: 'CARD_GAME' },
+    check: ({ gameState }) => gameState.seenTypes.includes('CARD_GAME'),
+  },
+  {
+    id: 'seen_treasure_hunt',
+    name: 'Тропой кладоискателя',
+    description: 'Закрой дело с породой «Поиск клада»',
+    emoji: '🗺️',
+    category: 'bestiary',
+    revealTopic: { kind: 'type', id: 'TREASURE_HUNT' },
+    check: ({ gameState }) => gameState.seenTypes.includes('TREASURE_HUNT'),
+  },
+  {
+    id: 'seen_potion_brew',
+    name: 'Котёл зельевара',
+    description: 'Закрой дело с породой «Зелейное дело»',
+    emoji: '🧪',
+    category: 'bestiary',
+    revealTopic: { kind: 'type', id: 'POTION_BREW' },
+    check: ({ gameState }) => gameState.seenTypes.includes('POTION_BREW'),
+  },
+  {
+    id: 'seen_guild_scheme',
+    name: 'Артельный подмастерье',
+    description: 'Закрой дело с породой «Артель»',
+    emoji: '⚙️',
+    category: 'bestiary',
+    revealTopic: { kind: 'type', id: 'GUILD_SCHEME' },
+    check: ({ gameState }) => gameState.seenTypes.includes('GUILD_SCHEME'),
+  },
+  {
+    id: 'seen_honest_trade',
+    name: 'Ряды ярмарочные',
+    description: 'Закрой дело с породой «Честная торговля»',
+    emoji: '🤝',
+    category: 'bestiary',
+    revealTopic: { kind: 'type', id: 'HONEST_TRADE' },
+    check: ({ gameState }) => gameState.seenTypes.includes('HONEST_TRADE'),
+  },
+
+  // ─── Зверинец: личины хозяев ────────────────────────────────────────────
+  {
+    id: 'seen_buratino',
+    name: 'Золотой ключик',
+    description: 'Распознай Буратино — закрой его дело',
+    emoji: '🤥',
+    category: 'bestiary',
+    revealTopic: { kind: 'archetype', id: 'BURATINO' },
+    check: ({ gameState }) => gameState.seenArchetypes.includes('BURATINO'),
+  },
+  {
+    id: 'seen_boyarin',
+    name: 'Царь-Горошина',
+    description: 'Столкнись с царём Горохом',
+    emoji: '👑',
+    category: 'bestiary',
+    revealTopic: { kind: 'archetype', id: 'BOYARIN' },
+    check: ({ gameState }) => gameState.seenArchetypes.includes('BOYARIN'),
+  },
+  {
+    id: 'seen_kolobok',
+    name: 'Ох, румяный бок',
+    description: 'Встреть Колобка и узнай его присказки',
+    emoji: '🥮',
+    category: 'bestiary',
+    revealTopic: { kind: 'archetype', id: 'KOLOBOK' },
+    check: ({ gameState }) => gameState.seenArchetypes.includes('KOLOBOK'),
+  },
+  {
+    id: 'seen_koschei',
+    name: 'Ледяной счёт',
+    description: 'Закрой дело Кощея — самый опасный хозяин',
+    emoji: '💀',
+    category: 'bestiary',
+    revealTopic: { kind: 'archetype', id: 'KOSCHEI' },
+    check: ({ gameState }) => gameState.seenArchetypes.includes('KOSCHEI'),
+  },
+  {
+    id: 'seen_zolushka',
+    name: 'Хрустальная туфелька',
+    description: 'Повстречай Золушку на ярмарке',
+    emoji: '👠',
+    category: 'bestiary',
+    revealTopic: { kind: 'archetype', id: 'ZOLUSHKA' },
+    check: ({ gameState }) => gameState.seenArchetypes.includes('ZOLUSHKA'),
+  },
+  {
+    id: 'seen_baba_yaga',
+    name: 'Избушка на опушке',
+    description: 'Загляни в дела Бабы-яги',
+    emoji: '🏚️',
+    category: 'bestiary',
+    revealTopic: { kind: 'archetype', id: 'BABA_YAGA' },
+    check: ({ gameState }) => gameState.seenArchetypes.includes('BABA_YAGA'),
+  },
+  {
+    id: 'seen_ivan_durak',
+    name: 'По щучьему велению',
+    description: 'Послушай Ивана-дурака — он честнее всех',
+    emoji: '🙃',
+    category: 'bestiary',
+    revealTopic: { kind: 'archetype', id: 'IVAN_DURAK' },
+    check: ({ gameState }) => gameState.seenArchetypes.includes('IVAN_DURAK'),
+  },
+
+  // ─── Зверинец: судьбы дел ───────────────────────────────────────────────
+  {
+    id: 'seen_instant_scam',
+    name: 'Укус вора',
+    description: 'Переживи внезапное бегство хозяина с казной',
+    emoji: '💀',
+    category: 'bestiary',
+    revealTopic: { kind: 'fate', id: 'INSTANT_SCAM' },
+    check: ({ gameState }) => gameState.seenFates.includes('INSTANT_SCAM'),
+  },
+  {
+    id: 'seen_slow_drain',
+    name: 'Тихий закат',
+    description: 'Увидь как дело медленно истлевает',
+    emoji: '🌫️',
+    category: 'bestiary',
+    revealTopic: { kind: 'fate', id: 'SLOW_DRAIN' },
+    check: ({ gameState }) => gameState.seenFates.includes('SLOW_DRAIN'),
+  },
+  {
+    id: 'seen_honest_fail',
+    name: 'Без удачи, но с честью',
+    description: 'Столкнись с честным провалом',
+    emoji: '😔',
+    category: 'bestiary',
+    revealTopic: { kind: 'fate', id: 'HONEST_FAIL' },
+    check: ({ gameState }) => gameState.seenFates.includes('HONEST_FAIL'),
+  },
+  {
+    id: 'seen_survivor',
+    name: 'Крепкий якорь',
+    description: 'Доведи дело-долгожителя до достойного закрытия',
+    emoji: '⚓',
+    category: 'bestiary',
+    revealTopic: { kind: 'fate', id: 'SURVIVOR' },
+    check: ({ gameState }) => gameState.seenFates.includes('SURVIVOR'),
+  },
+  {
+    id: 'seen_unicorn',
+    name: 'Поймал единорога',
+    description: 'Застань редчайший сказочный взлёт',
+    emoji: '🦄',
+    category: 'bestiary',
+    revealTopic: { kind: 'fate', id: 'UNICORN' },
+    check: ({ gameState }) => gameState.seenFates.includes('UNICORN'),
+  },
 ]
 
 export interface EvaluatedAchievement {
@@ -228,6 +389,7 @@ export interface EvaluatedAchievement {
   category: Achievement['category']
   unlocked: boolean
   progress?: { current: number; target: number }
+  revealTopic?: { kind: 'type' | 'archetype' | 'fate'; id: string }
 }
 
 export function evaluateAchievements(gameState: GameStateDTO): EvaluatedAchievement[] {
@@ -240,13 +402,15 @@ export function evaluateAchievements(gameState: GameStateDTO): EvaluatedAchievem
     category: a.category,
     unlocked: a.check(ctx),
     progress: a.progress?.(ctx),
+    revealTopic: a.revealTopic,
   }))
 }
 
 export const CATEGORY_LABELS: Record<Achievement['category'], string> = {
-  charter: '📜 Грамоты',
-  deals:   '⚖️ Дела',
-  wealth:  '💰 Достаток',
-  rank:    '🏆 Чин',
-  social:  '🤝 Сватовство',
+  charter:   '📜 Грамоты',
+  deals:     '⚖️ Дела',
+  wealth:    '💰 Достаток',
+  rank:      '🏆 Чин',
+  social:    '🤝 Сватовство',
+  bestiary:  '🗂️ Купеческая справа',
 }

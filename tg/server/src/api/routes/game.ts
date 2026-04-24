@@ -130,6 +130,16 @@ export async function gameRoutes(app: FastifyInstance) {
     const evaluatedTotal = tp + fp + fn
     const intuitionAccuracy = evaluatedTotal > 0 ? tp / evaluatedTotal : null
 
+    // Увиденные породы/личины/судьбы — по закрытым делам с разбором.
+    // Нужно для подвигов, открывающих справочник.
+    const postMortems = await prisma.postMortem.findMany({
+      where: { userId: user.id },
+      select: { revealedArchetype: true, fate: true, project: { select: { type: true } } },
+    })
+    const seenTypes = Array.from(new Set(postMortems.map(p => p.project.type)))
+    const seenArchetypes = Array.from(new Set(postMortems.map(p => p.revealedArchetype)))
+    const seenFates = Array.from(new Set(postMortems.map(p => p.fate)))
+
     return {
       balance: gameState.balance,
       currentDay: gameState.currentDay,
@@ -155,6 +165,9 @@ export async function gameRoutes(app: FastifyInstance) {
       maxConsecutiveAdvances: MAX_CONSECUTIVE_ADVANCES,
       activeProjects: activeProjects.map(toPublicDTO),
       inboxProjects: inboxProjects.map(toPublicDTO),
+      seenTypes,
+      seenArchetypes,
+      seenFates,
     }
   })
 
