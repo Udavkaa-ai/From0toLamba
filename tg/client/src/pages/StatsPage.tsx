@@ -260,8 +260,9 @@ function AchievementDetailModal({
           borderRadius: '20px 20px 0 0',
           border: `1px solid ${colors.cardBorder}`,
           padding: `${spacing.xl} ${spacing.lg}`,
-          paddingBottom: `calc(${spacing.xl} + env(safe-area-inset-bottom))`,
-          maxHeight: '85vh',
+          // BottomNav ~60px по высоте — иначе кнопка «Закрыть» уйдёт под неё
+          paddingBottom: `calc(72px + ${spacing.md} + env(safe-area-inset-bottom))`,
+          maxHeight: '85dvh',
           overflowY: 'auto',
         }}
       >

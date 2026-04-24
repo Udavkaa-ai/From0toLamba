@@ -67,9 +67,11 @@ export function OnboardingTutorial({ onClose }: { onClose: () => void }) {
         position: 'fixed', inset: 0, zIndex: 300,
         background: 'rgba(6, 4, 18, 0.92)',
         display: 'flex', flexDirection: 'column',
-        padding: `${spacing.xxl} ${spacing.lg}`,
-        paddingTop: `calc(${spacing.xxl} + env(safe-area-inset-top))`,
-        paddingBottom: `calc(${spacing.xxl} + env(safe-area-inset-bottom))`,
+        padding: `${spacing.lg}`,
+        paddingTop: `calc(${spacing.lg} + env(safe-area-inset-top))`,
+        // Снизу — BottomNav (~60px на родительской странице) + safe-area
+        paddingBottom: `calc(72px + ${spacing.md} + env(safe-area-inset-bottom))`,
+        overflowY: 'auto',
       }}
     >
       {/* Кнопка «Пропустить» */}
