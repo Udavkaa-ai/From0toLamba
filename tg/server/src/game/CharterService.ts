@@ -1,6 +1,7 @@
 import { prisma } from '../db/prisma'
 import { ProjectFate, LieTopic, ProjectPublicDTO } from './types'
 import { toPublicDTO } from './projectUtils'
+import { recomputeRank } from './rankService'
 
 const GRID_SIZE = 24              // 6×4
 const TIME_LIMIT_SECONDS = 15     // подсказка клиенту; серверная валидация времени не делается
@@ -177,6 +178,9 @@ export async function submitCharter(
       data: { isInbox: false },
     }),
   ])
+
+  // Чуйка изменилась — пересчитать ранг, чтобы он не «прилипал» до advance-day
+  await recomputeRank(userId)
 
   return {
     forgedIndices: [...forgedSet].sort((a, b) => a - b),

@@ -1,6 +1,7 @@
 import { prisma } from '../db/prisma'
 import { ProjectType, WITHDRAWAL_RULES } from './types'
 import { generatePostMortem } from '../ai/openRouterClient'
+import { recomputeRank } from './rankService'
 
 const MIN_INVEST = 5
 const MAX_INVEST_PER_PROJECT = 5000
@@ -171,6 +172,9 @@ export async function exitProject(userId: number, projectId: string): Promise<nu
     daysActive: project.daysSinceJoined,
     intuitionDelta: amaSession?.intuitionDelta ?? 0,
   }).catch(console.error)
+
+  // Достаток заметно меняется — пересчитываем ранг сразу, а не ждём advance-day
+  await recomputeRank(userId)
 
   return received
 }

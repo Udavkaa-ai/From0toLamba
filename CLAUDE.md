@@ -5,7 +5,7 @@
 
 ## Состояние проекта
 
-**Активная версия:** Telegram Mini App (`tg/`) — v1.5.6
+**Активная версия:** Telegram Mini App (`tg/`) — v1.5.7
 **Android:** код в `app/`, разработка заморожена — всё усилие на TG-версию
 **Ветка разработки:** `claude/telegram-game-migration-FDnlX`
 
@@ -273,7 +273,7 @@ npm run build  # outDir = ../server/public  (не коммитить!)
 
 - Скрытые поля проекта — никогда в клиент до закрытия. Только `toPublicDTO()`
 - AI вызывается только через `openRouterClient.ts`, не из роутов напрямую
-- `updateRankIfNeeded()` — только в `AdvanceDayService`, не при инвестировании
+- Ранг пересчитывает `recomputeRank(userId)` из `rankService.ts`. Вызывается в `AdvanceDayService`, после сабмита грамоты (`CharterService`) и после выхода из дела (`InvestService.exitProject`). При обычных вложениях/довложениях/частичных выводах — не трогаем (прокачку «покупкой» не хотим)
 - При закрытии дела — генерировать `PostMortem` с раскрытием архетипа
 - При выходе игрока (`exitProject`) — вызывать `generatePostMortem` асинхронно (`.catch(console.error)`)
 - `tg/server/public/` — **не коммитить**. Он в `.gitignore`

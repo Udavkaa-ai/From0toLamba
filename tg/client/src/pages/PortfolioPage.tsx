@@ -223,6 +223,7 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
   const [showAddInvest, setShowAddInvest] = useState(false)
   const [withdrawAmount, setWithdrawAmount] = useState('')
   const [addAmount, setAddAmount] = useState('')
+  const [confirmExit, setConfirmExit] = useState(false)
 
   const { data: updates } = useQuery({
     queryKey: ['updates', project.id],
@@ -358,7 +359,7 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
         <motion.button
           whileTap={{ scale: 0.96, background: `${colors.danger}35` }}
           transition={{ duration: 0.1 }}
-          onClick={() => exitMutation.mutate()}
+          onClick={() => { setConfirmExit(true); setShowWithdraw(false); setShowAddInvest(false) }}
           disabled={exitMutation.isPending || project.isWithdrawalLocked}
           style={{
             flex: 1, padding: '8px', background: `${colors.danger}20`,
@@ -370,6 +371,59 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
           Покинуть дело
         </motion.button>
       </div>
+
+      {/* Подтверждение выхода из дела — чтобы не нажать случайно */}
+      <AnimatePresence>
+        {confirmExit && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            style={{ overflow: 'hidden' }}
+          >
+            <div style={{
+              marginTop: spacing.md,
+              padding: spacing.md,
+              background: `${colors.danger}10`,
+              border: `1px solid ${colors.danger}50`,
+              borderRadius: '10px',
+            }}>
+              <div style={{ color: colors.textPrimary, fontSize: '13px', marginBottom: spacing.sm }}>
+                Покинуть дело? Вернётся <span style={{ color: colors.fairyGold, fontWeight: 700 }}>
+                  {(project.currentValueRubles * (1 - (project.type === 'CARD_GAME' || project.type === 'TREASURE_HUNT' ? 0.25 : 0))).toFixed(0)} ₽
+                </span> в казну.
+              </div>
+              <div style={{ display: 'flex', gap: spacing.sm }}>
+                <button
+                  onClick={() => setConfirmExit(false)}
+                  style={{
+                    flex: 1, padding: '8px',
+                    background: 'rgba(255,255,255,0.06)',
+                    border: `1px solid ${colors.cardBorder}`, borderRadius: '8px',
+                    color: colors.textSecondary, fontSize: '12px', fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Остаться
+                </button>
+                <button
+                  onClick={() => { exitMutation.mutate(); setConfirmExit(false) }}
+                  disabled={exitMutation.isPending}
+                  style={{
+                    flex: 1, padding: '8px',
+                    background: colors.danger, border: 'none', borderRadius: '8px',
+                    color: '#fff', fontSize: '12px', fontWeight: 700,
+                    cursor: 'pointer',
+                    opacity: exitMutation.isPending ? 0.6 : 1,
+                  }}
+                >
+                  {exitMutation.isPending ? 'Выходим…' : 'Да, покинуть'}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {withdrawalHint(project) && (
         <div style={{ color: colors.textMuted, fontSize: '10px', marginTop: '4px' }}>

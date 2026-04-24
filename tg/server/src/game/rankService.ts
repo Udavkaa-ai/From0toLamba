@@ -1,4 +1,5 @@
 import { InvestorRank } from './types'
+import { prisma } from '../db/prisma'
 
 /**
  * Ранги зависят только от достатка (totalWealth = balance + активные вложения)
@@ -35,4 +36,39 @@ const RANK_ORDER: Record<InvestorRank, number> = {
 
 export function isRankUp(oldRank: InvestorRank, newRank: InvestorRank): boolean {
   return RANK_ORDER[newRank] > RANK_ORDER[oldRank]
+}
+
+/**
+ * Пересчитать ранг по актуальным данным и сохранить, если изменился.
+ * При повышении ставит pendingRankUp — на главной покажется поздравление.
+ * Вызывать после событий, которые меняют чуйку или достаток вне advance-day
+ * (сабмит грамоты, выход из дела) — иначе ранг «прилипает» к значению
+ * последнего перехода дня.
+ */
+export async function recomputeRank(userId: number): Promise<InvestorRank> {
+  const [gs, actives] = await Promise.all([
+    prisma.gameState.findUniqueOrThrow({ where: { userId } }),
+    prisma.project.findMany({
+      where: { userId, isActive: true },
+      select: { currentValueRubles: true },
+    }),
+  ])
+  const totalWealth = gs.balance + actives.reduce((s, p) => s + p.currentValueRubles, 0)
+  const newRank = computeRank({
+    currentDay: gs.currentDay,
+    totalWealth,
+    intuitionScore: gs.intuitionScore,
+  })
+  const oldRank = gs.investorRank as InvestorRank
+  if (newRank === oldRank) return newRank
+
+  const rankUp = isRankUp(oldRank, newRank)
+  await prisma.gameState.update({
+    where: { userId },
+    data: {
+      investorRank: newRank,
+      ...(rankUp ? { pendingRankUp: newRank } : {}),
+    },
+  })
+  return newRank
 }
