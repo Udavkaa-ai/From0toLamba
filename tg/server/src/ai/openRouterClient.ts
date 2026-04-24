@@ -143,6 +143,7 @@ export async function generateProjectData(input: GenerateProjectInput, model = D
 {"name":"...","developerName":"...","claimedAPY":...,"description":"...","roadmap":["...","...","..."]}`
 
   try {
+    console.log(`[AI:project] model=${model}`)
     const response = await client.chat.completions.create({
       model: model,
       messages: [{ role: 'user', content: prompt }],
@@ -317,6 +318,7 @@ export async function startAmaSession(input: AmaSessionInput, model = DEFAULT_MO
   const firstMessagePrompt = `Поприветствуй потенциального вкладчика как ${developerName}, делец и хозяин дела «${projectName}». Расскажи кратко о деле и предложи задавать вопросы. 2–3 предложения, живой современный русский язык.`
 
   try {
+    console.log(`[AI:ama-start] model=${model}`)
     const response = await client.chat.completions.create({
       model: model,
       messages: [
@@ -342,6 +344,7 @@ export async function sendAmaMessage(input: SendAmaMessageInput, model = DEFAULT
   ]
 
   try {
+    console.log(`[AI:ama-msg] model=${model} q=${input.questionCount}`)
     const response = await client.chat.completions.create({
       model: model,
       messages,
@@ -442,6 +445,7 @@ export async function generateDailyUpdate(
 Отвечай ТОЛЬКО валидным JSON.`
 
   try {
+    console.log(`[AI:daily] model=${model} project=${project.name}`)
     const response = await client.chat.completions.create({
       model: model,
       messages: [{ role: 'user', content: prompt }],
@@ -499,6 +503,7 @@ export async function generatePostMortem(input: PostMortemInput, model = DEFAULT
 Напиши 3–4 предложения: раскрой архетип, объясни что произошло, дай урок для будущих вложений. В тексте употребляй именно русское имя архетипа («${archetypeLabel}»), а не код. Современный русский, без крипты, без английских слов, без markdown-звёздочек.`
 
   try {
+    console.log(`[AI:postmortem] model=${model} projectId=${projectId}`)
     const response = await client.chat.completions.create({
       model: model,
       messages: [{ role: 'user', content: prompt }],
