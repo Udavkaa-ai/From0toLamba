@@ -46,6 +46,16 @@ export async function gameRoutes(app: FastifyInstance) {
       gameState = { ...gameState, preferredModel: 'google/gemini-3.1-flash-lite-preview' }
     }
 
+    // Старых пользователей с платной DeepSeek переводим на бесплатную Gemma —
+    // чтобы не жечь бюджет, пока реклама не приносит доход
+    if (gameState.preferredModel === 'deepseek/deepseek-chat-v3-0324') {
+      await prisma.gameState.update({
+        where: { userId: user.id },
+        data: { preferredModel: 'google/gemma-4-26b-a4b-it:free' },
+      })
+      gameState = { ...gameState, preferredModel: 'google/gemma-4-26b-a4b-it:free' }
+    }
+
     // Запускаем онбординг если не начат
     if (!gameState.isOnboardingComplete) {
       const inboxCount = await prisma.project.count({ where: { userId: user.id, isInbox: true } })
@@ -216,7 +226,7 @@ export async function gameRoutes(app: FastifyInstance) {
       include: { gameState: true },
     })
     return {
-      preferredModel: user.gameState?.preferredModel ?? 'deepseek/deepseek-chat-v3-0324',
+      preferredModel: user.gameState?.preferredModel ?? 'google/gemma-4-26b-a4b-it:free',
     }
   })
 
@@ -224,7 +234,7 @@ export async function gameRoutes(app: FastifyInstance) {
   app.post('/api/game/settings', { preHandler: telegramAuthHook }, async (request, reply) => {
     const tgUser = request.telegramUser
     const body = z.object({
-      preferredModel: z.enum(['deepseek/deepseek-chat-v3-0324', 'google/gemini-3.1-flash-lite-preview']),
+      preferredModel: z.enum(['google/gemma-4-26b-a4b-it:free', 'google/gemini-3.1-flash-lite-preview']),
     }).safeParse(request.body)
     if (!body.success) return reply.status(400).send({ error: 'Неверная модель' })
 
@@ -407,7 +417,7 @@ export async function gameRoutes(app: FastifyInstance) {
     // Delete all user's projects (cascades to AmaSession, AmaMessage, DailyUpdate, PostMortem)
     await prisma.project.deleteMany({ where: { userId: user.id } })
     // Reset game state (keep preferredModel)
-    const preferredModel = user.gameState?.preferredModel ?? 'deepseek/deepseek-chat-v3-0324'
+    const preferredModel = user.gameState?.preferredModel ?? 'google/gemma-4-26b-a4b-it:free'
     await prisma.gameState.update({
       where: { userId: user.id },
       data: {

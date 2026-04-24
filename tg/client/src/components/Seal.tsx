@@ -8,8 +8,8 @@ const SHAPES = [
 ] as const
 type Shape = typeof SHAPES[number]
 
-// Primary — заметно ярче фона ячейки (#0A0818), чтобы даже shade(-15%) оставался
-// различимым. Secondary — тёмный, для контрастных линий и эмблемы поверх primary.
+// Primary — заметно ярче фона ячейки (#0A0818), чтобы подделка с тонкой мутацией
+// оттенка всё ещё читалась. Secondary — тёмный, для контрастных линий и эмблемы поверх primary.
 const COLORS = [
   { key: 'gold',    primary: '#E8B833', secondary: '#5A3100' },
   { key: 'bronze',  primary: '#C97A3E', secondary: '#4A2208' },
@@ -18,7 +18,7 @@ const COLORS = [
   { key: 'indigo',  primary: '#6275C4', secondary: '#1A2348' },
 ] as const
 
-/** Палитра печати — собрана из COLORS или с мутированным оттенком (shade). */
+/** Палитра печати — из COLORS или со сдвинутым тоном (hue shift). */
 interface SealColor {
   key: string
   primary: string
@@ -76,17 +76,37 @@ function pickBy<T>(arr: readonly T[], n: number): T {
   return arr[Math.abs(n) % arr.length]
 }
 
-/** Сдвиг оттенка: percent > 0 — светлее, < 0 — темнее. Сохраняет тон, меняет только яркость. */
-function shade(hex: string, percent: number): string {
-  const r = parseInt(hex.slice(1, 3), 16)
-  const g = parseInt(hex.slice(3, 5), 16)
-  const b = parseInt(hex.slice(5, 7), 16)
-  const adjust = (v: number) => {
-    const delta = (percent > 0 ? (255 - v) : v) * Math.abs(percent) / 100
-    const out = percent > 0 ? v + delta : v - delta
-    return Math.max(0, Math.min(255, Math.round(out)))
+/** Сдвиг тона (HSL hue) на N градусов. Яркость и насыщенность не трогаем —
+ *  меняется именно оттенок, это заметно на любом экране. */
+function shiftHue(hex: string, degrees: number): string {
+  const r = parseInt(hex.slice(1, 3), 16) / 255
+  const g = parseInt(hex.slice(3, 5), 16) / 255
+  const b = parseInt(hex.slice(5, 7), 16) / 255
+  const max = Math.max(r, g, b), min = Math.min(r, g, b)
+  const l = (max + min) / 2
+  let h = 0, s = 0
+  if (max !== min) {
+    const d = max - min
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
+    if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) * 60
+    else if (max === g) h = ((b - r) / d + 2) * 60
+    else h = ((r - g) / d + 4) * 60
   }
-  return '#' + [adjust(r), adjust(g), adjust(b)].map(v => v.toString(16).padStart(2, '0')).join('')
+  h = (h + degrees + 360) % 360
+
+  const c = (1 - Math.abs(2 * l - 1)) * s
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1))
+  const m = l - c / 2
+  let [r2, g2, b2] = [0, 0, 0]
+  if (h < 60)       [r2, g2, b2] = [c, x, 0]
+  else if (h < 120) [r2, g2, b2] = [x, c, 0]
+  else if (h < 180) [r2, g2, b2] = [0, c, x]
+  else if (h < 240) [r2, g2, b2] = [0, x, c]
+  else if (h < 300) [r2, g2, b2] = [x, 0, c]
+  else              [r2, g2, b2] = [c, 0, x]
+
+  const toHex = (v: number) => Math.round((v + m) * 255).toString(16).padStart(2, '0')
+  return '#' + toHex(r2) + toHex(g2) + toHex(b2)
 }
 
 /** Несколько «каналов» из одного seed, чтобы параметры не коррелировали */
@@ -149,14 +169,14 @@ export function mutateSeal(
       out.shape = nextInList(SHAPES, ref.shape, step)
       break
     case 'color': {
-      // Сдвигаем оттенок на ±20% яркости: заметно, но всё ещё
-      // в рамках «того же цвета», а не полная смена палитры.
+      // Сдвигаем ТОН (HSL hue) на ±30°: цвет уходит на соседний (золото → охра,
+      // изумруд → бирюза). На любом экране видно; полной смены палитры нет.
       const direction = (h & 1) === 0 ? 1 : -1
-      const pct = 20 * direction
+      const deg = 30 * direction
       out.color = {
-        key: ref.color.key + (direction > 0 ? '-light' : '-dark'),
-        primary: shade(ref.color.primary, pct),
-        secondary: shade(ref.color.secondary, pct),
+        key: ref.color.key + (direction > 0 ? '-warm' : '-cool'),
+        primary: shiftHue(ref.color.primary, deg),
+        secondary: shiftHue(ref.color.secondary, deg),
       }
       break
     }

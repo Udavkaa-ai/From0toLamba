@@ -92,7 +92,7 @@ const client = new OpenAI({
   },
 })
 
-const DEFAULT_MODEL = 'deepseek/deepseek-chat-v3-0324'
+const DEFAULT_MODEL = 'google/gemma-4-26b-a4b-it:free'
 
 // ─── Генерация данных проекта ────────────────────────────────────────────────
 

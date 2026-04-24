@@ -15,9 +15,9 @@ const RANK_DISPLAY: Record<string, string> = {
 
 const MODEL_OPTIONS = [
   {
-    id: 'deepseek/deepseek-chat-v3-0324',
-    label: 'DeepSeek',
-    subtitle: 'быстрый, дешёвый',
+    id: 'google/gemma-4-26b-a4b-it:free',
+    label: 'Gemma 4',
+    subtitle: 'бесплатная, по умолчанию',
   },
   {
     id: 'google/gemini-3.1-flash-lite-preview',

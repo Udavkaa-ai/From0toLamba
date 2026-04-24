@@ -15,7 +15,7 @@ export async function amaRoutes(app: FastifyInstance) {
 
     try {
       const gameState = await prisma.gameState.findUnique({ where: { userId: user.id } })
-      const model = gameState?.preferredModel ?? 'deepseek/deepseek-chat-v3-0324'
+      const model = gameState?.preferredModel ?? 'google/gemma-4-26b-a4b-it:free'
       const result = await startSession(user.id, projectId, model)
       return result
     } catch (err: any) {
@@ -49,7 +49,7 @@ export async function amaRoutes(app: FastifyInstance) {
 
     try {
       const gameState = await prisma.gameState.findUnique({ where: { userId: user.id } })
-      const model = gameState?.preferredModel ?? 'deepseek/deepseek-chat-v3-0324'
+      const model = gameState?.preferredModel ?? 'google/gemma-4-26b-a4b-it:free'
       const result = await sendMessage(user.id, projectId, body.data.message, model)
       return result
     } catch (err: any) {
