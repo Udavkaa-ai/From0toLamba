@@ -462,6 +462,7 @@ function ScanGrid({
 function ResultSheet({
   result, onInvest, onSkip,
 }: { result: CharterResultDTO; onInvest: () => void; onSkip: () => void }) {
+  const [collapsed, setCollapsed] = useState(false)
   const emoji = result.delta > 0 ? '🎯' : result.delta === 0 ? '🤔' : '😅'
   const tp = result.truePositives.length
   const fp = result.falsePositives.length
@@ -471,17 +472,18 @@ function ResultSheet({
     ? 'Грамота была чистая — +2 за верное чутьё'
     : `+${tp} найдено${fp > 0 ? ` − ${fp} ошиб${fp === 1 ? 'ка' : fp < 5 ? 'ки' : 'ок'}` : ''}${fn > 0 ? ` − ${2 * fn} упущено (×2)` : ''} = ${result.delta >= 0 ? '+' : ''}${result.delta}`
 
-  // Не используем Sheet helper — у него backdrop закрывается по клику.
-  // Здесь действие обязательно, поэтому backdrop без onClose, выйти можно
-  // только через «Миновать» или «Вложить».
+  // Действие обязательно, поэтому backdrop без onClose, выйти можно
+  // только через «Миновать» или «Вложить». Но лист можно свернуть кнопкой
+  // «▼ Посмотреть разбор» — тогда сетка полностью видна.
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       style={{
         position: 'fixed', inset: 0, zIndex: 220,
         display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-        background: 'rgba(0,0,0,0.55)',
-        pointerEvents: 'auto',
+        background: collapsed ? 'transparent' : 'rgba(0,0,0,0.55)',
+        pointerEvents: collapsed ? 'none' : 'auto',
+        transition: 'background 0.2s',
       }}
     >
       <motion.div
@@ -492,34 +494,78 @@ function ResultSheet({
           background: colors.nightBlue,
           borderRadius: '20px 20px 0 0',
           border: `1px solid ${colors.cardBorder}`,
-          padding: `${spacing.xxl} ${spacing.xl} ${spacing.xl}`,
-          paddingBottom: `calc(${spacing.xl} + env(safe-area-inset-bottom))`,
+          padding: collapsed
+            ? `${spacing.sm} ${spacing.xl}`
+            : `${spacing.xxl} ${spacing.xl} ${spacing.xl}`,
+          paddingBottom: collapsed
+            ? `calc(${spacing.sm} + env(safe-area-inset-bottom))`
+            : `calc(${spacing.xl} + env(safe-area-inset-bottom))`,
           boxShadow: '0 -8px 32px rgba(0,0,0,0.6)',
+          pointerEvents: 'auto',
         }}
       >
-        <div style={{ textAlign: 'center', marginBottom: spacing.lg }}>
-          <div style={{ fontSize: '40px' }}>{emoji}</div>
-          <div style={{ color: colors.fairyGold, fontSize: '22px', fontWeight: 700, marginTop: '4px' }}>
-            {result.delta > 0 ? `+${result.delta}` : `${result.delta}`} к чуйке
-          </div>
-          <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
-            {formula}
-          </div>
-        </div>
+        {/* Маркер-ручка: тап по верху листа переключает свёрнутое состояние */}
+        <button
+          onClick={() => setCollapsed(c => !c)}
+          style={{
+            display: 'block',
+            margin: `0 auto ${collapsed ? '6px' : spacing.sm}`,
+            width: '100%',
+            background: 'transparent', border: 'none', cursor: 'pointer',
+            color: colors.textMuted, fontSize: '11px',
+            padding: '4px 0',
+          }}
+        >
+          <div style={{
+            width: '40px', height: '4px', borderRadius: '2px',
+            background: `${colors.fairyGold}50`, margin: '0 auto 4px',
+          }} />
+          {collapsed ? '▲ Показать разбор' : '▼ Посмотреть печати'}
+        </button>
 
-        <div style={resultRowStyle}>
-          <ResultStat color={colors.success} label="Найдено" value={tp} />
-          <ResultStat color={colors.danger}  label="Ошибок"  value={fp} />
-          <ResultStat color={colors.warning} label="Упущено" value={fn} />
-        </div>
-        <div style={{ color: colors.textMuted, fontSize: '10px', textAlign: 'center', marginTop: '6px' }}>
-          Каждая пропущенная подделка стоит −2 к чуйке
-        </div>
+        {!collapsed && (
+          <>
+            <div style={{ textAlign: 'center', marginBottom: spacing.lg }}>
+              <div style={{ fontSize: '40px' }}>{emoji}</div>
+              <div style={{ color: colors.fairyGold, fontSize: '22px', fontWeight: 700, marginTop: '4px' }}>
+                {result.delta > 0 ? `+${result.delta}` : `${result.delta}`} к чуйке
+              </div>
+              <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
+                {formula}
+              </div>
+            </div>
 
-        <div style={{ color: colors.fairyGold, fontSize: '13px', fontWeight: 600, textAlign: 'center', marginTop: spacing.lg }}>
-          Что дальше?
-        </div>
-        <div style={{ display: 'flex', gap: spacing.sm, marginTop: spacing.sm }}>
+            <div style={resultRowStyle}>
+              <ResultStat color={colors.success} label="Найдено" value={tp} />
+              <ResultStat color={colors.danger}  label="Ошибок"  value={fp} />
+              <ResultStat color={colors.warning} label="Упущено" value={fn} />
+            </div>
+            <div style={{ color: colors.textMuted, fontSize: '10px', textAlign: 'center', marginTop: '6px' }}>
+              Каждая пропущенная подделка стоит −2 к чуйке
+            </div>
+
+            <div style={{ color: colors.fairyGold, fontSize: '13px', fontWeight: 600, textAlign: 'center', marginTop: spacing.lg }}>
+              Что дальше?
+            </div>
+          </>
+        )}
+
+        {collapsed && (
+          <div style={{
+            display: 'flex', justifyContent: 'center', gap: spacing.md,
+            color: colors.textSecondary, fontSize: '12px',
+            marginBottom: spacing.sm,
+          }}>
+            <span style={{ color: colors.fairyGold, fontWeight: 700 }}>
+              {result.delta > 0 ? `+${result.delta}` : result.delta} к чуйке
+            </span>
+            <span style={{ color: colors.success }}>✓ {tp}</span>
+            {fp > 0 && <span style={{ color: colors.danger }}>✕ {fp}</span>}
+            {fn > 0 && <span style={{ color: colors.warning }}>⚠ {fn}</span>}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: spacing.sm, marginTop: collapsed ? 0 : spacing.sm }}>
           <button onClick={onSkip} style={{ ...secondaryBtnStyle, flex: 1, marginTop: 0 }}>
             Миновать
           </button>
