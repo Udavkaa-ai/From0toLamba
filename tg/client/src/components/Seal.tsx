@@ -57,6 +57,9 @@ export interface SealParams {
   border: BorderStyle
   dots: DotCount
   emblem: Emblem
+  /** Отражение эмблемы по вертикальной оси — HARD-мутация (сокол смотрит
+   *  в другую сторону). У эталона всегда false. */
+  emblemFlip: boolean
 }
 
 export type CharterDifficulty = 'EASY' | 'MEDIUM' | 'HARD'
@@ -122,21 +125,30 @@ export function generateReferenceSeal(seed: string): SealParams {
     border:   pickBy(BORDER_STYLES, hashChannel(seed, 'border')),
     dots:     pickBy(DOT_COUNTS,   hashChannel(seed, 'dots')),
     emblem:   pickBy(ALL_EMBLEMS,  hashChannel(seed, 'emblem')),
+    emblemFlip: false,
   }
 }
 
 // ─── Мутация ──────────────────────────────────────────────────────────────
 
-type MutTarget = 'shape' | 'color' | 'rings' | 'border' | 'dots' | 'emblemClass' | 'emblemSame'
+type MutTarget =
+  | 'shape'         // геометрическая форма (квадрат → ромб)
+  | 'rings'         // число концентрических колец внутри
+  | 'emblemClass'   // зверь ↔ знак (радикальная смена силуэта эмблемы)
+  | 'emblemSame'    // зверь на похожего (fish↔falcon)
+  | 'colorPalette'  // полная смена цвета из палитры (gold → bronze)
+  | 'colorHue'      // малый сдвиг тона (±20°, тонко)
+  | 'dots'          // число точек-розетки
+  | 'emblemFlip'    // зеркальное отражение эмблемы
 
 const MUT_POOLS: Record<CharterDifficulty, MutTarget[]> = {
-  EASY:   ['shape', 'color'],
-  MEDIUM: ['emblemClass', 'rings'],
-  // HARD — только подмена эмблемы на похожую (fish↔falcon, bear↔wolf,
-  // anchor↔key). Dots/border на мелкой SVG плохо читаются под вращением —
-  // игроки жаловались, что разницу «не видно вообще». Оставляем одну
-  // читаемую мутацию — это и есть дух HARD: найти тонкую подмену зверя.
-  HARD:   ['emblemSame'],
+  // EASY (простые): форма/геометрия/линии — силуэт меняется радикально
+  EASY:   ['shape', 'rings', 'emblemClass'],
+  // MEDIUM (лёгкий): подмена зверя на похожего или смена палитры целиком —
+  // заметно, но не сразу
+  MEDIUM: ['emblemSame', 'colorPalette'],
+  // HARD (сложный): точки, малый сдвиг оттенка, зеркальное отражение эмблемы
+  HARD:   ['dots', 'colorHue', 'emblemFlip'],
 }
 
 /** «Похожие» эмблемы внутри одного класса — для HARD-мутаций */
@@ -172,12 +184,26 @@ export function mutateSeal(
     case 'shape':
       out.shape = nextInList(SHAPES, ref.shape, step)
       break
-    case 'color': {
-      // Сдвиг тона на ±60° — хорошо заметно, но остаётся «тот же цвет»,
-      // а не полностью чужая палитра. Если тестировщики скажут «всё равно
-      // не видно» — поднимаем угол; если «слишком легко» — опускаем.
+    case 'rings':
+      out.rings = nextInList(RING_COUNTS, ref.rings, step)
+      break
+    case 'dots':
+      // Гарантируем заметное изменение количества точек: +2 позиции по массиву,
+      // т.е. через одну — например 4 → 8 или 8 → 0. Иначе соседние значения
+      // (4→6, 6→8) на мелкой SVG почти не различаются.
+      out.dots = DOT_COUNTS[(DOT_COUNTS.indexOf(ref.dots) + 2) % DOT_COUNTS.length]
+      break
+    case 'colorPalette': {
+      // MEDIUM — соседний цвет палитры целиком (gold → bronze).
+      const idx = Math.max(0, COLORS.findIndex(c => c.key === ref.color.key))
+      const safeStep = (step % (COLORS.length - 1)) + 1
+      out.color = { ...COLORS[(idx + safeStep) % COLORS.length] }
+      break
+    }
+    case 'colorHue': {
+      // HARD — малый сдвиг тона ±20°, читается как «немного другой оттенок».
       const direction = (h & 1) === 0 ? 1 : -1
-      const deg = 60 * direction
+      const deg = 20 * direction
       out.color = {
         key: ref.color.key + (direction > 0 ? '-warm' : '-cool'),
         primary: shiftHue(ref.color.primary, deg),
@@ -185,14 +211,11 @@ export function mutateSeal(
       }
       break
     }
-    case 'rings':
-      out.rings = nextInList(RING_COUNTS, ref.rings, step)
-      break
-    case 'border':
-      out.border = nextInList(BORDER_STYLES, ref.border, step)
-      break
-    case 'dots':
-      out.dots = nextInList(DOT_COUNTS, ref.dots, step)
+    case 'emblemFlip':
+      // HARD — зеркалим эмблему. Работает для асимметричных (рыба, сокол,
+      // волк, якорь) — на симметричных (щит, ромб) почти не видно, поэтому
+      // в пуле есть альтернативы dots/colorHue.
+      out.emblemFlip = true
       break
     case 'emblemClass': {
       // Меняем класс эмблемы (зверь ↔ знак)
@@ -231,7 +254,7 @@ interface SealProps {
 /** Рисует только саму печать — обводка TP/FP/FN и selected живёт на ячейке-кнопке,
  *  чтобы не перекрывать точки-розетку по периметру. */
 export function Seal({ params, size = 72, dim = false }: SealProps) {
-  const { shape, color, rings, border, dots, emblem } = params
+  const { shape, color, rings, border, dots, emblem, emblemFlip } = params
   const opacity = dim ? 0.35 : 1
 
   return (
@@ -244,8 +267,10 @@ export function Seal({ params, size = 72, dim = false }: SealProps) {
       {renderRings(shape, rings, color)}
       {renderBorderStyle(shape, border, color)}
 
-      {/* Центральная эмблема */}
-      {renderEmblem(emblem, color)}
+      {/* Центральная эмблема (при emblemFlip — зеркалим по вертикальной оси) */}
+      {emblemFlip
+        ? <g transform="translate(100,0) scale(-1,1)">{renderEmblem(emblem, color)}</g>
+        : renderEmblem(emblem, color)}
     </svg>
   )
 }
@@ -345,7 +370,9 @@ function renderDots(n: DotCount, color: SealColor) {
     const a = (i / n) * Math.PI * 2 - Math.PI / 2
     const x = 50 + Math.cos(a) * r
     const y = 50 + Math.sin(a) * r
-    dots.push(<circle key={i} cx={x} cy={y} r="1.8" fill={color.secondary} />)
+    // Крупнее и ярче — раньше r=1.8 на secondary (тёмный) терялось под
+    // вращением. Теперь точки видно, и разница 4↔8 читается.
+    dots.push(<circle key={i} cx={x} cy={y} r="3" fill={color.primary} stroke={color.secondary} strokeWidth="0.6" />)
   }
   return <>{dots}</>
 }
