@@ -97,9 +97,20 @@ export function RegistryPage() {
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: spacing.xl }}>
           <button
             onClick={() => navigate('/portfolio')}
-            style={{ background: 'none', border: 'none', color: colors.textMuted, cursor: 'pointer', fontSize: '20px', padding: '0 8px 0 0' }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              background: `${colors.fairyGold}15`,
+              border: `1px solid ${colors.fairyGold}40`,
+              borderRadius: '10px',
+              color: colors.fairyGold,
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 600,
+              padding: '8px 12px',
+            }}
           >
-            ←
+            <span style={{ fontSize: '16px', lineHeight: 1 }}>←</span>
+            Назад
           </button>
           <div style={{ flex: 1, textAlign: 'center' }}>
             <div style={{ color: colors.fairyGold, fontSize: '20px', fontWeight: 700 }}>✦ Летопись ✦</div>
@@ -107,7 +118,7 @@ export function RegistryPage() {
               Архив закрытых дел
             </div>
           </div>
-          <div style={{ width: '36px' }} />
+          <div style={{ width: '76px' }} />
         </div>
 
         {/* Summary card */}

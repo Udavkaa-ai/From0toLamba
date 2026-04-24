@@ -9,6 +9,7 @@ import { OnboardingTutorial } from '@/components/OnboardingTutorial'
 import {
   WhatsNewOverlay, getPendingChangelog, markChangelogSeen, type ChangelogEntry,
 } from '@/components/WhatsNewOverlay'
+import { AchievementUnlockedOverlay } from '@/components/AchievementUnlockedOverlay'
 import { api, type ProjectDTO, type DailyUpdateDTO } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing, typography } from '@/theme'
@@ -42,13 +43,14 @@ export function HomePage() {
   const [showTutorial, setShowTutorial] = useState(false)
   const [pendingChangelog, setPendingChangelog] = useState<ChangelogEntry | null>(null)
 
-  // При монтировании главной — проверяем, видел ли игрок текущую версию.
-  // Показываем changelog только старым игрокам (у кого уже есть lastSeenVersion);
-  // новичкам вместо него идёт вводный тур.
+  // Changelog показываем после того как дойдёт gameState — нужно знать
+  // завершён ли онбординг (новичкам вместо changelog идёт тур).
   useEffect(() => {
-    const entry = getPendingChangelog(APP_VERSION)
+    if (!gameState) return
+    const entry = getPendingChangelog(APP_VERSION, gameState.isOnboardingComplete)
     if (entry) setPendingChangelog(entry)
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameState?.isOnboardingComplete])
   // Тикает каждую секунду, чтобы перерисовывать таймер кулдауна
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
@@ -198,6 +200,7 @@ export function HomePage() {
           />
         )}
       </AnimatePresence>
+      {!showTutorial && !pendingChangelog && <AchievementUnlockedOverlay />}
       {showDayNews && gameState.activeProjects.length > 0 && (
         <DayNewsOverlay projects={gameState.activeProjects} onClose={() => setShowDayNews(false)} />
       )}

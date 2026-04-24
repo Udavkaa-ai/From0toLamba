@@ -207,9 +207,18 @@ export function AmaPage() {
         }}>
           <button
             onClick={() => navigate(-1)}
-            style={{ background: 'none', border: 'none', color: colors.textMuted, cursor: 'pointer', fontSize: '20px' }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              background: `${colors.fairyGold}15`,
+              border: `1px solid ${colors.fairyGold}40`,
+              borderRadius: '10px',
+              color: colors.fairyGold, cursor: 'pointer',
+              fontSize: '13px', fontWeight: 600,
+              padding: '8px 12px',
+            }}
           >
-            ←
+            <span style={{ fontSize: '16px', lineHeight: 1 }}>←</span>
+            Назад
           </button>
           <div style={{ textAlign: 'center' }}>
             <div style={{ color: colors.fairyGold, fontWeight: 600, fontSize: '14px' }}>Беседа с Дельцом</div>

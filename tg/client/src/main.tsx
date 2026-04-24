@@ -11,7 +11,27 @@ import { StatsPage } from './pages/StatsPage'
 import { LeaderboardPage } from './pages/LeaderboardPage'
 import { RegistryPage } from './pages/RegistryPage'
 import { BottomNav } from './components/BottomNav'
+import { useTelegramBackButton } from './hooks/useTelegramBackButton'
 import './styles.css'
+
+function AppShell() {
+  useTelegramBackButton()
+  return (
+    <>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/inbox" element={<InboxPage />} />
+        <Route path="/charter/:projectId" element={<CharterPage />} />
+        <Route path="/ama/:projectId" element={<AmaPage />} />
+        <Route path="/portfolio" element={<PortfolioPage />} />
+        <Route path="/stats" element={<StatsPage />} />
+        <Route path="/leaderboard" element={<LeaderboardPage />} />
+        <Route path="/registry" element={<RegistryPage />} />
+      </Routes>
+      <BottomNav />
+    </>
+  )
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,17 +51,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/inbox" element={<InboxPage />} />
-          <Route path="/charter/:projectId" element={<CharterPage />} />
-          <Route path="/ama/:projectId" element={<AmaPage />} />
-          <Route path="/portfolio" element={<PortfolioPage />} />
-          <Route path="/stats" element={<StatsPage />} />
-          <Route path="/leaderboard" element={<LeaderboardPage />} />
-          <Route path="/registry" element={<RegistryPage />} />
-        </Routes>
-        <BottomNav />
+        <AppShell />
       </BrowserRouter>
     </QueryClientProvider>
   </React.StrictMode>,
@@ -57,6 +67,12 @@ declare global {
         expand(): void
         setHeaderColor(color: string): void
         setBackgroundColor(color: string): void
+        BackButton?: {
+          show(): void
+          hide(): void
+          onClick(cb: () => void): void
+          offClick(cb: () => void): void
+        }
       }
     }
   }

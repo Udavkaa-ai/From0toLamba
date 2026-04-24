@@ -12,30 +12,41 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.6.0',
+    title: 'Поздравления за подвиги и удобный возврат',
+    items: [
+      '🎉 За каждый новый подвиг — торжественная модалка прямо на главной, а для «зверинца» ещё и справка о породе/личине/судьбе',
+      '◀ Системная стрелка «назад» в Mini App возвращает к предыдущему экрану, а не закрывает игру',
+      '🔘 Кнопка «Назад» на Летописи, Грамоте и Беседе стала крупной и заметной',
+      '📯 Окошко с вестями показывается корректно при первом входе после обновления',
+    ],
+  },
+  {
     version: '1.5.21',
-    title: 'Новые подвиги и вводный рассказ',
+    title: 'Подвиги и вводный рассказ',
     items: [
       '📖 При первом входе — вводный рассказ: пять пород дел, семь личин хозяев, пять судеб',
       '🗂️ В «Успехах» подвиги стали кликабельными — открывают справочник пород, личин и судеб',
       '🔓 Заблокированные подвиги теперь показывают условие получения',
       '⚙️ В настройках появилось «Как играть» — вводный рассказ можно повторить в любой момент',
-      '📯 Окошко с вестями при новой версии — больше не пропустишь важное',
     ],
   },
 ]
 
 const LS_KEY = 'lastSeenVersion'
 
-/** Возвращает запись changelog, если клиент её ещё не видел. null иначе. */
-export function getPendingChangelog(currentVersion: string): ChangelogEntry | null {
+/**
+ * Возвращает запись changelog, если клиент её ещё не видел.
+ * Новичкам (без завершённого онбординга) — не показываем, у них в
+ * приоритете вводный тур.
+ */
+export function getPendingChangelog(
+  currentVersion: string,
+  isOnboardingComplete: boolean,
+): ChangelogEntry | null {
   if (typeof window === 'undefined') return null
+  if (!isOnboardingComplete) return null
   const seen = window.localStorage.getItem(LS_KEY)
-  // Первый вход без записи в localStorage — не показываем changelog
-  // (новичок получает вводный тур), а сразу «запоминаем» версию.
-  if (!seen) {
-    window.localStorage.setItem(LS_KEY, currentVersion)
-    return null
-  }
   if (seen === currentVersion) return null
   const entry = CHANGELOG.find(e => e.version === currentVersion)
   return entry ?? null

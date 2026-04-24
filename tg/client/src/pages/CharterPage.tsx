@@ -182,7 +182,10 @@ export function CharterPage() {
 
         {/* Шапка */}
         <div style={headerStyle}>
-          <button onClick={() => navigate(-1)} style={backBtnStyle}>←</button>
+          <button onClick={() => navigate(-1)} style={backBtnStyle}>
+            <span style={{ fontSize: '16px', lineHeight: 1 }}>←</span>
+            Назад
+          </button>
           <div style={{ textAlign: 'center' }}>
             <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '15px' }}>Купеческая грамота</div>
             <div style={{ color: colors.textMuted, fontSize: '11px' }}>
@@ -726,8 +729,13 @@ const headerStyle: React.CSSProperties = {
 }
 
 const backBtnStyle: React.CSSProperties = {
-  background: 'none', border: 'none',
-  color: colors.textMuted, cursor: 'pointer', fontSize: '20px',
+  display: 'flex', alignItems: 'center', gap: '6px',
+  background: `${colors.fairyGold}15`,
+  border: `1px solid ${colors.fairyGold}40`,
+  borderRadius: '10px',
+  color: colors.fairyGold, cursor: 'pointer',
+  fontSize: '13px', fontWeight: 600,
+  padding: '8px 12px',
 }
 
 const footerStyle: React.CSSProperties = {
