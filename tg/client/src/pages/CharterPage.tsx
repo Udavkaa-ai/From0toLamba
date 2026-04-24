@@ -8,6 +8,7 @@ import type { CharterDTO, CharterResultDTO, CharterSubmitDTO } from '@/api/clien
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing } from '@/theme'
 import { Seal, generateReferenceSeal, sealForCell } from '@/components/Seal'
+import { useTelegramBackHandler } from '@/hooks/useTelegramBackButton'
 
 const tg = (window as any).Telegram?.WebApp
 const haptic = tg?.HapticFeedback
@@ -30,7 +31,31 @@ export function CharterPage() {
   const [showInvest, setShowInvest] = useState(false)
   const [showChatLocked, setShowChatLocked] = useState(false)
   const [onboardingBonus, setOnboardingBonus] = useState<number | null>(null)
+  const [showExitConfirm, setShowExitConfirm] = useState(false)
   const onboardingTriggeredRef = useRef(false)
+
+  // До сабмита любой выход приравнивается к пропуску дела — иначе
+  // игрок смог бы выйти, заглянуть в эталон ещё раз, снова зайти и т.д.
+  const skipMutation = useMutation({
+    mutationFn: () => api.projects.skip(projectId!),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['gameState'] })
+      qc.invalidateQueries({ queryKey: ['charter', projectId] })
+      navigate('/inbox')
+    },
+  })
+
+  const tryGoBack = () => {
+    // Уже разобрано — просто уходим
+    if (phase === 'result') {
+      navigate(-1)
+      return
+    }
+    setShowExitConfirm(true)
+  }
+
+  // Системный «назад» в Telegram Mini App тоже перехватываем в те же правила
+  useTelegramBackHandler(tryGoBack)
 
   // Сессия-грамота: create-or-return. startCharter идемпотентен —
   // существующую сессию вернёт как есть, закрытый проект даст 410 CHARTER_EXPIRED
@@ -182,7 +207,7 @@ export function CharterPage() {
 
         {/* Шапка */}
         <div style={headerStyle}>
-          <button onClick={() => navigate(-1)} style={backBtnStyle}>
+          <button onClick={tryGoBack} style={backBtnStyle}>
             <span style={{ fontSize: '16px', lineHeight: 1 }}>←</span>
             Назад
           </button>
@@ -278,7 +303,91 @@ export function CharterPage() {
           <ChatLockedSheet onClose={() => setShowChatLocked(false)} />
         )}
       </AnimatePresence>
+
+      <AnimatePresence>
+        {showExitConfirm && (
+          <ExitConfirmSheet
+            pending={skipMutation.isPending}
+            onStay={() => setShowExitConfirm(false)}
+            onLeave={() => skipMutation.mutate()}
+          />
+        )}
+      </AnimatePresence>
     </ScreenBackground>
+  )
+}
+
+function ExitConfirmSheet({
+  pending, onStay, onLeave,
+}: { pending: boolean; onStay: () => void; onLeave: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      onClick={onStay}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 240,
+        background: 'rgba(6, 4, 18, 0.85)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: spacing.lg,
+      }}
+    >
+      <motion.div
+        initial={{ scale: 0.9, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.9, y: 20 }}
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: '100%', maxWidth: '380px',
+          background: `linear-gradient(145deg, ${colors.enchantedPurple}, ${colors.nightBlue})`,
+          border: `1px solid ${colors.danger}80`,
+          borderRadius: '16px',
+          padding: spacing.xl,
+        }}
+      >
+        <div style={{ textAlign: 'center', marginBottom: spacing.lg }}>
+          <div style={{ fontSize: '44px', marginBottom: '4px' }}>⚠️</div>
+          <div style={{ color: colors.fairyGold, fontSize: '17px', fontWeight: 700 }}>
+            Выйдешь сейчас — сделка не состоится
+          </div>
+          <div style={{ color: colors.textSecondary, fontSize: '13px', marginTop: spacing.sm, lineHeight: 1.5 }}>
+            Грамота уйдёт в летопись как пропущенная, её эталон и печати больше не покажутся.
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: spacing.sm }}>
+          <button
+            onClick={onStay}
+            disabled={pending}
+            style={{
+              flex: 1, padding: spacing.md,
+              background: `${colors.fairyGold}18`,
+              border: `1px solid ${colors.fairyGold}55`,
+              borderRadius: '12px',
+              color: colors.fairyGold,
+              fontSize: '14px', fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            Остаться
+          </button>
+          <button
+            onClick={onLeave}
+            disabled={pending}
+            style={{
+              flex: 1, padding: spacing.md,
+              background: colors.danger,
+              border: 'none',
+              borderRadius: '12px',
+              color: '#fff',
+              fontSize: '14px', fontWeight: 700,
+              cursor: 'pointer',
+              opacity: pending ? 0.6 : 1,
+            }}
+          >
+            {pending ? 'Уходим…' : 'Выйти и пропустить'}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
   )
 }
 
