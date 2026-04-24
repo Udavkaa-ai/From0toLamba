@@ -5,7 +5,7 @@
 
 ## Состояние проекта
 
-**Активная версия:** Telegram Mini App (`tg/`) — v1.5.9
+**Активная версия:** Telegram Mini App (`tg/`) — v1.5.10
 **Android:** код в `app/`, разработка заморожена — всё усилие на TG-версию
 **Ветка разработки:** `claude/telegram-game-migration-FDnlX`
 

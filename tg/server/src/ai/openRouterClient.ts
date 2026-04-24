@@ -94,6 +94,24 @@ const client = new OpenAI({
 
 const DEFAULT_MODEL = 'google/gemma-4-26b-a4b-it:free'
 
+/**
+ * Вытаскивает JSON из ответа модели.
+ * Бесплатные модели (Gemma/Llama и пр.) обычно не поддерживают
+ * `response_format: json_object`, поэтому парсим вручную — ищем первую {..}
+ * или [..], с учётом возможной обёртки ```json ... ``` от модели.
+ */
+function extractJson(raw: string): any {
+  const trimmed = raw.trim()
+  // Снимаем markdown-fence если есть
+  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
+  const body = fenced ? fenced[1] : trimmed
+  // Ищем границы JSON-объекта
+  const start = body.indexOf('{')
+  const end = body.lastIndexOf('}')
+  if (start < 0 || end <= start) throw new Error('no json object in response: ' + body.slice(0, 120))
+  return JSON.parse(body.slice(start, end + 1))
+}
+
 // ─── Генерация данных проекта ────────────────────────────────────────────────
 
 interface GenerateProjectInput {
@@ -147,11 +165,10 @@ export async function generateProjectData(input: GenerateProjectInput, model = D
       model: model,
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 300,
-      response_format: { type: 'json_object' },
     })
 
     const raw = response.choices[0]?.message?.content ?? '{}'
-    const parsed = JSON.parse(raw)
+    const parsed = extractJson(raw)
 
     return {
       name: parsed.name ?? 'Тайное дело',
@@ -445,11 +462,10 @@ export async function generateDailyUpdate(
       model: model,
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 300,
-      response_format: { type: 'json_object' },
     })
 
     const raw = response.choices[0]?.message?.content ?? '{}'
-    const parsed = JSON.parse(raw)
+    const parsed = extractJson(raw)
 
     await prisma.dailyUpdate.update({
       where: { id: inserted.id },

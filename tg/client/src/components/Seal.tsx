@@ -76,6 +76,39 @@ function pickBy<T>(arr: readonly T[], n: number): T {
   return arr[Math.abs(n) % arr.length]
 }
 
+/** Сдвиг тона (HSL hue) на N градусов. Яркость и насыщенность не трогаем —
+ *  меняется именно оттенок. Угол подбирается эмпирически под читаемость на OLED. */
+function shiftHue(hex: string, degrees: number): string {
+  const r = parseInt(hex.slice(1, 3), 16) / 255
+  const g = parseInt(hex.slice(3, 5), 16) / 255
+  const b = parseInt(hex.slice(5, 7), 16) / 255
+  const max = Math.max(r, g, b), min = Math.min(r, g, b)
+  const l = (max + min) / 2
+  let h = 0, s = 0
+  if (max !== min) {
+    const d = max - min
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
+    if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) * 60
+    else if (max === g) h = ((b - r) / d + 2) * 60
+    else h = ((r - g) / d + 4) * 60
+  }
+  h = (h + degrees + 360) % 360
+
+  const c = (1 - Math.abs(2 * l - 1)) * s
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1))
+  const m = l - c / 2
+  let [r2, g2, b2] = [0, 0, 0]
+  if (h < 60)       [r2, g2, b2] = [c, x, 0]
+  else if (h < 120) [r2, g2, b2] = [x, c, 0]
+  else if (h < 180) [r2, g2, b2] = [0, c, x]
+  else if (h < 240) [r2, g2, b2] = [0, x, c]
+  else if (h < 300) [r2, g2, b2] = [x, 0, c]
+  else              [r2, g2, b2] = [c, 0, x]
+
+  const toHex = (v: number) => Math.round((v + m) * 255).toString(16).padStart(2, '0')
+  return '#' + toHex(r2) + toHex(g2) + toHex(b2)
+}
+
 /** Несколько «каналов» из одного seed, чтобы параметры не коррелировали */
 function hashChannel(seed: string, channel: string): number {
   return hash(`${seed}::${channel}`)
@@ -136,14 +169,16 @@ export function mutateSeal(
       out.shape = nextInList(SHAPES, ref.shape, step)
       break
     case 'color': {
-      // EASY-уровень: берём соседний цвет из палитры целиком
-      // (gold → bronze → crimson → emerald → indigo → gold).
-      // Тонкие hue/brightness-сдвиги на практике терялись на OLED, поэтому
-      // на лёгком уровне мутацию делаем грубой — её и так должно быть видно.
-      const idx = Math.max(0, COLORS.findIndex(c => c.key === ref.color.key))
-      // Шаг в [1..COLORS.length-1], иначе могли бы выбрать тот же цвет
-      const safeStep = (step % (COLORS.length - 1)) + 1
-      out.color = { ...COLORS[(idx + safeStep) % COLORS.length] }
+      // Сдвиг тона на ±60° — хорошо заметно, но остаётся «тот же цвет»,
+      // а не полностью чужая палитра. Если тестировщики скажут «всё равно
+      // не видно» — поднимаем угол; если «слишком легко» — опускаем.
+      const direction = (h & 1) === 0 ? 1 : -1
+      const deg = 60 * direction
+      out.color = {
+        key: ref.color.key + (direction > 0 ? '-warm' : '-cool'),
+        primary: shiftHue(ref.color.primary, deg),
+        secondary: shiftHue(ref.color.secondary, deg),
+      }
       break
     }
     case 'rings':
