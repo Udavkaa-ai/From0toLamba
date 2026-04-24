@@ -107,6 +107,15 @@ export async function gameRoutes(app: FastifyInstance) {
       countReferrals(user.id),
     ])
 
+    // Догенерим имена для дел, которые застряли с плейсхолдером
+    // (бывает если первый AI-вызов упал — плейсхолдер сохранился в БД)
+    const { enrichPlaceholderProject } = await import('../../game/GenerateProjectService')
+    for (const p of inboxProjects) {
+      if (p.name === 'Тайное дело') {
+        enrichPlaceholderProject(p.id, gameState.preferredModel).catch(console.error)
+      }
+    }
+
     const currentWealth = gameState.balance + activeProjects.reduce((s, p) => s + p.currentValueRubles, 0)
     const weekStartWealth = await ensureWeekStartSnapshot(user.id, currentWealth)
 

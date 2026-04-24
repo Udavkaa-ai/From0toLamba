@@ -144,12 +144,16 @@ export async function generateProjectData(input: GenerateProjectInput, model = D
 
   try {
     console.log(`[AI:project] model=${model}`)
+    // reasoning: { enabled: false } — DeepSeek V4 MoE по умолчанию много думает,
+    // и при max_tokens=300 output обрезался прямо посреди JSON
+    // (finish_reason=length). Для коротких JSON-задач рассуждения не нужны.
     const response = await client.chat.completions.create({
       model: model,
       messages: [{ role: 'user', content: prompt }],
-      max_tokens: 1200,
+      max_tokens: 600,
       response_format: { type: 'json_object' },
-    })
+      reasoning: { enabled: false },
+    } as any)
 
     const raw = response.choices[0]?.message?.content ?? '{}'
     let parsed: any
@@ -331,8 +335,9 @@ export async function startAmaSession(input: AmaSessionInput, model = DEFAULT_MO
         { role: 'system', content: systemPrompt },
         { role: 'user', content: firstMessagePrompt },
       ],
-      max_tokens: 500,
-    })
+      max_tokens: 300,
+      reasoning: { enabled: false },
+    } as any)
     return response.choices[0]?.message?.content ?? `Здравствуй! Я ${developerName}, хозяин дела «${projectName}». Задавай вопросы!`
   } catch (err) {
     console.error('[AMA startSession] OpenRouter error:', err)
@@ -354,8 +359,9 @@ export async function sendAmaMessage(input: SendAmaMessageInput, model = DEFAULT
     const response = await client.chat.completions.create({
       model: model,
       messages,
-      max_tokens: 500,
-    })
+      max_tokens: 300,
+      reasoning: { enabled: false },
+    } as any)
     const content = response.choices[0]?.message?.content
     console.log(`[AMA] model=${model} q=${input.questionCount} chars=${content?.length ?? 0}`)
     return content ?? 'Дело хорошее, спрашивай смелее.'
@@ -455,9 +461,10 @@ export async function generateDailyUpdate(
     const response = await client.chat.completions.create({
       model: model,
       messages: [{ role: 'user', content: prompt }],
-      max_tokens: 1000,
+      max_tokens: 500,
       response_format: { type: 'json_object' },
-    })
+      reasoning: { enabled: false },
+    } as any)
 
     const raw = response.choices[0]?.message?.content ?? '{}'
     let parsed: any
@@ -519,8 +526,9 @@ export async function generatePostMortem(input: PostMortemInput, model = DEFAULT
     const response = await client.chat.completions.create({
       model: model,
       messages: [{ role: 'user', content: prompt }],
-      max_tokens: 800,
-    })
+      max_tokens: 400,
+      reasoning: { enabled: false },
+    } as any)
 
     const analysis = response.choices[0]?.message?.content ?? 'Дело закрылось.'
 

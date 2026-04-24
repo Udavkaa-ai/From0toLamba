@@ -87,3 +87,60 @@ export async function generateProject(
 export async function generateOnboardingProject(userId: number, model?: string): Promise<string> {
   return generateProject(userId, ProjectFate.HONEST_FAIL, model)
 }
+
+// Чтобы heal не стартовал одну и ту же генерацию многократно (например,
+// если клиент часто пулит /api/game), держим в памяти процесса множество
+// projectId, которые прямо сейчас догружаются. После UPDATE — вынимаем.
+const enrichingInFlight = new Set<string>()
+
+/**
+ * Догенерить имя/описание/баннер для проекта, который застрял с
+ * плейсхолдерами («Тайное дело / Ефим Лукавый»). Запускается в фоне
+ * при обнаружении таких дел в inbox/preloaded.
+ */
+export async function enrichPlaceholderProject(
+  projectId: string,
+  model?: string,
+): Promise<void> {
+  if (enrichingInFlight.has(projectId)) return
+  enrichingInFlight.add(projectId)
+  try {
+    const project = await prisma.project.findUnique({ where: { id: projectId } })
+    if (!project) return
+    // Проверяем что дело всё ещё с плейсхолдером — иначе заменим качественный
+    // текст пустым фолбэком при очередной неудачной генерации
+    if (project.name !== 'Тайное дело') return
+
+    const aiData = await generateProjectData({
+      type: project.type as ProjectType,
+      fate: project.fate as ProjectFate,
+      archetype: project.personaArchetype as PersonaArchetype,
+      lieTopics: project.lieTopics as any,
+    }, model)
+
+    // Если AI снова вернул плейсхолдер — не трогаем запись, попробуем в другой раз
+    if (aiData.name === 'Тайное дело') return
+
+    await prisma.project.update({
+      where: { id: projectId },
+      data: {
+        name: aiData.name,
+        claimedName: aiData.claimedName,
+        claimedAPY: aiData.claimedAPY,
+        developerName: aiData.developerName,
+        description: aiData.description,
+        roadmap: aiData.roadmap,
+      },
+    })
+    generateProjectBanner(
+      projectId,
+      aiData.name,
+      project.type as ProjectType,
+      project.personaArchetype as PersonaArchetype,
+    ).catch(console.error)
+  } catch (err) {
+    console.error('[enrichPlaceholderProject] failed:', err)
+  } finally {
+    enrichingInFlight.delete(projectId)
+  }
+}
