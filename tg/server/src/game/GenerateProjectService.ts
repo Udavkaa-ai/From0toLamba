@@ -30,13 +30,13 @@ export async function generateProject(
   const avatarSeed = Math.random().toString(36).slice(2, 10)
   const npcTruthParams = generateNpcTruthParams(type, fate, realDailyYieldRubles)
 
-  // AI генерирует имя, описание, публичные данные
-  const aiData = await generateProjectData({ type, fate, archetype, lieTopics }, model)
-
+  // Создаём запись СРАЗУ с плейсхолдером — чтобы preloadedCount сразу вырос
+  // и повторные seed'ы из /api/game не насеяли дублей, пока AI тормозит.
+  // Имена/описания AI подтянет в фоне через update ниже.
   const project = await prisma.project.create({
     data: {
       userId,
-      name: aiData.name,
+      name: 'Тайное дело',
       type,
       fate,
       personaArchetype: archetype,
@@ -44,24 +44,41 @@ export async function generateProject(
       realDailyYieldRubles,
       lieTopics,
       truthTopics,
-      developerName: aiData.developerName,
+      developerName: 'Ефим Лукавый',
       developerAvatarSeed: avatarSeed,
-      claimedName: aiData.claimedName,
-      claimedAPY: aiData.claimedAPY,
+      claimedName: 'Тайное дело',
+      claimedAPY: 100,
       claimedUserCount: irng(50, 5000),
       claimedTeamSize: irng(3, 30),
-      description: aiData.description,
-      roadmap: aiData.roadmap,
+      description: 'Прибыльное дело для смелых вкладчиков.',
+      roadmap: ['Открыть дело', 'Собрать рубли', 'Распределить прибыль'],
       currentUserCount: irng(50, 5000),
       npcTruthParams,
-      // Preloaded ждёт следующий advance-day; обычное дело идёт сразу в inbox
       isInbox: !options.preloaded,
       isPreloaded: !!options.preloaded,
     },
   })
 
-  // Генерируем баннер асинхронно (не блокируем)
-  generateProjectBanner(project.id, aiData.name, type, archetype).catch(console.error)
+  // AI-обогащение имён/описания и баннер — в фоне, не блокируем вызывающего
+  ;(async () => {
+    try {
+      const aiData = await generateProjectData({ type, fate, archetype, lieTopics }, model)
+      await prisma.project.update({
+        where: { id: project.id },
+        data: {
+          name: aiData.name,
+          claimedName: aiData.claimedName,
+          claimedAPY: aiData.claimedAPY,
+          developerName: aiData.developerName,
+          description: aiData.description,
+          roadmap: aiData.roadmap,
+        },
+      })
+      generateProjectBanner(project.id, aiData.name, type, archetype).catch(console.error)
+    } catch (err) {
+      console.error('[generateProject] AI enrich failed:', err)
+    }
+  })()
 
   return project.id
 }

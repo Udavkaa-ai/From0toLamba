@@ -52,11 +52,27 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
     data: { isInbox: false, isClosed: true, closureReason: 'Грамота истекла' },
   })
 
-  // Предзагруженные дела прошлого дня становятся новым inbox'ом мгновенно
-  const promoted = await prisma.project.updateMany({
+  // Предзагруженные дела прошлого дня становятся новым inbox'ом мгновенно.
+  // Ограничиваем до NEW_PROJECTS_PER_DAY_MAX — бывали случаи, когда race на
+  // /api/game сеял одни и те же preloaded по несколько раз и в итоге в inbox
+  // прилетало 6-8 дел. Сейчас лишние preloaded просто удаляем.
+  const preloadedToPromote = await prisma.project.findMany({
     where: { userId, isPreloaded: true },
-    data: { isPreloaded: false, isInbox: true },
+    take: NEW_PROJECTS_PER_DAY_MAX,
+    orderBy: { createdAt: 'asc' },
+    select: { id: true },
   })
+  if (preloadedToPromote.length > 0) {
+    await prisma.project.updateMany({
+      where: { id: { in: preloadedToPromote.map(p => p.id) } },
+      data: { isPreloaded: false, isInbox: true },
+    })
+  }
+  // Все оставшиеся preloaded (если насеялось больше лимита) — выкидываем
+  await prisma.project.deleteMany({
+    where: { userId, isPreloaded: true },
+  })
+  const promoted = { count: preloadedToPromote.length }
 
   const activeProjects = await prisma.project.findMany({
     where: { userId, isActive: true },
