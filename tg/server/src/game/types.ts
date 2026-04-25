@@ -13,7 +13,7 @@ export enum ProjectFate {
   SLOW_DRAIN = 'SLOW_DRAIN',       // 25% — держится 1–3 недели, тихо исчезает
   HONEST_FAIL = 'HONEST_FAIL',     // 15% — честно старался, не взлетело
   SURVIVOR = 'SURVIVOR',           // 30% — долгожитель, стабильный доход
-  UNICORN = 'UNICORN',             // 10% — взлетел: слава и иксы
+  UNICORN = 'UNICORN',             // 5% — взлетел: «Жар-птица за хвост»
 }
 
 export enum PersonaArchetype {
@@ -87,7 +87,7 @@ export const FATE_LABEL: Record<ProjectFate, string> = {
   [ProjectFate.SLOW_DRAIN]:   'Тихо угас',
   [ProjectFate.HONEST_FAIL]:  'Честный провал',
   [ProjectFate.SURVIVOR]:     'Выжил',
-  [ProjectFate.UNICORN]:      'Взлетел',
+  [ProjectFate.UNICORN]:      'Жар-птица за хвост',
 }
 
 /** Правила вывода по типу дела */
@@ -110,13 +110,13 @@ export const FATE_CONFIG: Record<ProjectFate, {
     daysRange: [2, 5],            // живёт 2–5 дней — успевает заманить
     dailyYieldRange: [0.05, 0.20], // приманка: 5–20% в день
     lossRange: [1.0, 1.0],         // исчезает со ВСЕМИ деньгами
-    weight: 20,
+    weight: 25,
   },
   [ProjectFate.SLOW_DRAIN]: {
     daysRange: [7, 21],
     dailyYieldRange: [0.015, 0.075], // x5 от прежних 0.003–0.015
     lossRange: [0.3, 0.7],
-    weight: 25,
+    weight: 30,
   },
   [ProjectFate.HONEST_FAIL]: {
     daysRange: [14, 30],
@@ -128,13 +128,13 @@ export const FATE_CONFIG: Record<ProjectFate, {
     daysRange: [15, 30],
     dailyYieldRange: [0.015, 0.075], // x5: ~1.5–7.5% в день
     lossRange: [0, 0],
-    weight: 30,
+    weight: 25,
   },
   [ProjectFate.UNICORN]: {
     daysRange: [20, 30],
     dailyYieldRange: [0.10, 0.50], // x5: 10–50% в день
     lossRange: [0, 0],
-    weight: 10,
+    weight: 5,
   },
 }
 

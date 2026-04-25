@@ -28,7 +28,7 @@ const FATE_DISPLAY: Record<string, { label: string; color: string }> = {
   SLOW_DRAIN:   { label: '🌫️ Тихо угас',             color: '#E8A060' },
   HONEST_FAIL:  { label: '😔 Честный провал',         color: colors.textMuted },
   SURVIVOR:     { label: '⚓ Выжил — дело передано', color: colors.success },
-  UNICORN:      { label: '🦄 Взлетел — выкуплен',    color: colors.fairyGold },
+  UNICORN:      { label: '🔥 Жар-птица за хвост',     color: colors.fairyGold },
 }
 
 const LIE_TOPIC_LABEL: Record<string, string> = {

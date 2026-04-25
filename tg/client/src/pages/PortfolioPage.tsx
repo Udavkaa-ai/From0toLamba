@@ -584,7 +584,7 @@ const ARCHETYPE_DISPLAY: Record<string, string> = {
 
 const FATE_DISPLAY: Record<string, string> = {
   INSTANT_SCAM: '💀 Сбежал с деньгами', SLOW_DRAIN: '🌫️ Тихо угас', HONEST_FAIL: '😔 Честный провал',
-  SURVIVOR: '⚓ Выжил', UNICORN: '🦄 Взлетел',
+  SURVIVOR: '⚓ Выжил', UNICORN: '🔥 Жар-птица',
 }
 
 function ClosedProjectCard({ project, postMortem }: { project: ProjectDTO; postMortem: PostMortemDTO | null }) {

@@ -817,22 +817,25 @@ function ActiveProjectCard({ project, delay, onPress }: { project: ProjectDTO; d
             </div>
           </div>
         </div>
-        {/* Плашка свежего события — кричит цветом и заголовком, чтобы игрок сразу заметил */}
+        {/* Свежее событие — заголовок + полный текст вести прямо на карточке.
+            Игрок не должен лезть в Казну чтобы порадоваться/огорчиться. */}
         {eventKind && eventColor && latestUpdate && (
           <div style={{
             marginTop: spacing.sm,
-            padding: '8px 10px',
-            borderRadius: '8px',
+            padding: '10px 12px',
+            borderRadius: '10px',
             background: `${eventColor}18`,
             border: `1px solid ${eventColor}55`,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
           }}>
-            <span style={{ color: eventColor, fontSize: '14px', lineHeight: 1 }}>{eventGlyph}</span>
-            <span style={{ color: colors.textPrimary, fontSize: '12px', fontWeight: 600, flex: 1 }}>
-              {latestUpdate.title}
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <span style={{ color: eventColor, fontSize: '14px', lineHeight: 1 }}>{eventGlyph}</span>
+              <span style={{ color: colors.textPrimary, fontSize: '13px', fontWeight: 700, flex: 1 }}>
+                {latestUpdate.title}
+              </span>
+            </div>
+            <div style={{ color: colors.textSecondary, fontSize: '12px', lineHeight: 1.5 }}>
+              {latestUpdate.body}
+            </div>
           </div>
         )}
         {(project.isWithdrawalLocked || newsSignal) && (

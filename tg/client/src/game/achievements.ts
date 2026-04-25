@@ -372,9 +372,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'seen_unicorn',
-    name: 'Поймал единорога',
-    description: 'Застань редчайший сказочный взлёт',
-    emoji: '🦄',
+    name: 'Поймал Жар-птицу за хвост',
+    description: 'Застань редчайшее дело, которое приумножает рубли в разы',
+    emoji: '🔥',
     category: 'bestiary',
     revealTopic: { kind: 'fate', id: 'UNICORN' },
     check: ({ gameState }) => gameState.seenFates.includes('UNICORN'),
