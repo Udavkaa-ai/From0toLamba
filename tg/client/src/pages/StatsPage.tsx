@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { ScreenBackground } from '@/components/ScreenBackground'
 import { FairyCard } from '@/components/FairyCard'
+import { PageTitle } from '@/components/PageTitle'
 import { api } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing } from '@/theme'
@@ -53,7 +54,7 @@ export function StatsPage() {
     <ScreenBackground>
       <div style={{ padding: `${spacing.xxl} ${spacing.lg} 80px`, maxWidth: '500px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: spacing.xxl }}>
-          <div style={{ color: colors.fairyGold, fontSize: '20px', fontWeight: 700 }}>✦ Успехи ✦</div>
+          <PageTitle>Успехи</PageTitle>
         </div>
 
         {/* Ранг */}

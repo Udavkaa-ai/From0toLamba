@@ -11,7 +11,7 @@ import {
 } from '@/components/WhatsNewOverlay'
 import { AchievementUnlockedOverlay } from '@/components/AchievementUnlockedOverlay'
 import { CountUp } from '@/components/CountUp'
-import { EyeIcon } from '@/components/icons'
+import { EyeIcon, LockIcon } from '@/components/icons'
 import { api, type ProjectDTO, type DailyUpdateDTO } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing, typography } from '@/theme'
@@ -806,8 +806,8 @@ function ActiveProjectCard({ project, delay, onPress }: { project: ProjectDTO; d
         {(project.isWithdrawalLocked || newsSignal) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm }}>
             {project.isWithdrawalLocked && (
-              <div style={{ color: colors.warning, fontSize: '11px' }}>
-                🔒 Вывод заблокирован
+              <div style={{ color: colors.warning, fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <LockIcon size={12} /> Вывод заблокирован
               </div>
             )}
             {newsSignal && !project.isWithdrawalLocked && (

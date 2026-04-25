@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom'
 import { ComposedChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts'
 import { ScreenBackground } from '@/components/ScreenBackground'
 import { FairyCard, OrnamentDivider, SkeletonCard } from '@/components/FairyCard'
+import { PageTitle } from '@/components/PageTitle'
+import { LockIcon } from '@/components/icons'
 import { api, type ProjectDTO, type PostMortemDTO, type DailyUpdateDTO, type TransactionDTO } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing, typography } from '@/theme'
@@ -47,7 +49,7 @@ export function PortfolioPage() {
     <ScreenBackground>
       <div style={{ padding: `${spacing.xxl} ${spacing.lg} 80px`, maxWidth: '500px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: spacing.xxl }}>
-          <div style={{ color: colors.fairyGold, fontSize: '20px', fontWeight: 700 }}>✦ Казна ✦</div>
+          <PageTitle>Казна</PageTitle>
           <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
             Активные дела и история
           </div>
@@ -327,8 +329,8 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
       </div>
 
       {project.isWithdrawalLocked && (
-        <div style={{ marginTop: spacing.sm, color: colors.warning, fontSize: '12px', padding: '4px 8px', background: `${colors.warning}15`, borderRadius: '6px' }}>
-          🔒 Вывод заблокирован хозяином
+        <div style={{ marginTop: spacing.sm, color: colors.warning, fontSize: '12px', padding: '4px 8px', background: `${colors.warning}15`, borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+          <LockIcon size={14} /> Вывод заблокирован хозяином
         </div>
       )}
 

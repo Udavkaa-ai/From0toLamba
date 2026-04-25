@@ -8,6 +8,7 @@ import type { CharterDTO, CharterResultDTO, CharterSubmitDTO } from '@/api/clien
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing } from '@/theme'
 import { Seal, generateReferenceSeal, sealForCell } from '@/components/Seal'
+import { CoinIcon } from '@/components/icons'
 import { useTelegramBackHandler } from '@/hooks/useTelegramBackButton'
 
 const tg = (window as any).Telegram?.WebApp
@@ -674,8 +675,8 @@ function ResultSheet({
           <button onClick={onSkip} style={{ ...secondaryBtnStyle, flex: 1, marginTop: 0 }}>
             Миновать
           </button>
-          <button onClick={onInvest} style={{ ...primaryBtnStyle, flex: 1 }}>
-            💰 Вложить
+          <button onClick={onInvest} style={{ ...primaryBtnStyle, flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+            <CoinIcon size={16} /> Вложить
           </button>
         </div>
       </motion.div>
@@ -727,8 +728,8 @@ function InvestSheet({ projectId, onClose, onSuccess }: { projectId: string; onC
 
   return (
     <Sheet onClose={onClose}>
-      <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '18px', marginBottom: spacing.sm }}>
-        💰 Вложить рубли
+      <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '18px', marginBottom: spacing.sm, display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <CoinIcon size={20} /> Вложить рубли
       </div>
       <div style={{ color: colors.textMuted, fontSize: '12px', marginBottom: spacing.sm }}>
         Баланс: {gameState?.balance.toFixed(0) ?? '—'} ₽ · Мин. 5 ₽ · Макс. 5 000 ₽

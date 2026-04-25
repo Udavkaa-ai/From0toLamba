@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { ScreenBackground } from '@/components/ScreenBackground'
 import { FairyCard, OrnamentDivider, SkeletonCard } from '@/components/FairyCard'
+import { PageTitle } from '@/components/PageTitle'
 import { api, type ProjectDTO, type PostMortemDTO } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing } from '@/theme'
@@ -113,7 +114,7 @@ export function RegistryPage() {
             Назад
           </button>
           <div style={{ flex: 1, textAlign: 'center' }}>
-            <div style={{ color: colors.fairyGold, fontSize: '20px', fontWeight: 700 }}>✦ Летопись ✦</div>
+            <PageTitle>Летопись</PageTitle>
             <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '2px' }}>
               Архив закрытых дел
             </div>

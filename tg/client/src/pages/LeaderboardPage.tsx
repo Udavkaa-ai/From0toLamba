@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { ScreenBackground } from '@/components/ScreenBackground'
 import { SkeletonCard } from '@/components/FairyCard'
+import { PageTitle } from '@/components/PageTitle'
 import {
   api,
   type LeaderboardEntryDTO,
@@ -49,9 +50,7 @@ export function LeaderboardPage() {
     <ScreenBackground>
       <div style={{ padding: `${spacing.xxl} ${spacing.lg} 80px`, maxWidth: '500px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: spacing.lg }}>
-          <div style={{ color: colors.fairyGold, fontSize: '20px', fontWeight: 700 }}>
-            ✦ Ярмарочный Рейтинг ✦
-          </div>
+          <PageTitle>Ярмарочный Рейтинг</PageTitle>
         </div>
 
         {/* Tabs */}

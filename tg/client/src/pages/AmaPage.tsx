@@ -6,6 +6,7 @@ import { ScreenBackground } from '@/components/ScreenBackground'
 import { api } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing } from '@/theme'
+import { CoinIcon } from '@/components/icons'
 
 const tg = (window as any).Telegram?.WebApp
 const haptic = tg?.HapticFeedback
@@ -349,9 +350,10 @@ export function AmaPage() {
                 fontWeight: 700,
                 cursor: 'pointer',
                 fontSize: '14px',
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
               }}
             >
-              💰 Вложить рубли
+              <CoinIcon size={16} /> Вложить рубли
             </button>
           </div>
         )}
@@ -519,8 +521,8 @@ function InvestSheet({ projectId, onClose, onSuccess }: { projectId: string; onC
           padding: spacing.xxl,
         }}
       >
-        <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '18px', marginBottom: spacing.sm }}>
-          💰 Вложить рубли
+        <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '18px', marginBottom: spacing.sm, display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <CoinIcon size={20} /> Вложить рубли
         </div>
         <div style={{ color: colors.textMuted, fontSize: '12px', marginBottom: spacing.sm }}>
           Баланс: {gameState?.balance.toFixed(0) ?? '—'} ₽ · Мин. 5 ₽ · Макс. 5 000 ₽
