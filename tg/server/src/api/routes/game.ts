@@ -186,7 +186,7 @@ export async function gameRoutes(app: FastifyInstance) {
 
     try {
       const result = await advanceDay(user.id)
-      return { success: true, newRank: result.newRank ?? null }
+      return { success: true, newRank: result.newRank ?? null, closures: result.closures }
     } catch (err: any) {
       if (err.message === 'ADVANCE_TOO_SOON') {
         const since = user.gameState?.lastAdvancedAt
@@ -210,7 +210,7 @@ export async function gameRoutes(app: FastifyInstance) {
       where: { telegramId: String(tgUser.id) },
     })
     const result = await advanceDay(user.id, { bypassCooldown: true })
-    return { success: true, newRank: result.newRank ?? null }
+    return { success: true, newRank: result.newRank ?? null, closures: result.closures }
   })
 
   // POST /api/game/clear-rank-up — сбросить pendingRankUp после показа

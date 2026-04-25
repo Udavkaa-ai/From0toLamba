@@ -169,6 +169,27 @@ export interface ReferralLeaderboardDTO {
   totalPlayers: number
 }
 
+export interface ClosureSummaryDTO {
+  id: string
+  name: string
+  developerName: string
+  fate: string
+  personaArchetype: string
+  investedAmount: number
+  returnedAmount: number
+  profitPercent: number
+  daysActive: number
+  closureReason: string
+  bannerImageUrl: string | null
+  forcedByMafia: boolean
+}
+
+export interface AdvanceDayResultDTO {
+  success: boolean
+  newRank: string | null
+  closures: ClosureSummaryDTO[]
+}
+
 export interface AmaSessionDTO {
   sessionId: string
   questionCount: number
@@ -210,8 +231,8 @@ export interface CharterDTO {
 export const api = {
   game: {
     getState: () => apiClient.get<GameStateDTO>('/game').then(r => r.data),
-    advanceDay: () => apiClient.post('/game/advance-day').then(r => r.data),
-    advanceDaySkip: () => apiClient.post('/game/advance-day-skip').then(r => r.data),
+    advanceDay: () => apiClient.post<AdvanceDayResultDTO>('/game/advance-day').then(r => r.data),
+    advanceDaySkip: () => apiClient.post<AdvanceDayResultDTO>('/game/advance-day-skip').then(r => r.data),
     clearRankUp: () => apiClient.post('/game/clear-rank-up').then(r => r.data),
     completeOnboarding: () => apiClient.post('/game/complete-onboarding').then(r => r.data),
     getSettings: () => apiClient.get<{ preferredModel: string }>('/game/settings').then(r => r.data),

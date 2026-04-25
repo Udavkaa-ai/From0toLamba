@@ -12,7 +12,7 @@ import {
 import { AchievementUnlockedOverlay } from '@/components/AchievementUnlockedOverlay'
 import { CountUp } from '@/components/CountUp'
 import { EyeIcon, LockIcon } from '@/components/icons'
-import { api, type ProjectDTO, type DailyUpdateDTO } from '@/api/client'
+import { api, type ProjectDTO, type DailyUpdateDTO, type ClosureSummaryDTO } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing, typography } from '@/theme'
 
@@ -41,6 +41,7 @@ export function HomePage() {
   const [localModel, setLocalModel] = useState<string | null>(null)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
   const [showDayNews, setShowDayNews] = useState(false)
+  const [dayClosures, setDayClosures] = useState<ClosureSummaryDTO[]>([])
   const [showAdStub, setShowAdStub] = useState(false)
   const [showTutorial, setShowTutorial] = useState(false)
   const [pendingChangelog, setPendingChangelog] = useState<ChangelogEntry | null>(null)
@@ -77,10 +78,11 @@ export function HomePage() {
 
   const advanceMutation = useMutation({
     mutationFn: api.game.advanceDay,
-    onSuccess: () => {
+    onSuccess: (data) => {
       tgHaptic?.notificationOccurred('success')
       qc.invalidateQueries({ queryKey: ['gameState'] })
       qc.invalidateQueries({ queryKey: ['updates'] })
+      setDayClosures(data.closures ?? [])
       setShowDayNews(true)
     },
     onError: () => tgHaptic?.notificationOccurred('error'),
@@ -88,11 +90,12 @@ export function HomePage() {
 
   const skipAdMutation = useMutation({
     mutationFn: api.game.advanceDaySkip,
-    onSuccess: () => {
+    onSuccess: (data) => {
       tgHaptic?.notificationOccurred('success')
       qc.invalidateQueries({ queryKey: ['gameState'] })
       qc.invalidateQueries({ queryKey: ['updates'] })
       setShowAdStub(false)
+      setDayClosures(data.closures ?? [])
       setShowDayNews(true)
     },
   })
@@ -204,7 +207,7 @@ export function HomePage() {
       </AnimatePresence>
       {!showTutorial && !pendingChangelog && <AchievementUnlockedOverlay />}
       {showDayNews && gameState.activeProjects.length > 0 && (
-        <DayNewsOverlay projects={gameState.activeProjects} onClose={() => setShowDayNews(false)} />
+        <DayNewsOverlay projects={gameState.activeProjects} closures={dayClosures} onClose={() => setShowDayNews(false)} />
       )}
 
       {/* Settings Sheet */}
@@ -869,24 +872,34 @@ function ActiveProjectCard({ project, delay, onPress }: { project: ProjectDTO; d
   )
 }
 
-function DayNewsOverlay({ projects, onClose }: { projects: ProjectDTO[]; onClose: () => void }) {
+function DayNewsOverlay({
+  projects, closures, onClose,
+}: {
+  projects: ProjectDTO[]
+  closures: ClosureSummaryDTO[]
+  onClose: () => void
+}) {
   const navigate = useNavigate()
   const [idx, setIdx] = useState(0)
 
-  const total = projects.length
-  const current = projects[idx]
+  // Сначала карточки итогов закрытий (драма), потом — обычные новости активных дел
+  const closureCount = closures.length
+  const total = closureCount + projects.length
+  const isClosure = idx < closureCount
+  const currentClosure = isClosure ? closures[idx] : null
+  const currentProject = !isClosure ? projects[idx - closureCount] : null
 
   const dismiss = () => {
     if (idx < total - 1) setIdx(idx + 1)
     else onClose()
   }
 
-  const goToDeal = () => {
+  const goPrimary = () => {
     onClose()
-    navigate('/portfolio')
+    navigate(isClosure ? '/registry' : '/portfolio')
   }
 
-  if (!current) return null
+  if (!currentClosure && !currentProject) return null
 
   return (
     <div style={{
@@ -920,7 +933,7 @@ function DayNewsOverlay({ projects, onClose }: { projects: ProjectDTO[]; onClose
           dragConstraints={{ left: 0, right: 0 }}
           dragElastic={0.3}
           onDragEnd={(_, info) => {
-            if (info.offset.x > 80) goToDeal()
+            if (info.offset.x > 80) goPrimary()
             else if (info.offset.x < -80) dismiss()
           }}
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -940,7 +953,7 @@ function DayNewsOverlay({ projects, onClose }: { projects: ProjectDTO[]; onClose
           {/* Counter */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <div style={{ color: colors.fairyGold, fontSize: '11px', fontWeight: 600 }}>
-              📜 Вести дня {idx + 1}/{total}
+              {isClosure ? `🏛 Итоги дела ${idx + 1}/${total}` : `📜 Вести ${idx + 1}/${total}`}
             </div>
             <button
               onClick={onClose}
@@ -950,7 +963,9 @@ function DayNewsOverlay({ projects, onClose }: { projects: ProjectDTO[]; onClose
             </button>
           </div>
 
-          <ProjectNewsCardContent project={current} />
+          {currentClosure
+            ? <ClosureCardContent closure={currentClosure} />
+            : currentProject && <ProjectNewsCardContent project={currentProject} />}
 
           {/* Действия: кнопки + свайп */}
           <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
@@ -968,10 +983,10 @@ function DayNewsOverlay({ projects, onClose }: { projects: ProjectDTO[]; onClose
                 cursor: 'pointer',
               }}
             >
-              ← Пропустить
+              ← Дальше
             </button>
             <button
-              onClick={e => { e.stopPropagation(); goToDeal() }}
+              onClick={e => { e.stopPropagation(); goPrimary() }}
               style={{
                 flex: 1,
                 padding: '10px 12px',
@@ -984,7 +999,7 @@ function DayNewsOverlay({ projects, onClose }: { projects: ProjectDTO[]; onClose
                 cursor: 'pointer',
               }}
             >
-              К делу →
+              {isClosure ? 'В летопись →' : 'К делу →'}
             </button>
           </div>
           <div style={{ color: colors.textMuted, fontSize: '10px', textAlign: 'center', marginTop: '8px', opacity: 0.7 }}>
@@ -992,6 +1007,88 @@ function DayNewsOverlay({ projects, onClose }: { projects: ProjectDTO[]; onClose
           </div>
         </motion.div>
       </AnimatePresence>
+    </div>
+  )
+}
+
+function ClosureCardContent({ closure }: { closure: ClosureSummaryDTO }) {
+  const profitable = closure.profitPercent >= 0
+  const accent = closure.forcedByMafia
+    ? colors.danger
+    : profitable
+      ? colors.success
+      : closure.profitPercent <= -50
+        ? colors.danger
+        : colors.warning
+
+  const fateLabel = closure.fate === 'INSTANT_SCAM' ? 'Сбежал с деньгами'
+    : closure.fate === 'SLOW_DRAIN' ? 'Тихо угас'
+    : closure.fate === 'HONEST_FAIL' ? 'Честный провал'
+    : closure.fate === 'SURVIVOR' ? 'Выжил с прибылью'
+    : closure.fate === 'UNICORN' ? 'Жар-птица за хвост'
+    : closure.fate
+
+  return (
+    <div>
+      {/* Заголовок: имя + delta */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+        <div>
+          <div style={{ color: colors.textPrimary, fontWeight: 700, fontSize: '15px' }}>{closure.name}</div>
+          <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '2px' }}>
+            {closure.developerName} · {closure.daysActive} дн.
+          </div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ color: accent, fontFamily: typography.headingFontFamily, fontSize: '22px', fontWeight: 700, lineHeight: 1.1 }}>
+            {profitable ? '+' : ''}{closure.profitPercent.toFixed(1)}%
+          </div>
+          <div style={{ color: colors.textMuted, fontSize: '10px', marginTop: '2px' }}>{fateLabel}</div>
+        </div>
+      </div>
+
+      {/* Причина закрытия (наратив) */}
+      <div style={{
+        padding: '10px 12px',
+        background: `${accent}15`,
+        border: `1px solid ${accent}50`,
+        borderRadius: '10px',
+        color: colors.textSecondary,
+        fontSize: '12px',
+        lineHeight: 1.5,
+        marginBottom: '12px',
+        whiteSpace: 'pre-line',
+      }}>
+        {closure.forcedByMafia && (
+          <div style={{ color: colors.danger, fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>
+            ⚡ Не вышел вовремя — отдал половину
+          </div>
+        )}
+        {closure.closureReason}
+      </div>
+
+      {/* Числа: Вложено → Получено */}
+      <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '8px 0' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ color: colors.textMuted, fontSize: '10px' }}>Вложено</div>
+          <div style={{ color: colors.textSecondary, fontWeight: 600, fontSize: '14px', fontVariantNumeric: 'tabular-nums' }}>
+            {closure.investedAmount.toFixed(0)} ₽
+          </div>
+        </div>
+        <div style={{ color: colors.textMuted, fontSize: '14px' }}>→</div>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ color: colors.textMuted, fontSize: '10px' }}>Получено</div>
+          <div style={{
+            color: accent,
+            fontFamily: typography.headingFontFamily,
+            fontSize: '20px',
+            fontWeight: 700,
+            fontVariantNumeric: 'tabular-nums',
+            textShadow: `0 0 12px ${accent}40`,
+          }}>
+            {closure.returnedAmount.toFixed(0)} ₽
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

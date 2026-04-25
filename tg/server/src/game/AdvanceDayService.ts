@@ -37,7 +37,26 @@ export interface AdvanceDayOptions {
   bypassCooldown?: boolean
 }
 
-export async function advanceDay(userId: number, options: AdvanceDayOptions = {}): Promise<{ newRank?: InvestorRank }> {
+/** Итоги закрытия одного дела за этот advance-day — для оверлея «карточки закрытий» */
+export interface ClosureSummary {
+  id: string
+  name: string
+  developerName: string
+  fate: string                    // ProjectFate enum value
+  personaArchetype: string        // PersonaArchetype enum value
+  investedAmount: number
+  returnedAmount: number
+  profitPercent: number
+  daysActive: number
+  closureReason: string
+  bannerImageUrl: string | null   // прокси-URL /api/banner/<id>
+  forcedByMafia: boolean          // true если зевнул мафио-предложение
+}
+
+export async function advanceDay(userId: number, options: AdvanceDayOptions = {}): Promise<{
+  newRank?: InvestorRank
+  closures: ClosureSummary[]
+}> {
   const gameState = await prisma.gameState.findUniqueOrThrow({ where: { userId } })
 
   // Кулдаун: после пачки в MAX_CONSECUTIVE_ADVANCES дней должно пройти ADVANCE_COOLDOWN_MS
@@ -85,6 +104,7 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
 
   let balanceDelta = 0
   let returnedDelta = 0  // сумма всех автозакрытий за этот день — для totalReturned
+  const closures: ClosureSummary[] = []
 
   for (const project of activeProjects) {
     const fate = project.fate as ProjectFate
@@ -174,6 +194,22 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
           day: gameState.currentDay + 1,
         },
       }).catch(console.error)
+
+      // Сводка для оверлея «итоги закрытий» — клиент покажет до перехода на новый день
+      closures.push({
+        id: project.id,
+        name: project.name,
+        developerName: project.developerName,
+        fate: project.fate,
+        personaArchetype: project.personaArchetype,
+        investedAmount: project.investedAmountRubles,
+        returnedAmount: returned,
+        profitPercent,
+        daysActive: project.daysSinceJoined,
+        closureReason,
+        bannerImageUrl: project.bannerImageUrl ? `/api/banner/${project.id}` : null,
+        forcedByMafia: mafiaForced,
+      })
 
       continue
     }
@@ -356,5 +392,5 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
     }
   }
 
-  return rankUp ? { newRank } : {}
+  return { newRank: rankUp ? newRank : undefined, closures }
 }
