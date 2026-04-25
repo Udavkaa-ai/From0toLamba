@@ -34,6 +34,7 @@ export interface ProjectDTO {
   id: string
   name: string
   type: string
+  personaArchetype: string
   isInbox: boolean
   isActive: boolean
   isClosed: boolean
@@ -229,8 +230,6 @@ export const api = {
     getSession: (projectId: string) => apiClient.get<AmaSessionDTO>(`/ama/${projectId}`).then(r => r.data),
     sendMessage: (projectId: string, message: string) =>
       apiClient.post<{ reply: string; questionCount: number; isSessionComplete: boolean }>(`/ama/${projectId}/message`, { message }).then(r => r.data),
-    evaluateIntuition: (projectId: string, selectedTopics: string[]) =>
-      apiClient.post(`/ama/${projectId}/evaluate-intuition`, { selectedTopics }).then(r => r.data),
   },
 
   charter: {

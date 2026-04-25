@@ -29,7 +29,6 @@ export function CharterPage() {
   const [scanCountdown, setScanCountdown] = useState<number | null>(null)
   const [result, setResult] = useState<CharterResultDTO | null>(null)
   const [showInvest, setShowInvest] = useState(false)
-  const [showChatLocked, setShowChatLocked] = useState(false)
   const [onboardingBonus, setOnboardingBonus] = useState<number | null>(null)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
   const onboardingTriggeredRef = useRef(false)
@@ -225,7 +224,7 @@ export function CharterPage() {
           <IntroScreen
             project={project}
             onStart={() => setPhase('reference')}
-            onChat={() => setShowChatLocked(true)}
+            onChat={() => navigate(`/ama/${projectId}`)}
           />
         )}
 
@@ -295,12 +294,6 @@ export function CharterPage() {
             onClose={() => setShowInvest(false)}
             onSuccess={() => navigate('/portfolio')}
           />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showChatLocked && (
-          <ChatLockedSheet onClose={() => setShowChatLocked(false)} />
         )}
       </AnimatePresence>
 
@@ -451,7 +444,7 @@ function IntroScreen({
       <button onClick={onChat} style={secondaryBtnStyle}>
         💬 Расспросить дельца лично
         <div style={{ fontSize: '10px', color: colors.textMuted, marginTop: '2px', fontWeight: 400 }}>
-          скоро — за просмотр рекламы
+          скоро откроется за просмотр рекламы — пока бесплатно
         </div>
       </button>
     </div>
@@ -769,22 +762,6 @@ function InvestSheet({ projectId, onClose, onSuccess }: { projectId: string; onC
       >
         {investMutation.isPending ? '⏳' : 'Вложить'}
       </button>
-    </Sheet>
-  )
-}
-
-function ChatLockedSheet({ onClose }: { onClose: () => void }) {
-  return (
-    <Sheet onClose={onClose}>
-      <div style={{ fontSize: '40px', textAlign: 'center', marginBottom: spacing.md }}>🎭</div>
-      <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '18px', textAlign: 'center', marginBottom: spacing.sm }}>
-        Беседа с дельцом
-      </div>
-      <div style={{ color: colors.textSecondary, fontSize: '13px', textAlign: 'center', lineHeight: 1.5, marginBottom: spacing.lg }}>
-        Можно расспросить хозяина дела лично — он ответит, как умеет. Врать будет красиво, правду скрывать — изящно.
-        Скоро откроется за просмотр рекламы.
-      </div>
-      <button onClick={onClose} style={primaryBtnStyle}>Понятно</button>
     </Sheet>
   )
 }

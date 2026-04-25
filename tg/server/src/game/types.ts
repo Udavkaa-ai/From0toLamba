@@ -143,6 +143,7 @@ export interface ProjectPublicDTO {
   id: string
   name: string
   type: ProjectType
+  personaArchetype: PersonaArchetype
   isInbox: boolean
   isActive: boolean
   isClosed: boolean

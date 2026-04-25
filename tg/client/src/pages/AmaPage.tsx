@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -7,67 +7,44 @@ import { api } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing } from '@/theme'
 
-const LIE_TOPICS = [
-  { id: 'PATRON_COUNT', emoji: '👥', label: 'Вкладчики', hint: 'Врёт о числе вкладчиков' },
-  { id: 'DAILY_PROFIT', emoji: '💰', label: 'Доход', hint: 'Завышает дневной доход' },
-  { id: 'PAYOUT_DATE', emoji: '📅', label: 'Выплаты', hint: 'Называет ложные сроки выплат' },
-  { id: 'GUILD_SIZE', emoji: '🏗️', label: 'Артель', hint: 'Приукрашивает размер команды' },
-  { id: 'ELDER_BLESSING', emoji: '📜', label: 'Проверка', hint: 'Выдуманная проверка старейшин' },
-  { id: 'NOBLE_BACKING', emoji: '🏰', label: 'Покровители', hint: 'Несуществующие покровители' },
-  { id: 'WITHDRAWAL_LIMITS', emoji: '🔒', label: 'Вывод', hint: 'Скрывает ограничения на вывод' },
-]
-
-const TOPIC_LABEL: Record<string, string> = Object.fromEntries(
-  LIE_TOPICS.map(t => [t.id, `${t.emoji} ${t.label}`])
-)
-
 const tg = (window as any).Telegram?.WebApp
 const haptic = tg?.HapticFeedback
 
+// Разговорные шаблоны — для болтовни «по приколу», без допросной механики
 const ALL_QUESTIONS = [
-  // Доходность
-  'Сколько реально зарабатывают участники в день?',
-  'Назови конкретную цифру — сколько рублей в день на сотню вложенных?',
-  'Откуда берётся такая высокая доходность?',
-  'Почему у вас выгоднее, чем у конкурентов?',
-  'Есть ли участник, готовый подтвердить свой доход?',
-  // Вкладчики
-  'Сколько сейчас вкладчиков в деле?',
-  'Как давно самый первый вкладчик с тобой работает?',
-  'Сколько человек вышло из дела за последний месяц и почему?',
-  // Выплаты
-  'Когда точно будут первые выплаты?',
-  'Как выглядит процесс вывода рублей — шаги, сроки?',
-  'Были ли когда-нибудь задержки выплат? По какой причине?',
-  'Можно вывести рубли прямо сейчас, не дожидаясь срока?',
-  // Команда
-  'Кто в артели? Можно проверить их имена?',
-  'Сколько человек работает над делом?',
-  // Проверки и документы
-  'Дело проверено старейшинами или воеводой?',
-  'Есть ли официальный документ или грамота о деле?',
-  'Покажи книгу учёта доходов и расходов',
-  // Вывод и ограничения
-  'Есть ли ограничения на вывод рублей?',
-  'Что случится, если я захочу выйти из дела раньше срока?',
-  // Покровители
-  'Кто ваши покровители и партнёры?',
-  'Есть ли у дела поддержка от торговой гильдии или государства?',
-  // Риски
-  'Что будет, если дело не пойдёт?',
-  'Были ли у тебя дела, которые провалились? Расскажи.',
-  'Почему я должен тебе доверять?',
+  'Расскажи о себе',
+  'Откуда ты родом?',
+  'Как докатился до этого дела?',
+  'Самая дикая байка из жизни?',
+  'Что самое страшное видел?',
+  'Кто твой кумир?',
+  'Любимое блюдо?',
+  'Чего боишься больше всего?',
+  'Если завтра разоришься — куда подашься?',
+  'Был ли у тебя любимый человек?',
+  'Веришь ли в чудеса?',
+  'Что бы делал, если бы вдруг стал царём?',
+  'Расскажи свою любимую сказку',
+  'Что у тебя в карманах сейчас?',
+  'Какая твоя главная слабость?',
+  'Какую песню напеваешь, когда никто не слышит?',
 ]
 
 function pickSessionQuestions(sessionId: string | undefined): string[] {
-  // Детерминированно выбираем 10 вопросов на сессию
+  // Детерминированно выбираем 8 вопросов на сессию
   const seed = sessionId ? sessionId.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) : Date.now()
   const shuffled = [...ALL_QUESTIONS].sort((a, b) => {
     const ha = (seed * a.charCodeAt(0) * 2654435761) % ALL_QUESTIONS.length
     const hb = (seed * b.charCodeAt(0) * 2654435761) % ALL_QUESTIONS.length
     return ha - hb
   })
-  return shuffled.slice(0, 10)
+  return shuffled.slice(0, 8)
+}
+
+function personaBgUrl(archetype: string | undefined): string | null {
+  if (!archetype) return null
+  const slug = archetype.toLowerCase()
+  return `/personas/${slug}.png`
 }
 
 export function AmaPage() {
@@ -76,14 +53,22 @@ export function AmaPage() {
   const qc = useQueryClient()
   const { gameState, setGameState } = useGameStore()
   const [input, setInput] = useState('')
-  const [selectedTopics, setSelectedTopics] = useState<Set<string>>(new Set())
   const [showInvestSheet, setShowInvestSheet] = useState(false)
-  const [showIntuitionResult, setShowIntuitionResult] = useState<any>(null)
-  const [showLegend, setShowLegend] = useState(false)
   const [onboardingBonus, setOnboardingBonus] = useState<number | null>(null)
   const [usedTemplates, setUsedTemplates] = useState<Set<string>>(new Set())
   const onboardingTriggeredRef = useRef(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const project = useMemo(() => {
+    if (!projectId || !gameState) return null
+    return (
+      gameState.activeProjects.find(p => p.id === projectId) ??
+      gameState.inboxProjects.find(p => p.id === projectId) ??
+      null
+    )
+  }, [projectId, gameState])
+
+  const bgUrl = personaBgUrl(project?.personaArchetype)
 
   // Инициализируем/получаем сессию
   const { data: session, isLoading } = useQuery({
@@ -135,14 +120,6 @@ export function AmaPage() {
     },
   })
 
-  const intuitionMutation = useMutation({
-    mutationFn: () => api.ama.evaluateIntuition(projectId!, [...selectedTopics]),
-    onSuccess: (data) => {
-      setShowIntuitionResult(data)
-      qc.invalidateQueries({ queryKey: ['ama', projectId] })
-    },
-  })
-
   // Онбординг-бонус: выдаём 50 ₽ когда первая беседа завершена
   useEffect(() => {
     if (
@@ -154,7 +131,6 @@ export function AmaPage() {
       api.game.completeOnboarding().then((res: any) => {
         if (res.bonusAwarded) {
           setOnboardingBonus(res.bonusAwarded)
-          // Сразу обновляем Zustand — не ждём рефетч страницы
           if (gameState) {
             setGameState({
               ...gameState,
@@ -190,20 +166,50 @@ export function AmaPage() {
     )
   }
 
-  const questionsLeft = 10 - session.questionCount
-
   return (
     <ScreenBackground showSparkles={false}>
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh' }}>
+      {/* Персонажный фон под слоем UI */}
+      {bgUrl && (
+        <div
+          aria-hidden
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 0,
+            backgroundImage: `url(${bgUrl})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            // Затемняем, чтобы текст читался поверх
+            filter: 'brightness(0.45) saturate(0.85)',
+          }}
+        />
+      )}
+      {/* Виньетка-градиент: верх и низ темнее, центр чуть светлее */}
+      {bgUrl && (
+        <div
+          aria-hidden
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 0,
+            background: 'linear-gradient(180deg, rgba(10,8,24,0.85) 0%, rgba(10,8,24,0.4) 30%, rgba(10,8,24,0.4) 70%, rgba(10,8,24,0.95) 100%)',
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', position: 'relative', zIndex: 1 }}>
 
         {/* Шапка */}
         <div style={{
           padding: `${spacing.md} ${spacing.lg}`,
-          background: 'rgba(10, 8, 24, 0.95)',
+          background: 'rgba(10, 8, 24, 0.85)',
           borderBottom: `1px solid ${colors.cardBorder}`,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          backdropFilter: 'blur(8px)',
         }}>
           <button
             onClick={() => navigate(-1)}
@@ -220,67 +226,31 @@ export function AmaPage() {
             <span style={{ fontSize: '16px', lineHeight: 1 }}>←</span>
             Назад
           </button>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ color: colors.fairyGold, fontWeight: 600, fontSize: '14px' }}>Беседа с Дельцом</div>
+          <div style={{ textAlign: 'center', flex: 1, minWidth: 0 }}>
+            <div style={{
+              color: colors.fairyGold, fontWeight: 600, fontSize: '14px',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>
+              {project?.developerName ?? 'Беседа с Дельцом'}
+            </div>
             <div style={{ color: colors.textMuted, fontSize: '11px' }}>
               {session.isComplete ? 'Беседа завершена' : `Вопрос ${session.questionCount}/10`}
             </div>
           </div>
-          <div style={{ width: '36px' }} />
+          <div style={{ width: '64px' }} />
         </div>
 
-        {/* Полоска Чуйки */}
+        {/* Мягкая плашка про будущую рекламу — показываем один раз сверху */}
         <div style={{
-          padding: `${spacing.sm} ${spacing.lg}`,
-          background: 'rgba(6, 4, 18, 0.8)',
-          borderBottom: `1px solid ${colors.cardBorder}`,
+          padding: `${spacing.xs} ${spacing.lg}`,
+          background: 'rgba(255, 184, 0, 0.08)',
+          borderBottom: `1px solid ${colors.fairyGold}20`,
+          color: `${colors.fairyGold}cc`,
+          fontSize: '10px',
+          textAlign: 'center',
+          backdropFilter: 'blur(4px)',
         }}>
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-            <span style={{ color: colors.textMuted, fontSize: '11px' }}>👁 Чуйка:</span>
-            {LIE_TOPICS.map(t => {
-              const selected = selectedTopics.has(t.id)
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => {
-                    if (session.isIntuitionEvaluated) return
-                    setSelectedTopics(prev => {
-                      const next = new Set(prev)
-                      if (next.has(t.id)) next.delete(t.id)
-                      else next.add(t.id)
-                      return next
-                    })
-                  }}
-                  style={{
-                    background: selected ? `${colors.fairyGold}30` : 'transparent',
-                    border: `1px solid ${selected ? colors.fairyGold : colors.cardBorder}`,
-                    borderRadius: '20px',
-                    padding: '2px 8px',
-                    color: selected ? colors.fairyGold : colors.textMuted,
-                    cursor: session.isIntuitionEvaluated ? 'default' : 'pointer',
-                    fontSize: '11px',
-                  }}
-                >
-                  {t.emoji}
-                </button>
-              )
-            })}
-            <button
-              onClick={() => setShowLegend(true)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: colors.textMuted,
-                cursor: 'pointer',
-                fontSize: '13px',
-                padding: '0 2px',
-                lineHeight: 1,
-              }}
-              title="Что такое Чуйка?"
-            >
-              ?
-            </button>
-          </div>
+          📺 Скоро беседа будет открываться за просмотр рекламы — пока бесплатно
         </div>
 
         {/* Сообщения */}
@@ -303,12 +273,13 @@ export function AmaPage() {
                   padding: `${spacing.sm} ${spacing.md}`,
                   borderRadius: msg.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
                   background: msg.role === 'user'
-                    ? `${colors.enchantedPurple}cc`
-                    : `rgba(42, 25, 96, 0.5)`,
+                    ? `${colors.enchantedPurple}dd`
+                    : 'rgba(20, 12, 48, 0.85)',
                   border: `1px solid ${msg.role === 'user' ? colors.fairyGold + '30' : colors.cardBorder}`,
                   color: colors.textPrimary,
                   fontSize: '14px',
                   lineHeight: 1.5,
+                  backdropFilter: 'blur(6px)',
                 }}>
                   <TypewriterText text={msg.content} animate={isLastAssistant} />
                 </div>
@@ -321,10 +292,11 @@ export function AmaPage() {
               <div style={{
                 padding: `${spacing.sm} ${spacing.md}`,
                 borderRadius: '16px 16px 16px 4px',
-                background: `rgba(42, 25, 96, 0.5)`,
+                background: 'rgba(20, 12, 48, 0.85)',
                 border: `1px solid ${colors.cardBorder}`,
                 color: colors.textMuted,
                 fontSize: '14px',
+                backdropFilter: 'blur(6px)',
               }}>
                 Делец думает...
               </div>
@@ -357,39 +329,24 @@ export function AmaPage() {
           </motion.div>
         )}
 
-        {/* Кнопки действий после завершения */}
+        {/* Кнопка вложения после завершения беседы */}
         {session.isComplete && (
-          <div style={{ padding: `${spacing.md} ${spacing.lg}`, background: 'rgba(10, 8, 24, 0.95)', borderTop: `1px solid ${colors.cardBorder}` }}>
-            {!session.isIntuitionEvaluated && (
-              <button
-                onClick={() => intuitionMutation.mutate()}
-                disabled={intuitionMutation.isPending}
-                style={{
-                  width: '100%',
-                  padding: spacing.md,
-                  background: `${colors.fairyGold}20`,
-                  border: `1px solid ${colors.fairyGold}`,
-                  borderRadius: '12px',
-                  color: colors.fairyGold,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  marginBottom: spacing.sm,
-                  fontSize: '14px',
-                }}
-              >
-                👁 Оценить чуйку
-              </button>
-            )}
+          <div style={{
+            padding: `${spacing.md} ${spacing.lg}`,
+            background: 'rgba(10, 8, 24, 0.9)',
+            borderTop: `1px solid ${colors.cardBorder}`,
+            backdropFilter: 'blur(8px)',
+          }}>
             <button
               onClick={() => setShowInvestSheet(true)}
               style={{
                 width: '100%',
                 padding: spacing.md,
-                background: `${colors.enchantedPurple}`,
-                border: `1px solid ${colors.fairyGold}40`,
+                background: colors.enchantedPurple,
+                border: `1px solid ${colors.fairyGold}`,
                 borderRadius: '12px',
                 color: colors.fairyGold,
-                fontWeight: 600,
+                fontWeight: 700,
                 cursor: 'pointer',
                 fontSize: '14px',
               }}
@@ -402,8 +359,9 @@ export function AmaPage() {
         {/* Шаблоны вопросов + поле ввода */}
         {!session.isComplete && (
           <div style={{
-            background: 'rgba(10, 8, 24, 0.95)',
+            background: 'rgba(10, 8, 24, 0.9)',
             borderTop: `1px solid ${colors.cardBorder}`,
+            backdropFilter: 'blur(8px)',
           }}>
             {/* Шаблоны */}
             {!sendMutation.isPending && (
@@ -474,11 +432,11 @@ export function AmaPage() {
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSend()}
-                placeholder="Задай вопрос дельцу..."
+                placeholder="Спроси о чём угодно..."
                 maxLength={500}
                 style={{
                   flex: 1,
-                  background: 'rgba(42, 25, 96, 0.4)',
+                  background: 'rgba(42, 25, 96, 0.6)',
                   border: `1px solid ${colors.cardBorder}`,
                   borderRadius: '12px',
                   padding: `${spacing.sm} ${spacing.md}`,
@@ -511,20 +469,6 @@ export function AmaPage() {
         )}
       </div>
 
-      {/* Легенда Чуйки */}
-      <AnimatePresence>
-        {showLegend && (
-          <IntuitionLegendModal onClose={() => setShowLegend(false)} />
-        )}
-      </AnimatePresence>
-
-      {/* Результат оценки чуйки */}
-      <AnimatePresence>
-        {showIntuitionResult && (
-          <IntuitionResultSheet result={showIntuitionResult} onClose={() => setShowIntuitionResult(null)} />
-        )}
-      </AnimatePresence>
-
       {/* Лист вложения */}
       <AnimatePresence>
         {showInvestSheet && projectId && (
@@ -535,128 +479,10 @@ export function AmaPage() {
   )
 }
 
-function IntuitionLegendModal({ onClose }: { onClose: () => void }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={onClose}
-      style={{
-        position: 'fixed', inset: 0, zIndex: 200,
-        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-        background: 'rgba(0,0,0,0.7)',
-      }}
-    >
-      <motion.div
-        initial={{ y: '100%' }}
-        animate={{ y: 0 }}
-        exit={{ y: '100%' }}
-        onClick={e => e.stopPropagation()}
-        style={{
-          width: '100%', maxWidth: '500px',
-          background: colors.nightBlue,
-          borderRadius: '20px 20px 0 0',
-          border: `1px solid ${colors.cardBorder}`,
-          padding: spacing.xxl,
-        }}
-      >
-        <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '18px', marginBottom: spacing.md }}>
-          👁 Чуйка — как работает
-        </div>
-        <div style={{ color: colors.textMuted, fontSize: '13px', marginBottom: spacing.lg }}>
-          Отмечай темы, в которых подозреваешь ложь. После беседы нажми «Оценить чуйку».
-        </div>
-        {LIE_TOPICS.map(t => (
-          <div key={t.id} style={{ display: 'flex', gap: spacing.sm, marginBottom: spacing.md, alignItems: 'flex-start' }}>
-            <span style={{ fontSize: '16px' }}>{t.emoji}</span>
-            <div>
-              <div style={{ color: colors.textPrimary, fontWeight: 600, fontSize: '13px' }}>{t.label}</div>
-              <div style={{ color: colors.textMuted, fontSize: '12px' }}>{t.hint}</div>
-            </div>
-          </div>
-        ))}
-        <div style={{ color: `${colors.fairyGold}cc`, fontSize: '12px', marginTop: spacing.sm }}>
-          ✓ Угадал — +1 очко чуйки &nbsp;&nbsp; ✗ Обвинил напрасно — −1 очко
-        </div>
-        <button
-          onClick={onClose}
-          style={{
-            width: '100%', marginTop: spacing.lg,
-            padding: spacing.md, background: `${colors.fairyGold}20`,
-            border: `1px solid ${colors.fairyGold}`, borderRadius: '12px',
-            color: colors.fairyGold, fontWeight: 600, cursor: 'pointer', fontSize: '14px',
-          }}
-        >
-          Понятно
-        </button>
-      </motion.div>
-    </motion.div>
-  )
-}
-
-function IntuitionResultSheet({ result, onClose }: { result: any; onClose: () => void }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={onClose}
-      style={{
-        position: 'fixed', inset: 0, zIndex: 200,
-        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-        background: 'rgba(0,0,0,0.7)',
-      }}
-    >
-      <motion.div
-        initial={{ y: '100%' }}
-        animate={{ y: 0 }}
-        exit={{ y: '100%' }}
-        onClick={e => e.stopPropagation()}
-        style={{
-          width: '100%', maxWidth: '500px',
-          background: colors.nightBlue,
-          borderRadius: '20px 20px 0 0',
-          border: `1px solid ${colors.cardBorder}`,
-          padding: spacing.xxl,
-        }}
-      >
-        <div style={{ textAlign: 'center', marginBottom: spacing.lg }}>
-          <div style={{ fontSize: '48px' }}>{result.delta > 0 ? '🎯' : result.delta === 0 ? '🤔' : '😅'}</div>
-          <div style={{ color: colors.fairyGold, fontSize: '20px', fontWeight: 700, marginTop: spacing.sm }}>
-            {result.delta > 0 ? `+${result.delta} к чуйке!` : result.delta === 0 ? 'Не угадал' : `${result.delta} к чуйке`}
-          </div>
-        </div>
-        {result.correctTopics.length > 0 && (
-          <div style={{ color: colors.success, fontSize: '13px', marginBottom: spacing.sm }}>
-            Верно угадал: {result.correctTopics.map((t: string) => TOPIC_LABEL[t] ?? t).join(', ')}
-          </div>
-        )}
-        {result.falseTopics.length > 0 && (
-          <div style={{ color: colors.danger, fontSize: '13px' }}>
-            Ошибся: {result.falseTopics.map((t: string) => TOPIC_LABEL[t] ?? t).join(', ')}
-          </div>
-        )}
-        <button
-          onClick={onClose}
-          style={{
-            width: '100%', marginTop: spacing.xl,
-            padding: spacing.md, background: `${colors.fairyGold}20`,
-            border: `1px solid ${colors.fairyGold}`, borderRadius: '12px',
-            color: colors.fairyGold, fontWeight: 600, cursor: 'pointer', fontSize: '14px',
-          }}
-        >
-          Продолжить
-        </button>
-      </motion.div>
-    </motion.div>
-  )
-}
-
 function InvestSheet({ projectId, onClose, onSuccess }: { projectId: string; onClose: () => void; onSuccess: () => void }) {
   const [amount, setAmount] = useState('')
   const qc = useQueryClient()
-  const { gameState, setGameState } = useGameStore()
+  const { gameState } = useGameStore()
 
   const investMutation = useMutation({
     mutationFn: () => api.invest.invest(projectId, Number(amount)),

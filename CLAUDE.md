@@ -5,7 +5,7 @@
 
 ## Состояние проекта
 
-**Активная версия:** Telegram Mini App (`tg/`) — v1.6.1
+**Активная версия:** Telegram Mini App (`tg/`) — v2.0.0
 **Android:** код в `app/`, разработка заморожена — всё усилие на TG-версию
 **Ветка разработки:** `claude/telegram-game-migration-FDnlX`
 
@@ -13,11 +13,11 @@
 
 ## Суть игры
 
-Мобильная игра — симулятор инвестора в сказочной Руси. Игрок вкладывает рубли (₽) в «дела» (аналоги крипто-проектов), большинство из которых обман. Ключевая механика — **«Купеческая грамота»**: мини-игра на внимательность. Перед принятием решения о вложении игрок изучает свиток с 24 печатями и ищет подделки. Чем больше лжи в деле — тем больше подделок в грамоте. Число подделок и тонкость мутаций определяются судьбой проекта. AI-чат с хозяином остаётся как вторичный инструмент (в будущем откроется за просмотр рекламы).
+Мобильная игра — симулятор инвестора в сказочной Руси. Игрок вкладывает рубли (₽) в «дела» (аналоги крипто-проектов), большинство из которых обман. Ключевая механика — **«Купеческая грамота»**: мини-игра на внимательность. Перед принятием решения о вложении игрок изучает свиток с 24 печатями и ищет подделки. Чем больше лжи в деле — тем больше подделок в грамоте. Число подделок и тонкость мутаций определяются судьбой проекта. AI-чат с хозяином — развлекательная болтовня в характере персонажа (открывается из грамоты; в будущем — за просмотр рекламы).
 
 - **Стартовый баланс:** 0 ₽ → онбординг-бонус ~50 ₽
 - **Валюта:** рубли (₽), отображать `"%.0f ₽"`
-- **Архетип хозяина** скрыт до PostMortem
+- **Архетип хозяина** виден игроку (через арт-фон беседы и в DTO проекта); судьба и реальные параметры — по-прежнему скрыты до PostMortem
 
 ---
 
@@ -39,13 +39,13 @@ tg/
         ├── api/routes/
         │   ├── game.ts            # /api/game, /advance-day, /settings, /reset, /leaderboard, /version
         │   ├── projects.ts        # /api/projects/inbox, /portfolio, /updates, /skip
-        │   ├── ama.ts             # /api/ama/:id/start|message|evaluate-intuition (legacy-чат)
+        │   ├── ama.ts             # /api/ama/:id/start|message — развлекательная болтовня с хозяином
         │   ├── charter.ts         # /api/charter/:id/start|submit — мини-игра «Грамота»
         │   └── invest.ts          # /api/invest/:id (invest/add/withdraw/exit)
         ├── game/
         │   ├── types.ts           # Все энамы + FATE_CONFIG + WITHDRAWAL_RULES + ProjectPublicDTO
         │   ├── GenerateProjectService.ts  # AI-генерация нового дела + баннер Pollinations.ai
-        │   ├── AmaSessionService.ts       # Чат с хозяином (legacy)
+        │   ├── AmaSessionService.ts       # Чат с хозяином — развлекательная болтовня в характере
         │   ├── CharterService.ts          # Мини-игра «Купеческая грамота» (основная механика чуйки)
         │   ├── AdvanceDayService.ts       # Ежедневный цикл + история
         │   ├── InvestService.ts           # Вложить/довложить/вывести/выйти + PostMortem при выходе
@@ -55,8 +55,7 @@ tg/
         ├── bot/bot.ts              # Grammy Telegram bot
         ├── scheduler/dailyJob.ts   # node-cron — advance-day в 09:00 MSK + уведомления о доступности нового дня каждые 5 мин
         ├── middleware/telegramAuth.ts  # Верификация X-Telegram-Init-Data
-        ├── db/prisma.ts            # PrismaClient singleton
-        └── data/personas.json      # Архетипы персонажей
+        └── db/prisma.ts            # PrismaClient singleton
     └── prisma/schema.prisma        # Полная схема БД
     └── .gitignore                  # Исключает public/ (сборка клиента — не коммитить!)
 ```
@@ -96,13 +95,13 @@ tg/
 | GET | `/api/charter/:projectId` | Получить состояние (до сабмита — только seed/gridSize/difficulty; после — с разбором) |
 | POST | `/api/charter/:projectId/submit` | Сабмит выбранных индексов, оценка чуйки (одноразово) |
 
-### AMA (legacy — вторичный чат, в будущем за просмотр рекламы)
+### AMA (вторичный чат — развлекательная болтовня в характере, в будущем за просмотр рекламы)
 | Метод | Путь | Описание |
 |---|---|---|
 | POST | `/api/ama/:projectId/start` | Начать сессию беседы |
 | GET | `/api/ama/:projectId` | Получить историю сессии |
 | POST | `/api/ama/:projectId/message` | Отправить вопрос, получить ответ AI |
-| POST | `/api/ama/:projectId/evaluate-intuition` | Оценить Чуйку (старый путь — сейчас не используется из UI) |
+| POST | `/api/ama/:projectId/evaluate-intuition` | Старый путь оценки чуйки. Сервер ещё держит — клиент не вызывает; не использовать в новом UI |
 
 ### Invest
 | Метод | Путь | Описание |
@@ -121,7 +120,7 @@ tg/
 **Таблицы:** `User`, `GameState`, `Project`, `AmaSession`, `AmaMessage`, `DailyUpdate`, `PostMortem`, `Transaction`, `AdRevenue`
 
 **КРИТИЧНО — скрытые поля `Project`:**
-`fate`, `personaArchetype`, `daysUntilCollapse`, `realDailyYieldRubles`, `lieTopics`, `truthTopics`, `npcTruthParams` — **НИКОГДА** не отдавать клиенту напрямую. Использовать `toPublicDTO()` из `projectUtils.ts`.
+`fate`, `daysUntilCollapse`, `realDailyYieldRubles`, `lieTopics`, `truthTopics`, `npcTruthParams` — **НИКОГДА** не отдавать клиенту напрямую. Использовать `toPublicDTO()` из `projectUtils.ts`. (`personaArchetype` теперь публичный — нужен клиенту для арт-фона беседы.)
 
 **Поля истории для графиков:** `valueHistory`, `userCountHistory`, `apyHistory` — массивы последних 30 дней, обновляются в `AdvanceDayService`.
 
@@ -236,7 +235,7 @@ npm run build  # outDir = ../server/public  (не коммитить!)
 | Главная | `HomePage.tsx` | Баланс, активные дела (с новостями и «Довложить»), «Следующий день» |
 | Входящие | `InboxPage.tsx` | Новые предложения из inbox (ведут на `/charter/:id`) |
 | Грамота | `CharterPage.tsx` | Мини-игра «Купеческая грамота»: эталон → 24 печати → разбор → чуйка. Основной путь оценки лжи |
-| Беседа | `AmaPage.tsx` | Legacy AMA-чат с хозяином. Сейчас доступен только по прямой ссылке; в будущем — за просмотр рекламы |
+| Беседа | `AmaPage.tsx` | Развлекательная болтовня с хозяином в характере (фон по архетипу из `/personas/*.png`). Открывается из CharterPage. В будущем — за просмотр рекламы |
 | Казна | `PortfolioPage.tsx` | Активные дела: графики (Recharts), вести, довложить/вывести/выйти; ссылка на Летопись |
 | Успехи | `StatsPage.tsx` | Статистика, ранг, история баланса |
 | Рейтинг | `LeaderboardPage.tsx` | Топ-100 игроков по состоянию, текущий игрок выделен |

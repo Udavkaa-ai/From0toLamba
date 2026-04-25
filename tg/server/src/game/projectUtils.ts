@@ -79,6 +79,7 @@ export function toPublicDTO(project: Project): ProjectPublicDTO {
     id: project.id,
     name: project.name,
     type: project.type as ProjectType,
+    personaArchetype: project.personaArchetype as PersonaArchetype,
     isInbox: project.isInbox,
     isActive: project.isActive,
     isClosed: project.isClosed,
