@@ -833,7 +833,7 @@ function ActiveProjectCard({ project, delay, onPress }: { project: ProjectDTO; d
                 {latestUpdate.title}
               </span>
             </div>
-            <div style={{ color: colors.textSecondary, fontSize: '12px', lineHeight: 1.5 }}>
+            <div style={{ color: colors.textSecondary, fontSize: '12px', lineHeight: 1.5, whiteSpace: 'pre-line' }}>
               {latestUpdate.body}
             </div>
           </div>
@@ -1044,8 +1044,8 @@ function ProjectNewsCardContent({ project }: { project: ProjectDTO }) {
             <span style={{ fontSize: '13px' }}>{signal}</span>
             <span style={{ color: colors.textSecondary, fontSize: '12px', fontWeight: 600 }}>{latest.title}</span>
           </div>
-          <div style={{ color: colors.textMuted, fontSize: '11px', lineHeight: 1.5 }}>
-            {latest.body.slice(0, 160)}{latest.body.length > 160 ? '...' : ''}
+          <div style={{ color: colors.textMuted, fontSize: '11px', lineHeight: 1.5, whiteSpace: 'pre-line' }}>
+            {latest.body.slice(0, 220)}{latest.body.length > 220 ? '…' : ''}
           </div>
           {latest.redFlags.length > 0 && (
             <div style={{ marginTop: '6px' }}>

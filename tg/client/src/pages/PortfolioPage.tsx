@@ -191,7 +191,7 @@ function NewsItem({ update }: { update: DailyUpdateDTO }) {
             exit={{ height: 0, opacity: 0 }}
             style={{ overflow: 'hidden' }}
           >
-            <div style={{ marginTop: '6px', color: colors.textMuted, fontSize: '11px', lineHeight: 1.5 }}>
+            <div style={{ marginTop: '6px', color: colors.textMuted, fontSize: '11px', lineHeight: 1.5, whiteSpace: 'pre-line' }}>
               {update.body}
             </div>
             {update.redFlags.length > 0 && (
