@@ -66,6 +66,8 @@ export interface DailyUpdateDTO {
   redFlags: string[]
   payoutStatus: string
   userCountDelta: number
+  /** Случайное событие — null если обычная весть. */
+  eventKind?: 'NEGATIVE' | 'POSITIVE' | 'NEUTRAL' | null
 }
 
 export interface PostMortemDTO {

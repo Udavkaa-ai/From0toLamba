@@ -1,9 +1,10 @@
 import { prisma } from '../db/prisma'
-import { ProjectFate, FATE_CONFIG, InvestorRank } from './types'
+import { ProjectFate, FATE_CONFIG, ProjectType, InvestorRank } from './types'
 import { computeRank, isRankUp } from './rankService'
 import { randomInRange as rng, randomIntInRange as irng } from './projectUtils'
 import { generateDailyUpdate, generatePostMortem } from '../ai/openRouterClient'
 import { generateProject } from './GenerateProjectService'
+import { pickRandomEvent, applyEventEffect, renderEventBody } from './randomEvents'
 
 const HANDOVER_REASONS_SURVIVOR = [
   'Дело выкупил племянник воеводы — прибыль выплачена 📜',
@@ -168,11 +169,20 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
     if (project.investedAmountRubles > 0) {
       const dailyYield = project.investedAmountRubles * project.realDailyYieldRubles
       updatedValue += dailyYield
+    }
 
-      // 10% шанс случайного события
-      if (Math.random() < 0.1) {
-        const eventMultiplier = rng(0.85, 1.2)
-        updatedValue *= eventMultiplier
+    // Розыгрыш случайного события (15-25% шанс / специфично по типу + судьбе).
+    // См. randomEvents.ts. Если событие выпало — его текст ЗАМЕНЯЕТ обычную
+    // ежедневную весть от AI, а эффект меняет currentValueRubles разово.
+    const event = pickRandomEvent(project.type as ProjectType, fate)
+    let eventApplied: { newsTitle: string; newsBody: string; kind: 'NEGATIVE' | 'POSITIVE' | 'NEUTRAL' } | null = null
+    if (event) {
+      const { newValue, deltaRubles } = applyEventEffect(updatedValue, event.effect)
+      updatedValue = newValue
+      eventApplied = {
+        newsTitle: event.title,
+        newsBody: renderEventBody(event.body, project.name, deltaRubles),
+        kind: event.kind,
       }
     }
 
@@ -223,9 +233,27 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
       },
     })
 
-    // Генерируем весть для проекта (кроме INSTANT_SCAM — он молчит до самого исчезновения)
-    if (fate !== ProjectFate.INSTANT_SCAM) {
-      generateDailyUpdate(project.id, userId, project, userCountDelta, payoutStatus).catch(console.error)
+    // Генерируем весть для проекта (кроме INSTANT_SCAM — он молчит до самого исчезновения).
+    // Если выпало случайное событие — кладём его текст мгновенно как DailyUpdate
+    // и НЕ зовём AI. Иначе — обычный плейсхолдер + AI-генерация поверх.
+    if (fate !== ProjectFate.INSTANT_SCAM || eventApplied) {
+      if (eventApplied) {
+        await prisma.dailyUpdate.create({
+          data: {
+            projectId: project.id,
+            userId,
+            day: project.daysSinceJoined + 1,
+            title: eventApplied.newsTitle,
+            body: eventApplied.newsBody,
+            redFlags: [],
+            payoutStatus,
+            eventKind: eventApplied.kind,
+            userCountDelta,
+          },
+        }).catch(err => console.error('[Event news] insert failed:', err))
+      } else if (fate !== ProjectFate.INSTANT_SCAM) {
+        generateDailyUpdate(project.id, userId, project, userCountDelta, payoutStatus).catch(console.error)
+      }
     }
   }
 

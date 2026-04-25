@@ -133,9 +133,24 @@ export function PortfolioPage() {
 function NewsItem({ update }: { update: DailyUpdateDTO }) {
   const [expanded, setExpanded] = useState(false)
 
+  // Случайное событие имеет приоритет в подсветке: красный/зелёный/серый ромб.
+  // Иначе — обычный сигнал по payoutStatus / userCountDelta.
   let signal = '⚪'
-  if (update.payoutStatus === 'BOOSTED' || update.userCountDelta > 5) signal = '🟢'
-  else if (update.payoutStatus === 'DELAYED' || update.userCountDelta < -5) signal = '🔴'
+  let signalColor: string = colors.textMuted
+  if (update.eventKind === 'NEGATIVE') { signal = '◆'; signalColor = colors.danger }
+  else if (update.eventKind === 'POSITIVE') { signal = '◆'; signalColor = colors.success }
+  else if (update.eventKind === 'NEUTRAL') { signal = '◇'; signalColor = colors.fairyGold }
+  else if (update.payoutStatus === 'BOOSTED' || update.userCountDelta > 5) { signal = '●'; signalColor = colors.success }
+  else if (update.payoutStatus === 'DELAYED' || update.userCountDelta < -5) { signal = '●'; signalColor = colors.danger }
+
+  const isEvent = !!update.eventKind
+  const eventBorder = update.eventKind === 'NEGATIVE'
+    ? `${colors.danger}50`
+    : update.eventKind === 'POSITIVE'
+      ? `${colors.success}50`
+      : update.eventKind === 'NEUTRAL'
+        ? `${colors.fairyGold}40`
+        : colors.cardBorder
 
   return (
     <div
@@ -143,16 +158,18 @@ function NewsItem({ update }: { update: DailyUpdateDTO }) {
       style={{
         padding: '6px 8px',
         borderRadius: '6px',
-        background: 'rgba(42, 25, 96, 0.3)',
+        background: isEvent ? 'rgba(42, 25, 96, 0.5)' : 'rgba(42, 25, 96, 0.3)',
         marginBottom: '4px',
         cursor: 'pointer',
-        border: `1px solid ${colors.cardBorder}`,
+        border: `1px solid ${eventBorder}`,
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <span style={{ fontSize: '12px' }}>{signal}</span>
+        <span style={{ fontSize: '12px', color: signalColor, lineHeight: 1 }}>{signal}</span>
         <span style={{
-          color: colors.textSecondary, fontSize: '11px', flex: 1,
+          color: isEvent ? colors.textPrimary : colors.textSecondary,
+          fontWeight: isEvent ? 600 : 400,
+          fontSize: '11px', flex: 1,
           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
         }}>
           {update.title}

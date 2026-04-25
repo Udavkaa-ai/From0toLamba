@@ -190,6 +190,9 @@ model DailyUpdate {
   redFlags       String[] @default([])
   payoutStatus   String   @default("NORMAL") // NORMAL | DELAYED | BOOSTED
   announcement   String?  // LISTING | HACK | CRIMINAL_CASE | PARTNERSHIP | null
+  // Случайное событие (см. randomEvents.ts) — для UI-подсветки в ленте новостей.
+  // null = обычная ежедневная весть; NEGATIVE/POSITIVE/NEUTRAL = выпало событие.
+  eventKind      String?  // NEGATIVE | POSITIVE | NEUTRAL | null
   userCountDelta Int      @default(0)
   createdAt      DateTime @default(now())
 
