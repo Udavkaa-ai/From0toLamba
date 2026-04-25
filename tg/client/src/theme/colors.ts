@@ -43,11 +43,14 @@ export const colors = {
   candleLight: '#FFC857',       // свет свечи — мерцание на CharterPage
   mist: 'rgba(180,200,220,0.12)', // туман — поверх HomePage
 
-  // ── Карточки ────────────────────────────────────────────────────────────
-  cardGradientTop: 'rgba(42, 25, 96, 0.88)',
-  cardGradientBottom: 'rgba(13, 23, 53, 0.95)',
-  cardBorder: 'rgba(255, 184, 0, 0.2)',
-  cardBorderBright: 'rgba(255, 184, 0, 0.5)',
+  // ── Карточки (премиальный многослойный стиль) ────────────────────────────
+  cardGradientTop: 'rgba(58, 32, 110, 0.88)',     // тёплый фиолет, верх
+  cardGradientMid: 'rgba(34, 16, 70, 0.92)',      // глубокий plum, середина
+  cardGradientBottom: 'rgba(15, 18, 42, 0.96)',   // dark navy, низ
+  cardBorder: 'rgba(255, 184, 0, 0.12)',          // hairline gold — еле заметна
+  cardBorderBright: 'rgba(255, 184, 0, 0.35)',    // для активных/hover
+  cardHighlight: 'rgba(255, 255, 255, 0.06)',     // inset top — стеклянный блик
+  cardShade: 'rgba(0, 0, 0, 0.35)',               // inset bottom — глубина
 
   // ── Оверлеи ─────────────────────────────────────────────────────────────
   overlayDark: 'rgba(6, 4, 18, 0.85)',
@@ -56,7 +59,7 @@ export const colors = {
 
 export const gradients = {
   screen: `linear-gradient(180deg, rgba(6,4,18,0.85) 0%, rgba(10,8,24,0.75) 50%, rgba(6,4,18,0.94) 100%)`,
-  card: `linear-gradient(145deg, ${colors.cardGradientTop} 0%, ${colors.cardGradientBottom} 100%)`,
+  card: `linear-gradient(155deg, ${colors.cardGradientTop} 0%, ${colors.cardGradientMid} 50%, ${colors.cardGradientBottom} 100%)`,
   goldAccent: `linear-gradient(90deg, transparent, ${colors.fairyGold}40, transparent)`,
   goldShine: `linear-gradient(135deg, ${colors.fairyGoldDim}, ${colors.fairyGoldBright}, ${colors.fairyGoldDim})`,
   rankUp: `linear-gradient(135deg, ${colors.enchantedPurple}, ${colors.nightBlue})`,

@@ -240,9 +240,10 @@ export async function generateProjectBanner(
   ].join(', ')
 
   const seed = parseInt(projectId.replace(/-/g, '').slice(-6), 16) % 99999
-  // 1152×768 — точное соотношение 3:2 при кратности 64 (SDXL-friendly).
-  // Wide aspect'ы (2:1, 7:4) Pollinations не любит — растягивает персонажей.
-  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1152&height=768&nologo=true&seed=${seed}`
+  // 1024×1024 — родное SDXL-разрешение 1:1. Pollinations стабильно отдаёт
+  // квадрат; широкие aspect'ы (2:1, 7:4) либо растягивают персонажей,
+  // либо игнорируются и возвращается квадрат — UI потом сплющивает.
+  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}`
 
   await prisma.project.update({
     where: { id: projectId },

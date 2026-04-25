@@ -6,72 +6,81 @@ interface FairyCardProps {
   style?: CSSProperties
   onClick?: () => void
   padding?: string
-  ornaments?: boolean
+  /** Тонкая золотая верхняя линия (типографский акцент) — для важных карточек. По умолчанию off. */
+  accent?: boolean
+  /** Подсветить — для активного/выделенного состояния. */
+  highlighted?: boolean
 }
 
-export function FairyCard({ children, style, onClick, padding = spacing.lg, ornaments = true }: FairyCardProps) {
+/**
+ * Премиальная карточка: многослойный градиент (тёплый purple → plum → dark navy),
+ * двойная inset-обводка (стеклянный hairline сверху + глубокая тень снизу),
+ * почти невидимая золотая граница. Без stock-fantasy уголков.
+ */
+export function FairyCard({
+  children,
+  style,
+  onClick,
+  padding = '18px 20px',
+  accent = false,
+  highlighted = false,
+}: FairyCardProps) {
+  const borderColor = highlighted ? colors.cardBorderBright : colors.cardBorder
+
   return (
     <div
       onClick={onClick}
       style={{
         background: gradients.card,
-        border: `1px solid ${colors.cardBorder}`,
-        borderRadius: radius.lg,
+        border: `1px solid ${borderColor}`,
+        borderRadius: '18px',
         padding,
         position: 'relative',
         overflow: 'hidden',
         cursor: onClick ? 'pointer' : 'default',
+        boxShadow: [
+          '0 6px 24px rgba(0, 0, 0, 0.45)',                  // глубокая тень
+          `inset 0 1px 0 ${colors.cardHighlight}`,           // стеклянный блик сверху
+          `inset 0 -1px 0 ${colors.cardShade}`,              // глубина снизу
+          highlighted ? `0 0 24px ${colors.fairyGold}25` : '', // мягкое золотое свечение для highlighted
+        ].filter(Boolean).join(', '),
+        transition: 'box-shadow 0.2s, transform 0.15s, border-color 0.2s',
         ...style,
       }}
     >
-      {ornaments && <CardCornerOrnaments />}
+      {accent && <AccentLine />}
       {children}
     </div>
   )
 }
 
-function CardCornerOrnaments() {
-  const style: CSSProperties = {
-    position: 'absolute',
-    width: '16px',
-    height: '16px',
-    opacity: 0.5,
-  }
-
-  const corner = (top?: number | string, right?: number | string, bottom?: number | string, left?: number | string, rotate?: string) => ({
-    ...style,
-    top,
-    right,
-    bottom,
-    left,
-    transform: rotate ? `rotate(${rotate})` : undefined,
-  })
-
-  const Ornament = ({ pos }: { pos: CSSProperties }) => (
-    <svg style={pos} viewBox="0 0 16 16" fill="none">
-      <path d="M9 2 L2 2 L2 9" stroke="#FFB800" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-      <circle cx="2" cy="2" r="1.5" fill="#FFB800" />
-    </svg>
-  )
-
+/** Тонкая золотая линия сверху, fade по краям — типографский элемент вместо уголков */
+function AccentLine() {
   return (
-    <>
-      <Ornament pos={corner(6, undefined, undefined, 6)} />
-      <Ornament pos={corner(6, 6, undefined, undefined, '90deg')} />
-      <Ornament pos={corner(undefined, undefined, 6, 6, '270deg')} />
-      <Ornament pos={corner(undefined, 6, 6, undefined, '180deg')} />
-    </>
+    <div
+      aria-hidden
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: '12%',
+        right: '12%',
+        height: '1px',
+        background: `linear-gradient(90deg, transparent, ${colors.fairyGold}80, transparent)`,
+        pointerEvents: 'none',
+      }}
+    />
   )
 }
 
 export function SkeletonCard({ lines = 3 }: { lines?: number }) {
   return (
     <div style={{
-      background: 'linear-gradient(145deg, rgba(42,25,96,0.6), rgba(13,23,53,0.8))',
-      border: `1px solid rgba(255,184,0,0.1)`,
-      borderRadius: radius.lg,
-      padding: spacing.lg,
+      background: gradients.card,
+      border: `1px solid ${colors.cardBorder}`,
+      borderRadius: '18px',
+      padding: '18px 20px',
       marginBottom: spacing.md,
+      boxShadow: `0 6px 24px rgba(0,0,0,0.45), inset 0 1px 0 ${colors.cardHighlight}`,
     }}>
       <style>{`@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}`}</style>
       {Array.from({ length: lines }, (_, i) => (
@@ -89,7 +98,7 @@ export function SkeletonCard({ lines = 3 }: { lines?: number }) {
   )
 }
 
-// Золотой разделитель с ромбом
+/** Золотой разделитель с ромбом — типографский акцент, оставлен как был */
 export function OrnamentDivider() {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '12px 0' }}>

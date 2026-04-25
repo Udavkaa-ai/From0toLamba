@@ -460,7 +460,7 @@ export function HomePage() {
 
         {/* Баланс */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <FairyCard style={{ marginBottom: spacing.lg, textAlign: 'center' }}>
+          <FairyCard accent style={{ marginBottom: spacing.lg, textAlign: 'center' }}>
             <div style={{ color: colors.textSecondary, fontSize: '12px', marginBottom: '4px' }}>Свободные рубли</div>
             <div style={{
               color: colors.fairyGold,
