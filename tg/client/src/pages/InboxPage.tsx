@@ -70,7 +70,7 @@ function InboxCard({ project, onClick }: { project: ProjectDTO; onClick: () => v
         <img
           src={project.bannerImageUrl}
           alt={project.name}
-          style={{ width: '100%', aspectRatio: '1 / 1', objectFit: 'cover', borderRadius: '8px', marginBottom: spacing.md, display: 'block' }}
+          style={{ width: '100%', aspectRatio: '3 / 2', objectFit: 'cover', borderRadius: '8px', marginBottom: spacing.md, display: 'block' }}
           onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
         />
       )}
