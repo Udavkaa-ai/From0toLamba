@@ -1,12 +1,19 @@
 import { useNavigate, useLocation } from 'react-router-dom'
+import type { ComponentType } from 'react'
 import { colors, spacing } from '@/theme'
+import { HomeIcon, ScrollIcon, ChestIcon, ChartIcon, CrownIcon } from './icons'
 
-const TABS = [
-  { path: '/', icon: '🏠', label: 'Главная' },
-  { path: '/inbox', icon: '📜', label: 'Грамоты' },
-  { path: '/portfolio', icon: '💰', label: 'Казна' },
-  { path: '/stats', icon: '📊', label: 'Успехи' },
-  { path: '/leaderboard', icon: '🏆', label: 'Рейтинг' },
+interface IconProps {
+  size?: number
+  style?: React.CSSProperties
+}
+
+const TABS: Array<{ path: string; Icon: ComponentType<IconProps>; label: string }> = [
+  { path: '/', Icon: HomeIcon, label: 'Главная' },
+  { path: '/inbox', Icon: ScrollIcon, label: 'Грамоты' },
+  { path: '/portfolio', Icon: ChestIcon, label: 'Казна' },
+  { path: '/stats', Icon: ChartIcon, label: 'Успехи' },
+  { path: '/leaderboard', Icon: CrownIcon, label: 'Рейтинг' },
 ]
 
 export function BottomNav() {
@@ -30,32 +37,40 @@ export function BottomNav() {
         paddingBottom: 'env(safe-area-inset-bottom)',
       }}
     >
-      {TABS.map(tab => {
-        const isActive = tab.path === '/'
+      {TABS.map(({ path, Icon, label }) => {
+        const isActive = path === '/'
           ? pathname === '/'
-          : pathname.startsWith(tab.path)
+          : pathname.startsWith(path)
 
         return (
           <button
-            key={tab.path}
-            onClick={() => navigate(tab.path)}
+            key={path}
+            onClick={() => navigate(path)}
             style={{
               flex: 1,
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '2px',
+              gap: '4px',
               padding: `${spacing.sm} 0`,
               background: 'none',
               border: 'none',
               cursor: 'pointer',
               color: isActive ? colors.fairyGold : colors.textMuted,
-              transition: 'color 0.2s',
+              transition: 'color 0.2s, transform 0.15s',
+              transform: isActive ? 'translateY(-1px)' : 'none',
             }}
           >
-            <span style={{ fontSize: '20px', lineHeight: 1 }}>{tab.icon}</span>
-            <span style={{ fontSize: '10px', fontWeight: isActive ? 600 : 400 }}>
-              {tab.label}
+            <Icon size={22} style={{
+              filter: isActive ? `drop-shadow(0 0 6px ${colors.fairyGold}80)` : 'none',
+              transition: 'filter 0.2s',
+            }} />
+            <span style={{
+              fontSize: '10px',
+              fontWeight: isActive ? 600 : 400,
+              letterSpacing: '0.02em',
+            }}>
+              {label}
             </span>
           </button>
         )

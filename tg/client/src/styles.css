@@ -10,12 +10,18 @@ html, body, #root {
 }
 
 body {
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
   background-color: #060412;
   color: #ffffff;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+}
+
+/* Заголовочный шрифт по умолчанию для семантических заголовков */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Cinzel', 'Marcellus', 'Times New Roman', serif;
+  letter-spacing: 0.02em;
 }
 
 /* Убираем скролл-полосу на мобильных */
@@ -48,4 +54,67 @@ body {
   animation-delay: var(--seal-delay, 0s);
   transform-origin: 50% 50%;
   will-change: transform;
+}
+
+/* ── Атмосфера ─────────────────────────────────────────────────────────── */
+
+/* Лёгкий медленно плывущий туман по экрану */
+@keyframes mistDrift {
+  0%   { transform: translate3d(-5%, -3%, 0); opacity: 0.55; }
+  50%  { transform: translate3d(3%, 2%, 0);   opacity: 0.85; }
+  100% { transform: translate3d(-5%, -3%, 0); opacity: 0.55; }
+}
+.mist-layer {
+  position: fixed;
+  inset: -10%;
+  pointer-events: none;
+  z-index: 1;
+  background:
+    radial-gradient(ellipse 60% 35% at 30% 20%, rgba(180,200,220,0.10), transparent 60%),
+    radial-gradient(ellipse 50% 40% at 70% 75%, rgba(220,200,180,0.07), transparent 65%),
+    radial-gradient(ellipse 80% 30% at 50% 50%, rgba(160,180,210,0.06), transparent 70%);
+  animation: mistDrift 28s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* Мерцание света свечи — для кнопок и оверлеев в важные моменты */
+@keyframes candleFlicker {
+  0%, 100% { opacity: 1;   filter: brightness(1); }
+  20%      { opacity: 0.92; filter: brightness(0.96); }
+  45%      { opacity: 1;   filter: brightness(1.06); }
+  70%      { opacity: 0.95; filter: brightness(0.98); }
+}
+.candle-flicker {
+  animation: candleFlicker 2.4s ease-in-out infinite;
+}
+
+/* Парение частиц снизу вверх — для монеток-летунов после успеха */
+@keyframes floatUp {
+  0%   { transform: translateY(0)   scale(1);   opacity: 0; }
+  10%  { opacity: 1; }
+  100% { transform: translateY(-120px) scale(0.6); opacity: 0; }
+}
+.float-up {
+  animation: floatUp 1.2s ease-out forwards;
+  will-change: transform, opacity;
+}
+
+/* Лёгкая «пульсация» золотого свечения — для важных кнопок */
+@keyframes goldPulse {
+  0%, 100% { box-shadow: 0 0 14px rgba(255,184,0,0.35); }
+  50%      { box-shadow: 0 0 24px rgba(255,184,0,0.55), 0 0 40px rgba(255,184,0,0.25); }
+}
+.gold-pulse {
+  animation: goldPulse 2.6s ease-in-out infinite;
+}
+
+/* Тёплая тонировка пергамента — оверлей поверх контента */
+.parchment-tint {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 0%, rgba(244,228,188,0.06), transparent 60%),
+    radial-gradient(ellipse 90% 70% at 50% 100%, rgba(180,140,80,0.05), transparent 60%);
 }

@@ -2,14 +2,16 @@ import { ReactNode, useEffect } from 'react'
 import { SparklesOverlay } from './SparklesOverlay'
 import { gradients, colors } from '@/theme'
 
-export const APP_VERSION = '2.0.0'
+export const APP_VERSION = '2.1.0'
 
 interface ScreenBackgroundProps {
   children: ReactNode
   showSparkles?: boolean
+  /** Атмосферный туман — лёгкий движущийся слой. По умолчанию включён. */
+  showMist?: boolean
 }
 
-export function ScreenBackground({ children, showSparkles = true }: ScreenBackgroundProps) {
+export function ScreenBackground({ children, showSparkles = true, showMist = true }: ScreenBackgroundProps) {
   useEffect(() => {
     fetch('/api/version')
       .then(r => r.json())
@@ -30,8 +32,9 @@ export function ScreenBackground({ children, showSparkles = true }: ScreenBackgr
         overflow: 'hidden',
       }}
     >
+      {showMist && <div className="mist-layer" aria-hidden />}
       {showSparkles && <SparklesOverlay />}
-      <div style={{ position: 'relative', zIndex: 1 }}>
+      <div style={{ position: 'relative', zIndex: 2 }}>
         {children}
       </div>
       <div style={{
@@ -49,4 +52,3 @@ export function ScreenBackground({ children, showSparkles = true }: ScreenBackgr
     </div>
   )
 }
-

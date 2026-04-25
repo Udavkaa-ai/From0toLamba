@@ -10,6 +10,8 @@ import {
   WhatsNewOverlay, getPendingChangelog, markChangelogSeen, type ChangelogEntry,
 } from '@/components/WhatsNewOverlay'
 import { AchievementUnlockedOverlay } from '@/components/AchievementUnlockedOverlay'
+import { CountUp } from '@/components/CountUp'
+import { EyeIcon } from '@/components/icons'
 import { api, type ProjectDTO, type DailyUpdateDTO } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing, typography } from '@/theme'
@@ -441,7 +443,14 @@ export function HomePage() {
           >
             ⚙️
           </button>
-          <div style={{ fontSize: '28px', fontWeight: 800, color: colors.fairyGold }}>
+          <div style={{
+            fontFamily: typography.headingFontFamily,
+            fontSize: '28px',
+            fontWeight: 700,
+            color: colors.fairyGold,
+            letterSpacing: '0.06em',
+            textShadow: `0 0 24px ${colors.fairyGold}40`,
+          }}>
             Из грязи в князи
           </div>
           <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
@@ -453,14 +462,25 @@ export function HomePage() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <FairyCard style={{ marginBottom: spacing.lg, textAlign: 'center' }}>
             <div style={{ color: colors.textSecondary, fontSize: '12px', marginBottom: '4px' }}>Свободные рубли</div>
-            <div style={{ color: colors.fairyGold, fontSize: '36px', fontWeight: 800 }}>
-              {gameState.balance.toFixed(0)} ₽
+            <div style={{
+              color: colors.fairyGold,
+              fontFamily: typography.headingFontFamily,
+              fontSize: '40px',
+              fontWeight: 700,
+              letterSpacing: '0.02em',
+              textShadow: `0 0 28px ${colors.fairyGold}50`,
+              fontVariantNumeric: 'tabular-nums',
+            }}>
+              <CountUp value={gameState.balance} />
+              <span style={{ fontSize: '26px', marginLeft: '6px', opacity: 0.85 }}>₽</span>
             </div>
             <OrnamentDivider />
             <div style={{ display: 'flex', justifyContent: 'space-around' }}>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ color: colors.textMuted, fontSize: '11px' }}>Всего злата</div>
-                <div style={{ color: colors.textPrimary, fontWeight: 600 }}>{totalWealth.toFixed(0)} ₽</div>
+                <div style={{ color: colors.textPrimary, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                  <CountUp value={totalWealth} /> ₽
+                </div>
               </div>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ color: colors.textMuted, fontSize: '11px' }}>Доход</div>
@@ -469,7 +489,9 @@ export function HomePage() {
                 </div>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ color: colors.textMuted, fontSize: '11px' }}>Чуйка 👁</div>
+                <div style={{ color: colors.textMuted, fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
+                  Чуйка <EyeIcon size={11} />
+                </div>
                 <div style={{ color: colors.textPrimary, fontWeight: 600 }}>{gameState.intuitionScore}</div>
               </div>
             </div>
