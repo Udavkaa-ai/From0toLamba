@@ -2,6 +2,8 @@
 // 6 параметров, полностью деривируются из seed-строки.
 // Динамическое вращение клетки добавляется на уровне страницы (CSS-анимация).
 
+import { useRef } from 'react'
+
 const SHAPES = [
   'circle', 'square', 'diamond', 'hexagon', 'octagon',
   'triangleUp', 'triangleDown', 'shield',
@@ -241,31 +243,132 @@ interface SealProps {
 }
 
 /** Рисует только саму печать — обводка TP/FP/FN и selected живёт на ячейке-кнопке,
- *  чтобы не перекрывать точки-розетку по периметру. */
+ *  чтобы не перекрывать точки-розетку по периметру.
+ *
+ *  Визуал: радиальный градиент на основе создаёт эффект тиснёной восковой печати
+ *  (светлый блик top-left → тёмная глубина bottom-right). Soft drop-shadow вокруг
+ *  даёт ощущение объёма. Внутренний hairline-блик в верхней части — «глянец».
+ *  Эмблема со своей мягкой тенью — выглядит выдавленной в основе. */
 export function Seal({ params, size = 72, dim = false }: SealProps) {
   const { shape, color, rings, border, dots, emblem } = params
   const opacity = dim ? 0.35 : 1
 
+  // Уникальные id градиентов на инстанс — иначе несколько печатей в одном DOM
+  // подхватят один и тот же gradient и потеряют свой цвет.
+  const gid = useUniqueId()
+  const fillId = `seal-fill-${gid}`
+  const glossId = `seal-gloss-${gid}`
+  const embossId = `seal-emboss-${gid}`
+
   return (
-    <svg viewBox="0 0 100 100" width={size} height={size} style={{ opacity, display: 'block' }}>
-      {/* Точки-розетка */}
+    <svg
+      viewBox="0 0 100 100"
+      width={size}
+      height={size}
+      style={{
+        opacity,
+        display: 'block',
+        // Soft outer glow + drop shadow — подчёркивают, что печать «лежит» на пергаменте
+        filter: `drop-shadow(0 1.5px 1.5px rgba(0,0,0,0.55)) drop-shadow(0 0 2.5px ${color.primary}40)`,
+      }}
+    >
+      <defs>
+        {/* Радиальный градиент основной заливки — блик top-left, тень bottom-right */}
+        <radialGradient id={fillId} cx="35%" cy="30%" r="75%">
+          <stop offset="0%"   stopColor={lighten(color.primary, 0.35)} />
+          <stop offset="55%"  stopColor={color.primary} />
+          <stop offset="100%" stopColor={darken(color.primary, 0.35)} />
+        </radialGradient>
+        {/* Hairline-блик — тонкая полудуга в верхней части как глянец на стекле */}
+        <linearGradient id={glossId} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%"  stopColor="#FFFFFF" stopOpacity="0.35" />
+          <stop offset="60%" stopColor="#FFFFFF" stopOpacity="0" />
+        </linearGradient>
+        {/* Мягкая тень под эмблемой — ощущение тиснения */}
+        <filter id={embossId} x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="0.6" />
+          <feOffset dx="0" dy="0.6" result="shadow" />
+          <feComponentTransfer in="shadow" result="shadow2"><feFuncA type="linear" slope="0.55" /></feComponentTransfer>
+          <feMerge>
+            <feMergeNode in="shadow2" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+
+      {/* Точки-розетка по периметру (за пределами основы) */}
       {renderDots(dots, color)}
 
-      {/* Форма + концентрические кольца + ободок */}
-      {renderShape(shape, color, 36)}
+      {/* Основная форма с радиальным градиентом */}
+      {renderShape(shape, color, 36, `url(#${fillId})`)}
+
+      {/* Hairline-блик поверх основы — лёгкий «глянец» */}
+      <g style={{ pointerEvents: 'none' }} clipPath={undefined}>
+        {renderGloss(shape, glossId)}
+      </g>
+
+      {/* Концентрические кольца + декоративный ободок */}
       {renderRings(shape, rings, color)}
       {renderBorderStyle(shape, border, color)}
 
-      {/* Центральная эмблема */}
-      {renderEmblem(emblem, color)}
+      {/* Центральная эмблема — с soft emboss filter */}
+      <g filter={`url(#${embossId})`}>{renderEmblem(emblem, color)}</g>
     </svg>
+  )
+}
+
+// ── Утилиты для рендера ────────────────────────────────────────────────────
+
+let _idCounter = 0
+function useUniqueId(): string {
+  // Уникальность нужна, чтобы несколько печатей в одном DOM не подхватили
+  // один gradient/filter id. Сохраняется на инстанс через useRef.
+  const ref = useRef<string | null>(null)
+  if (ref.current === null) ref.current = `s${(++_idCounter).toString(36)}`
+  return ref.current
+}
+
+function clamp01(v: number): number { return Math.max(0, Math.min(1, v)) }
+
+function hexToRgb(hex: string): [number, number, number] {
+  const h = hex.replace('#', '')
+  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]
+}
+function rgbToHex(r: number, g: number, b: number): string {
+  const to = (v: number) => Math.round(clamp01(v / 255) * 255).toString(16).padStart(2, '0')
+  return `#${to(r)}${to(g)}${to(b)}`
+}
+/** Смесь цвета с белым на factor [0..1] — для блика */
+function lighten(hex: string, factor: number): string {
+  const [r, g, b] = hexToRgb(hex)
+  return rgbToHex(r + (255 - r) * factor, g + (255 - g) * factor, b + (255 - b) * factor)
+}
+/** Смесь цвета с чёрным на factor [0..1] — для тени */
+function darken(hex: string, factor: number): string {
+  const [r, g, b] = hexToRgb(hex)
+  return rgbToHex(r * (1 - factor), g * (1 - factor), b * (1 - factor))
+}
+
+/** Полупрозрачный «глянец» — половинка фигуры сверху, чтобы создать стекло-эффект */
+function renderGloss(shape: Shape, glossId: string) {
+  // Простая полу-эллиптическая накладка по центру верхней части — вписывается
+  // в любую форму без необходимости делать clip-path под каждую.
+  return (
+    <ellipse
+      cx="50"
+      cy="32"
+      rx="22"
+      ry="11"
+      fill={`url(#${glossId})`}
+      opacity="0.7"
+    />
   )
 }
 
 // ── Формы ──────────────────────────────────────────────────────────────────
 
-function renderShape(shape: Shape, color: SealColor, r: number) {
-  const fill = color.primary
+function renderShape(shape: Shape, color: SealColor, r: number, customFill?: string) {
+  const fill = customFill ?? color.primary
   const stroke = color.secondary
   const common = { fill, stroke, strokeWidth: 2 }
   switch (shape) {
