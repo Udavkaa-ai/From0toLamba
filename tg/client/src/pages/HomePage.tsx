@@ -477,14 +477,20 @@ export function HomePage() {
             <OrnamentDivider />
             <div style={{ display: 'flex', justifyContent: 'space-around' }}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ color: colors.textMuted, fontSize: '11px' }}>Всего злата</div>
-                <div style={{ color: colors.textPrimary, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
-                  <CountUp value={totalWealth} /> ₽
+                <div style={{ color: colors.textMuted, fontSize: '11px' }}>Вложено</div>
+                <div style={{ color: colors.textSecondary, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                  {gameState.totalInvested.toFixed(0)} ₽
                 </div>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ color: colors.textMuted, fontSize: '11px' }}>Доход</div>
-                <div style={{ color: roi >= 0 ? colors.success : colors.danger, fontWeight: 600 }}>
+                <div style={{ color: colors.textMuted, fontSize: '11px' }}>Получено</div>
+                <div style={{ color: colors.textSecondary, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                  {(gameState.totalReturned + activeValue).toFixed(0)} ₽
+                </div>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ color: colors.textMuted, fontSize: '11px' }}>Итог</div>
+                <div style={{ color: roi >= 0 ? colors.success : colors.danger, fontWeight: 700 }}>
                   {roi >= 0 ? '+' : ''}{roi.toFixed(1)}%
                 </div>
               </div>
