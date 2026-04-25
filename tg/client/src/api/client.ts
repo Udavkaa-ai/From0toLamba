@@ -122,6 +122,10 @@ export interface GameStateDTO {
   seenTypes: string[]
   seenArchetypes: string[]
   seenFates: string[]
+  // С каким числом дельцов начал беседу (для подвигов «социальные»)
+  amaSessionsStarted: number
+  // Сколько бесед довёл до конца — задал все 10 вопросов
+  amaSessionsCompleted: number
 }
 
 export interface LeaderboardEntryDTO {

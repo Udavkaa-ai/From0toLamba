@@ -221,6 +221,44 @@ export const ACHIEVEMENTS: Achievement[] = [
     progress: ({ gameState }) => ({ current: Math.min(gameState.referralCount, 20), target: 20 }),
   },
 
+  // ─── Беседы с дельцами ──────────────────────────────────────────────────
+  {
+    id: 'first_chat',
+    name: 'Первая беседа',
+    description: 'Поговорил с одним дельцом',
+    emoji: '💬',
+    category: 'social',
+    check: ({ gameState }) => gameState.amaSessionsStarted >= 1,
+    progress: ({ gameState }) => ({ current: Math.min(gameState.amaSessionsStarted, 1), target: 1 }),
+  },
+  {
+    id: 'five_chats',
+    name: 'Знакомец на ярмарке',
+    description: 'Побеседовал с пятью разными дельцами',
+    emoji: '🗣',
+    category: 'social',
+    check: ({ gameState }) => gameState.amaSessionsStarted >= 5,
+    progress: ({ gameState }) => ({ current: Math.min(gameState.amaSessionsStarted, 5), target: 5 }),
+  },
+  {
+    id: 'ten_chats',
+    name: 'Завсегдатай кабака',
+    description: 'Побеседовал с десятью разными дельцами',
+    emoji: '🍻',
+    category: 'social',
+    check: ({ gameState }) => gameState.amaSessionsStarted >= 10,
+    progress: ({ gameState }) => ({ current: Math.min(gameState.amaSessionsStarted, 10), target: 10 }),
+  },
+  {
+    id: 'all_ten_questions',
+    name: 'Расспросил по чести',
+    description: 'Задал все 10 вопросов в одной беседе',
+    emoji: '📜',
+    category: 'social',
+    check: ({ gameState }) => gameState.amaSessionsCompleted >= 1,
+    progress: ({ gameState }) => ({ current: Math.min(gameState.amaSessionsCompleted, 1), target: 1 }),
+  },
+
   // ─── Зверинец: породы дел ───────────────────────────────────────────────
   {
     id: 'seen_card_game',

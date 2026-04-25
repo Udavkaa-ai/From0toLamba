@@ -101,7 +101,7 @@ export async function gameRoutes(app: FastifyInstance) {
       console.log(`[Referral] NOT granted (already attached or self-ref) user=${user.id}`)
     }
 
-    const [activeProjects, inboxProjects, closedProjectsCount, charterSessions, referralCount] = await Promise.all([
+    const [activeProjects, inboxProjects, closedProjectsCount, charterSessions, referralCount, amaSessionsStarted, amaSessionsCompleted] = await Promise.all([
       prisma.project.findMany({ where: { userId: user.id, isActive: true } }),
       prisma.project.findMany({ where: { userId: user.id, isInbox: true }, orderBy: { createdAt: 'desc' }, take: 10 }),
       prisma.project.count({ where: { userId: user.id, isClosed: true } }),
@@ -110,6 +110,10 @@ export async function gameRoutes(app: FastifyInstance) {
         select: { forgedIndices: true, charterSelectedIndices: true },
       }),
       countReferrals(user.id),
+      // С каким количеством дельцов вообще начал беседу (один делец = одна сессия по projectId)
+      prisma.amaSession.count({ where: { userId: user.id } }),
+      // В скольких беседах дошёл до конца (10 вопросов задано)
+      prisma.amaSession.count({ where: { userId: user.id, isComplete: true } }),
     ])
 
     // Догенерим имена для дел, которые застряли с плейсхолдером
@@ -173,6 +177,8 @@ export async function gameRoutes(app: FastifyInstance) {
       seenTypes,
       seenArchetypes,
       seenFates,
+      amaSessionsStarted,
+      amaSessionsCompleted,
     }
   })
 
