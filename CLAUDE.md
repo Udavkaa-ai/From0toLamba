@@ -5,7 +5,7 @@
 
 ## Состояние проекта
 
-**Активная версия:** Telegram Mini App (`tg/`) — v2.1.0
+**Активная версия:** Telegram Mini App (`tg/`) — v2.2.0
 **Android:** код в `app/`, разработка заморожена — всё усилие на TG-версию
 **Ветка разработки:** `claude/telegram-game-migration-FDnlX`
 
@@ -41,7 +41,8 @@ tg/
         │   ├── projects.ts        # /api/projects/inbox, /portfolio, /updates, /skip
         │   ├── ama.ts             # /api/ama/:id/start|message — развлекательная болтовня с хозяином
         │   ├── charter.ts         # /api/charter/:id/start|submit — мини-игра «Грамота»
-        │   └── invest.ts          # /api/invest/:id (invest/add/withdraw/exit)
+        │   ├── invest.ts          # /api/invest/:id (invest/add/withdraw/exit)
+        │   └── banner.ts          # /api/banner/:id — прокси к Pollinations с приватным ключом
         ├── game/
         │   ├── types.ts           # Все энамы + FATE_CONFIG + WITHDRAWAL_RULES + ProjectPublicDTO
         │   ├── GenerateProjectService.ts  # AI-генерация нового дела + баннер Pollinations.ai
@@ -111,6 +112,11 @@ tg/
 | POST | `/api/invest/:projectId/withdraw` | Частичный вывод |
 | POST | `/api/invest/:projectId/exit` | Выйти из дела полностью (запускает PostMortem async) |
 
+### Banner (прокси к Pollinations.ai)
+| Метод | Путь | Описание |
+|---|---|---|
+| GET | `/api/banner/:projectId` | Стримит баннер дела с Pollinations через приватный ключ. Public, кеш 24ч. |
+
 ---
 
 ## База данных (Prisma + PostgreSQL)
@@ -150,7 +156,7 @@ InvestorRank:     NEWBIE (старт) → AMBASSADOR (100 ₽ + чуйка 10) �
 - **Клиент:** `tg/server/src/ai/openRouterClient.ts`
 - **Функции:** `generateAmaResponse`, `generateProjectName`, `generateDailyUpdate`, `generatePostMortem`, `generateProjectBanner`
 
-**Баннеры дел:** генерируются через Pollinations.ai (`https://image.pollinations.ai/prompt/...`) — бесплатно, без API-ключа. Seed вычисляется из projectId. Сохраняются в `project.bannerImageUrl`.
+**Баннеры дел:** генерируются через Pollinations.ai (модель `flux` по умолчанию). Запрос идёт через **прокси-эндпоинт `GET /api/banner/:projectId`** — сервер хранит в БД только указатель `/api/banner/<id>`, а сам Pollinations-URL и заголовок `Authorization: Bearer ${POLLINATIONS_API_KEY}` подмешивает на лету. Seed детерминирован по projectId, prompt — по `type + personaArchetype` (см. `pollinationsImageUrl()` в `openRouterClient.ts`). Без `POLLINATIONS_API_KEY` прокси работает анонимно (медленнее, без приоритета). Старые прямые Pollinations-URL в БД игнорируются — `toPublicDTO` всегда отдаёт прокси-URL.
 
 **Язык ответов AI:** современный живой русский. Без нарочитого старорусского. Народные присказки — изредка. Все суммы в рублях. Без слов «блокчейн», «крипто», «TON».
 
@@ -178,11 +184,13 @@ InvestorRank:     NEWBIE (старт) → AMBASSADOR (100 ₽ + чуйка 10) �
 ## Переменные окружения (Railway → Variables)
 
 ```
-DATABASE_URL         ${{Postgres.DATABASE_URL}}   ← ссылка на Railway Postgres
-TELEGRAM_BOT_TOKEN   123456:ABC...
-MINI_APP_URL         https://from0tolamba-production.up.railway.app
-OPENROUTER_API_KEY   sk-or-...
-NODE_ENV             production
+DATABASE_URL          ${{Postgres.DATABASE_URL}}   ← ссылка на Railway Postgres
+TELEGRAM_BOT_TOKEN    123456:ABC...
+MINI_APP_URL          https://from0tolamba-production.up.railway.app
+OPENROUTER_API_KEY    sk-or-...
+POLLINATIONS_API_KEY  sk_iQk...   ← опционально, без него — анонимный режим
+POLLINATIONS_MODEL    flux        ← модель image-API (flux | flux-realism | turbo | …)
+NODE_ENV              production
 ```
 
 ---

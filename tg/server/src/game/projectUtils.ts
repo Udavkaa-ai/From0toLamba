@@ -96,7 +96,9 @@ export function toPublicDTO(project: Project): ProjectPublicDTO {
     daysSinceJoined: project.daysSinceJoined,
     isWithdrawalLocked: project.isWithdrawalLocked,
     closureReason: project.closureReason,
-    bannerImageUrl: project.bannerImageUrl,
+    // Все баннеры идут через наш прокси /api/banner/:id — он сам ходит в Pollinations
+    // с приватным ключом. Старые прямые Pollinations-URL в БД игнорируются.
+    bannerImageUrl: project.bannerImageUrl ? `/api/banner/${project.id}` : null,
     currentUserCount: project.currentUserCount,
     userCountHistory: project.userCountHistory,
     apyHistory: project.apyHistory,

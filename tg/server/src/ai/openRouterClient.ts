@@ -226,28 +226,55 @@ const ARCHETYPE_THEME: Record<PersonaArchetype, string> = {
   [PersonaArchetype.IVAN_DURAK]: 'simple peasant lucky wanderer firebird horse',
 }
 
-export async function generateProjectBanner(
-  projectId: string,
-  projectName: string,
-  type: ProjectType,
-  archetype: PersonaArchetype,
-): Promise<void> {
-  const prompt = [
+/** Детерминированный prompt по типу дела и архетипу хозяина */
+export function buildBannerPrompt(type: ProjectType, archetype: PersonaArchetype): string {
+  return [
     TYPE_THEME[type],
     ARCHETYPE_THEME[archetype],
     'russian fairy tale fantasy, dark mystical atmosphere, gold purple blue tones',
     'cinematic banner, painterly illustration, no text, no letters',
   ].join(', ')
+}
 
-  const seed = parseInt(projectId.replace(/-/g, '').slice(-6), 16) % 99999
-  // 1024×1024 — родное SDXL-разрешение 1:1. Pollinations стабильно отдаёт
-  // квадрат; широкие aspect'ы (2:1, 7:4) либо растягивают персонажей,
-  // либо игнорируются и возвращается квадрат — UI потом сплющивает.
-  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}`
+/** Детерминированный seed для Pollinations — стабильный по projectId */
+export function bannerSeedFor(projectId: string): number {
+  return parseInt(projectId.replace(/-/g, '').slice(-6), 16) % 99999
+}
 
+/**
+ * Строит upstream-URL Pollinations для конкретного проекта.
+ * Используется прокси-эндпоинтом /api/banner/:projectId — токен сюда не подмешивается,
+ * это отдельная забота прокси (через header).
+ */
+export function pollinationsImageUrl(projectId: string, type: ProjectType, archetype: PersonaArchetype): string {
+  const prompt = buildBannerPrompt(type, archetype)
+  const seed = bannerSeedFor(projectId)
+  const model = process.env.POLLINATIONS_MODEL ?? 'flux'
+  // 1024×1024 — родное SDXL-разрешение 1:1. Pollinations стабильно отдаёт квадрат;
+  // широкие aspect'ы (2:1, 7:4) либо растягивают персонажей, либо игнорируются.
+  const params = new URLSearchParams({
+    width: '1024',
+    height: '1024',
+    nologo: 'true',
+    seed: String(seed),
+    model,
+  })
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?${params.toString()}`
+}
+
+/**
+ * Записывает в проект ссылку на наш прокси-эндпоинт.
+ * Сама картинка генерируется лениво при первом запросе клиента.
+ */
+export async function generateProjectBanner(
+  projectId: string,
+  _projectName: string,
+  _type: ProjectType,
+  _archetype: PersonaArchetype,
+): Promise<void> {
   await prisma.project.update({
     where: { id: projectId },
-    data: { bannerImageUrl: url },
+    data: { bannerImageUrl: `/api/banner/${projectId}` },
   }).catch(err => console.error('[Banner] DB update failed:', err))
 }
 
