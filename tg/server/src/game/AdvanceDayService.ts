@@ -352,8 +352,9 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
   const rankUp = rankChanged && isRankUp(oldRank, newRank)
 
   // История (храним последние 30 точек)
-  const balanceHistory = [...gameState.balanceHistory, newBalance].slice(-30)
-  const investedHistory = [...gameState.investedHistory, totalWealth - newBalance].slice(-30)
+  // 180 точек = ~полгода активной игры — клиент даёт переключатель «30 / 90 / Всё»
+  const balanceHistory = [...gameState.balanceHistory, newBalance].slice(-180)
+  const investedHistory = [...gameState.investedHistory, totalWealth - newBalance].slice(-180)
 
   await prisma.gameState.update({
     where: { userId },

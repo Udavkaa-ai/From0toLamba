@@ -937,14 +937,27 @@ function DayNewsOverlay({
             else if (info.offset.x < -80) dismiss()
           }}
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
+          animate={{
+            opacity: 1, scale: 1, y: 0,
+            // Пульс рамки только для closure-карточек, чтобы итог дела бил в глаза
+            boxShadow: isClosure
+              ? [`0 0 0 ${currentClosure!.profitPercent >= 0 && !currentClosure!.forcedByMafia ? colors.success : colors.danger}40`,
+                 `0 0 32px ${currentClosure!.profitPercent >= 0 && !currentClosure!.forcedByMafia ? colors.success : colors.danger}80`,
+                 `0 0 0 ${currentClosure!.profitPercent >= 0 && !currentClosure!.forcedByMafia ? colors.success : colors.danger}40`]
+              : '0 0 0 rgba(0,0,0,0)',
+          }}
           exit={{ opacity: 0, x: -120, scale: 0.85 }}
-          transition={{ type: 'spring', damping: 22, stiffness: 260 }}
+          transition={{
+            type: 'spring', damping: 22, stiffness: 260,
+            boxShadow: { duration: 1.6, repeat: Infinity, ease: 'easeInOut' },
+          }}
           style={{
             position: 'relative', zIndex: 202,
             width: 'min(360px, calc(100vw - 48px))',
             background: `linear-gradient(145deg, #2A1960, #0D1735)`,
-            border: `1px solid rgba(255,184,0,0.35)`,
+            border: isClosure
+              ? `2px solid ${currentClosure!.profitPercent >= 0 && !currentClosure!.forcedByMafia ? colors.success : colors.danger}`
+              : `1px solid rgba(255,184,0,0.35)`,
             borderRadius: '16px',
             padding: '20px',
             cursor: 'grab',
@@ -1028,8 +1041,48 @@ function ClosureCardContent({ closure }: { closure: ClosureSummaryDTO }) {
     : closure.fate === 'UNICORN' ? 'Жар-птица за хвост'
     : closure.fate
 
+  const fateEmoji = closure.forcedByMafia ? '⚡'
+    : closure.fate === 'UNICORN' ? '🔥'
+    : closure.fate === 'SURVIVOR' ? '⚓'
+    : closure.fate === 'INSTANT_SCAM' ? '💀'
+    : closure.fate === 'SLOW_DRAIN' ? '🕯️'
+    : closure.fate === 'HONEST_FAIL' ? '😔'
+    : '📜'
+
+  // Haptic-сигнал при появлении карточки итогов — игрок физически почувствует
+  useEffect(() => {
+    const tg = (window as any).Telegram?.WebApp?.HapticFeedback
+    if (!tg) return
+    if (closure.forcedByMafia || !profitable) tg.notificationOccurred('warning')
+    else tg.notificationOccurred('success')
+  }, [closure.id])
+
   return (
     <div>
+      {/* Большой fate-эмодзи сверху — драма, кричит «дело закрылось» */}
+      <div style={{ textAlign: 'center', marginBottom: '12px' }}>
+        <motion.div
+          initial={{ scale: 0.5, rotate: -10 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ type: 'spring', damping: 12, stiffness: 200, delay: 0.1 }}
+          style={{ fontSize: '56px', lineHeight: 1, filter: `drop-shadow(0 0 12px ${accent}80)` }}
+        >
+          {fateEmoji}
+        </motion.div>
+        <div style={{
+          color: accent,
+          fontFamily: typography.headingFontFamily,
+          fontSize: '14px',
+          fontWeight: 700,
+          letterSpacing: '0.15em',
+          textTransform: 'uppercase',
+          marginTop: '6px',
+          textShadow: `0 0 16px ${accent}60`,
+        }}>
+          Дело закрылось
+        </div>
+      </div>
+
       {/* Заголовок: имя + delta */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
         <div>

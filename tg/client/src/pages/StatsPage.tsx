@@ -5,9 +5,10 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recha
 import { ScreenBackground } from '@/components/ScreenBackground'
 import { FairyCard } from '@/components/FairyCard'
 import { PageTitle } from '@/components/PageTitle'
+import { CountUp } from '@/components/CountUp'
 import { api } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
-import { colors, spacing } from '@/theme'
+import { colors, spacing, typography } from '@/theme'
 import { evaluateAchievements, CATEGORY_LABELS, type EvaluatedAchievement } from '@/game/achievements'
 import { loreFor } from '@/game/lore'
 
@@ -23,8 +24,11 @@ const RANK_NEXT_HINT: Record<string, string> = {
   LAMBO_SENSEI: 'Ты достиг вершины! 👑',
 }
 
+type ChartScale = 30 | 90 | 999
+
 export function StatsPage() {
   const gameState = useGameStore(s => s.gameState)
+  const [chartScale, setChartScale] = useState<ChartScale>(30)
 
   useQuery({
     queryKey: ['gameState'],
@@ -38,17 +42,17 @@ export function StatsPage() {
   if (!gameState) return null
 
   const activeValue = gameState.activeProjects.reduce((s, p) => s + p.currentValueRubles, 0)
-  const totalWealth = gameState.balance + activeValue
-  // Доход включает стоимость активных дел — не «-100%» сразу после первого вложения
+  const received = gameState.totalReturned + activeValue
   const roi = gameState.totalInvested > 0
-    ? ((gameState.totalReturned + activeValue - gameState.totalInvested) / gameState.totalInvested * 100)
+    ? ((received - gameState.totalInvested) / gameState.totalInvested * 100)
     : 0
 
-  const chartData = gameState.balanceHistory.map((b, i) => ({
+  const fullChart = gameState.balanceHistory.map((b, i) => ({
     day: i + 1,
     balance: Math.round(b),
     invested: Math.round(gameState.investedHistory[i] ?? 0),
   }))
+  const chartData = chartScale === 999 ? fullChart : fullChart.slice(-chartScale)
 
   return (
     <ScreenBackground>
@@ -58,14 +62,21 @@ export function StatsPage() {
         </div>
 
         {/* Ранг */}
-        <FairyCard style={{ marginBottom: spacing.lg, textAlign: 'center' }}>
+        <FairyCard accent style={{ marginBottom: spacing.lg, textAlign: 'center' }}>
           <div style={{ fontSize: '40px', marginBottom: spacing.sm }}>
             {gameState.investorRank === 'LAMBO_SENSEI' ? '👑' :
              gameState.investorRank === 'SHARK' ? '🧥' :
              gameState.investorRank === 'ANALYST' ? '📖' :
              gameState.investorRank === 'AMBASSADOR' ? '🛒' : '🎪'}
           </div>
-          <div style={{ color: colors.fairyGold, fontSize: '22px', fontWeight: 700 }}>
+          <div style={{
+            color: colors.fairyGold,
+            fontFamily: typography.headingFontFamily,
+            fontSize: '24px',
+            fontWeight: 700,
+            letterSpacing: '0.04em',
+            textShadow: `0 0 16px ${colors.fairyGold}40`,
+          }}>
             {RANK_DISPLAY[gameState.investorRank] ?? gameState.investorRank}
           </div>
           <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: spacing.sm }}>
@@ -73,38 +84,82 @@ export function StatsPage() {
           </div>
         </FairyCard>
 
-        {/* Основные метрики */}
+        {/* Финансы — единая тройка как на Главной */}
+        <FairyCard style={{ marginBottom: spacing.lg }}>
+          <div style={{ color: colors.textMuted, fontSize: '11px', textAlign: 'center', marginBottom: spacing.sm, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            Денежная летопись
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+            <Stat label="Вложено" value={`${gameState.totalInvested.toFixed(0)} ₽`} />
+            <Stat label="Получено" value={`${received.toFixed(0)} ₽`} />
+            <Stat
+              label="Итог"
+              value={`${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%`}
+              valueColor={roi >= 0 ? colors.success : colors.danger}
+            />
+          </div>
+          <div style={{ marginTop: spacing.md, paddingTop: spacing.md, borderTop: `1px solid ${colors.cardBorder}`, display: 'flex', justifyContent: 'space-around' }}>
+            <Stat label="Свободные рубли" value={`${gameState.balance.toFixed(0)} ₽`} small />
+            <Stat label="Всего злата" value={`${(gameState.balance + activeValue).toFixed(0)} ₽`} small />
+          </div>
+        </FairyCard>
+
+        {/* Игровые показатели */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing.sm, marginBottom: spacing.lg }}>
           {[
-            { label: 'Дней в игре', value: gameState.currentDay },
-            { label: 'Серия дней', value: gameState.dayStreak + ' 🔥' },
-            { label: 'Злато купца', value: totalWealth.toFixed(0) + ' ₽' },
-            { label: 'Чуйка 👁', value: gameState.intuitionScore },
+            { label: 'Дней в игре', value: String(gameState.currentDay) },
+            { label: 'Завершено дел', value: String(gameState.closedProjectsCount) },
+            { label: 'Чуйка', value: String(gameState.intuitionScore) },
             {
               label: 'Точность чуйки',
               value: gameState.intuitionAccuracy === null
                 ? '—'
                 : Math.round(gameState.intuitionAccuracy * 100) + '%',
             },
-            { label: 'Дел закрыто', value: gameState.closedProjectsCount + ' 📜' },
-            { label: 'Вложено всего', value: gameState.totalInvested.toFixed(0) + ' ₽' },
-            { label: 'Доходность', value: (roi >= 0 ? '+' : '') + roi.toFixed(1) + '%' },
           ].map(({ label, value }) => (
             <FairyCard key={label} padding={spacing.md} style={{ textAlign: 'center' }}>
               <div style={{ color: colors.textMuted, fontSize: '11px', marginBottom: '4px' }}>{label}</div>
-              <div style={{ color: colors.textPrimary, fontWeight: 700, fontSize: '16px' }}>{value}</div>
+              <div style={{ color: colors.textPrimary, fontWeight: 700, fontSize: '18px', fontVariantNumeric: 'tabular-nums' }}>
+                <CountUp value={parseFloat(value) || 0} format={() => value} duration={400} />
+              </div>
             </FairyCard>
           ))}
         </div>
 
-        {/* График баланса */}
-        {chartData.length > 1 && (
+        {/* График баланса с переключателем масштаба */}
+        {fullChart.length > 1 && (
           <FairyCard style={{ marginBottom: spacing.lg }}>
-            <div style={{ color: colors.fairyGold, fontSize: '13px', fontWeight: 600, marginBottom: spacing.md }}>
-              Ведомость баланса
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md }}>
+              <div style={{ color: colors.fairyGold, fontSize: '13px', fontWeight: 600 }}>
+                Ведомость баланса
+              </div>
+              <div style={{ display: 'flex', gap: '4px' }}>
+                {([
+                  { v: 30 as ChartScale, label: '30 дн.' },
+                  { v: 90 as ChartScale, label: '90 дн.' },
+                  { v: 999 as ChartScale, label: 'Всё' },
+                ]).map(opt => (
+                  <button
+                    key={opt.v}
+                    onClick={() => setChartScale(opt.v)}
+                    style={{
+                      padding: '4px 8px',
+                      fontSize: '10px',
+                      fontWeight: 600,
+                      border: `1px solid ${chartScale === opt.v ? colors.fairyGold : colors.cardBorder}`,
+                      background: chartScale === opt.v ? `${colors.fairyGold}20` : 'transparent',
+                      color: chartScale === opt.v ? colors.fairyGold : colors.textMuted,
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
             <ResponsiveContainer width="100%" height={160}>
-              <BarChart data={chartData} barSize={8} barCategoryGap={2}>
+              <BarChart data={chartData} barSize={chartData.length > 60 ? 3 : 8} barCategoryGap={2}>
                 <XAxis dataKey="day" stroke={colors.textMuted} tick={{ fontSize: 10 }} />
                 <YAxis stroke={colors.textMuted} tick={{ fontSize: 10 }} tickFormatter={(v: number) => v >= 1000 ? `${Math.round(v / 1000)}k` : String(v)} width={32} />
                 <Tooltip
@@ -134,6 +189,22 @@ export function StatsPage() {
         <AchievementsSection />
       </div>
     </ScreenBackground>
+  )
+}
+
+function Stat({ label, value, valueColor, small }: { label: string; value: string; valueColor?: string; small?: boolean }) {
+  return (
+    <div style={{ textAlign: 'center', flex: 1 }}>
+      <div style={{ color: colors.textMuted, fontSize: '11px', marginBottom: '2px' }}>{label}</div>
+      <div style={{
+        color: valueColor ?? colors.textPrimary,
+        fontWeight: 700,
+        fontSize: small ? '13px' : '16px',
+        fontVariantNumeric: 'tabular-nums',
+      }}>
+        {value}
+      </div>
+    </div>
   )
 }
 
