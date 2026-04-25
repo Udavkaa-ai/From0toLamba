@@ -120,6 +120,10 @@ model Project {
   currentValueRubles   Float     @default(0)
   daysSinceJoined      Int       @default(0)
   isWithdrawalLocked   Boolean   @default(false)
+  // «Предложение от которого нельзя отказаться» — за 2-3 дня до автозакрытия
+  // прибыльных дел (SURVIVOR/UNICORN). Если игрок не успел выйти руками —
+  // получит 50% при автозакрытии. См. mafiaOffers.ts.
+  mafiaOfferIssued     Boolean   @default(false)
   closureReason        String?
   bannerImageUrl       String?
   bannerPromptUsed     String?

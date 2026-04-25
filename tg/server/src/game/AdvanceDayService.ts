@@ -5,6 +5,10 @@ import { randomInRange as rng, randomIntInRange as irng } from './projectUtils'
 import { generateDailyUpdate, generatePostMortem } from '../ai/openRouterClient'
 import { generateProject } from './GenerateProjectService'
 import { pickRandomEvent, applyEventEffect, renderEventBody } from './randomEvents'
+import {
+  pickMafiaOffer, renderMafiaText,
+  MAFIA_OFFER_DAYS_BEFORE, MAFIA_OFFER_CHANCE, MAFIA_FORCED_CLOSURE_RETURN_PERCENT,
+} from './mafiaOffers'
 
 const HANDOVER_REASONS_SURVIVOR = [
   'Дело выкупил племянник воеводы — прибыль выплачена 📜',
@@ -80,6 +84,7 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
   })
 
   let balanceDelta = 0
+  let returnedDelta = 0  // сумма всех автозакрытий за этот день — для totalReturned
 
   for (const project of activeProjects) {
     const fate = project.fate as ProjectFate
@@ -106,12 +111,19 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
       shouldClose = true
       lossPercent = rng(fateCfg.lossRange[0], fateCfg.lossRange[1])
 
+      // Игрок зевнул «предложение от которого нельзя отказаться» — отдаёт половину
+      const isProfitable = fate === ProjectFate.SURVIVOR || fate === ProjectFate.UNICORN
+      const mafiaForced = isProfitable && project.mafiaOfferIssued
+
       if (fate === ProjectFate.INSTANT_SCAM) {
         closureReason = 'Хозяин исчез вместе со всеми деньгами 💀'
       } else if (fate === ProjectFate.SLOW_DRAIN) {
         closureReason = 'Дело тихо угасло и закрылось'
       } else if (fate === ProjectFate.HONEST_FAIL) {
         closureReason = 'Хозяин честно признал провал'
+      } else if (mafiaForced) {
+        closureReason = pickMafiaOffer(project.id).closure
+        lossPercent = 1 - MAFIA_FORCED_CLOSURE_RETURN_PERCENT  // 50%
       } else if (fate === ProjectFate.SURVIVOR) {
         closureReason = HANDOVER_REASONS_SURVIVOR[Math.floor(Math.random() * HANDOVER_REASONS_SURVIVOR.length)]
       } else if (fate === ProjectFate.UNICORN) {
@@ -120,6 +132,7 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
 
       const returned = updatedValue * (1 - lossPercent)
       balanceDelta += returned
+      returnedDelta += returned
 
       // Генерируем PostMortem
       const profitPercent = project.investedAmountRubles > 0
@@ -171,18 +184,41 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
       updatedValue += dailyYield
     }
 
-    // Розыгрыш случайного события (15-25% шанс / специфично по типу + судьбе).
-    // См. randomEvents.ts. Если событие выпало — его текст ЗАМЕНЯЕТ обычную
-    // ежедневную весть от AI, а эффект меняет currentValueRubles разово.
-    const event = pickRandomEvent(project.type as ProjectType, fate)
     let eventApplied: { newsTitle: string; newsBody: string; kind: 'NEGATIVE' | 'POSITIVE' | 'NEUTRAL' } | null = null
-    if (event) {
-      const { newValue, deltaRubles } = applyEventEffect(updatedValue, event.effect)
-      updatedValue = newValue
+
+    // Сначала: «Предложение от которого нельзя отказаться» — за 2-3 дня до
+    // автозакрытия SURVIVOR/UNICORN с шансом 60%. Один раз на проект.
+    // Если выпало — обычный pickRandomEvent НЕ разыгрывается, чтобы не
+    // конкурировать за единственный слот вести в день.
+    const inMafiaWindow = daysLeft !== null
+      && (MAFIA_OFFER_DAYS_BEFORE as readonly number[]).includes(daysLeft)
+      && (fate === ProjectFate.SURVIVOR || fate === ProjectFate.UNICORN)
+      && !project.mafiaOfferIssued
+    if (inMafiaWindow && Math.random() < MAFIA_OFFER_CHANCE) {
+      const offer = pickMafiaOffer(project.id)
       eventApplied = {
-        newsTitle: event.title,
-        newsBody: renderEventBody(event.body, project.name, deltaRubles),
-        kind: event.kind,
+        newsTitle: 'Предложение, от которого нельзя отказаться',
+        newsBody: renderMafiaText(offer.warning, project.name),
+        kind: 'NEGATIVE',
+      }
+      await prisma.project.update({
+        where: { id: project.id },
+        data: { mafiaOfferIssued: true },
+      })
+    }
+
+    // Розыгрыш случайного события (15-25% шанс / специфично по типу + судьбе).
+    // См. randomEvents.ts. Только если в этот день не выпала мафия.
+    if (!eventApplied) {
+      const event = pickRandomEvent(project.type as ProjectType, fate)
+      if (event) {
+        const { newValue, deltaRubles } = applyEventEffect(updatedValue, event.effect)
+        updatedValue = newValue
+        eventApplied = {
+          newsTitle: event.title,
+          newsBody: renderEventBody(event.body, project.name, deltaRubles),
+          kind: event.kind,
+        }
       }
     }
 
@@ -294,6 +330,11 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
       investedHistory,
       pendingRankUp: rankUp ? newRank : null,
       lastAdvancedAt: new Date(),
+      // Автозакрытия (SURVIVOR/UNICORN/SLOW_DRAIN/HONEST_FAIL/INSTANT_SCAM)
+      // тоже считаются как «возвращённые рубли» — иначе на Главной выглядит
+      // как сплошной убыток, хотя жирные авто-выплаты от прибыльных дел
+      // прошли мимо счётчика.
+      totalReturned: returnedDelta > 0 ? { increment: returnedDelta } : undefined,
       // Сбрасываем флаг — крон должен снова отправить уведомление через 2 часа
       nextDayNotified: false,
       consecutiveAdvances: newConsecutive,

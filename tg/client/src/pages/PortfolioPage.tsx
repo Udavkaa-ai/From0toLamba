@@ -251,7 +251,9 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
     refetchInterval: 30_000,
   })
 
-  const recentUpdates = (updates ?? []).slice(-3).reverse()
+  // Сервер возвращает orderBy { day: 'desc' } — новейшие в начале массива.
+  // Берём 3 свежайшие; внутри блока показываем сверху самую свежую.
+  const recentUpdates = (updates ?? []).slice(0, 3)
 
   const profit = project.investedAmountRubles > 0
     ? ((project.currentValueRubles - project.investedAmountRubles) / project.investedAmountRubles * 100)

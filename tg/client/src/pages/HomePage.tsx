@@ -769,7 +769,7 @@ function ActiveProjectCard({ project, delay, onPress }: { project: ProjectDTO; d
     queryFn: () => api.projects.getUpdates(project.id),
   })
 
-  const latestUpdate: DailyUpdateDTO | undefined = updates?.[updates.length - 1]
+  const latestUpdate: DailyUpdateDTO | undefined = updates?.[0]
   // Свежее случайное событие — отдельная плашка ниже, заметная и в характере.
   // Обычные сигналы (payoutStatus, userCountDelta, redFlags) — мелкой строкой как раньше.
   const eventKind = latestUpdate?.eventKind
@@ -1002,7 +1002,7 @@ function ProjectNewsCardContent({ project }: { project: ProjectDTO }) {
     queryFn: () => api.projects.getUpdates(project.id),
   })
 
-  const latest = updates?.[updates.length - 1]
+  const latest = updates?.[0]
   // Случайное событие имеет приоритет в подаче — заметный цветной ромб
   let signal = '⚪'
   let signalColor: string = colors.textMuted
