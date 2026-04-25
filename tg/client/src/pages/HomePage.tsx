@@ -770,12 +770,20 @@ function ActiveProjectCard({ project, delay, onPress }: { project: ProjectDTO; d
   })
 
   const latestUpdate: DailyUpdateDTO | undefined = updates?.[updates.length - 1]
+  // Свежее случайное событие — отдельная плашка ниже, заметная и в характере.
+  // Обычные сигналы (payoutStatus, userCountDelta, redFlags) — мелкой строкой как раньше.
+  const eventKind = latestUpdate?.eventKind
   let newsSignal: string | null = null
-  if (latestUpdate) {
+  if (latestUpdate && !eventKind) {
     if (latestUpdate.payoutStatus === 'BOOSTED' || latestUpdate.userCountDelta > 5) newsSignal = '🟢'
     else if (latestUpdate.payoutStatus === 'DELAYED' || latestUpdate.userCountDelta < -5) newsSignal = '🔴'
     else if (latestUpdate.redFlags.length > 0) newsSignal = '⚠️'
   }
+  const eventColor = eventKind === 'NEGATIVE' ? colors.danger
+    : eventKind === 'POSITIVE' ? colors.success
+    : eventKind === 'NEUTRAL' ? colors.fairyGold
+    : null
+  const eventGlyph = eventKind === 'NEUTRAL' ? '◇' : '◆'
 
   return (
     <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay }}>
@@ -809,6 +817,24 @@ function ActiveProjectCard({ project, delay, onPress }: { project: ProjectDTO; d
             </div>
           </div>
         </div>
+        {/* Плашка свежего события — кричит цветом и заголовком, чтобы игрок сразу заметил */}
+        {eventKind && eventColor && latestUpdate && (
+          <div style={{
+            marginTop: spacing.sm,
+            padding: '8px 10px',
+            borderRadius: '8px',
+            background: `${eventColor}18`,
+            border: `1px solid ${eventColor}55`,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}>
+            <span style={{ color: eventColor, fontSize: '14px', lineHeight: 1 }}>{eventGlyph}</span>
+            <span style={{ color: colors.textPrimary, fontSize: '12px', fontWeight: 600, flex: 1 }}>
+              {latestUpdate.title}
+            </span>
+          </div>
+        )}
         {(project.isWithdrawalLocked || newsSignal) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm }}>
             {project.isWithdrawalLocked && (
@@ -974,9 +1000,13 @@ function ProjectNewsCardContent({ project }: { project: ProjectDTO }) {
   })
 
   const latest = updates?.[updates.length - 1]
+  // Случайное событие имеет приоритет в подаче — заметный цветной ромб
   let signal = '⚪'
   let signalColor: string = colors.textMuted
-  if (latest) {
+  if (latest?.eventKind === 'NEGATIVE') { signal = '◆'; signalColor = colors.danger }
+  else if (latest?.eventKind === 'POSITIVE') { signal = '◆'; signalColor = colors.success }
+  else if (latest?.eventKind === 'NEUTRAL') { signal = '◇'; signalColor = colors.fairyGold }
+  else if (latest) {
     if (latest.payoutStatus === 'BOOSTED' || latest.userCountDelta > 5) { signal = '🟢'; signalColor = colors.success }
     else if (latest.payoutStatus === 'DELAYED' || latest.userCountDelta < -5) { signal = '🔴'; signalColor = colors.danger }
   }
