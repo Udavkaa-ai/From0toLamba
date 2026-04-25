@@ -136,7 +136,7 @@ tg/
 
 ```typescript
 ProjectType:      CARD_GAME | TREASURE_HUNT | POTION_BREW | GUILD_SCHEME | HONEST_TRADE
-ProjectFate:      INSTANT_SCAM(20%) | SLOW_DRAIN(25%) | HONEST_FAIL(15%) | SURVIVOR(30%) | UNICORN(10%)
+ProjectFate:      INSTANT_SCAM(25%) | SLOW_DRAIN(30%) | HONEST_FAIL(15%) | SURVIVOR(25%) | UNICORN(5%)
 PersonaArchetype: BURATINO | BOYARIN | KOLOBOK | KOSCHEI | ZOLUSHKA | BABA_YAGA | IVAN_DURAK
 LieTopic:         PATRON_COUNT | DAILY_PROFIT | PAYOUT_DATE | GUILD_SIZE | ELDER_BLESSING | NOBLE_BACKING | WITHDRAWAL_LIMITS
 InvestorRank:     NEWBIE (старт) → AMBASSADOR (100 ₽ + чуйка 10) → ANALYST (1 000 ₽ + чуйка 50) → SHARK (3 000 ₽ + чуйка 100) → LAMBO_SENSEI (10 000 ₽ + чуйка 300)
@@ -224,7 +224,7 @@ npm run build  # outDir = ../server/public  (не коммитить!)
 | Активных дел | max 10 |
 | Кулдаун между днями | 7 «быстрых» переходов подряд — без ожидания; после 7-го кнопка блокируется на 2 часа. Крон шлёт уведомление в бот, заглушка «посмотреть рекламу» сбрасывает пачку и открывает ещё 7 быстрых дней |
 | Доходность SURVIVOR | 1.5–7.5% в день, 15–30 дней жизни |
-| Доходность UNICORN | 10–50% в день, 20–30 дней жизни |
+| Доходность UNICORN (Жар-птица) | 10–50% в день, 20–30 дней жизни |
 | Доходность INSTANT_SCAM | приманка 5–20% в день, 2–5 дней, исчезает со 100% денег и БЕЗ предупреждений (ни вестей, ни блокировки вывода, ни оттока вкладчиков) |
 | Доходность SLOW_DRAIN | 1.5–7.5% в день, 7–21 день, теряет 30–70%; за 2 дня до конца блокирует вывод и шлёт DELAYED-вести |
 | Потеря HONEST_FAIL | 10–40% |
