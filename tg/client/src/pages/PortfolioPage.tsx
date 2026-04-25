@@ -7,7 +7,8 @@ import { ScreenBackground } from '@/components/ScreenBackground'
 import { FairyCard, OrnamentDivider, SkeletonCard } from '@/components/FairyCard'
 import { api, type ProjectDTO, type PostMortemDTO, type DailyUpdateDTO, type TransactionDTO } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
-import { colors, spacing } from '@/theme'
+import { colors, spacing, typography } from '@/theme'
+import { CountUp } from '@/components/CountUp'
 
 /** Конкретная подсказка для вывода: сумма в ₽, а не просто «25%». */
 function withdrawalHint(project: ProjectDTO): string | null {
@@ -303,8 +304,23 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
           <div style={{ color: colors.textMuted, fontSize: '11px' }}>{project.developerName} · {project.daysSinceJoined} дн.</div>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ color: colors.textPrimary, fontWeight: 700 }}>{project.currentValueRubles.toFixed(0)} ₽</div>
-          <div style={{ color: profit >= 0 ? colors.success : colors.danger, fontSize: '12px' }}>
+          <div style={{ color: colors.textMuted, fontSize: '10px', letterSpacing: '0.02em' }}>
+            вложено {project.investedAmountRubles.toFixed(0)} ₽
+          </div>
+          <div style={{
+            color: colors.fairyGold,
+            fontFamily: typography.headingFontFamily,
+            fontSize: '22px',
+            fontWeight: 700,
+            lineHeight: 1.1,
+            letterSpacing: '0.02em',
+            fontVariantNumeric: 'tabular-nums',
+            textShadow: `0 0 16px ${colors.fairyGold}30`,
+            marginTop: '2px',
+          }}>
+            <CountUp value={project.currentValueRubles} /> ₽
+          </div>
+          <div style={{ color: profit >= 0 ? colors.success : colors.danger, fontSize: '12px', fontWeight: 600 }}>
             {profit >= 0 ? '+' : ''}{profit.toFixed(1)}%
           </div>
         </div>

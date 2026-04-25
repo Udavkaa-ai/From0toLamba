@@ -782,10 +782,23 @@ function ActiveProjectCard({ project, delay, onPress }: { project: ProjectDTO; d
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '14px' }}>
-              {project.currentValueRubles.toFixed(0)} ₽
+            <div style={{ color: colors.textMuted, fontSize: '10px', letterSpacing: '0.02em' }}>
+              вложено {project.investedAmountRubles.toFixed(0)} ₽
             </div>
-            <div style={{ color: profit >= 0 ? colors.success : colors.danger, fontSize: '11px' }}>
+            <div style={{
+              color: colors.fairyGold,
+              fontFamily: typography.headingFontFamily,
+              fontSize: '20px',
+              fontWeight: 700,
+              lineHeight: 1.1,
+              letterSpacing: '0.02em',
+              fontVariantNumeric: 'tabular-nums',
+              textShadow: `0 0 14px ${colors.fairyGold}30`,
+              marginTop: '2px',
+            }}>
+              <CountUp value={project.currentValueRubles} /> ₽
+            </div>
+            <div style={{ color: profit >= 0 ? colors.success : colors.danger, fontSize: '11px', fontWeight: 600 }}>
               {profit >= 0 ? '+' : ''}{profit.toFixed(1)}%
             </div>
           </div>
