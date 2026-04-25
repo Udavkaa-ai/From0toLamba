@@ -82,18 +82,23 @@ export async function gameRoutes(app: FastifyInstance) {
 
     // Реферальная программа: пробуем привязать реферала.
     // Источник payload: initData.start_param (если Mini App открыли через
-    // t.me/bot?startapp=ref_X и бот с Main Mini App настроен) ИЛИ
-    // user.pendingReferralParam (если пользователь пришёл по t.me/bot?start=ref_X,
-    // где бот сохранил payload в /start хендлере).
+    // t.me/bot?startapp=ref_X — основной путь, требует Main Mini App в BotFather)
+    // ИЛИ user.pendingReferralParam (legacy — если бот сохранил из /start ref_X).
     const refPayload = request.telegramStartParam ?? user.pendingReferralParam ?? null
+    if (refPayload) {
+      console.log(`[Referral] user=${user.id} (tg=${tgUser.id}) payload=${refPayload} src=${request.telegramStartParam ? 'startParam' : 'pending'}`)
+    }
     const refResult = await tryAttachReferrer(user.id, refPayload)
     if (refResult.bonusGranted) {
+      console.log(`[Referral] BONUS GRANTED user=${user.id} referrerId=${refResult.referrerId}`)
       // Подчистим pending — чтобы не пытаться повторно
       if (user.pendingReferralParam) {
         await prisma.user.update({ where: { id: user.id }, data: { pendingReferralParam: null } })
       }
       // Забираем обновлённый gameState (там balance уже увеличен)
       gameState = (await prisma.gameState.findUniqueOrThrow({ where: { userId: user.id } }))
+    } else if (refPayload) {
+      console.log(`[Referral] NOT granted (already attached or self-ref) user=${user.id}`)
     }
 
     const [activeProjects, inboxProjects, closedProjectsCount, charterSessions, referralCount] = await Promise.all([
@@ -446,6 +451,16 @@ export async function gameRoutes(app: FastifyInstance) {
     })
     // Delete all user's projects (cascades to AmaSession, AmaMessage, DailyUpdate, PostMortem)
     await prisma.project.deleteMany({ where: { userId: user.id } })
+    // Снимаем реферальную привязку — иначе тестер после reset не сможет
+    // повторно принять бонус по новой ссылке-приглашению.
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        referrerId: null,
+        referralBonusGranted: false,
+        pendingReferralParam: null,
+      },
+    })
     // Reset game state (keep preferredModel)
     const preferredModel = user.gameState?.preferredModel ?? 'deepseek/deepseek-v4-flash'
     await prisma.gameState.update({

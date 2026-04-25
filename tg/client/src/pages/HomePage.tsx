@@ -559,10 +559,10 @@ export function HomePage() {
 function handleInvite(gameState: { userId: number; firstName?: string } | any) {
   const userId = gameState?.userId
   if (!userId) return
-  // Используем ?start= (а не ?startapp=) — так payload гарантированно приходит
-  // в /start хендлер бота, который сохранит его в pendingReferralParam.
-  // ?startapp= работает только если у бота настроена Main Mini App в BotFather.
-  const botLink = `https://t.me/vknyazi_bot?start=ref_${userId}`
+  // ?startapp= — payload приходит в initData.start_param, не зависит от того,
+  // жал ли получатель Start раньше (с ?start= deeplink молчит у активного юзера).
+  // Требует настроенной Main Mini App в BotFather (см. CLAUDE.md → Реферальная программа).
+  const botLink = `https://t.me/vknyazi_bot?startapp=ref_${userId}`
   const text = [
     '📜 Купеческая грамота для тебя!',
     'Приходи на ярмарку «Из грязи в князи» — будем вкладывать рубли, ловить жуликов и расти в чинах.',
