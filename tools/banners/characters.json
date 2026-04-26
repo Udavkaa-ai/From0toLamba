@@ -1,5 +1,28 @@
 {
-  "_comment": "Six archetypes; for each — 5 named visual variants. Each variant is one distinct individual of that archetype. The generator uses desc for the image prompt and name for the game NPC identity.",
+  "_comment": "Seven archetypes; for each — 5 named visual variants. Each variant is one distinct individual of that archetype. The generator uses desc for the image prompt and name for the game NPC identity.",
+
+  "BURATINO": [
+    {
+      "name": "Буратино Деревянный",
+      "desc": "wooden puppet boy with a very long pointy carved nose, painted rosy cheeks on a smooth wooden face, bright blue eyes made of glass beads, wearing a small blue felt jacket with gold buttons and a pointed yellow hat, visible wood grain texture on his face and hands, cheerful naive expression"
+    },
+    {
+      "name": "Буратино Золотой Ключик",
+      "desc": "small wooden puppet with an exaggeratedly long pointed nose, carved from pale birch wood, wearing a tattered red and white striped shirt and a worn felt cap, a large old golden key hanging on a cord around his neck, wide innocent smile, thin wooden limbs"
+    },
+    {
+      "name": "Буратино Хитрован",
+      "desc": "carved wooden puppet boy with a long tapered nose and an unconvincing knowing smirk, wearing a patchwork waistcoat over a coarse linen shirt, a crooked little cap, one painted eyebrow raised in attempted cunning, wooden knuckles clutching a small coin purse"
+    },
+    {
+      "name": "Буратино-Купец",
+      "desc": "wooden puppet dressed up in a comically oversized merchant kaftan of green brocade, long pointed nose poking out above a huge fur collar, glass-bead eyes wide with excitement, too-big fur-trimmed shapka tilted on his round carved head, stubby wooden fingers spread wide"
+    },
+    {
+      "name": "Буратино Простак",
+      "desc": "scruffy little wooden puppet with a chipped long nose and peeling paint on his cheeks, wearing a too-short patched linen shirt and bare wooden feet, sitting cross-legged with a blissfully oblivious grin, sawdust spilling from a crack in his elbow"
+    }
+  ],
 
   "IVAN_DURAK": [
     {

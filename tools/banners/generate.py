@@ -62,6 +62,7 @@ DEAL_TYPES = [
 
 # Archetypes — must match the server enum.
 ARCHETYPES = [
+    "BURATINO",
     "IVAN_DURAK",
     "BABA_YAGA",
     "ZOLUSHKA",
