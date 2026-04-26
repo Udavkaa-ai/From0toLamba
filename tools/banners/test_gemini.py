@@ -20,11 +20,17 @@ API_KEY = ""
 # ─────────────────────────────────────────────────────────────────
 
 
+import argparse
+import time
 from pathlib import Path
 import sys
 import traceback
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "output"
+
+# Бесплатный тир image-моделей: обычно 2 RPM.
+# Если у тебя Pay-as-you-go — ставь --rpm 10 или выше.
+DEFAULT_RPM = 2
 
 # Перебираем модели в этом порядке. Первая работающая — побеждает.
 # Если у тебя есть конкретное имя — поставь его первым.
@@ -127,6 +133,22 @@ def try_generate(client, types_module, model: str, prompt: str):
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description="Smoke test Gemini image models")
+    parser.add_argument(
+        "--rpm", type=int, default=DEFAULT_RPM,
+        help=f"max requests per minute (default: {DEFAULT_RPM} — free tier limit)",
+    )
+    args = parser.parse_args()
+
+    interval = 60.0 / max(1, args.rpm)
+
+    def pace(label: str = "") -> None:
+        msg = f"  ⏳ пауза {interval:.0f}с (RPM={args.rpm})"
+        if label:
+            msg += f" — {label}"
+        print(msg)
+        time.sleep(interval)
+
     if not API_KEY or not API_KEY.startswith("AIzaSy"):
         print("ERROR: вставь свой ключ в API_KEY в начале файла", file=sys.stderr)
         return 2
@@ -143,14 +165,15 @@ def main() -> int:
 
     # Шаг 0: выясняем какая модель работает (одним пробным запросом).
     working_model = None
-    print("[probe] ищем рабочую модель…")
+    print(f"[probe] ищем рабочую модель… (RPM={args.rpm}, пауза ~{interval:.0f}с между запросами)")
     probe_prompt = "a tiny test painting of a red apple, simple, no text"
-    for model in MODEL_FALLBACKS:
+    for idx, model in enumerate(MODEL_FALLBACKS):
+        if idx > 0:
+            pace(f"перед пробой {model}")
         try:
             data, _mime = try_generate(client, types, model, probe_prompt)
             print(f"  ✓ {model} работает ({len(data)//1024} KB на пробном запросе)")
             working_model = model
-            # Сохраняем пробный апельсин для контроля
             (OUTPUT_DIR / f"_probe_{model.replace('/', '_')}.png").write_bytes(data)
             break
         except Exception as err:  # noqa: BLE001
@@ -164,9 +187,10 @@ def main() -> int:
         print("  - аккаунт принял условия использования image-генерации", file=sys.stderr)
         return 1
 
-    print(f"\n[run] генерируем 3 пробных баннера моделью {working_model}\n")
+    print(f"\n[run] генерируем {len(TEST_PROMPTS)} пробных баннера моделью {working_model}\n")
     ok = 0
     for i, (stem, prompt) in enumerate(TEST_PROMPTS, 1):
+        pace(f"перед {stem}")
         print(f"[{i}/{len(TEST_PROMPTS)}] {stem}")
         try:
             data, mime = try_generate(client, types, working_model, prompt)
