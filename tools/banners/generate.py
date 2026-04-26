@@ -243,18 +243,19 @@ def call_gemini(client, prompt: str) -> tuple[bytes, str]:
     )
 
 
-def autocrop(data: bytes, mime: str) -> bytes:
+def autocrop(data: bytes, mime: str, threshold: int = 245) -> bytes:
     """
-    Обрезает белые/однотонные поля, если модель вернула картинку в квадратном
-    canvas с паддингом. Требует Pillow (уже в зависимостях).
+    Обрезает светлые поля по яркости: если пиксель ярче threshold в
+    grayscale — считается фоном. Надёжнее точного цвета при кремовом паддинге.
+    Требует Pillow (уже в зависимостях).
     """
     try:
-        from PIL import Image, ImageChops
+        from PIL import Image
         import io as _io
         img = Image.open(_io.BytesIO(data)).convert("RGB")
-        bg = Image.new("RGB", img.size, img.getpixel((0, 0)))
-        diff = ImageChops.difference(img, bg)
-        bbox = diff.getbbox()
+        gray = img.convert("L")
+        mask = gray.point(lambda p: 255 if p < threshold else 0)
+        bbox = mask.getbbox()
         if bbox and bbox != (0, 0, img.width, img.height):
             img = img.crop(bbox)
         buf = _io.BytesIO()

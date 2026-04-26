@@ -85,19 +85,19 @@ TEST_PROMPTS = [
 ]
 
 
-def autocrop(data: bytes, mime: str) -> bytes:
+def autocrop(data: bytes, mime: str, threshold: int = 245) -> bytes:
     """
-    Обрезает белые/однотонные поля, если модель вернула картинку в квадратном
-    canvas с паддингом. Требует Pillow (pip install pillow).
+    Обрезает светлые поля по яркости: если пиксель ярче threshold в
+    grayscale — считается фоном. Надёжнее точного цвета при кремовом паддинге.
     Если Pillow не установлен — возвращает исходные байты без изменений.
     """
     try:
-        from PIL import Image, ImageChops  # type: ignore
+        from PIL import Image  # type: ignore
         import io as _io
         img = Image.open(_io.BytesIO(data)).convert("RGB")
-        bg = Image.new("RGB", img.size, img.getpixel((0, 0)))
-        diff = ImageChops.difference(img, bg)
-        bbox = diff.getbbox()
+        gray = img.convert("L")
+        mask = gray.point(lambda p: 255 if p < threshold else 0)
+        bbox = mask.getbbox()
         if bbox and bbox != (0, 0, img.width, img.height):
             img = img.crop(bbox)
         buf = _io.BytesIO()

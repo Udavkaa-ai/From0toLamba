@@ -25,16 +25,18 @@ same way regarding text, framing, and palette.
 ────────────────────────────────────────────────────────────────────────────
 illustration in the style of Ivan Bilibin, classic Russian fairy tale book
 art, art-nouveau decorative composition, ornamental floral and geometric
-border framing the scene, flat areas of saturated jewel-tone colour, strong
-black ink outlines, fine line decoration, traditional Slavic folk patterns
-woven into clothing and architecture, gold leaf accents, slightly stylised
-proportions
+border integrated into the dark background, flat areas of saturated
+jewel-tone colour, strong black ink outlines, fine line decoration,
+traditional Slavic folk patterns woven into clothing and architecture,
+gold leaf accents, slightly stylised proportions
 
 [shared suffix — appended to every option]
 russian fairy tale fantasy, dark mystical atmosphere, fairy gold and
-enchanted purple and night blue dominant palette, cinematic horizontal
-banner composition 7:4, character clearly framed as the focal point, no
-text, no letters, no captions, no signatures, no watermarks
+enchanted purple and night blue dominant palette, dark background extending
+to all edges, no white or cream areas, no parchment background,
+cinematic horizontal banner composition 7:4, character clearly framed as
+the focal point, no text, no letters, no captions, no signatures,
+no watermarks
 
 
 ────────────────────────────────────────────────────────────────────────────
@@ -48,9 +50,11 @@ brooding skies
 
 [shared suffix — appended to every option]
 russian fairy tale fantasy, dark mystical atmosphere, fairy gold and
-enchanted purple and night blue dominant palette, cinematic horizontal
-banner composition 7:4, character clearly framed as the focal point, no
-text, no letters, no captions, no signatures, no watermarks
+enchanted purple and night blue dominant palette, dark background extending
+to all edges, no white or cream areas, no parchment background,
+cinematic horizontal banner composition 7:4, character clearly framed as
+the focal point, no text, no letters, no captions, no signatures,
+no watermarks
 
 
 ────────────────────────────────────────────────────────────────────────────
@@ -64,6 +68,8 @@ perspective with flattened depth, pre-modern handcrafted feel
 
 [shared suffix — appended to every option]
 russian fairy tale fantasy, dark mystical atmosphere, fairy gold and
-enchanted purple and night blue dominant palette, cinematic horizontal
-banner composition 7:4, character clearly framed as the focal point, no
-text, no letters, no captions, no signatures, no watermarks
+enchanted purple and night blue dominant palette, dark background extending
+to all edges, no white or cream areas, no parchment background,
+cinematic horizontal banner composition 7:4, character clearly framed as
+the focal point, no text, no letters, no captions, no signatures,
+no watermarks
