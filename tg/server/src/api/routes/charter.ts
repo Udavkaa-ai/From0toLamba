@@ -10,10 +10,14 @@ export async function charterRoutes(app: FastifyInstance) {
   app.post('/api/charter/:projectId/start', { preHandler: telegramAuthHook }, async (request, reply) => {
     const { projectId } = request.params as { projectId: string }
     const tgUser = request.telegramUser
-    const user = await prisma.user.findUniqueOrThrow({ where: { telegramId: String(tgUser.id) } })
+    const user = await prisma.user.findUniqueOrThrow({
+      where: { telegramId: String(tgUser.id) },
+      include: { gameState: true },
+    })
+    const rank = user.gameState?.investorRank ?? 'NEWBIE'
 
     try {
-      const view = await startCharter(user.id, projectId)
+      const view = await startCharter(user.id, projectId, rank)
       return view
     } catch (err: any) {
       if (err.message === 'CHARTER_EXPIRED') {
@@ -27,10 +31,14 @@ export async function charterRoutes(app: FastifyInstance) {
   app.get('/api/charter/:projectId', { preHandler: telegramAuthHook }, async (request, reply) => {
     const { projectId } = request.params as { projectId: string }
     const tgUser = request.telegramUser
-    const user = await prisma.user.findUniqueOrThrow({ where: { telegramId: String(tgUser.id) } })
+    const user = await prisma.user.findUniqueOrThrow({
+      where: { telegramId: String(tgUser.id) },
+      include: { gameState: true },
+    })
+    const rank = user.gameState?.investorRank ?? 'NEWBIE'
 
     try {
-      const view = await getCharter(user.id, projectId)
+      const view = await getCharter(user.id, projectId, rank)
       if (!view) return reply.status(404).send({ error: 'Грамота ещё не открыта' })
       return view
     } catch (err: any) {

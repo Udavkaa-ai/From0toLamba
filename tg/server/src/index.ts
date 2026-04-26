@@ -9,6 +9,7 @@ import { projectRoutes } from './api/routes/projects'
 import { amaRoutes } from './api/routes/ama'
 import { charterRoutes } from './api/routes/charter'
 import { investRoutes } from './api/routes/invest'
+import { tasksRoutes } from './api/routes/tasks'
 import { createWebhookHandler, getBot } from './bot/bot'
 import { startDailyScheduler } from './scheduler/dailyJob'
 import { prisma } from './db/prisma'
@@ -38,6 +39,7 @@ async function main() {
   await app.register(amaRoutes)
   await app.register(charterRoutes)
   await app.register(investRoutes)
+  await app.register(tasksRoutes)
 
   // Telegram webhook
   const webhookSecret = process.env.TELEGRAM_BOT_TOKEN?.split(':')[0]
@@ -51,7 +53,7 @@ async function main() {
   app.get('/health', async () => ({ ok: true, ts: new Date().toISOString() }))
 
   // Version endpoint — клиент сравнивает и перезагружается если устарел
-  app.get('/api/version', async () => ({ version: '1.6.2' }))
+  app.get('/api/version', async () => ({ version: '1.6.3' }))
 
   // Статика клиента (SPA)
   const publicDir = path.join(__dirname, '..', 'public')

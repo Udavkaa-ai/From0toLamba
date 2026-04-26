@@ -75,6 +75,20 @@ export function AchievementUnlockedOverlay() {
   )
 }
 
+const BOT_LINK = 'https://t.me/vknyazi_bot'
+
+function shareAchievement(achievement: EvaluatedAchievement) {
+  const text = `${achievement.emoji} Совершил подвиг «${achievement.name}» в игре «Из грязи в князи»!\n${achievement.description}`
+  const url = `https://t.me/share/url?url=${encodeURIComponent(BOT_LINK)}&text=${encodeURIComponent(text)}`
+  if (typeof window !== 'undefined') {
+    if (window.Telegram?.WebApp?.openTelegramLink) {
+      window.Telegram.WebApp.openTelegramLink(url)
+    } else {
+      window.open(url, '_blank')
+    }
+  }
+}
+
 function UnlockedBanner({
   achievement, onClose,
 }: { achievement: EvaluatedAchievement; onClose: () => void }) {
@@ -160,21 +174,38 @@ function UnlockedBanner({
           </div>
         )}
 
-        <button
-          onClick={onClose}
-          style={{
-            width: '100%',
-            padding: spacing.md,
-            background: colors.fairyGold,
-            border: 'none',
-            borderRadius: '12px',
-            color: colors.nightBlue,
-            fontSize: '14px', fontWeight: 700,
-            cursor: 'pointer',
-          }}
-        >
-          К делам →
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            onClick={() => shareAchievement(achievement)}
+            style={{
+              flex: 1,
+              padding: spacing.md,
+              background: 'rgba(255,255,255,0.06)',
+              border: `1px solid ${colors.fairyGold}50`,
+              borderRadius: '12px',
+              color: colors.fairyGold,
+              fontSize: '14px', fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Поделиться
+          </button>
+          <button
+            onClick={onClose}
+            style={{
+              flex: 1,
+              padding: spacing.md,
+              background: colors.fairyGold,
+              border: 'none',
+              borderRadius: '12px',
+              color: colors.nightBlue,
+              fontSize: '14px', fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            К делам →
+          </button>
+        </div>
       </motion.div>
     </motion.div>
   )

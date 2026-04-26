@@ -9,6 +9,7 @@ import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing } from '@/theme'
 import { evaluateAchievements, CATEGORY_LABELS, type EvaluatedAchievement } from '@/game/achievements'
 import { loreFor } from '@/game/lore'
+import { ChannelTasksBlock } from '@/components/ChannelTasksBlock'
 
 const RANK_DISPLAY: Record<string, string> = {
   NEWBIE: 'Скоморох', AMBASSADOR: 'Купец', ANALYST: 'Мудрец', SHARK: 'Боярин', LAMBO_SENSEI: 'Князь',
@@ -128,6 +129,9 @@ export function StatsPage() {
             </div>
           </FairyCard>
         )}
+
+        {/* Награды за подписку */}
+        <ChannelTasksBlock />
 
         {/* Подвиги */}
         <AchievementsSection />
