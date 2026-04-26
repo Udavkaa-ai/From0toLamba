@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """
-Smoke test для gemini-3.1-flash-image-preview.
+Smoke test для Gemini image-моделей.
 
 Перед запуском:
 1. Вставь свой ключ в API_KEY ниже (между кавычек)
 2. pip install google-genai
-3. python3 test_gemini.py
+3. python test_gemini.py
 
-Создаст 3 пробных баннера в tools/banners/output/test_*.png
+Создаст пробные баннеры в tools/banners/output/*_test.png
+Если первая модель не работает — скрипт сам попробует следующую из MODEL_FALLBACKS.
 """
 
 # ─── ВСТАВЬ КЛЮЧ СЮДА ────────────────────────────────────────────
@@ -21,9 +22,17 @@ API_KEY = ""
 
 from pathlib import Path
 import sys
+import traceback
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "output"
-MODEL = "gemini-3.1-flash-image-preview"
+
+# Перебираем модели в этом порядке. Первая работающая — побеждает.
+# Если у тебя есть конкретное имя — поставь его первым.
+MODEL_FALLBACKS = [
+    "gemini-3.1-flash-image-preview",   # если есть в твоём аккаунте
+    "gemini-2.5-flash-image-preview",   # «нано банан», стабильно работающее имя
+    "gemini-2.0-flash-preview-image-generation",  # старый рабочий вариант
+]
 
 # Три тестовых промпта — три разных архетипа × дела × композиции,
 # в одном (билибинском) стиле. Если эти три выглядят прилично,
@@ -70,13 +79,61 @@ TEST_PROMPTS = [
 ]
 
 
+def try_generate(client, types_module, model: str, prompt: str):
+    """
+    Пробует сгенерировать картинку. Возвращает (image_bytes, mime_type) или
+    кидает исключение с понятным текстом.
+    """
+    config = types_module.GenerateContentConfig(
+        response_modalities=["IMAGE"],
+    )
+    try:
+        response = client.models.generate_content(
+            model=model,
+            contents=prompt,
+            config=config,
+        )
+    except Exception:
+        # Некоторые SDK-версии требуют ["IMAGE", "TEXT"]; пробуем мягкий вариант
+        config = types_module.GenerateContentConfig(
+            response_modalities=["IMAGE", "TEXT"],
+        )
+        response = client.models.generate_content(
+            model=model,
+            contents=prompt,
+            config=config,
+        )
+
+    parts_dump = []
+    for cand in (response.candidates or []):
+        content = getattr(cand, "content", None)
+        if not content:
+            continue
+        for part in (content.parts or []):
+            inline = getattr(part, "inline_data", None)
+            if inline and getattr(inline, "data", None):
+                return inline.data, inline.mime_type or "image/png"
+            text = getattr(part, "text", None)
+            if text:
+                parts_dump.append(f"text: {text[:200]}")
+
+    finish = None
+    if response.candidates:
+        finish = getattr(response.candidates[0], "finish_reason", None)
+    raise RuntimeError(
+        f"no inline image. finish_reason={finish}. "
+        f"parts={parts_dump or '<empty>'}"
+    )
+
+
 def main() -> int:
-    if not API_KEY or API_KEY.startswith("AIzaSy") is False:
+    if not API_KEY or not API_KEY.startswith("AIzaSy"):
         print("ERROR: вставь свой ключ в API_KEY в начале файла", file=sys.stderr)
         return 2
 
     try:
         from google import genai  # type: ignore
+        from google.genai import types  # type: ignore
     except ImportError:
         print("ERROR: pip install google-genai", file=sys.stderr)
         return 2
@@ -84,40 +141,46 @@ def main() -> int:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     client = genai.Client(api_key=API_KEY)
 
+    # Шаг 0: выясняем какая модель работает (одним пробным запросом).
+    working_model = None
+    print("[probe] ищем рабочую модель…")
+    probe_prompt = "a tiny test painting of a red apple, simple, no text"
+    for model in MODEL_FALLBACKS:
+        try:
+            data, _mime = try_generate(client, types, model, probe_prompt)
+            print(f"  ✓ {model} работает ({len(data)//1024} KB на пробном запросе)")
+            working_model = model
+            # Сохраняем пробный апельсин для контроля
+            (OUTPUT_DIR / f"_probe_{model.replace('/', '_')}.png").write_bytes(data)
+            break
+        except Exception as err:  # noqa: BLE001
+            print(f"  ✗ {model}: {str(err)[:200]}")
+
+    if working_model is None:
+        print("\n[fail] ни одна из моделей не отдала картинку.", file=sys.stderr)
+        print("Проверь что:", file=sys.stderr)
+        print("  - ключ от Google AI Studio (а не Vertex AI)", file=sys.stderr)
+        print("  - в твоём регионе/проекте включена Gemini API", file=sys.stderr)
+        print("  - аккаунт принял условия использования image-генерации", file=sys.stderr)
+        return 1
+
+    print(f"\n[run] генерируем 3 пробных баннера моделью {working_model}\n")
+    ok = 0
     for i, (stem, prompt) in enumerate(TEST_PROMPTS, 1):
         print(f"[{i}/{len(TEST_PROMPTS)}] {stem}")
         try:
-            response = client.models.generate_content(
-                model=MODEL,
-                contents=prompt,
-            )
+            data, mime = try_generate(client, types, working_model, prompt)
+            ext = ".png" if "png" in mime else (".jpg" if "jpeg" in mime else ".bin")
+            out = OUTPUT_DIR / f"{stem}{ext}"
+            out.write_bytes(data)
+            print(f"  ✓ {out} ({len(data)//1024} KB)")
+            ok += 1
         except Exception as err:  # noqa: BLE001
-            print(f"  ✗ API error: {err}", file=sys.stderr)
-            continue
+            print(f"  ✗ {err}", file=sys.stderr)
+            traceback.print_exc()
 
-        saved = False
-        for cand in (response.candidates or []):
-            content = getattr(cand, "content", None)
-            if not content:
-                continue
-            for part in (content.parts or []):
-                inline = getattr(part, "inline_data", None)
-                if inline and getattr(inline, "data", None):
-                    mime = inline.mime_type or "image/png"
-                    ext = ".png" if "png" in mime else (".jpg" if "jpeg" in mime else ".bin")
-                    out = OUTPUT_DIR / f"{stem}{ext}"
-                    out.write_bytes(inline.data)
-                    print(f"  ✓ {out} ({len(inline.data)//1024} KB)")
-                    saved = True
-                    break
-            if saved:
-                break
-
-        if not saved:
-            text = getattr(response, "text", None) or "<no text>"
-            print(f"  ✗ no image in response. text={text[:300]}", file=sys.stderr)
-
-    return 0
+    print(f"\n[done] {ok}/{len(TEST_PROMPTS)} ok → {OUTPUT_DIR}")
+    return 0 if ok == len(TEST_PROMPTS) else 1
 
 
 if __name__ == "__main__":
