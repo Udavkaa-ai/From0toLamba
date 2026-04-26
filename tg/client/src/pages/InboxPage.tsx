@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ScreenBackground } from '@/components/ScreenBackground'
+import { ScreenBackground, PAGE_BG } from '@/components/ScreenBackground'
 import { FairyCard, OrnamentDivider, SkeletonCard } from '@/components/FairyCard'
 import { PageTitle } from '@/components/PageTitle'
 import { api, type ProjectDTO } from '@/api/client'
@@ -17,7 +17,7 @@ export function InboxPage() {
   })
 
   return (
-    <ScreenBackground>
+    <ScreenBackground bgImage={PAGE_BG.inbox}>
       <div style={{ padding: `${spacing.xxl} ${spacing.lg} 80px`, maxWidth: '500px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: spacing.xxl }}>
           <PageTitle>Входящие грамоты</PageTitle>

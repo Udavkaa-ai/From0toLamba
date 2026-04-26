@@ -63,6 +63,14 @@ async function main() {
     decorateReply: false,
   })
 
+  // Фоновые изображения страниц
+  const backgroundsDir = path.join(__dirname, '..', 'assets', 'backgrounds')
+  await app.register(staticFiles, {
+    root: backgroundsDir,
+    prefix: '/backgrounds/',
+    decorateReply: false,
+  })
+
   // Статика клиента (SPA)
   const publicDir = path.join(__dirname, '..', 'public')
   await app.register(staticFiles, {

@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { ComposedChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts'
-import { ScreenBackground } from '@/components/ScreenBackground'
+import { ScreenBackground, PAGE_BG } from '@/components/ScreenBackground'
 import { FairyCard, OrnamentDivider, SkeletonCard } from '@/components/FairyCard'
 import { PageTitle } from '@/components/PageTitle'
 import { LockIcon } from '@/components/icons'
@@ -46,7 +46,7 @@ export function PortfolioPage() {
   })
 
   return (
-    <ScreenBackground>
+    <ScreenBackground bgImage={PAGE_BG.portfolio}>
       <div style={{ padding: `${spacing.xxl} ${spacing.lg} 80px`, maxWidth: '500px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: spacing.xxl }}>
           <PageTitle>Казна</PageTitle>

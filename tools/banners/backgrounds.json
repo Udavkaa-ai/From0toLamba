@@ -1,0 +1,57 @@
+{
+  "_comment": "Background images for game pages. Portrait 9:16. No characters — pure atmospheric environment.",
+
+  "home": [
+    {
+      "key": "HOME_01",
+      "desc": "moonlit ancient birch forest, silver trunks stretching upward, fireflies drifting between trees, warm amber glow of a distant village through the mist, ground covered in luminous blue moss, night sky barely visible through canopy, no people"
+    },
+    {
+      "key": "HOME_02",
+      "desc": "pre-dawn Russian market square, empty merchant stalls with rolled canvas awnings, iron lanterns still burning with orange flame, wet cobblestones reflecting light, ornate wooden facades of old trading houses, purple sky beginning to lighten at the horizon, no people"
+    },
+    {
+      "key": "HOME_03",
+      "desc": "wide dark river at midnight, full moon reflected as a shimmering column of gold on the water, silhouettes of ancient wooden boats tied to a dock, distant watchtowers and onion domes against deep blue night sky, reeds along the bank, no people"
+    },
+    {
+      "key": "HOME_04",
+      "desc": "snow-covered Russian village at dusk, thatched and wooden rooftops dusted white, blue twilight sky with first stars appearing, warm candlelight in small windows, smoke rising from clay chimneys, icicles on eaves, no people"
+    },
+    {
+      "key": "HOME_05",
+      "desc": "deep autumn golden forest, cathedral of birch and oak, fallen leaves in amber and rust on a winding path, thin morning mist between trunks, a single wrought-iron lantern on a post with warm flame, distant rolling hills, no people"
+    },
+    {
+      "key": "HOME_06",
+      "desc": "open night meadow under a vast starry sky with a faint aurora of green and violet light, wild flowers glowing faintly in the dark grass, a stone well with a carved wooden roof in the middle, shooting star streak across the sky, no people"
+    },
+    {
+      "key": "HOME_07",
+      "desc": "overgrown ancient monastery courtyard, crumbling stone walls draped in dark ivy, mysterious golden runes glowing faintly on carved pillars, a stone fountain long dry but filled with fallen leaves, torchlight flickering in deep archways, no people"
+    }
+  ],
+
+  "pages": [
+    {
+      "key": "BG_INBOX",
+      "desc": "candlelit medieval merchant study, heavy oak desk covered in rolled parchment scrolls and wax-sealed letters, a quill pen resting in an inkwell, brass scales and stacks of ledger books on shelves, warm amber firelight on stone walls, dust motes in the light, no people"
+    },
+    {
+      "key": "BG_PORTFOLIO",
+      "desc": "underground treasury vault carved from dark stone, wooden chests overflowing with gold coins and pearl strings, iron-bound strongboxes stacked along walls, warm torchlight on piles of silver ingots, a heavy iron door ajar in the background, no people"
+    },
+    {
+      "key": "BG_STATS",
+      "desc": "grand ceremonial hall with vaulted wooden ceiling, ornate Slavic banners hanging from high beams, tall arched windows letting in shafts of golden light, an empty throne dais with carved pea-pod motifs, polished marble floor reflecting the light, no people"
+    },
+    {
+      "key": "BG_LEADERBOARD",
+      "desc": "fairy tale market fairground viewed from above, colourful merchant tents in a spiral pattern, pennants and flags in gold and purple, cobblestone paths between stalls, warm dusk light casting long shadows, smoke from food stalls rising in wisps, no people"
+    },
+    {
+      "key": "BG_REGISTRY",
+      "desc": "vast ancient library with towering bookshelves reaching into darkness, thick leather-bound tomes and scrolls on every shelf, a floating magical candelabra casting warm light, dust and golden motes drifting in shafts of light, a reading lectern with an open illustrated manuscript, no people"
+    }
+  ]
+}

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
-import { ScreenBackground } from '@/components/ScreenBackground'
+import { ScreenBackground, PAGE_BG } from '@/components/ScreenBackground'
 import { FairyCard } from '@/components/FairyCard'
 import { PageTitle } from '@/components/PageTitle'
 import { CountUp } from '@/components/CountUp'
@@ -56,7 +56,7 @@ export function StatsPage() {
   const chartData = chartScale === 999 ? fullChart : fullChart.slice(-chartScale)
 
   return (
-    <ScreenBackground>
+    <ScreenBackground bgImage={PAGE_BG.stats}>
       <div style={{ padding: `${spacing.xxl} ${spacing.lg} 80px`, maxWidth: '500px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: spacing.xxl }}>
           <PageTitle>Успехи</PageTitle>

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { ScreenBackground } from '@/components/ScreenBackground'
+import { ScreenBackground, PAGE_BG } from '@/components/ScreenBackground'
 import { FairyCard, OrnamentDivider, SkeletonCard } from '@/components/FairyCard'
 import { PageTitle } from '@/components/PageTitle'
 import { api, type ProjectDTO, type PostMortemDTO } from '@/api/client'
@@ -92,7 +92,7 @@ export function RegistryPage() {
   }
 
   return (
-    <ScreenBackground>
+    <ScreenBackground bgImage={PAGE_BG.registry}>
       <div style={{ padding: `${spacing.xxl} ${spacing.lg} 80px`, maxWidth: '500px', margin: '0 auto' }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: spacing.xl }}>

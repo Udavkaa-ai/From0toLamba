@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ScreenBackground, APP_VERSION } from '@/components/ScreenBackground'
+import { ScreenBackground, APP_VERSION, homeBackground } from '@/components/ScreenBackground'
 import { FairyCard, OrnamentDivider } from '@/components/FairyCard'
 import { RankUpOverlay } from '@/components/RankUpOverlay'
 import { OnboardingTutorial } from '@/components/OnboardingTutorial'
@@ -184,7 +184,7 @@ export function HomePage() {
   const currentModel = localModel ?? gameState.preferredModel
 
   return (
-    <ScreenBackground>
+    <ScreenBackground bgImage={homeBackground(gameState.currentDay)}>
       {gameState.pendingRankUp && <RankUpOverlay rank={gameState.pendingRankUp} />}
       <AnimatePresence>
         {showTutorial && (

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { ScreenBackground } from '@/components/ScreenBackground'
+import { ScreenBackground, PAGE_BG } from '@/components/ScreenBackground'
 import { SkeletonCard } from '@/components/FairyCard'
 import { PageTitle } from '@/components/PageTitle'
 import {
@@ -47,7 +47,7 @@ export function LeaderboardPage() {
   const [tab, setTab] = useState<Tab>('all')
 
   return (
-    <ScreenBackground>
+    <ScreenBackground bgImage={PAGE_BG.leaderboard}>
       <div style={{ padding: `${spacing.xxl} ${spacing.lg} 80px`, maxWidth: '500px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: spacing.lg }}>
           <PageTitle>Ярмарочный Рейтинг</PageTitle>

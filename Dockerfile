@@ -23,6 +23,8 @@ COPY tg/server ./
 RUN rm -rf ./public && cp -r /build/tg/server/public ./public
 # Баннеры персонажей — статика, генерируются заранее
 COPY tools/banners/output_realistic ./assets/banners/
+# Фоновые изображения страниц
+COPY tools/banners/output_backgrounds ./assets/backgrounds/
 
 # NODE_PATH указывает Node искать модули в /deps/node_modules
 ENV NODE_PATH=/deps/node_modules
