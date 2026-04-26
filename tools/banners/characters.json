@@ -2,7 +2,7 @@
   "_comment": "Six archetypes; for each — 3-5 visual variants of distinct individuals of that archetype. Each variant is one image-model-friendly noun phrase in English. The generator picks one variant per banner so all three images for the same archetype show DIFFERENT merchants of the same archetype.",
 
   "IVAN_DURAK": [
-    "young flaxen-haired peasant lad with smiling face and a slight foolish grin, wearing white linen rubakha embroidered with red cross-stitch, simple kushak belt, bast-shoe lapti, holding a hay-stem in his teeth",
+    "young flaxen-haired peasant lad with smiling face and a slight foolish grin, wearing white linen rubakha embroidered with red cross-stitch, simple kushak belt, bast-shoe lapti",
     "freckled red-haired barefoot wanderer in patched grey kaftan and birch-bark hat, carrying a small wooden staff and a kerchief-bundle on a stick over his shoulder",
     "dreamy chestnut-haired youth lying back on the warm side of a clay stove, in a striped homespun shirt, cheeks pink, blue eyes gazing up at the ceiling, sleepy and untroubled",
     "stocky black-bearded young muzhik in a sheepskin tulup and felt valenki, wide guileless face, sitting astride a grey wolf in deep snow",
@@ -18,11 +18,11 @@
   ],
 
   "ZOLUSHKA": [
-    "soot-streaked young woman with chestnut hair tied in a simple braid, wearing a patched grey homespun sarafan and a coarse linen apron, kind tired blue eyes, ash on her cheek, holding a wooden broom",
-    "barefoot raven-haired girl in a sky-blue sarafan that is starting to glow at the hem with silver threads, glass slipper just appearing in her hand, twilight light around her",
-    "fair-haired stepdaughter in white linen sorochka and dark patched sarafan, hand-feeding doves from a wooden trencher in a frosty courtyard, expression gentle and resolute",
-    "young woman with golden hair under a simple white kerchief, sitting at a low stool sorting heaps of buckwheat and millet by the firelight, mice gathered to help her",
-    "girl half-transformed: torn working dress on one side, shimmering pearl-embroidered sarafan and silver kokoshnik on the other, fairy-godmother light pouring over her shoulder"
+    "soot-dusted young woman with chestnut hair tied in a simple braid, wearing a patched grey homespun sarafan and a coarse linen apron, kind tired blue eyes, smooth clear face, holding a wooden broom, no scars no wounds",
+    "barefoot raven-haired girl in a sky-blue sarafan that is starting to glow at the hem with silver threads, glass slipper just appearing in her hand, twilight light around her, smooth unblemished complexion",
+    "fair-haired stepdaughter in white linen sorochka and dark patched sarafan, hand-feeding doves from a wooden trencher in a frosty courtyard, expression gentle and resolute, smooth clear skin no scars",
+    "young woman with golden hair under a simple white kerchief, sitting at a low stool sorting heaps of buckwheat and millet by the firelight, mice gathered to help her, smooth clear complexion no scars",
+    "girl half-transformed: torn working dress on one side, shimmering pearl-embroidered sarafan and silver kokoshnik on the other, fairy-godmother light pouring over her shoulder, smooth clear face no scars"
   ],
 
   "KOSCHEI": [
