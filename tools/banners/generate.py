@@ -339,6 +339,7 @@ def already_done(stem: str) -> Path | None:
 # --- Main loop --------------------------------------------------------------
 
 def main() -> int:
+    global MODEL  # позволяет --model переключать модель без правки кода
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--style", default=DEFAULT_STYLE,
                         help=f"style key in style_anchor.txt (default: {DEFAULT_STYLE})")
@@ -359,9 +360,6 @@ def main() -> int:
     parser.add_argument("--force", action="store_true",
                         help="re-generate even if the output file already exists")
     args = parser.parse_args()
-
-    # Allow overriding MODEL via --model flag
-    global MODEL
     MODEL = args.model
 
     characters = load_json(ROOT / "characters.json")
