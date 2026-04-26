@@ -4,54 +4,54 @@
   "home": [
     {
       "key": "HOME_01",
-      "desc": "moonlit ancient birch forest, silver trunks stretching upward, fireflies drifting between trees, warm amber glow of a distant village through the mist, ground covered in luminous blue moss, night sky barely visible through canopy, no people"
+      "desc": "ancient Russian forest at night, massive silver birch trunks glowing in moonlight, deep violet and midnight blue sky barely visible through dense canopy, dozens of golden fireflies drifting between trees, ground covered in luminous blue-green moss, mist curling around roots, mysterious warm amber glow deep between the trees in the distance"
     },
     {
       "key": "HOME_02",
-      "desc": "pre-dawn Russian market square, empty merchant stalls with rolled canvas awnings, iron lanterns still burning with orange flame, wet cobblestones reflecting light, ornate wooden facades of old trading houses, purple sky beginning to lighten at the horizon, no people"
+      "desc": "medieval Russian market square at night before dawn, empty wooden merchant stalls with folded canvas awnings, iron lanterns with orange flame casting pools of warm gold light on wet cobblestones, ornate dark wooden facades of old trading houses lining the square, deep violet sky, reflections shimmering on the stones, no people"
     },
     {
       "key": "HOME_03",
-      "desc": "wide dark river at midnight, full moon reflected as a shimmering column of gold on the water, silhouettes of ancient wooden boats tied to a dock, distant watchtowers and onion domes against deep blue night sky, reeds along the bank, no people"
+      "desc": "wide dark river at midnight in a Russian fairy tale world, full moon reflected as a long shimmering column of molten gold on the water, silhouettes of ancient wooden boats moored at a weathered dock, distant onion domes and watchtowers against deep blue-violet night sky, tall reeds along the near bank, still water, no people"
     },
     {
       "key": "HOME_04",
-      "desc": "snow-covered Russian village at dusk, thatched and wooden rooftops dusted white, blue twilight sky with first stars appearing, warm candlelight in small windows, smoke rising from clay chimneys, icicles on eaves, no people"
+      "desc": "ancient Russian village rooftops in deep winter twilight, thatched and log rooftops heavy with snow seen from a hillside, indigo and violet dusk sky, warm amber candlelight glowing from small windows deep in the walls, smoke rising from clay chimneys, icicles catching the last light, dark pine silhouettes on the horizon, no christmas trees no holiday decorations no people"
     },
     {
       "key": "HOME_05",
-      "desc": "deep autumn golden forest, cathedral of birch and oak, fallen leaves in amber and rust on a winding path, thin morning mist between trunks, a single wrought-iron lantern on a post with warm flame, distant rolling hills, no people"
+      "desc": "deep autumn forest in a Russian fairy tale world, enormous ancient oaks with cathedral-like canopy, amber and rust fallen leaves carpeting a winding forest path, thin morning mist between massive trunks, one old wrought-iron lantern on a mossy stone post with a warm flame, rolling misty hills visible through the trees, no people"
     },
     {
       "key": "HOME_06",
-      "desc": "open night meadow under a vast starry sky with a faint aurora of green and violet light, wild flowers glowing faintly in the dark grass, a stone well with a carved wooden roof in the middle, shooting star streak across the sky, no people"
+      "desc": "open night meadow in a Russian fairy tale world, vast starry sky with faint curtains of green and violet aurora light above, tall wild grass and flowers that glow faintly with blue bioluminescence, an ancient carved stone well with a wooden shingled roof in the centre of the meadow, a single streak of a shooting star, deep midnight blue sky, no people"
     },
     {
       "key": "HOME_07",
-      "desc": "overgrown ancient monastery courtyard, crumbling stone walls draped in dark ivy, mysterious golden runes glowing faintly on carved pillars, a stone fountain long dry but filled with fallen leaves, torchlight flickering in deep archways, no people"
+      "desc": "overgrown ancient stone monastery courtyard in a Russian fairy tale world, crumbling stone walls draped in dark ivy and fern, carved stone pillars with ancient Slavic runes glowing faint gold, a dry stone fountain filled with fallen leaves, torchlight flickering deep in vaulted stone archways, violet and deep blue night sky above, moss on every surface, no people"
     }
   ],
 
   "pages": [
     {
       "key": "BG_INBOX",
-      "desc": "candlelit medieval merchant study, heavy oak desk covered in rolled parchment scrolls and wax-sealed letters, a quill pen resting in an inkwell, brass scales and stacks of ledger books on shelves, warm amber firelight on stone walls, dust motes in the light, no people"
+      "desc": "candlelit medieval Russian merchant study interior, heavy dark oak desk piled with rolled parchment scrolls and wax-sealed letters, a quill pen in a brass inkwell, old brass scales and stacks of leather ledger books on deep shelves, warm amber flame of multiple candles, dark stone walls, dust motes floating in candlelight shafts, deep violet shadows in corners, no people"
     },
     {
       "key": "BG_PORTFOLIO",
-      "desc": "underground treasury vault carved from dark stone, wooden chests overflowing with gold coins and pearl strings, iron-bound strongboxes stacked along walls, warm torchlight on piles of silver ingots, a heavy iron door ajar in the background, no people"
+      "desc": "underground treasury vault carved from dark stone, wooden chests overflowing with gold coins and pearl strings, ornate iron-bound strongboxes stacked along rough stone walls, warm torchlight glinting on piles of silver ingots and gold bars, a heavy iron door slightly ajar revealing darkness beyond, deep violet and amber lighting, no people"
     },
     {
       "key": "BG_STATS",
-      "desc": "grand ceremonial hall with vaulted wooden ceiling, ornate Slavic banners hanging from high beams, tall arched windows letting in shafts of golden light, an empty throne dais with carved pea-pod motifs, polished marble floor reflecting the light, no people"
+      "desc": "grand ceremonial hall interior of a Russian fairy tale palace, vaulted wooden ceiling with carved beams, crimson and gold Slavic banners hanging from high beams, tall arched windows with shafts of golden light cutting through dust, polished dark stone floor reflecting light, ornate carved throne on a dais at the far end, no people"
     },
     {
       "key": "BG_LEADERBOARD",
-      "desc": "fairy tale market fairground viewed from above, colourful merchant tents in a spiral pattern, pennants and flags in gold and purple, cobblestone paths between stalls, warm dusk light casting long shadows, smoke from food stalls rising in wisps, no people"
+      "desc": "aerial view of a Russian fairy tale market fair at golden dusk, colourful merchant tents arranged in a spiral pattern on a cobblestone square, gold and crimson pennants and flags rippling in the wind, warm amber dusk light casting long purple shadows, smoke from cooking fires rising, lanterns beginning to glow as evening falls, no people"
     },
     {
       "key": "BG_REGISTRY",
-      "desc": "vast ancient library with towering bookshelves reaching into darkness, thick leather-bound tomes and scrolls on every shelf, a floating magical candelabra casting warm light, dust and golden motes drifting in shafts of light, a reading lectern with an open illustrated manuscript, no people"
+      "desc": "vast ancient library interior with towering bookshelves receding into darkness above, thick dust-covered leather-bound tomes and rolled scrolls on every shelf, a floating magical bronze candelabra casting warm pools of light, golden dust motes drifting in light shafts, a reading lectern with an open illustrated manuscript showing Slavic illuminated art, deep violet shadows between shelves, no people"
     }
   ]
 }

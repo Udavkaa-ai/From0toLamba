@@ -33,15 +33,14 @@ INITIAL_BACKOFF_SEC = 5.0
 BACKOFF_MULTIPLIER  = 2.0
 
 STYLE_PREFIX = (
-    "semi-realistic high-detail digital fantasy painting, "
-    "Slavic folk-tale atmosphere, no cartoon outlines, no flat colour fields, "
-    "three-dimensional volumetric lighting with warm amber and cool violet-blue contrast, "
-    "deep atmospheric depth, painterly render, "
-    "no characters, no people, no figures in foreground, "
-    "russian fairy tale fantasy, dark mystical atmosphere, "
-    "fairy gold and enchanted purple and night blue dominant palette, "
-    "dark background, no text, no letters, no watermarks, "
-    "portrait composition 9:16, full-frame immersive environment"
+    "dark Russian fairy tale fantasy environment painting, "
+    "dramatic oil painting style with rich atmospheric depth, "
+    "dominant palette of deep violet, midnight blue, and warm gold — no grey backgrounds, no white backgrounds, "
+    "moody and immersive, cinematic fantasy lighting, "
+    "NO characters NO people NO figures, purely environmental scene, "
+    "NOT a product photo NOT a studio shot NOT a Christmas scene NOT a holiday decoration, "
+    "ancient Slavic medieval world, magic realism, "
+    "portrait format filling the entire frame edge to edge with the scene, no vignette border"
 )
 
 
