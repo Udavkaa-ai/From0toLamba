@@ -85,29 +85,57 @@ TEST_PROMPTS = [
 ]
 
 
+def autocrop(data: bytes, mime: str) -> bytes:
+    """
+    Обрезает белые/однотонные поля, если модель вернула картинку в квадратном
+    canvas с паддингом. Требует Pillow (pip install pillow).
+    Если Pillow не установлен — возвращает исходные байты без изменений.
+    """
+    try:
+        from PIL import Image, ImageChops  # type: ignore
+        import io as _io
+        img = Image.open(_io.BytesIO(data)).convert("RGB")
+        bg = Image.new("RGB", img.size, img.getpixel((0, 0)))
+        diff = ImageChops.difference(img, bg)
+        bbox = diff.getbbox()
+        if bbox and bbox != (0, 0, img.width, img.height):
+            img = img.crop(bbox)
+        buf = _io.BytesIO()
+        fmt = "JPEG" if "jpeg" in mime else "PNG"
+        img.save(buf, format=fmt, quality=95)
+        return buf.getvalue()
+    except ImportError:
+        return data
+
+
+def _make_config(types_module, modalities: list) -> object:
+    try:
+        return types_module.GenerateContentConfig(
+            response_modalities=modalities,
+            image_config=types_module.ImageConfig(aspect_ratio="16:9"),
+        )
+    except Exception:
+        # Старые SDK без ImageConfig
+        return types_module.GenerateContentConfig(response_modalities=modalities)
+
+
 def try_generate(client, types_module, model: str, prompt: str):
     """
     Пробует сгенерировать картинку. Возвращает (image_bytes, mime_type) или
     кидает исключение с понятным текстом.
     """
-    config = types_module.GenerateContentConfig(
-        response_modalities=["IMAGE"],
-    )
     try:
         response = client.models.generate_content(
             model=model,
             contents=prompt,
-            config=config,
+            config=_make_config(types_module, ["IMAGE"]),
         )
     except Exception:
         # Некоторые SDK-версии требуют ["IMAGE", "TEXT"]; пробуем мягкий вариант
-        config = types_module.GenerateContentConfig(
-            response_modalities=["IMAGE", "TEXT"],
-        )
         response = client.models.generate_content(
             model=model,
             contents=prompt,
-            config=config,
+            config=_make_config(types_module, ["IMAGE", "TEXT"]),
         )
 
     parts_dump = []
@@ -196,6 +224,7 @@ def main() -> int:
             data, mime = try_generate(client, types, working_model, prompt)
             ext = ".png" if "png" in mime else (".jpg" if "jpeg" in mime else ".bin")
             out = OUTPUT_DIR / f"{stem}{ext}"
+            data = autocrop(data, mime)
             out.write_bytes(data)
             print(f"  ✓ {out} ({len(data)//1024} KB)")
             ok += 1

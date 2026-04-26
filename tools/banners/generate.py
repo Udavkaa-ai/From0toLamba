@@ -243,8 +243,31 @@ def call_gemini(client, prompt: str) -> tuple[bytes, str]:
     )
 
 
-def write_image(stem: str, data: bytes, ext: str) -> Path:
+def autocrop(data: bytes, mime: str) -> bytes:
+    """
+    Обрезает белые/однотонные поля, если модель вернула картинку в квадратном
+    canvas с паддингом. Требует Pillow (уже в зависимостях).
+    """
+    try:
+        from PIL import Image, ImageChops
+        import io as _io
+        img = Image.open(_io.BytesIO(data)).convert("RGB")
+        bg = Image.new("RGB", img.size, img.getpixel((0, 0)))
+        diff = ImageChops.difference(img, bg)
+        bbox = diff.getbbox()
+        if bbox and bbox != (0, 0, img.width, img.height):
+            img = img.crop(bbox)
+        buf = _io.BytesIO()
+        fmt = "JPEG" if "jpeg" in mime else "PNG"
+        img.save(buf, format=fmt, quality=95)
+        return buf.getvalue()
+    except ImportError:
+        return data
+
+
+def write_image(stem: str, data: bytes, ext: str, mime: str = "") -> Path:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    data = autocrop(data, mime or ext)
     out_path = OUTPUT_DIR / f"{stem}{ext}"
     out_path.write_bytes(data)
     return out_path
@@ -332,7 +355,8 @@ def main() -> int:
             limiter.wait()
             try:
                 data, ext = call_gemini(client, job.prompt)
-                path = write_image(job.filename_stem, data, ext)
+                mime = "image/jpeg" if ext in (".jpg", ".jpeg") else "image/png"
+                path = write_image(job.filename_stem, data, ext, mime)
                 print(f"  ✓ {path.name} ({len(data)//1024} KB)")
                 break
             except Exception as err:  # noqa: BLE001
