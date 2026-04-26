@@ -37,10 +37,12 @@ DEFAULT_RPM = 10
 
 # Перебираем модели в этом порядке. Первая работающая — побеждает.
 # Если у тебя есть конкретное имя — поставь его первым.
+# Только Gemini-модели: используют generate_content() + response_modalities=IMAGE
+# Imagen-модели (imagen-4.0-*) тестируй через: python generate.py --limit 1 --test
 MODEL_FALLBACKS = [
-    "gemini-2.5-flash-image",          # GA, самый надёжный
-    "gemini-3.1-flash-image-preview",  # preview — иногда нужен opt-in
-    "gemini-3-pro-image-preview",      # дорогой ($0.134/шт) — последний шанс
+    "gemini-2.5-flash-image",          # ~$0.04–0.06/шт, GA
+    "gemini-3.1-flash-image-preview",  # ~$0.05–0.08/шт, preview
+    "gemini-3-pro-image-preview",      # дорогой — только крайний случай
 ]
 
 # Три тестовых промпта — три разных архетипа × дела × композиции,

@@ -34,14 +34,18 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 OUTPUT_DIR = ROOT / "output"
 
-MODEL = "gemini-2.5-flash-image"
+MODEL = "imagen-4.0-fast-generate-001"
 DEFAULT_STYLE = "bilibin"
 
-# gemini-2.5-flash-image лимиты (март 2026):
-#   Free tier:  10 RPM, 500 RPD  — без биллинга
-#   Tier 1:    150+ RPM          — при привязанном биллинге (pay-as-you-go)
-# Image-запросы медленнее текстовых, ставим 10 RPM как безопасный потолок.
-# При 10 RPM 90 баннеров = ~9 мин; ~$0.04–0.06/шт → итого $3.60–5.40.
+# Доступные image-модели через AI Studio API (апрель 2026):
+#   imagen-4.0-fast-generate-001   ~$0.02/шт  ← DEFAULT, самая дешёвая
+#   imagen-4.0-generate-001        ~$0.04/шт  лучше качеством
+#   imagen-4.0-ultra-generate-001  ~$0.08/шт  максимальное качество
+#   gemini-2.5-flash-image         ~$0.04–0.06 (токены, Gemini-метод)
+#   gemini-3.1-flash-image-preview ~$0.05–0.08 (токены)
+#
+# Imagen-модели используют generate_images(), Gemini — generate_content().
+# При 10 RPM 90 баннеров ≈ 9 мин; imagen-fast → итого ~$1.80.
 REQUESTS_PER_MINUTE = 10
 MAX_RETRIES = 5
 INITIAL_BACKOFF_SEC = 4.0
@@ -245,6 +249,54 @@ def call_gemini(client, prompt: str) -> tuple[bytes, str]:
     )
 
 
+def call_imagen(client, prompt: str) -> tuple[bytes, str]:
+    """
+    Imagen 4 family via google-genai SDK — uses generate_images(), not generate_content().
+    Supports aspect_ratio natively; no Vertex AI SDK needed.
+    """
+    from google.genai import types  # type: ignore
+
+    response = client.models.generate_images(
+        model=MODEL,
+        prompt=prompt,
+        config=types.GenerateImagesConfig(
+            number_of_images=1,
+            aspect_ratio="16:9",
+            safety_filter_level="block_few",
+            person_generation="allow_adult",
+        ),
+    )
+
+    images = getattr(response, "generated_images", None) or []
+    if not images:
+        raise RuntimeError(
+            f"Imagen вернул пустой список. "
+            f"prompt_feedback={getattr(response, 'prompt_feedback', None)}"
+        )
+
+    img_obj = images[0]
+    # SDK версии >= 0.8: image.image_bytes
+    raw = getattr(getattr(img_obj, "image", None), "image_bytes", None)
+    if raw:
+        return raw, ".png"
+    # Fallback: прямой атрибут _image_bytes
+    raw = getattr(img_obj, "_image_bytes", None)
+    if raw:
+        return raw, ".png"
+
+    raise RuntimeError(
+        "Не удалось извлечь байты из ответа Imagen. "
+        "Попробуй: pip install -U google-genai"
+    )
+
+
+def call_api(client, prompt: str) -> tuple[bytes, str]:
+    """Диспетчер: Imagen (generate_images) vs Gemini (generate_content)."""
+    if "imagen" in MODEL.lower():
+        return call_imagen(client, prompt)
+    return call_gemini(client, prompt)
+
+
 def autocrop(data: bytes, mime: str, threshold: int = 245) -> bytes:
     """
     Обрезает светлые поля по яркости: если пиксель ярче threshold в
@@ -298,23 +350,44 @@ def main() -> int:
                         help=f"requests per minute (default: {REQUESTS_PER_MINUTE})")
     parser.add_argument("--limit", type=int, default=None,
                         help="stop after generating this many images (for smoke tests)")
+    parser.add_argument("--test", action="store_true",
+                        help="3 test images: BABA_YAGA/IVAN_DURAK/KOLOBOK × POTION_BREW")
+    parser.add_argument("--model", default=MODEL,
+                        help=f"model to use (default: {MODEL})")
     parser.add_argument("--dry", action="store_true",
                         help="print prompts only, do not call the API")
     parser.add_argument("--force", action="store_true",
                         help="re-generate even if the output file already exists")
     args = parser.parse_args()
 
+    # Allow overriding MODEL via --model flag
+    global MODEL
+    MODEL = args.model
+
     characters = load_json(ROOT / "characters.json")
     deals = load_json(ROOT / "deals.json")
     style_text = (ROOT / "style_anchor.txt").read_text(encoding="utf-8")
     style_block = parse_style_anchor(style_text, args.style)
 
-    jobs = build_jobs(
-        characters=characters, deals=deals, style_block=style_block,
-        only_archetype=args.only_archetype, only_deal=args.only_deal,
-    )
+    if args.test:
+        test_archetypes = ["BABA_YAGA", "IVAN_DURAK", "KOLOBOK"]
+        jobs = []
+        for arch in test_archetypes:
+            batch = build_jobs(
+                characters=characters, deals=deals, style_block=style_block,
+                only_archetype=arch, only_deal="POTION_BREW",
+            )
+            if batch:
+                jobs.append(batch[0])
+    else:
+        jobs = build_jobs(
+            characters=characters, deals=deals, style_block=style_block,
+            only_archetype=args.only_archetype, only_deal=args.only_deal,
+        )
 
+    cost_est = len(jobs) * (0.02 if "imagen" in MODEL.lower() else 0.05)
     print(f"[plan] {len(jobs)} jobs · style={args.style} · model={MODEL}")
+    print(f"       ≈${cost_est:.2f} ({'$0.02' if 'imagen' in MODEL.lower() else '~$0.05'}/шт)")
     if args.dry:
         for j in jobs:
             print(f"--- {j.filename_stem}")
@@ -357,7 +430,7 @@ def main() -> int:
         for attempt in range(1, MAX_RETRIES + 1):
             limiter.wait()
             try:
-                data, ext = call_gemini(client, job.prompt)
+                data, ext = call_api(client, job.prompt)
                 mime = "image/jpeg" if ext in (".jpg", ".jpeg") else "image/png"
                 path = write_image(job.filename_stem, data, ext, mime)
                 print(f"  ✓ {path.name} ({len(data)//1024} KB)")
