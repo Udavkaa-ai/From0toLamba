@@ -536,19 +536,6 @@ export function HomePage() {
           </motion.div>
         )}
 
-        {/* Кнопка следующий день + кулдаун-таймер */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
-          <NextDayButton
-            gameState={gameState}
-            now={now}
-            isPending={advanceMutation.isPending}
-            isError={advanceMutation.isError}
-            errorMessage={(advanceMutation.error as Error | undefined)?.message}
-            onAdvance={() => { tgHaptic?.impactOccurred('medium'); advanceMutation.mutate() }}
-            onWatchAd={() => setShowAdStub(true)}
-          />
-        </motion.div>
-
       </div>
 
       {/* Заглушка рекламы для пропуска ожидания */}
@@ -568,6 +555,7 @@ export function HomePage() {
         now={now}
         isPending={advanceMutation.isPending}
         onAdvance={() => { tgHaptic?.impactOccurred('medium'); advanceMutation.mutate() }}
+        onWatchAd={() => setShowAdStub(true)}
       />
     </ScreenBackground>
   )
@@ -593,12 +581,13 @@ function handleInvite(gameState: { userId: number; firstName?: string } | any) {
 }
 
 function NextDayFab({
-  gameState, now, isPending, onAdvance,
+  gameState, now, isPending, onAdvance, onWatchAd,
 }: {
   gameState: { lastAdvancedAt: string | null; advanceCooldownMs: number; consecutiveAdvances: number; maxConsecutiveAdvances: number }
   now: number
   isPending: boolean
   onAdvance: () => void
+  onWatchAd: () => void
 }) {
   const lastMs = gameState.lastAdvancedAt ? new Date(gameState.lastAdvancedAt).getTime() : 0
   const cooldownMs = gameState.advanceCooldownMs ?? 2 * 60 * 60 * 1000
@@ -613,35 +602,65 @@ function NextDayFab({
       : '🌅 Следующий день'
 
   return (
-    <motion.button
-      whileTap={{ scale: isLocked || isPending ? 1 : 0.95 }}
-      transition={{ duration: 0.1 }}
-      onClick={() => { if (!isLocked && !isPending) onAdvance() }}
-      disabled={isPending || isLocked}
-      style={{
-        position: 'fixed',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        bottom: 'calc(68px + env(safe-area-inset-bottom))',
-        zIndex: 110,
-        padding: '10px 24px',
-        background: isLocked
-          ? `rgba(13, 23, 53, 0.85)`
-          : `linear-gradient(135deg, ${colors.enchantedPurple}ee, ${colors.nightBlue}ee)`,
-        border: `1px solid ${isLocked ? `${colors.fairyGold}25` : `${colors.fairyGold}60`}`,
-        borderRadius: '24px',
-        color: isLocked ? colors.textMuted : colors.fairyGold,
-        fontSize: '13px',
-        fontWeight: 600,
-        cursor: isLocked || isPending ? 'not-allowed' : 'pointer',
-        backdropFilter: 'blur(12px)',
-        boxShadow: isLocked ? 'none' : `0 4px 20px ${colors.fairyGold}30`,
-        whiteSpace: 'nowrap',
-        opacity: isPending ? 0.7 : 1,
-      }}
-    >
-      {label}
-    </motion.button>
+    <div style={{
+      position: 'fixed',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      bottom: 'calc(68px + env(safe-area-inset-bottom))',
+      zIndex: 110,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: '6px',
+    }}>
+      <motion.button
+        whileTap={{ scale: isLocked || isPending ? 1 : 0.95 }}
+        transition={{ duration: 0.1 }}
+        onClick={() => { if (!isLocked && !isPending) onAdvance() }}
+        disabled={isPending || isLocked}
+        style={{
+          padding: '10px 24px',
+          background: isLocked
+            ? `rgba(13, 23, 53, 0.85)`
+            : `linear-gradient(135deg, ${colors.enchantedPurple}ee, ${colors.nightBlue}ee)`,
+          border: `1px solid ${isLocked ? `${colors.fairyGold}25` : `${colors.fairyGold}60`}`,
+          borderRadius: '24px',
+          color: isLocked ? colors.textMuted : colors.fairyGold,
+          fontSize: '13px',
+          fontWeight: 600,
+          cursor: isLocked || isPending ? 'not-allowed' : 'pointer',
+          backdropFilter: 'blur(12px)',
+          boxShadow: isLocked ? 'none' : `0 4px 20px ${colors.fairyGold}30`,
+          whiteSpace: 'nowrap',
+          opacity: isPending ? 0.7 : 1,
+        }}
+      >
+        {label}
+      </motion.button>
+
+      {isLocked && (
+        <motion.button
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          onClick={onWatchAd}
+          style={{
+            padding: '7px 18px',
+            background: 'rgba(13, 23, 53, 0.80)',
+            border: `1px dashed ${colors.fairyGold}45`,
+            borderRadius: '20px',
+            color: colors.fairyGold,
+            fontSize: '12px',
+            fontWeight: 600,
+            cursor: 'pointer',
+            backdropFilter: 'blur(12px)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          📺 Пропустить за рекламу
+        </motion.button>
+      )}
+    </div>
   )
 }
 
