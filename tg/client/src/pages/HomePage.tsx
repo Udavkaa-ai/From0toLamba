@@ -561,6 +561,14 @@ export function HomePage() {
           />
         )}
       </AnimatePresence>
+
+      {/* Плавающая кнопка «Следующий день» — всегда видна без скролла */}
+      <NextDayFab
+        gameState={gameState}
+        now={now}
+        isPending={advanceMutation.isPending}
+        onAdvance={() => { tgHaptic?.impactOccurred('medium'); advanceMutation.mutate() }}
+      />
     </ScreenBackground>
   )
 }
@@ -582,6 +590,59 @@ function handleInvite(gameState: { userId: number; firstName?: string } | any) {
   const tg = (window as any).Telegram?.WebApp
   if (tg?.openTelegramLink) tg.openTelegramLink(shareUrl)
   else window.open(shareUrl, '_blank')
+}
+
+function NextDayFab({
+  gameState, now, isPending, onAdvance,
+}: {
+  gameState: { lastAdvancedAt: string | null; advanceCooldownMs: number; consecutiveAdvances: number; maxConsecutiveAdvances: number }
+  now: number
+  isPending: boolean
+  onAdvance: () => void
+}) {
+  const lastMs = gameState.lastAdvancedAt ? new Date(gameState.lastAdvancedAt).getTime() : 0
+  const cooldownMs = gameState.advanceCooldownMs ?? 2 * 60 * 60 * 1000
+  const remainingFreePresses = Math.max(0, (gameState.maxConsecutiveAdvances ?? 3) - (gameState.consecutiveAdvances ?? 0))
+  const remainingMs = Math.max(0, lastMs + cooldownMs - now)
+  const isLocked = remainingFreePresses === 0 && remainingMs > 0
+
+  const label = isPending
+    ? '⏳ Течёт время...'
+    : isLocked
+      ? `⏳ ${formatRemaining(remainingMs)}`
+      : '🌅 Следующий день'
+
+  return (
+    <motion.button
+      whileTap={{ scale: isLocked || isPending ? 1 : 0.95 }}
+      transition={{ duration: 0.1 }}
+      onClick={() => { if (!isLocked && !isPending) onAdvance() }}
+      disabled={isPending || isLocked}
+      style={{
+        position: 'fixed',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        bottom: 'calc(68px + env(safe-area-inset-bottom))',
+        zIndex: 110,
+        padding: '10px 24px',
+        background: isLocked
+          ? `rgba(13, 23, 53, 0.85)`
+          : `linear-gradient(135deg, ${colors.enchantedPurple}ee, ${colors.nightBlue}ee)`,
+        border: `1px solid ${isLocked ? `${colors.fairyGold}25` : `${colors.fairyGold}60`}`,
+        borderRadius: '24px',
+        color: isLocked ? colors.textMuted : colors.fairyGold,
+        fontSize: '13px',
+        fontWeight: 600,
+        cursor: isLocked || isPending ? 'not-allowed' : 'pointer',
+        backdropFilter: 'blur(12px)',
+        boxShadow: isLocked ? 'none' : `0 4px 20px ${colors.fairyGold}30`,
+        whiteSpace: 'nowrap',
+        opacity: isPending ? 0.7 : 1,
+      }}
+    >
+      {label}
+    </motion.button>
+  )
 }
 
 function NextDayButton({
