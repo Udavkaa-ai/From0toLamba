@@ -55,12 +55,14 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
+import generate as _gen_module
 from generate import (
-    ROOT, OUTPUT_DIR, DEFAULT_STYLE,
+    ROOT, DEFAULT_STYLE,
     load_json, parse_style_anchor, Job, build_jobs,
     TokenBucket, autocrop, write_image, already_done,
     DEAL_TYPES, ARCHETYPES,
 )
+OUTPUT_DIR = _gen_module.OUTPUT_DIR
 
 # --- Config -----------------------------------------------------------------
 
@@ -144,6 +146,10 @@ def main() -> int:
     parser.add_argument("--only-deal", dest="only_deal")
     parser.add_argument("--variants", type=int, default=3,
                         help="вариантов на пару архетип×дело (default: 3, max: сколько угодно)")
+    parser.add_argument("--sample", type=int, default=None, metavar="N",
+                        help="взять N разнообразных картинок (variant=1 на каждую пару архетип×дело)")
+    parser.add_argument("--output-dir", default=None, metavar="DIR",
+                        help="папка для результатов (default: tools/banners/output)")
     parser.add_argument("--rpm", type=int, default=REQUESTS_PER_MINUTE)
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--test", action="store_true",
@@ -160,6 +166,12 @@ def main() -> int:
             file=sys.stderr,
         )
         return 2
+
+    # Override output dir if requested
+    if args.output_dir:
+        out_path = Path(args.output_dir)
+        out_path.mkdir(parents=True, exist_ok=True)
+        _gen_module.OUTPUT_DIR = out_path
 
     characters = load_json(ROOT / "characters.json")
     deals      = load_json(ROOT / "deals.json")
@@ -182,7 +194,23 @@ def main() -> int:
             characters=characters, deals=deals, style_block=style_block,
             only_archetype=args.only_archetype, only_deal=args.only_deal,
         )
-        if args.variants <= 3:
+        if args.sample is not None:
+            # Берём одну картинку на каждую пару архетип×дело (variant=1),
+            # чередуя архетипы и дела для максимального разнообразия в первых N.
+            # Порядок: ARCH[0]×DEAL[0], ARCH[1]×DEAL[0], ... ARCH[5]×DEAL[0],
+            #          ARCH[0]×DEAL[1], ... — транспонированный обход.
+            by_pair: dict[tuple[str, str], Job] = {
+                (j.archetype, j.deal): j
+                for j in base_jobs if j.variant == 1
+            }
+            ordered: list[Job] = []
+            for deal in (DEAL_TYPES if not args.only_deal else [args.only_deal]):
+                for arch in (ARCHETYPES if not args.only_archetype else [args.only_archetype]):
+                    j = by_pair.get((arch, deal))
+                    if j:
+                        ordered.append(j)
+            jobs = ordered[:args.sample]
+        elif args.variants <= 3:
             jobs = base_jobs
         else:
             # Расширяем: для каждой пары архетип×дело генерируем args.variants штук

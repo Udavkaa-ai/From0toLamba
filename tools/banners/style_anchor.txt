@@ -73,3 +73,25 @@ to all edges, no white or cream areas, no parchment background,
 cinematic horizontal banner composition 7:4, character clearly framed as
 the focal point, no text, no letters, no captions, no signatures,
 no watermarks
+
+
+────────────────────────────────────────────────────────────────────────────
+[realistic]
+────────────────────────────────────────────────────────────────────────────
+semi-realistic high-detail digital fantasy painting, Slavic folk-tale
+atmosphere rendered with photographic conviction, no cartoon outlines,
+no flat colour fields, no anime stylisation, richly textured period-accurate
+medieval Russian costume and weathered props, three-dimensional volumetric
+lighting — warm amber firelight against cool violet-blue shadows,
+realistically proportioned expressive figures, subtle magical elements
+treated with physical plausibility (glowing embers, luminescent mist,
+faint sparks), deep atmospheric haze and cinematic depth of field,
+painterly brushwork in the tradition of Andrey Shishkin and Vsevolod Ivanov
+
+[shared suffix — appended to every option]
+russian fairy tale fantasy, dark mystical atmosphere, fairy gold and
+enchanted purple and night blue dominant palette, dark background extending
+to all edges, no white or cream areas, no parchment background,
+cinematic horizontal banner composition 7:4, character clearly framed as
+the focal point, no text, no letters, no captions, no signatures,
+no watermarks
