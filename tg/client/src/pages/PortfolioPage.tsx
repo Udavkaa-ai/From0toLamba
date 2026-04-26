@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useId } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { ComposedChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts'
+import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts'
 import { ScreenBackground, PAGE_BG } from '@/components/ScreenBackground'
 import { FairyCard, OrnamentDivider, SkeletonCard } from '@/components/FairyCard'
 import { PageTitle } from '@/components/PageTitle'
@@ -84,50 +84,47 @@ export function PortfolioPage() {
         {/* Закрытые (только те, куда вкладывался) */}
         {data?.closed && data.closed.filter(p => p.investedAmountRubles > 0).length > 0 && (
           <section style={{ marginTop: spacing.xl }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm }}>
-              <div style={{ color: colors.textMuted, fontSize: '13px', fontWeight: 600 }}>
-                История
-              </div>
-              <button
-                onClick={() => navigate('/registry')}
-                style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  color: colors.fairyGold, fontSize: '12px',
-                }}
-              >
-                Вся летопись →
-              </button>
+            <div style={{ color: colors.textMuted, fontSize: '13px', fontWeight: 600, marginBottom: spacing.sm }}>
+              История
             </div>
             {data.closed.filter(p => p.investedAmountRubles > 0).slice(0, 3).map((p, i) => (
               <motion.div key={p.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}>
                 <ClosedProjectCard project={p} postMortem={p.postMortem} />
               </motion.div>
             ))}
-            {data.closed.filter(p => p.investedAmountRubles > 0).length > 3 && (
-              <div
-                onClick={() => navigate('/registry')}
-                style={{
-                  textAlign: 'center', color: colors.textMuted, fontSize: '12px',
-                  padding: spacing.sm, cursor: 'pointer',
-                }}
-              >
-                + ещё {data.closed.filter(p => p.investedAmountRubles > 0).length - 3} в летописи
-              </div>
-            )}
+            <motion.button
+              whileTap={{ scale: 0.96 }}
+              onClick={() => navigate('/registry')}
+              style={{
+                width: '100%', marginTop: spacing.sm,
+                padding: '12px',
+                background: `linear-gradient(135deg, ${colors.enchantedPurple} 0%, #1a0d40 100%)`,
+                border: `1px solid ${colors.fairyGold}50`,
+                borderRadius: '10px',
+                color: colors.fairyGold,
+                fontWeight: 700,
+                fontSize: '14px',
+                cursor: 'pointer',
+                letterSpacing: '0.02em',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+              }}
+            >
+              <span>📜</span>
+              <span>Вся летопись</span>
+              {data.closed.filter(p => p.investedAmountRubles > 0).length > 3 && (
+                <span style={{ fontSize: '11px', opacity: 0.7, fontWeight: 400 }}>
+                  (+{data.closed.filter(p => p.investedAmountRubles > 0).length - 3} ещё)
+                </span>
+              )}
+            </motion.button>
           </section>
         )}
 
-        {/* Движение средств */}
-        {transactions.length > 0 && (
-          <section style={{ marginTop: spacing.xl }}>
-            <div style={{ color: colors.textMuted, fontSize: '13px', fontWeight: 600, marginBottom: spacing.sm }}>
-              Движение средств
-            </div>
-            {transactions.slice(0, 20).map(tx => (
-              <TransactionRow key={tx.id} tx={tx} />
-            ))}
-          </section>
-        )}
+        {/* Движение средств — свёрнуто по умолчанию */}
+        <TransactionSection transactions={transactions} />
       </div>
     </ScreenBackground>
   )
@@ -208,31 +205,37 @@ function NewsItem({ update }: { update: DailyUpdateDTO }) {
   )
 }
 
-function MiniDualChart({ valueHistory, userCountHistory }: { valueHistory: number[]; userCountHistory: number[] }) {
-  const len = Math.max(valueHistory.length, userCountHistory.length)
-  if (len < 2) return null
-  const data = Array.from({ length: len }, (_, i) => ({
-    day: i + 1,
-    val: valueHistory[i] ?? null,
-    usr: userCountHistory[i] ?? null,
-  }))
-  const fmtK = (v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)
+function MiniValueChart({ valueHistory, userCount, invested }: { valueHistory: number[]; userCount: number; invested: number }) {
+  const uid = useId()
+  if (valueHistory.length < 2) return null
+  const data = valueHistory.map((val, i) => ({ i, val }))
+  const last = valueHistory[valueHistory.length - 1]
+  const color = last > invested ? '#50C878' : last < invested * 0.98 ? '#E34234' : '#FFB800'
+  const gradId = `vg-${uid.replace(/:/g, '')}`
 
   return (
-    <ResponsiveContainer width="100%" height={64}>
-      <ComposedChart data={data} margin={{ top: 4, right: 30, bottom: 0, left: 0 }}>
-        <XAxis dataKey="day" stroke="transparent" tick={{ fontSize: 8, fill: '#6B7A99' }} tickCount={3} interval="preserveStartEnd" />
-        <YAxis yAxisId="left" stroke="transparent" tick={{ fontSize: 8, fill: '#FFB800' }} width={28} tickCount={2} tickFormatter={fmtK} />
-        <YAxis yAxisId="right" orientation="right" stroke="transparent" tick={{ fontSize: 8, fill: '#4a9eff' }} width={28} tickCount={2} tickFormatter={fmtK} />
-        <Tooltip
-          contentStyle={{ background: '#0D1735', border: 'none', borderRadius: '6px', fontSize: '10px', color: '#C8C8FF' }}
-          formatter={(val: number, name: string) => [name === 'val' ? `${val} ₽` : `${val} вкл.`, '']}
-          labelFormatter={(l: number) => `День ${l}`}
-        />
-        <Line yAxisId="left" type="monotone" dataKey="val" stroke="#FFB800" strokeWidth={1.5} dot={false} isAnimationActive={false} />
-        <Line yAxisId="right" type="monotone" dataKey="usr" stroke="#4a9eff" strokeWidth={1.5} dot={false} isAnimationActive={false} />
-      </ComposedChart>
-    </ResponsiveContainer>
+    <>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+        <span style={{ color: '#aaa', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>История стоимости</span>
+        <span style={{ color: '#4a9eff', fontSize: '9px' }}>👥 {userCount} вкл.</span>
+      </div>
+      <ResponsiveContainer width="100%" height={72}>
+        <AreaChart data={data} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
+          <defs>
+            <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor={color} stopOpacity={0.35} />
+              <stop offset="95%" stopColor={color} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <Tooltip
+            contentStyle={{ background: '#0D1735', border: 'none', borderRadius: '6px', fontSize: '10px', color: '#C8C8FF' }}
+            formatter={(val: number) => [`${val.toFixed(0)} ₽`, 'Стоимость']}
+            labelFormatter={(l: number) => `День ${l + 1}`}
+          />
+          <Area type="monotone" dataKey="val" stroke={color} strokeWidth={1.5} fill={`url(#${gradId})`} dot={false} isAnimationActive={false} />
+        </AreaChart>
+      </ResponsiveContainer>
+    </>
   )
 }
 
@@ -296,8 +299,6 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
   })
 
   const hasValueHistory = project.valueHistory.length > 1
-  const hasUserCountHistory = project.userCountHistory.length > 1
-  const hasDualHistory = hasValueHistory || hasUserCountHistory
 
   return (
     <FairyCard style={{ marginBottom: spacing.md }}>
@@ -336,15 +337,11 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
         </div>
       )}
 
-      {/* Mini charts */}
-      {hasDualHistory && (
+      {/* Mini chart */}
+      {hasValueHistory && (
         <>
           <OrnamentDivider />
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-            <span style={{ color: '#FFB800', fontSize: '9px' }}>₽ стоимость</span>
-            <span style={{ color: '#4a9eff', fontSize: '9px' }}>👥 {project.currentUserCount} вкл.</span>
-          </div>
-          <MiniDualChart valueHistory={project.valueHistory} userCountHistory={project.userCountHistory} />
+          <MiniValueChart valueHistory={project.valueHistory} userCount={project.currentUserCount} invested={project.investedAmountRubles} />
         </>
       )}
 
@@ -658,6 +655,35 @@ const TX_TYPE_ICON: Record<string, string> = {
 }
 const TX_TYPE_LABEL: Record<string, string> = {
   INVEST: 'Вложено', ADD: 'Довложено', WITHDRAW: 'Выведено', EXIT: 'Выход', RETURNED: 'Возврат', REFERRAL_BONUS: 'Сватовство',
+}
+
+function TransactionSection({ transactions }: { transactions: TransactionDTO[] }) {
+  const [open, setOpen] = useState(false)
+  if (transactions.length === 0) return null
+  return (
+    <section style={{ marginTop: spacing.xl }}>
+      <button
+        onClick={() => setOpen(v => !v)}
+        style={{
+          width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0',
+          marginBottom: open ? spacing.sm : 0,
+        }}
+      >
+        <span style={{ color: colors.textMuted, fontSize: '13px', fontWeight: 600 }}>Движение средств</span>
+        <span style={{ color: colors.textMuted, fontSize: '18px', lineHeight: 1 }}>{open ? '−' : '+'}</span>
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
+            {transactions.slice(0, 20).map(tx => (
+              <TransactionRow key={tx.id} tx={tx} />
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </section>
+  )
 }
 
 function TransactionRow({ tx }: { tx: TransactionDTO }) {
