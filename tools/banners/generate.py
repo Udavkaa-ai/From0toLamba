@@ -70,7 +70,7 @@ ARCHETYPES = [
     "KOLOBOK",
 ]
 
-VARIANTS_PER_PAIR = 3   # NN = 01..03
+VARIANTS_PER_PAIR = 5   # NN = 01..05 — по числу визуальных вариантов каждого архетипа
 
 
 # --- Prompt assembly --------------------------------------------------------
@@ -128,7 +128,8 @@ class Job:
     archetype: str
     deal: str
     variant: int                # 1..VARIANTS_PER_PAIR
-    character_desc: str
+    character_name: str         # имя NPC для игры (из characters.json → name)
+    character_desc: str         # описание внешности для промта (→ desc)
     deal_desc: str
     style_block: str
 
@@ -143,6 +144,14 @@ class Job:
             f"a {self.character_desc}",
             self.deal_desc,
         ])
+
+
+def _parse_char_variant(raw: object) -> tuple[str, str]:
+    """Возвращает (name, desc) из элемента characters.json."""
+    if isinstance(raw, dict):
+        return raw.get("name", ""), raw.get("desc", "")
+    # Обратная совместимость: старый формат — просто строка
+    return "", str(raw)
 
 
 def build_jobs(
@@ -160,19 +169,19 @@ def build_jobs(
             if only_deal and deal != only_deal:
                 continue
             scenarios = deals.get(deal)
-            if not isinstance(scenarios, list) or len(scenarios) < VARIANTS_PER_PAIR:
-                raise ValueError(
-                    f"deals.json: {deal} needs at least {VARIANTS_PER_PAIR} scenarios"
-                )
+            if not isinstance(scenarios, list) or not scenarios:
+                raise ValueError(f"deals.json: missing/empty entry for {deal}")
             for n in range(VARIANTS_PER_PAIR):
-                # Different character variant + different scene per variant —
-                # maximum variety inside a (archetype, deal) triple.
-                char = char_variants[n % len(char_variants)]
-                deal_desc = scenarios[n]
+                # Разные визуальные варианты персонажа + ротация сцен.
+                # Сцен в deals.json может быть меньше вариантов — циклически повторяем.
+                char_name, char_desc = _parse_char_variant(
+                    char_variants[n % len(char_variants)]
+                )
+                deal_desc = scenarios[n % len(scenarios)]
                 jobs.append(Job(
                     archetype=arch, deal=deal, variant=n + 1,
-                    character_desc=char, deal_desc=deal_desc,
-                    style_block=style_block,
+                    character_name=char_name, character_desc=char_desc,
+                    deal_desc=deal_desc, style_block=style_block,
                 ))
     return jobs
 

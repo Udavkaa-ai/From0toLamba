@@ -1,51 +1,141 @@
 {
-  "_comment": "Six archetypes; for each — 3-5 visual variants of distinct individuals of that archetype. Each variant is one image-model-friendly noun phrase in English. The generator picks one variant per banner so all three images for the same archetype show DIFFERENT merchants of the same archetype.",
+  "_comment": "Six archetypes; for each — 5 named visual variants. Each variant is one distinct individual of that archetype. The generator uses desc for the image prompt and name for the game NPC identity.",
 
   "IVAN_DURAK": [
-    "young flaxen-haired peasant lad with smiling face and a slight foolish grin, wearing white linen rubakha embroidered with red cross-stitch, simple kushak belt, bast-shoe lapti",
-    "freckled red-haired barefoot wanderer in patched grey kaftan and birch-bark hat, carrying a small wooden staff and a kerchief-bundle on a stick over his shoulder",
-    "dreamy chestnut-haired youth lying back on the warm side of a clay stove, in a striped homespun shirt, cheeks pink, blue eyes gazing up at the ceiling, sleepy and untroubled",
-    "stocky black-bearded young muzhik in a sheepskin tulup and felt valenki, wide guileless face, sitting astride a grey wolf in deep snow",
-    "lanky sandy-haired youth in a crooked papakha and a too-big embroidered coat, balancing a bundle of magic feathers under one arm, expression naively pleased"
+    {
+      "name": "Иван Простодушный",
+      "desc": "young flaxen-haired peasant lad with smiling face and a slight foolish grin, wearing white linen rubakha embroidered with red cross-stitch, simple kushak belt, bast-shoe lapti"
+    },
+    {
+      "name": "Ванька Горе-Бродяга",
+      "desc": "freckled red-haired barefoot wanderer in patched grey kaftan and birch-bark hat, carrying a small wooden staff and a kerchief-bundle on a stick over his shoulder"
+    },
+    {
+      "name": "Иванушка Ленивец",
+      "desc": "dreamy chestnut-haired youth lying back on the warm side of a clay stove, in a striped homespun shirt, cheeks pink, blue eyes gazing up at the ceiling, sleepy and untroubled"
+    },
+    {
+      "name": "Иван Серый Волк",
+      "desc": "stocky black-bearded young muzhik in a sheepskin tulup and felt valenki, wide guileless face, sitting astride a grey wolf in deep snow"
+    },
+    {
+      "name": "Ванька Перо-Жар",
+      "desc": "lanky sandy-haired youth in a crooked papakha and a too-big embroidered coat, balancing a bundle of magic firebird feathers under one arm, expression naively pleased"
+    }
   ],
 
   "BABA_YAGA": [
-    "ancient hunchbacked crone with a long crooked nose hooking down to her chin, wild grey hair under a black headscarf with white skull pattern, tattered dark sarafan, holding a bony pestle, eyes glowing pale yellow",
-    "skeletal forest witch in a ragged dark green cloak of moss and pine needles, hair like spider-web, a black raven perched on her bony shoulder, knobbed walking stick in her gnarled hand",
-    "stout broad-shouldered hag with iron-grey braids and a single red eye, wearing a crimson and black sarafan stitched with bone beads, stirring a great copper cauldron, mushrooms sprouting from her shawl",
-    "tall gaunt witch in a black fur-trimmed dushegreya and tall pointed kokoshnik woven from chicken bones, holding a broom of dry birch twigs, fingernails long and yellow",
-    "ancient toothless granny crouched on the stove ledge of her hut on chicken legs, wrapped in many shawls of black and rust-red, clutching a small wooden bowl, single tooth showing"
+    {
+      "name": "Яга Костяная",
+      "desc": "ancient hunchbacked crone with a long crooked nose hooking down to her chin, wild grey hair under a faded black headscarf, tattered dark sarafan, holding a bony pestle, eyes glowing pale yellow"
+    },
+    {
+      "name": "Ягиня Лесная",
+      "desc": "skeletal forest witch in a ragged dark green cloak of moss and pine needles, hair like spider-web, a black raven perched on her bony shoulder, knobbed walking stick in her gnarled hand"
+    },
+    {
+      "name": "Бабка-Ведьма",
+      "desc": "stout broad-shouldered hag with iron-grey braids and a single red eye, wearing a crimson and black sarafan stitched with bone beads, stirring a great copper cauldron, mushrooms sprouting from her shawl"
+    },
+    {
+      "name": "Яга Куриная Ножка",
+      "desc": "tall gaunt witch in a black fur-trimmed dushegreya and tall pointed kokoshnik woven from chicken bones, holding a broom of dry birch twigs, fingernails long and yellow"
+    },
+    {
+      "name": "Бабушка Нечистая",
+      "desc": "ancient toothless granny crouched on the stove ledge of her hut on chicken legs, wrapped in many shawls of black and rust-red, clutching a small wooden bowl, single tooth showing"
+    }
   ],
 
   "ZOLUSHKA": [
-    "soot-dusted young woman with chestnut hair tied in a simple braid, wearing a patched grey homespun sarafan and a coarse linen apron, kind tired blue eyes, smooth clear face, holding a wooden broom, no scars no wounds",
-    "barefoot raven-haired girl in a sky-blue sarafan that is starting to glow at the hem with silver threads, glass slipper just appearing in her hand, twilight light around her, smooth unblemished complexion",
-    "fair-haired stepdaughter in white linen sorochka and dark patched sarafan, hand-feeding doves from a wooden trencher in a frosty courtyard, expression gentle and resolute, smooth clear skin no scars",
-    "young woman with golden hair under a simple white kerchief, sitting at a low stool sorting heaps of buckwheat and millet by the firelight, mice gathered to help her, smooth clear complexion no scars",
-    "girl half-transformed: torn working dress on one side, shimmering pearl-embroidered sarafan and silver kokoshnik on the other, fairy-godmother light pouring over her shoulder, smooth clear face no scars"
+    {
+      "name": "Золушка Пепелышка",
+      "desc": "soot-dusted young woman with chestnut hair tied in a simple braid, wearing a patched grey homespun sarafan and a coarse linen apron, kind tired blue eyes, smooth clear face, holding a wooden broom, no scars no wounds"
+    },
+    {
+      "name": "Зорька Стеклянная",
+      "desc": "barefoot raven-haired girl in a sky-blue sarafan that is starting to glow at the hem with silver threads, glass slipper just appearing in her hand, twilight light around her, smooth unblemished complexion"
+    },
+    {
+      "name": "Настенька Тихая",
+      "desc": "fair-haired stepdaughter in white linen sorochka and dark patched sarafan, hand-feeding doves from a wooden trencher in a frosty courtyard, expression gentle and resolute, smooth clear skin no scars"
+    },
+    {
+      "name": "Дуняша Мышиная",
+      "desc": "young woman with golden hair under a simple white kerchief, sitting at a low stool sorting heaps of buckwheat and millet by the firelight, mice gathered to help her, smooth clear complexion no scars"
+    },
+    {
+      "name": "Алёнушка Волшебная",
+      "desc": "girl half-transformed: torn working dress on one side, shimmering pearl-embroidered sarafan and silver kokoshnik on the other, fairy-godmother light pouring over her shoulder, smooth clear face no scars"
+    }
   ],
 
   "KOSCHEI": [
-    "tall gaunt sorcerer with skeletal frame, deathly pale skin stretched over high cheekbones, sunken green eyes, long black robe with iron-bone clasps, crowned with a thin twisted iron diadem, fingers tipped with black nails",
-    "ancient lich-king seated on a throne of intertwined bones and rusty swords, draped in a moth-eaten purple velvet mantle, holding a small black egg in his clawed hand",
-    "shadow-thin warlock in a long fur-trimmed cloak of crow feathers, half-skeletal face partly hidden behind a high collar, riding a gaunt black horse through fog",
-    "decrepit immortal with a wispy grey beard down to his chest, dressed in tarnished silver armour over black chainmail, leaning on a staff topped with a chained skull",
-    "lean noble with bone-white braided hair, in a high-collared black brocade kaftan stitched with silver runes, behind him a chained iron chest in a treasury of skulls"
+    {
+      "name": "Кощей Бессмертный",
+      "desc": "tall gaunt sorcerer with skeletal frame, deathly pale skin stretched over high cheekbones, sunken green eyes, long black robe with iron-bone clasps, crowned with a thin twisted iron diadem, fingers tipped with black nails"
+    },
+    {
+      "name": "Чернокнижник Лютый",
+      "desc": "ancient lich-king seated on a throne of intertwined bones and rusty swords, draped in a moth-eaten purple velvet mantle, holding a small black egg in his clawed hand"
+    },
+    {
+      "name": "Кощей Воронов",
+      "desc": "shadow-thin warlock in a long fur-trimmed cloak of crow feathers, half-skeletal face partly hidden behind a high collar, riding a gaunt black horse through fog"
+    },
+    {
+      "name": "Кощей Серебряный",
+      "desc": "decrepit immortal with a wispy grey beard down to his chest, dressed in tarnished silver armour over black chainmail, leaning on a staff topped with a chained skull"
+    },
+    {
+      "name": "Кощей Тёмный",
+      "desc": "lean noble with bone-white braided hair, in a high-collared black brocade kaftan stitched with silver runes, behind him a chained iron chest in a treasury of skulls"
+    }
   ],
 
   "TSAR_GOROKH": [
-    "rotund elderly tsar with a vast white beard cascading over a green and gold brocade kaftan, tall fur-trimmed shapka Monomakha crown studded with rubies, holding a curled sceptre, fond chuckle on his ruddy face",
-    "stout old king with thin grey hair and a forked beard, dressed in a heavy crimson and ermine mantle, sitting on a throne shaped like a giant pea pod, plump hands resting on his round belly",
-    "jolly bald monarch with curly white sideburns, jewel-encrusted golden crown perched askew, wearing a mustard-yellow kaftan embroidered with green peas and pearls, drinking sweet kvass from a horn cup",
-    "stately silver-bearded tsar with sad benevolent eyes, in a blue and gold robe, holding a tall staff with a globe of carved peas, a flock of carved wooden pigeons at his feet",
-    "rumpled folk-tale king in slippers and a long nightcap with a tassel, brocade kaftan unbuttoned at the chest, surrounded by piles of scattered gold coins and ledgers"
+    {
+      "name": "Царь Горох Великий",
+      "desc": "rotund elderly tsar with a vast white beard cascading over a green and gold brocade kaftan, tall fur-trimmed shapka Monomakha crown studded with rubies, holding a curled sceptre, fond chuckle on his ruddy face"
+    },
+    {
+      "name": "Царь-Батюшка Гороховый",
+      "desc": "stout old king with thin grey hair and a forked beard, dressed in a heavy crimson and ermine mantle, sitting on a throne shaped like a giant pea pod, plump hands resting on his round belly"
+    },
+    {
+      "name": "Царь Квасной",
+      "desc": "jolly bald monarch with curly white sideburns, jewel-encrusted golden crown perched askew, wearing a mustard-yellow kaftan embroidered with green peas and pearls, drinking sweet kvass from a horn cup"
+    },
+    {
+      "name": "Царь Грустный",
+      "desc": "stately silver-bearded tsar with sad benevolent eyes, in a blue and gold robe, holding a tall staff with a globe of carved peas, a flock of carved wooden pigeons at his feet"
+    },
+    {
+      "name": "Царь-Соня",
+      "desc": "rumpled folk-tale king in slippers and a long nightcap with a tassel, brocade kaftan unbuttoned at the chest, surrounded by piles of scattered gold coins and ledgers"
+    }
   ],
 
   "KOLOBOK": [
-    "round golden-baked bread roll with a smooth crust, two cheerful black-bead eyes and a wide cracked-crust grin, small flour-dusted limbs, rolling along a forest path, late autumn leaves around",
-    "plump dough-roll character with rosy buttery cheeks, an embroidered red sash tied around its middle, tiny stick-thin arms holding a kerchief-bundle, smug expression",
-    "weather-worn dark-baked roll with raisin eyes and a slightly burnt crust, sitting on a windowsill of a peasant izba, pretending to look innocent",
-    "round shiny brioche-like character with a curled crust on top like a topknot, holding a small painted spoon, bouncing along a country lane in front of a forest",
-    "fat sourdough roll with poppy-seed freckles, a wide grin showing crumb-teeth, leaning back lazily on a hay bale in a sunlit field"
+    {
+      "name": "Колобок Золотой",
+      "desc": "round golden-baked bread roll with a smooth crust, two cheerful black-bead eyes and a wide cracked-crust grin, small flour-dusted limbs, rolling along a forest path, late autumn leaves around"
+    },
+    {
+      "name": "Колобок Румяный",
+      "desc": "plump dough-roll character with rosy buttery cheeks, an embroidered red sash tied around its middle, tiny stick-thin arms holding a kerchief-bundle, smug expression"
+    },
+    {
+      "name": "Колобок Горелый",
+      "desc": "weather-worn dark-baked roll with raisin eyes and a slightly burnt crust, sitting on a windowsill of a peasant izba, pretending to look innocent"
+    },
+    {
+      "name": "Колобочек Нарядный",
+      "desc": "round shiny brioche-like character with a curled crust on top like a topknot, holding a small painted spoon, bouncing along a country lane in front of a forest"
+    },
+    {
+      "name": "Колобок Ленивый",
+      "desc": "fat sourdough roll with poppy-seed freckles, a wide grin showing crumb-teeth, leaning back lazily on a hay bale in a sunlit field"
+    }
   ]
 }
