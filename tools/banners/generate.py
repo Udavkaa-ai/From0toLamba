@@ -37,10 +37,12 @@ OUTPUT_DIR = ROOT / "output"
 MODEL = "gemini-2.5-flash-image"
 DEFAULT_STYLE = "bilibin"
 
-# Free tier of gemini-3.1-flash-image-preview is ~10 RPM at the time of
-# writing. Stay under it with a steady pace; the limiter also smooths bursts.
-# Adjust REQUESTS_PER_MINUTE if your key has a higher quota.
-REQUESTS_PER_MINUTE = 8
+# gemini-2.5-flash-image лимиты (март 2026):
+#   Free tier:  10 RPM, 500 RPD  — без биллинга
+#   Tier 1:    150+ RPM          — при привязанном биллинге (pay-as-you-go)
+# Image-запросы медленнее текстовых, ставим 10 RPM как безопасный потолок.
+# При 10 RPM 90 баннеров = ~9 мин; ~$0.04–0.06/шт → итого $3.60–5.40.
+REQUESTS_PER_MINUTE = 10
 MAX_RETRIES = 5
 INITIAL_BACKOFF_SEC = 4.0
 BACKOFF_MULTIPLIER = 2.0
