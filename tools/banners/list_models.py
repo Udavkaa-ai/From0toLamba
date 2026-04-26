@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """
 Диагностика: показывает все модели, доступные твоему ключу через Google AI
-Studio, и какие из них умеют генерить картинки (response_modalities=IMAGE
-или supported_actions содержит 'generateContent').
+Studio. Фильтрует image-capable модели и показывает их описание/версию.
 
 Usage:
     1. Вставь ключ в API_KEY ниже
@@ -27,51 +26,52 @@ def main() -> int:
         return 2
 
     client = genai.Client(api_key=API_KEY)
+    all_models = list(client.models.list())
 
-    print(f"{'name':<55} {'actions':<30} {'in/out modalities'}")
-    print("─" * 110)
+    # ── Все модели ────────────────────────────────────────────────────────────
+    print(f"\n{'ИМЯ МОДЕЛИ':<55} {'ВЫВОД':<25} ОПИСАНИЕ")
+    print("─" * 120)
 
     image_capable = []
-    for m in client.models.list():
-        name = m.name or ""
-        actions = ", ".join(m.supported_actions or [])
-        in_mod = ", ".join(m.input_token_limit and ["text"] or [])  # placeholder
-        # Достаём modalities из любого из доступных полей
-        in_mod = ""
+
+    for m in all_models:
+        name = (m.name or "").replace("models/", "")
+
         out_mod = ""
-        for attr in ("input_modalities", "supported_input_modalities"):
-            val = getattr(m, attr, None)
-            if val:
-                in_mod = ", ".join(str(v) for v in val)
-                break
         for attr in ("output_modalities", "supported_output_modalities"):
             val = getattr(m, attr, None)
             if val:
                 out_mod = ", ".join(str(v) for v in val)
                 break
 
-        modalities = f"in:[{in_mod}] out:[{out_mod}]"
+        desc = (getattr(m, "description", None) or "").replace("\n", " ")[:80]
 
-        # Помечаем кандидатов на image-генерацию
-        marker = ""
-        name_lc = name.lower()
-        if "image" in name_lc or "imagen" in name_lc or "IMAGE" in (out_mod or "").upper():
-            marker = "  ◀ image"
-            image_capable.append(name)
+        is_image = (
+            "image" in name.lower()
+            or "imagen" in name.lower()
+            or "IMAGE" in out_mod.upper()
+        )
 
-        # Урезаем для влезания в строку
-        short_name = name.replace("models/", "")
-        print(f"{short_name:<55} {actions:<30} {modalities}{marker}")
+        marker = "  ◀◀ IMAGE" if is_image else ""
+        if is_image:
+            image_capable.append((name, out_mod, desc))
 
+        print(f"{name:<55} {out_mod:<25} {desc}{marker}")
+
+    # ── Только image-capable ──────────────────────────────────────────────────
     print()
+    print("=" * 80)
     if image_capable:
-        print(f"[image-capable] {len(image_capable)} модель(и):")
-        for n in image_capable:
-            print(f"  - {n}")
+        print(f"IMAGE-CAPABLE МОДЕЛИ ({len(image_capable)} шт.):\n")
+        for name, out_mod, desc in image_capable:
+            print(f"  Имя:    {name}")
+            print(f"  Вывод:  {out_mod}")
+            if desc:
+                print(f"  Описание: {desc}")
+            print()
     else:
-        print("[image-capable] ничего похожего на image-модель не нашлось.")
-        print("  Возможно, image-генерация не включена в твоём тарифе/регионе.")
-        print("  Проверь https://aistudio.google.com/app/apikey — Plan: Free vs Paid.")
+        print("Ни одной image-capable модели не найдено.")
+        print("Проверь https://aistudio.google.com/app/apikey — Plan: Free vs Paid.")
 
     return 0
 
