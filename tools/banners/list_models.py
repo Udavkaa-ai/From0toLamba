@@ -77,4 +77,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    code = main()
+    input("\nНажми Enter чтобы закрыть...")
+    sys.exit(code)
