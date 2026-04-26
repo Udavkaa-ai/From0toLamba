@@ -67,6 +67,7 @@ declare global {
         expand(): void
         setHeaderColor(color: string): void
         setBackgroundColor(color: string): void
+        openTelegramLink(url: string): void
         BackButton?: {
           show(): void
           hide(): void
