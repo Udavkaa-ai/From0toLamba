@@ -206,75 +206,55 @@ export async function generateProjectData(input: GenerateProjectInput, model = D
   }
 }
 
-// ─── Баннер проекта (Pollinations.ai) ────────────────────────────────────────
+// ─── Баннер проекта (предгенерированные статические WebP) ────────────────────
 
-const TYPE_THEME: Record<ProjectType, string> = {
-  [ProjectType.CARD_GAME]: 'playing cards gambling medieval tavern candlelight',
-  [ProjectType.TREASURE_HUNT]: 'treasure chest ancient map forest ruins moonlight',
-  [ProjectType.POTION_BREW]: 'alchemy potions cauldron mystical laboratory glowing',
-  [ProjectType.GUILD_SCHEME]: 'guild craftsmen medieval hall workshop banners',
-  [ProjectType.HONEST_TRADE]: 'market bazaar merchants colourful goods stalls',
+// BOYARIN в игре = Царь Горох; изображения генерились под ключом TSAR_GOROKH
+const ARCHETYPE_TO_BANNER: Record<PersonaArchetype, string> = {
+  [PersonaArchetype.BURATINO]:   'BURATINO',
+  [PersonaArchetype.BOYARIN]:    'TSAR_GOROKH',
+  [PersonaArchetype.KOLOBOK]:    'KOLOBOK',
+  [PersonaArchetype.KOSCHEI]:    'KOSCHEI',
+  [PersonaArchetype.ZOLUSHKA]:   'ZOLUSHKA',
+  [PersonaArchetype.BABA_YAGA]:  'BABA_YAGA',
+  [PersonaArchetype.IVAN_DURAK]: 'IVAN_DURAK',
 }
 
-const ARCHETYPE_THEME: Record<PersonaArchetype, string> = {
-  [PersonaArchetype.BURATINO]: 'puppet marionette magical wooden toy theatre',
-  [PersonaArchetype.BOYARIN]: 'ancient fairy tale russian tsar long white beard golden crown pea throne old folk king',
-  [PersonaArchetype.KOLOBOK]: 'round jolly bread rolling cheerful autumn',
-  [PersonaArchetype.KOSCHEI]: 'dark skeletal immortal ominous black skull',
-  [PersonaArchetype.ZOLUSHKA]: 'cinderella carriage pumpkin midnight starlight',
-  [PersonaArchetype.BABA_YAGA]: 'hut on chicken legs forest witch cauldron fog',
-  [PersonaArchetype.IVAN_DURAK]: 'simple peasant lucky wanderer firebird horse',
+const TYPE_TO_BANNER: Record<ProjectType, string> = {
+  [ProjectType.CARD_GAME]:     'CARD_GAME',
+  [ProjectType.TREASURE_HUNT]: 'TREASURE_HUNT',
+  [ProjectType.POTION_BREW]:   'POTION_BREW',
+  [ProjectType.GUILD_SCHEME]:  'GUILD_SCHEME',
+  [ProjectType.HONEST_TRADE]:  'HONEST_TRADE',
 }
 
-/** Детерминированный prompt по типу дела и архетипу хозяина */
-export function buildBannerPrompt(type: ProjectType, archetype: PersonaArchetype): string {
-  return [
-    TYPE_THEME[type],
-    ARCHETYPE_THEME[archetype],
-    'russian fairy tale fantasy, dark mystical atmosphere, gold purple blue tones',
-    'cinematic banner, painterly illustration, no text, no letters',
-  ].join(', ')
+/** Детерминированный вариант 1–5 из projectId */
+function bannerVariant(projectId: string): number {
+  const hash = parseInt(projectId.replace(/-/g, '').slice(-8), 16)
+  return (hash % 5) + 1
 }
 
-/** Детерминированный seed для Pollinations — стабильный по projectId */
-export function bannerSeedFor(projectId: string): number {
-  return parseInt(projectId.replace(/-/g, '').slice(-6), 16) % 99999
-}
-
-/**
- * Строит upstream-URL Pollinations для конкретного проекта.
- * Используется прокси-эндпоинтом /api/banner/:projectId — токен сюда не подмешивается,
- * это отдельная забота прокси (через header).
- */
-export function pollinationsImageUrl(projectId: string, type: ProjectType, archetype: PersonaArchetype): string {
-  const prompt = buildBannerPrompt(type, archetype)
-  const seed = bannerSeedFor(projectId)
-  const model = process.env.POLLINATIONS_MODEL ?? 'flux'
-  // 1024×1024 — родное SDXL-разрешение 1:1. Pollinations стабильно отдаёт квадрат;
-  // широкие aspect'ы (2:1, 7:4) либо растягивают персонажей, либо игнорируются.
-  const params = new URLSearchParams({
-    width: '1024',
-    height: '1024',
-    nologo: 'true',
-    seed: String(seed),
-    model,
-  })
-  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?${params.toString()}`
+/** Имя файла баннера для данного проекта */
+export function staticBannerFilename(projectId: string, type: ProjectType, archetype: PersonaArchetype): string {
+  const arch = ARCHETYPE_TO_BANNER[archetype]
+  const deal = TYPE_TO_BANNER[type]
+  const v = String(bannerVariant(projectId)).padStart(2, '0')
+  return `${arch}_${deal}_${v}.webp`
 }
 
 /**
- * Записывает в проект ссылку на наш прокси-эндпоинт.
- * Сама картинка генерируется лениво при первом запросе клиента.
+ * Записывает в проект ссылку на предгенерированный статический баннер.
+ * Файлы лежат в assets/banners/ и раздаются по /banners/:filename.
  */
 export async function generateProjectBanner(
   projectId: string,
   _projectName: string,
-  _type: ProjectType,
-  _archetype: PersonaArchetype,
+  type: ProjectType,
+  archetype: PersonaArchetype,
 ): Promise<void> {
+  const filename = staticBannerFilename(projectId, type, archetype)
   await prisma.project.update({
     where: { id: projectId },
-    data: { bannerImageUrl: `/api/banner/${projectId}` },
+    data: { bannerImageUrl: `/banners/${filename}` },
   }).catch(err => console.error('[Banner] DB update failed:', err))
 }
 

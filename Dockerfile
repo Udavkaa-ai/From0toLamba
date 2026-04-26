@@ -21,6 +21,8 @@ WORKDIR /app/tg/server
 COPY tg/server ./
 # Кладём собранный клиент (rm -rf гарантирует чистую замену)
 RUN rm -rf ./public && cp -r /build/tg/server/public ./public
+# Баннеры персонажей — статика, генерируются заранее
+COPY tools/banners/output_realistic ./assets/banners/
 
 # NODE_PATH указывает Node искать модули в /deps/node_modules
 ENV NODE_PATH=/deps/node_modules

@@ -3,9 +3,21 @@ import { ProjectFate, LieTopic, ProjectPublicDTO } from './types'
 import { toPublicDTO } from './projectUtils'
 import { recomputeRank } from './rankService'
 
-const GRID_SIZE = 24              // 6×4
-const TIME_LIMIT_SECONDS = 15     // подсказка клиенту; серверная валидация времени не делается
+const GRID_SIZE = 24
 const MAX_FORGERIES = GRID_SIZE - 1
+
+// Чем выше чин — тем меньше времени на рассматривание грамоты
+const RANK_TIME_LIMIT: Record<string, number> = {
+  NEWBIE:       25,
+  AMBASSADOR:   20,
+  ANALYST:      15,
+  SHARK:        10,
+  LAMBO_SENSEI:  5,
+}
+
+function timeLimitForRank(rank: string): number {
+  return RANK_TIME_LIMIT[rank] ?? 15
+}
 
 /** Сила мутации подделок — чем честнее дело, тем тоньше мутации */
 export type CharterDifficulty = 'EASY' | 'MEDIUM' | 'HARD'
@@ -68,7 +80,7 @@ export interface CharterPublicView {
 }
 
 /** Создать или вернуть существующую сессию-грамоту */
-export async function startCharter(userId: number, projectId: string): Promise<CharterPublicView> {
+export async function startCharter(userId: number, projectId: string, rank = 'NEWBIE'): Promise<CharterPublicView> {
   const project = await prisma.project.findFirstOrThrow({ where: { id: projectId, userId } })
 
   // Грамота закрыта (истекла или дело завершилось) — новую сессию не создаём,
@@ -78,7 +90,7 @@ export async function startCharter(userId: number, projectId: string): Promise<C
     throw new Error('CHARTER_EXPIRED')
   }
   if (existing && existing.gridSeed) {
-    return toPublicView(existing, project)
+    return toPublicView(existing, project, rank)
   }
 
   const fate = project.fate as ProjectFate
@@ -107,17 +119,17 @@ export async function startCharter(userId: number, projectId: string): Promise<C
         },
       })
 
-  return toPublicView(session, project)
+  return toPublicView(session, project, rank)
 }
 
-export async function getCharter(userId: number, projectId: string): Promise<CharterPublicView | null> {
+export async function getCharter(userId: number, projectId: string, rank = 'NEWBIE'): Promise<CharterPublicView | null> {
   const session = await prisma.amaSession.findUnique({ where: { projectId } })
   if (!session || session.userId !== userId || !session.gridSeed) return null
   const project = await prisma.project.findUnique({ where: { id: projectId } })
   if (!project) return null
   // Дело уже закрылось (advance-day откатил грамоту) — сигнализируем клиенту отдельным кодом
   if (project.isClosed) throw new Error('CHARTER_EXPIRED')
-  return toPublicView(session, project)
+  return toPublicView(session, project, rank)
 }
 
 export interface SubmitCharterResult {
@@ -204,6 +216,7 @@ function toPublicView(
     intuitionDelta: number
   },
   project: Parameters<typeof toPublicDTO>[0],
+  rank = 'NEWBIE',
 ): CharterPublicView {
   const isSubmitted = !!session.charterSubmittedAt
   const base: CharterPublicView = {
@@ -211,7 +224,7 @@ function toPublicView(
     gridSeed: session.gridSeed ?? '',
     gridSize: session.gridSize,
     difficulty: (session.difficulty as CharterDifficulty) ?? 'MEDIUM',
-    timeLimitSeconds: TIME_LIMIT_SECONDS,
+    timeLimitSeconds: timeLimitForRank(rank),
     forgedIndices: session.forgedIndices,
     isSubmitted,
     project: toPublicDTO(project),

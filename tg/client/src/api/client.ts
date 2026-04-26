@@ -128,6 +128,15 @@ export interface GameStateDTO {
   amaSessionsCompleted: number
 }
 
+export interface ChannelTaskDTO {
+  id: string
+  channelTitle: string
+  channelLink: string
+  description: string
+  rewardRubles: number
+  claimed: boolean
+}
+
 export interface LeaderboardEntryDTO {
   userId: number
   firstName: string
@@ -277,5 +286,11 @@ export const api = {
     addInvestment: (projectId: string, amount: number) => apiClient.post(`/invest/${projectId}/add`, { amount }).then(r => r.data),
     withdraw: (projectId: string, amount: number) => apiClient.post(`/invest/${projectId}/withdraw`, { amount }).then(r => r.data),
     exit: (projectId: string) => apiClient.post(`/invest/${projectId}/exit`).then(r => r.data),
+  },
+
+  tasks: {
+    getChannels: () => apiClient.get<ChannelTaskDTO[]>('/tasks/channels').then(r => r.data),
+    claimChannel: (taskId: string) =>
+      apiClient.post<{ success: boolean; rewardRubles: number }>(`/tasks/channels/${taskId}/claim`).then(r => r.data),
   },
 }

@@ -26,12 +26,13 @@ model User {
   // если у бота настроена Main Mini App в BotFather. Через команду бота — надёжнее.
   pendingReferralParam  String?
 
-  gameState    GameState?
-  projects     Project[]
-  amaSessions  AmaSession[]
-  updates      DailyUpdate[]
-  postMortems  PostMortem[]
-  transactions Transaction[]
+  gameState      GameState?
+  projects       Project[]
+  amaSessions    AmaSession[]
+  updates        DailyUpdate[]
+  postMortems    PostMortem[]
+  transactions   Transaction[]
+  channelClaims  ChannelClaim[]
 }
 
 model GameState {
@@ -239,6 +240,19 @@ model Transaction {
 
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
+}
+
+// Клейм за подписку на канал — одна строка на (user, taskId)
+model ChannelClaim {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  taskId    String
+  claimedAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, taskId])
   @@index([userId])
 }
 
