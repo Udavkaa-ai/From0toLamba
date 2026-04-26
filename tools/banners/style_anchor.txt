@@ -1,0 +1,69 @@
+STYLE ANCHOR
+============
+
+Pick ONE of the three options below, then set STYLE_KEY in generate.py to its
+key (e.g. "bilibin"). The chosen block is prepended to every prompt, identical
+across all 90 images. This is the single biggest knob for "do all banners look
+like one set".
+
+Recommendation: BILIBIN.
+- Strongest "Russian fairy tale book" association for players.
+- Most consistent in modern image models — has appeared in plenty of training
+  data tagged "Bilibin", "Russian lubok illustration", "Russian art nouveau
+  fairy tale".
+- Reads well at small banner sizes (decorative, high-contrast, clear silhouettes).
+
+If the test batch under "bilibin" feels too flat / too "book illustration",
+switch to "vasnetsov" for richer painterly depth. "lubok" is the most
+stylised — only pick it if you want a deliberately naive folk-print look.
+
+Each block ends with the SAME shared suffix so all three options behave the
+same way regarding text, framing, and palette.
+
+────────────────────────────────────────────────────────────────────────────
+[bilibin]
+────────────────────────────────────────────────────────────────────────────
+illustration in the style of Ivan Bilibin, classic Russian fairy tale book
+art, art-nouveau decorative composition, ornamental floral and geometric
+border framing the scene, flat areas of saturated jewel-tone colour, strong
+black ink outlines, fine line decoration, traditional Slavic folk patterns
+woven into clothing and architecture, gold leaf accents, slightly stylised
+proportions
+
+[shared suffix — appended to every option]
+russian fairy tale fantasy, dark mystical atmosphere, fairy gold and
+enchanted purple and night blue dominant palette, cinematic horizontal
+banner composition 7:4, character clearly framed as the focal point, no
+text, no letters, no captions, no signatures, no watermarks
+
+
+────────────────────────────────────────────────────────────────────────────
+[vasnetsov]
+────────────────────────────────────────────────────────────────────────────
+oil painting in the style of Viktor Vasnetsov, romantic 19th century Russian
+academic painting, dramatic atmospheric lighting, deep painterly shadows,
+historical-fantasy realism, rich textured brushwork, weathered period-correct
+costume detail, mood of folklore and myth, soft golden hour or moonlight,
+brooding skies
+
+[shared suffix — appended to every option]
+russian fairy tale fantasy, dark mystical atmosphere, fairy gold and
+enchanted purple and night blue dominant palette, cinematic horizontal
+banner composition 7:4, character clearly framed as the focal point, no
+text, no letters, no captions, no signatures, no watermarks
+
+
+────────────────────────────────────────────────────────────────────────────
+[lubok]
+────────────────────────────────────────────────────────────────────────────
+illustration in the style of traditional Russian lubok folk woodcut prints,
+naive folk art, bold flat colour fields with hand-tinted look, simplified
+charming figures, thick uneven hand-carved black outlines, decorative
+patterning filling negative space, mock-aged paper texture, tilted folk-art
+perspective with flattened depth, pre-modern handcrafted feel
+
+[shared suffix — appended to every option]
+russian fairy tale fantasy, dark mystical atmosphere, fairy gold and
+enchanted purple and night blue dominant palette, cinematic horizontal
+banner composition 7:4, character clearly framed as the focal point, no
+text, no letters, no captions, no signatures, no watermarks

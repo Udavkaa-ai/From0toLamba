@@ -1,0 +1,33 @@
+{
+  "_comment": "Five deal types; for each — exactly 3 distinct compositions/scenarios. Pure scene/staging description (no character — character comes from characters.json). The merchant should be the focal point of the composition.",
+
+  "TREASURE_HUNT": [
+    "kneeling beside a half-buried oak chest in a moonlit pine forest, lid cracked open spilling silver coins and pearl strings, a shovel stuck in dark earth, will-o'-the-wisp lights drifting between trees",
+    "standing at the prow of a small wooden barque on a misty river at dawn, holding an unrolled treasure map made of birch bark with red marks, ancient stone idols watching from the riverbank",
+    "stepping into a low limestone cave entrance flanked by carved pagan stone faces, a torch burning in one hand throwing warm light, glints of gold visible deep in the darkness behind"
+  ],
+
+  "POTION_BREW": [
+    "leaning over a bubbling copper cauldron in a smoky log izba, jars of strange roots and dried mushrooms on shelves, green steam curling up, dried herbs hanging from low ceiling beams",
+    "in a dim wooden hut surrounded by glass apothecary bottles of luminous liquids on a long oak workbench, mortar and pestle, candles burning low, a cat watching from the windowsill",
+    "outdoors at twilight in a forest clearing, gathering glowing blue herbs into a wicker basket, a small portable cauldron simmering on stones, fireflies and moths around"
+  ],
+
+  "CARD_GAME": [
+    "seated at a square wooden tavern table cluttered with playing cards face down and stacks of silver coins, candle in an iron holder casting long shadows, two empty chairs across, kvass jug nearby",
+    "in a noisy smoky inn, dealing cards across a fur-trimmed table to unseen rich opponents, gold rings on fingers, sly half-smile, samovar steaming on a side table",
+    "alone late at night in a moonlit chamber, fanning a hand of painted cards, dice and gold coins on a velvet cloth, an open ledger and a crow feather quill nearby"
+  ],
+
+  "GUILD_SCHEME": [
+    "standing in front of a long polished oak table where rich seated boyars in tall fur shapkas listen intently, a parchment scroll unfurled in his hand showing painted diagrams, an ornate samovar in the background",
+    "addressing a small gathering of merchants in fur-trimmed kaftans inside a guild hall, gesturing toward a wooden chest of stacked gold ingots, painted icons of saints on the walls behind",
+    "outdoors at a marketplace, raised on a low wooden platform, holding up a wax-sealed charter to a curious crowd of townsfolk, a clerk in a black robe writing names in a thick book"
+  ],
+
+  "HONEST_TRADE": [
+    "behind a sturdy wooden market stall hung with strings of dried fish and bunches of onions, weighing goods on a brass scale, customers in homespun coats waiting, a shaggy horse and cart in the background",
+    "inside a clean modest wooden shop, neat shelves of birch-bark boxes, jars of honey and pots of butter, a customer counting copper coins on a worn counter, sun streaming through a small window",
+    "loading bolts of woven linen and clay jars onto a sturdy wooden cart in a snowy village square, breath visible in cold air, a calm draught horse hitched up, frosty rooftops behind"
+  ]
+}
