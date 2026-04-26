@@ -34,7 +34,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 OUTPUT_DIR = ROOT / "output"
 
-MODEL = "gemini-3.1-flash-image-preview"
+MODEL = "gemini-2.5-flash-image"
 DEFAULT_STYLE = "bilibin"
 
 # Free tier of gemini-3.1-flash-image-preview is ~10 RPM at the time of
@@ -195,10 +195,29 @@ def call_gemini(client, prompt: str) -> tuple[bytes, str]:
     Returns (image_bytes, file_extension). Raises on failure.
     Uses the google-genai SDK (`pip install google-genai`).
     """
-    response = client.models.generate_content(
-        model=MODEL,
-        contents=prompt,
-    )
+    from google.genai import types  # type: ignore
+
+    def _make_config(modalities: list[str]) -> types.GenerateContentConfig:
+        return types.GenerateContentConfig(
+            response_modalities=modalities,
+            image_config=types.ImageConfig(aspect_ratio="16:9"),
+        )
+
+    # Some SDK versions require ["IMAGE", "TEXT"]; try strict first.
+    try:
+        response = client.models.generate_content(
+            model=MODEL,
+            contents=prompt,
+            config=_make_config(["IMAGE"]),
+        )
+    except Exception:
+        response = client.models.generate_content(
+            model=MODEL,
+            contents=prompt,
+            config=_make_config(["IMAGE", "TEXT"]),
+        )
+
+    parts_dump = []
     for cand in (response.candidates or []):
         content = getattr(cand, "content", None)
         if not content:
@@ -211,9 +230,17 @@ def call_gemini(client, prompt: str) -> tuple[bytes, str]:
                 if ext == ".jpe":
                     ext = ".jpg"
                 return inline.data, ext
-    # No image in response — surface the text so we know why.
-    text = getattr(response, "text", None) or "<no text>"
-    raise RuntimeError(f"no image in response; text={text[:300]}")
+            text_part = getattr(part, "text", None)
+            if text_part:
+                parts_dump.append(text_part[:200])
+
+    finish = None
+    if response.candidates:
+        finish = getattr(response.candidates[0], "finish_reason", None)
+    raise RuntimeError(
+        f"no image in response; finish_reason={finish}; "
+        f"text={parts_dump or '<empty>'}"
+    )
 
 
 def write_image(stem: str, data: bytes, ext: str) -> Path:

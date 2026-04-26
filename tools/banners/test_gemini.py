@@ -29,9 +29,9 @@ OUTPUT_DIR = Path(__file__).resolve().parent / "output"
 # Перебираем модели в этом порядке. Первая работающая — побеждает.
 # Если у тебя есть конкретное имя — поставь его первым.
 MODEL_FALLBACKS = [
-    "gemini-3.1-flash-image-preview",   # если есть в твоём аккаунте
-    "gemini-2.5-flash-image-preview",   # «нано банан», стабильно работающее имя
-    "gemini-2.0-flash-preview-image-generation",  # старый рабочий вариант
+    "gemini-2.5-flash-image",          # GA, самый надёжный
+    "gemini-3.1-flash-image-preview",  # preview — иногда нужен opt-in
+    "gemini-3-pro-image-preview",      # дорогой ($0.134/шт) — последний шанс
 ]
 
 # Три тестовых промпта — три разных архетипа × дела × композиции,
