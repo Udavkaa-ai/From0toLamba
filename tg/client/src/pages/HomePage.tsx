@@ -611,18 +611,6 @@ export function HomePage() {
           </motion.div>
         )}
 
-        {/* Кнопка следующий день + кулдаун-таймер */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
-          <NextDayButton
-            gameState={gameState}
-            now={now}
-            isPending={advanceMutation.isPending}
-            isError={advanceMutation.isError}
-            errorMessage={(advanceMutation.error as Error | undefined)?.message}
-            onAdvance={() => { tgHaptic?.impactOccurred('medium'); advanceMutation.mutate() }}
-            onWatchAd={() => setShowPaymentModal(true)}
-          />
-        </motion.div>
       </div>
 
       {/* Модалка оплаты для пропуска ожидания */}
