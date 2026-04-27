@@ -182,6 +182,18 @@ export interface ReferralLeaderboardDTO {
   totalPlayers: number
 }
 
+export interface AchievementLeaderboardEntryDTO extends LeaderboardEntryDTO {
+  achievementScore: number
+  closedProjectsCount: number
+  chartersSubmitted: number
+}
+
+export interface AchievementLeaderboardDTO {
+  entries: AchievementLeaderboardEntryDTO[]
+  myPosition: number | null
+  totalPlayers: number
+}
+
 export interface ClosureSummaryDTO {
   id: string
   name: string
@@ -280,6 +292,9 @@ export const api = {
     get: () => apiClient.get<LeaderboardDTO>('/leaderboard').then(r => r.data),
     getWeek: () => apiClient.get<WeeklyLeaderboardDTO>('/leaderboard/week').then(r => r.data),
     getReferrals: () => apiClient.get<ReferralLeaderboardDTO>('/leaderboard/referrals').then(r => r.data),
+    getByIntuition: () => apiClient.get<LeaderboardDTO>('/leaderboard/intuition').then(r => r.data),
+    getByDays: () => apiClient.get<LeaderboardDTO>('/leaderboard/days').then(r => r.data),
+    getByAchievements: () => apiClient.get<AchievementLeaderboardDTO>('/leaderboard/achievements').then(r => r.data),
   },
 
   invest: {

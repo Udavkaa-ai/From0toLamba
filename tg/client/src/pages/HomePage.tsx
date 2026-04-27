@@ -236,6 +236,107 @@ export function HomePage() {
         )}
       </AnimatePresence>
       {!showTutorial && !pendingChangelog && <AchievementUnlockedOverlay />}
+
+      {/* Reset confirmation modal */}
+      <AnimatePresence>
+        {showResetConfirm && (
+          <>
+            <motion.div
+              key="reset-backdrop"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowResetConfirm(false)}
+              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200 }}
+            />
+            <motion.div
+              key="reset-modal"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              onClick={e => e.stopPropagation()}
+              style={{
+                position: 'fixed', top: '50%', left: '50%',
+                transform: 'translate(-50%, -50%)',
+                zIndex: 201,
+                width: 'min(360px, calc(100vw - 40px))',
+                background: `linear-gradient(180deg, #1a0a08 0%, ${colors.nightBlue} 100%)`,
+                border: `1px solid ${colors.danger}50`,
+                borderRadius: '16px',
+                padding: '24px',
+              }}
+            >
+              <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  width: '40px', height: '40px', borderRadius: '50%',
+                  background: `${colors.danger}20`, border: `2px solid ${colors.danger}`,
+                  color: colors.danger, fontSize: '20px', fontWeight: 900, marginBottom: '12px',
+                }}>!</div>
+                <div style={{ color: colors.textPrimary, fontSize: '16px', fontWeight: 700 }}>
+                  Начать заново?
+                </div>
+              </div>
+              <div style={{
+                padding: '12px',
+                background: `${colors.danger}10`,
+                border: `1px solid ${colors.danger}30`,
+                borderRadius: '10px',
+                marginBottom: '16px',
+                fontSize: '12px',
+                color: colors.textSecondary,
+                lineHeight: 1.6,
+              }}>
+                <div style={{ fontWeight: 700, color: colors.danger, marginBottom: '6px' }}>Будет удалено:</div>
+                {[
+                  '🪙 Все гроши и история баланса',
+                  '📦 Все активные и закрытые дела',
+                  '👁 Чуйка и счётчик дней',
+                  '🎭 Купеческий чин',
+                  '📜 Разобранные грамоты',
+                  '🏆 Все подвиги',
+                ].map(item => (
+                  <div key={item} style={{ marginTop: '3px' }}>{item}</div>
+                ))}
+                <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: `1px solid ${colors.danger}20`, color: colors.textMuted, fontSize: '11px' }}>
+                  Рефералы и настройки нейронки сохранятся
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={() => setShowResetConfirm(false)}
+                  style={{
+                    flex: 1, padding: '11px',
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    borderRadius: '10px',
+                    color: colors.textPrimary,
+                    fontSize: '13px', fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Отмена
+                </button>
+                <button
+                  onClick={() => resetMutation.mutate()}
+                  disabled={resetMutation.isPending}
+                  style={{
+                    flex: 1, padding: '11px',
+                    background: colors.danger,
+                    border: 'none',
+                    borderRadius: '10px',
+                    color: '#fff',
+                    fontSize: '13px', fontWeight: 700,
+                    cursor: 'pointer',
+                    opacity: resetMutation.isPending ? 0.6 : 1,
+                  }}
+                >
+                  {resetMutation.isPending ? 'Сброс...' : 'Да, начать заново'}
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
       {showDayNews && gameState.activeProjects.length > 0 && (
         <DayNewsOverlay projects={gameState.activeProjects} closures={dayClosures} onClose={() => setShowDayNews(false)} />
       )}
@@ -417,70 +518,32 @@ export function HomePage() {
                 </div>
               </div>
 
-              {/* Danger zone */}
+              {/* Reset button */}
               <div>
-                <div style={{ color: colors.textMuted, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Опасная зона
-                </div>
-                {!showResetConfirm ? (
-                  <button
-                    onClick={() => setShowResetConfirm(true)}
-                    style={{
-                      width: '100%', padding: '12px 16px',
-                      background: 'rgba(244,67,54,0.1)',
-                      border: `1px solid ${colors.danger}60`,
-                      borderRadius: '12px',
-                      color: colors.danger,
-                      fontSize: '14px', fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    🔄 Начать заново
-                  </button>
-                ) : (
-                  <div style={{
-                    padding: '16px',
-                    background: 'rgba(244,67,54,0.1)',
+                <button
+                  onClick={() => setShowResetConfirm(true)}
+                  style={{
+                    width: '100%', padding: '12px 16px',
+                    background: 'rgba(244,67,54,0.12)',
                     border: `1px solid ${colors.danger}60`,
                     borderRadius: '12px',
-                  }}>
-                    <div style={{ color: colors.textPrimary, fontSize: '14px', marginBottom: '12px', fontWeight: 600 }}>
-                      Весь прогресс будет удалён. Продолжить?
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button
-                        onClick={() => setShowResetConfirm(false)}
-                        style={{
-                          flex: 1, padding: '10px',
-                          background: 'rgba(255,255,255,0.1)',
-                          border: '1px solid rgba(255,255,255,0.2)',
-                          borderRadius: '8px',
-                          color: colors.textPrimary,
-                          fontSize: '13px', fontWeight: 600,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Отмена
-                      </button>
-                      <button
-                        onClick={() => resetMutation.mutate()}
-                        disabled={resetMutation.isPending}
-                        style={{
-                          flex: 1, padding: '10px',
-                          background: colors.danger,
-                          border: 'none',
-                          borderRadius: '8px',
-                          color: '#fff',
-                          fontSize: '13px', fontWeight: 600,
-                          cursor: 'pointer',
-                          opacity: resetMutation.isPending ? 0.6 : 1,
-                        }}
-                      >
-                        {resetMutation.isPending ? 'Сброс...' : 'Да, сбросить'}
-                      </button>
-                    </div>
-                  </div>
-                )}
+                    color: colors.danger,
+                    fontSize: '14px', fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                  }}
+                >
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    width: '20px', height: '20px',
+                    borderRadius: '50%',
+                    background: colors.danger,
+                    color: '#fff',
+                    fontSize: '13px', fontWeight: 900, lineHeight: 1,
+                    flexShrink: 0,
+                  }}>!</span>
+                  Начать заново
+                </button>
               </div>
             </motion.div>
           </>
@@ -531,7 +594,18 @@ export function HomePage() {
           }}>
             🏆 Бета · с 1 мая — конкурс с призами
           </div>
-          <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
+          {(() => {
+            const WEEK_DAYS = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
+            const maxC = gameState.maxConsecutiveAdvances ?? 7
+            const usedC = gameState.consecutiveAdvances ?? 0
+            const dayName = usedC > 0 ? WEEK_DAYS[Math.min(usedC, maxC) - 1] : null
+            return dayName ? (
+              <div style={{ color: `${colors.fairyGold}70`, fontSize: '11px', marginTop: '2px', letterSpacing: '0.05em' }}>
+                {dayName}
+              </div>
+            ) : null
+          })()}
+          <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '2px' }}>
             ✦ День {gameState.currentDay} · {RANK_DISPLAY[gameState.investorRank] ?? gameState.investorRank} ✦
           </div>
         </motion.div>
@@ -789,9 +863,9 @@ function NextDayButton({
   // Подпись под кнопкой: только когда пачка уже начала расходоваться
   let subline: string | null = null
   if (!isPending) {
-    if (isLocked) subline = `Пачка дней исчерпана · 10 ⭐ чтобы пропустить или жди ${formatRemaining(remainingMs)}`
+    if (isLocked) subline = `Перерыв · жди ${formatRemaining(remainingMs)} или потрать 10 ⭐`
     else if (usedConsec > 0 && remainingFreePresses > 0) {
-      subline = `Быстрых переходов осталось: ${remainingFreePresses} из ${maxConsec}`
+      subline = `Осталось переходов: ${remainingFreePresses} из ${maxConsec}`
     }
   }
 
@@ -890,7 +964,7 @@ function StarsPaymentOverlay({
           Пропустить ожидание
         </div>
         <div style={{ color: colors.textSecondary, fontSize: '13px', textAlign: 'center', lineHeight: 1.5, marginBottom: spacing.lg }}>
-          За <strong style={{ color: colors.fairyGold }}>10 Telegram Stars</strong> пачка быстрых дней наполнится прямо сейчас. Оплата через встроенный кошелёк Telegram.
+          За <strong style={{ color: colors.fairyGold }}>10 Telegram Stars</strong> перерыв закончится прямо сейчас — и можно идти дальше. Оплата через встроенный кошелёк Telegram.
         </div>
         <button
           onClick={onConfirm}

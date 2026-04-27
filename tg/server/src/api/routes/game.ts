@@ -447,6 +447,149 @@ export async function gameRoutes(app: FastifyInstance) {
     return reply.send({ entries: top100, myPosition, totalPlayers })
   })
 
+  // GET /api/leaderboard/intuition — топ-5 по чуйке
+  app.get('/api/leaderboard/intuition', { preHandler: telegramAuthHook }, async (request, reply) => {
+    const tgUser = request.telegramUser
+    const currentUser = await prisma.user.findUnique({
+      where: { telegramId: String(tgUser.id) },
+      select: { id: true },
+    })
+
+    const [gameStates, projectSums] = await Promise.all([
+      prisma.gameState.findMany({
+        where: { isOnboardingComplete: true },
+        include: { user: { select: { id: true, firstName: true, username: true } } },
+      }),
+      prisma.project.groupBy({
+        by: ['userId'],
+        where: { isActive: true },
+        _sum: { currentValueRubles: true },
+      }),
+    ])
+    const sumByUserId = new Map(projectSums.map(p => [p.userId, p._sum.currentValueRubles ?? 0]))
+
+    const ranked = gameStates
+      .map(gs => ({
+        userId: gs.userId,
+        firstName: gs.user.firstName,
+        username: gs.user.username ?? null,
+        investorRank: gs.investorRank,
+        currentDay: gs.currentDay,
+        intuitionScore: gs.intuitionScore,
+        totalWealth: gs.balance + (sumByUserId.get(gs.userId) ?? 0),
+        isMe: currentUser ? gs.userId === currentUser.id : false,
+      }))
+      .sort((a, b) => b.intuitionScore - a.intuitionScore)
+
+    const top5 = ranked.slice(0, 5).map((e, i) => ({ ...e, position: i + 1 }))
+    const myEntry = currentUser ? ranked.find(e => e.userId === currentUser.id) : null
+    const myPosition = myEntry ? ranked.indexOf(myEntry) + 1 : null
+
+    return reply.send({ entries: top5, myPosition, totalPlayers: ranked.length })
+  })
+
+  // GET /api/leaderboard/days — топ-5 по количеству игровых дней
+  app.get('/api/leaderboard/days', { preHandler: telegramAuthHook }, async (request, reply) => {
+    const tgUser = request.telegramUser
+    const currentUser = await prisma.user.findUnique({
+      where: { telegramId: String(tgUser.id) },
+      select: { id: true },
+    })
+
+    const [gameStates, projectSums] = await Promise.all([
+      prisma.gameState.findMany({
+        where: { isOnboardingComplete: true },
+        include: { user: { select: { id: true, firstName: true, username: true } } },
+      }),
+      prisma.project.groupBy({
+        by: ['userId'],
+        where: { isActive: true },
+        _sum: { currentValueRubles: true },
+      }),
+    ])
+    const sumByUserId = new Map(projectSums.map(p => [p.userId, p._sum.currentValueRubles ?? 0]))
+
+    const ranked = gameStates
+      .map(gs => ({
+        userId: gs.userId,
+        firstName: gs.user.firstName,
+        username: gs.user.username ?? null,
+        investorRank: gs.investorRank,
+        currentDay: gs.currentDay,
+        intuitionScore: gs.intuitionScore,
+        totalWealth: gs.balance + (sumByUserId.get(gs.userId) ?? 0),
+        isMe: currentUser ? gs.userId === currentUser.id : false,
+      }))
+      .sort((a, b) => b.currentDay - a.currentDay)
+
+    const top5 = ranked.slice(0, 5).map((e, i) => ({ ...e, position: i + 1 }))
+    const myEntry = currentUser ? ranked.find(e => e.userId === currentUser.id) : null
+    const myPosition = myEntry ? ranked.indexOf(myEntry) + 1 : null
+
+    return reply.send({ entries: top5, myPosition, totalPlayers: ranked.length })
+  })
+
+  // GET /api/leaderboard/achievements — топ-5 по количеству закрытых дел + разобранных грамот
+  app.get('/api/leaderboard/achievements', { preHandler: telegramAuthHook }, async (request, reply) => {
+    const tgUser = request.telegramUser
+    const currentUser = await prisma.user.findUnique({
+      where: { telegramId: String(tgUser.id) },
+      select: { id: true },
+    })
+
+    const [gameStates, projectSums, closedCounts, charterCounts] = await Promise.all([
+      prisma.gameState.findMany({
+        where: { isOnboardingComplete: true },
+        include: { user: { select: { id: true, firstName: true, username: true } } },
+      }),
+      prisma.project.groupBy({
+        by: ['userId'],
+        where: { isActive: true },
+        _sum: { currentValueRubles: true },
+      }),
+      prisma.project.groupBy({
+        by: ['userId'],
+        where: { isClosed: true },
+        _count: { _all: true },
+      }),
+      prisma.amaSession.groupBy({
+        by: ['userId'],
+        where: { charterSubmittedAt: { not: null } },
+        _count: { _all: true },
+      }),
+    ])
+
+    const sumByUserId = new Map(projectSums.map(p => [p.userId, p._sum.currentValueRubles ?? 0]))
+    const closedByUserId = new Map(closedCounts.map(c => [c.userId, c._count._all]))
+    const chartersByUserId = new Map(charterCounts.map(c => [c.userId, c._count._all]))
+
+    const ranked = gameStates
+      .map(gs => {
+        const closed = closedByUserId.get(gs.userId) ?? 0
+        const charters = chartersByUserId.get(gs.userId) ?? 0
+        return {
+          userId: gs.userId,
+          firstName: gs.user.firstName,
+          username: gs.user.username ?? null,
+          investorRank: gs.investorRank,
+          currentDay: gs.currentDay,
+          intuitionScore: gs.intuitionScore,
+          totalWealth: gs.balance + (sumByUserId.get(gs.userId) ?? 0),
+          achievementScore: closed * 3 + charters,
+          closedProjectsCount: closed,
+          chartersSubmitted: charters,
+          isMe: currentUser ? gs.userId === currentUser.id : false,
+        }
+      })
+      .sort((a, b) => b.achievementScore - a.achievementScore)
+
+    const top5 = ranked.slice(0, 5).map((e, i) => ({ ...e, position: i + 1 }))
+    const myEntry = currentUser ? ranked.find(e => e.userId === currentUser.id) : null
+    const myPosition = myEntry ? ranked.indexOf(myEntry) + 1 : null
+
+    return reply.send({ entries: top5, myPosition, totalPlayers: ranked.length })
+  })
+
   // POST /api/game/reset
   app.post('/api/game/reset', { preHandler: telegramAuthHook }, async (request, reply) => {
     const tgUser = request.telegramUser

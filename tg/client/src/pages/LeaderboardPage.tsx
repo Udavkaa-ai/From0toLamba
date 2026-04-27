@@ -7,8 +7,7 @@ import { PageTitle } from '@/components/PageTitle'
 import {
   api,
   type LeaderboardEntryDTO,
-  type WeeklyLeaderboardEntryDTO,
-  type ReferralLeaderboardEntryDTO,
+  type AchievementLeaderboardEntryDTO,
 } from '@/api/client'
 import { colors, spacing } from '@/theme'
 
@@ -35,16 +34,17 @@ function positionBadge(pos: number) {
   return `#${pos}`
 }
 
-type Tab = 'all' | 'week' | 'referrals'
+type Tab = 'money' | 'intuition' | 'days' | 'achievements'
 
 const TAB_LABELS: Record<Tab, string> = {
-  all: '✦ Вечная слава',
-  week: '🏪 Ярмарка недели',
-  referrals: '🤝 Сваты',
+  money: '💰 Злато',
+  intuition: '👁 Чуйка',
+  days: '📅 Дни',
+  achievements: '🎯 Дела',
 }
 
 export function LeaderboardPage() {
-  const [tab, setTab] = useState<Tab>('all')
+  const [tab, setTab] = useState<Tab>('money')
 
   return (
     <ScreenBackground bgImage={PAGE_BG.leaderboard}>
@@ -84,9 +84,10 @@ export function LeaderboardPage() {
           ))}
         </div>
 
-        {tab === 'all' && <AllTimeTab />}
-        {tab === 'week' && <WeekTab />}
-        {tab === 'referrals' && <ReferralsTab />}
+        {tab === 'money' && <MoneyTab />}
+        {tab === 'intuition' && <IntuitionTab />}
+        {tab === 'days' && <DaysTab />}
+        {tab === 'achievements' && <AchievementsTab />}
       </div>
     </ScreenBackground>
   )
@@ -94,102 +95,106 @@ export function LeaderboardPage() {
 
 // ─── Tabs ──────────────────────────────────────────────────────────────────
 
-function AllTimeTab() {
+function MoneyTab() {
   const { data, isLoading } = useQuery({
-    queryKey: ['leaderboard', 'all'],
+    queryKey: ['leaderboard', 'money'],
     queryFn: api.leaderboard.get,
     refetchInterval: 60_000,
   })
+  const top5 = data?.entries.slice(0, 5)
 
   return (
     <>
-      <Caption text={data ? `${data.totalPlayers} купцов в игре` : 'Купцы всего Лукоморья'} />
+      <Caption text={data ? `${data.totalPlayers} купцов в игре` : 'Богатейшие купцы Лукоморья'} />
       {isLoading && [1, 2, 3, 4, 5].map(i => <SkeletonCard key={i} lines={2} />)}
-      {data?.entries.length === 0 && !isLoading && (
-        <EmptyState icon="🏪" text="Пока никто не вышел на ярмарку" />
+      {top5?.length === 0 && !isLoading && (
+        <EmptyState icon="💰" text="Пока никто не накопил злата" />
       )}
-      {data?.entries.map((entry, i) => (
-        <motion.div
-          key={entry.userId}
-          initial={{ opacity: 0, x: -16 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: Math.min(i * 0.03, 0.6) }}
-        >
+      {top5?.map((entry, i) => (
+        <motion.div key={entry.userId} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
           <LeaderboardRow entry={entry} />
         </motion.div>
       ))}
-      {data && data.myPosition && data.myPosition > 100 && (
+      {data && data.myPosition && data.myPosition > 5 && (
         <MyOutsidePos myPosition={data.myPosition} total={data.totalPlayers} hint="Копи злато — поднимайся выше!" />
       )}
     </>
   )
 }
 
-function WeekTab() {
+function IntuitionTab() {
   const { data, isLoading } = useQuery({
-    queryKey: ['leaderboard', 'week'],
-    queryFn: api.leaderboard.getWeek,
+    queryKey: ['leaderboard', 'intuition'],
+    queryFn: api.leaderboard.getByIntuition,
     refetchInterval: 60_000,
   })
 
   return (
     <>
-      <Caption text={
-        data
-          ? `${data.totalPlayers} купцов приумножили злато · неделя с ${formatDate(data.weekStart)}`
-          : 'Прирост состояния с понедельника'
-      } />
+      <Caption text={data ? `${data.totalPlayers} купцов в игре` : 'Острее всех чуют обман'} />
       {isLoading && [1, 2, 3, 4, 5].map(i => <SkeletonCard key={i} lines={2} />)}
       {data?.entries.length === 0 && !isLoading && (
-        <EmptyState icon="📅" text="На этой неделе никто ещё не заработал" />
+        <EmptyState icon="👁" text="Ещё никто не проверял грамоты" />
       )}
       {data?.entries.map((entry, i) => (
-        <motion.div
-          key={entry.userId}
-          initial={{ opacity: 0, x: -16 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: Math.min(i * 0.03, 0.6) }}
-        >
-          <WeeklyRow entry={entry} />
+        <motion.div key={entry.userId} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
+          <IntuitionRow entry={entry} />
         </motion.div>
       ))}
-      {data && data.myPosition && data.myPosition > 100 && (
-        <MyOutsidePos myPosition={data.myPosition} total={data.totalPlayers} hint="Прокрути день — и тебя увидят!" />
+      {data && data.myPosition && data.myPosition > 5 && (
+        <MyOutsidePos myPosition={data.myPosition} total={data.totalPlayers} hint="Разбирай грамоты — точнее видишь!" />
       )}
     </>
   )
 }
 
-function ReferralsTab() {
+function DaysTab() {
   const { data, isLoading } = useQuery({
-    queryKey: ['leaderboard', 'referrals'],
-    queryFn: api.leaderboard.getReferrals,
+    queryKey: ['leaderboard', 'days'],
+    queryFn: api.leaderboard.getByDays,
     refetchInterval: 60_000,
   })
 
   return (
     <>
-      <Caption text={
-        data
-          ? `${data.totalPlayers} купцов уже сватают на ярмарку`
-          : 'Кто зазвал больше купцов на Русь'
-      } />
+      <Caption text={data ? `${data.totalPlayers} купцов в игре` : 'Дольше всех на ярмарке'} />
       {isLoading && [1, 2, 3, 4, 5].map(i => <SkeletonCard key={i} lines={2} />)}
       {data?.entries.length === 0 && !isLoading && (
-        <EmptyState icon="🤝" text="Сватов пока не нашлось — будь первым" />
+        <EmptyState icon="📅" text="Пока никто не прошёл и дня" />
       )}
       {data?.entries.map((entry, i) => (
-        <motion.div
-          key={entry.userId}
-          initial={{ opacity: 0, x: -16 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: Math.min(i * 0.03, 0.6) }}
-        >
-          <ReferralRow entry={entry} />
+        <motion.div key={entry.userId} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
+          <DaysRow entry={entry} />
         </motion.div>
       ))}
-      {data && data.myPosition && data.myPosition > 100 && (
-        <MyOutsidePos myPosition={data.myPosition} total={data.totalPlayers} hint="Пригласи купца — и попадёшь в топ!" />
+      {data && data.myPosition && data.myPosition > 5 && (
+        <MyOutsidePos myPosition={data.myPosition} total={data.totalPlayers} hint="Жми следующий день каждый раз!" />
+      )}
+    </>
+  )
+}
+
+function AchievementsTab() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['leaderboard', 'achievements'],
+    queryFn: api.leaderboard.getByAchievements,
+    refetchInterval: 60_000,
+  })
+
+  return (
+    <>
+      <Caption text={data ? `${data.totalPlayers} купцов в игре` : 'Больше всего закрытых дел'} />
+      {isLoading && [1, 2, 3, 4, 5].map(i => <SkeletonCard key={i} lines={2} />)}
+      {data?.entries.length === 0 && !isLoading && (
+        <EmptyState icon="🎯" text="Пока никто не завершил дел" />
+      )}
+      {data?.entries.map((entry, i) => (
+        <motion.div key={entry.userId} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
+          <AchievementRow entry={entry} />
+        </motion.div>
+      ))}
+      {data && data.myPosition && data.myPosition > 5 && (
+        <MyOutsidePos myPosition={data.myPosition} total={data.totalPlayers} hint="Входи в дела и разбирай грамоты!" />
       )}
     </>
   )
@@ -207,44 +212,45 @@ function LeaderboardRow({ entry }: { entry: LeaderboardEntryDTO }) {
   )
 }
 
-function WeeklyRow({ entry }: { entry: WeeklyLeaderboardEntryDTO }) {
+function IntuitionRow({ entry }: { entry: LeaderboardEntryDTO }) {
   return (
     <BaseRow
       entry={entry}
-      rightTop={<span style={{ color: colors.success }}>+{Math.round(entry.weekDelta).toLocaleString('ru')} г</span>}
-      rightBottom={`всего: ${Math.round(entry.totalWealth).toLocaleString('ru')} г`}
+      rightTop={<span style={{ color: colors.fairyGold }}>👁 {entry.intuitionScore}</span>}
+      rightBottom={`${Math.round(entry.totalWealth).toLocaleString('ru')} г`}
     />
   )
 }
 
-function ReferralRow({ entry }: { entry: ReferralLeaderboardEntryDTO }) {
+function DaysRow({ entry }: { entry: LeaderboardEntryDTO }) {
   return (
     <BaseRow
-      entry={{
-        userId: entry.userId,
-        firstName: entry.firstName,
-        username: entry.username,
-        investorRank: entry.investorRank,
-        currentDay: 0,
-        intuitionScore: 0,
-        totalWealth: 0,
-        isMe: entry.isMe,
-        position: entry.position,
-      }}
-      hideRankDay
-      rightTop={`🤝 ${entry.referralCount} куп${pluralizeCup(entry.referralCount)}`}
-      rightBottom={null}
+      entry={entry}
+      rightTop={`${entry.currentDay} дней`}
+      rightBottom={`👁 ${entry.intuitionScore}`}
+      hideDayInSub
+    />
+  )
+}
+
+function AchievementRow({ entry }: { entry: AchievementLeaderboardEntryDTO }) {
+  return (
+    <BaseRow
+      entry={entry}
+      rightTop={`📦 ${entry.closedProjectsCount} дел`}
+      rightBottom={`📜 ${entry.chartersSubmitted} грамот`}
     />
   )
 }
 
 function BaseRow({
-  entry, rightTop, rightBottom, hideRankDay,
+  entry, rightTop, rightBottom, hideRankDay, hideDayInSub,
 }: {
   entry: LeaderboardEntryDTO
   rightTop: React.ReactNode
   rightBottom: React.ReactNode
   hideRankDay?: boolean
+  hideDayInSub?: boolean
 }) {
   const displayName = entry.username ? `@${entry.username}` : entry.firstName
   const rankLabel = RANK_LABEL[entry.investorRank] ?? entry.investorRank
@@ -290,7 +296,7 @@ function BaseRow({
         </div>
         {!hideRankDay && (
           <div style={{ color: colors.textMuted, fontSize: '10px', marginTop: '2px' }}>
-            {rankEmoji} {rankLabel} · день {entry.currentDay}
+            {rankEmoji} {rankLabel}{!hideDayInSub ? ` · день ${entry.currentDay}` : ''}
           </div>
         )}
         {hideRankDay && (
@@ -355,16 +361,3 @@ function MyOutsidePos({ myPosition, total, hint }: { myPosition: number; total: 
   )
 }
 
-function formatDate(iso: string): string {
-  const d = new Date(iso)
-  return `${d.getDate()}.${String(d.getMonth() + 1).padStart(2, '0')}`
-}
-
-function pluralizeCup(n: number): string {
-  const mod10 = n % 10
-  const mod100 = n % 100
-  if (mod100 >= 11 && mod100 <= 14) return 'цов'
-  if (mod10 === 1) return 'ец'
-  if (mod10 >= 2 && mod10 <= 4) return 'ца'
-  return 'цов'
-}

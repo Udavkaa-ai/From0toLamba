@@ -47,6 +47,12 @@ const SLIDES: Slide[] = [
     title: 'Чины и ярмарочный рейтинг',
     body: 'Скоморох → Купец → Мудрец → Боярин → Князь. Поднимаешься по чинам копя гроши и растя чуйку. В «Успехах» собирай подвиги — заодно откроешь справочник пород, личин и судеб.',
   },
+  {
+    emoji: '📜',
+    title: 'Правила и ответственность',
+    body: '«Из грязи в князи» — симуляционная игра. Все проекты, персонажи и события вымышлены и не являются инвестиционными советами. Игровые гроши (г) не имеют реальной стоимости.\n\nПлатежи за дополнительные возможности (Telegram Stars) обрабатываются Telegram. Используя приложение, вы подтверждаете, что вам исполнилось 18 лет.\n\nВремя от времени разработчики проводят конкурсы с реальными призами — следи за объявлениями в игре.',
+    accent: 'Нажимая «Принять», вы соглашаетесь с правилами игры',
+  },
 ]
 
 export function OnboardingTutorial({ onClose }: { onClose: () => void }) {
@@ -74,18 +80,20 @@ export function OnboardingTutorial({ onClose }: { onClose: () => void }) {
         overflowY: 'auto',
       }}
     >
-      {/* Кнопка «Пропустить» */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: spacing.md }}>
-        <button
-          onClick={onClose}
-          style={{
-            background: 'none', border: 'none',
-            color: colors.textMuted, fontSize: '13px',
-            cursor: 'pointer', padding: '4px 8px',
-          }}
-        >
-          Пропустить →
-        </button>
+      {/* Кнопка «Пропустить» — скрыта на последнем слайде с правилами */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: spacing.md, minHeight: '28px' }}>
+        {!isLast && (
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none', border: 'none',
+              color: colors.textMuted, fontSize: '13px',
+              cursor: 'pointer', padding: '4px 8px',
+            }}
+          >
+            Пропустить →
+          </button>
+        )}
       </div>
 
       {/* Прогресс-точки */}
@@ -180,7 +188,7 @@ export function OnboardingTutorial({ onClose }: { onClose: () => void }) {
             cursor: 'pointer',
           }}
         >
-          {isLast ? '💰 Начать торговлю' : 'Дальше →'}
+          {isLast ? '📜 Принять правила и начать' : 'Дальше →'}
         </button>
       </div>
     </motion.div>
