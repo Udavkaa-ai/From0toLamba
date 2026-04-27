@@ -12,9 +12,9 @@ export interface ChannelTask {
 export const CHANNEL_TASKS: ChannelTask[] = [
   {
     id: 'channel_vknyazi_official',
-    channelUsername: 'vknyazi',
+    channelUsername: 'vknyazi_izgryazi',
     channelTitle: 'Из грязи в князи',
-    channelLink: 'https://t.me/vknyazi',
+    channelLink: 'https://t.me/vknyazi_izgryazi',
     description: 'Официальный канал игры — новости и обновления',
     rewardRubles: 50,
   },
