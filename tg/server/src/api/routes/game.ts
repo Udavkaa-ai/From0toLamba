@@ -208,8 +208,7 @@ export async function gameRoutes(app: FastifyInstance) {
     }
   })
 
-  // POST /api/game/advance-day-skip — заглушка «посмотрел рекламу, пропускаю ожидание»
-  // TODO: впилить реальную проверку показа рекламы Telegram Ads / Yandex
+  // POST /api/game/advance-day-skip — legacy endpoint; основной флоу через /api/payments/activate
   app.post('/api/game/advance-day-skip', { preHandler: telegramAuthHook }, async (request, reply) => {
     const tgUser = request.telegramUser
     const user = await prisma.user.findUniqueOrThrow({

@@ -1,7 +1,9 @@
 import { Bot, webhookCallback, InlineKeyboard } from 'grammy'
 import { prisma } from '../db/prisma'
 
-// Бот инициализируется лениво — при первом обращении
+const STARS_TIMER_SKIP = 10
+const STARS_AMA_UNLOCK = 10
+
 let _bot: Bot | null = null
 
 export function getBot(): Bot {
@@ -14,18 +16,35 @@ export function getBot(): Bot {
   return _bot
 }
 
-// Экспортируем геттер как прокси для удобства импорта
 export const bot = new Proxy({} as Bot, {
   get(_, prop) {
     return (getBot() as any)[prop]
   },
 })
 
+export async function createTimerSkipInvoice(userId: number, payload: string): Promise<string> {
+  return getBot().api.createInvoiceLink(
+    'Пропуск ожидания',
+    'Снять 2-часовой кулдаун и сразу перейти к следующему дню',
+    payload,
+    '',
+    'XTR',
+    [{ label: 'Пропуск кулдауна', amount: STARS_TIMER_SKIP }],
+  )
+}
+
+export async function createAmaUnlockInvoice(merchantName: string, userId: number, payload: string): Promise<string> {
+  return getBot().api.createInvoiceLink(
+    `Беседа с ${merchantName}`,
+    'Открыть личную беседу с дельцом и задать до 10 вопросов',
+    payload,
+    '',
+    'XTR',
+    [{ label: 'Беседа с дельцом', amount: STARS_AMA_UNLOCK }],
+  )
+}
+
 function setupHandlers(bot: Bot) {
-  // /start — приветствие + кнопка открыть Mini App.
-  // Если пришёл с payload-ом вида `ref_<userId>` (через ссылку приглашения
-  // t.me/bot?start=ref_<userId>) — сохраняем его в pendingReferralParam,
-  // чтобы /api/game потом привязал реферала и выдал обоим бонус.
   bot.command('start', async (ctx) => {
     const appUrl = process.env.MINI_APP_URL ?? ''
     const name = ctx.from?.first_name ?? 'купец'
@@ -65,7 +84,6 @@ function setupHandlers(bot: Bot) {
     )
   })
 
-  // /help
   bot.command('help', async (ctx) => {
     const appUrl = process.env.MINI_APP_URL ?? ''
     const keyboard = new InlineKeyboard().webApp('🏪 Открыть ярмарку', appUrl)
@@ -85,7 +103,42 @@ function setupHandlers(bot: Bot) {
     )
   })
 
-  // Неизвестные команды
+  // Обязательный обработчик — Telegram требует ответа в течение 10 секунд
+  bot.on('pre_checkout_query', async (ctx) => {
+    await ctx.answerPreCheckoutQuery(true)
+  })
+
+  // Фиксируем успешную оплату и выдаём фичу
+  bot.on('message:successful_payment', async (ctx) => {
+    const payment = ctx.message?.successful_payment
+    if (!payment) return
+
+    const telegramId = ctx.from ? String(ctx.from.id) : null
+    if (!telegramId) return
+
+    const payload = payment.invoice_payload
+    const chargeId = payment.telegram_payment_charge_id
+
+    console.log(`[Payment] successful_payment tgId=${telegramId} payload=${payload} chargeId=${chargeId}`)
+
+    try {
+      const user = await prisma.user.findUnique({ where: { telegramId } })
+      if (!user) return
+
+      // Обновляем запись покупки — проставляем chargeId для возвратов
+      await prisma.starPurchase.updateMany({
+        where: { userId: user.id, payload },
+        data: { telegramChargeId: chargeId },
+      })
+
+      // Фича активируется клиентом через /api/payments/activate после callback "paid".
+      // Здесь только обновляем telegramChargeId для учёта и возможных возвратов.
+      console.log(`[Payment] logged userId=${user.id} feature=${payload.startsWith('ts:') ? 'timer_skip' : 'ama_unlock'}`)
+    } catch (err) {
+      console.error('[Payment] Error processing successful_payment:', err)
+    }
+  })
+
   bot.on('message', async (ctx) => {
     const appUrl = process.env.MINI_APP_URL ?? ''
     const keyboard = new InlineKeyboard().webApp('🏪 Открыть ярмарку', appUrl)
@@ -93,10 +146,6 @@ function setupHandlers(bot: Bot) {
   })
 }
 
-/**
- * Webhook handler для Fastify
- * Используется в production — вешается на POST /bot/webhook
- */
 export function createWebhookHandler() {
   const bot = getBot()
   return webhookCallback(bot, 'fastify')

@@ -57,6 +57,7 @@ export function AmaPage() {
   const [showInvestSheet, setShowInvestSheet] = useState(false)
   const [onboardingBonus, setOnboardingBonus] = useState<number | null>(null)
   const [usedTemplates, setUsedTemplates] = useState<Set<string>>(new Set())
+  const [amaPaymentPending, setAmaPaymentPending] = useState(false)
   const onboardingTriggeredRef = useRef(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -70,21 +71,59 @@ export function AmaPage() {
   }, [projectId, gameState])
 
   const bgUrl = personaBgUrl(project?.personaArchetype)
+  const tgWebApp = (window as any).Telegram?.WebApp
 
   // Инициализируем/получаем сессию
-  const { data: session, isLoading } = useQuery({
+  // Если онбординг не завершён — первая беседа бесплатная (онбординг-проект).
+  // После онбординга — беседа платная (10 Stars), сессия не создаётся до оплаты.
+  const { data: session, isLoading, refetch: refetchSession } = useQuery({
     queryKey: ['ama', projectId],
     queryFn: async () => {
       try {
         return await api.ama.getSession(projectId!)
       } catch {
-        await api.ama.start(projectId!)
-        return api.ama.getSession(projectId!)
+        if (!gameState?.isOnboardingComplete) {
+          // Онбординг: создаём бесплатно
+          await api.ama.start(projectId!)
+          return api.ama.getSession(projectId!)
+        }
+        // Платная беседа — сессия ещё не создана, покажем гейт оплаты
+        return null
       }
     },
     enabled: !!projectId,
     staleTime: 0,
   })
+
+  const handleAmaPayment = async () => {
+    if (!projectId) return
+    setAmaPaymentPending(true)
+    try {
+      const merchantName = project?.developerName ?? 'дельцом'
+      const resp = await api.payments.createInvoice('ama_unlock', projectId, merchantName) as any
+      if (!resp.invoiceLink) {
+        // PAYMENTS_ENABLED=false — сессия уже активирована на сервере
+        await refetchSession()
+        setAmaPaymentPending(false)
+        return
+      }
+      if (!tgWebApp?.openInvoice) {
+        setAmaPaymentPending(false)
+        return
+      }
+      tgWebApp.openInvoice(resp.invoiceLink, async (status: string) => {
+        if (status === 'paid') {
+          try {
+            await api.payments.activateAmaUnlock(projectId)
+            await refetchSession()
+          } catch { /* ignore */ }
+        }
+        setAmaPaymentPending(false)
+      })
+    } catch {
+      setAmaPaymentPending(false)
+    }
+  }
 
   const sessionQuestions = useMemo(
     () => pickSessionQuestions(session?.sessionId),
@@ -157,7 +196,7 @@ export function AmaPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [session?.messages.length])
 
-  if (isLoading || !session) {
+  if (isLoading) {
     return (
       <ScreenBackground>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100dvh', color: colors.fairyGold, fontSize: '24px' }}>
@@ -167,6 +206,72 @@ export function AmaPage() {
     )
   }
 
+  // Сессии нет — показываем гейт оплаты
+  if (!session) {
+    return (
+      <ScreenBackground showSparkles={false}>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh' }}>
+          <div style={{
+            padding: `${spacing.md} ${spacing.lg}`,
+            background: 'rgba(10, 8, 24, 0.95)',
+            borderBottom: `1px solid ${colors.cardBorder}`,
+            display: 'flex', alignItems: 'center', gap: '8px',
+          }}>
+            <button
+              onClick={() => navigate(-1)}
+              style={{
+                background: `${colors.fairyGold}15`,
+                border: `1px solid ${colors.fairyGold}40`,
+                borderRadius: '10px',
+                color: colors.fairyGold, cursor: 'pointer',
+                padding: '6px 12px', fontSize: '13px', fontWeight: 600,
+              }}
+            >← Назад</button>
+            <div style={{ color: colors.textPrimary, fontSize: '14px', fontWeight: 600 }}>
+              {project?.developerName ?? 'Делец'}
+            </div>
+          </div>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: `${spacing.xxl} ${spacing.lg}`, gap: spacing.lg, textAlign: 'center' }}>
+            <div style={{ fontSize: '56px' }}>⭐</div>
+            <div style={{ color: colors.fairyGold, fontSize: '20px', fontWeight: 700 }}>
+              Личная беседа с {project?.developerName ?? 'дельцом'}
+            </div>
+            <div style={{ color: colors.textSecondary, fontSize: '13px', lineHeight: 1.6, maxWidth: '320px' }}>
+              Задай до 10 вопросов хозяину дела лично. Разведай правду, прояви чуйку и реши — вкладываться или нет.
+            </div>
+            <div style={{
+              background: `${colors.fairyGold}12`,
+              border: `1px solid ${colors.fairyGold}35`,
+              borderRadius: '14px',
+              padding: `${spacing.md} ${spacing.lg}`,
+              color: colors.textMuted,
+              fontSize: '12px',
+              lineHeight: 1.5,
+            }}>
+              Стоимость беседы: <strong style={{ color: colors.fairyGold }}>10 Telegram Stars</strong>
+            </div>
+            <button
+              onClick={handleAmaPayment}
+              disabled={amaPaymentPending}
+              style={{
+                width: '100%', maxWidth: '320px',
+                padding: `${spacing.md} ${spacing.lg}`,
+                background: `linear-gradient(135deg, #FFB800, #FF8C00)`,
+                border: 'none', borderRadius: '14px',
+                color: '#1a0a00', fontWeight: 700, fontSize: '16px',
+                cursor: amaPaymentPending ? 'not-allowed' : 'pointer',
+                opacity: amaPaymentPending ? 0.6 : 1,
+              }}
+            >
+              {amaPaymentPending ? 'Открываем оплату…' : '⭐ Начать беседу · 10 звёзд'}
+            </button>
+          </div>
+        </div>
+      </ScreenBackground>
+    )
+  }
+
+  const questionsLeft = 10 - session.questionCount
   return (
     <ScreenBackground showSparkles={false}>
       {/* Персонажный фон под слоем UI */}

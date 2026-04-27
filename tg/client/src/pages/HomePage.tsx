@@ -42,7 +42,8 @@ export function HomePage() {
   const [showResetConfirm, setShowResetConfirm] = useState(false)
   const [showDayNews, setShowDayNews] = useState(false)
   const [dayClosures, setDayClosures] = useState<ClosureSummaryDTO[]>([])
-  const [showAdStub, setShowAdStub] = useState(false)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [paymentPending, setPaymentPending] = useState(false)
   const [showTutorial, setShowTutorial] = useState(false)
   const [pendingChangelog, setPendingChangelog] = useState<ChangelogEntry | null>(null)
 
@@ -88,17 +89,46 @@ export function HomePage() {
     onError: () => tgHaptic?.notificationOccurred('error'),
   })
 
-  const skipAdMutation = useMutation({
-    mutationFn: api.game.advanceDaySkip,
-    onSuccess: (data) => {
-      tgHaptic?.notificationOccurred('success')
-      qc.invalidateQueries({ queryKey: ['gameState'] })
-      qc.invalidateQueries({ queryKey: ['updates'] })
-      setShowAdStub(false)
-      setDayClosures(data.closures ?? [])
-      setShowDayNews(true)
-    },
-  })
+  const handleTimerSkipPayment = async () => {
+    setPaymentPending(true)
+    try {
+      const resp = await api.payments.createInvoice('timer_skip') as any
+      if (!resp.invoiceLink) {
+        qc.invalidateQueries({ queryKey: ['gameState'] })
+        qc.invalidateQueries({ queryKey: ['updates'] })
+        setShowPaymentModal(false)
+        setDayClosures(resp.closures ?? [])
+        setShowDayNews(true)
+        tgHaptic?.notificationOccurred('success')
+        setPaymentPending(false)
+        return
+      }
+      const tgWebApp = (window as any).Telegram?.WebApp
+      if (!tgWebApp?.openInvoice) {
+        setPaymentPending(false)
+        return
+      }
+      tgWebApp.openInvoice(resp.invoiceLink, async (status: string) => {
+        if (status === 'paid') {
+          try {
+            const result = await api.payments.activateTimerSkip()
+            qc.invalidateQueries({ queryKey: ['gameState'] })
+            qc.invalidateQueries({ queryKey: ['updates'] })
+            setShowPaymentModal(false)
+            setDayClosures(result.closures ?? [])
+            setShowDayNews(true)
+            tgHaptic?.notificationOccurred('success')
+          } catch {
+            tgHaptic?.notificationOccurred('error')
+          }
+        }
+        setPaymentPending(false)
+      })
+    } catch {
+      tgHaptic?.notificationOccurred('error')
+      setPaymentPending(false)
+    }
+  }
 
   const updateModelMutation = useMutation({
     mutationFn: (model: string) => api.game.updateSettings(model),
@@ -356,6 +386,37 @@ export function HomePage() {
                 </button>
               </div>
 
+              {/* Правила · Отказ от ответственности */}
+              <div style={{ marginBottom: '24px' }}>
+                <div style={{ color: colors.textMuted, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Правила и ответственность
+                </div>
+                <div style={{
+                  padding: '14px 16px',
+                  background: 'rgba(255,255,255,0.04)',
+                  border: `1px solid ${colors.cardBorder}`,
+                  borderRadius: '12px',
+                  color: colors.textMuted,
+                  fontSize: '11px',
+                  lineHeight: 1.7,
+                }}>
+                  <strong style={{ color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>
+                    Из грязи в князи — симуляционная игра
+                  </strong>
+                  Все проекты, персонажи и события в игре <strong style={{ color: colors.textPrimary }}>вымышлены</strong> и не являются инвестиционными советами или рекомендациями. Любое сходство с реальными проектами или людьми случайно.
+                  <br /><br />
+                  Игровые рубли (₽) — внутриигровая валюта, не имеющая реальной стоимости.
+                  <br /><br />
+                  Платежи за дополнительные возможности (Telegram Stars) обрабатываются Telegram. Разработчик игры не хранит данные платёжных карт и не несёт ответственности за действия платёжной платформы.
+                  <br /><br />
+                  Разработчик не несёт ответственности за действия третьих лиц, сбои сети, а также за любые убытки, возникшие в результате использования приложения.
+                  <br /><br />
+                  Используя приложение, вы подтверждаете, что вам исполнилось 18 лет или имеется согласие родителей/опекунов.
+                  <br /><br />
+                  <span style={{ color: `${colors.fairyGold}90` }}>@vknyazi_bot · Версия {APP_VERSION}</span>
+                </div>
+              </div>
+
               {/* Danger zone */}
               <div>
                 <div style={{ color: colors.textMuted, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
@@ -456,6 +517,20 @@ export function HomePage() {
           }}>
             Из грязи в князи
           </div>
+          <div style={{
+            display: 'inline-block',
+            marginTop: '6px',
+            padding: '3px 10px',
+            background: `${colors.fairyGold}18`,
+            border: `1px solid ${colors.fairyGold}40`,
+            borderRadius: '12px',
+            color: colors.fairyGold,
+            fontSize: '10px',
+            fontWeight: 600,
+            letterSpacing: '0.03em',
+          }}>
+            🏆 Бета · с 1 мая — конкурс с призами
+          </div>
           <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
             ✦ День {gameState.currentDay} · {RANK_DISPLAY[gameState.investorRank] ?? gameState.investorRank} ✦
           </div>
@@ -536,15 +611,27 @@ export function HomePage() {
           </motion.div>
         )}
 
+        {/* Кнопка следующий день + кулдаун-таймер */}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
+          <NextDayButton
+            gameState={gameState}
+            now={now}
+            isPending={advanceMutation.isPending}
+            isError={advanceMutation.isError}
+            errorMessage={(advanceMutation.error as Error | undefined)?.message}
+            onAdvance={() => { tgHaptic?.impactOccurred('medium'); advanceMutation.mutate() }}
+            onWatchAd={() => setShowPaymentModal(true)}
+          />
+        </motion.div>
       </div>
 
-      {/* Заглушка рекламы для пропуска ожидания */}
+      {/* Модалка оплаты для пропуска ожидания */}
       <AnimatePresence>
-        {showAdStub && (
-          <AdStubOverlay
-            isPending={skipAdMutation.isPending}
-            onConfirm={() => skipAdMutation.mutate()}
-            onClose={() => setShowAdStub(false)}
+        {showPaymentModal && (
+          <StarsPaymentOverlay
+            isPending={paymentPending}
+            onConfirm={handleTimerSkipPayment}
+            onClose={() => setShowPaymentModal(false)}
           />
         )}
       </AnimatePresence>
@@ -555,7 +642,7 @@ export function HomePage() {
         now={now}
         isPending={advanceMutation.isPending}
         onAdvance={() => { tgHaptic?.impactOccurred('medium'); advanceMutation.mutate() }}
-        onWatchAd={() => setShowAdStub(true)}
+        onWatchAd={() => setShowPaymentModal(true)}
       />
     </ScreenBackground>
   )
@@ -698,7 +785,7 @@ function NextDayButton({
   // Подпись под кнопкой: только когда пачка уже начала расходоваться
   let subline: string | null = null
   if (!isPending) {
-    if (isLocked) subline = `Пачка дней исчерпана · смотри рекламу или жди ${formatRemaining(remainingMs)}`
+    if (isLocked) subline = `Пачка дней исчерпана · 10 ⭐ чтобы пропустить или жди ${formatRemaining(remainingMs)}`
     else if (usedConsec > 0 && remainingFreePresses > 0) {
       subline = `Быстрых переходов осталось: ${remainingFreePresses} из ${maxConsec}`
     }
@@ -748,7 +835,7 @@ function NextDayButton({
             cursor: 'pointer',
           }}
         >
-          📺 Посмотреть рекламу и пропустить ожидание
+          ⭐ 10 звёзд · пропустить ожидание
         </button>
       )}
       {isError && !isLocked && (
@@ -770,7 +857,7 @@ function formatRemaining(ms: number): string {
   return `${s}с`
 }
 
-function AdStubOverlay({
+function StarsPaymentOverlay({
   isPending, onConfirm, onClose,
 }: { isPending: boolean; onConfirm: () => void; onClose: () => void }) {
   return (
@@ -794,12 +881,12 @@ function AdStubOverlay({
           padding: spacing.xxl,
         }}
       >
-        <div style={{ fontSize: '40px', textAlign: 'center', marginBottom: spacing.md }}>📺</div>
+        <div style={{ fontSize: '40px', textAlign: 'center', marginBottom: spacing.md }}>⭐</div>
         <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '17px', textAlign: 'center', marginBottom: spacing.sm }}>
-          Реклама пока не подключена
+          Пропустить ожидание
         </div>
         <div style={{ color: colors.textSecondary, fontSize: '13px', textAlign: 'center', lineHeight: 1.5, marginBottom: spacing.lg }}>
-          Скоро здесь появится короткий ролик от партнёров. После него пачка быстрых дней снова наполнится. Пока что можем пропустить просто так — нажимай.
+          За <strong style={{ color: colors.fairyGold }}>10 Telegram Stars</strong> пачка быстрых дней наполнится прямо сейчас. Оплата через встроенный кошелёк Telegram.
         </div>
         <button
           onClick={onConfirm}
@@ -807,10 +894,10 @@ function AdStubOverlay({
           style={{
             width: '100%',
             padding: spacing.md,
-            background: colors.fairyGold,
+            background: `linear-gradient(135deg, #FFB800, #FF8C00)`,
             border: 'none',
             borderRadius: '12px',
-            color: colors.nightBlue,
+            color: '#1a0a00',
             fontWeight: 700,
             fontSize: '15px',
             cursor: 'pointer',
@@ -818,7 +905,7 @@ function AdStubOverlay({
             marginBottom: spacing.sm,
           }}
         >
-          {isPending ? 'Пропускаем…' : '🌅 Пропустить ожидание'}
+          {isPending ? 'Открываем оплату…' : '⭐ Заплатить 10 звёзд'}
         </button>
         <button
           onClick={onClose}

@@ -293,4 +293,13 @@ export const api = {
     claimChannel: (taskId: string) =>
       apiClient.post<{ success: boolean; rewardRubles: number }>(`/tasks/channels/${taskId}/claim`).then(r => r.data),
   },
+
+  payments: {
+    createInvoice: (feature: 'timer_skip' | 'ama_unlock', projectId?: string, merchantName?: string) =>
+      apiClient.post<{ invoiceLink: string }>('/payments/invoice', { feature, projectId, merchantName }).then(r => r.data),
+    activateTimerSkip: () =>
+      apiClient.post<AdvanceDayResultDTO>('/payments/activate', { feature: 'timer_skip' }).then(r => r.data),
+    activateAmaUnlock: (projectId: string) =>
+      apiClient.post<{ success: boolean }>('/payments/activate', { feature: 'ama_unlock', projectId }).then(r => r.data),
+  },
 }
