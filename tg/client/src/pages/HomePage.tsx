@@ -680,6 +680,8 @@ function NextDayFab({
 
   const maxConsec = gameState.maxConsecutiveAdvances ?? 7
   const usedConsec = gameState.consecutiveAdvances ?? 0
+  const WEEK_DAYS = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
+  const currentDayName = usedConsec > 0 ? WEEK_DAYS[Math.min(usedConsec, maxConsec) - 1] : null
 
   return (
     <div style={{
@@ -693,15 +695,13 @@ function NextDayFab({
       alignItems: 'center',
       gap: '4px',
     }}>
-      {usedConsec > 0 && (
+      {currentDayName && (
         <div style={{
           color: isLocked ? `${colors.fairyGold}80` : colors.textMuted,
           fontSize: '10px',
           whiteSpace: 'nowrap',
         }}>
-          {isLocked
-            ? `Пачка исчерпана · ${maxConsec} из ${maxConsec} дней`
-            : `Быстрых дней осталось: ${maxConsec - usedConsec} из ${maxConsec}`}
+          {currentDayName}
         </div>
       )}
       <motion.button
