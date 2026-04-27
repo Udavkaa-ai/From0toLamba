@@ -1,276 +1,168 @@
-# CLAUDE.md — «Из грязи в князи»
-> Симулятор купца-инвестора в сказочной Руси. Telegram Mini App + (изначально) Android-приложение.
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ---
 
-## Состояние проекта
+## Суть проекта
 
-**Активная версия:** Telegram Mini App (`tg/`) — v2.2.0
-**Android:** код в `app/`, разработка заморожена — всё усилие на TG-версию
-**Ветка разработки:** `claude/telegram-game-migration-FDnlX`
+«Из грязи в князи» — Telegram Mini App, симулятор купца-инвестора в сказочной Руси. Игрок вкладывает рубли (₽) в «дела» (аналоги крипто-проектов), большинство из которых обман. Ключевая механика — **«Купеческая грамота»**: мини-игра на внимательность (24 SVG-печати, ищем подделки за 15 сек).
 
----
-
-## Суть игры
-
-Мобильная игра — симулятор инвестора в сказочной Руси. Игрок вкладывает рубли (₽) в «дела» (аналоги крипто-проектов), большинство из которых обман. Ключевая механика — **«Купеческая грамота»**: мини-игра на внимательность. Перед принятием решения о вложении игрок изучает свиток с 24 печатями и ищет подделки. Чем больше лжи в деле — тем больше подделок в грамоте. Число подделок и тонкость мутаций определяются судьбой проекта. AI-чат с хозяином — развлекательная болтовня в характере персонажа (открывается из грамоты; в будущем — за просмотр рекламы).
-
-- **Стартовый баланс:** 0 ₽ → онбординг-бонус ~50 ₽
-- **Валюта:** рубли (₽), отображать `"%.0f ₽"`
-- **Архетип хозяина** виден игроку (через арт-фон беседы и в DTO проекта); судьба и реальные параметры — по-прежнему скрыты до PostMortem
+- **Активная версия:** `tg/` — v2.8.1. `app/` (Android) — заморожен.
+- **Валюта:** рубли (₽), отображать `"%.0f ₽"`.
+- **Архетип хозяина** (`personaArchetype`) публичный — нужен клиенту для баннера/беседы. Все остальные скрытые поля до PostMortem — через `toPublicDTO()`.
 
 ---
 
-## Архитектура Telegram Mini App (`tg/`)
+## Команды разработки
+
+```bash
+# Сервер (порт 3000)
+cd tg/server
+npm install && cp .env.example .env   # первый раз
+npm run dev          # tsx watch src/index.ts
+
+# Клиент (порт 5173, proxy /api → :3000)
+cd tg/client
+npm install
+npm run dev
+
+# Сборка клиента (outDir = ../server/public — НЕ коммитить)
+cd tg/client && npm run build
+
+# Prisma
+cd tg/server
+npm run db:push      # применить изменения схемы
+npm run db:studio    # GUI для БД в браузере
+```
+
+Нет тестов. Нет линтера. TypeScript проверяется при `npm run build`.
+
+---
+
+## Архитектура `tg/`
 
 ```
 tg/
-├── client/          # React + TypeScript + Vite + MUI
-│   └── src/
-│       ├── api/client.ts          # Все HTTP-запросы к серверу
-│       ├── stores/gameStore.ts    # Zustand-стор (gameState, проекты)
-│       ├── pages/                 # HomePage, InboxPage, CharterPage, AmaPage, PortfolioPage, StatsPage
-│       │                          # LeaderboardPage, RegistryPage
-│       ├── components/            # FairyCard, ScreenBackground, SparklesOverlay, BottomNav, RankUpOverlay, Seal
-│       └── theme/colors.ts        # FairyGold, EnchantedPurple, NightBlue
-└── server/          # Fastify + TypeScript + Prisma + PostgreSQL
-    └── src/
-        ├── index.ts               # Точка входа, регистрация плагинов и роутов
-        ├── api/routes/
-        │   ├── game.ts            # /api/game, /advance-day, /settings, /reset, /leaderboard, /version
-        │   ├── projects.ts        # /api/projects/inbox, /portfolio, /updates, /skip
-        │   ├── ama.ts             # /api/ama/:id/start|message — развлекательная болтовня с хозяином
-        │   ├── charter.ts         # /api/charter/:id/start|submit — мини-игра «Грамота»
-        │   ├── invest.ts          # /api/invest/:id (invest/add/withdraw/exit)
-        │   └── banner.ts          # /api/banner/:id — прокси к Pollinations с приватным ключом
-        ├── game/
-        │   ├── types.ts           # Все энамы + FATE_CONFIG + WITHDRAWAL_RULES + ProjectPublicDTO
-        │   ├── GenerateProjectService.ts  # AI-генерация нового дела + баннер Pollinations.ai
-        │   ├── AmaSessionService.ts       # Чат с хозяином — развлекательная болтовня в характере
-        │   ├── CharterService.ts          # Мини-игра «Купеческая грамота» (основная механика чуйки)
-        │   ├── AdvanceDayService.ts       # Ежедневный цикл + история
-        │   ├── InvestService.ts           # Вложить/довложить/вывести/выйти + PostMortem при выходе
-        │   ├── projectUtils.ts            # toPublicDTO (убирает скрытые поля)
-        │   └── rankService.ts             # computeRank()
-        ├── ai/openRouterClient.ts  # Запросы к OpenRouter (DeepSeek v4 Flash) + generateProjectBanner
-        ├── bot/bot.ts              # Grammy Telegram bot
-        ├── scheduler/dailyJob.ts   # node-cron — advance-day в 09:00 MSK + уведомления о доступности нового дня каждые 5 мин
-        ├── middleware/telegramAuth.ts  # Верификация X-Telegram-Init-Data
-        └── db/prisma.ts            # PrismaClient singleton
-    └── prisma/schema.prisma        # Полная схема БД
-    └── .gitignore                  # Исключает public/ (сборка клиента — не коммитить!)
+├── client/src/
+│   ├── api/client.ts          # все HTTP-запросы; типы ProjectDTO, PostMortemDTO и т.д.
+│   ├── stores/gameStore.ts    # Zustand — gameState + проекты
+│   ├── pages/                 # по одному файлу на экран
+│   ├── components/
+│   │   ├── ScreenBackground.tsx  # фоновые изображения + версионирование + PAGE_BG + homeBackground()
+│   │   ├── Seal.tsx              # процедурная SVG-печать (6 параметров, детерминирована из seed)
+│   │   ├── FairyCard.tsx         # базовая карточка + OrnamentDivider + SkeletonCard
+│   │   └── BottomNav.tsx         # нижняя навигация
+│   └── theme/colors.ts        # FairyGold #FFB800 · EnchantedPurple #2A1960 · NightBlue #0D1735
+└── server/src/
+    ├── index.ts               # точка входа: регистрация плагинов, роутов, статики
+    ├── api/routes/            # game · projects · ama · charter · invest · banner
+    ├── game/
+    │   ├── types.ts           # все enum + FATE_CONFIG + WITHDRAWAL_RULES
+    │   ├── GenerateProjectService.ts
+    │   ├── CharterService.ts  # основная механика — forgedIndices только на сервере
+    │   ├── AdvanceDayService.ts
+    │   ├── InvestService.ts
+    │   ├── AmaSessionService.ts
+    │   ├── projectUtils.ts    # toPublicDTO() — фильтр скрытых полей
+    │   └── rankService.ts     # recomputeRank(userId)
+    ├── ai/openRouterClient.ts # OpenRouter + staticBannerFilename()
+    ├── bot/bot.ts             # Grammy бот
+    ├── scheduler/dailyJob.ts  # cron advance-day 09:00 MSK + уведомления каждые 5 мин
+    ├── middleware/telegramAuth.ts
+    └── db/prisma.ts           # PrismaClient singleton
 ```
 
----
-
-## API Reference
-
-Все запросы требуют заголовок `X-Telegram-Init-Data` (Telegram.WebApp.initData).
-
-### Game
-| Метод | Путь | Описание |
-|---|---|---|
-| GET | `/api/game` | Получить gameState + все проекты пользователя |
-| POST | `/api/game/advance-day` | Прокрутить день вперёд (429 + `secondsRemaining` если кулдаун 2ч ещё не истёк) |
-| POST | `/api/game/advance-day-skip` | Заглушка «посмотрел рекламу» — пропускает кулдаун |
-| POST | `/api/game/clear-rank-up` | Очистить pendingRankUp после показа поздравления |
-| POST | `/api/game/complete-onboarding` | Завершить онбординг (начисляет бонус ~50 ₽) |
-| GET | `/api/game/settings` | Получить настройки (preferredModel) |
-| POST | `/api/game/settings` | Обновить настройки |
-| POST | `/api/game/reset` | Сбросить весь прогресс |
-| GET | `/api/leaderboard` | Топ-100 игроков по totalWealth (без initData) |
-| GET | `/api/version` | Текущая версия приложения (без initData) |
-
-### Projects
-| Метод | Путь | Описание |
-|---|---|---|
-| GET | `/api/projects/inbox` | Входящие предложения |
-| GET | `/api/projects/portfolio` | Активные + закрытые дела |
-| GET | `/api/projects/:id/updates` | Ежедневные вести по делу |
-| POST | `/api/projects/:id/skip` | Миновать (удалить из inbox) |
-
-### Charter (купеческая грамота — основная механика чуйки)
-| Метод | Путь | Описание |
-|---|---|---|
-| POST | `/api/charter/:projectId/start` | Создать/вернуть сессию-грамоту (генерит сетку 24 печати + скрытые индексы подделок) |
-| GET | `/api/charter/:projectId` | Получить состояние (до сабмита — только seed/gridSize/difficulty; после — с разбором) |
-| POST | `/api/charter/:projectId/submit` | Сабмит выбранных индексов, оценка чуйки (одноразово) |
-
-### AMA (вторичный чат — развлекательная болтовня в характере, в будущем за просмотр рекламы)
-| Метод | Путь | Описание |
-|---|---|---|
-| POST | `/api/ama/:projectId/start` | Начать сессию беседы |
-| GET | `/api/ama/:projectId` | Получить историю сессии |
-| POST | `/api/ama/:projectId/message` | Отправить вопрос, получить ответ AI |
-| POST | `/api/ama/:projectId/evaluate-intuition` | Старый путь оценки чуйки. Сервер ещё держит — клиент не вызывает; не использовать в новом UI |
-
-### Invest
-| Метод | Путь | Описание |
-|---|---|---|
-| POST | `/api/invest/:projectId` | Первое вложение |
-| POST | `/api/invest/:projectId/add` | Довложить (max 5000 ₽, не при заблокированном выводе) |
-| POST | `/api/invest/:projectId/withdraw` | Частичный вывод |
-| POST | `/api/invest/:projectId/exit` | Выйти из дела полностью (запускает PostMortem async) |
-
-### Banner (прокси к Pollinations.ai)
-| Метод | Путь | Описание |
-|---|---|---|
-| GET | `/api/banner/:projectId` | Стримит баннер дела с Pollinations через приватный ключ. Public, кеш 24ч. |
+**Статика в `index.ts`:**
+- `/banners/*` → `assets/banners/` — предгенерированные WebP-баннеры персонажей
+- `/backgrounds/*` → `assets/backgrounds/` — фоновые изображения страниц
+- Оба регистрируются с `decorateReply: false` из-за множественных `@fastify/static`
 
 ---
 
-## База данных (Prisma + PostgreSQL)
+## Доменные типы
 
-Схема: `tg/server/prisma/schema.prisma`
-
-**Таблицы:** `User`, `GameState`, `Project`, `AmaSession`, `AmaMessage`, `DailyUpdate`, `PostMortem`, `Transaction`, `AdRevenue`
-
-**КРИТИЧНО — скрытые поля `Project`:**
-`fate`, `daysUntilCollapse`, `realDailyYieldRubles`, `lieTopics`, `truthTopics`, `npcTruthParams` — **НИКОГДА** не отдавать клиенту напрямую. Использовать `toPublicDTO()` из `projectUtils.ts`. (`personaArchetype` теперь публичный — нужен клиенту для арт-фона беседы.)
-
-**Поля истории для графиков:** `valueHistory`, `userCountHistory`, `apyHistory` — массивы последних 30 дней, обновляются в `AdvanceDayService`.
-
----
-
-## Доменные типы (`tg/server/src/game/types.ts`)
-
-```typescript
+```
 ProjectType:      CARD_GAME | TREASURE_HUNT | POTION_BREW | GUILD_SCHEME | HONEST_TRADE
 ProjectFate:      INSTANT_SCAM(25%) | SLOW_DRAIN(30%) | HONEST_FAIL(15%) | SURVIVOR(25%) | UNICORN(5%)
 PersonaArchetype: BURATINO | BOYARIN | KOLOBOK | KOSCHEI | ZOLUSHKA | BABA_YAGA | IVAN_DURAK
-LieTopic:         PATRON_COUNT | DAILY_PROFIT | PAYOUT_DATE | GUILD_SIZE | ELDER_BLESSING | NOBLE_BACKING | WITHDRAWAL_LIMITS
-InvestorRank:     NEWBIE (старт) → AMBASSADOR (100 ₽ + чуйка 10) → ANALYST (1 000 ₽ + чуйка 50) → SHARK (3 000 ₽ + чуйка 100) → LAMBO_SENSEI (10 000 ₽ + чуйка 300)
+InvestorRank:     NEWBIE → AMBASSADOR → ANALYST → SHARK → LAMBO_SENSEI
 ```
 
-Правила вывода (`WITHDRAWAL_RULES`):
-- `POTION_BREW`, `GUILD_SCHEME`: max 25% от вложенного
+**Правила вывода** (`WITHDRAWAL_RULES` в `types.ts`):
+- `POTION_BREW`, `GUILD_SCHEME`: max `Math.floor(currentValueRubles × 0.25)` за раз
 - `CARD_GAME`, `TREASURE_HUNT`: любая сумма, −25% комиссия
 - `HONEST_TRADE`: без ограничений и без комиссии
 
 ---
 
+## Баннеры и фоны
+
+**Баннеры персонажей** — статические WebP, лежат в `tools/banners/output_realistic/` и копируются в Docker-образ. Имя файла: `<ARCHETYPE>_<TYPE>_<NN>.webp`, вариант детерминирован по projectId:
+
+```typescript
+// в openRouterClient.ts
+const hash = parseInt(projectId.replace(/-/g, '').slice(-8), 16)
+const variant = (hash % 5) + 1   // 1..5
+```
+
+`/api/banner/:id` (legacy URL в БД) делает 301 redirect на `/banners/{filename}`.
+
+Маппинг архетип→папку: `BOYARIN` → `TSAR_GOROKH` (в `ARCHETYPE_TO_BANNER` в `openRouterClient.ts`).
+
+**Фоновые изображения** — `tools/banners/output_backgrounds/`, 7 вариантов главной (`HOME_01..07`) + 5 страничных (`BG_INBOX`, `BG_PORTFOLIO`, `BG_STATS`, `BG_LEADERBOARD`, `BG_REGISTRY`).
+
+```typescript
+// ScreenBackground.tsx
+homeBackground(currentDay)  // меняется каждые 7 дней: Math.floor(day/7) % 7 + 1
+PAGE_BG.portfolio           // '/backgrounds/BG_PORTFOLIO.webp'
+```
+
+---
+
+## Механика «Купеческой грамоты»
+
+- Сетка 4×6 = 24 печати; таймер 15 сек, по истечении — автосабмит
+- Число подделок: `lieTopics.length + extra(fate)` (INSTANT_SCAM +2, SLOW_DRAIN +1)
+- Difficulty: EASY (INSTANT_SCAM/HONEST_FAIL) → радикальная мутация; MEDIUM (SLOW_DRAIN) → похожий зверь/цвет; HARD (SURVIVOR/UNICORN) → ±точки розетки, сдвиг тона ±20°
+- Формула чуйки: `delta = TP − FP − 2·FN` + бонус `+2` за верно опознанную чистую грамоту
+- `forgedIndices` **никогда** не покидают сервер до сабмита (хранятся в `AmaSession`)
+
+---
+
 ## AI-интеграция
 
-- **Провайдер:** OpenRouter (`https://openrouter.ai/api/v1/`)
-- **Модели:** `deepseek/deepseek-v4-flash` (по умолчанию, платная, но дешёвая и быстрая) и `google/gemini-3.1-flash-lite-preview`. Меняется в настройках через `preferredModel`. Старые модели (DeepSeek v3, Gemma 4 free, Qwen free) автоматически мигрируются на v4-flash при входе. Используется `response_format: { type: 'json_object' }` — DeepSeek его поддерживает корректно
-- **Клиент:** `tg/server/src/ai/openRouterClient.ts`
-- **Функции:** `generateAmaResponse`, `generateProjectName`, `generateDailyUpdate`, `generatePostMortem`, `generateProjectBanner`
-
-**Баннеры дел:** генерируются через Pollinations.ai (модель `flux` по умолчанию). Запрос идёт через **прокси-эндпоинт `GET /api/banner/:projectId`** — сервер хранит в БД только указатель `/api/banner/<id>`, а сам Pollinations-URL и заголовок `Authorization: Bearer ${POLLINATIONS_API_KEY}` подмешивает на лету. Seed детерминирован по projectId, prompt — по `type + personaArchetype` (см. `pollinationsImageUrl()` в `openRouterClient.ts`). Без `POLLINATIONS_API_KEY` прокси работает анонимно (медленнее, без приоритета). Старые прямые Pollinations-URL в БД игнорируются — `toPublicDTO` всегда отдаёт прокси-URL.
-
-**Язык ответов AI:** современный живой русский. Без нарочитого старорусского. Народные присказки — изредка. Все суммы в рублях. Без слов «блокчейн», «крипто», «TON».
+- **Провайдер:** OpenRouter, клиент в `openRouterClient.ts`
+- **Модели:** `deepseek/deepseek-v4-flash` (дефолт) и `google/gemini-3.1-flash-lite-preview`; меняется через `preferredModel` в настройках. Старые модели авто-мигрируются на v4-flash при входе
+- **Формат:** `response_format: { type: 'json_object' }` (DeepSeek поддерживает корректно)
+- **Язык ответов:** современный живой русский, без «блокчейна», «крипто», «TON»
+- AI вызывается только через `openRouterClient.ts`, не из роутов напрямую
 
 ---
 
-## Деплой
-
-**Хостинг: Railway** (`https://railway.app`)
-- Сервис: `From0toLamba` — деплой из GitHub `udavkaa-ai/from0tolamba`, Dockerfile в корне
-- БД: PostgreSQL-сервис на Railway, `DATABASE_URL` прокинут через `${{Postgres.DATABASE_URL}}`
-- Домен: `https://from0tolamba-production.up.railway.app`
-- Бот: `@vknyazi_bot`
-
-При деплое Railway сам собирает Docker-образ. При старте контейнера автоматически:
-1. `prisma db push --accept-data-loss` — синхронизирует схему БД
-2. `tsx src/index.ts` — запускает сервер
-
-- `NODE_ENV=production`: webhook Telegram + cron на 21:00 MSK
-- `NODE_ENV=development`: long polling бота
-
-**ВАЖНО:** `tg/server/public/` в `.gitignore` — никогда не коммитить сборку клиента. Docker сам собирает клиент и копирует в нужное место.
-
----
-
-## Переменные окружения (Railway → Variables)
-
-```
-DATABASE_URL          ${{Postgres.DATABASE_URL}}   ← ссылка на Railway Postgres
-TELEGRAM_BOT_TOKEN    123456:ABC...
-MINI_APP_URL          https://from0tolamba-production.up.railway.app
-OPENROUTER_API_KEY    sk-or-...
-POLLINATIONS_API_KEY  sk_iQk...   ← опционально, без него — анонимный режим
-POLLINATIONS_MODEL    flux        ← модель image-API (flux | flux-realism | turbo | …)
-NODE_ENV              production
-```
-
----
-
-## Локальная разработка
-
-```bash
-# Сервер
-cd tg/server && npm install && cp .env.example .env
-# (заполнить .env)
-npm run dev    # tsx watch src/index.ts
-
-# Клиент
-cd tg/client && npm install
-npm run dev    # Vite :5173 → proxy /api → :3000
-
-# Сборка клиента для production
-npm run build  # outDir = ../server/public  (не коммитить!)
-```
-
----
-
-## Экономика игры
+## Экономика
 
 | Параметр | Значение |
 |---|---|
-| Стартовый баланс | 0 ₽ |
-| Онбординг-бонус | ~50 ₽ |
-| Мин. вложение | 5 ₽ |
-| Макс. вложение | 5 000 ₽ на дело |
+| Стартовый баланс | 0 ₽ → онбординг-бонус ~50 ₽ |
+| Мин./макс. вложение | 5 ₽ / 5 000 ₽ на дело |
 | Активных дел | max 10 |
-| Кулдаун между днями | 7 «быстрых» переходов подряд — без ожидания; после 7-го кнопка блокируется на 2 часа. Крон шлёт уведомление в бот, заглушка «посмотреть рекламу» сбрасывает пачку и открывает ещё 7 быстрых дней |
-| Доходность SURVIVOR | 1.5–7.5% в день, 15–30 дней жизни |
-| Доходность UNICORN (Жар-птица) | 10–50% в день, 20–30 дней жизни |
-| Доходность INSTANT_SCAM | приманка 5–20% в день, 2–5 дней, исчезает со 100% денег и БЕЗ предупреждений (ни вестей, ни блокировки вывода, ни оттока вкладчиков) |
-| Доходность SLOW_DRAIN | 1.5–7.5% в день, 7–21 день, теряет 30–70%; за 2 дня до конца блокирует вывод и шлёт DELAYED-вести |
-| Потеря HONEST_FAIL | 10–40% |
+| Кулдаун дней | 7 быстрых подряд → блокировка 2 ч; «реклама» сбрасывает пачку |
+| SURVIVOR | 1.5–7.5%/день, 15–30 дней |
+| UNICORN | 10–50%/день, 20–30 дней |
+| INSTANT_SCAM | 5–20%/день, 2–5 дней, исчезает без предупреждений со 100% средств |
+| SLOW_DRAIN | 1.5–7.5%/день, 7–21 день, −30–70%; за 2 дня блокирует вывод + DELAYED-вести |
 
-`state.balance` — только свободные рубли. Доход копится в `project.currentValueRubles` до вывода/выхода.
-`computeRank()` использует: `totalWealth = balance + Σ activeProjects.currentValueRubles`, `intuitionScore`, `currentDay`.
-
-Успешные дела (SURVIVOR, UNICORN) закрываются по истечении срока с нарративной причиной «дело сменило владельца» — случайная фраза из массива `HANDOVER_REASONS_*` в `AdvanceDayService.ts`.
-
----
-
-## Страницы клиента
-
-| Страница | Файл | Назначение |
-|---|---|---|
-| Главная | `HomePage.tsx` | Баланс, активные дела (с новостями и «Довложить»), «Следующий день» |
-| Входящие | `InboxPage.tsx` | Новые предложения из inbox (ведут на `/charter/:id`) |
-| Грамота | `CharterPage.tsx` | Мини-игра «Купеческая грамота»: эталон → 24 печати → разбор → чуйка. Основной путь оценки лжи |
-| Беседа | `AmaPage.tsx` | Развлекательная болтовня с хозяином в характере (фон по архетипу из `/personas/*.png`). Открывается из CharterPage. В будущем — за просмотр рекламы |
-| Казна | `PortfolioPage.tsx` | Активные дела: графики (Recharts), вести, довложить/вывести/выйти; ссылка на Летопись |
-| Успехи | `StatsPage.tsx` | Статистика, ранг, история баланса |
-| Рейтинг | `LeaderboardPage.tsx` | Топ-100 игроков по состоянию, текущий игрок выделен |
-| Летопись | `RegistryPage.tsx` | Все закрытые дела: архетип, PostMortem, баннер, статистика |
-
-### Мини-игра «Купеческая грамота»
-
-- **Сетка:** 4 × 6 = 24 печати
-- **Таймер:** 15 секунд на поиск, по истечении автосабмит текущего выбора
-- **Число подделок:** `lieTopics.length + extra(fate)` (INSTANT_SCAM +2, SLOW_DRAIN +1, прочие 0)
-- **Difficulty (сила мутации):**
-  - `EASY` (INSTANT_SCAM, HONEST_FAIL) — силуэт меняется радикально: форма, число колец, класс эмблемы (зверь↔знак)
-  - `MEDIUM` (SLOW_DRAIN) — подмена зверя на похожего (fish↔falcon, bear↔wolf) или смена цвета по палитре (gold→bronze)
-  - `HARD` (SURVIVOR, UNICORN) — количество точек розетки (4↔8, через одну), малый сдвиг тона (±20°)
-- **Динамика:** все клетки в сетке крутятся в режиме поиска (CSS-анимация `sealSpin` 18с/круг со сдвигом фазы на каждую клетку) — это создаёт визуальный шум и усложняет сопоставление. В фазе разбора вращение замораживается
-- **Чистая грамота:** если `fate ∈ {SURVIVOR, UNICORN}` и у дела мало `lieTopics` — подделок может быть 0. Если игрок никого не тапнул и подделок действительно не было — `delta = +2` (верно опознал честность)
-- **Формула чуйки:** `delta = TP − FP − 2·FN` (без clamp) + бонус `+2` за чистую грамоту (0 подделок, игрок никого не отметил). Применяется к `gameState.intuitionScore` при сабмите. Пропущенная подделка стоит дороже ошибки — поощряем внимательность
-- **Генерация печати:** процедурная SVG-компонента `Seal.tsx`, 6 параметров (форма / цвет / кольца / ободок / точки / эмблема), всё деривируется из `gridSeed` детерминированно. Эмблемы: 6 зверей (медведь, волк, олень, сокол, кабан, рыба) + 4 знака (якорь, ключ, перо, подкова) = 10 вариантов
-- **Безопасность:** `forgedIndices` хранятся в `AmaSession` и НИКОГДА не отдаются клиенту до сабмита
+`state.balance` — только свободные ₽. Доход копится в `project.currentValueRubles`.
+`computeRank()` = `totalWealth = balance + Σ activeProjects.currentValueRubles` + intuitionScore + currentDay.
 
 ---
 
 ## Версионирование и кэш
 
-Клиент содержит константу `APP_VERSION` в `ScreenBackground.tsx`. При каждом монтировании компонента делается запрос к `/api/version`. Если версии расходятся — `window.location.reload()`.
+`APP_VERSION` сверяется при каждом монтировании `ScreenBackground` — при расхождении с `/api/version` делается `window.location.reload()`.
 
-При обновлении версии менять **в двух местах одновременно**:
+**При обновлении версии менять одновременно в двух местах:**
 1. `tg/client/src/components/ScreenBackground.tsx` — константа `APP_VERSION`
 2. `tg/server/src/index.ts` — обработчик `GET /api/version`
 
@@ -278,27 +170,54 @@ npm run build  # outDir = ../server/public  (не коммитить!)
 
 ## Ключевые правила
 
-- Скрытые поля проекта — никогда в клиент до закрытия. Только `toPublicDTO()`
-- AI вызывается только через `openRouterClient.ts`, не из роутов напрямую
-- Ранг пересчитывает `recomputeRank(userId)` из `rankService.ts`. Вызывается в `AdvanceDayService`, после сабмита грамоты (`CharterService`) и после выхода из дела (`InvestService.exitProject`). При обычных вложениях/довложениях/частичных выводах — не трогаем (прокачку «покупкой» не хотим)
-- При закрытии дела — генерировать `PostMortem` с раскрытием архетипа
-- При выходе игрока (`exitProject`) — вызывать `generatePostMortem` асинхронно (`.catch(console.error)`)
-- `tg/server/public/` — **не коммитить**. Он в `.gitignore`
-- Тёмная тема — основная. Язык UI — русский
+- Скрытые поля проекта — только через `toPublicDTO()`, никогда напрямую
+- `recomputeRank(userId)` вызывать после: сабмита грамоты, выхода из дела, advance-day. **Не** при вложениях/выводах
+- `generatePostMortem` при `exitProject` — асинхронно (`.catch(console.error)`)
+- `tg/server/public/` — в `.gitignore`, не коммитить
+- Тёмная тема. UI на русском. UI-словарь: вложить / купеческий чин / покинуть дело / посул (APY) / летопись / ярмарочный рейтинг
 
 ---
 
-## UI-словарь
+## Деплой (Railway)
 
-| Обычное слово | В UI |
-|---|---|
-| инвестировать | вложить |
-| ранг инвестора | купеческий чин |
-| выйти из проекта | покинуть дело |
-| заявленный APY | посул (APY) |
-| управление инвестицией | распорядиться вложением |
-| архив закрытых дел | летопись |
-| таблица лидеров | ярмарочный рейтинг |
+- Репо: `udavkaa-ai/from0tolamba`, Dockerfile в корне
+- Домен: `https://from0tolamba-production.up.railway.app`, бот: `@vknyazi_bot`
+- При старте контейнера: `prisma db push --accept-data-loss` → `tsx src/index.ts`
+- `NODE_ENV=production`: Telegram webhook + cron 09:00 MSK
+- `NODE_ENV=development`: long polling бота
+
+**Переменные окружения:**
+```
+DATABASE_URL          ${{Postgres.DATABASE_URL}}
+TELEGRAM_BOT_TOKEN
+MINI_APP_URL          https://from0tolamba-production.up.railway.app
+OPENROUTER_API_KEY    sk-or-...
+POLLINATIONS_API_KEY  (опционально, legacy)
+NODE_ENV              production
+```
+
+---
+
+## Генерация изображений (`tools/banners/`)
+
+Инструменты для пересборки статики (нужен Google Cloud / Vertex AI):
+
+```bash
+pip install google-genai pillow
+
+# Баннеры персонажей (175 шт, 7 арх × 5 типов × 5 вариантов)
+python generate_vertex.py --project <GCP_PROJECT> --style realistic
+python generate_vertex.py --project ... --sample 10   # тест 10 штук
+python compress.py --inplace output_realistic/        # PNG→WebP, quality=85
+
+# Фоновые изображения страниц (12 шт)
+python generate_backgrounds.py --project <GCP_PROJECT>
+python compress.py --inplace output_backgrounds/
+
+# После генерации — добавить в git и задеплоить (Docker сам копирует в образ)
+```
+
+Конфигурация описаний: `characters.json` (7 арх × 5 вариантов), `deals.json`, `backgrounds.json`.
 
 ---
 
@@ -307,15 +226,5 @@ npm run build  # outDir = ../server/public  (не коммитить!)
 | Задача | Где |
 |---|---|
 | Push-уведомления через бота | `bot/bot.ts` |
-| Экран «Вести с ярмарки» (News) | новая страница клиента |
+| Экран «Вести с ярмарки» (News feed) | новая страница клиента |
 | Admin-панель с AdRevenue | отдельный роут/сервис |
-
----
-
-## Цвета темы
-
-```typescript
-FairyGold       = #FFB800  // золото — акценты, заголовки
-EnchantedPurple = #2A1960  // тёмно-фиолетовый — верх карточек
-NightBlue       = #0D1735  // тёмно-синий — низ карточек, фон
-```
