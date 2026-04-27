@@ -732,7 +732,7 @@ function NextDayFab({
             whiteSpace: 'nowrap',
           }}
         >
-          📺 Пропустить за рекламу
+          ⭐ 10 звёзд · пропустить
         </motion.button>
       )}
     </div>
