@@ -210,6 +210,7 @@ export interface AmaSessionDTO {
   isIntuitionEvaluated: boolean
   selectedLieTopics: string[]
   intuitionDelta: number
+  developerName: string | null
   messages: Array<{ role: string; content: string; createdAt: string }>
 }
 
