@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 «Из грязи в князи» — Telegram Mini App, симулятор купца-инвестора в сказочной Руси. Игрок вкладывает рубли (₽) в «дела» (аналоги крипто-проектов), большинство из которых обман. Ключевая механика — **«Купеческая грамота»**: мини-игра на внимательность (24 SVG-печати, ищем подделки за 15 сек).
 
-- **Активная версия:** `tg/` — v2.8.1. `app/` (Android) — заморожен.
+- **Активная версия:** `tg/` — v2.9.0. `app/` (Android) — заморожен.
 - **Валюта:** рубли (₽), отображать `"%.0f ₽"`.
 - **Архетип хозяина** (`personaArchetype`) публичный — нужен клиенту для баннера/беседы. Все остальные скрытые поля до PostMortem — через `toPublicDTO()`.
 
@@ -56,7 +56,7 @@ tg/
 │   └── theme/colors.ts        # FairyGold #FFB800 · EnchantedPurple #2A1960 · NightBlue #0D1735
 └── server/src/
     ├── index.ts               # точка входа: регистрация плагинов, роутов, статики
-    ├── api/routes/            # game · projects · ama · charter · invest · banner
+    ├── api/routes/            # game · projects · ama · charter · invest · banner · payments · tasks
     ├── game/
     │   ├── types.ts           # все enum + FATE_CONFIG + WITHDRAWAL_RULES
     │   ├── GenerateProjectService.ts
@@ -65,7 +65,11 @@ tg/
     │   ├── InvestService.ts
     │   ├── AmaSessionService.ts
     │   ├── projectUtils.ts    # toPublicDTO() — фильтр скрытых полей
-    │   └── rankService.ts     # recomputeRank(userId)
+    │   ├── rankService.ts     # recomputeRank(userId)
+    │   ├── referralService.ts # tryAttachReferrer + countReferrals; бонус 100 ₽ обоим
+    │   ├── weeklyService.ts   # ensureWeekStartSnapshot — снимок состояния на начало недели
+    │   ├── mafiaOffers.ts     # «мафиозные» принудительные выкупы за 50% при закрытии
+    │   └── randomEvents.ts    # случайные события NEGATIVE/POSITIVE/NEUTRAL при advance-day
     ├── ai/openRouterClient.ts # OpenRouter + staticBannerFilename()
     ├── bot/bot.ts             # Grammy бот
     ├── scheduler/dailyJob.ts  # cron advance-day 09:00 MSK + уведомления каждые 5 мин
@@ -147,7 +151,7 @@ PAGE_BG.portfolio           // '/backgrounds/BG_PORTFOLIO.webp'
 | Стартовый баланс | 0 ₽ → онбординг-бонус ~50 ₽ |
 | Мин./макс. вложение | 5 ₽ / 5 000 ₽ на дело |
 | Активных дел | max 10 |
-| Кулдаун дней | 7 быстрых подряд → блокировка 2 ч; «реклама» сбрасывает пачку |
+| Кулдаун дней | 7 быстрых подряд (`MAX_CONSECUTIVE_ADVANCES`) → блокировка 2 ч; 10 Stars сбрасывают пачку |
 | SURVIVOR | 1.5–7.5%/день, 15–30 дней |
 | UNICORN | 10–50%/день, 20–30 дней |
 | INSTANT_SCAM | 5–20%/день, 2–5 дней, исчезает без предупреждений со 100% средств |
@@ -192,6 +196,7 @@ DATABASE_URL          ${{Postgres.DATABASE_URL}}
 TELEGRAM_BOT_TOKEN
 MINI_APP_URL          https://from0tolamba-production.up.railway.app
 OPENROUTER_API_KEY    sk-or-...
+PAYMENTS_ENABLED      true   # false = dev bypass (Stars не списываются)
 POLLINATIONS_API_KEY  (опционально, legacy)
 NODE_ENV              production
 ```
@@ -221,10 +226,20 @@ python compress.py --inplace output_backgrounds/
 
 ---
 
+## Telegram Stars (платежи)
+
+- Пропуск кулдауна: **10 Stars** (`STARS_TIMER_SKIP` в `bot.ts`)
+- Беседа с дельцом (AMA): **10 Stars** (`STARS_AMA_UNLOCK`)
+- `PAYMENTS_ENABLED=false` → сервер активирует фичу бесплатно (dev-режим)
+- `bot.ts` содержит обязательный хендлер `pre_checkout_query` и логгер `successful_payment`
+- Stars зачисляются на баланс бота; смотреть через BotFather → /mybots → Revenue
+
+---
+
 ## Известные TODO
 
 | Задача | Где |
 |---|---|
 | Push-уведомления через бота | `bot/bot.ts` |
 | Экран «Вести с ярмарки» (News feed) | новая страница клиента |
-| Admin-панель с AdRevenue | отдельный роут/сервис |
+| Admin-панель | отдельный роут/сервис |
