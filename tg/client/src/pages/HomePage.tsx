@@ -624,14 +624,16 @@ export function HomePage() {
         )}
       </AnimatePresence>
 
-      {/* Плавающая кнопка «Следующий день» — всегда видна без скролла */}
-      <NextDayFab
-        gameState={gameState}
-        now={now}
-        isPending={advanceMutation.isPending}
-        onAdvance={() => { tgHaptic?.impactOccurred('medium'); advanceMutation.mutate() }}
-        onWatchAd={() => setShowPaymentModal(true)}
-      />
+      {/* Плавающая кнопка «Следующий день» — скрыта когда открыты настройки/модалки */}
+      {!showSettings && !showPaymentModal && (
+        <NextDayFab
+          gameState={gameState}
+          now={now}
+          isPending={advanceMutation.isPending}
+          onAdvance={() => { tgHaptic?.impactOccurred('medium'); advanceMutation.mutate() }}
+          onWatchAd={() => setShowPaymentModal(true)}
+        />
+      )}
     </ScreenBackground>
   )
 }
@@ -676,6 +678,10 @@ function NextDayFab({
       ? `⏳ ${formatRemaining(remainingMs)}`
       : '🌅 Следующий день'
 
+  const maxConsec = gameState.maxConsecutiveAdvances ?? 7
+  const usedConsec = gameState.consecutiveAdvances ?? 0
+  const showDayCount = !isLocked && usedConsec > 0
+
   return (
     <div style={{
       position: 'fixed',
@@ -686,8 +692,17 @@ function NextDayFab({
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      gap: '6px',
+      gap: '4px',
     }}>
+      {showDayCount && (
+        <div style={{
+          color: colors.textMuted,
+          fontSize: '10px',
+          whiteSpace: 'nowrap',
+        }}>
+          Быстрых дней: {maxConsec - usedConsec} из {maxConsec}
+        </div>
+      )}
       <motion.button
         whileTap={{ scale: isLocked || isPending ? 1 : 0.95 }}
         transition={{ duration: 0.1 }}

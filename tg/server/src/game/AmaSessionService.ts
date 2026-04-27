@@ -176,7 +176,10 @@ export async function evaluateIntuition(userId: number, projectId: string, selec
 }
 
 export async function getSessionMessages(projectId: string) {
-  const session = await prisma.amaSession.findUnique({ where: { projectId } })
+  const session = await prisma.amaSession.findUnique({
+    where: { projectId },
+    include: { project: { select: { developerName: true } } },
+  })
   if (!session) return null
 
   const messages = await prisma.amaMessage.findMany({
@@ -192,6 +195,7 @@ export async function getSessionMessages(projectId: string) {
     isIntuitionEvaluated: session.isIntuitionEvaluated,
     selectedLieTopics: session.selectedLieTopics,
     intuitionDelta: session.intuitionDelta,
+    developerName: session.project.developerName,
     messages,
   }
 }

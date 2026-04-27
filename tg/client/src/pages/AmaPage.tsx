@@ -337,26 +337,13 @@ export function AmaPage() {
               color: colors.fairyGold, fontWeight: 600, fontSize: '14px',
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>
-              {project?.developerName ?? 'Беседа с Дельцом'}
+              {session.developerName ?? project?.developerName ?? 'Беседа с Дельцом'}
             </div>
             <div style={{ color: colors.textMuted, fontSize: '11px' }}>
               {session.isComplete ? 'Беседа завершена' : `Вопрос ${session.questionCount}/10`}
             </div>
           </div>
           <div style={{ width: '64px' }} />
-        </div>
-
-        {/* Мягкая плашка про будущую рекламу — показываем один раз сверху */}
-        <div style={{
-          padding: `${spacing.xs} ${spacing.lg}`,
-          background: 'rgba(255, 184, 0, 0.08)',
-          borderBottom: `1px solid ${colors.fairyGold}20`,
-          color: `${colors.fairyGold}cc`,
-          fontSize: '10px',
-          textAlign: 'center',
-          backdropFilter: 'blur(4px)',
-        }}>
-          📺 Скоро беседа будет открываться за просмотр рекламы — пока бесплатно
         </div>
 
         {/* Сообщения */}
