@@ -27,7 +27,7 @@ export async function investRoutes(app: FastifyInstance) {
         AMOUNT_TOO_SMALL: [400, 'Минимальное вложение — 5 ₽'],
         AMOUNT_TOO_LARGE: [400, 'Максимальное вложение — 5 000 ₽ на дело'],
         INSUFFICIENT_BALANCE: [400, 'Недостаточно рублей'],
-        MAX_PROJECTS_REACHED: [400, 'Нельзя вести больше 10 дел одновременно'],
+        MAX_PROJECTS_REACHED: [400, 'Нельзя вести больше 5 дел одновременно'],
       }
       const mapped = errMap[err.message]
       if (mapped) return reply.status(mapped[0]).send({ error: mapped[1] })

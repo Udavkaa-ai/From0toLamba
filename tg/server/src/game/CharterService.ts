@@ -22,12 +22,14 @@ function timeLimitForRank(rank: string): number {
 /** Сила мутации подделок — чем честнее дело, тем тоньше мутации */
 export type CharterDifficulty = 'EASY' | 'MEDIUM' | 'HARD'
 
-/** Сколько подделок в грамоте на основе lieTopics.length + fate-bonus */
+/** Сколько подделок в грамоте на основе lieTopics.length + fate-bonus.
+ *  INSTANT_SCAM и UNICORN зафиксированы в диапазоне 4-5 — намеренно одинаково,
+ *  чтобы игрок не мог отличить скам от жар-птицы по мини-игре визуально. */
 function computeForgeryCount(lieCount: number, fate: ProjectFate): number {
-  const extra =
-    fate === ProjectFate.INSTANT_SCAM ? 2 :
-    fate === ProjectFate.SLOW_DRAIN   ? 1 :
-    0
+  if (fate === ProjectFate.INSTANT_SCAM || fate === ProjectFate.UNICORN) {
+    return 4 + (lieCount % 2) // 4 или 5, детерминировано из lieCount
+  }
+  const extra = fate === ProjectFate.SLOW_DRAIN ? 1 : 0
   const raw = lieCount + extra
   return Math.max(0, Math.min(MAX_FORGERIES, raw))
 }

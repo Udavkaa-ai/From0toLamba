@@ -107,32 +107,32 @@ export const FATE_CONFIG: Record<ProjectFate, {
   weight: number
 }> = {
   [ProjectFate.INSTANT_SCAM]: {
-    daysRange: [2, 5],            // живёт 2–5 дней — успевает заманить
-    dailyYieldRange: [0.05, 0.20], // приманка: 5–20% в день
-    lossRange: [1.0, 1.0],         // исчезает со ВСЕМИ деньгами
-    weight: 25,
+    daysRange: [5, 8],             // живёт 5–8 дней — долго заманивает сплошным позитивом
+    dailyYieldRange: [0.025, 0.10], // приманка: 2.5–10% в день
+    lossRange: [1.0, 1.0],          // исчезает со ВСЕМИ деньгами
+    weight: 20,
   },
   [ProjectFate.SLOW_DRAIN]: {
     daysRange: [7, 21],
-    dailyYieldRange: [0.015, 0.075], // x5 от прежних 0.003–0.015
+    dailyYieldRange: [0.0075, 0.0375], // 0.75–3.75% в день
     lossRange: [0.3, 0.7],
     weight: 30,
   },
   [ProjectFate.HONEST_FAIL]: {
     daysRange: [14, 30],
-    dailyYieldRange: [0.005, 0.025], // x5
+    dailyYieldRange: [0.0025, 0.0125], // 0.25–1.25% в день
     lossRange: [0.1, 0.4],
     weight: 15,
   },
   [ProjectFate.SURVIVOR]: {
     daysRange: [15, 30],
-    dailyYieldRange: [0.015, 0.075], // x5: ~1.5–7.5% в день
+    dailyYieldRange: [0.0075, 0.0375], // 0.75–3.75% в день
     lossRange: [0, 0],
     weight: 25,
   },
   [ProjectFate.UNICORN]: {
     daysRange: [20, 30],
-    dailyYieldRange: [0.10, 0.50], // x5: 10–50% в день
+    dailyYieldRange: [0.05, 0.25], // 5–25% в день — Жар-птица
     lossRange: [0, 0],
     weight: 5,
   },

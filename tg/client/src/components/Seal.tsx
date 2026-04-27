@@ -130,21 +130,20 @@ export function generateReferenceSeal(seed: string): SealParams {
 // ─── Мутация ──────────────────────────────────────────────────────────────
 
 type MutTarget =
-  | 'shape'         // геометрическая форма (квадрат → ромб)
-  | 'rings'         // число концентрических колец внутри
-  | 'emblemClass'   // зверь ↔ знак (радикальная смена силуэта эмблемы)
-  | 'emblemSame'    // зверь на похожего (fish↔falcon)
-  | 'colorPalette'  // полная смена цвета из палитры (gold → bronze)
-  | 'colorHue'      // малый сдвиг тона (±20°, тонко)
-  | 'dots'          // число точек-розетки
+  | 'shape'           // геометрическая форма (квадрат → ромб)
+  | 'rings'           // число концентрических колец внутри
+  | 'emblemClass'     // зверь ↔ знак (радикальная смена силуэта эмблемы)
+  | 'emblemSame'      // зверь на похожего (fish↔falcon)
+  | 'colorHueMedium'  // умеренный сдвиг тона ±35-45° — заметно, но похожий цвет
+  | 'colorHue'        // малый сдвиг тона ±20° — тонко
+  | 'dots'            // число точек-розетки
 
 const MUT_POOLS: Record<CharterDifficulty, MutTarget[]> = {
-  // EASY (простые): форма/геометрия/линии — силуэт меняется радикально
+  // EASY: форма/геометрия/эмблема — силуэт меняется радикально, цвет тот же
   EASY:   ['shape', 'rings', 'emblemClass'],
-  // MEDIUM (лёгкий): подмена зверя на похожего или смена палитры целиком —
-  // заметно, но не сразу
-  MEDIUM: ['emblemSame', 'colorPalette'],
-  // HARD (сложный): число точек-розетки и малый сдвиг оттенка
+  // MEDIUM: похожий зверь или умеренный сдвиг оттенка — заметно, но не кричит
+  MEDIUM: ['emblemSame', 'colorHueMedium'],
+  // HARD: число точек-розетки и малый сдвиг оттенка — нужно присматриваться
   HARD:   ['dots', 'colorHue'],
 }
 
@@ -190,11 +189,16 @@ export function mutateSeal(
       // (4→6, 6→8) на мелкой SVG почти не различаются.
       out.dots = DOT_COUNTS[(DOT_COUNTS.indexOf(ref.dots) + 2) % DOT_COUNTS.length]
       break
-    case 'colorPalette': {
-      // MEDIUM — соседний цвет палитры целиком (gold → bronze).
-      const idx = Math.max(0, COLORS.findIndex(c => c.key === ref.color.key))
-      const safeStep = (step % (COLORS.length - 1)) + 1
-      out.color = { ...COLORS[(idx + safeStep) % COLORS.length] }
+    case 'colorHueMedium': {
+      // MEDIUM — умеренный сдвиг тона ±35-45°: цвет явно другой, но из той же семьи.
+      // Не прыгаем на другой конец спектра — gold остаётся тёплым, не превращается в синий.
+      const direction = (h & 1) === 0 ? 1 : -1
+      const deg = (35 + (h % 11)) * direction  // 35..45°
+      out.color = {
+        key: ref.color.key + (direction > 0 ? '-shifted' : '-shifted2'),
+        primary: shiftHue(ref.color.primary, deg),
+        secondary: shiftHue(ref.color.secondary, deg),
+      }
       break
     }
     case 'colorHue': {
