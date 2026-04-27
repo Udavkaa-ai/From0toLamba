@@ -160,7 +160,7 @@ export function AmaPage() {
     },
   })
 
-  // Онбординг-бонус: выдаём 50 ₽ когда первая беседа завершена
+  // Онбординг-бонус: выдаём 50 г когда первая беседа завершена
   useEffect(() => {
     if (
       session?.isComplete &&
@@ -414,7 +414,7 @@ export function AmaPage() {
             }}
           >
             <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '16px' }}>
-              🎉 +{onboardingBonus} ₽ на счёт!
+              🎉 +{onboardingBonus} г на счёт!
             </div>
             <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
               Онбординг-бонус за первую беседу
@@ -445,7 +445,7 @@ export function AmaPage() {
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
               }}
             >
-              <CoinIcon size={16} /> Вложить рубли
+              <CoinIcon size={16} /> Вложить гроши
             </button>
           </div>
         )}
@@ -507,7 +507,7 @@ export function AmaPage() {
             }}>
               <button
                 onClick={() => setShowInvestSheet(true)}
-                title="Вложить рубли"
+                title="Вложить гроши"
                 style={{
                   flexShrink: 0,
                   padding: `${spacing.sm} 10px`,
@@ -614,16 +614,16 @@ function InvestSheet({ projectId, onClose, onSuccess }: { projectId: string; onC
         }}
       >
         <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '18px', marginBottom: spacing.sm, display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <CoinIcon size={20} /> Вложить рубли
+          <CoinIcon size={20} /> Вложить гроши
         </div>
         <div style={{ color: colors.textMuted, fontSize: '12px', marginBottom: spacing.sm }}>
-          Баланс: {gameState?.balance.toFixed(0) ?? '—'} ₽ · Мин. 5 ₽ · Макс. 5 000 ₽
+          Баланс: {gameState?.balance.toFixed(0) ?? '—'} г · Мин. 5 г · Макс. 5 000 г
         </div>
         <input
           type="number"
           value={amount}
           onChange={e => setAmount(e.target.value)}
-          placeholder="Сумма в рублях"
+          placeholder="Сумма в грошах"
           style={{
             width: '100%', boxSizing: 'border-box',
             background: 'rgba(42, 25, 96, 0.4)',

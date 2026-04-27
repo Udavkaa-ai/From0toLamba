@@ -5,7 +5,7 @@ import { recomputeRank } from './rankService'
 
 const MIN_INVEST = 5
 const MAX_INVEST_PER_PROJECT = 5000
-const MAX_ACTIVE_PROJECTS = 10
+const MAX_ACTIVE_PROJECTS = 5
 
 export async function invest(userId: number, projectId: string, amount: number): Promise<void> {
   if (amount < MIN_INVEST) throw new Error('AMOUNT_TOO_SMALL')

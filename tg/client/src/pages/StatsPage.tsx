@@ -18,10 +18,10 @@ const RANK_DISPLAY: Record<string, string> = {
 }
 
 const RANK_NEXT_HINT: Record<string, string> = {
-  NEWBIE: '100 ₽ и чуйка 10 → Купец',
-  AMBASSADOR: '1 000 ₽ и чуйка 50 → Мудрец',
-  ANALYST: '3 000 ₽ и чуйка 100 → Боярин',
-  SHARK: '10 000 ₽ и чуйка 300 → Князь',
+  NEWBIE: '100 г и чуйка 20 → Купец',
+  AMBASSADOR: '1 000 г и чуйка 100 → Мудрец',
+  ANALYST: '10 000 г и чуйка 300 → Боярин',
+  SHARK: '50 000 г и чуйка 500 → Князь',
   LAMBO_SENSEI: 'Ты достиг вершины! 👑',
 }
 
@@ -91,8 +91,8 @@ export function StatsPage() {
             Денежная летопись
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-around' }}>
-            <Stat label="Вложено" value={`${gameState.totalInvested.toFixed(0)} ₽`} />
-            <Stat label="Получено" value={`${received.toFixed(0)} ₽`} />
+            <Stat label="Вложено" value={`${gameState.totalInvested.toFixed(0)} г`} />
+            <Stat label="Получено" value={`${received.toFixed(0)} г`} />
             <Stat
               label="Итог"
               value={`${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%`}
@@ -100,8 +100,8 @@ export function StatsPage() {
             />
           </div>
           <div style={{ marginTop: spacing.md, paddingTop: spacing.md, borderTop: `1px solid ${colors.cardBorder}`, display: 'flex', justifyContent: 'space-around' }}>
-            <Stat label="Свободные рубли" value={`${gameState.balance.toFixed(0)} ₽`} small />
-            <Stat label="Всего злата" value={`${(gameState.balance + activeValue).toFixed(0)} ₽`} small />
+            <Stat label="Свободные гроши" value={`${gameState.balance.toFixed(0)} г`} small />
+            <Stat label="Всего злата" value={`${(gameState.balance + activeValue).toFixed(0)} г`} small />
           </div>
         </FairyCard>
 
@@ -166,7 +166,7 @@ export function StatsPage() {
                 <Tooltip
                   contentStyle={{ background: colors.nightBlue, border: `1px solid ${colors.cardBorder}`, borderRadius: '8px' }}
                   labelStyle={{ color: colors.textMuted, fontSize: '11px' }}
-                  formatter={(v: number, name: string) => [`${v} ₽`, name === 'balance' ? 'Свободно' : 'Вложено']}
+                  formatter={(v: number, name: string) => [`${v} г`, name === 'balance' ? 'Свободно' : 'Вложено']}
                   labelFormatter={(l: number) => `День ${l}`}
                 />
                 <Bar dataKey="balance" stackId="a" fill={colors.fairyGold} />

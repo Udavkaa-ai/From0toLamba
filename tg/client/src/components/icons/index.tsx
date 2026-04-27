@@ -45,7 +45,7 @@ export function ScrollIcon({ size = 20, className, style }: IconProps) {
   )
 }
 
-/** Монета с символом ₽ — Казна / суммы */
+/** Монета — Казна / суммы */
 export function CoinIcon({ size = 20, className, style }: IconProps) {
   return (
     <svg {...baseProps(size)} className={className} style={style}>

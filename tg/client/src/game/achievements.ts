@@ -104,7 +104,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'copper_coin',
     name: 'Медная мошна',
-    description: 'Накопил 100 ₽ в казне',
+    description: 'Накопил 100 г в казне',
     emoji: '💰',
     category: 'wealth',
     check: ({ totalWealth }) => totalWealth >= 100,
@@ -113,7 +113,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'gold_coin',
     name: 'Золотой червонец',
-    description: 'Накопил 1 000 ₽',
+    description: 'Накопил 1 000 г',
     emoji: '🪙',
     category: 'wealth',
     check: ({ totalWealth }) => totalWealth >= 1000,
@@ -122,7 +122,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'rich_chest',
     name: 'Кованый сундук',
-    description: 'Накопил 5 000 ₽',
+    description: 'Накопил 5 000 г',
     emoji: '📦',
     category: 'wealth',
     check: ({ totalWealth }) => totalWealth >= 5000,
@@ -131,7 +131,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'vast_treasure',
     name: 'Несметные богатства',
-    description: 'Накопил 10 000 ₽',
+    description: 'Накопил 10 000 г',
     emoji: '💎',
     category: 'wealth',
     check: ({ totalWealth }) => totalWealth >= 10000,
@@ -411,7 +411,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'seen_unicorn',
     name: 'Поймал Жар-птицу за хвост',
-    description: 'Застань редчайшее дело, которое приумножает рубли в разы',
+    description: 'Застань редчайшее дело, которое приумножает гроши в разы',
     emoji: '🔥',
     category: 'bestiary',
     revealTopic: { kind: 'fate', id: 'UNICORN' },

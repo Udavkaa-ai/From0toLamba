@@ -34,6 +34,7 @@ export async function startSession(userId: number, projectId: string, model?: st
         lieTopics: project.lieTopics as LieTopic[],
         truthTopics: project.truthTopics as LieTopic[],
         npcTruthParams: project.npcTruthParams as NpcTruthParams | null,
+        fate: project.fate,
       }, model)
       await prisma.amaMessage.create({
         data: { sessionId: existing.id, role: 'assistant', content: firstMessage },
@@ -111,6 +112,7 @@ export async function sendMessage(userId: number, projectId: string, userMessage
       lieTopics: project.lieTopics as LieTopic[],
       truthTopics: project.truthTopics as LieTopic[],
       npcTruthParams: project.npcTruthParams as NpcTruthParams | null,
+      fate: project.fate,
       history: history.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
       userMessage,
       questionCount: session.questionCount + 1,

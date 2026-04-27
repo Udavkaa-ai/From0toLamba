@@ -271,6 +271,7 @@ interface AmaSessionInput {
   lieTopics: LieTopic[]
   truthTopics: LieTopic[]
   npcTruthParams: NpcTruthParams | null
+  fate: string
 }
 
 interface SendAmaMessageInput {
@@ -284,10 +285,19 @@ interface SendAmaMessageInput {
   history: Array<{ role: 'user' | 'assistant'; content: string }>
   userMessage: string
   questionCount: number
+  fate: string
+}
+
+const FATE_BEHAVIOR: Record<string, string> = {
+  INSTANT_SCAM: 'Это мошенничество — деньги вкладчиков уже почти потрачены, дело скоро исчезнет. Уклоняйся от конкретных вопросов о доходах и сроках, переводи тему на пышные обещания. При прямых вопросах чуть нервничай, отвечай туманно и хвастайся без фактов.',
+  SLOW_DRAIN: 'Дело медленно тонет — доходы падают, хозяин уже думает как выйти. Преувеличивай прошлые успехи, избегай говорить о будущем конкретно, слегка уклоняйся от вопросов о выводе средств.',
+  HONEST_FAIL: 'Дело честное, но скоро прогорит по объективным причинам (рынок, конкуренты, неудача). Отвечай искренне и позитивно, но можешь проговориться о трудностях — «рынок сложный», «конкуренты наступают».',
+  SURVIVOR: 'Живучее дело с реальным стабильным доходом. Отвечай уверенно и с достоинством, показывай знание своего дела, хвастайся конкретными — пусть и скромными — успехами.',
+  UNICORN: 'Редкий единорог — дело действительно взрывного роста. Будь очень воодушевлён, почти сам не веришь насколько хорошо идёт, говори с азартом и удивлением от собственного успеха.',
 }
 
 function buildAmaSystemPrompt(input: AmaSessionInput | SendAmaMessageInput, questionNumber = 1): string {
-  const { archetype, developerName, projectName } = input
+  const { archetype, developerName, projectName, fate } = input
   const persona = PERSONA_MAP.get(archetype)
 
   const phrases = persona
@@ -298,8 +308,9 @@ function buildAmaSystemPrompt(input: AmaSessionInput | SendAmaMessageInput, ques
 
   const speechStyle = persona?.speechStyle ?? 'Говори живым современным русским языком.'
   const favoriteTopics = persona?.favoriteTopics ?? ''
+  const fateBehavior = FATE_BEHAVIOR[fate] ?? ''
 
-  return `Ты играешь роль в текстовой игре «Из грязи в князи» — сказочная Русь, болтовня с дельцом для развлечения. Это НЕ допрос — это балагур-беседа. Игрок может спрашивать о чём угодно: о тебе, о деле, о жизни, попросить байку.
+  return `Ты играешь роль в текстовой игре «Из грязи в князи» — сказочная Русь, беседа с дельцом. Игрок может спрашивать о чём угодно: о тебе, о деле, о жизни, попросить байку.
 
 Твой персонаж: ${developerName}, хозяин дела «${projectName}». Отвечай только от его имени.
 
@@ -310,13 +321,15 @@ function buildAmaSystemPrompt(input: AmaSessionInput | SendAmaMessageInput, ques
 ХАРАКТЕРНЫЕ ФРАЗЫ (используй как образец стиля, не копируй дословно):
 ${phrases}
 
+СКРЫТАЯ СУТЬ ДЕЛА (только для тебя — не говори об этом напрямую, но дай почувствовать):
+${fateBehavior}
+
 ПРАВИЛА:
 - Отвечай 2-3 предложения, живым современным русским. Без длинных монологов.
-- Шути, рассказывай байки, привирай и хвастайся в характере персонажа — это часть твоей роли. Не нужно выдавать «правду о деле».
 - Не выходи из роли. Каждый ответ начинай по-разному.
-- Суммы — только в рублях. Никакой крипты, TON, блокчейна.
+- Суммы — только в грошах. Никакой крипты, TON, блокчейна.
 - Не объясняй игроку «я персонаж такой-то». Просто будь им.
-- Если игрок задал странный/мета-вопрос — отшутись в характере и переведи тему на свои любимые байки.`
+- Если игрок задал странный/мета-вопрос — отшутись в характере и переведи тему на свои байки.`
 }
 
 export async function startAmaSession(input: AmaSessionInput, model = DEFAULT_MODEL): Promise<string> {

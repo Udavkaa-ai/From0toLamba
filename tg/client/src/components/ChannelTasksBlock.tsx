@@ -123,7 +123,7 @@ function ChannelTaskRow({
             fontSize: '14px',
             textDecoration: task.claimed ? 'line-through' : 'none',
           }}>
-            +{task.rewardRubles} ₽
+            +{task.rewardRubles} г
           </div>
 
           {task.claimed ? (

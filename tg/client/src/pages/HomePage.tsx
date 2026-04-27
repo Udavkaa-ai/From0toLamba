@@ -381,7 +381,7 @@ export function HomePage() {
                 >
                   📜 Зазвать купца на ярмарку
                   <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '4px', fontWeight: 400 }}>
-                    Обоим по +100 ₽ в казну, когда перейдёт по ссылке
+                    Обоим по +100 г в казну, когда перейдёт по ссылке
                   </div>
                 </button>
               </div>
@@ -405,7 +405,7 @@ export function HomePage() {
                   </strong>
                   Все проекты, персонажи и события в игре <strong style={{ color: colors.textPrimary }}>вымышлены</strong> и не являются инвестиционными советами или рекомендациями. Любое сходство с реальными проектами или людьми случайно.
                   <br /><br />
-                  Игровые рубли (₽) — внутриигровая валюта, не имеющая реальной стоимости.
+                  Игровые гроши (г) — внутриигровая валюта, не имеющая реальной стоимости.
                   <br /><br />
                   Платежи за дополнительные возможности (Telegram Stars) обрабатываются Telegram. Разработчик игры не хранит данные платёжных карт и не несёт ответственности за действия платёжной платформы.
                   <br /><br />
@@ -539,7 +539,7 @@ export function HomePage() {
         {/* Баланс */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <FairyCard accent style={{ marginBottom: spacing.lg, textAlign: 'center' }}>
-            <div style={{ color: colors.textSecondary, fontSize: '12px', marginBottom: '4px' }}>Свободные рубли</div>
+            <div style={{ color: colors.textSecondary, fontSize: '12px', marginBottom: '4px' }}>Свободные гроши</div>
             <div style={{
               color: colors.fairyGold,
               fontFamily: typography.headingFontFamily,
@@ -550,20 +550,20 @@ export function HomePage() {
               fontVariantNumeric: 'tabular-nums',
             }}>
               <CountUp value={gameState.balance} />
-              <span style={{ fontSize: '26px', marginLeft: '6px', opacity: 0.85 }}>₽</span>
+              <span style={{ fontSize: '26px', marginLeft: '6px', opacity: 0.85 }}>г</span>
             </div>
             <OrnamentDivider />
             <div style={{ display: 'flex', justifyContent: 'space-around' }}>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ color: colors.textMuted, fontSize: '11px' }}>Вложено</div>
                 <div style={{ color: colors.textSecondary, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
-                  {gameState.totalInvested.toFixed(0)} ₽
+                  {gameState.totalInvested.toFixed(0)} г
                 </div>
               </div>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ color: colors.textMuted, fontSize: '11px' }}>Получено</div>
                 <div style={{ color: colors.textSecondary, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
-                  {(gameState.totalReturned + activeValue).toFixed(0)} ₽
+                  {(gameState.totalReturned + activeValue).toFixed(0)} г
                 </div>
               </div>
               <div style={{ textAlign: 'center' }}>
@@ -647,8 +647,8 @@ function handleInvite(gameState: { userId: number; firstName?: string } | any) {
   const botLink = `https://t.me/vknyazi_bot?startapp=ref_${userId}`
   const text = [
     '📜 Купеческая грамота для тебя!',
-    'Приходи на ярмарку «Из грязи в князи» — будем вкладывать рубли, ловить жуликов и расти в чинах.',
-    'Оба получим по 100 ₽ в казну, если перейдёшь по ссылке:',
+    'Приходи на ярмарку «Из грязи в князи» — будем вкладывать гроши, ловить жуликов и расти в чинах.',
+    'Оба получим по 100 г в казну, если перейдёшь по ссылке:',
   ].join('\n')
 
   const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(botLink)}&text=${encodeURIComponent(text)}`
@@ -971,7 +971,7 @@ function ActiveProjectCard({ project, delay, onPress }: { project: ProjectDTO; d
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ color: colors.textMuted, fontSize: '10px', letterSpacing: '0.02em' }}>
-              вложено {project.investedAmountRubles.toFixed(0)} ₽
+              вложено {project.investedAmountRubles.toFixed(0)} г
             </div>
             <div style={{
               color: colors.fairyGold,
@@ -984,7 +984,7 @@ function ActiveProjectCard({ project, delay, onPress }: { project: ProjectDTO; d
               textShadow: `0 0 14px ${colors.fairyGold}30`,
               marginTop: '2px',
             }}>
-              <CountUp value={project.currentValueRubles} /> ₽
+              <CountUp value={project.currentValueRubles} /> г
             </div>
             <div style={{ color: profit >= 0 ? colors.success : colors.danger, fontSize: '11px', fontWeight: 600 }}>
               {profit >= 0 ? '+' : ''}{profit.toFixed(1)}%
@@ -1295,7 +1295,7 @@ function ClosureCardContent({ closure }: { closure: ClosureSummaryDTO }) {
         <div style={{ textAlign: 'center' }}>
           <div style={{ color: colors.textMuted, fontSize: '10px' }}>Вложено</div>
           <div style={{ color: colors.textSecondary, fontWeight: 600, fontSize: '14px', fontVariantNumeric: 'tabular-nums' }}>
-            {closure.investedAmount.toFixed(0)} ₽
+            {closure.investedAmount.toFixed(0)} г
           </div>
         </div>
         <div style={{ color: colors.textMuted, fontSize: '14px' }}>→</div>
@@ -1309,7 +1309,7 @@ function ClosureCardContent({ closure }: { closure: ClosureSummaryDTO }) {
             fontVariantNumeric: 'tabular-nums',
             textShadow: `0 0 12px ${accent}40`,
           }}>
-            {closure.returnedAmount.toFixed(0)} ₽
+            {closure.returnedAmount.toFixed(0)} г
           </div>
         </div>
       </div>
@@ -1347,7 +1347,7 @@ function ProjectNewsCardContent({ project }: { project: ProjectDTO }) {
           <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '2px' }}>{project.developerName}</div>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ color: colors.fairyGold, fontWeight: 700 }}>{project.currentValueRubles.toFixed(0)} ₽</div>
+          <div style={{ color: colors.fairyGold, fontWeight: 700 }}>{project.currentValueRubles.toFixed(0)} г</div>
           <div style={{ color: profit >= 0 ? colors.success : colors.danger, fontSize: '11px' }}>
             {profit >= 0 ? '+' : ''}{profit.toFixed(1)}%
           </div>

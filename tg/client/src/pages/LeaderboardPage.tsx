@@ -201,7 +201,7 @@ function LeaderboardRow({ entry }: { entry: LeaderboardEntryDTO }) {
   return (
     <BaseRow
       entry={entry}
-      rightTop={`${Math.round(entry.totalWealth).toLocaleString('ru')} ₽`}
+      rightTop={`${Math.round(entry.totalWealth).toLocaleString('ru')} г`}
       rightBottom={entry.intuitionScore > 0 ? `👁 ${entry.intuitionScore}` : null}
     />
   )
@@ -211,8 +211,8 @@ function WeeklyRow({ entry }: { entry: WeeklyLeaderboardEntryDTO }) {
   return (
     <BaseRow
       entry={entry}
-      rightTop={<span style={{ color: colors.success }}>+{Math.round(entry.weekDelta).toLocaleString('ru')} ₽</span>}
-      rightBottom={`всего: ${Math.round(entry.totalWealth).toLocaleString('ru')} ₽`}
+      rightTop={<span style={{ color: colors.success }}>+{Math.round(entry.weekDelta).toLocaleString('ru')} г</span>}
+      rightBottom={`всего: ${Math.round(entry.totalWealth).toLocaleString('ru')} г`}
     />
   )
 }

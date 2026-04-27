@@ -269,7 +269,7 @@ export function CharterPage() {
             style={bonusStyle}
           >
             <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '16px' }}>
-              🎉 +{onboardingBonus} ₽ на счёт!
+              🎉 +{onboardingBonus} г на счёт!
             </div>
             <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
               Онбординг-бонус за первую грамоту
@@ -445,7 +445,7 @@ function IntroScreen({
       <button onClick={onChat} style={secondaryBtnStyle}>
         💬 Расспросить дельца лично
         <div style={{ fontSize: '10px', color: colors.textMuted, marginTop: '2px', fontWeight: 400 }}>
-          скоро откроется за просмотр рекламы — пока бесплатно
+          10 Telegram Stars · личная беседа с дельцом
         </div>
       </button>
     </div>
@@ -729,16 +729,16 @@ function InvestSheet({ projectId, onClose, onSuccess }: { projectId: string; onC
   return (
     <Sheet onClose={onClose}>
       <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '18px', marginBottom: spacing.sm, display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <CoinIcon size={20} /> Вложить рубли
+        <CoinIcon size={20} /> Вложить гроши
       </div>
       <div style={{ color: colors.textMuted, fontSize: '12px', marginBottom: spacing.sm }}>
-        Баланс: {gameState?.balance.toFixed(0) ?? '—'} ₽ · Мин. 5 ₽ · Макс. 5 000 ₽
+        Баланс: {gameState?.balance.toFixed(0) ?? '—'} г · Мин. 5 г · Макс. 5 000 г
       </div>
       <input
         type="number"
         value={amount}
         onChange={e => setAmount(e.target.value)}
-        placeholder="Сумма в рублях"
+        placeholder="Сумма в грошах"
         style={{
           width: '100%', boxSizing: 'border-box',
           background: 'rgba(42, 25, 96, 0.4)',

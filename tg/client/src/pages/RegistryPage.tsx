@@ -76,7 +76,7 @@ export function RegistryPage() {
     const lines = [
       '📜 Моя Летопись в «Из грязи в князи»:',
       rank ? `Чин: ${rank} · чуйка ${gameState?.intuitionScore ?? 0}` : null,
-      `Состояние: ${wealth.toFixed(0)} ₽`,
+      `Состояние: ${wealth.toFixed(0)} г`,
       closed.length > 0
         ? `Закрытых дел: ${closed.length} · итог ${overallPnl >= 0 ? '+' : ''}${overallPnl.toFixed(1)}%`
         : null,
@@ -131,11 +131,11 @@ export function RegistryPage() {
             <div style={{ display: 'flex', justifyContent: 'space-around' }}>
               <div>
                 <div style={{ color: colors.textMuted, fontSize: '10px' }}>Вложено всего</div>
-                <div style={{ color: colors.textSecondary, fontWeight: 700 }}>{totalInvested.toFixed(0)} ₽</div>
+                <div style={{ color: colors.textSecondary, fontWeight: 700 }}>{totalInvested.toFixed(0)} г</div>
               </div>
               <div>
                 <div style={{ color: colors.textMuted, fontSize: '10px' }}>Получено</div>
-                <div style={{ color: colors.textSecondary, fontWeight: 700 }}>{totalReturned.toFixed(0)} ₽</div>
+                <div style={{ color: colors.textSecondary, fontWeight: 700 }}>{totalReturned.toFixed(0)} г</div>
               </div>
               <div>
                 <div style={{ color: colors.textMuted, fontSize: '10px' }}>Итог</div>
@@ -296,8 +296,8 @@ function RegistryCard({ project, postMortem }: { project: ClosedProject; postMor
             {/* Stats grid */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
               {[
-                { label: 'Вложено', value: `${postMortem.investedAmount.toFixed(0)} ₽` },
-                { label: 'Получено', value: `${postMortem.returnedAmount.toFixed(0)} ₽` },
+                { label: 'Вложено', value: `${postMortem.investedAmount.toFixed(0)} г` },
+                { label: 'Получено', value: `${postMortem.returnedAmount.toFixed(0)} г` },
                 { label: 'Дней', value: String(postMortem.daysActive) },
                 { label: 'Чуйка', value: postMortem.intuitionDelta !== 0 ? `${postMortem.intuitionDelta > 0 ? '+' : ''}${postMortem.intuitionDelta}` : '—', color: postMortem.intuitionDelta > 0 ? colors.success : postMortem.intuitionDelta < 0 ? colors.danger : colors.textMuted },
               ].map(s => (

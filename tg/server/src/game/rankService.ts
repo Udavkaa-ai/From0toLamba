@@ -2,14 +2,13 @@ import { InvestorRank } from './types'
 import { prisma } from '../db/prisma'
 
 /**
- * Ранги зависят только от достатка (totalWealth = balance + активные вложения)
- * и чуйки. Дни больше не влияют — механика кулдауна и так растягивает игру во времени.
+ * Ранги зависят от достатка (totalWealth = balance + активные вложения) и чуйки.
  *
  *   Скоморох (NEWBIE)       — старт
- *   Купец    (AMBASSADOR)   — 100 ₽   + чуйка 10
- *   Мудрец   (ANALYST)      — 1 000 ₽ + чуйка 50
- *   Боярин   (SHARK)        — 3 000 ₽ + чуйка 100
- *   Князь    (LAMBO_SENSEI) — 10 000 ₽ + чуйка 300
+ *   Купец    (AMBASSADOR)   — 100 г    + чуйка 20
+ *   Мудрец   (ANALYST)      — 1 000 г  + чуйка 100
+ *   Боярин   (SHARK)        — 10 000 г + чуйка 300
+ *   Князь    (LAMBO_SENSEI) — 50 000 г + чуйка 500
  */
 export function computeRank(params: {
   currentDay: number
@@ -18,10 +17,10 @@ export function computeRank(params: {
 }): InvestorRank {
   const { totalWealth, intuitionScore } = params
 
-  if (totalWealth >= 10000 && intuitionScore >= 300) return InvestorRank.LAMBO_SENSEI
-  if (totalWealth >= 3000  && intuitionScore >= 100) return InvestorRank.SHARK
-  if (totalWealth >= 1000  && intuitionScore >= 50)  return InvestorRank.ANALYST
-  if (totalWealth >= 100   && intuitionScore >= 10)  return InvestorRank.AMBASSADOR
+  if (totalWealth >= 50000 && intuitionScore >= 500) return InvestorRank.LAMBO_SENSEI
+  if (totalWealth >= 10000 && intuitionScore >= 300) return InvestorRank.SHARK
+  if (totalWealth >= 1000  && intuitionScore >= 100) return InvestorRank.ANALYST
+  if (totalWealth >= 100   && intuitionScore >= 20)  return InvestorRank.AMBASSADOR
   return InvestorRank.NEWBIE
 }
 
