@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 «Из грязи в князи» — Telegram Mini App, симулятор купца-инвестора в сказочной Руси. Игрок вкладывает рубли (₽) в «дела» (аналоги крипто-проектов), большинство из которых обман. Ключевая механика — **«Купеческая грамота»**: мини-игра на внимательность (24 SVG-печати, ищем подделки за 15 сек).
 
 - **Активная версия:** `tg/` — v2.9.0. `app/` (Android) — заморожен.
-- **Валюта:** рубли (₽), отображать `"%.0f ₽"`.
+- **Валюта:** гроши (г) в UI; DB-поля (`currentValueRubles`, `investedAmountRubles` и т.д.) не переименованы — только отображение. Формат: `"%.0f г"`.
 - **Архетип хозяина** (`personaArchetype`) публичный — нужен клиенту для баннера/беседы. Все остальные скрытые поля до PostMortem — через `toPublicDTO()`.
 
 ---
@@ -66,7 +66,7 @@ tg/
     │   ├── AmaSessionService.ts
     │   ├── projectUtils.ts    # toPublicDTO() — фильтр скрытых полей
     │   ├── rankService.ts     # recomputeRank(userId)
-    │   ├── referralService.ts # tryAttachReferrer + countReferrals; бонус 100 ₽ обоим
+    │   ├── referralService.ts # tryAttachReferrer + countReferrals; бонус 100 г обоим
     │   ├── weeklyService.ts   # ensureWeekStartSnapshot — снимок состояния на начало недели
     │   ├── mafiaOffers.ts     # «мафиозные» принудительные выкупы за 50% при закрытии
     │   └── randomEvents.ts    # случайные события NEGATIVE/POSITIVE/NEUTRAL при advance-day
@@ -141,6 +141,7 @@ PAGE_BG.portfolio           // '/backgrounds/BG_PORTFOLIO.webp'
 - **Формат:** `response_format: { type: 'json_object' }` (DeepSeek поддерживает корректно)
 - **Язык ответов:** современный живой русский, без «блокчейна», «крипто», «TON»
 - AI вызывается только через `openRouterClient.ts`, не из роутов напрямую
+- `buildAmaSystemPrompt` получает `fate` проекта и включает блок `FATE_BEHAVIOR` — скрытую подсказку NPC о реальном состоянии дела (INSTANT_SCAM/SLOW_DRAIN/HONEST_FAIL/SURVIVOR/UNICORN)
 
 ---
 
@@ -148,17 +149,25 @@ PAGE_BG.portfolio           // '/backgrounds/BG_PORTFOLIO.webp'
 
 | Параметр | Значение |
 |---|---|
-| Стартовый баланс | 0 ₽ → онбординг-бонус ~50 ₽ |
-| Мин./макс. вложение | 5 ₽ / 5 000 ₽ на дело |
-| Активных дел | max 10 |
+| Стартовый баланс | 0 г → онбординг-бонус ~50 г |
+| Мин./макс. вложение | 5 г / 5 000 г на дело |
+| Активных дел | max 5 |
 | Кулдаун дней | 7 быстрых подряд (`MAX_CONSECUTIVE_ADVANCES`) → блокировка 2 ч; 10 Stars сбрасывают пачку |
 | SURVIVOR | 1.5–7.5%/день, 15–30 дней |
 | UNICORN | 10–50%/день, 20–30 дней |
 | INSTANT_SCAM | 5–20%/день, 2–5 дней, исчезает без предупреждений со 100% средств |
 | SLOW_DRAIN | 1.5–7.5%/день, 7–21 день, −30–70%; за 2 дня блокирует вывод + DELAYED-вести |
 
-`state.balance` — только свободные ₽. Доход копится в `project.currentValueRubles`.
+`state.balance` — только свободные г. Доход копится в `project.currentValueRubles`.
 `computeRank()` = `totalWealth = balance + Σ activeProjects.currentValueRubles` + intuitionScore + currentDay.
+
+**Пороги чинов** (`rankService.ts`):
+| Чин | totalWealth | intuitionScore |
+|---|---|---|
+| Купец (AMBASSADOR) | ≥ 100 г | ≥ 20 |
+| Мудрец (ANALYST) | ≥ 1 000 г | ≥ 100 |
+| Боярин (SHARK) | ≥ 10 000 г | ≥ 300 |
+| Князь (LAMBO_SENSEI) | ≥ 50 000 г | ≥ 500 |
 
 ---
 
