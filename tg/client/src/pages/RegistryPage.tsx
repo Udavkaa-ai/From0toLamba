@@ -84,7 +84,9 @@ export function RegistryPage() {
       'Попробуй отличить купца от жулика — @vknyazi_bot',
     ].filter(Boolean).join('\n')
 
-    const appUrl = 'https://t.me/vknyazi_bot'
+    const appUrl = gameState?.userId
+      ? `https://t.me/vknyazi_bot?startapp=ref_${gameState.userId}`
+      : 'https://t.me/vknyazi_bot'
     const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(appUrl)}&text=${encodeURIComponent(lines)}`
     const tg = (window as any).Telegram?.WebApp
     if (tg?.openTelegramLink) tg.openTelegramLink(shareUrl)

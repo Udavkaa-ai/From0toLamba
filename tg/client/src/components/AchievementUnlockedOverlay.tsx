@@ -75,11 +75,12 @@ export function AchievementUnlockedOverlay() {
   )
 }
 
-const BOT_LINK = 'https://t.me/vknyazi_bot'
-
-function shareAchievement(achievement: EvaluatedAchievement) {
+function shareAchievement(achievement: EvaluatedAchievement, userId?: number) {
+  const botLink = userId
+    ? `https://t.me/vknyazi_bot?startapp=ref_${userId}`
+    : 'https://t.me/vknyazi_bot'
   const text = `${achievement.emoji} Совершил подвиг «${achievement.name}» в игре «Из грязи в князи»!\n${achievement.description}`
-  const url = `https://t.me/share/url?url=${encodeURIComponent(BOT_LINK)}&text=${encodeURIComponent(text)}`
+  const url = `https://t.me/share/url?url=${encodeURIComponent(botLink)}&text=${encodeURIComponent(text)}`
   if (typeof window !== 'undefined') {
     if (window.Telegram?.WebApp?.openTelegramLink) {
       window.Telegram.WebApp.openTelegramLink(url)
@@ -92,6 +93,7 @@ function shareAchievement(achievement: EvaluatedAchievement) {
 function UnlockedBanner({
   achievement, onClose,
 }: { achievement: EvaluatedAchievement; onClose: () => void }) {
+  const userId = useGameStore(s => s.gameState?.userId)
   const lore = achievement.revealTopic
     ? loreFor(achievement.revealTopic.kind, achievement.revealTopic.id)
     : null
@@ -176,7 +178,7 @@ function UnlockedBanner({
 
         <div style={{ display: 'flex', gap: '8px' }}>
           <button
-            onClick={() => shareAchievement(achievement)}
+            onClick={() => shareAchievement(achievement, userId)}
             style={{
               flex: 1,
               padding: spacing.md,
