@@ -17,9 +17,8 @@ function withdrawalHint(project: ProjectDTO): string | null {
   switch (project.type) {
     case 'POTION_BREW':
     case 'GUILD_SCHEME': {
-      // Лимит считается от investedAmountRubles, не от currentValue
-      const maxRubles = project.investedAmountRubles * 0.25
-      return `Макс. за раз: ${maxRubles.toFixed(0)} ₽ (25% от вложенных ${project.investedAmountRubles.toFixed(0)} ₽)`
+      const maxRubles = Math.floor(project.currentValueRubles * 0.25)
+      return `Макс. за раз: ${maxRubles} ₽ (25% от ${project.currentValueRubles.toFixed(0)} ₽ в деле)`
     }
     case 'CARD_GAME':
     case 'TREASURE_HUNT':
@@ -521,7 +520,7 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
               </div>
               {(project.type === 'POTION_BREW' || project.type === 'GUILD_SCHEME') && (
                 <div style={{ color: colors.warning, fontSize: '11px', marginBottom: '4px' }}>
-                  ⚠️ Макс. за раз: {(project.investedAmountRubles * 0.25).toFixed(0)} ₽ (25% от вложенных {project.investedAmountRubles.toFixed(0)} ₽)
+                  ⚠️ Макс. за раз: {Math.floor(project.currentValueRubles * 0.25)} ₽ (25% от {project.currentValueRubles.toFixed(0)} ₽ в деле)
                 </div>
               )}
               {(project.type === 'CARD_GAME' || project.type === 'TREASURE_HUNT') && (

@@ -90,9 +90,9 @@ export async function partialWithdraw(userId: number, projectId: string, amount:
   const type = project.type as ProjectType
   const rules = WITHDRAWAL_RULES[type]
 
-  // Проверяем лимит
+  // Проверяем лимит — 25% от текущего баланса дела, округление вниз
   if (rules.maxPercent !== null) {
-    const maxAllowed = project.investedAmountRubles * rules.maxPercent
+    const maxAllowed = Math.floor(project.currentValueRubles * rules.maxPercent)
     if (amount > maxAllowed) throw new Error('EXCEEDS_LIMIT')
   }
 
