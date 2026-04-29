@@ -240,29 +240,32 @@ export function HomePage() {
       {/* Reset confirmation modal */}
       <AnimatePresence>
         {showResetConfirm && (
-          <>
-            <motion.div
-              key="reset-backdrop"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setShowResetConfirm(false)}
-              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200 }}
-            />
+          <motion.div
+            key="reset-overlay"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setShowResetConfirm(false)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 200,
+              background: 'rgba(0,0,0,0.80)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: '20px',
+            }}
+          >
             <motion.div
               key="reset-modal"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.88, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.88, y: 16 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               onClick={e => e.stopPropagation()}
               style={{
-                position: 'fixed', top: '50%', left: '50%',
-                transform: 'translate(-50%, -50%)',
-                zIndex: 201,
-                width: 'min(360px, calc(100vw - 40px))',
+                width: '100%', maxWidth: '360px',
                 background: `linear-gradient(180deg, #1a0a08 0%, ${colors.nightBlue} 100%)`,
                 border: `1px solid ${colors.danger}50`,
                 borderRadius: '16px',
                 padding: '24px',
+                maxHeight: 'calc(100dvh - 40px)',
+                overflowY: 'auto',
               }}
             >
               <div style={{ textAlign: 'center', marginBottom: '16px' }}>
@@ -334,7 +337,7 @@ export function HomePage() {
                 </button>
               </div>
             </motion.div>
-          </>
+          </motion.div>
         )}
       </AnimatePresence>
       {showDayNews && gameState.activeProjects.length > 0 && (
@@ -521,7 +524,7 @@ export function HomePage() {
               {/* Reset button */}
               <div>
                 <button
-                  onClick={() => setShowResetConfirm(true)}
+                  onClick={() => { setShowSettings(false); setShowResetConfirm(true) }}
                   style={{
                     width: '100%', padding: '12px 16px',
                     background: 'rgba(244,67,54,0.12)',
