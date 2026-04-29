@@ -240,7 +240,7 @@ function MiniValueChart({ valueHistory, userCount, invested }: { valueHistory: n
 
 function ActiveProjectCard({ project }: { project: ProjectDTO }) {
   const qc = useQueryClient()
-  const { gameState } = useGameStore()
+  const { gameState, updateBalance } = useGameStore()
   const [showWithdraw, setShowWithdraw] = useState(false)
   const [showAddInvest, setShowAddInvest] = useState(false)
   const [withdrawAmount, setWithdrawAmount] = useState('')
@@ -289,6 +289,7 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
     mutationFn: () => api.invest.addInvestment(project.id, Number(addAmount)),
     onSuccess: () => {
       portfolioHaptic?.notificationOccurred('success')
+      updateBalance(-Number(addAmount))
       setShowAddInvest(false)
       setAddAmount('')
       qc.invalidateQueries({ queryKey: ['portfolio'] })

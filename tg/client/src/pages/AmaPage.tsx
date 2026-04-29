@@ -576,12 +576,13 @@ export function AmaPage() {
 function InvestSheet({ projectId, onClose, onSuccess }: { projectId: string; onClose: () => void; onSuccess: () => void }) {
   const [amount, setAmount] = useState('')
   const qc = useQueryClient()
-  const { gameState } = useGameStore()
+  const { gameState, updateBalance } = useGameStore()
 
   const investMutation = useMutation({
     mutationFn: () => api.invest.invest(projectId, Number(amount)),
     onSuccess: () => {
       haptic?.notificationOccurred('success')
+      updateBalance(-Number(amount))
       qc.invalidateQueries({ queryKey: ['gameState'] })
       onSuccess()
     },
