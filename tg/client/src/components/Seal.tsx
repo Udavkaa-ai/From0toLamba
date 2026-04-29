@@ -61,6 +61,7 @@ export interface SealParams {
   border: BorderStyle
   dots: DotCount
   emblem: Emblem
+  innerScale: number  // масштаб рисунка внутри ячейки, 1.0 = норма
 }
 
 export type CharterDifficulty = 'EASY' | 'MEDIUM' | 'HARD'
@@ -120,46 +121,62 @@ function hashChannel(seed: string, channel: string): number {
 
 export function generateReferenceSeal(seed: string): SealParams {
   return {
-    shape:    pickBy(SHAPES,       hashChannel(seed, 'shape')),
-    color:    pickBy(COLORS,       hashChannel(seed, 'color')),
-    rings:    pickBy(RING_COUNTS,  hashChannel(seed, 'rings')),
-    border:   pickBy(BORDER_STYLES, hashChannel(seed, 'border')),
-    dots:     pickBy(DOT_COUNTS,   hashChannel(seed, 'dots')),
-    emblem:   pickBy(ALL_EMBLEMS,  hashChannel(seed, 'emblem')),
+    shape:      pickBy(SHAPES,        hashChannel(seed, 'shape')),
+    color:      pickBy(COLORS,        hashChannel(seed, 'color')),
+    rings:      pickBy(RING_COUNTS,   hashChannel(seed, 'rings')),
+    border:     pickBy(BORDER_STYLES, hashChannel(seed, 'border')),
+    dots:       pickBy(DOT_COUNTS,    hashChannel(seed, 'dots')),
+    emblem:     pickBy(ALL_EMBLEMS,   hashChannel(seed, 'emblem')),
+    innerScale: 1.0,
   }
 }
 
 // ─── Мутация ──────────────────────────────────────────────────────────────
 
 type MutTarget =
-  | 'shape'           // геометрическая форма (квадрат → ромб)
-  | 'rings'           // число концентрических колец внутри
-  | 'emblemClass'     // зверь ↔ знак (радикальная смена силуэта эмблемы)
-  | 'emblemSame'      // зверь на похожего (fish↔falcon)
-  | 'colorHueMedium'  // умеренный сдвиг тона ±35-45° — заметно, но похожий цвет
-  | 'colorHue'        // малый сдвиг тона ±20° — тонко
-  | 'dots'            // число точек-розетки
+  | 'shape'       // схожая форма (шестигранник → восьмигранник)
+  | 'rings'       // число концентрических колец
+  | 'emblemClass' // зверь ↔ знак (разные классы)
+  | 'emblemSame'  // визуально похожий в том же классе
+  | 'colorHue'    // сдвиг тона ±25° — только оттенок, без смены цвета
+  | 'dots'        // число точек-розетки
+  | 'size'        // масштаб печати (крупнее/мельче)
 
 const MUT_POOLS: Record<CharterDifficulty, MutTarget[]> = {
-  // EASY: форма/геометрия/эмблема — силуэт меняется радикально, цвет тот же
-  EASY:   ['shape', 'rings', 'emblemClass'],
-  // MEDIUM: похожий зверь или умеренный сдвиг оттенка — заметно, но не кричит
-  MEDIUM: ['emblemSame', 'colorHueMedium'],
-  // HARD: число точек-розетки и малый сдвиг оттенка — нужно присматриваться
-  HARD:   ['dots', 'colorHue'],
+  EASY:   ['shape', 'size', 'emblemClass'],
+  MEDIUM: ['emblemSame', 'colorHue', 'size'],
+  HARD:   ['dots', 'colorHue', 'size'],
 }
 
-/** «Похожие» эмблемы внутри одного класса — для MEDIUM-мутаций */
+/** Визуально схожие формы — переходы между соседними геометриями, без зеркал */
+const SIMILAR_SHAPE: Record<Shape, Shape> = {
+  circle:      'hexagon',
+  square:      'diamond',
+  diamond:     'square',
+  hexagon:     'octagon',
+  octagon:     'hexagon',
+  triangleUp:  'shield',      // оба с острой вершиной сверху
+  triangleDown: 'diamond',    // оба с острым концом снизу
+  shield:      'triangleUp',
+}
+
+/** Визуально схожие эмблемы — подбор по силуэту, не по смыслу */
 const SIMILAR_ANIMAL: Record<Animal, Animal> = {
-  bear: 'boar',   wolf: 'bear',
-  deer: 'fish',   falcon: 'wolf',
-  boar: 'wolf',   fish: 'deer',
+  bear:   'boar',    // оба: круглая голова, схожий профиль
+  boar:   'bear',
+  wolf:   'deer',    // оба: острые выступы вверх (уши / рога)
+  deer:   'wolf',
+  falcon: 'fish',    // оба: горизонтальный вытянутый силуэт
+  fish:   'falcon',
 }
 const SIMILAR_MOTIF: Record<Motif, Motif> = {
-  anchor: 'horseshoe', horseshoe: 'crown',
-  key: 'sword',        sword: 'key',
-  feather: 'flame',    flame: 'feather',
-  crown: 'anchor',
+  feather:   'flame',      // оба: вытянутый суживающийся каплевидный силуэт
+  flame:     'feather',
+  anchor:    'sword',      // оба: вертикальная ось + горизонтальная перекладина
+  sword:     'anchor',
+  key:       'crown',      // оба: декоративный верх + вертикальное/горизонтальное основание
+  crown:     'key',
+  horseshoe: 'anchor',     // оба: дугообразный изгиб + симметрия
 }
 
 function nextInList<T>(arr: readonly T[], current: T, step: number): T {
@@ -182,48 +199,37 @@ export function mutateSeal(
 
   switch (target) {
     case 'shape':
-      out.shape = nextInList(SHAPES, ref.shape, step)
+      // Схожая форма — без зеркал, без радикальных смен (шестигранник → восьмигранник)
+      out.shape = SIMILAR_SHAPE[ref.shape]
       break
     case 'rings':
       out.rings = nextInList(RING_COUNTS, ref.rings, step)
       break
     case 'dots':
-      // Гарантируем заметное изменение количества точек: +2 позиции по массиву,
-      // т.е. через одну — например 4 → 8 или 8 → 0. Иначе соседние значения
-      // (4→6, 6→8) на мелкой SVG почти не различаются.
       out.dots = DOT_COUNTS[(DOT_COUNTS.indexOf(ref.dots) + 2) % DOT_COUNTS.length]
       break
-    case 'colorHueMedium': {
-      // MEDIUM — умеренный сдвиг тона ±35-45°: цвет явно другой, но из той же семьи.
-      // Не прыгаем на другой конец спектра — gold остаётся тёплым, не превращается в синий.
+    case 'colorHue': {
+      // Только сдвиг тона ±25° — насыщенность и яркость не меняются
       const direction = (h & 1) === 0 ? 1 : -1
-      const deg = (35 + (h % 11)) * direction  // 35..45°
       out.color = {
-        key: ref.color.key + (direction > 0 ? '-shifted' : '-shifted2'),
-        primary: shiftHue(ref.color.primary, deg),
-        secondary: shiftHue(ref.color.secondary, deg),
+        key: ref.color.key + (direction > 0 ? '-warm' : '-cool'),
+        primary: shiftHue(ref.color.primary, 25 * direction),
+        secondary: shiftHue(ref.color.secondary, 25 * direction),
       }
       break
     }
-    case 'colorHue': {
-      // HARD — малый сдвиг тона ±20°, читается как «немного другой оттенок».
-      const direction = (h & 1) === 0 ? 1 : -1
-      const deg = 20 * direction
-      out.color = {
-        key: ref.color.key + (direction > 0 ? '-warm' : '-cool'),
-        primary: shiftHue(ref.color.primary, deg),
-        secondary: shiftHue(ref.color.secondary, deg),
-      }
+    case 'size': {
+      // Крупнее или мельче — противоположно базовому (1.0)
+      out.innerScale = ((h >> 3) & 1) === 0 ? 0.82 : 1.18
       break
     }
     case 'emblemClass': {
-      // Меняем класс эмблемы (зверь ↔ знак)
       if (ref.emblem.kind === 'animal') out.emblem = { kind: 'motif', value: pickBy(MOTIFS, h >>> 7) }
       else out.emblem = { kind: 'animal', value: pickBy(ANIMALS, h >>> 7) }
       break
     }
     case 'emblemSame': {
-      // Меняем эмблему в том же классе на похожую
+      // Визуально похожий силуэт в том же классе
       if (ref.emblem.kind === 'animal') out.emblem = { kind: 'animal', value: SIMILAR_ANIMAL[ref.emblem.value] }
       else out.emblem = { kind: 'motif', value: SIMILAR_MOTIF[ref.emblem.value] }
       break
@@ -258,8 +264,9 @@ interface SealProps {
  *  даёт ощущение объёма. Внутренний hairline-блик в верхней части — «глянец».
  *  Эмблема со своей мягкой тенью — выглядит выдавленной в основе. */
 export function Seal({ params, size = 72, dim = false }: SealProps) {
-  const { shape, color, rings, border, dots, emblem } = params
+  const { shape, color, rings, border, dots, emblem, innerScale = 1 } = params
   const opacity = dim ? 0.35 : 1
+  const scaleTransform = innerScale !== 1 ? `translate(50 50) scale(${innerScale}) translate(-50 -50)` : undefined
 
   // Уникальные id градиентов на инстанс — иначе несколько печатей в одном DOM
   // подхватят один и тот же gradient и потеряют свой цвет.
@@ -304,23 +311,19 @@ export function Seal({ params, size = 72, dim = false }: SealProps) {
         </filter>
       </defs>
 
-      {/* Точки-розетка по периметру (за пределами основы) */}
+      {/* Точки-розетка всегда на внешнем кольце, не масштабируются */}
       {renderDots(dots, color)}
 
-      {/* Основная форма с радиальным градиентом */}
-      {renderShape(shape, color, 36, `url(#${fillId})`)}
-
-      {/* Hairline-блик поверх основы — лёгкий «глянец» */}
-      <g style={{ pointerEvents: 'none' }} clipPath={undefined}>
-        {renderGloss(shape, glossId)}
+      {/* Всё тело печати масштабируется от центра при мутации размера */}
+      <g transform={scaleTransform}>
+        {renderShape(shape, color, 36, `url(#${fillId})`)}
+        <g style={{ pointerEvents: 'none' }}>
+          {renderGloss(shape, glossId)}
+        </g>
+        {renderRings(shape, rings, color)}
+        {renderBorderStyle(shape, border, color)}
+        <g filter={`url(#${embossId})`}>{renderEmblem(emblem, color)}</g>
       </g>
-
-      {/* Концентрические кольца + декоративный ободок */}
-      {renderRings(shape, rings, color)}
-      {renderBorderStyle(shape, border, color)}
-
-      {/* Центральная эмблема — с soft emboss filter */}
-      <g filter={`url(#${embossId})`}>{renderEmblem(emblem, color)}</g>
     </svg>
   )
 }
