@@ -18,6 +18,8 @@ const COLORS = [
   { key: 'crimson', primary: '#D14B4B', secondary: '#4D1010' },
   { key: 'emerald', primary: '#4FA577', secondary: '#123322' },
   { key: 'indigo',  primary: '#6275C4', secondary: '#1A2348' },
+  { key: 'violet',  primary: '#A855F7', secondary: '#2E1065' },
+  { key: 'teal',    primary: '#2DD4BF', secondary: '#0F4440' },
 ] as const
 
 /** Палитра печати — из COLORS или со сдвинутым тоном (hue shift). */
@@ -38,7 +40,7 @@ type DotCount = typeof DOT_COUNTS[number]
 
 /** Центральная эмблема — зверь или знак */
 const ANIMALS = ['bear', 'wolf', 'deer', 'falcon', 'boar', 'fish'] as const
-const MOTIFS  = ['anchor', 'key', 'feather', 'horseshoe'] as const
+const MOTIFS  = ['anchor', 'key', 'feather', 'horseshoe', 'crown', 'sword', 'flame'] as const
 
 type Animal = typeof ANIMALS[number]
 type Motif  = typeof MOTIFS[number]
@@ -147,15 +149,17 @@ const MUT_POOLS: Record<CharterDifficulty, MutTarget[]> = {
   HARD:   ['dots', 'colorHue'],
 }
 
-/** «Похожие» эмблемы внутри одного класса — для HARD-мутаций */
+/** «Похожие» эмблемы внутри одного класса — для MEDIUM-мутаций */
 const SIMILAR_ANIMAL: Record<Animal, Animal> = {
-  bear: 'wolf',   wolf: 'bear',
-  deer: 'falcon', falcon: 'deer',
-  boar: 'bear',   fish: 'falcon',
+  bear: 'boar',   wolf: 'bear',
+  deer: 'fish',   falcon: 'wolf',
+  boar: 'wolf',   fish: 'deer',
 }
 const SIMILAR_MOTIF: Record<Motif, Motif> = {
-  anchor: 'key',       key: 'anchor',
-  feather: 'horseshoe', horseshoe: 'feather',
+  anchor: 'horseshoe', horseshoe: 'crown',
+  key: 'sword',        sword: 'key',
+  feather: 'flame',    flame: 'feather',
+  crown: 'anchor',
 }
 
 function nextInList<T>(arr: readonly T[], current: T, step: number): T {
@@ -527,6 +531,27 @@ function renderMotif(m: Motif, fill: string) {
           <circle cx="66" cy="42" r="1.5" fill={stroke} />
           <circle cx="38" cy="58" r="1.5" fill={stroke} />
           <circle cx="62" cy="58" r="1.5" fill={stroke} />
+        </g>
+      )
+    case 'crown':
+      return (
+        <g fill={fill}>
+          <path d="M 32 64 L 32 48 L 41 58 L 50 34 L 59 58 L 68 48 L 68 64 Z" />
+          <rect x="32" y="64" width="36" height="6" rx="2" />
+        </g>
+      )
+    case 'sword':
+      return (
+        <g fill={fill}>
+          <rect x="48" y="24" width="4" height="34" rx="2" />
+          <rect x="38" y="54" width="24" height="4" rx="2" />
+          <path d="M 47 58 L 50 74 L 53 58 Z" />
+        </g>
+      )
+    case 'flame':
+      return (
+        <g fill={fill}>
+          <path d="M 50 28 Q 62 38 60 50 Q 66 44 62 54 Q 62 68 50 72 Q 38 68 38 54 Q 34 44 40 50 Q 38 38 50 28 Z" />
         </g>
       )
   }

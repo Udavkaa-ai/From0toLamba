@@ -155,6 +155,7 @@ export function HomePage() {
   const resetMutation = useMutation({
     mutationFn: api.game.resetGame,
     onSuccess: () => {
+      window.localStorage.removeItem('seenAchievements')
       setShowResetConfirm(false)
       setShowSettings(false)
       qc.invalidateQueries({ queryKey: ['gameState'] })
