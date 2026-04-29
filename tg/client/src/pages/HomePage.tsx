@@ -12,7 +12,7 @@ import {
 import { AchievementUnlockedOverlay } from '@/components/AchievementUnlockedOverlay'
 import { CountUp } from '@/components/CountUp'
 import { EyeIcon, LockIcon } from '@/components/icons'
-import { api, type ProjectDTO, type DailyUpdateDTO, type ClosureSummaryDTO } from '@/api/client'
+import { api, type ProjectDTO, type DailyUpdateDTO, type ClosureSummaryDTO, type MyReferralEntryDTO } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing, typography } from '@/theme'
 
@@ -40,6 +40,7 @@ export function HomePage() {
   const [showSettings, setShowSettings] = useState(false)
   const [localModel, setLocalModel] = useState<string | null>(null)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [showMyReferrals, setShowMyReferrals] = useState(false)
   const [showDayNews, setShowDayNews] = useState(false)
   const [dayClosures, setDayClosures] = useState<ClosureSummaryDTO[]>([])
   const [showPaymentModal, setShowPaymentModal] = useState(false)
@@ -340,6 +341,10 @@ export function HomePage() {
           </motion.div>
         )}
       </AnimatePresence>
+      {showMyReferrals && (
+        <MyReferralsSheet onClose={() => setShowMyReferrals(false)} />
+      )}
+
       {showDayNews && gameState.activeProjects.length > 0 && (
         <DayNewsOverlay projects={gameState.activeProjects} closures={dayClosures} onClose={() => setShowDayNews(false)} />
       )}
@@ -485,8 +490,30 @@ export function HomePage() {
                 >
                   📜 Зазвать купца на ярмарку
                   <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '4px', fontWeight: 400 }}>
-                    Обоим по +100 г в казну, когда перейдёт по ссылке
+                    Обоим по +100 г, когда сосватанный наберёт 10 чуйки
                   </div>
+                </button>
+                <button
+                  onClick={() => { setShowSettings(false); setShowMyReferrals(true) }}
+                  style={{
+                    width: '100%',
+                    marginTop: '8px',
+                    padding: '10px 16px',
+                    background: 'rgba(255,255,255,0.04)',
+                    border: `1px solid ${colors.cardBorder}`,
+                    borderRadius: '12px',
+                    color: colors.textSecondary,
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  🤝 Мои сосватанные
+                  <span style={{ color: colors.textMuted, fontSize: '11px', fontWeight: 400 }}>→</span>
                 </button>
               </div>
 
@@ -712,6 +739,98 @@ export function HomePage() {
         />
       )}
     </ScreenBackground>
+  )
+}
+
+function MyReferralsSheet({ onClose }: { onClose: () => void }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ['referrals', 'my'],
+    queryFn: api.referrals.getMy,
+  })
+  const threshold = data?.threshold ?? 10
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        key="referrals-backdrop"
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        onClick={onClose}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 100 }}
+      />
+      <motion.div
+        key="referrals-sheet"
+        initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+        style={{
+          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 101,
+          background: `linear-gradient(180deg, ${colors.enchantedPurple} 0%, ${colors.nightBlue} 100%)`,
+          borderTop: `1px solid ${colors.fairyGold}40`,
+          borderRadius: '20px 20px 0 0',
+          padding: '24px 20px 40px',
+          maxHeight: '75dvh',
+          overflowY: 'auto',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <div style={{ color: colors.fairyGold, fontSize: '17px', fontWeight: 700 }}>🤝 Мои сосватанные</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: colors.textMuted, fontSize: '20px', cursor: 'pointer', padding: '4px 8px' }}>✕</button>
+        </div>
+        <div style={{ color: colors.textMuted, fontSize: '11px', marginBottom: '16px', lineHeight: 1.5 }}>
+          Бонус +100 г обоим начисляется когда сосватанный набирает {threshold} чуйки
+        </div>
+
+        {isLoading && [1, 2, 3].map(i => (
+          <div key={i} style={{ height: '52px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', marginBottom: '8px', animation: 'pulse 1.5s infinite' }} />
+        ))}
+
+        {!isLoading && data?.referrals.length === 0 && (
+          <div style={{ textAlign: 'center', color: colors.textMuted, padding: '32px 0' }}>
+            <div style={{ fontSize: '32px', marginBottom: '8px' }}>📜</div>
+            <div>Никого пока не сосватал</div>
+            <div style={{ fontSize: '11px', marginTop: '4px' }}>Поделись пригласительной грамотой</div>
+          </div>
+        )}
+
+        {data?.referrals.map((r: MyReferralEntryDTO) => {
+          const done = r.bonusGranted
+          const pct = Math.min(100, Math.round((r.intuitionScore / threshold) * 100))
+          const displayName = r.username ? '@' + r.username : r.firstName
+          return (
+            <div key={r.userId} style={{
+              display: 'flex', alignItems: 'center', gap: '12px',
+              padding: '10px 12px',
+              marginBottom: '8px',
+              borderRadius: '10px',
+              background: done ? `${colors.success}12` : 'rgba(255,255,255,0.05)',
+              border: `1px solid ${done ? colors.success + '40' : colors.cardBorder}`,
+            }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ color: done ? colors.success : colors.textPrimary, fontWeight: 600, fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {displayName}
+                </div>
+                {!done && (
+                  <div style={{ marginTop: '4px' }}>
+                    <div style={{ height: '3px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: pct + '%', background: colors.fairyGold, borderRadius: '2px', transition: 'width 0.3s' }} />
+                    </div>
+                    <div style={{ color: colors.textMuted, fontSize: '10px', marginTop: '3px' }}>
+                      Чуйка: {r.intuitionScore} / {threshold}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div style={{ flexShrink: 0, textAlign: 'right' }}>
+                {done ? (
+                  <div style={{ color: colors.success, fontSize: '12px', fontWeight: 700 }}>+100 г ✓</div>
+                ) : (
+                  <div style={{ color: colors.textMuted, fontSize: '11px' }}>День {r.currentDay}</div>
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </motion.div>
+    </AnimatePresence>
   )
 }
 

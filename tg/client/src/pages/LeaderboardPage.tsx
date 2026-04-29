@@ -71,7 +71,7 @@ export function LeaderboardPage() {
                 flex: 1,
                 padding: '8px 4px',
                 background: tab === t ? `${colors.fairyGold}20` : 'transparent',
-                border: `1px solid ${tab === t ? `${colors.fairyGold}60` : 'transparent'}`,
+                border: `1px solid ${tab === t ? colors.fairyGold + '60' : 'transparent'}`,
                 borderRadius: '8px',
                 color: tab === t ? colors.fairyGold : colors.textMuted,
                 fontSize: '11px',
@@ -95,107 +95,130 @@ export function LeaderboardPage() {
 
 // ─── Tabs ──────────────────────────────────────────────────────────────────
 
+function ShowAllButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        width: '100%', marginTop: spacing.sm,
+        padding: '10px',
+        background: 'rgba(255,255,255,0.04)',
+        border: `1px solid ${colors.cardBorder}`,
+        borderRadius: '10px',
+        color: colors.textMuted,
+        fontSize: '12px', fontWeight: 600,
+        cursor: 'pointer',
+      }}
+    >
+      👥 Смотреть всех купцов
+    </button>
+  )
+}
+
 function MoneyTab() {
+  const [showAll, setShowAll] = useState(false)
   const { data, isLoading } = useQuery({
     queryKey: ['leaderboard', 'money'],
     queryFn: api.leaderboard.get,
     refetchInterval: 60_000,
   })
-  const top5 = data?.entries.slice(0, 5)
+  const entries = showAll ? data?.entries : data?.entries.slice(0, 5)
 
   return (
     <>
-      <Caption text={data ? `${data.totalPlayers} купцов в игре` : 'Богатейшие купцы Лукоморья'} />
+      <Caption description="Богатейшие купцы Лукоморья" totalPlayers={data?.totalPlayers} />
       {isLoading && [1, 2, 3, 4, 5].map(i => <SkeletonCard key={i} lines={2} />)}
-      {top5?.length === 0 && !isLoading && (
-        <EmptyState icon="💰" text="Пока никто не накопил злата" />
-      )}
-      {top5?.map((entry, i) => (
-        <motion.div key={entry.userId} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
+      {entries?.length === 0 && !isLoading && <EmptyState icon="💰" text="Пока никто не накопил злата" />}
+      {entries?.map((entry, i) => (
+        <motion.div key={entry.userId} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: Math.min(i * 0.03, 0.3) }}>
           <LeaderboardRow entry={entry} />
         </motion.div>
       ))}
-      {data && data.myPosition && data.myPosition > 5 && (
+      {data && data.myPosition && data.myPosition > (showAll ? data.entries.length : 5) && (
         <MyOutsidePos myPosition={data.myPosition} total={data.totalPlayers} hint="Копи злато — поднимайся выше!" />
       )}
+      {!showAll && data && data.entries.length > 5 && <ShowAllButton onClick={() => setShowAll(true)} />}
     </>
   )
 }
 
 function IntuitionTab() {
+  const [showAll, setShowAll] = useState(false)
   const { data, isLoading } = useQuery({
     queryKey: ['leaderboard', 'intuition'],
     queryFn: api.leaderboard.getByIntuition,
     refetchInterval: 60_000,
   })
+  const entries = showAll ? data?.entries : data?.entries.slice(0, 5)
 
   return (
     <>
-      <Caption text={data ? `${data.totalPlayers} купцов в игре` : 'Острее всех чуют обман'} />
+      <Caption description="Острее всех чуют обман" totalPlayers={data?.totalPlayers} />
       {isLoading && [1, 2, 3, 4, 5].map(i => <SkeletonCard key={i} lines={2} />)}
-      {data?.entries.length === 0 && !isLoading && (
-        <EmptyState icon="👁" text="Ещё никто не проверял грамоты" />
-      )}
-      {data?.entries.map((entry, i) => (
-        <motion.div key={entry.userId} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
+      {entries?.length === 0 && !isLoading && <EmptyState icon="👁" text="Ещё никто не проверял грамоты" />}
+      {entries?.map((entry, i) => (
+        <motion.div key={entry.userId} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: Math.min(i * 0.03, 0.3) }}>
           <IntuitionRow entry={entry} />
         </motion.div>
       ))}
-      {data && data.myPosition && data.myPosition > 5 && (
+      {data && data.myPosition && data.myPosition > (showAll ? data.entries.length : 5) && (
         <MyOutsidePos myPosition={data.myPosition} total={data.totalPlayers} hint="Разбирай грамоты — точнее видишь!" />
       )}
+      {!showAll && data && data.entries.length > 5 && <ShowAllButton onClick={() => setShowAll(true)} />}
     </>
   )
 }
 
 function DaysTab() {
+  const [showAll, setShowAll] = useState(false)
   const { data, isLoading } = useQuery({
     queryKey: ['leaderboard', 'days'],
     queryFn: api.leaderboard.getByDays,
     refetchInterval: 60_000,
   })
+  const entries = showAll ? data?.entries : data?.entries.slice(0, 5)
 
   return (
     <>
-      <Caption text={data ? `${data.totalPlayers} купцов в игре` : 'Дольше всех на ярмарке'} />
+      <Caption description="Дольше всех на ярмарке" totalPlayers={data?.totalPlayers} />
       {isLoading && [1, 2, 3, 4, 5].map(i => <SkeletonCard key={i} lines={2} />)}
-      {data?.entries.length === 0 && !isLoading && (
-        <EmptyState icon="📅" text="Пока никто не прошёл и дня" />
-      )}
-      {data?.entries.map((entry, i) => (
-        <motion.div key={entry.userId} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
+      {entries?.length === 0 && !isLoading && <EmptyState icon="📅" text="Пока никто не прошёл и дня" />}
+      {entries?.map((entry, i) => (
+        <motion.div key={entry.userId} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: Math.min(i * 0.03, 0.3) }}>
           <DaysRow entry={entry} />
         </motion.div>
       ))}
-      {data && data.myPosition && data.myPosition > 5 && (
+      {data && data.myPosition && data.myPosition > (showAll ? data.entries.length : 5) && (
         <MyOutsidePos myPosition={data.myPosition} total={data.totalPlayers} hint="Жми следующий день каждый раз!" />
       )}
+      {!showAll && data && data.entries.length > 5 && <ShowAllButton onClick={() => setShowAll(true)} />}
     </>
   )
 }
 
 function AchievementsTab() {
+  const [showAll, setShowAll] = useState(false)
   const { data, isLoading } = useQuery({
     queryKey: ['leaderboard', 'achievements'],
     queryFn: api.leaderboard.getByAchievements,
     refetchInterval: 60_000,
   })
+  const entries = showAll ? data?.entries : data?.entries.slice(0, 5)
 
   return (
     <>
-      <Caption text={data ? `${data.totalPlayers} купцов в игре` : 'Больше всего закрытых дел'} />
+      <Caption description="Больше всего закрытых дел" totalPlayers={data?.totalPlayers} />
       {isLoading && [1, 2, 3, 4, 5].map(i => <SkeletonCard key={i} lines={2} />)}
-      {data?.entries.length === 0 && !isLoading && (
-        <EmptyState icon="🎯" text="Пока никто не завершил дел" />
-      )}
-      {data?.entries.map((entry, i) => (
-        <motion.div key={entry.userId} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
+      {entries?.length === 0 && !isLoading && <EmptyState icon="🎯" text="Пока никто не завершил дел" />}
+      {entries?.map((entry, i) => (
+        <motion.div key={entry.userId} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: Math.min(i * 0.03, 0.3) }}>
           <AchievementRow entry={entry} />
         </motion.div>
       ))}
-      {data && data.myPosition && data.myPosition > 5 && (
+      {data && data.myPosition && data.myPosition > (showAll ? data.entries.length : 5) && (
         <MyOutsidePos myPosition={data.myPosition} total={data.totalPlayers} hint="Входи в дела и разбирай грамоты!" />
       )}
+      {!showAll && data && data.entries.length > 5 && <ShowAllButton onClick={() => setShowAll(true)} />}
     </>
   )
 }
@@ -326,10 +349,13 @@ function BaseRow({
 
 // ─── Bits ──────────────────────────────────────────────────────────────────
 
-function Caption({ text }: { text: string }) {
+function Caption({ description, totalPlayers }: { description: string; totalPlayers?: number }) {
   return (
-    <div style={{ color: colors.textMuted, fontSize: '11px', textAlign: 'center', marginBottom: spacing.md }}>
-      {text}
+    <div style={{ textAlign: 'center', marginBottom: spacing.md }}>
+      <div style={{ color: colors.fairyGold, fontSize: '12px', fontWeight: 600, opacity: 0.85 }}>{description}</div>
+      {totalPlayers !== undefined && (
+        <div style={{ color: colors.textMuted, fontSize: '10px', marginTop: '2px' }}>{totalPlayers} купцов в игре</div>
+      )}
     </div>
   )
 }
@@ -360,4 +386,3 @@ function MyOutsidePos({ myPosition, total, hint }: { myPosition: number; total: 
     </div>
   )
 }
-

@@ -194,6 +194,20 @@ export interface AchievementLeaderboardDTO {
   totalPlayers: number
 }
 
+export interface MyReferralEntryDTO {
+  userId: number
+  firstName: string
+  username: string | null
+  bonusGranted: boolean
+  intuitionScore: number
+  currentDay: number
+}
+
+export interface MyReferralsDTO {
+  referrals: MyReferralEntryDTO[]
+  threshold: number
+}
+
 export interface ClosureSummaryDTO {
   id: string
   name: string
@@ -295,6 +309,10 @@ export const api = {
     getByIntuition: () => apiClient.get<LeaderboardDTO>('/leaderboard/intuition').then(r => r.data),
     getByDays: () => apiClient.get<LeaderboardDTO>('/leaderboard/days').then(r => r.data),
     getByAchievements: () => apiClient.get<AchievementLeaderboardDTO>('/leaderboard/achievements').then(r => r.data),
+  },
+
+  referrals: {
+    getMy: () => apiClient.get<MyReferralsDTO>('/referrals/my').then(r => r.data),
   },
 
   invest: {

@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { prisma } from '../../db/prisma'
 import { telegramAuthHook } from '../../middleware/telegramAuth'
 import { advanceDay, ADVANCE_COOLDOWN_MS, MAX_CONSECUTIVE_ADVANCES } from '../../game/AdvanceDayService'
-import { tryAttachReferrer, countReferrals } from '../../game/referralService'
+import { tryAttachReferrer, countReferrals, REFERRAL_INTUITION_THRESHOLD } from '../../game/referralService'
 import { ensureWeekStartSnapshot } from '../../game/weeklyService'
 import { generateOnboardingProject } from '../../game/GenerateProjectService'
 import { toPublicDTO } from '../../game/projectUtils'
@@ -478,11 +478,11 @@ export async function gameRoutes(app: FastifyInstance) {
       }))
       .sort((a, b) => b.intuitionScore - a.intuitionScore)
 
-    const top5 = ranked.slice(0, 5).map((e, i) => ({ ...e, position: i + 1 }))
+    const top100 = ranked.slice(0, 100).map((e, i) => ({ ...e, position: i + 1 }))
     const myEntry = currentUser ? ranked.find(e => e.userId === currentUser.id) : null
     const myPosition = myEntry ? ranked.indexOf(myEntry) + 1 : null
 
-    return reply.send({ entries: top5, myPosition, totalPlayers: ranked.length })
+    return reply.send({ entries: top100, myPosition, totalPlayers: ranked.length })
   })
 
   // GET /api/leaderboard/days — топ-5 по количеству игровых дней
@@ -519,11 +519,11 @@ export async function gameRoutes(app: FastifyInstance) {
       }))
       .sort((a, b) => b.currentDay - a.currentDay)
 
-    const top5 = ranked.slice(0, 5).map((e, i) => ({ ...e, position: i + 1 }))
+    const top100 = ranked.slice(0, 100).map((e, i) => ({ ...e, position: i + 1 }))
     const myEntry = currentUser ? ranked.find(e => e.userId === currentUser.id) : null
     const myPosition = myEntry ? ranked.indexOf(myEntry) + 1 : null
 
-    return reply.send({ entries: top5, myPosition, totalPlayers: ranked.length })
+    return reply.send({ entries: top100, myPosition, totalPlayers: ranked.length })
   })
 
   // GET /api/leaderboard/achievements — топ-5 по количеству закрытых дел + разобранных грамот
@@ -580,11 +580,45 @@ export async function gameRoutes(app: FastifyInstance) {
       })
       .sort((a, b) => b.achievementScore - a.achievementScore)
 
-    const top5 = ranked.slice(0, 5).map((e, i) => ({ ...e, position: i + 1 }))
+    const top100 = ranked.slice(0, 100).map((e, i) => ({ ...e, position: i + 1 }))
     const myEntry = currentUser ? ranked.find(e => e.userId === currentUser.id) : null
     const myPosition = myEntry ? ranked.indexOf(myEntry) + 1 : null
 
-    return reply.send({ entries: top5, myPosition, totalPlayers: ranked.length })
+    return reply.send({ entries: top100, myPosition, totalPlayers: ranked.length })
+  })
+
+  // GET /api/referrals/my — список сосватанных с их статусом
+  app.get('/api/referrals/my', { preHandler: telegramAuthHook }, async (request, reply) => {
+    const tgUser = request.telegramUser
+    const currentUser = await prisma.user.findUnique({
+      where: { telegramId: String(tgUser.id) },
+      select: { id: true },
+    })
+    if (!currentUser) return reply.status(404).send({ error: 'NOT_FOUND' })
+
+    const referred = await prisma.user.findMany({
+      where: { referrerId: currentUser.id },
+      select: {
+        id: true,
+        firstName: true,
+        username: true,
+        referralBonusGranted: true,
+        gameState: { select: { intuitionScore: true, currentDay: true } },
+      },
+      orderBy: { createdAt: 'asc' },
+    })
+
+    return reply.send({
+      referrals: referred.map(r => ({
+        userId: r.id,
+        firstName: r.firstName,
+        username: r.username ?? null,
+        bonusGranted: r.referralBonusGranted,
+        intuitionScore: r.gameState?.intuitionScore ?? 0,
+        currentDay: r.gameState?.currentDay ?? 0,
+      })),
+      threshold: REFERRAL_INTUITION_THRESHOLD,
+    })
   })
 
   // POST /api/game/reset
