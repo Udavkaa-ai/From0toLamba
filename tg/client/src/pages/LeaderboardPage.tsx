@@ -207,7 +207,7 @@ function AchievementsTab() {
 
   return (
     <>
-      <Caption description="Больше всего закрытых дел" totalPlayers={data?.totalPlayers} />
+      <Caption description="Больше всего вложений в дела + грамот" totalPlayers={data?.totalPlayers} />
       {isLoading && [1, 2, 3, 4, 5].map(i => <SkeletonCard key={i} lines={2} />)}
       {entries?.length === 0 && !isLoading && <EmptyState icon="🎯" text="Пока никто не завершил дел" />}
       {entries?.map((entry, i) => (
@@ -260,7 +260,7 @@ function AchievementRow({ entry }: { entry: AchievementLeaderboardEntryDTO }) {
   return (
     <BaseRow
       entry={entry}
-      rightTop={`📦 ${entry.closedProjectsCount} дел`}
+      rightTop={`📦 ${entry.closedProjectsCount} вложений`}
       rightBottom={`📜 ${entry.chartersSubmitted} грамот`}
     />
   )

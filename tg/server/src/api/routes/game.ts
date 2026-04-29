@@ -101,7 +101,7 @@ export async function gameRoutes(app: FastifyInstance) {
     const [activeProjects, inboxProjects, closedProjectsCount, charterSessions, referralCount, amaSessionsStarted, amaSessionsCompleted] = await Promise.all([
       prisma.project.findMany({ where: { userId: user.id, isActive: true } }),
       prisma.project.findMany({ where: { userId: user.id, isInbox: true }, orderBy: { createdAt: 'desc' }, take: 10 }),
-      prisma.project.count({ where: { userId: user.id, isClosed: true } }),
+      prisma.project.count({ where: { userId: user.id, isClosed: true, investedAmountRubles: { gt: 0 } } }),
       prisma.amaSession.findMany({
         where: { userId: user.id, charterSubmittedAt: { not: null } },
         select: { forgedIndices: true, charterSelectedIndices: true },
@@ -546,7 +546,7 @@ export async function gameRoutes(app: FastifyInstance) {
       }),
       prisma.project.groupBy({
         by: ['userId'],
-        where: { isClosed: true },
+        where: { isClosed: true, investedAmountRubles: { gt: 0 } },
         _count: { _all: true },
       }),
       prisma.amaSession.groupBy({
