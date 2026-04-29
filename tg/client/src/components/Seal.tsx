@@ -134,18 +134,17 @@ export function generateReferenceSeal(seed: string): SealParams {
 // ─── Мутация ──────────────────────────────────────────────────────────────
 
 type MutTarget =
-  | 'shape'       // схожая форма (шестигранник → восьмигранник)
-  | 'rings'       // число концентрических колец
-  | 'emblemClass' // зверь ↔ знак (разные классы)
-  | 'emblemSame'  // визуально похожий в том же классе
-  | 'colorHue'    // сдвиг тона ±25° — только оттенок, без смены цвета
-  | 'dots'        // число точек-розетки
-  | 'size'        // масштаб печати (крупнее/мельче)
+  | 'shape'      // схожая форма (шестигранник → восьмигранник)
+  | 'rings'      // число концентрических колец (1/2/3)
+  | 'emblemSame' // визуально похожий силуэт в том же классе
+  | 'colorHue'   // сдвиг тона ±20° — только оттенок, без смены цвета
+  | 'dots'       // число точек-розетки
+  | 'size'       // масштаб печати ±15%
 
 const MUT_POOLS: Record<CharterDifficulty, MutTarget[]> = {
-  EASY:   ['shape', 'size', 'emblemClass'],
-  MEDIUM: ['emblemSame', 'colorHue', 'size'],
-  HARD:   ['dots', 'colorHue', 'size'],
+  EASY:   ['shape', 'rings', 'size'],
+  MEDIUM: ['emblemSame', 'colorHue', 'rings', 'size'],
+  HARD:   ['dots', 'colorHue', 'rings'],
 }
 
 /** Визуально схожие формы — переходы между соседними геометриями, без зеркал */
@@ -209,23 +208,18 @@ export function mutateSeal(
       out.dots = DOT_COUNTS[(DOT_COUNTS.indexOf(ref.dots) + 2) % DOT_COUNTS.length]
       break
     case 'colorHue': {
-      // Только сдвиг тона ±25° — насыщенность и яркость не меняются
+      // Только сдвиг тона ±20° — насыщенность и яркость не меняются
       const direction = (h & 1) === 0 ? 1 : -1
       out.color = {
         key: ref.color.key + (direction > 0 ? '-warm' : '-cool'),
-        primary: shiftHue(ref.color.primary, 25 * direction),
-        secondary: shiftHue(ref.color.secondary, 25 * direction),
+        primary: shiftHue(ref.color.primary, 20 * direction),
+        secondary: shiftHue(ref.color.secondary, 20 * direction),
       }
       break
     }
     case 'size': {
       // Крупнее или мельче — противоположно базовому (1.0)
-      out.innerScale = ((h >> 3) & 1) === 0 ? 0.82 : 1.18
-      break
-    }
-    case 'emblemClass': {
-      if (ref.emblem.kind === 'animal') out.emblem = { kind: 'motif', value: pickBy(MOTIFS, h >>> 7) }
-      else out.emblem = { kind: 'animal', value: pickBy(ANIMALS, h >>> 7) }
+      out.innerScale = ((h >> 3) & 1) === 0 ? 0.85 : 1.15
       break
     }
     case 'emblemSame': {
