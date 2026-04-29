@@ -1079,7 +1079,7 @@ function StarsPaymentOverlay({
           background: colors.nightBlue,
           borderRadius: '20px 20px 0 0',
           border: `1px solid ${colors.cardBorder}`,
-          padding: spacing.xxl,
+          padding: `${spacing.xxl} ${spacing.xxl} calc(${spacing.xxl} + 80px + env(safe-area-inset-bottom))`,
         }}
       >
         <div style={{ fontSize: '40px', textAlign: 'center', marginBottom: spacing.md }}>⭐</div>
