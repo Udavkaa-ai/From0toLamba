@@ -115,13 +115,13 @@ export const FATE_CONFIG: Record<ProjectFate, {
   [ProjectFate.SLOW_DRAIN]: {
     daysRange: [7, 21],
     dailyYieldRange: [0.0375, 0.0675], // 3.75–6.75% в день (+3pp)
-    lossRange: [0.3, 0.7],
+    lossRange: [0.3, 0.5],
     weight: 30,
   },
   [ProjectFate.HONEST_FAIL]: {
     daysRange: [14, 30],
     dailyYieldRange: [0.0325, 0.0425], // 3.25–4.25% в день (+3pp)
-    lossRange: [0.1, 0.4],
+    lossRange: [0.1, 0.2],
     weight: 15,
   },
   [ProjectFate.SURVIVOR]: {

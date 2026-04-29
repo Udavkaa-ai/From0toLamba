@@ -2,7 +2,7 @@ import { useState, useId } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts'
+import { ComposedChart, AreaChart, Area, Line, ResponsiveContainer, Tooltip, YAxis } from 'recharts'
 import { ScreenBackground, PAGE_BG } from '@/components/ScreenBackground'
 import { FairyCard, OrnamentDivider, SkeletonCard } from '@/components/FairyCard'
 import { PageTitle } from '@/components/PageTitle'
@@ -204,10 +204,20 @@ function NewsItem({ update }: { update: DailyUpdateDTO }) {
   )
 }
 
-function MiniValueChart({ valueHistory, userCount, invested }: { valueHistory: number[]; userCount: number; invested: number }) {
+function MiniValueChart({ valueHistory, userCountHistory, userCount, invested }: {
+  valueHistory: number[]
+  userCountHistory: number[]
+  userCount: number
+  invested: number
+}) {
   const uid = useId()
   if (valueHistory.length < 2) return null
-  const data = valueHistory.map((val, i) => ({ i, val }))
+  const len = Math.max(valueHistory.length, userCountHistory.length)
+  const data = Array.from({ length: len }, (_, i) => ({
+    i,
+    val: valueHistory[i] ?? null,
+    users: userCountHistory[i] ?? null,
+  }))
   const last = valueHistory[valueHistory.length - 1]
   const color = last > invested ? '#50C878' : last < invested * 0.98 ? '#E34234' : '#FFB800'
   const gradId = `vg-${uid.replace(/:/g, '')}`
@@ -218,21 +228,24 @@ function MiniValueChart({ valueHistory, userCount, invested }: { valueHistory: n
         <span style={{ color: '#aaa', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>История стоимости</span>
         <span style={{ color: '#4a9eff', fontSize: '9px' }}>👥 {userCount} вкл.</span>
       </div>
-      <ResponsiveContainer width="100%" height={72}>
-        <AreaChart data={data} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
+      <ResponsiveContainer width="100%" height={80}>
+        <ComposedChart data={data} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
           <defs>
             <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor={color} stopOpacity={0.35} />
               <stop offset="95%" stopColor={color} stopOpacity={0} />
             </linearGradient>
           </defs>
+          <YAxis yAxisId="val" hide domain={['auto', 'auto']} />
+          <YAxis yAxisId="users" hide orientation="right" domain={['auto', 'auto']} />
           <Tooltip
             contentStyle={{ background: '#0D1735', border: 'none', borderRadius: '6px', fontSize: '10px', color: '#C8C8FF' }}
-            formatter={(val: number) => [`${val.toFixed(0)} г`, 'Стоимость']}
+            formatter={(v: number, name: string) => name === 'val' ? [`${v.toFixed(0)} г`, 'Стоимость'] : [`${v} чел.`, 'Вкладчики']}
             labelFormatter={(l: number) => `День ${l + 1}`}
           />
-          <Area type="monotone" dataKey="val" stroke={color} strokeWidth={1.5} fill={`url(#${gradId})`} dot={false} isAnimationActive={false} />
-        </AreaChart>
+          <Area yAxisId="val" type="monotone" dataKey="val" stroke={color} strokeWidth={1.5} fill={`url(#${gradId})`} dot={false} isAnimationActive={false} />
+          <Line yAxisId="users" type="monotone" dataKey="users" stroke="#4a9eff" strokeWidth={1.5} strokeDasharray="3 3" dot={false} isAnimationActive={false} connectNulls />
+        </ComposedChart>
       </ResponsiveContainer>
     </>
   )
@@ -341,7 +354,7 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
       {hasValueHistory && (
         <>
           <OrnamentDivider />
-          <MiniValueChart valueHistory={project.valueHistory} userCount={project.currentUserCount} invested={project.investedAmountRubles} />
+          <MiniValueChart valueHistory={project.valueHistory} userCountHistory={project.userCountHistory} userCount={project.currentUserCount} invested={project.investedAmountRubles} />
         </>
       )}
 

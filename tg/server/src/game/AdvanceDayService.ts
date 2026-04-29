@@ -258,21 +258,30 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
       }
     }
 
-    // Compute userCountDelta based on fate
+    // Compute userCountDelta based on fate and lifecycle phase
     let userCountDelta = 0
+    const totalLife = project.daysSinceJoined + (project.daysUntilCollapse ?? 0)
+    const progress = totalLife > 0 ? project.daysSinceJoined / totalLife : 0
+
     if (fate === ProjectFate.INSTANT_SCAM) {
-      // Скам ничего не сигналит: вкладчики «прибывают» как и в нормальных делах
-      userCountDelta = irng(3, 20)
+      // Скам не палится: ровный рост до самого исчезновения
+      userCountDelta = irng(3, 18)
     } else if (fate === ProjectFate.SLOW_DRAIN) {
-      const daysLeft2 = project.daysUntilCollapse ?? 0
-      // More users leave as collapse approaches
-      userCountDelta = -irng(2, 15) * (daysLeft2 < 5 ? 3 : 1)
-    } else if (fate === ProjectFate.UNICORN) {
-      userCountDelta = irng(5, 30)
+      // Плавный рост (первые 50%) → плавный спад (последние 50%)
+      userCountDelta = progress < 0.5 ? irng(2, 10) : -irng(2, 10)
+    } else if (fate === ProjectFate.HONEST_FAIL) {
+      // Резкий рост (первые 30%) → сильный спад (70%)
+      userCountDelta = progress < 0.3 ? irng(15, 30) : -irng(15, 35)
     } else if (fate === ProjectFate.SURVIVOR) {
-      userCountDelta = irng(-2, 8)
-    } else {
-      userCountDelta = irng(-5, 3)
+      // Медленный рост → плато → небольшое снижение
+      if (progress < 0.3) userCountDelta = irng(2, 8)
+      else if (progress < 0.7) userCountDelta = irng(-3, 3)
+      else userCountDelta = -irng(2, 5)
+    } else if (fate === ProjectFate.UNICORN) {
+      // Медленный рост → плато → резкий взлёт
+      if (progress < 0.4) userCountDelta = irng(2, 8)
+      else if (progress < 0.7) userCountDelta = irng(-2, 5)
+      else userCountDelta = irng(20, 50)
     }
 
     // Determine payoutStatus
