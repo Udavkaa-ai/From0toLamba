@@ -376,8 +376,8 @@ export function HomePage() {
                 background: `linear-gradient(180deg, ${colors.enchantedPurple} 0%, ${colors.nightBlue} 100%)`,
                 borderTop: `1px solid ${colors.fairyGold}40`,
                 borderRadius: '20px 20px 0 0',
-                padding: '24px 20px 40px',
-                maxHeight: '80dvh',
+                padding: `24px 20px calc(140px + env(safe-area-inset-bottom))`,
+                maxHeight: '85dvh',
                 overflowY: 'auto',
               }}
             >
@@ -766,8 +766,8 @@ function MyReferralsSheet({ onClose }: { onClose: () => void }) {
           background: `linear-gradient(180deg, ${colors.enchantedPurple} 0%, ${colors.nightBlue} 100%)`,
           borderTop: `1px solid ${colors.fairyGold}40`,
           borderRadius: '20px 20px 0 0',
-          padding: '24px 20px 40px',
-          maxHeight: '75dvh',
+          padding: `24px 20px calc(140px + env(safe-area-inset-bottom))`,
+          maxHeight: '85dvh',
           overflowY: 'auto',
         }}
       >
@@ -844,7 +844,7 @@ function handleInvite(gameState: { userId: number; firstName?: string } | any) {
   const text = [
     '📜 Купеческая грамота для тебя!',
     'Приходи на ярмарку «Из грязи в князи» — будем вкладывать гроши, ловить жуликов и расти в чинах.',
-    'Оба получим по 100 г в казну, если перейдёшь по ссылке:',
+    'Оба получим по +100 г в казну, когда ты наберёшь 10 чуйки в мини-игре «Купеческая грамота».',
   ].join('\n')
 
   const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(botLink)}&text=${encodeURIComponent(text)}`
