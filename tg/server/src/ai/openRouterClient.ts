@@ -128,7 +128,6 @@ interface GeneratedProjectData {
   name: string
   developerName: string
   claimedName: string
-  claimedAPY: number
   description: string
   roadmap: string[]
 }
@@ -156,12 +155,11 @@ export async function generateProjectData(input: GenerateProjectInput, model = D
 Придумай:
 1. name — название дела (2–4 слова, сказочный стиль, на русском)
 2. developerName — имя хозяина с прозвищем или фамилией в народном стиле (ОБЯЗАТЕЛЬНО 2–3 слова: имя + прозвище или фамилия-прилагательное). Примеры: "Емеля Дурило", "Фёдор Казна-Цела", "Никита Золотозуб", "Вахромей Трепетило", "Гаврила Хитрован", "Пётр Кривошей", "Аника-воин", "Степан Ловкач-Рублёв". Имя должно быть колоритным и запоминающимся.
-3. claimedAPY — заявленная доходность в % годовых (число от 50 до 5000, чем мошеннее — тем выше)
-4. description — описание дела (3–4 предложения, от первого лица хозяина, без блокчейна/крипты, валюта — гроши или «г»)
-5. roadmap — план дел (ровно 3 пункта, массив строк)
+3. description — описание дела (3–4 предложения, от первого лица хозяина, без блокчейна/крипты, валюта — гроши или «г»)
+4. roadmap — план дел (ровно 3 пункта, массив строк)
 
 Отвечай ТОЛЬКО валидным JSON без пояснений:
-{"name":"...","developerName":"...","claimedAPY":...,"description":"...","roadmap":["...","...","..."]}`
+{"name":"...","developerName":"...","description":"...","roadmap":["...","...","..."]}`
 
   try {
     console.log(`[AI:project] model=${model}`)
@@ -189,7 +187,6 @@ export async function generateProjectData(input: GenerateProjectInput, model = D
       name: parsed.name ?? 'Тайное дело',
       developerName: parsed.developerName ?? 'Ефим Лукавый',
       claimedName: parsed.name ?? 'Тайное дело',
-      claimedAPY: Number(parsed.claimedAPY) || 100,
       description: parsed.description ?? 'Прибыльное дело для смелых вкладчиков.',
       roadmap: parsed.roadmap ?? ['Открыть дело', 'Собрать гроши', 'Распределить прибыль'],
     }
@@ -199,7 +196,6 @@ export async function generateProjectData(input: GenerateProjectInput, model = D
       name: 'Тайное дело',
       developerName: 'Ефим Лукавый',
       claimedName: 'Тайное дело',
-      claimedAPY: 200,
       description: 'Прибыльное дело для смелых вкладчиков.',
       roadmap: ['Открыть дело', 'Собрать гроши', 'Распределить прибыль'],
     }

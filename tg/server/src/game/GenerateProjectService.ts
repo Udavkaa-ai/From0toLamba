@@ -3,6 +3,25 @@ import { generateProjectData, generateProjectBanner } from '../ai/openRouterClie
 import { ProjectType, ProjectFate, PersonaArchetype, FATE_CONFIG } from './types'
 import { randomInRange as rng, randomIntInRange as irng, weightedRandom as wr, selectLieAndTruthTopics as slt, generateNpcTruthParams } from './projectUtils'
 
+/** Диапазоны множителя по судьбе: мошенники врут вверх, UNICORN занижает */
+const CLAIMED_APY_MULTIPLIER: Record<ProjectFate, [number, number]> = {
+  [ProjectFate.INSTANT_SCAM]: [0.9, 1.5],
+  [ProjectFate.SLOW_DRAIN]:   [0.7, 1.4],
+  [ProjectFate.HONEST_FAIL]:  [0.5, 1.0],
+  [ProjectFate.SURVIVOR]:     [0.7, 1.3],
+  [ProjectFate.UNICORN]:      [0.3, 0.7],
+}
+
+function computeClaimedAPY(realDailyYield: number, fate: ProjectFate): number {
+  const realAnnualPct = realDailyYield * 365 * 100
+  const [lo, hi] = CLAIMED_APY_MULTIPLIER[fate]
+  const multiplier = lo + Math.random() * (hi - lo)
+  const raw = Math.round(realAnnualPct * multiplier)
+  // Округляем до «красивого» числа — мошенники не говорят «2347%»
+  const step = raw >= 2000 ? 100 : raw >= 500 ? 50 : 25
+  return Math.max(50, Math.min(Math.round(raw / step) * step, 9999))
+}
+
 const ALL_FATES = Object.entries(FATE_CONFIG).map(([value, cfg]) => ({
   value: value as ProjectFate,
   weight: cfg.weight,
@@ -33,6 +52,8 @@ export async function generateProject(
   // Создаём запись СРАЗУ с плейсхолдером — чтобы preloadedCount сразу вырос
   // и повторные seed'ы из /api/game не насеяли дублей, пока AI тормозит.
   // Имена/описания AI подтянет в фоне через update ниже.
+  const claimedAPY = computeClaimedAPY(realDailyYieldRubles, fate)
+
   const project = await prisma.project.create({
     data: {
       userId,
@@ -47,7 +68,7 @@ export async function generateProject(
       developerName: 'Ефим Лукавый',
       developerAvatarSeed: avatarSeed,
       claimedName: 'Тайное дело',
-      claimedAPY: 100,
+      claimedAPY,
       claimedUserCount: irng(50, 5000),
       claimedTeamSize: irng(3, 30),
       description: 'Прибыльное дело для смелых вкладчиков.',
@@ -68,7 +89,6 @@ export async function generateProject(
         data: {
           name: aiData.name,
           claimedName: aiData.claimedName,
-          claimedAPY: aiData.claimedAPY,
           developerName: aiData.developerName,
           description: aiData.description,
           roadmap: aiData.roadmap,
@@ -126,7 +146,6 @@ export async function enrichPlaceholderProject(
       data: {
         name: aiData.name,
         claimedName: aiData.claimedName,
-        claimedAPY: aiData.claimedAPY,
         developerName: aiData.developerName,
         description: aiData.description,
         roadmap: aiData.roadmap,
