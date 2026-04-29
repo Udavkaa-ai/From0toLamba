@@ -127,7 +127,24 @@ function ChannelTaskRow({
           </div>
 
           {task.claimed ? (
-            <div style={{ color: colors.textMuted, fontSize: '11px' }}>Получено ✓</div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+              <div style={{ color: colors.textMuted, fontSize: '11px' }}>Получено ✓</div>
+              <button
+                onClick={openChannel}
+                style={{
+                  padding: '3px 8px',
+                  background: 'transparent',
+                  border: `1px solid ${colors.cardBorder}`,
+                  borderRadius: '6px',
+                  color: colors.textMuted,
+                  fontSize: '10px',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                Перейти →
+              </button>
+            </div>
           ) : (
             <div style={{ display: 'flex', gap: '6px' }}>
               <button
