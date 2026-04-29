@@ -45,7 +45,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     fateBias: [ProjectFate.INSTANT_SCAM, ProjectFate.SLOW_DRAIN, ProjectFate.UNICORN],
     weight: 10,
     title: 'Богатый покровитель пришёл к делу',
-    body: 'К {name} приехал именитый купец из стольного града — закинул свои рубли, дело подросло на {amount} ₽.',
+    body: 'К {name} приехал именитый купец из стольного града — закинул свои гроши, дело подросло на {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.06, max: 0.12 },
   },
   {
@@ -55,7 +55,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     fateBias: [ProjectFate.SURVIVOR, ProjectFate.UNICORN, ProjectFate.INSTANT_SCAM],
     weight: 9,
     title: 'Молва пошла по ярмарке',
-    body: 'О {name} зашептались на торговых рядах — народ потянулся, прибавило {amount} ₽.',
+    body: 'О {name} зашептались на торговых рядах — народ потянулся, прибавило {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.04, max: 0.09 },
   },
   {
@@ -65,7 +65,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     fateBias: [ProjectFate.INSTANT_SCAM, ProjectFate.SLOW_DRAIN, ProjectFate.SURVIVOR, ProjectFate.UNICORN],
     weight: 8,
     title: 'Старейшины благословили дело',
-    body: 'Совет старейшин ярмарки одобрил {name} — народ успокоился, прибавило {amount} ₽.',
+    body: 'Совет старейшин ярмарки одобрил {name} — народ успокоился, прибавило {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.03, max: 0.07 },
   },
   {
@@ -75,7 +75,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     fateBias: [ProjectFate.INSTANT_SCAM, ProjectFate.UNICORN],
     weight: 8,
     title: 'Государев указ о свободной торговле',
-    body: 'Новый царский указ снял пошлины с {name} — дело подросло на {amount} ₽.',
+    body: 'Новый царский указ снял пошлины с {name} — дело подросло на {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.05, max: 0.10 },
   },
   {
@@ -85,7 +85,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     fateBias: [ProjectFate.INSTANT_SCAM, ProjectFate.UNICORN],
     weight: 8,
     title: 'Иноземный купец заинтересовался',
-    body: 'Из-за моря прослышали о {name} — иноземец вложил свои монеты, прибавило {amount} ₽.',
+    body: 'Из-за моря прослышали о {name} — иноземец вложил свои монеты, прибавило {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.08, max: 0.14 },
   },
   {
@@ -95,7 +95,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     fateBias: [ProjectFate.UNICORN, ProjectFate.SURVIVOR],
     weight: 7,
     title: 'Богомольцы принесли монеты',
-    body: 'Волна богомольцев проходила мимо {name} и оставила немало — прибавило {amount} ₽.',
+    body: 'Волна богомольцев проходила мимо {name} и оставила немало — прибавило {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.04, max: 0.09 },
   },
   {
@@ -105,7 +105,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     fateBias: [ProjectFate.INSTANT_SCAM, ProjectFate.UNICORN, ProjectFate.SURVIVOR],
     weight: 7,
     title: 'Ярмарочный праздник собрал толпы',
-    body: 'В честь именин государя устроили гуляния — у {name} небывалый наплыв, +{amount} ₽.',
+    body: 'В честь именин государя устроили гуляния — у {name} небывалый наплыв, +{amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.05, max: 0.11 },
   },
   {
@@ -115,7 +115,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     fateBias: [ProjectFate.SURVIVOR, ProjectFate.UNICORN],
     weight: 6,
     title: 'Купеческая гильдия рекомендовала дело',
-    body: 'Уважаемые купцы внесли {name} в список надёжных дел — поток вкладчиков вырос, +{amount} ₽.',
+    body: 'Уважаемые купцы внесли {name} в список надёжных дел — поток вкладчиков вырос, +{amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.04, max: 0.08 },
   },
   {
@@ -124,7 +124,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: ALL,
     weight: 6,
     title: 'Богатый урожай — у людей завелись деньги',
-    body: 'Небывалый урожай наполнил кошельки крестьян — часть монет потекла в {name}, +{amount} ₽.',
+    body: 'Небывалый урожай наполнил кошельки крестьян — часть монет потекла в {name}, +{amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.03, max: 0.07 },
   },
   {
@@ -134,7 +134,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     fateBias: [ProjectFate.INSTANT_SCAM, ProjectFate.UNICORN],
     weight: 6,
     title: 'Знаменитый путешественник упомянул дело',
-    body: 'Заморский гость написал в своих записках о {name} — слава разошлась, прибавило {amount} ₽.',
+    body: 'Заморский гость написал в своих записках о {name} — слава разошлась, прибавило {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.06, max: 0.11 },
   },
   {
@@ -143,7 +143,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: ALL,
     weight: 5,
     title: 'Благодатная погода — торговля бойкая',
-    body: 'Тепло и солнце выманили народ на ярмарку — у {name} выручка выросла на {amount} ₽.',
+    body: 'Тепло и солнце выманили народ на ярмарку — у {name} выручка выросла на {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.03, max: 0.06 },
   },
 
@@ -155,7 +155,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: ALL,
     weight: 10,
     title: 'Воевода нагрянул с проверкой',
-    body: 'У {name} проверили учётную книгу — нашли неточности и взяли мзду в {amount} ₽.',
+    body: 'У {name} проверили учётную книгу — нашли неточности и взяли мзду в {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.10, max: -0.05 },
   },
   {
@@ -164,7 +164,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: ALL,
     weight: 9,
     title: 'Новая подать с купцов',
-    body: 'Государев приказ ввёл новую подать — у {name} взяли {amount} ₽ в казну.',
+    body: 'Государев приказ ввёл новую подать — у {name} взяли {amount} г в казну.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.08, max: -0.04 },
   },
   {
@@ -173,7 +173,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: ALL,
     weight: 8,
     title: 'Ярмарка захирела — народ не идёт',
-    body: 'Торговля на ярмарке встала: у {name} выручка просела на {amount} ₽.',
+    body: 'Торговля на ярмарке встала: у {name} выручка просела на {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.08, max: -0.04 },
   },
   {
@@ -182,7 +182,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: ALL,
     weight: 7,
     title: 'Засуха — народ затягивает пояса',
-    body: 'Неурожай опустошил кошельки покупателей — у {name} прибыль упала на {amount} ₽.',
+    body: 'Неурожай опустошил кошельки покупателей — у {name} прибыль упала на {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.07, max: -0.04 },
   },
   {
@@ -191,7 +191,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: ALL,
     weight: 6,
     title: 'Ранние морозы побили урожай',
-    body: 'Холода ударили раньше срока — у {name} пострадали запасы на {amount} ₽.',
+    body: 'Холода ударили раньше срока — у {name} пострадали запасы на {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.07, max: -0.03 },
   },
   {
@@ -200,7 +200,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: ALL,
     weight: 6,
     title: 'Мор в городе — люди разбегаются',
-    body: 'Слухи о хвори опустели ярмарку — у {name} убыток {amount} ₽.',
+    body: 'Слухи о хвори опустели ярмарку — у {name} убыток {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.09, max: -0.05 },
   },
   {
@@ -209,7 +209,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: ALL,
     weight: 5,
     title: 'Мост обрушился — дороги закрыты',
-    body: 'Переправа сломалась — товары и вкладчики не могут добраться до {name}, потеря {amount} ₽.',
+    body: 'Переправа сломалась — товары и вкладчики не могут добраться до {name}, потеря {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.08, max: -0.04 },
   },
   {
@@ -218,7 +218,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: ALL,
     weight: 5,
     title: 'Пожар на ярмарке',
-    body: 'Огонь прошёлся по торговым рядам — {name} не уцелело, сгорело на {amount} ₽.',
+    body: 'Огонь прошёлся по торговым рядам — {name} не уцелело, сгорело на {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.12, max: -0.06 },
   },
   {
@@ -228,7 +228,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     fateBias: [ProjectFate.SURVIVOR, ProjectFate.UNICORN],
     weight: 5,
     title: 'Слухи о мошенничестве на рынке',
-    body: 'По ярмарке поползли слухи о нечестных купцах — вкладчики {name} занервничали, убыток {amount} ₽.',
+    body: 'По ярмарке поползли слухи о нечестных купцах — вкладчики {name} занервничали, убыток {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.09, max: -0.05 },
   },
 
@@ -263,7 +263,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.POTION_BREW],
     weight: 10,
     title: 'Травы зацвели обильно',
-    body: 'Знахарь принёс к {name} необычайно богатый сбор — варево пошло споро, прибавило {amount} ₽.',
+    body: 'Знахарь принёс к {name} необычайно богатый сбор — варево пошло споро, прибавило {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.06, max: 0.12 },
   },
   {
@@ -272,7 +272,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.POTION_BREW],
     weight: 9,
     title: 'Заморский алхимик с заказом',
-    body: 'В {name} заглянул иноземный гость, заказал большую партию зелий — расчёт {amount} ₽.',
+    body: 'В {name} заглянул иноземный гость, заказал большую партию зелий — расчёт {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.08, max: 0.15 },
   },
   {
@@ -282,7 +282,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     fateBias: [ProjectFate.UNICORN, ProjectFate.INSTANT_SCAM],
     weight: 9,
     title: 'Хворь в округе — зелья нарасхват',
-    body: 'В соседних сёлах начался мор — все бегут к {name} за снадобьями, +{amount} ₽.',
+    body: 'В соседних сёлах начался мор — все бегут к {name} за снадобьями, +{amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.12, max: 0.20 },
   },
   {
@@ -292,7 +292,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     fateBias: [ProjectFate.UNICORN],
     weight: 8,
     title: 'Редкий ингредиент с Востока',
-    body: 'Торговец привёз диковинный корень — варево у {name} стало втрое сильнее, +{amount} ₽.',
+    body: 'Торговец привёз диковинный корень — варево у {name} стало втрое сильнее, +{amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.10, max: 0.16 },
   },
   {
@@ -301,7 +301,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.POTION_BREW],
     weight: 7,
     title: 'Нашли старинный рецепт в погребе',
-    body: 'В {name} обнаружили древний свиток — новое зелье раскупили за день, +{amount} ₽.',
+    body: 'В {name} обнаружили древний свиток — новое зелье раскупили за день, +{amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.07, max: 0.13 },
   },
   {
@@ -311,7 +311,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     fateBias: [ProjectFate.SURVIVOR, ProjectFate.UNICORN],
     weight: 7,
     title: 'Знахарь прославился на всю округу',
-    body: 'После удачного исцеления боярина слух о {name} разлетелся — очередь стоит, +{amount} ₽.',
+    body: 'После удачного исцеления боярина слух о {name} разлетелся — очередь стоит, +{amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.08, max: 0.14 },
   },
   {
@@ -320,7 +320,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.POTION_BREW],
     weight: 10,
     title: 'Котёл взорвался',
-    body: 'Подмастерье у {name} нагрел котёл сверх меры — хлопок, потеря товара на {amount} ₽.',
+    body: 'Подмастерье у {name} нагрел котёл сверх меры — хлопок, потеря товара на {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.12, max: -0.06 },
   },
   {
@@ -329,7 +329,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.POTION_BREW],
     weight: 7,
     title: 'Чёрная кошка склянки опрокинула',
-    body: 'В {name} забралась лесная кошка, разбила полку с тинктурами — убыток {amount} ₽.',
+    body: 'В {name} забралась лесная кошка, разбила полку с тинктурами — убыток {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.06, max: -0.03 },
   },
   {
@@ -338,7 +338,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.POTION_BREW],
     weight: 8,
     title: 'Подмастерье перепутал травы',
-    body: 'Вся партия у {name} пошла насмарку — пришлось выбросить зелья на {amount} ₽.',
+    body: 'Вся партия у {name} пошла насмарку — пришлось выбросить зелья на {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.10, max: -0.05 },
   },
   {
@@ -347,7 +347,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.POTION_BREW],
     weight: 7,
     title: 'Засуха выкосила запасы трав',
-    body: 'Нет сырья — {name} встало на неделю, потеря {amount} ₽.',
+    body: 'Нет сырья — {name} встало на неделю, потеря {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.08, max: -0.04 },
   },
   {
@@ -356,7 +356,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.POTION_BREW],
     weight: 6,
     title: 'Покупатель отравился — слухи поползли',
-    body: 'Один из клиентов {name} слёг после зелья — молва отпугнула покупателей, убыток {amount} ₽.',
+    body: 'Один из клиентов {name} слёг после зелья — молва отпугнула покупателей, убыток {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.11, max: -0.07 },
   },
   {
@@ -365,7 +365,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.POTION_BREW],
     weight: 6,
     title: 'Конкурент открыл лавку напротив',
-    body: 'Соседний зелейник переманил половину клиентов {name} — выручка упала на {amount} ₽.',
+    body: 'Соседний зелейник переманил половину клиентов {name} — выручка упала на {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.08, max: -0.04 },
   },
 
@@ -379,7 +379,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.GUILD_SCHEME],
     weight: 9,
     title: 'Новый мастер со своим заказом',
-    body: 'К {name} прибился умелец с большим заказом от воеводы — поднялись на {amount} ₽.',
+    body: 'К {name} прибился умелец с большим заказом от воеводы — поднялись на {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.07, max: 0.12 },
   },
   {
@@ -389,7 +389,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     fateBias: [ProjectFate.INSTANT_SCAM, ProjectFate.SLOW_DRAIN, ProjectFate.UNICORN],
     weight: 8,
     title: 'Городской староста благословил артель',
-    body: 'Староста публично похвалил {name} — народ повалил вкладываться, прибыло {amount} ₽.',
+    body: 'Староста публично похвалил {name} — народ повалил вкладываться, прибыло {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.05, max: 0.10 },
   },
   {
@@ -399,7 +399,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     fateBias: [ProjectFate.UNICORN, ProjectFate.SURVIVOR],
     weight: 9,
     title: 'Воевода заказал крепостную стену',
-    body: 'Воевода нанял {name} строить новую стену — казённый заказ принёс {amount} ₽.',
+    body: 'Воевода нанял {name} строить новую стену — казённый заказ принёс {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.10, max: 0.16 },
   },
   {
@@ -409,7 +409,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     fateBias: [ProjectFate.UNICORN, ProjectFate.INSTANT_SCAM],
     weight: 8,
     title: 'Большой казённый подряд',
-    body: '{name} выиграло торги на строительство — аванс поступил, +{amount} ₽.',
+    body: '{name} выиграло торги на строительство — аванс поступил, +{amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.09, max: 0.15 },
   },
   {
@@ -419,7 +419,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     fateBias: [ProjectFate.SURVIVOR, ProjectFate.UNICORN],
     weight: 7,
     title: 'Взяли приз на ярмарке мастерства',
-    body: '{name} увезло главный кубок — заказы посыпались со всей округи, +{amount} ₽.',
+    body: '{name} увезло главный кубок — заказы посыпались со всей округи, +{amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.07, max: 0.12 },
   },
   {
@@ -428,7 +428,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.GUILD_SCHEME],
     weight: 6,
     title: 'Умелые подмастерья ускорили работу',
-    body: 'Новая смена в {name} взяла темп — сдали заказ раньше срока, премия {amount} ₽.',
+    body: 'Новая смена в {name} взяла темп — сдали заказ раньше срока, премия {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.05, max: 0.09 },
   },
   {
@@ -437,7 +437,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.GUILD_SCHEME],
     weight: 10,
     title: 'Артельная ссора',
-    body: 'В {name} мастера переругались за долю — кто-то ушёл, недосчитались {amount} ₽.',
+    body: 'В {name} мастера переругались за долю — кто-то ушёл, недосчитались {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.10, max: -0.05 },
   },
   {
@@ -446,7 +446,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.GUILD_SCHEME],
     weight: 9,
     title: 'Конкурент перекупил мастеров',
-    body: 'Соседняя артель сманила лучших у {name} — заказы встали, потеря {amount} ₽.',
+    body: 'Соседняя артель сманила лучших у {name} — заказы встали, потеря {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.12, max: -0.06 },
   },
   {
@@ -455,7 +455,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.GUILD_SCHEME],
     weight: 8,
     title: 'Мастера потребовали прибавки — встали',
-    body: 'Работники {name} бросили инструмент до переговоров — простой обошёлся в {amount} ₽.',
+    body: 'Работники {name} бросили инструмент до переговоров — простой обошёлся в {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.09, max: -0.05 },
   },
   {
@@ -464,7 +464,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.GUILD_SCHEME],
     weight: 7,
     title: 'Нет сырья — заказы стоят',
-    body: 'Поставка леса к {name} задержалась на три седмицы — штраф заказчика {amount} ₽.',
+    body: 'Поставка леса к {name} задержалась на три седмицы — штраф заказчика {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.08, max: -0.04 },
   },
   {
@@ -473,7 +473,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.GUILD_SCHEME],
     weight: 7,
     title: 'Бракованная партия — возврат',
-    body: 'Заказчик вернул кривые брёвна {name} — пришлось переделывать за свой счёт, минус {amount} ₽.',
+    body: 'Заказчик вернул кривые брёвна {name} — пришлось переделывать за свой счёт, минус {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.10, max: -0.06 },
   },
   {
@@ -482,7 +482,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.GUILD_SCHEME],
     weight: 5,
     title: 'Пожар в мастерской',
-    body: 'Ночью вспыхнул склад {name} — сгорело инструментов и заготовок на {amount} ₽.',
+    body: 'Ночью вспыхнул склад {name} — сгорело инструментов и заготовок на {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.14, max: -0.08 },
   },
 
@@ -496,7 +496,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.HONEST_TRADE],
     weight: 10,
     title: 'Караван заморских товаров',
-    body: 'К {name} пришёл караван с пряностями — продали с большим барышом, +{amount} ₽.',
+    body: 'К {name} пришёл караван с пряностями — продали с большим барышом, +{amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.08, max: 0.14 },
   },
   {
@@ -505,7 +505,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.HONEST_TRADE],
     weight: 9,
     title: 'Богатый купец взял оптом',
-    body: 'К {name} приехал именитый барин, выкупил всю партию — расчёт {amount} ₽.',
+    body: 'К {name} приехал именитый барин, выкупил всю партию — расчёт {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.10, max: 0.16 },
   },
   {
@@ -515,7 +515,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     fateBias: [ProjectFate.SURVIVOR, ProjectFate.UNICORN],
     weight: 8,
     title: 'Открыли новый торговый путь',
-    body: 'Разведчики {name} нашли короткую дорогу к богатым сёлам — доход вырос на {amount} ₽.',
+    body: 'Разведчики {name} нашли короткую дорогу к богатым сёлам — доход вырос на {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.08, max: 0.14 },
   },
   {
@@ -525,7 +525,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     fateBias: [ProjectFate.UNICORN, ProjectFate.INSTANT_SCAM],
     weight: 8,
     title: 'Редкий товар с Востока',
-    body: 'К {name} попал диковинный шёлк — продали втридорога, +{amount} ₽.',
+    body: 'К {name} попал диковинный шёлк — продали втридорога, +{amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.10, max: 0.18 },
   },
   {
@@ -534,7 +534,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.HONEST_TRADE],
     weight: 7,
     title: 'Сезонный спрос взлетел',
-    body: 'Перед зимой народ бросился скупать запасы у {name} — выручка +{amount} ₽.',
+    body: 'Перед зимой народ бросился скупать запасы у {name} — выручка +{amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.07, max: 0.12 },
   },
   {
@@ -544,7 +544,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     fateBias: [ProjectFate.INSTANT_SCAM, ProjectFate.UNICORN],
     weight: 7,
     title: 'Удачная сделка с иноземцами',
-    body: 'Заморские купцы заплатили за товар {name} золотом сверх договора — лишние {amount} ₽.',
+    body: 'Заморские купцы заплатили за товар {name} золотом сверх договора — лишние {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.08, max: 0.14 },
   },
   {
@@ -553,7 +553,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.HONEST_TRADE],
     weight: 10,
     title: 'Налёт разбойников на обоз',
-    body: 'Под Можайском обоз {name} ограбили — потеря товара на {amount} ₽.',
+    body: 'Под Можайском обоз {name} ограбили — потеря товара на {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.18, max: -0.10 },
   },
   {
@@ -562,7 +562,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.HONEST_TRADE],
     weight: 8,
     title: 'Партия товара испортилась в пути',
-    body: 'У {name} в дороге подмочили мешки — часть товара пришлось списать, убыток {amount} ₽.',
+    body: 'У {name} в дороге подмочили мешки — часть товара пришлось списать, убыток {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.08, max: -0.04 },
   },
   {
@@ -571,7 +571,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.HONEST_TRADE],
     weight: 7,
     title: 'Весенний лёд сломал мосты',
-    body: 'Половодье разрушило переправы — обоз {name} застрял на неделю, убыток {amount} ₽.',
+    body: 'Половодье разрушило переправы — обоз {name} застрял на неделю, убыток {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.10, max: -0.06 },
   },
   {
@@ -580,7 +580,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.HONEST_TRADE],
     weight: 7,
     title: 'Новая таможенная пошлина',
-    body: 'Государев откупщик повысил сборы — {name} заплатило лишних {amount} ₽ на границе.',
+    body: 'Государев откупщик повысил сборы — {name} заплатило лишних {amount} г на границе.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.09, max: -0.05 },
   },
   {
@@ -589,7 +589,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.HONEST_TRADE],
     weight: 6,
     title: 'Партнёр обманул с товаром',
-    body: 'Поставщик {name} подсунул негодный товар — пришлось судиться и терять {amount} ₽.',
+    body: 'Поставщик {name} подсунул негодный товар — пришлось судиться и терять {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.11, max: -0.07 },
   },
   {
@@ -598,7 +598,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.HONEST_TRADE],
     weight: 5,
     title: 'Рынок залили дешёвой подделкой',
-    body: 'Жулики наводнили ярмарку фальшивым товаром под маркой {name} — репутация и выручка упали на {amount} ₽.',
+    body: 'Жулики наводнили ярмарку фальшивым товаром под маркой {name} — репутация и выручка упали на {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.10, max: -0.06 },
   },
 
@@ -612,7 +612,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.CARD_GAME],
     weight: 10,
     title: 'Большой проигрыш заезжего барина',
-    body: 'У {name} заезжий барин просадил всё за вечер — заведению досталось {amount} ₽.',
+    body: 'У {name} заезжий барин просадил всё за вечер — заведению досталось {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.12, max: 0.20 },
   },
   {
@@ -622,7 +622,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     fateBias: [ProjectFate.UNICORN, ProjectFate.INSTANT_SCAM],
     weight: 9,
     title: 'Приезжий вельможа устроил турнир',
-    body: 'Знатный гость выбрал {name} для большого турнира — заведение собрало {amount} ₽.',
+    body: 'Знатный гость выбрал {name} для большого турнира — заведение собрало {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.14, max: 0.22 },
   },
   {
@@ -632,7 +632,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     fateBias: [ProjectFate.UNICORN, ProjectFate.INSTANT_SCAM],
     weight: 8,
     title: 'Компания богатых купцов засела играть',
-    body: 'Целая артель купцов провела у {name} три ночи — касса пополнилась на {amount} ₽.',
+    body: 'Целая артель купцов провела у {name} три ночи — касса пополнилась на {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.10, max: 0.18 },
   },
   {
@@ -642,7 +642,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     fateBias: [ProjectFate.SURVIVOR, ProjectFate.UNICORN],
     weight: 8,
     title: 'Закрытая вечеринка для воеводы',
-    body: 'Воевода заказал {name} приватный вечер — оплата вперёд, касса выросла на {amount} ₽.',
+    body: 'Воевода заказал {name} приватный вечер — оплата вперёд, касса выросла на {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.09, max: 0.15 },
   },
   {
@@ -651,7 +651,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.CARD_GAME],
     weight: 7,
     title: 'Ночь везения — все ставки сыграли',
-    body: 'В {name} выдалась фартовая ночь — банк остался за заведением, +{amount} ₽.',
+    body: 'В {name} выдалась фартовая ночь — банк остался за заведением, +{amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.08, max: 0.14 },
   },
   {
@@ -661,7 +661,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     fateBias: [ProjectFate.INSTANT_SCAM, ProjectFate.UNICORN],
     weight: 6,
     title: 'Новая игра собрала толпу',
-    body: '{name} придумало новую забаву — любопытные несут монеты, касса +{amount} ₽.',
+    body: '{name} придумало новую забаву — любопытные несут монеты, касса +{amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.07, max: 0.12 },
   },
   {
@@ -670,7 +670,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.CARD_GAME],
     weight: 10,
     title: 'Шулера накрыли — выручку забрали',
-    body: 'У {name} стража поймала шулеров за столом, всю выручку конфисковали — минус {amount} ₽.',
+    body: 'У {name} стража поймала шулеров за столом, всю выручку конфисковали — минус {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.14, max: -0.07 },
   },
   {
@@ -679,7 +679,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.CARD_GAME],
     weight: 8,
     title: 'Воевода грозился прикрыть заведение',
-    body: 'У {name} были разговоры о закрытии — отдали мзду {amount} ₽, кое-как замяли.',
+    body: 'У {name} были разговоры о закрытии — отдали мзду {amount} г, кое-как замяли.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.10, max: -0.05 },
   },
   {
@@ -688,7 +688,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.CARD_GAME],
     weight: 8,
     title: 'Стражники устроили облаву',
-    body: 'Ночная облава разогнала игроков {name} — заведение простояло пустым, убыток {amount} ₽.',
+    body: 'Ночная облава разогнала игроков {name} — заведение простояло пустым, убыток {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.12, max: -0.07 },
   },
   {
@@ -697,7 +697,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.CARD_GAME],
     weight: 7,
     title: 'Скандал с подозрением в мошенничестве',
-    body: 'Проигравший боярин обвинил {name} в нечестной игре — молва разошлась, минус {amount} ₽.',
+    body: 'Проигравший боярин обвинил {name} в нечестной игре — молва разошлась, минус {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.10, max: -0.06 },
   },
   {
@@ -706,7 +706,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.CARD_GAME],
     weight: 6,
     title: 'Ночью ограбили кассу',
-    body: 'Лихие люди влезли в {name} и унесли дневную выручку — минус {amount} ₽.',
+    body: 'Лихие люди влезли в {name} и унесли дневную выручку — минус {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.13, max: -0.08 },
   },
   {
@@ -715,7 +715,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.CARD_GAME],
     weight: 5,
     title: 'Дурная слава отпугнула игроков',
-    body: 'По городу пошёл слух что в {name} нечисто — постоянные клиенты перестали ходить, убыток {amount} ₽.',
+    body: 'По городу пошёл слух что в {name} нечисто — постоянные клиенты перестали ходить, убыток {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.09, max: -0.05 },
   },
 
@@ -729,7 +729,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.TREASURE_HUNT],
     weight: 10,
     title: 'Нашли старый клад под корнями',
-    body: 'У {name} под старым дубом откопали клад с серебром — +{amount} ₽ в казну.',
+    body: 'У {name} под старым дубом откопали клад с серебром — +{amount} г в казну.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.14, max: 0.22 },
   },
   {
@@ -738,7 +738,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.TREASURE_HUNT],
     weight: 9,
     title: 'Старая карта раскрыла новое место',
-    body: 'У {name} нашлась карта с пометкой — пошли разведать, добыли на {amount} ₽.',
+    body: 'У {name} нашлась карта с пометкой — пошли разведать, добыли на {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.08, max: 0.15 },
   },
   {
@@ -748,7 +748,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     fateBias: [ProjectFate.UNICORN, ProjectFate.INSTANT_SCAM],
     weight: 9,
     title: 'Русло реки открыло монеты',
-    body: 'Весенний паводок вымыл на берег старинные монеты — {name} собрало на {amount} ₽.',
+    body: 'Весенний паводок вымыл на берег старинные монеты — {name} собрало на {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.12, max: 0.20 },
   },
   {
@@ -758,7 +758,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     fateBias: [ProjectFate.UNICORN],
     weight: 8,
     title: 'Нашли древний артефакт',
-    body: 'Артель {name} откопала старинный идол — коллекционер заплатил {amount} ₽ не торгуясь.',
+    body: 'Артель {name} откопала старинный идол — коллекционер заплатил {amount} г не торгуясь.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.15, max: 0.25 },
   },
   {
@@ -768,7 +768,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     fateBias: [ProjectFate.SURVIVOR, ProjectFate.UNICORN],
     weight: 7,
     title: 'Отшельник указал заветное место',
-    body: 'Лесной старец за краюху хлеба показал {name} схрон — добыли на {amount} ₽.',
+    body: 'Лесной старец за краюху хлеба показал {name} схрон — добыли на {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.10, max: 0.17 },
   },
   {
@@ -777,7 +777,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.TREASURE_HUNT],
     weight: 6,
     title: 'Оттепель обнажила схрон',
-    body: 'Таявший снег открыл в земле старый сундук — {name} не упустило случай, +{amount} ₽.',
+    body: 'Таявший снег открыл в земле старый сундук — {name} не упустило случай, +{amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: 0.09, max: 0.15 },
   },
   {
@@ -786,7 +786,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.TREASURE_HUNT],
     weight: 10,
     title: 'Заблудились в дремучей чаще',
-    body: 'Артель {name} неделю плутала в лесу — припасы съели, расходы {amount} ₽.',
+    body: 'Артель {name} неделю плутала в лесу — припасы съели, расходы {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.10, max: -0.05 },
   },
   {
@@ -795,7 +795,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.TREASURE_HUNT],
     weight: 8,
     title: 'Дикие звери разогнали артель',
-    body: 'Медведь забрёл в лагерь {name} — народ разбежался, бросив снаряжение на {amount} ₽.',
+    body: 'Медведь забрёл в лагерь {name} — народ разбежался, бросив снаряжение на {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.10, max: -0.05 },
   },
   {
@@ -804,7 +804,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.TREASURE_HUNT],
     weight: 8,
     title: 'Конкуренты опередили артель',
-    body: 'Другая ватага добралась до места раньше {name} — место выработано, потери {amount} ₽.',
+    body: 'Другая ватага добралась до места раньше {name} — место выработано, потери {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.10, max: -0.06 },
   },
   {
@@ -813,7 +813,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.TREASURE_HUNT],
     weight: 6,
     title: 'Обрушение в пещере',
-    body: 'Своды рухнули пока {name} копало — потеряли снаряжение и часть добычи на {amount} ₽.',
+    body: 'Своды рухнули пока {name} копало — потеряли снаряжение и часть добычи на {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.12, max: -0.07 },
   },
   {
@@ -822,7 +822,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.TREASURE_HUNT],
     weight: 6,
     title: 'Ложный след обошёлся дорого',
-    body: '{name} потратило две недели на пустое место — припасы и жалованье вышли в {amount} ₽.',
+    body: '{name} потратило две недели на пустое место — припасы и жалованье вышли в {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.09, max: -0.05 },
   },
   {
@@ -831,7 +831,7 @@ export const RANDOM_EVENTS: RandomEvent[] = [
     applicableTo: [ProjectType.TREASURE_HUNT],
     weight: 5,
     title: 'Буря уничтожила лагерь',
-    body: 'Ночная гроза снесла палатки {name} и смыла часть добычи — убыток {amount} ₽.',
+    body: 'Ночная гроза снесла палатки {name} и смыла часть добычи — убыток {amount} г.',
     effect: { type: 'VALUE_DELTA_PERCENT', min: -0.11, max: -0.06 },
   },
 ]

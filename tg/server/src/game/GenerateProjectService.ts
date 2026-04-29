@@ -51,7 +51,7 @@ export async function generateProject(
       claimedUserCount: irng(50, 5000),
       claimedTeamSize: irng(3, 30),
       description: 'Прибыльное дело для смелых вкладчиков.',
-      roadmap: ['Открыть дело', 'Собрать рубли', 'Распределить прибыль'],
+      roadmap: ['Открыть дело', 'Собрать гроши', 'Распределить прибыль'],
       currentUserCount: irng(50, 5000),
       npcTruthParams,
       isInbox: !options.preloaded,
