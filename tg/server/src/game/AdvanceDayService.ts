@@ -284,6 +284,73 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
       else userCountDelta = irng(20, 50)
     }
 
+    // Событийная дельта вкладчиков: позитив +3-5%, негатив −3-7%
+    if (eventApplied?.kind === 'POSITIVE') {
+      userCountDelta += Math.round(project.currentUserCount * rng(0.03, 0.05))
+    } else if (eventApplied?.kind === 'NEGATIVE') {
+      userCountDelta -= Math.round(project.currentUserCount * rng(0.03, 0.07))
+    }
+
+    const newUserCount = Math.max(0, project.currentUserCount + userCountDelta)
+
+    // Закрытие из-за исхода вкладчиков (только если было вложение)
+    if (newUserCount <= 0 && project.investedAmountRubles > 0) {
+      const abandonLoss = rng(fateCfg.lossRange[0], fateCfg.lossRange[1])
+      const returned = updatedValue * (1 - abandonLoss)
+      balanceDelta += returned
+      returnedDelta += returned
+
+      const profitPct = project.investedAmountRubles > 0
+        ? ((returned - project.investedAmountRubles) / project.investedAmountRubles) * 100
+        : 0
+      const amaSessionAbandoned = await prisma.amaSession.findUnique({ where: { projectId: project.id } })
+      generatePostMortem({
+        projectId: project.id, userId,
+        archetype: project.personaArchetype,
+        fate: project.fate,
+        lieTopics: project.lieTopics,
+        investedAmount: project.investedAmountRubles,
+        returnedAmount: returned,
+        profitPercent: profitPct,
+        daysActive: project.daysSinceJoined,
+        intuitionDelta: amaSessionAbandoned?.intuitionDelta ?? 0,
+      }).catch(console.error)
+
+      await prisma.project.update({
+        where: { id: project.id },
+        data: {
+          isActive: false, isClosed: true,
+          closureReason: 'Все вкладчики разбежались — дело рухнуло',
+          currentValueRubles: returned,
+          currentUserCount: 0,
+          userCountHistory: [...project.userCountHistory, 0].slice(-30),
+        },
+      })
+      await prisma.transaction.create({
+        data: {
+          userId, projectId: project.id,
+          projectName: project.name,
+          type: 'RETURNED', amount: returned,
+          day: gameState.currentDay + 1,
+        },
+      }).catch(console.error)
+
+      closures.push({
+        id: project.id, name: project.name,
+        developerName: project.developerName,
+        fate: project.fate,
+        personaArchetype: project.personaArchetype,
+        investedAmount: project.investedAmountRubles,
+        returnedAmount: returned,
+        profitPercent: profitPct,
+        daysActive: project.daysSinceJoined,
+        closureReason: 'Все вкладчики разбежались — дело рухнуло',
+        bannerImageUrl: project.bannerImageUrl ? `/api/banner/${project.id}` : null,
+        forcedByMafia: false,
+      })
+      continue
+    }
+
     // Determine payoutStatus
     let payoutStatus = 'NORMAL'
     // INSTANT_SCAM — никаких сигналов, выплаты «нормальные» до самого исчезновения
@@ -292,8 +359,6 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
     } else if (fate === ProjectFate.UNICORN && project.daysSinceJoined > 0) {
       payoutStatus = Math.random() < 0.3 ? 'BOOSTED' : 'NORMAL'
     }
-
-    const newUserCount = Math.max(0, project.currentUserCount + userCountDelta)
     const apparentAPY = project.investedAmountRubles > 0
       ? ((updatedValue - project.investedAmountRubles) / project.investedAmountRubles) * 365 / Math.max(1, project.daysSinceJoined) * 100
       : project.claimedAPY
