@@ -630,6 +630,7 @@ export async function gameRoutes(app: FastifyInstance) {
     })
     // Delete all user's projects (cascades to AmaSession, AmaMessage, DailyUpdate, PostMortem)
     await prisma.project.deleteMany({ where: { userId: user.id } })
+    await prisma.transaction.deleteMany({ where: { userId: user.id } })
     // Снимаем реферальную привязку — иначе тестер после reset не сможет
     // повторно принять бонус по новой ссылке-приглашению.
     await prisma.user.update({
