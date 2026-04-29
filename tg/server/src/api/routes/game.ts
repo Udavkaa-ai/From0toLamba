@@ -89,16 +89,13 @@ export async function gameRoutes(app: FastifyInstance) {
       console.log(`[Referral] user=${user.id} (tg=${tgUser.id}) payload=${refPayload} src=${request.telegramStartParam ? 'startParam' : 'pending'}`)
     }
     const refResult = await tryAttachReferrer(user.id, refPayload)
-    if (refResult.bonusGranted) {
-      console.log(`[Referral] BONUS GRANTED user=${user.id} referrerId=${refResult.referrerId}`)
-      // Подчистим pending — чтобы не пытаться повторно
+    if (refResult.attached) {
+      console.log(`[Referral] attached user=${user.id} referrerId=${refResult.referrerId} (bonus pending чуйка≥10)`)
       if (user.pendingReferralParam) {
         await prisma.user.update({ where: { id: user.id }, data: { pendingReferralParam: null } })
       }
-      // Забираем обновлённый gameState (там balance уже увеличен)
-      gameState = (await prisma.gameState.findUniqueOrThrow({ where: { userId: user.id } }))
     } else if (refPayload) {
-      console.log(`[Referral] NOT granted (already attached or self-ref) user=${user.id}`)
+      console.log(`[Referral] NOT attached (already attached or self-ref) user=${user.id}`)
     }
 
     const [activeProjects, inboxProjects, closedProjectsCount, charterSessions, referralCount, amaSessionsStarted, amaSessionsCompleted] = await Promise.all([

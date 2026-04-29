@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { prisma } from '../../db/prisma'
 import { telegramAuthHook } from '../../middleware/telegramAuth'
 import { startCharter, getCharter, submitCharter } from '../../game/CharterService'
+import { checkAndGrantReferralBonus } from '../../game/referralService'
 
 export async function charterRoutes(app: FastifyInstance) {
 
@@ -66,6 +67,8 @@ export async function charterRoutes(app: FastifyInstance) {
 
     try {
       const result = await submitCharter(user.id, projectId, body.data.selectedIndices)
+      // Проверяем реферальный бонус — мог дозреть после этой грамоты
+      checkAndGrantReferralBonus(user.id).catch(console.error)
       return result
     } catch (err: any) {
       if (err.message === 'ALREADY_SUBMITTED') {
