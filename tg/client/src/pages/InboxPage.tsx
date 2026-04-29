@@ -105,7 +105,7 @@ function InboxCard({ project, onClick }: { project: ProjectDTO; onClick: () => v
           👤 {project.developerName}
         </div>
         <div style={{ color: colors.textMuted, fontSize: '11px' }}>
-          👥 {project.claimedUserCount.toLocaleString('ru')} вкладчиков
+          👥 {project.currentUserCount.toLocaleString('ru')} вкладчиков
         </div>
       </div>
 

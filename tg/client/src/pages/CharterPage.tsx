@@ -407,7 +407,7 @@ function IntroScreen({
 
       <div style={paramsRowStyle}>
         <ParamChip label="Посул APY" value={`${project.claimedAPY}%`} />
-        <ParamChip label="Вкладчиков" value={project.claimedUserCount.toLocaleString('ru')} />
+        <ParamChip label="Вкладчиков" value={project.currentUserCount.toLocaleString('ru')} />
         <ParamChip label="Артель" value={`${project.claimedTeamSize} чел.`} />
       </div>
 
