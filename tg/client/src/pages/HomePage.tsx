@@ -1789,64 +1789,86 @@ function BannerAnnouncementModal({ onClose }: { onClose: () => void }) {
       style={{
         position: 'fixed', inset: 0, zIndex: 260,
         background: 'rgba(6, 4, 18, 0.88)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: spacing.lg,
-        overflowY: 'auto',
       }}
     >
       <motion.div
-        initial={{ scale: 0.92, y: 20 }}
-        animate={{ scale: 1, y: 0 }}
-        exit={{ scale: 0.92, y: 20 }}
-        transition={{ type: 'spring', damping: 25, stiffness: 280 }}
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
         onClick={e => e.stopPropagation()}
         style={{
-          width: '100%', maxWidth: '420px',
-          background: `linear-gradient(145deg, ${colors.enchantedPurple}, ${colors.nightBlue})`,
-          border: `1px solid ${colors.fairyGold}55`,
-          borderRadius: '16px',
-          padding: spacing.xl,
-          boxShadow: '0 16px 48px rgba(0,0,0,0.6)',
+          position: 'fixed', bottom: 0, left: 0, right: 0,
+          maxHeight: '90dvh',
+          display: 'flex', flexDirection: 'column',
+          background: `linear-gradient(180deg, ${colors.enchantedPurple} 0%, ${colors.nightBlue} 100%)`,
+          borderTop: `1px solid ${colors.fairyGold}55`,
+          borderRadius: '20px 20px 0 0',
+          boxShadow: '0 -8px 32px rgba(0,0,0,0.5)',
         }}
       >
-        <div style={{ color: colors.fairyGold, fontSize: '18px', fontWeight: 800, marginBottom: spacing.lg, textAlign: 'center' }}>
-          {content.title}
+        {/* Заголовок — фиксирован */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: `${spacing.lg} ${spacing.lg} ${spacing.md}`,
+          borderBottom: `1px solid ${colors.fairyGold}25`,
+          flexShrink: 0,
+        }}>
+          <div style={{ color: colors.fairyGold, fontSize: '16px', fontWeight: 800, flex: 1, paddingRight: spacing.sm }}>
+            {content.title}
+          </div>
+          <button
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', color: colors.textMuted, fontSize: '20px', cursor: 'pointer', padding: '4px 8px', flexShrink: 0 }}
+          >
+            ✕
+          </button>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.md }}>
-          {content.sections.map((s, i) => (
-            <div key={i} style={{
-              padding: `${spacing.sm} ${spacing.md}`,
-              background: 'rgba(255,255,255,0.04)',
-              border: `1px solid ${colors.cardBorder}`,
-              borderRadius: '10px',
-            }}>
-              {s.heading && (
-                <div style={{ color: colors.fairyGold, fontSize: '12px', fontWeight: 700, marginBottom: '4px' }}>
-                  {s.heading}
+        {/* Скроллируемый контент */}
+        <div style={{ overflowY: 'auto', flex: 1, padding: spacing.lg }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.md }}>
+            {content.sections.map((s, i) => (
+              <div key={i} style={{
+                padding: `${spacing.sm} ${spacing.md}`,
+                background: 'rgba(255,255,255,0.04)',
+                border: `1px solid ${colors.cardBorder}`,
+                borderRadius: '10px',
+              }}>
+                {s.heading && (
+                  <div style={{ color: colors.fairyGold, fontSize: '12px', fontWeight: 700, marginBottom: '4px' }}>
+                    {s.heading}
+                  </div>
+                )}
+                <div style={{ color: colors.textPrimary, fontSize: '13px', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
+                  {s.body}
                 </div>
-              )}
-              <div style={{ color: colors.textPrimary, fontSize: '13px', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
-                {s.body}
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
-        <button
-          onClick={onClose}
-          style={{
-            width: '100%', marginTop: spacing.xl,
-            padding: spacing.md,
-            background: colors.fairyGold,
-            border: 'none', borderRadius: '12px',
-            color: colors.nightBlue,
-            fontSize: '14px', fontWeight: 700,
-            cursor: 'pointer', fontFamily: 'inherit',
-          }}
-        >
-          Понял, вперёд! →
-        </button>
+        {/* Кнопка — фиксирована снизу */}
+        <div style={{
+          padding: `${spacing.md} ${spacing.lg} calc(${spacing.lg} + env(safe-area-inset-bottom))`,
+          flexShrink: 0,
+          borderTop: `1px solid ${colors.fairyGold}25`,
+        }}>
+          <button
+            onClick={onClose}
+            style={{
+              width: '100%',
+              padding: spacing.md,
+              background: colors.fairyGold,
+              border: 'none', borderRadius: '12px',
+              color: colors.nightBlue,
+              fontSize: '14px', fontWeight: 700,
+              cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >
+            Понял, вперёд! →
+          </button>
+        </div>
       </motion.div>
     </motion.div>
   )
