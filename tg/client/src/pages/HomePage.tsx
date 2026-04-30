@@ -47,6 +47,7 @@ export function HomePage() {
   const [paymentPending, setPaymentPending] = useState(false)
   const [showTutorial, setShowTutorial] = useState(false)
   const [pendingChangelog, setPendingChangelog] = useState<ChangelogEntry | null>(null)
+  const [showBannerModal, setShowBannerModal] = useState(false)
 
   // Changelog показываем после того как дойдёт gameState — нужно знать
   // завершён ли онбординг (новичкам вместо changelog идёт тур).
@@ -238,6 +239,11 @@ export function HomePage() {
         )}
       </AnimatePresence>
       {!showTutorial && !pendingChangelog && <AchievementUnlockedOverlay />}
+
+      {/* Баннер-объявление: до 1 мая — о сбросе, с 1 мая — о турнире */}
+      <AnimatePresence>
+        {showBannerModal && <BannerAnnouncementModal onClose={() => setShowBannerModal(false)} />}
+      </AnimatePresence>
 
       {/* Reset confirmation modal */}
       <AnimatePresence>
@@ -581,7 +587,7 @@ export function HomePage() {
         )}
       </AnimatePresence>
 
-      <div style={{ padding: `${spacing.xxl} ${spacing.lg} 80px`, maxWidth: '500px', margin: '0 auto' }}>
+      <div style={{ padding: `calc(${spacing.xxl} + var(--tg-safe-area-inset-top, env(safe-area-inset-top, 0px))) ${spacing.lg} 80px`, maxWidth: '500px', margin: '0 auto' }}>
 
         {/* Логотип + кнопка настроек */}
         <motion.div
@@ -611,20 +617,27 @@ export function HomePage() {
           }}>
             Из грязи в князи
           </div>
-          <div style={{
-            display: 'inline-block',
-            marginTop: '6px',
-            padding: '3px 10px',
-            background: `${colors.fairyGold}18`,
-            border: `1px solid ${colors.fairyGold}40`,
-            borderRadius: '12px',
-            color: colors.fairyGold,
-            fontSize: '10px',
-            fontWeight: 600,
-            letterSpacing: '0.03em',
-          }}>
-            🏆 Бета · с 1 мая — конкурс с призами
-          </div>
+          <button
+            onClick={() => setShowBannerModal(true)}
+            style={{
+              display: 'inline-block',
+              marginTop: '6px',
+              padding: '3px 10px',
+              background: `${colors.fairyGold}18`,
+              border: `1px solid ${colors.fairyGold}40`,
+              borderRadius: '12px',
+              color: colors.fairyGold,
+              fontSize: '10px',
+              fontWeight: 600,
+              letterSpacing: '0.03em',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+            }}
+          >
+            {new Date() >= new Date('2025-05-01T00:00:00+03:00')
+              ? '🏆 Майская Ярмарка — турнир идёт!'
+              : '🏆 Бета · с 1 мая — конкурс с призами'}
+          </button>
           {(() => {
             const WEEK_DAYS = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
             const maxC = gameState.maxConsecutiveAdvances ?? 7
@@ -1579,5 +1592,121 @@ function ProjectNewsCardContent({ project }: { project: ProjectDTO }) {
         </div>
       )}
     </div>
+  )
+}
+
+const TOURNAMENT_START = new Date('2025-05-01T00:00:00+03:00')
+
+const PRE_RESET_CONTENT = {
+  title: '📢 Перед стартом турнира',
+  sections: [
+    {
+      heading: 'Что произойдёт 1 мая',
+      body: 'Прогресс всех игроков обнуляется — злато, чины, дни, подвиги, грамоты. Все начинают с чистого листа. Это нужно, чтобы турнир был честным.',
+    },
+    {
+      heading: 'Реферальные связи сохраняются',
+      body: 'Если ты уже кого-то позвал, связь останется. Бонус нужно будет заработать заново: сосватанный набирает 10 чуйки → оба получают +100 г.',
+    },
+    {
+      heading: 'Что изменится',
+      body: '— Купеческие печати обновятся — старые паттерны не сработают.\n— Беседа с дельцом становится платной (10 Stars).\n— Пропуск ожидания между неделями — 10 Stars. В бете это было бесплатно.',
+    },
+    {
+      heading: null,
+      body: 'Спасибо всем, кто тестировал — вы помогли сделать игру лучше. Вперёд — за грош, за чин, за сказочный турнир! 🏆',
+    },
+  ],
+}
+
+const TOURNAMENT_CONTENT = {
+  title: '🏆 Майская Ярмарка',
+  sections: [
+    {
+      heading: 'Турнир идёт с 1 по 9 мая',
+      body: 'Итоги — 10 мая в 10:00 (МСК). Один игрок может выиграть только в одной номинации.',
+    },
+    {
+      heading: 'Номинации',
+      body: '📦 Старожил — больше всего торговых дней\n💰 Богатей — самый крупный капитал\n🔮 Провидец — наивысший счёт чуйки\n🤝 Сватушка — больше всего приведённых купцов\n🎭 Зверинец — закрыл больше всего дел',
+    },
+    {
+      heading: 'Важно для «Старожила»',
+      body: 'Пропуск двухчасового ожидания стоит 10 Stars. Планируй дни с умом!',
+    },
+  ],
+}
+
+function BannerAnnouncementModal({ onClose }: { onClose: () => void }) {
+  const isTournament = new Date() >= TOURNAMENT_START
+  const content = isTournament ? TOURNAMENT_CONTENT : PRE_RESET_CONTENT
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 260,
+        background: 'rgba(6, 4, 18, 0.88)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: spacing.lg,
+        overflowY: 'auto',
+      }}
+    >
+      <motion.div
+        initial={{ scale: 0.92, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.92, y: 20 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 280 }}
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: '100%', maxWidth: '420px',
+          background: `linear-gradient(145deg, ${colors.enchantedPurple}, ${colors.nightBlue})`,
+          border: `1px solid ${colors.fairyGold}55`,
+          borderRadius: '16px',
+          padding: spacing.xl,
+          boxShadow: '0 16px 48px rgba(0,0,0,0.6)',
+        }}
+      >
+        <div style={{ color: colors.fairyGold, fontSize: '18px', fontWeight: 800, marginBottom: spacing.lg, textAlign: 'center' }}>
+          {content.title}
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.md }}>
+          {content.sections.map((s, i) => (
+            <div key={i} style={{
+              padding: `${spacing.sm} ${spacing.md}`,
+              background: 'rgba(255,255,255,0.04)',
+              border: `1px solid ${colors.cardBorder}`,
+              borderRadius: '10px',
+            }}>
+              {s.heading && (
+                <div style={{ color: colors.fairyGold, fontSize: '12px', fontWeight: 700, marginBottom: '4px' }}>
+                  {s.heading}
+                </div>
+              )}
+              <div style={{ color: colors.textPrimary, fontSize: '13px', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
+                {s.body}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <button
+          onClick={onClose}
+          style={{
+            width: '100%', marginTop: spacing.xl,
+            padding: spacing.md,
+            background: colors.fairyGold,
+            border: 'none', borderRadius: '12px',
+            color: colors.nightBlue,
+            fontSize: '14px', fontWeight: 700,
+            cursor: 'pointer', fontFamily: 'inherit',
+          }}
+        >
+          Понял, вперёд! →
+        </button>
+      </motion.div>
+    </motion.div>
   )
 }
