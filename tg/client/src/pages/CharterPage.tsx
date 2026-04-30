@@ -732,7 +732,7 @@ function InvestSheet({ projectId, onClose, onSuccess }: { projectId: string; onC
         <CoinIcon size={20} /> Вложить гроши
       </div>
       <div style={{ color: colors.textMuted, fontSize: '12px', marginBottom: spacing.sm }}>
-        Баланс: {gameState?.balance.toFixed(0) ?? '—'} г · Мин. 5 г · Макс. 5 000 г
+        Баланс: {gameState != null ? Math.floor(gameState.balance) : '—'} г · Мин. 5 г · Макс. 5 000 г
       </div>
       <input
         type="number"

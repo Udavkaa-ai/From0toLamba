@@ -18,7 +18,7 @@ function withdrawalHint(project: ProjectDTO): string | null {
     case 'POTION_BREW':
     case 'GUILD_SCHEME': {
       const maxRubles = Math.floor(project.currentValueRubles * 0.25)
-      return `Макс. за раз: ${maxRubles} г (25% от ${project.currentValueRubles.toFixed(0)} г в деле)`
+      return `Макс. за раз: ${maxRubles} г (25% от ${Math.floor(project.currentValueRubles)} г в деле)`
     }
     case 'CARD_GAME':
     case 'TREASURE_HUNT':
@@ -240,7 +240,7 @@ function MiniValueChart({ valueHistory, userCountHistory, userCount, invested }:
           <YAxis yAxisId="users" hide orientation="right" domain={['auto', 'auto']} />
           <Tooltip
             contentStyle={{ background: '#0D1735', border: 'none', borderRadius: '6px', fontSize: '10px', color: '#C8C8FF' }}
-            formatter={(v: number, name: string) => name === 'val' ? [`${v.toFixed(0)} г`, 'Стоимость'] : [`${v} чел.`, 'Вкладчики']}
+            formatter={(v: number, name: string) => name === 'val' ? [`${Math.floor(v)} г`, 'Стоимость'] : [`${v} чел.`, 'Вкладчики']}
             labelFormatter={(l: number) => `День ${l + 1}`}
           />
           <Area yAxisId="val" type="monotone" dataKey="val" stroke={color} strokeWidth={1.5} fill={`url(#${gradId})`} dot={false} isAnimationActive={false} />
@@ -323,7 +323,7 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
         </div>
         <div style={{ textAlign: 'right' }}>
           <div style={{ color: colors.textMuted, fontSize: '10px', letterSpacing: '0.02em' }}>
-            вложено {project.investedAmountRubles.toFixed(0)} г
+            вложено {Math.floor(project.investedAmountRubles)} г
           </div>
           <div style={{
             color: colors.fairyGold,
@@ -437,7 +437,7 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
             }}>
               <div style={{ color: colors.textPrimary, fontSize: '13px', marginBottom: spacing.sm }}>
                 Покинуть дело? Вернётся <span style={{ color: colors.fairyGold, fontWeight: 700 }}>
-                  {(project.currentValueRubles * (1 - (project.type === 'CARD_GAME' || project.type === 'TREASURE_HUNT' ? 0.25 : 0))).toFixed(0)} г
+                  {Math.floor(project.currentValueRubles * (1 - (project.type === 'CARD_GAME' || project.type === 'TREASURE_HUNT' ? 0.25 : 0)))} г
                 </span> в казну.
               </div>
               <div style={{ display: 'flex', gap: spacing.sm }}>
@@ -484,7 +484,7 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
             <div style={{ marginTop: spacing.md }}>
               <div style={{ color: colors.textMuted, fontSize: '11px', marginBottom: '4px' }}>
-                В казне: <span style={{ color: colors.fairyGold, fontWeight: 600 }}>{(gameState?.balance ?? 0).toFixed(0)} г</span>
+                В казне: <span style={{ color: colors.fairyGold, fontWeight: 600 }}>{Math.floor(gameState?.balance ?? 0)} г</span>
                 {' · '}мин. 5 г · макс. 5 000 г
               </div>
               <input
@@ -529,12 +529,12 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
             <div style={{ marginTop: spacing.md }}>
               <div style={{ color: colors.textMuted, fontSize: '11px', marginBottom: '4px' }}>
-                В деле: <span style={{ color: colors.fairyGold, fontWeight: 600 }}>{project.currentValueRubles.toFixed(0)} г</span>
-                {' · '}в казне: <span style={{ color: colors.fairyGold, fontWeight: 600 }}>{(gameState?.balance ?? 0).toFixed(0)} г</span>
+                В деле: <span style={{ color: colors.fairyGold, fontWeight: 600 }}>{Math.floor(project.currentValueRubles)} г</span>
+                {' · '}в казне: <span style={{ color: colors.fairyGold, fontWeight: 600 }}>{Math.floor(gameState?.balance ?? 0)} г</span>
               </div>
               {(project.type === 'POTION_BREW' || project.type === 'GUILD_SCHEME') && (
                 <div style={{ color: colors.warning, fontSize: '11px', marginBottom: '4px' }}>
-                  ⚠️ Макс. за раз: {Math.floor(project.currentValueRubles * 0.25)} г (25% от {project.currentValueRubles.toFixed(0)} г в деле)
+                  ⚠️ Макс. за раз: {Math.floor(project.currentValueRubles * 0.25)} г (25% от {Math.floor(project.currentValueRubles)} г в деле)
                 </div>
               )}
               {(project.type === 'CARD_GAME' || project.type === 'TREASURE_HUNT') && (
@@ -556,9 +556,9 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
               />
               {Number(withdrawAmount) > 0 && (project.type === 'CARD_GAME' || project.type === 'TREASURE_HUNT') && (
                 <div style={{ color: colors.success, fontSize: '12px', marginTop: '6px' }}>
-                  💰 На руки: <span style={{ fontWeight: 700 }}>{(Number(withdrawAmount) * 0.75).toFixed(0)} г</span>
+                  💰 На руки: <span style={{ fontWeight: 700 }}>{Math.floor(Number(withdrawAmount) * 0.75)} г</span>
                   <span style={{ color: colors.textMuted, fontSize: '11px' }}>
-                    {' '}(комиссия {(Number(withdrawAmount) * 0.25).toFixed(0)} г)
+                    {' '}(комиссия {Math.floor(Number(withdrawAmount) * 0.25)} г)
                   </span>
                 </div>
               )}
@@ -637,11 +637,11 @@ function ClosedProjectCard({ project, postMortem }: { project: ProjectDTO; postM
             <div style={{ display: 'flex', gap: spacing.xl, marginTop: spacing.md }}>
               <div>
                 <div style={{ color: colors.textMuted, fontSize: '10px' }}>Вложено</div>
-                <div style={{ color: colors.textSecondary, fontSize: '12px' }}>{postMortem.investedAmount.toFixed(0)} г</div>
+                <div style={{ color: colors.textSecondary, fontSize: '12px' }}>{Math.floor(postMortem.investedAmount)} г</div>
               </div>
               <div>
                 <div style={{ color: colors.textMuted, fontSize: '10px' }}>Получено</div>
-                <div style={{ color: colors.textSecondary, fontSize: '12px' }}>{postMortem.returnedAmount.toFixed(0)} г</div>
+                <div style={{ color: colors.textSecondary, fontSize: '12px' }}>{Math.floor(postMortem.returnedAmount)} г</div>
               </div>
               <div>
                 <div style={{ color: colors.textMuted, fontSize: '10px' }}>Дней</div>
@@ -725,7 +725,7 @@ function TransactionRow({ tx }: { tx: TransactionDTO }) {
         </div>
       </div>
       <div style={{ color, fontWeight: 700, fontSize: '13px', flexShrink: 0 }}>
-        {sign}{tx.amount.toFixed(0)} г
+        {sign}{Math.floor(tx.amount)} г
       </div>
     </div>
   )

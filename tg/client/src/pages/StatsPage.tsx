@@ -91,8 +91,8 @@ export function StatsPage() {
             Денежная летопись
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-around' }}>
-            <Stat label="Вложено" value={`${gameState.totalInvested.toFixed(0)} г`} />
-            <Stat label="Получено" value={`${received.toFixed(0)} г`} />
+            <Stat label="Вложено" value={`${Math.floor(gameState.totalInvested)} г`} />
+            <Stat label="Получено" value={`${Math.floor(received)} г`} />
             <Stat
               label="Итог"
               value={`${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%`}
@@ -100,8 +100,8 @@ export function StatsPage() {
             />
           </div>
           <div style={{ marginTop: spacing.md, paddingTop: spacing.md, borderTop: `1px solid ${colors.cardBorder}`, display: 'flex', justifyContent: 'space-around' }}>
-            <Stat label="Свободные гроши" value={`${gameState.balance.toFixed(0)} г`} small />
-            <Stat label="Всего злата" value={`${(gameState.balance + activeValue).toFixed(0)} г`} small />
+            <Stat label="Свободные гроши" value={`${Math.floor(gameState.balance)} г`} small />
+            <Stat label="Всего злата" value={`${Math.floor(gameState.balance + activeValue)} г`} small />
           </div>
         </FairyCard>
 

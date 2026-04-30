@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -64,18 +64,21 @@ export function HomePage() {
     return () => clearInterval(id)
   }, [])
 
-  const { isLoading, isError, error } = useQuery({
+  const localModelInitRef = useRef(false)
+  const { isLoading, isError, error, data: freshGameState } = useQuery({
     queryKey: ['gameState'],
-    queryFn: async () => {
-      const data = await api.game.getState()
-      setGameState(data)
-      if (localModel === null) {
-        setLocalModel(data.preferredModel)
-      }
-      return data
-    },
+    queryFn: () => api.game.getState(),
     refetchInterval: 30_000,
   })
+
+  useEffect(() => {
+    if (!freshGameState) return
+    setGameState(freshGameState)
+    if (!localModelInitRef.current) {
+      localModelInitRef.current = true
+      setLocalModel(freshGameState.preferredModel)
+    }
+  }, [freshGameState])
 
   const tgHaptic = (window as any).Telegram?.WebApp?.HapticFeedback
 
@@ -673,13 +676,13 @@ export function HomePage() {
               <div style={{ textAlign: 'center' }}>
                 <div style={{ color: colors.textMuted, fontSize: '11px' }}>Вложено</div>
                 <div style={{ color: colors.textSecondary, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
-                  {gameState.totalInvested.toFixed(0)} г
+                  {Math.floor(gameState.totalInvested)} г
                 </div>
               </div>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ color: colors.textMuted, fontSize: '11px' }}>Получено</div>
                 <div style={{ color: colors.textSecondary, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
-                  {(gameState.totalReturned + activeValue).toFixed(0)} г
+                  {Math.floor(gameState.totalReturned + activeValue)} г
                 </div>
               </div>
               <div style={{ textAlign: 'center' }}>
@@ -1179,7 +1182,7 @@ function ActiveProjectCard({ project, delay, onPress }: { project: ProjectDTO; d
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ color: colors.textMuted, fontSize: '10px', letterSpacing: '0.02em' }}>
-              вложено {project.investedAmountRubles.toFixed(0)} г
+              вложено {Math.floor(project.investedAmountRubles)} г
             </div>
             <div style={{
               color: colors.fairyGold,
@@ -1503,7 +1506,7 @@ function ClosureCardContent({ closure }: { closure: ClosureSummaryDTO }) {
         <div style={{ textAlign: 'center' }}>
           <div style={{ color: colors.textMuted, fontSize: '10px' }}>Вложено</div>
           <div style={{ color: colors.textSecondary, fontWeight: 600, fontSize: '14px', fontVariantNumeric: 'tabular-nums' }}>
-            {closure.investedAmount.toFixed(0)} г
+            {Math.floor(closure.investedAmount)} г
           </div>
         </div>
         <div style={{ color: colors.textMuted, fontSize: '14px' }}>→</div>
@@ -1517,7 +1520,7 @@ function ClosureCardContent({ closure }: { closure: ClosureSummaryDTO }) {
             fontVariantNumeric: 'tabular-nums',
             textShadow: `0 0 12px ${accent}40`,
           }}>
-            {closure.returnedAmount.toFixed(0)} г
+            {Math.floor(closure.returnedAmount)} г
           </div>
         </div>
       </div>
@@ -1555,7 +1558,7 @@ function ProjectNewsCardContent({ project }: { project: ProjectDTO }) {
           <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '2px' }}>{project.developerName}</div>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ color: colors.fairyGold, fontWeight: 700 }}>{project.currentValueRubles.toFixed(0)} г</div>
+          <div style={{ color: colors.fairyGold, fontWeight: 700 }}>{Math.floor(project.currentValueRubles)} г</div>
           <div style={{ color: profit >= 0 ? colors.success : colors.danger, fontSize: '11px' }}>
             {profit >= 0 ? '+' : ''}{profit.toFixed(1)}%
           </div>
