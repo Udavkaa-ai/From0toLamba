@@ -1,4 +1,5 @@
-// Звуковой движок — всё синтезируется через Web Audio API, без файлов
+// Звуковой движок — синтез через Web Audio API, без файлов.
+// Эстетика: приглушённые щелчки дерева/пергамента, шелест страниц — под антураж сказочной Руси.
 
 export type SoundName = 'tap' | 'invest' | 'day' | 'win' | 'lose' | 'rankup' | 'seal'
 
@@ -9,7 +10,6 @@ let _ctx: AudioContext | null = null
 
 function ctx(): AudioContext {
   if (!_ctx) _ctx = new AudioContext()
-  // Браузер может приостановить контекст без жеста — возобновляем
   if (_ctx.state === 'suspended') _ctx.resume()
   return _ctx
 }
@@ -31,121 +31,154 @@ export function setVolume(v: number): void {
   localStorage.setItem(VOLUME_KEY, String(Math.max(0, Math.min(1, v))))
 }
 
-// ─── Вспомогательные примитивы ─────────────────────────────────────────────
+// ─── Примитивы ──────────────────────────────────────────────────────────────
 
-function gain(c: AudioContext, value: number): GainNode {
-  const g = c.createGain()
-  g.gain.value = value
-  g.connect(c.destination)
-  return g
+// Белый шум — основа для шелеста пергамента
+function noiseBuffer(c: AudioContext, dur: number): AudioBuffer {
+  const len = Math.ceil(c.sampleRate * dur)
+  const buf = c.createBuffer(1, len, c.sampleRate)
+  const data = buf.getChannelData(0)
+  for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1
+  return buf
 }
 
-function sine(c: AudioContext, freq: number, start: number, dur: number, g: GainNode) {
+function playNoise(
+  c: AudioContext,
+  dur: number,
+  lpFreq: number,   // lowpass — срезаем высокие, оставляем бумажный шорох
+  peakGain: number,
+  attackRatio = 0.15, // доля от dur на атаку
+): void {
+  const src = c.createBufferSource()
+  src.buffer = noiseBuffer(c, dur)
+
+  const filt = c.createBiquadFilter()
+  filt.type = 'lowpass'
+  filt.frequency.value = lpFreq
+  filt.Q.value = 0.7
+
+  const g = c.createGain()
+  const now = c.currentTime
+  const attack = now + dur * attackRatio
+  const end = now + dur
+  g.gain.setValueAtTime(0, now)
+  g.gain.linearRampToValueAtTime(peakGain, attack)
+  g.gain.linearRampToValueAtTime(0, end)
+
+  src.connect(filt)
+  filt.connect(g)
+  g.connect(c.destination)
+  src.start(now)
+  src.stop(end)
+}
+
+// Короткий глухой удар (дерево, войлок) — синус на низкой частоте с быстрым спадом
+function playThud(
+  c: AudioContext,
+  freq: number,
+  dur: number,
+  peakGain: number,
+): void {
+  const osc = c.createOscillator()
+  osc.type = 'sine'
+
+  // Частота чуть падает — как настоящий удар
+  const now = c.currentTime
+  osc.frequency.setValueAtTime(freq, now)
+  osc.frequency.exponentialRampToValueAtTime(freq * 0.6, now + dur)
+
+  const filt = c.createBiquadFilter()
+  filt.type = 'lowpass'
+  filt.frequency.value = freq * 3
+  filt.Q.value = 1
+
+  const g = c.createGain()
+  g.gain.setValueAtTime(peakGain, now)
+  g.gain.exponentialRampToValueAtTime(0.001, now + dur)
+
+  osc.connect(filt)
+  filt.connect(g)
+  g.connect(c.destination)
+  osc.start(now)
+  osc.stop(now + dur)
+}
+
+// Тихий колокольчик — синус с медленным затуханием, отфильтрованный
+function playBell(
+  c: AudioContext,
+  freq: number,
+  startAt: number,
+  dur: number,
+  peakGain: number,
+): void {
   const osc = c.createOscillator()
   osc.type = 'sine'
   osc.frequency.value = freq
-  osc.connect(g)
-  osc.start(start)
-  osc.stop(start + dur)
-}
 
-function ramp(
-  c: AudioContext,
-  g: GainNode,
-  startVal: number,
-  endVal: number,
-  startTime: number,
-  endTime: number,
-) {
-  g.gain.setValueAtTime(startVal, startTime)
-  g.gain.linearRampToValueAtTime(endVal, endTime)
+  const filt = c.createBiquadFilter()
+  filt.type = 'bandpass'
+  filt.frequency.value = freq
+  filt.Q.value = 8   // узкая полоса — мягкий, почти деревянный тон
+
+  const g = c.createGain()
+  g.gain.setValueAtTime(0, startAt)
+  g.gain.linearRampToValueAtTime(peakGain, startAt + 0.01)
+  g.gain.exponentialRampToValueAtTime(0.001, startAt + dur)
+
+  osc.connect(filt)
+  filt.connect(g)
+  g.connect(c.destination)
+  osc.start(startAt)
+  osc.stop(startAt + dur)
 }
 
 // ─── Звуки ──────────────────────────────────────────────────────────────────
 
+// Тихий щелчок деревянной кнопки — короткий удар + чуть шелеста
 function playTap(c: AudioContext, vol: number) {
-  const g = gain(c, vol * 0.35)
-  const now = c.currentTime
-  ramp(c, g, 0.35 * vol, 0, now, now + 0.08)
-  sine(c, 900, now, 0.08, g)
+  playThud(c, 180, 0.07, vol * 0.4)
+  playNoise(c, 0.06, 400, vol * 0.08)
 }
 
+// Монета падает на деревянный стол: два удара (подброс + укладка)
 function playInvest(c: AudioContext, vol: number) {
-  // Звон монеты: высокая нота + быстрый спад
-  const g = gain(c, vol * 0.5)
-  const now = c.currentTime
-  ramp(c, g, 0.5 * vol, 0, now, now + 0.35)
-  const osc = c.createOscillator()
-  osc.type = 'sine'
-  osc.frequency.setValueAtTime(1400, now)
-  osc.frequency.linearRampToValueAtTime(1100, now + 0.35)
-  osc.connect(g)
-  osc.start(now)
-  osc.stop(now + 0.35)
+  playThud(c, 260, 0.12, vol * 0.45)
+  setTimeout(() => playThud(c, 220, 0.09, vol * 0.25), 90)
 }
 
+// Шелест страницы: перелистывание пергамента
 function playDay(c: AudioContext, vol: number) {
-  // Мягкий «свист» перехода: sweep вверх
-  const g = gain(c, vol * 0.4)
-  const now = c.currentTime
-  ramp(c, g, 0, vol * 0.4, now, now + 0.05)
-  ramp(c, g, vol * 0.4, 0, now + 0.15, now + 0.35)
-  const osc = c.createOscillator()
-  osc.type = 'sine'
-  osc.frequency.setValueAtTime(400, now)
-  osc.frequency.linearRampToValueAtTime(800, now + 0.35)
-  osc.connect(g)
-  osc.start(now)
-  osc.stop(now + 0.35)
+  playNoise(c, 0.28, 1200, vol * 0.55, 0.08)
+  // Лёгкий хлопок в конце — страница легла
+  setTimeout(() => playThud(c, 140, 0.1, vol * 0.15), 220)
 }
 
+// Удача: мягкий перезвон двух колокольчиков
 function playWin(c: AudioContext, vol: number) {
-  // Три восходящие ноты: до-ми-соль
-  const notes = [523, 659, 784]
-  notes.forEach((freq, i) => {
-    const t = c.currentTime + i * 0.12
-    const g = gain(c, 0)
-    ramp(c, g, vol * 0.45, 0, t, t + 0.22)
-    sine(c, freq, t, 0.22, g)
-  })
+  const now = c.currentTime
+  playBell(c, 520, now,        0.5, vol * 0.35)
+  playBell(c, 780, now + 0.14, 0.45, vol * 0.28)
 }
 
+// Неудача: глухой двойной стук — как захлопнутая книга
 function playLose(c: AudioContext, vol: number) {
-  // Нисходящий тон с небольшим дрожанием
-  const g = gain(c, vol * 0.45)
-  const now = c.currentTime
-  ramp(c, g, vol * 0.45, 0, now, now + 0.45)
-  const osc = c.createOscillator()
-  osc.type = 'sawtooth'
-  osc.frequency.setValueAtTime(350, now)
-  osc.frequency.linearRampToValueAtTime(180, now + 0.45)
-  const filt = c.createBiquadFilter()
-  filt.type = 'lowpass'
-  filt.frequency.value = 600
-  osc.connect(filt)
-  filt.connect(g)
-  osc.start(now)
-  osc.stop(now + 0.45)
+  playThud(c, 120, 0.18, vol * 0.45)
+  setTimeout(() => playThud(c, 100, 0.15, vol * 0.3), 110)
 }
 
+// Повышение чина: три колокольчика лесенкой + финальный шелест
 function playRankup(c: AudioContext, vol: number) {
-  // Мини-фанфара: четыре ноты вверх
-  const notes = [523, 659, 784, 1047]
-  notes.forEach((freq, i) => {
-    const t = c.currentTime + i * 0.13
-    const g = gain(c, 0)
-    ramp(c, g, vol * 0.5, vol * 0.1, t, t + 0.25)
-    ramp(c, g, vol * 0.1, 0, t + 0.25, t + 0.4)
-    sine(c, freq, t, 0.4, g)
-  })
+  const now = c.currentTime
+  playBell(c, 440, now,        0.6, vol * 0.3)
+  playBell(c, 550, now + 0.17, 0.55, vol * 0.3)
+  playBell(c, 660, now + 0.34, 0.7, vol * 0.35)
+  playNoise(c, 0.35, 900, vol * 0.2, 0.4)
 }
 
+// Печать на пергамент: глухой мягкий удар, как штамп по воску
 function playSeal(c: AudioContext, vol: number) {
-  // Тихий щелчок для выбора печати
-  const g = gain(c, vol * 0.25)
-  const now = c.currentTime
-  ramp(c, g, vol * 0.25, 0, now, now + 0.06)
-  sine(c, 600, now, 0.06, g)
+  playThud(c, 200, 0.08, vol * 0.3)
+  playNoise(c, 0.07, 600, vol * 0.1)
 }
 
 // ─── Публичный API ───────────────────────────────────────────────────────────
