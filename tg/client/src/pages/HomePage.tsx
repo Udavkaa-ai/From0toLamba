@@ -10,6 +10,7 @@ import {
   WhatsNewOverlay, getPendingChangelog, markChangelogSeen, type ChangelogEntry,
 } from '@/components/WhatsNewOverlay'
 import { AchievementUnlockedOverlay } from '@/components/AchievementUnlockedOverlay'
+import { FaqModal } from '@/components/FaqModal'
 import { CountUp } from '@/components/CountUp'
 import { EyeIcon, LockIcon } from '@/components/icons'
 import { api, type ProjectDTO, type DailyUpdateDTO, type ClosureSummaryDTO, type MyReferralEntryDTO } from '@/api/client'
@@ -53,6 +54,7 @@ export function HomePage() {
   const [showTutorial, setShowTutorial] = useState(false)
   const [pendingChangelog, setPendingChangelog] = useState<ChangelogEntry | null>(null)
   const [showBannerModal, setShowBannerModal] = useState(false)
+  const [showFaq, setShowFaq] = useState(false)
   const [soundMuted, setSoundMuted] = useState(isMuted)
   const [soundVolume, setSoundVolume] = useState(getVolume)
 
@@ -318,6 +320,9 @@ export function HomePage() {
         )}
       </AnimatePresence>
       {!showTutorial && !pendingChangelog && <AchievementUnlockedOverlay />}
+      <AnimatePresence>
+        {showFaq && <FaqModal onClose={() => setShowFaq(false)} />}
+      </AnimatePresence>
 
       {/* Баннер-объявление: до 1 мая — о сбросе, с 1 мая — о турнире */}
       <AnimatePresence>
@@ -599,6 +604,27 @@ export function HomePage() {
                   📖 Как играть
                   <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '4px', fontWeight: 400 }}>
                     Вводный рассказ о делах, хозяевах и судьбах
+                  </div>
+                </button>
+                <button
+                  onClick={() => { playSound('tap'); setShowSettings(false); setShowFaq(true) }}
+                  style={{
+                    width: '100%',
+                    marginTop: '8px',
+                    padding: '12px 16px',
+                    background: `${colors.fairyGold}18`,
+                    border: `1px solid ${colors.fairyGold}55`,
+                    borderRadius: '12px',
+                    color: colors.fairyGold,
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                  }}
+                >
+                  ❓ ЧАВО
+                  <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '4px', fontWeight: 400 }}>
+                    Частые вопросы — правила, типы дел, чуйка, судьбы
                   </div>
                 </button>
               </div>
