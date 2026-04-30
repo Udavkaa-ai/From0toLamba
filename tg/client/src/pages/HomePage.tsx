@@ -34,6 +34,10 @@ const MODEL_OPTIONS = [
   },
 ]
 
+// Флаг на уровне модуля — музыка играет только один раз за сессию браузера,
+// не перезапускается при каждом возврате на главную.
+let mainThemePlayed = false
+
 export function HomePage() {
   const navigate = useNavigate()
   const qc = useQueryClient()
@@ -52,56 +56,57 @@ export function HomePage() {
   const [soundMuted, setSoundMuted] = useState(isMuted)
   const [soundVolume, setSoundVolume] = useState(getVolume)
 
-  // ─── Фоновая музыка главного экрана ───────────────────────────────────────
+  // ─── Фоновая музыка — только один раз за сессию ────────────────────────────
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const MUSIC_VOL = 0.2
 
   useEffect(() => {
+    if (mainThemePlayed) return  // уже играла в этой сессии — не повторяем
+    mainThemePlayed = true
+
     const audio = new Audio('/main_theme.mp3')
     audio.loop = false
-    audio.volume = isMuted() ? 0 : getVolume() * 0.4  // тише SFX
+    audio.volume = isMuted() ? 0 : MUSIC_VOL
     audioRef.current = audio
 
-    const startPlayback = () => {
+    const tryPlay = () => {
       audio.play().catch(() => {
-        // Автовоспроизведение заблокировано — ждём первого касания
-        const onTouch = () => {
+        // Браузер заблокировал — ждём первого касания пользователя
+        const onFirstTouch = () => {
           audio.play().catch(() => {})
-          document.removeEventListener('touchstart', onTouch)
-          document.removeEventListener('click', onTouch)
         }
-        document.addEventListener('touchstart', onTouch, { once: true })
-        document.addEventListener('click', onTouch, { once: true })
+        document.addEventListener('touchstart', onFirstTouch, { once: true })
+        document.addEventListener('click', onFirstTouch, { once: true })
       })
     }
 
-    // Затухание за 10 секунд до конца
-    const FADE_DURATION = 10
+    // Плавное затухание за последние 10 секунд
+    const FADE_SEC = 10
     const onTimeUpdate = () => {
       const remaining = audio.duration - audio.currentTime
       if (!isFinite(remaining)) return
-      if (remaining <= FADE_DURATION) {
-        const targetVol = isMuted() ? 0 : getVolume() * 0.4
-        audio.volume = Math.max(0, targetVol * (remaining / FADE_DURATION))
+      if (remaining <= FADE_SEC) {
+        audio.volume = isMuted() ? 0 : Math.max(0, MUSIC_VOL * (remaining / FADE_SEC))
       }
     }
 
     audio.addEventListener('timeupdate', onTimeUpdate)
-    startPlayback()
+    tryPlay()
 
     return () => {
+      // При уходе с главной приостанавливаем, но флаг не сбрасываем
       audio.removeEventListener('timeupdate', onTimeUpdate)
       audio.pause()
-      audio.src = ''
       audioRef.current = null
     }
   }, [])
 
-  // Синхронизируем громкость трека с ползунком и mute
+  // Реагируем на mute — громкость фиксирована 20%, не связана с ползунком SFX
   useEffect(() => {
     const audio = audioRef.current
     if (!audio) return
-    audio.volume = soundMuted ? 0 : soundVolume * 0.4
-  }, [soundMuted, soundVolume])
+    audio.volume = soundMuted ? 0 : MUSIC_VOL
+  }, [soundMuted])
 
   useEffect(() => {
     if (gameState?.pendingRankUp) playSound('rankup')
