@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ScreenBackground } from '@/components/ScreenBackground'
+import { playSound } from '@/sounds'
 import { api } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing } from '@/theme'
@@ -582,6 +583,7 @@ function InvestSheet({ projectId, onClose, onSuccess }: { projectId: string; onC
     mutationFn: () => api.invest.invest(projectId, Number(amount)),
     onSuccess: () => {
       haptic?.notificationOccurred('success')
+      playSound('invest')
       updateBalance(-Number(amount))
       qc.invalidateQueries({ queryKey: ['gameState'] })
       onSuccess()

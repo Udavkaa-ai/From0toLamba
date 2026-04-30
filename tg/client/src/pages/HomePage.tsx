@@ -15,6 +15,7 @@ import { EyeIcon, LockIcon } from '@/components/icons'
 import { api, type ProjectDTO, type DailyUpdateDTO, type ClosureSummaryDTO, type MyReferralEntryDTO } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing, typography } from '@/theme'
+import { playSound, isMuted, setMuted, getVolume, setVolume } from '@/sounds'
 
 const RANK_DISPLAY: Record<string, string> = {
   NEWBIE: 'Скоморох', AMBASSADOR: 'Купец', ANALYST: 'Мудрец', SHARK: 'Боярин', LAMBO_SENSEI: 'Князь',
@@ -48,6 +49,12 @@ export function HomePage() {
   const [showTutorial, setShowTutorial] = useState(false)
   const [pendingChangelog, setPendingChangelog] = useState<ChangelogEntry | null>(null)
   const [showBannerModal, setShowBannerModal] = useState(false)
+  const [soundMuted, setSoundMuted] = useState(isMuted)
+  const [soundVolume, setSoundVolume] = useState(getVolume)
+
+  useEffect(() => {
+    if (gameState?.pendingRankUp) playSound('rankup')
+  }, [gameState?.pendingRankUp])
 
   // Changelog показываем после того как дойдёт gameState — нужно знать
   // завершён ли онбординг (новичкам вместо changelog идёт тур).
@@ -86,6 +93,7 @@ export function HomePage() {
     mutationFn: api.game.advanceDay,
     onSuccess: (data) => {
       tgHaptic?.notificationOccurred('success')
+      playSound('day')
       qc.invalidateQueries({ queryKey: ['gameState'] })
       qc.invalidateQueries({ queryKey: ['updates'] })
       setDayClosures(data.closures ?? [])
@@ -451,6 +459,55 @@ export function HomePage() {
                 </div>
               </div>
 
+              {/* Звук */}
+              <div style={{ marginBottom: '28px' }}>
+                <div style={{ color: colors.textSecondary, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Звук
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <span style={{ color: colors.textPrimary, fontSize: '14px' }}>
+                    {soundMuted ? '🔇 Выключен' : '🔊 Включён'}
+                  </span>
+                  <button
+                    onClick={() => {
+                      const next = !soundMuted
+                      setSoundMuted(next)
+                      setMuted(next)
+                      if (!next) playSound('tap')
+                    }}
+                    style={{
+                      padding: '6px 16px',
+                      background: soundMuted ? `${colors.textMuted}20` : `${colors.fairyGold}20`,
+                      border: `1px solid ${soundMuted ? colors.textMuted : colors.fairyGold}55`,
+                      borderRadius: '10px',
+                      color: soundMuted ? colors.textMuted : colors.fairyGold,
+                      fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                    }}
+                  >
+                    {soundMuted ? 'Включить' : 'Выключить'}
+                  </button>
+                </div>
+                {!soundMuted && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ color: colors.textMuted, fontSize: '12px', flexShrink: 0 }}>Тихо</span>
+                    <input
+                      type="range"
+                      min={0} max={1} step={0.05}
+                      value={soundVolume}
+                      onChange={e => {
+                        const v = Number(e.target.value)
+                        setSoundVolume(v)
+                        setVolume(v)
+                      }}
+                      onMouseUp={() => playSound('tap')}
+                      onTouchEnd={() => playSound('tap')}
+                      style={{ flex: 1, accentColor: colors.fairyGold }}
+                    />
+                    <span style={{ color: colors.textMuted, fontSize: '12px', flexShrink: 0 }}>Громко</span>
+                  </div>
+                )}
+              </div>
+
               {/* Повторный просмотр вводного рассказа */}
               <div style={{ marginBottom: '28px' }}>
                 <div style={{ color: colors.textSecondary, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
@@ -598,13 +655,38 @@ export function HomePage() {
           animate={{ opacity: 1, y: 0 }}
           style={{ textAlign: 'center', marginBottom: spacing.xxl, position: 'relative' }}
         >
+          {/* Кнопка звука */}
           <button
-            onClick={() => setShowSettings(true)}
+            onClick={() => {
+              playSound('tap')
+              const next = !soundMuted
+              setSoundMuted(next)
+              setMuted(next)
+            }}
+            style={{
+              position: 'absolute', left: 0, top: 0,
+              background: `${colors.fairyGold}14`,
+              border: `1px solid ${colors.fairyGold}35`,
+              borderRadius: '10px',
+              color: soundMuted ? colors.textMuted : colors.fairyGold,
+              fontSize: '16px',
+              cursor: 'pointer', padding: '5px 8px',
+              lineHeight: 1,
+            }}
+          >
+            {soundMuted ? '🔇' : '🔊'}
+          </button>
+          {/* Кнопка настроек */}
+          <button
+            onClick={() => { playSound('tap'); setShowSettings(true) }}
             style={{
               position: 'absolute', right: 0, top: 0,
-              background: 'none', border: 'none',
-              color: colors.textMuted, fontSize: '20px',
-              cursor: 'pointer', padding: '4px',
+              background: `${colors.fairyGold}14`,
+              border: `1px solid ${colors.fairyGold}35`,
+              borderRadius: '10px',
+              color: colors.fairyGold,
+              fontSize: '16px',
+              cursor: 'pointer', padding: '5px 8px',
               lineHeight: 1,
             }}
           >
@@ -1270,6 +1352,13 @@ function DayNewsOverlay({
   const isClosure = idx < closureCount
   const currentClosure = isClosure ? closures[idx] : null
   const currentProject = !isClosure ? projects[idx - closureCount] : null
+
+  // Звук при первом закрытии
+  useEffect(() => {
+    if (!currentClosure) return
+    const profitable = currentClosure.profitPercent >= 0
+    playSound(profitable ? 'win' : 'lose')
+  }, [idx])
 
   const dismiss = () => {
     if (idx < total - 1) setIdx(idx + 1)

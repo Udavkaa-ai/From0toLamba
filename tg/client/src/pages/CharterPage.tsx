@@ -10,6 +10,7 @@ import { colors, spacing } from '@/theme'
 import { Seal, generateReferenceSeal, sealForCell } from '@/components/Seal'
 import { CoinIcon } from '@/components/icons'
 import { useTelegramBackHandler } from '@/hooks/useTelegramBackButton'
+import { playSound } from '@/sounds'
 
 const tg = (window as any).Telegram?.WebApp
 const haptic = tg?.HapticFeedback
@@ -104,6 +105,7 @@ export function CharterPage() {
       setResult(rest)
       setPhase('result')
       haptic?.notificationOccurred(res.delta > 0 ? 'success' : res.delta < 0 ? 'error' : 'warning')
+      playSound(res.delta >= 0 ? 'win' : 'lose')
       qc.invalidateQueries({ queryKey: ['gameState'] })
 
       // Онбординг-бонус по первой проверенной грамоте
@@ -188,6 +190,7 @@ export function CharterPage() {
   const toggleCell = (i: number) => {
     if (phase !== 'scan') return
     haptic?.impactOccurred('light')
+    playSound('seal')
     setSelected(prev => {
       const next = new Set(prev)
       if (next.has(i)) next.delete(i)
