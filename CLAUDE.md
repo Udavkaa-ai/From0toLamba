@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Суть проекта
 
-«Из грязи в князи» — Telegram Mini App, симулятор купца-инвестора в сказочной Руси. Игрок вкладывает рубли (₽) в «дела» (аналоги крипто-проектов), большинство из которых обман. Ключевая механика — **«Купеческая грамота»**: мини-игра на внимательность (24 SVG-печати, ищем подделки за 15 сек).
+«Из грязи в князи» — Telegram Mini App, симулятор купца-инвестора в сказочной Руси. Игрок вкладывает гроши (г) в «дела», большинство из которых обман. Ключевая механика — **«Купеческая грамота»**: мини-игра на внимательность (24 SVG-печати, ищем подделки; таймер зависит от чина). Текущая версия: **3.0.0**.
 
 - **Активная версия:** `tg/`. `app/` (Android) — заморожен (`CODEMAP.md` описывает Android-архитектуру, к `tg/` не относится).
 - **Валюта:** гроши (г) в UI; DB-поля (`currentValueRubles`, `investedAmountRubles` и т.д.) не переименованы — только отображение. Всегда `Math.floor(n)`, **не** `.toFixed(0)` — `.toFixed` округляет вверх и вызывает «Недостаточно средств».
@@ -162,11 +162,29 @@ PAGE_BG.portfolio           // '/backgrounds/BG_PORTFOLIO.webp'
 
 ## Механика «Купеческой грамоты»
 
-- Сетка 4×6 = 24 печати; таймер 15 сек, по истечении — автосабмит
+- Сетка 4×6 = 24 печати; по истечении таймера — автосабмит
+- **Таймер зависит от чина** (`RANK_TIME_LIMIT` в `CharterService.ts`): NEWBIE 25 с · AMBASSADOR 20 с · ANALYST 15 с · SHARK 10 с · LAMBO_SENSEI 5 с
 - Число подделок: `lieTopics.length + extra(fate)` (INSTANT_SCAM +2, SLOW_DRAIN +1)
-- Difficulty: EASY (INSTANT_SCAM/HONEST_FAIL) → радикальная мутация; MEDIUM (SLOW_DRAIN) → похожий зверь/цвет; HARD (SURVIVOR/UNICORN) → ±точки розетки, сдвиг тона ±20°
+- **`forgedIndices` отправляются клиенту** в `CharterDTO` при старте — клиент должен знать, какие ячейки рисовать мутированными. «Не покидают сервер» — устаревший комментарий.
+- Difficulty по fate: EASY (INSTANT_SCAM/HONEST_FAIL) → явная мутация; MEDIUM (SLOW_DRAIN) → похожий зверь/цвет; HARD (SURVIVOR/UNICORN) → сдвиг тона ±20°
+- **Мутации по чину** (`RANK_MUT_POOLS` в `Seal.tsx`): NEWBIE → только `shape`; AMBASSADOR → `shape, size, dots`; ANALYST+ → все типы включая `colorHue, rings, emblemSame`
 - Формула чуйки: `delta = TP − FP − 2·FN` + бонус `+2` за верно опознанную чистую грамоту
-- `forgedIndices` **никогда** не покидают сервер до сабмита (хранятся в `AmaSession`)
+- **Число подделок на интро-экране**: Скоморох видит точное число, Купец и выше — `???`
+- `sealForCell(refSeed, index, isForged, difficulty, rank?)` — `rank` используется для выбора пула мутаций вместо `difficulty`
+
+---
+
+## Звуки и музыка
+
+**SFX** — `tg/client/src/sounds.ts`, Web Audio API (без файлов), 7 событий:
+`tap` · `invest` · `day` · `win` · `lose` · `rankup` · `seal`
+
+Вызов: `playSound('tap')`. Mute/volume хранятся в `localStorage` (`sound_muted`, `sound_volume`). Управление через `isMuted()`, `setMuted()`, `getVolume()`, `setVolume()`.
+
+**Фоновая музыка** — `tg/client/public/main_theme.mp3` (файл в `public/`, отдаётся как `/main_theme.mp3`).
+- Запускается **один раз за браузерную сессию** (модульный флаг `let mainThemePlayed = false` в `HomePage.tsx`), не перезапускается при навигации.
+- Громкость: `soundVolume × 0.4` (при дефолтном ползунке 0.5 → 20%). Реагирует на mute-переключатель и ползунок громкости.
+- Плавное затухание за последние 10 секунд трека.
 
 ---
 
@@ -228,6 +246,8 @@ PAGE_BG.portfolio           // '/backgrounds/BG_PORTFOLIO.webp'
 - `claimedAPY` генерируется сервером в `GenerateProjectService.ts` (`computeClaimedAPY()`), а не AI. В промпт не включать и от AI не ждать
 - `referrerId` и `referralBonusGranted` на `User` — **не сбрасывать** при сбросе игры (это связь аккаунта, а не игровая прогрессия). Сбрасывать только `pendingReferralParam: null`
 - `seenTypes` / `seenArchetypes` / `seenFates` в `GameStateDTO` — вычисляются из `PostMortem` на лету в `/api/game` (GET), в БД не хранятся
+- Поле чина в `GameStateDTO` называется **`investorRank`** (не `rank`) — частая ошибка при обращении к `gameState`
+- **localStorage-ключи онбординга:** `onboarding_v3_seen` — тур показан после v3.0 (сбрасывать при мажорных обновлениях, меняя ключ); `charter_tutorial_seen` — обучалка грамоты показана
 
 ---
 
