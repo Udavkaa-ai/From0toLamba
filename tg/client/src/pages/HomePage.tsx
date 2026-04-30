@@ -1748,7 +1748,7 @@ function ProjectNewsCardContent({ project }: { project: ProjectDTO }) {
 }
 
 // Переключатель вручную: true = показывать правила турнира, false = объявление о перезапуске
-const IS_TOURNAMENT_ACTIVE = false
+const IS_TOURNAMENT_ACTIVE = true
 
 const PRE_RESET_CONTENT = {
   title: '📢 Перед стартом турнира — важное объявление!',
