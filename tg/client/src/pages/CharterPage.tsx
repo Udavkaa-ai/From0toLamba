@@ -260,6 +260,9 @@ export function CharterPage() {
         {phase === 'intro' && project && (
           <IntroScreen
             project={project}
+            forgeryCount={charter.forgedIndices.length}
+            timeLimitSeconds={charter.timeLimitSeconds}
+            difficulty={charter.difficulty}
             onStart={() => setPhase('reference')}
             onChat={() => navigate(`/ama/${projectId}`)}
           />
@@ -594,11 +597,30 @@ function ExitConfirmSheet({
 
 // ── Фазы ───────────────────────────────────────────────────────────────────
 
+const DIFF_MUTATION_HINT: Record<string, string> = {
+  EASY:   'Отличия явные — форма или размер',
+  MEDIUM: 'Отличия умеренные — знак или тон цвета',
+  HARD:   'Отличия тонкие — цвет, число колец',
+}
+
+function forgeryColor(n: number): string {
+  if (n <= 2) return colors.success
+  if (n <= 4) return colors.warning
+  return colors.danger
+}
+
 function IntroScreen({
-  project, onStart, onChat,
-}: { project: any; onStart: () => void; onChat: () => void }) {
+  project, forgeryCount, timeLimitSeconds, difficulty, onStart, onChat,
+}: {
+  project: any
+  forgeryCount: number
+  timeLimitSeconds: number
+  difficulty: string
+  onStart: () => void
+  onChat: () => void
+}) {
   return (
-    <div style={{ flex: 1, padding: spacing.lg, maxWidth: '500px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
+    <div style={{ flex: 1, padding: spacing.lg, maxWidth: '500px', margin: '0 auto', width: '100%', boxSizing: 'border-box', overflowY: 'auto' }}>
       {project.bannerImageUrl && (
         <img
           src={project.bannerImageUrl}
@@ -631,18 +653,41 @@ function IntroScreen({
         {project.description}
       </div>
 
+      {/* Параметры грамоты — подделки, время, сложность */}
       <div style={{
-        marginTop: spacing.lg,
-        padding: spacing.md,
-        background: `${colors.fairyGold}10`,
-        border: `1px solid ${colors.fairyGold}40`,
-        borderRadius: '12px',
+        marginTop: spacing.md,
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr 1fr',
+        gap: spacing.sm,
+      }}>
+        <CharterStat
+          label="Подделок"
+          value={`${forgeryCount} из 24`}
+          valueColor={forgeryColor(forgeryCount)}
+        />
+        <CharterStat
+          label="На поиск"
+          value={`${timeLimitSeconds} с`}
+          valueColor={timeLimitSeconds <= 10 ? colors.danger : timeLimitSeconds <= 15 ? colors.warning : colors.textPrimary}
+        />
+        <CharterStat
+          label="Отличия"
+          value={difficulty === 'EASY' ? 'явные' : difficulty === 'MEDIUM' ? 'средние' : 'тонкие'}
+          valueColor={difficulty === 'HARD' ? colors.warning : colors.textPrimary}
+        />
+      </div>
+
+      <div style={{
+        marginTop: spacing.sm,
+        padding: `${spacing.sm} ${spacing.md}`,
+        background: `${forgeryColor(forgeryCount)}10`,
+        border: `1px solid ${forgeryColor(forgeryCount)}40`,
+        borderRadius: '10px',
         color: colors.textSecondary,
-        fontSize: '12px',
+        fontSize: '11px',
         lineHeight: 1.5,
       }}>
-        <div style={{ color: colors.fairyGold, fontWeight: 700, marginBottom: '4px' }}>Как проверить грамоту</div>
-        Запомни эталонный купеческий знак — его покажут на пару мгновений. Потом на свитке — 24 печати. Найди подделки, тапни по каждой. Подделки могут отличаться любой мелочью: формой, цветом, поворотом, центральным знаком, числом колец или точек.
+        {DIFF_MUTATION_HINT[difficulty] ?? DIFF_MUTATION_HINT.EASY} · запомни эталон и ищи не такие же
       </div>
 
       <button onClick={onStart} style={{ ...primaryBtnStyle, marginTop: spacing.lg }}>
@@ -655,6 +700,21 @@ function IntroScreen({
           10 Telegram Stars · личная беседа с дельцом
         </div>
       </button>
+    </div>
+  )
+}
+
+function CharterStat({ label, value, valueColor }: { label: string; value: string; valueColor: string }) {
+  return (
+    <div style={{
+      padding: `${spacing.sm} ${spacing.md}`,
+      background: 'rgba(42, 25, 96, 0.4)',
+      border: `1px solid ${colors.cardBorder}`,
+      borderRadius: '10px',
+      textAlign: 'center',
+    }}>
+      <div style={{ color: valueColor, fontWeight: 700, fontSize: '15px' }}>{value}</div>
+      <div style={{ color: colors.textMuted, fontSize: '10px', marginTop: '2px' }}>{label}</div>
     </div>
   )
 }
