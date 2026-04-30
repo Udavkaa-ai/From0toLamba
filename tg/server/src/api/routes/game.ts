@@ -631,15 +631,11 @@ export async function gameRoutes(app: FastifyInstance) {
     // Delete all user's projects (cascades to AmaSession, AmaMessage, DailyUpdate, PostMortem)
     await prisma.project.deleteMany({ where: { userId: user.id } })
     await prisma.transaction.deleteMany({ where: { userId: user.id } })
-    // Снимаем реферальную привязку — иначе тестер после reset не сможет
-    // повторно принять бонус по новой ссылке-приглашению.
+    // referrerId и referralBonusGranted намеренно НЕ сбрасываем:
+    // бонус выдаётся ровно один раз в жизни аккаунта, независимо от сбросов.
     await prisma.user.update({
       where: { id: user.id },
-      data: {
-        referrerId: null,
-        referralBonusGranted: false,
-        pendingReferralParam: null,
-      },
+      data: { pendingReferralParam: null },
     })
     // Reset game state (keep preferredModel)
     const preferredModel = user.gameState?.preferredModel ?? 'deepseek/deepseek-v4-flash'
