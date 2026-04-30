@@ -107,8 +107,8 @@ export async function gameRoutes(app: FastifyInstance) {
         select: { forgedIndices: true, charterSelectedIndices: true },
       }),
       countReferrals(user.id),
-      // С каким количеством дельцов вообще начал беседу (один делец = одна сессия по projectId)
-      prisma.amaSession.count({ where: { userId: user.id } }),
+      // Беседы, где игрок реально написал хотя бы одно сообщение
+      prisma.amaSession.count({ where: { userId: user.id, messages: { some: { role: 'user' } } } }),
       // В скольких беседах дошёл до конца (10 вопросов задано)
       prisma.amaSession.count({ where: { userId: user.id, isComplete: true } }),
     ])
