@@ -263,6 +263,7 @@ export function CharterPage() {
             forgeryCount={charter.forgedIndices.length}
             timeLimitSeconds={charter.timeLimitSeconds}
             difficulty={charter.difficulty}
+            showForgeryCount={!gameState?.investorRank || gameState.investorRank === 'NEWBIE'}
             onStart={() => setPhase('reference')}
             onChat={() => navigate(`/ama/${projectId}`)}
           />
@@ -610,12 +611,13 @@ function forgeryColor(n: number): string {
 }
 
 function IntroScreen({
-  project, forgeryCount, timeLimitSeconds, difficulty, onStart, onChat,
+  project, forgeryCount, timeLimitSeconds, difficulty, showForgeryCount, onStart, onChat,
 }: {
   project: any
   forgeryCount: number
   timeLimitSeconds: number
   difficulty: string
+  showForgeryCount: boolean
   onStart: () => void
   onChat: () => void
 }) {
@@ -653,18 +655,25 @@ function IntroScreen({
         {project.description}
       </div>
 
-      {/* Параметры грамоты — подделки, время, сложность */}
+      {/* Параметры грамоты — подделки (только Скомороху), время, сложность */}
       <div style={{
         marginTop: spacing.md,
         display: 'grid',
         gridTemplateColumns: '1fr 1fr 1fr',
         gap: spacing.sm,
       }}>
-        <CharterStat
-          label="Подделок"
-          value={`${forgeryCount} из 24`}
-          valueColor={forgeryColor(forgeryCount)}
-        />
+        {showForgeryCount
+          ? <CharterStat
+              label="Подделок"
+              value={`${forgeryCount} из 24`}
+              valueColor={forgeryColor(forgeryCount)}
+            />
+          : <CharterStat
+              label="Подделок"
+              value="???"
+              valueColor={colors.textMuted}
+            />
+        }
         <CharterStat
           label="На поиск"
           value={`${timeLimitSeconds} с`}
