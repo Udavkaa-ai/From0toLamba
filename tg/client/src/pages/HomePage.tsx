@@ -35,9 +35,9 @@ const MODEL_OPTIONS = [
   },
 ]
 
-// Флаг на уровне модуля — музыка играет только один раз за сессию браузера,
-// не перезапускается при каждом возврате на главную.
+// Модульные синглтоны — сохраняются между навигациями (один экземпляр Audio на сессию).
 let mainThemePlayed = false
+let audioElement: HTMLAudioElement | null = null
 
 export function HomePage() {
   const navigate = useNavigate()
@@ -65,27 +65,37 @@ export function HomePage() {
   const musicVol = () => isMuted() ? 0 : getVolume() * MUSIC_FACTOR
 
   useEffect(() => {
-    if (mainThemePlayed) return  // уже играла в этой сессии — не повторяем
+    if (mainThemePlayed) {
+      // Повторный маунт (навигация туда-обратно) — переподключаем ref к живому элементу
+      audioRef.current = audioElement
+      return () => { audioRef.current = null }
+    }
     mainThemePlayed = true
 
     const audio = new Audio('/main_theme.mp3')
     audio.loop = false
     audio.volume = musicVol()
+    audioElement = audio
     audioRef.current = audio
+
+    // touchHandler нужен чтобы убрать слушатели при размонтировании (иначе
+    // старый Audio-элемент снова запускается при касании уже без ref-управления)
+    let touchHandler: (() => void) | null = null
 
     const tryPlay = () => {
       audio.play().catch(() => {
-        // Браузер заблокировал — ждём первого касания пользователя
-        const onFirstTouch = () => {
+        touchHandler = () => {
+          document.removeEventListener('touchstart', touchHandler!)
+          document.removeEventListener('click', touchHandler!)
+          touchHandler = null
           audio.volume = musicVol()
           audio.play().catch(() => {})
         }
-        document.addEventListener('touchstart', onFirstTouch, { once: true })
-        document.addEventListener('click', onFirstTouch, { once: true })
+        document.addEventListener('touchstart', touchHandler)
+        document.addEventListener('click', touchHandler)
       })
     }
 
-    // Плавное затухание за последние 10 секунд
     const FADE_SEC = 10
     const onTimeUpdate = () => {
       const remaining = audio.duration - audio.currentTime
@@ -99,8 +109,12 @@ export function HomePage() {
     tryPlay()
 
     return () => {
-      // При уходе с главной приостанавливаем, но флаг не сбрасываем
       audio.removeEventListener('timeupdate', onTimeUpdate)
+      if (touchHandler) {
+        document.removeEventListener('touchstart', touchHandler)
+        document.removeEventListener('click', touchHandler)
+        touchHandler = null
+      }
       audio.pause()
       audioRef.current = null
     }

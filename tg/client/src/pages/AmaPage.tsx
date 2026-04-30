@@ -83,8 +83,10 @@ export function AmaPage() {
       try {
         return await api.ama.getSession(projectId!)
       } catch {
-        if (!gameState?.isOnboardingComplete) {
-          // Онбординг: создаём бесплатно
+        // Строгая проверка: gameState?.isOnboardingComplete === false.
+        // Если gameState ещё не загрузился (undefined) — не запускаем беседу бесплатно.
+        if (gameState?.isOnboardingComplete === false) {
+          // Онбординг: первая беседа бесплатная
           await api.ama.start(projectId!)
           return api.ama.getSession(projectId!)
         }
@@ -116,6 +118,8 @@ export function AmaPage() {
         if (status === 'paid') {
           try {
             await api.payments.activateAmaUnlock(projectId)
+            // Генерируем первое приветствие дельца
+            await api.ama.start(projectId)
             await refetchSession()
           } catch { /* ignore */ }
         }
