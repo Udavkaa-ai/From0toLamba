@@ -133,7 +133,7 @@ export function generateReferenceSeal(seed: string): SealParams {
 
 // ─── Мутация ──────────────────────────────────────────────────────────────
 
-type MutTarget =
+export type MutTarget =
   | 'shape'      // схожая форма (шестигранник → восьмигранник)
   | 'rings'      // число концентрических колец (1/2/3)
   | 'emblemSame' // визуально похожий силуэт в том же классе
@@ -145,6 +145,17 @@ const MUT_POOLS: Record<CharterDifficulty, MutTarget[]> = {
   EASY:   ['shape', 'rings', 'size'],
   MEDIUM: ['emblemSame', 'colorHue', 'rings', 'size'],
   HARD:   ['dots', 'colorHue', 'rings'],
+}
+
+// Чем выше чин, тем больше видов мутаций встречается в грамоте.
+// На скоморохе — только форма (просто); на купце добавляются размер и точки;
+// выше — цвет и кольца (тонкие отличия).
+export const RANK_MUT_POOLS: Record<string, MutTarget[]> = {
+  NEWBIE:       ['shape'],
+  AMBASSADOR:   ['shape', 'size', 'dots'],
+  ANALYST:      ['shape', 'size', 'dots', 'colorHue', 'rings', 'emblemSame'],
+  SHARK:        ['shape', 'size', 'dots', 'colorHue', 'rings', 'emblemSame'],
+  LAMBO_SENSEI: ['shape', 'size', 'dots', 'colorHue', 'rings', 'emblemSame'],
 }
 
 /** Визуально схожие формы — переходы между соседними геометриями, без зеркал */
@@ -189,9 +200,10 @@ export function mutateSeal(
   seed: string,
   index: number,
   difficulty: CharterDifficulty,
+  rankPool?: MutTarget[],
 ): SealParams {
   const h = hash(`${seed}:cell${index}:mut`)
-  const pool = MUT_POOLS[difficulty]
+  const pool = rankPool ?? MUT_POOLS[difficulty]
   const target = pool[h % pool.length]
   const out: SealParams = { ...ref }
   const step = (h >>> 4) + 1
@@ -237,9 +249,12 @@ export function sealForCell(
   index: number,
   isForged: boolean,
   difficulty: CharterDifficulty,
+  rank?: string,
 ): SealParams {
   const ref = generateReferenceSeal(refSeed)
-  return isForged ? mutateSeal(ref, refSeed, index, difficulty) : ref
+  if (!isForged) return ref
+  const rankPool = rank ? RANK_MUT_POOLS[rank] : undefined
+  return mutateSeal(ref, refSeed, index, difficulty, rankPool)
 }
 
 // ─── SVG-рендер ────────────────────────────────────────────────────────────

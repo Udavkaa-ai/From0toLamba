@@ -7,13 +7,26 @@ import { api } from '@/api/client'
 import type { CharterDTO, CharterResultDTO, CharterSubmitDTO } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing } from '@/theme'
-import { Seal, generateReferenceSeal, sealForCell } from '@/components/Seal'
+import { Seal, generateReferenceSeal, sealForCell, mutateSeal, RANK_MUT_POOLS } from '@/components/Seal'
+import type { MutTarget } from '@/components/Seal'
 import { CoinIcon } from '@/components/icons'
 import { useTelegramBackHandler } from '@/hooks/useTelegramBackButton'
 import { playSound } from '@/sounds'
 
 const tg = (window as any).Telegram?.WebApp
 const haptic = tg?.HapticFeedback
+
+// Эталон и примеры мутаций для обучалки — вычисляются один раз на весь модуль
+const TUTORIAL_SEED = 'tutorial-ref'
+const TUTORIAL_REF = generateReferenceSeal(TUTORIAL_SEED)
+const TUTORIAL_EXAMPLES: Record<MutTarget, ReturnType<typeof generateReferenceSeal>> = {
+  shape:      mutateSeal(TUTORIAL_REF, TUTORIAL_SEED, 0, 'EASY', ['shape']),
+  size:       mutateSeal(TUTORIAL_REF, TUTORIAL_SEED, 1, 'EASY', ['size']),
+  dots:       mutateSeal(TUTORIAL_REF, TUTORIAL_SEED, 2, 'EASY', ['dots']),
+  colorHue:   mutateSeal(TUTORIAL_REF, TUTORIAL_SEED, 3, 'EASY', ['colorHue']),
+  rings:      mutateSeal(TUTORIAL_REF, TUTORIAL_SEED, 4, 'EASY', ['rings']),
+  emblemSame: mutateSeal(TUTORIAL_REF, TUTORIAL_SEED, 5, 'EASY', ['emblemSame']),
+}
 
 type Phase = 'intro' | 'reference' | 'scan' | 'result'
 
@@ -33,7 +46,16 @@ export function CharterPage() {
   const [showInvest, setShowInvest] = useState(false)
   const [onboardingBonus, setOnboardingBonus] = useState<number | null>(null)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
+  const [showTutorial, setShowTutorial] = useState(false)
   const onboardingTriggeredRef = useRef(false)
+
+  // Показываем обучалку один раз при первом посещении
+  useEffect(() => {
+    if (!localStorage.getItem('charter_tutorial_seen')) {
+      setShowTutorial(true)
+      localStorage.setItem('charter_tutorial_seen', '1')
+    }
+  }, [])
 
   // До сабмита любой выход приравнивается к пропуску дела — иначе
   // игрок смог бы выйти, заглянуть в эталон ещё раз, снова зайти и т.д.
@@ -220,7 +242,18 @@ export function CharterPage() {
               {phaseCaption(phase, charter, scanCountdown)}
             </div>
           </div>
-          <div style={{ width: '36px' }} />
+          <button
+            onClick={() => setShowTutorial(true)}
+            style={{
+              width: '36px', height: '36px',
+              background: `${colors.fairyGold}15`,
+              border: `1px solid ${colors.fairyGold}40`,
+              borderRadius: '10px',
+              color: colors.fairyGold,
+              fontSize: '16px', fontWeight: 700,
+              cursor: 'pointer', padding: 0,
+            }}
+          >?</button>
         </div>
 
         {/* Тело — зависит от фазы */}
@@ -242,6 +275,7 @@ export function CharterPage() {
             selected={selected}
             result={phase === 'result' ? result : null}
             onToggle={toggleCell}
+            rank={gameState?.rank ?? 'NEWBIE'}
           />
         )}
 
@@ -310,7 +344,177 @@ export function CharterPage() {
           />
         )}
       </AnimatePresence>
+
+      <AnimatePresence>
+        {showTutorial && (
+          <TutorialSheet
+            rank={gameState?.rank ?? 'NEWBIE'}
+            onClose={() => setShowTutorial(false)}
+          />
+        )}
+      </AnimatePresence>
     </ScreenBackground>
+  )
+}
+
+// ── Обучалка ──────────────────────────────────────────────────────────────
+
+const MUT_LABELS: Record<MutTarget, string> = {
+  shape:      'Форма изменена',
+  size:       'Размер изменён (крупнее или мельче)',
+  dots:       'Количество точек по краю',
+  colorHue:   'Тон цвета сдвинут',
+  rings:      'Число внутренних колец',
+  emblemSame: 'Знак заменён похожим',
+}
+
+const RANK_NEXT_HINT: Record<string, string | null> = {
+  NEWBIE:       'На чине Купца добавятся: размер и точки по краю',
+  AMBASSADOR:   'На чине Мудреца добавятся: тон цвета и число колец',
+  ANALYST:      null,
+  SHARK:        null,
+  LAMBO_SENSEI: null,
+}
+
+function TutorialSheet({ rank, onClose }: { rank: string; onClose: () => void }) {
+  const pool = RANK_MUT_POOLS[rank] ?? RANK_MUT_POOLS.NEWBIE
+  const nextHint = RANK_NEXT_HINT[rank] ?? null
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 310,
+        background: 'rgba(0,0,0,0.75)',
+        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+      }}
+    >
+      <motion.div
+        initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 30, stiffness: 280 }}
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: '100%', maxWidth: '500px',
+          background: colors.nightBlue,
+          borderRadius: '20px 20px 0 0',
+          border: `1px solid ${colors.cardBorder}`,
+          maxHeight: '88dvh',
+          display: 'flex', flexDirection: 'column',
+        }}
+      >
+        {/* Шапка */}
+        <div style={{ padding: `${spacing.md} ${spacing.xl} ${spacing.sm}`, textAlign: 'center', flexShrink: 0 }}>
+          <div style={{
+            width: '40px', height: '4px', borderRadius: '2px',
+            background: `${colors.fairyGold}50`, margin: '0 auto 12px',
+          }} />
+          <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '17px' }}>
+            Как читать грамоту
+          </div>
+          <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
+            В грамоте 24 печати. Большинство — честные копии. Найди подделки.
+          </div>
+        </div>
+
+        {/* Прокручиваемое тело */}
+        <div style={{ overflowY: 'auto', flex: 1, padding: `0 ${spacing.xl}` }}>
+
+          {/* Эталон */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: spacing.md,
+            marginBottom: spacing.lg,
+            padding: spacing.md,
+            background: `${colors.fairyGold}12`,
+            border: `1px solid ${colors.fairyGold}40`,
+            borderRadius: '12px',
+          }}>
+            <Seal params={TUTORIAL_REF} size={60} />
+            <div>
+              <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '13px' }}>
+                Эталонный знак
+              </div>
+              <div style={{ color: colors.textSecondary, fontSize: '12px', lineHeight: 1.5 }}>
+                Его покажут на 3 секунды. Запомни форму, цвет, кольца и точки.
+              </div>
+            </div>
+          </div>
+
+          {/* Виды подделок на текущем чине */}
+          <div style={{ color: colors.textSecondary, fontSize: '12px', marginBottom: spacing.sm }}>
+            На твоём чине подделки отличаются:
+          </div>
+
+          {(Object.entries(MUT_LABELS) as [MutTarget, string][])
+            .filter(([target]) => pool.includes(target))
+            .map(([target, label]) => (
+              <div
+                key={target}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: spacing.sm,
+                  marginBottom: '8px',
+                  padding: `${spacing.sm} ${spacing.md}`,
+                  background: 'rgba(42,25,96,0.35)',
+                  borderRadius: '10px',
+                }}
+              >
+                <Seal params={TUTORIAL_REF} size={44} />
+                <div style={{ color: colors.textMuted, fontSize: '18px', lineHeight: 1 }}>→</div>
+                <Seal params={TUTORIAL_EXAMPLES[target]} size={44} />
+                <div style={{ color: colors.textSecondary, fontSize: '12px', flex: 1, lineHeight: 1.4 }}>
+                  {label}
+                </div>
+              </div>
+            ))
+          }
+
+          {/* Подсказка о следующем чине */}
+          {nextHint && (
+            <div style={{
+              marginTop: spacing.sm,
+              padding: spacing.sm,
+              color: colors.textMuted, fontSize: '11px',
+              fontStyle: 'italic',
+              textAlign: 'center',
+            }}>
+              📈 {nextHint}
+            </div>
+          )}
+
+          {/* Формула чуйки */}
+          <div style={{
+            marginTop: spacing.lg,
+            padding: spacing.md,
+            background: 'rgba(42,25,96,0.35)',
+            border: `1px solid ${colors.cardBorder}`,
+            borderRadius: '12px',
+          }}>
+            <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '13px', marginBottom: spacing.sm }}>
+              Как считается чуйка
+            </div>
+            <div style={{ fontSize: '12px', color: colors.textSecondary, lineHeight: 1.8 }}>
+              <div><span style={{ color: colors.success }}>+1</span> за каждую найденную подделку</div>
+              <div><span style={{ color: colors.danger }}>−1</span> за каждую ошибку (тапнул не ту)</div>
+              <div><span style={{ color: colors.warning }}>−2</span> за каждую пропущенную</div>
+              <div><span style={{ color: colors.fairyGold }}>+2</span> бонус, если грамота чистая и ты ничего не нажал</div>
+            </div>
+          </div>
+
+          <div style={{ height: spacing.lg }} />
+        </div>
+
+        {/* Кнопка */}
+        <div style={{
+          padding: `${spacing.md} ${spacing.xl}`,
+          paddingBottom: `calc(${spacing.md} + env(safe-area-inset-bottom))`,
+          flexShrink: 0,
+        }}>
+          <button onClick={onClose} style={primaryBtnStyle}>
+            Понятно, начать!
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
   )
 }
 
@@ -487,12 +691,13 @@ function ReferenceScreen({ seed, countdown }: { seed: string; countdown: number 
 }
 
 function ScanGrid({
-  charter, selected, result, onToggle,
+  charter, selected, result, onToggle, rank,
 }: {
   charter: CharterDTO
   selected: Set<number>
   result: CharterResultDTO | null
   onToggle: (i: number) => void
+  rank: string
 }) {
   const forgedSet = useMemo(() => new Set(charter.forgedIndices), [charter.forgedIndices])
   const tpSet = useMemo(() => new Set(result?.truePositives ?? []), [result])
@@ -514,7 +719,7 @@ function ScanGrid({
       }}>
         {Array.from({ length: charter.gridSize }, (_, i) => {
           const isForged = forgedSet.has(i)
-          const params = sealForCell(charter.gridSeed, i, isForged, charter.difficulty)
+          const params = sealForCell(charter.gridSeed, i, isForged, charter.difficulty, rank)
           const ring: 'tp' | 'fp' | 'fn' | null = result
             ? tpSet.has(i) ? 'tp' : fpSet.has(i) ? 'fp' : fnSet.has(i) ? 'fn' : null
             : null
