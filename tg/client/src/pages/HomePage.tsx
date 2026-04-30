@@ -634,7 +634,7 @@ export function HomePage() {
               fontFamily: 'inherit',
             }}
           >
-            {new Date() >= new Date('2025-05-01T00:00:00+03:00')
+            {new Date() >= TOURNAMENT_START
               ? '🏆 Майская Ярмарка — турнир идёт!'
               : '🏆 Бета · с 1 мая — конкурс с призами'}
           </button>
@@ -1595,7 +1595,8 @@ function ProjectNewsCardContent({ project }: { project: ProjectDTO }) {
   )
 }
 
-const TOURNAMENT_START = new Date('2025-05-01T00:00:00+03:00')
+// May 1 2025 00:00 MSK = April 30 2025 21:00 UTC
+const TOURNAMENT_START = new Date(Date.UTC(2025, 3, 30, 21, 0, 0))
 
 const PRE_RESET_CONTENT = {
   title: '📢 Перед стартом турнира',
