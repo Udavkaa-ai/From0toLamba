@@ -214,10 +214,12 @@ export function HomePage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['gameState'] }),
   })
 
-  // Первый вход — показываем вводный тур один раз. После этого
-  // isOnboardingComplete=true и автозапуска больше не будет.
+  // Показываем тур при первом входе (новый игрок) или при обновлении до v3.0 (старый игрок).
+  // Ключ 'onboarding_v3_seen' сбрасывает флаг для всех при мажорном обновлении.
   useEffect(() => {
-    if (gameState && !gameState.isOnboardingComplete && !showTutorial) {
+    if (!gameState) return
+    const seenV3 = !!localStorage.getItem('onboarding_v3_seen')
+    if ((!gameState.isOnboardingComplete || !seenV3) && !showTutorial) {
       setShowTutorial(true)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -294,6 +296,7 @@ export function HomePage() {
           <OnboardingTutorial
             onClose={() => {
               setShowTutorial(false)
+              localStorage.setItem('onboarding_v3_seen', '1')
               if (!gameState.isOnboardingComplete) completeOnboardingMutation.mutate()
             }}
           />
