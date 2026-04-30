@@ -275,7 +275,7 @@ export function CharterPage() {
             selected={selected}
             result={phase === 'result' ? result : null}
             onToggle={toggleCell}
-            rank={gameState?.rank ?? 'NEWBIE'}
+            rank={gameState?.investorRank ?? 'NEWBIE'}
           />
         )}
 
@@ -348,7 +348,7 @@ export function CharterPage() {
       <AnimatePresence>
         {showTutorial && (
           <TutorialSheet
-            rank={gameState?.rank ?? 'NEWBIE'}
+            rank={gameState?.investorRank ?? 'NEWBIE'}
             onClose={() => setShowTutorial(false)}
           />
         )}
