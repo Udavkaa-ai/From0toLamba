@@ -52,6 +52,57 @@ export function HomePage() {
   const [soundMuted, setSoundMuted] = useState(isMuted)
   const [soundVolume, setSoundVolume] = useState(getVolume)
 
+  // ─── Фоновая музыка главного экрана ───────────────────────────────────────
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  useEffect(() => {
+    const audio = new Audio('/main_theme.mp3')
+    audio.loop = false
+    audio.volume = isMuted() ? 0 : getVolume() * 0.4  // тише SFX
+    audioRef.current = audio
+
+    const startPlayback = () => {
+      audio.play().catch(() => {
+        // Автовоспроизведение заблокировано — ждём первого касания
+        const onTouch = () => {
+          audio.play().catch(() => {})
+          document.removeEventListener('touchstart', onTouch)
+          document.removeEventListener('click', onTouch)
+        }
+        document.addEventListener('touchstart', onTouch, { once: true })
+        document.addEventListener('click', onTouch, { once: true })
+      })
+    }
+
+    // Затухание за 10 секунд до конца
+    const FADE_DURATION = 10
+    const onTimeUpdate = () => {
+      const remaining = audio.duration - audio.currentTime
+      if (!isFinite(remaining)) return
+      if (remaining <= FADE_DURATION) {
+        const targetVol = isMuted() ? 0 : getVolume() * 0.4
+        audio.volume = Math.max(0, targetVol * (remaining / FADE_DURATION))
+      }
+    }
+
+    audio.addEventListener('timeupdate', onTimeUpdate)
+    startPlayback()
+
+    return () => {
+      audio.removeEventListener('timeupdate', onTimeUpdate)
+      audio.pause()
+      audio.src = ''
+      audioRef.current = null
+    }
+  }, [])
+
+  // Синхронизируем громкость трека с ползунком и mute
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+    audio.volume = soundMuted ? 0 : soundVolume * 0.4
+  }, [soundMuted, soundVolume])
+
   useEffect(() => {
     if (gameState?.pendingRankUp) playSound('rankup')
   }, [gameState?.pendingRankUp])
