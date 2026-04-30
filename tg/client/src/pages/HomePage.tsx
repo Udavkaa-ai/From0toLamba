@@ -58,7 +58,9 @@ export function HomePage() {
 
   // ─── Фоновая музыка — только один раз за сессию ────────────────────────────
   const audioRef = useRef<HTMLAudioElement | null>(null)
-  const MUSIC_VOL = 0.2
+  // Множитель: при ползунке 0.5 (по умолчанию) музыка на 20% (0.5 × 0.4 = 0.2)
+  const MUSIC_FACTOR = 0.4
+  const musicVol = () => isMuted() ? 0 : getVolume() * MUSIC_FACTOR
 
   useEffect(() => {
     if (mainThemePlayed) return  // уже играла в этой сессии — не повторяем
@@ -66,13 +68,14 @@ export function HomePage() {
 
     const audio = new Audio('/main_theme.mp3')
     audio.loop = false
-    audio.volume = isMuted() ? 0 : MUSIC_VOL
+    audio.volume = musicVol()
     audioRef.current = audio
 
     const tryPlay = () => {
       audio.play().catch(() => {
         // Браузер заблокировал — ждём первого касания пользователя
         const onFirstTouch = () => {
+          audio.volume = musicVol()
           audio.play().catch(() => {})
         }
         document.addEventListener('touchstart', onFirstTouch, { once: true })
@@ -86,7 +89,7 @@ export function HomePage() {
       const remaining = audio.duration - audio.currentTime
       if (!isFinite(remaining)) return
       if (remaining <= FADE_SEC) {
-        audio.volume = isMuted() ? 0 : Math.max(0, MUSIC_VOL * (remaining / FADE_SEC))
+        audio.volume = Math.max(0, musicVol() * (remaining / FADE_SEC))
       }
     }
 
@@ -101,12 +104,12 @@ export function HomePage() {
     }
   }, [])
 
-  // Реагируем на mute — громкость фиксирована 20%, не связана с ползунком SFX
+  // Реагируем на изменения громкости и mute
   useEffect(() => {
     const audio = audioRef.current
     if (!audio) return
-    audio.volume = soundMuted ? 0 : MUSIC_VOL
-  }, [soundMuted])
+    audio.volume = soundMuted ? 0 : soundVolume * MUSIC_FACTOR
+  }, [soundMuted, soundVolume])
 
   useEffect(() => {
     if (gameState?.pendingRankUp) playSound('rankup')
