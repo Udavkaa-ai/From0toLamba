@@ -10,6 +10,17 @@ import {
   MAFIA_OFFER_DAYS_BEFORE, MAFIA_OFFER_CHANCE, MAFIA_FORCED_CLOSURE_RETURN_PERCENT,
 } from './mafiaOffers'
 
+/** Правильный % прибыли с учётом выводов: (выведено + возврат − вложено) / вложено */
+async function computeProfitPercent(projectId: string, investedAmount: number, returned: number): Promise<number> {
+  if (investedAmount <= 0) return 0
+  const agg = await prisma.transaction.aggregate({
+    where: { projectId, type: 'WITHDRAWN' },
+    _sum: { amount: true },
+  })
+  const totalWithdrawn = agg._sum.amount ?? 0
+  return ((returned + totalWithdrawn - investedAmount) / investedAmount) * 100
+}
+
 const HANDOVER_REASONS_SURVIVOR = [
   'Дело выкупил племянник воеводы — прибыль выплачена 📜',
   'Хозяин уступил дело купеческой артели — расчёт честный',
@@ -155,9 +166,7 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
       returnedDelta += returned
 
       // Генерируем PostMortem
-      const profitPercent = project.investedAmountRubles > 0
-        ? ((returned - project.investedAmountRubles) / project.investedAmountRubles) * 100
-        : 0
+      const profitPercent = await computeProfitPercent(project.id, project.investedAmountRubles, returned)
 
       const amaSession = await prisma.amaSession.findUnique({ where: { projectId: project.id } })
 
@@ -300,9 +309,7 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
       balanceDelta += returned
       returnedDelta += returned
 
-      const profitPct = project.investedAmountRubles > 0
-        ? ((returned - project.investedAmountRubles) / project.investedAmountRubles) * 100
-        : 0
+      const profitPct = await computeProfitPercent(project.id, project.investedAmountRubles, returned)
       const amaSessionAbandoned = await prisma.amaSession.findUnique({ where: { projectId: project.id } })
       generatePostMortem({
         projectId: project.id, userId,

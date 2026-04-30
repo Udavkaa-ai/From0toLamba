@@ -156,8 +156,13 @@ export async function exitProject(userId: number, projectId: string): Promise<nu
   })
 
   const amaSession = await prisma.amaSession.findUnique({ where: { projectId } })
+  const agg = await prisma.transaction.aggregate({
+    where: { projectId, type: 'WITHDRAWN' },
+    _sum: { amount: true },
+  })
+  const totalWithdrawn = agg._sum.amount ?? 0
   const profitPercent = project.investedAmountRubles > 0
-    ? ((received - project.investedAmountRubles) / project.investedAmountRubles) * 100
+    ? ((received + totalWithdrawn - project.investedAmountRubles) / project.investedAmountRubles) * 100
     : 0
 
   generatePostMortem({
