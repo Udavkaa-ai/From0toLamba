@@ -634,9 +634,7 @@ export function HomePage() {
               fontFamily: 'inherit',
             }}
           >
-            {new Date() >= TOURNAMENT_START
-              ? '🏆 Майская Ярмарка — турнир идёт!'
-              : '🏆 Бета · с 1 мая — конкурс с призами'}
+            {IS_TOURNAMENT_ACTIVE ? '🏆 Майская Ярмарка — турнир идёт!' : '📢 Скоро перезапуск — читай'}
           </button>
           {(() => {
             const WEEK_DAYS = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
@@ -1595,14 +1593,14 @@ function ProjectNewsCardContent({ project }: { project: ProjectDTO }) {
   )
 }
 
-// May 1 2025 00:00 MSK = April 30 2025 21:00 UTC
-const TOURNAMENT_START = new Date(Date.UTC(2025, 3, 30, 21, 0, 0))
+// Переключатель вручную: true = показывать правила турнира, false = объявление о перезапуске
+const IS_TOURNAMENT_ACTIVE = false
 
 const PRE_RESET_CONTENT = {
-  title: '📢 Перед стартом турнира',
+  title: '📢 Перед стартом турнира — важное объявление!',
   sections: [
     {
-      heading: 'Что произойдёт 1 мая',
+      heading: 'Что произойдёт',
       body: 'Прогресс всех игроков обнуляется — злато, чины, дни, подвиги, грамоты. Все начинают с чистого листа. Это нужно, чтобы турнир был честным.',
     },
     {
@@ -1611,11 +1609,11 @@ const PRE_RESET_CONTENT = {
     },
     {
       heading: 'Что изменится',
-      body: '— Купеческие печати обновятся — старые паттерны не сработают.\n— Беседа с дельцом становится платной (10 Stars).\n— Пропуск ожидания между неделями — 10 Stars. В бете это было бесплатно.',
+      body: '— Купеческие печати обновятся — старые паттерны не сработают, придётся смотреть внимательнее.\n— Открывается платная беседа с дельцом — можно разузнать у хозяина правду о его деле перед вложением (10 Telegram Stars).\n— Пропуск двухчасового ожидания между неделями становится платным (10 Telegram Stars). В бете это было бесплатно — теперь по-честному. Для тех, кто метит в «Старожилы ярмарки», это важно учитывать.',
     },
     {
       heading: null,
-      body: 'Спасибо всем, кто тестировал — вы помогли сделать игру лучше. Вперёд — за грош, за чин, за сказочный турнир! 🏆',
+      body: 'Спасибо всем, кто тестировал — вы помогли сделать игру лучше.\n\nВперёд — за грош, за чин, за сказочный турнир! 🏆',
     },
   ],
 }
@@ -1639,8 +1637,7 @@ const TOURNAMENT_CONTENT = {
 }
 
 function BannerAnnouncementModal({ onClose }: { onClose: () => void }) {
-  const isTournament = new Date() >= TOURNAMENT_START
-  const content = isTournament ? TOURNAMENT_CONTENT : PRE_RESET_CONTENT
+  const content = IS_TOURNAMENT_ACTIVE ? TOURNAMENT_CONTENT : PRE_RESET_CONTENT
 
   return (
     <motion.div
