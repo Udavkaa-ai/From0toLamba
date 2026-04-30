@@ -93,6 +93,7 @@ export function toPublicDTO(project: Project): ProjectPublicDTO {
     roadmap: project.roadmap,
     investedAmountRubles: project.investedAmountRubles,
     currentValueRubles: project.currentValueRubles,
+    totalWithdrawnRubles: project.totalWithdrawnRubles ?? 0,
     daysSinceJoined: project.daysSinceJoined,
     isWithdrawalLocked: project.isWithdrawalLocked,
     closureReason: project.closureReason,

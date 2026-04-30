@@ -271,7 +271,7 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
   const recentUpdates = (updates ?? []).slice(0, 3)
 
   const profit = project.investedAmountRubles > 0
-    ? ((project.currentValueRubles - project.investedAmountRubles) / project.investedAmountRubles * 100)
+    ? ((project.currentValueRubles + (project.totalWithdrawnRubles ?? 0) - project.investedAmountRubles) / project.investedAmountRubles * 100)
     : 0
 
   const portfolioHaptic = (window as any).Telegram?.WebApp?.HapticFeedback

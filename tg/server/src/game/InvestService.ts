@@ -104,7 +104,10 @@ export async function partialWithdraw(userId: number, projectId: string, amount:
   await prisma.$transaction([
     prisma.project.update({
       where: { id: projectId },
-      data: { currentValueRubles: { decrement: amount } },
+      data: {
+        currentValueRubles: { decrement: amount },
+        totalWithdrawnRubles: { increment: received },
+      },
     }),
     prisma.gameState.update({
       where: { userId },
@@ -156,11 +159,8 @@ export async function exitProject(userId: number, projectId: string): Promise<nu
   })
 
   const amaSession = await prisma.amaSession.findUnique({ where: { projectId } })
-  const agg = await prisma.transaction.aggregate({
-    where: { projectId, type: 'WITHDRAWN' },
-    _sum: { amount: true },
-  })
-  const totalWithdrawn = agg._sum.amount ?? 0
+  // totalWithdrawnRubles хранится на проекте — не нужен отдельный агрегат
+  const totalWithdrawn = project.totalWithdrawnRubles
   const profitPercent = project.investedAmountRubles > 0
     ? ((received + totalWithdrawn - project.investedAmountRubles) / project.investedAmountRubles) * 100
     : 0

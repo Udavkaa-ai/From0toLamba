@@ -121,6 +121,7 @@ model Project {
   // СОСТОЯНИЕ
   investedAmountRubles Float     @default(0)
   currentValueRubles   Float     @default(0)
+  totalWithdrawnRubles Float     @default(0)  // сумма всех выводов (после комиссии) — для корректного profit%
   daysSinceJoined      Int       @default(0)
   isWithdrawalLocked   Boolean   @default(false)
   // «Предложение от которого нельзя отказаться» — за 2-3 дня до автозакрытия

@@ -48,6 +48,7 @@ export interface ProjectDTO {
   roadmap: string[]
   investedAmountRubles: number
   currentValueRubles: number
+  totalWithdrawnRubles: number
   daysSinceJoined: number
   isWithdrawalLocked: boolean
   closureReason: string | null
