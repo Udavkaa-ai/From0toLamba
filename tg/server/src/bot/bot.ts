@@ -1,5 +1,6 @@
 import { Bot, webhookCallback, InlineKeyboard } from 'grammy'
 import { prisma } from '../db/prisma'
+import { generateOnboardingProject } from '../game/GenerateProjectService'
 
 const STARS_TIMER_SKIP = 10
 const STARS_AMA_UNLOCK = 10
@@ -136,6 +137,80 @@ function setupHandlers(bot: Bot) {
       console.log(`[Payment] logged userId=${user.id} feature=${payload.startsWith('ts:') ? 'timer_skip' : 'ama_unlock'}`)
     } catch (err) {
       console.error('[Payment] Error processing successful_payment:', err)
+    }
+  })
+
+  const ADMIN_TELEGRAM_ID = 424553547
+  const RESET_MARKER_TELEGRAM_ID = 'system:reset_v1_may2025'
+
+  bot.command('resetall', async (ctx) => {
+    if (ctx.from?.id !== ADMIN_TELEGRAM_ID) return
+
+    const marker = await prisma.user.findFirst({ where: { telegramId: RESET_MARKER_TELEGRAM_ID } })
+    if (marker) {
+      await ctx.reply('⚠️ Сброс уже был выполнён ранее. Повторный запуск заблокирован.')
+      return
+    }
+
+    await ctx.reply('🔄 Запускаю глобальный сброс...')
+
+    try {
+      const users = await prisma.user.findMany({ include: { gameState: true } })
+      let count = 0
+
+      for (const user of users) {
+        if (!user.gameState) continue
+        if (user.telegramId.startsWith('system:')) continue
+
+        const preferredModel = user.gameState.preferredModel ?? 'deepseek/deepseek-v4-flash'
+
+        await prisma.project.deleteMany({ where: { userId: user.id } })
+        await prisma.transaction.deleteMany({ where: { userId: user.id } })
+
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { pendingReferralParam: null, referralBonusGranted: false },
+        })
+
+        await prisma.gameState.update({
+          where: { userId: user.id },
+          data: {
+            balance: 0,
+            currentDay: 0,
+            investorRank: 'NEWBIE',
+            intuitionScore: 0,
+            dayStreak: 0,
+            isOnboardingComplete: false,
+            totalInvested: 0,
+            totalReturned: 0,
+            balanceHistory: [],
+            investedHistory: [],
+            pendingRankUp: null,
+            lastAdvancedAt: null,
+            nextDayNotified: true,
+            consecutiveAdvances: 0,
+            weekStartWealth: 0,
+            weekStartAt: null,
+            preferredModel,
+          },
+        })
+
+        generateOnboardingProject(user.id, preferredModel).catch(e =>
+          console.error(`[resetall] userId=${user.id} onboarding error:`, e),
+        )
+
+        count++
+      }
+
+      // Маркер защищает от повторного запуска
+      await prisma.user.create({
+        data: { telegramId: RESET_MARKER_TELEGRAM_ID, firstName: 'system' },
+      })
+
+      await ctx.reply(`✅ Сброс завершён. Обработано игроков: ${count}.`)
+    } catch (err) {
+      console.error('[resetall] Error:', err)
+      await ctx.reply('❌ Ошибка при сбросе. Проверьте логи.')
     }
   })
 

@@ -108,7 +108,13 @@ export function HomePage() {
   useEffect(() => {
     const audio = audioRef.current
     if (!audio) return
-    audio.volume = soundMuted ? 0 : soundVolume * MUSIC_FACTOR
+    if (soundMuted) {
+      audio.volume = 0
+      audio.pause()
+    } else {
+      audio.volume = soundVolume * MUSIC_FACTOR
+      if (audio.paused && !audio.ended) audio.play().catch(() => {})
+    }
   }, [soundMuted, soundVolume])
 
   useEffect(() => {
