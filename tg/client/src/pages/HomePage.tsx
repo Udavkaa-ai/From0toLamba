@@ -10,7 +10,7 @@ import {
   WhatsNewOverlay, getPendingChangelog, markChangelogSeen, type ChangelogEntry,
 } from '@/components/WhatsNewOverlay'
 import { AchievementUnlockedOverlay } from '@/components/AchievementUnlockedOverlay'
-import { FaqModal } from '@/components/FaqModal'
+import { FaqModal, FaqAnnouncementModal, useFaqAnnouncement } from '@/components/FaqModal'
 import { CountUp } from '@/components/CountUp'
 import { EyeIcon, LockIcon } from '@/components/icons'
 import { api, type ProjectDTO, type DailyUpdateDTO, type ClosureSummaryDTO, type MyReferralEntryDTO } from '@/api/client'
@@ -55,6 +55,7 @@ export function HomePage() {
   const [pendingChangelog, setPendingChangelog] = useState<ChangelogEntry | null>(null)
   const [showBannerModal, setShowBannerModal] = useState(false)
   const [showFaq, setShowFaq] = useState(false)
+  const [showFaqAnnouncement, setShowFaqAnnouncement] = useState(useFaqAnnouncement)
   const [soundMuted, setSoundMuted] = useState(isMuted)
   const [soundVolume, setSoundVolume] = useState(getVolume)
 
@@ -336,6 +337,11 @@ export function HomePage() {
       {!showTutorial && !pendingChangelog && <AchievementUnlockedOverlay />}
       <AnimatePresence>
         {showFaq && <FaqModal onClose={() => setShowFaq(false)} />}
+      </AnimatePresence>
+      <AnimatePresence>
+        {showFaqAnnouncement && !showTutorial && (
+          <FaqAnnouncementModal onClose={() => setShowFaqAnnouncement(false)} />
+        )}
       </AnimatePresence>
 
       {/* Баннер-объявление: до 1 мая — о сбросе, с 1 мая — о турнире */}

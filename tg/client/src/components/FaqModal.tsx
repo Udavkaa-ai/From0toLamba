@@ -425,3 +425,88 @@ export function FaqModal({ onClose }: { onClose: () => void }) {
     </motion.div>
   )
 }
+
+// ─── FaqAnnouncementModal — одноразовый анонс ЧАВО ──────────────────────────
+
+const FAQ_SEEN_KEY = 'faq_v1_seen'
+
+export function useFaqAnnouncement() {
+  if (typeof window === 'undefined') return false
+  return !localStorage.getItem(FAQ_SEEN_KEY)
+}
+
+export function FaqAnnouncementModal({ onClose }: { onClose: () => void }) {
+  const handleClose = () => {
+    localStorage.setItem(FAQ_SEEN_KEY, '1')
+    onClose()
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 350,
+        background: 'rgba(6, 4, 18, 0.92)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '24px',
+      }}
+    >
+      <motion.div
+        initial={{ scale: 0.88, y: 24 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.88, y: 24 }}
+        transition={{ type: 'spring', damping: 26, stiffness: 280 }}
+        style={{
+          width: '100%', maxWidth: '360px',
+          background: `linear-gradient(145deg, ${colors.enchantedPurple}, ${colors.nightBlue})`,
+          border: `1px solid ${colors.fairyGold}50`,
+          borderRadius: '20px',
+          padding: '28px 24px 24px',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.7)',
+          textAlign: 'center',
+        }}
+      >
+        <div style={{ fontSize: '56px', marginBottom: '12px' }}>❓</div>
+
+        <div style={{ color: colors.fairyGold, fontSize: '20px', fontWeight: 800, marginBottom: '12px' }}>
+          Теперь есть ЧАВО
+        </div>
+
+        <div style={{ color: colors.textPrimary, fontSize: '14px', lineHeight: 1.6, marginBottom: '16px' }}>
+          Частые вопросы об игре — правила вывода по типам дел, что такое чуйка, чем заканчиваются проекты и многое другое.
+        </div>
+
+        <div style={{
+          padding: '10px 14px',
+          background: `${colors.fairyGold}12`,
+          border: `1px solid ${colors.fairyGold}35`,
+          borderRadius: '12px',
+          color: colors.textMuted,
+          fontSize: '12px',
+          lineHeight: 1.5,
+          marginBottom: '20px',
+        }}>
+          Открывается через <strong style={{ color: colors.fairyGold }}>⚙️ Настройки → ЧАВО</strong>
+        </div>
+
+        <button
+          onClick={handleClose}
+          style={{
+            width: '100%',
+            padding: '14px',
+            background: colors.fairyGold,
+            border: 'none',
+            borderRadius: '12px',
+            color: colors.nightBlue,
+            fontSize: '15px', fontWeight: 700,
+            cursor: 'pointer',
+          }}
+        >
+          Понял, спасибо!
+        </button>
+      </motion.div>
+    </motion.div>
+  )
+}
