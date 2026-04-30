@@ -8,8 +8,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 «Из грязи в князи» — Telegram Mini App, симулятор купца-инвестора в сказочной Руси. Игрок вкладывает рубли (₽) в «дела» (аналоги крипто-проектов), большинство из которых обман. Ключевая механика — **«Купеческая грамота»**: мини-игра на внимательность (24 SVG-печати, ищем подделки за 15 сек).
 
-- **Активная версия:** `tg/` — v2.9.0. `app/` (Android) — заморожен.
-- **Валюта:** гроши (г) в UI; DB-поля (`currentValueRubles`, `investedAmountRubles` и т.д.) не переименованы — только отображение. Формат: `"%.0f г"`.
+- **Активная версия:** `tg/`. `app/` (Android) — заморожен (`CODEMAP.md` описывает Android-архитектуру, к `tg/` не относится).
+- **Валюта:** гроши (г) в UI; DB-поля (`currentValueRubles`, `investedAmountRubles` и т.д.) не переименованы — только отображение. Всегда `Math.floor(n)`, **не** `.toFixed(0)` — `.toFixed` округляет вверх и вызывает «Недостаточно средств».
 - **Архетип хозяина** (`personaArchetype`) публичный — нужен клиенту для баннера/беседы. Все остальные скрытые поля до PostMortem — через `toPublicDTO()`.
 
 ---
@@ -37,6 +37,8 @@ npm run db:studio    # GUI для БД в браузере
 ```
 
 Нет тестов. Нет линтера. TypeScript проверяется при `npm run build`.
+
+Клиентский alias `@/` → `tg/client/src/` (настроен в `vite.config.js`). Использовать везде вместо относительных путей вглубь.
 
 ---
 
@@ -84,6 +86,35 @@ tg/
 
 ---
 
+## Аутентификация
+
+Каждый HTTP-запрос клиента несёт заголовок `X-Telegram-Init-Data` с `window.Telegram.WebApp.initData`. Сервер проверяет HMAC в `middleware/telegramAuth.ts` (`telegramAuthHook`). Все роуты вешают этот хук как `preHandler`.
+
+Dev-обход: если `NODE_ENV=development` и заголовок равен строке `'dev'`, сервер ищет тестового пользователя по `telegramId='dev'`. Создать его через `prisma db studio` или вручную в БД.
+
+---
+
+## Состояние на клиенте (React Query + Zustand)
+
+`GameStateDTO` живёт в двух местах одновременно:
+- **React Query** — кэш `['gameState']`, единственный запрос в `HomePage.tsx`
+- **Zustand** `gameStore.ts` — `gameState` читают все страницы через `useGameStore()`
+
+**Правило синхронизации:** `setGameState` вызывается **только из `useEffect`** на `freshGameState` (data из useQuery), **никогда внутри `queryFn`**. Вызов внутри `queryFn` создаёт гонку: фоновый рефетч, начатый до инвестиции, завершается позже и затирает оптимистичное обновление.
+
+```typescript
+// ПРАВИЛЬНО (HomePage.tsx)
+const { data: freshGameState } = useQuery({ queryKey: ['gameState'], queryFn: () => api.game.getState() })
+useEffect(() => { if (freshGameState) setGameState(freshGameState) }, [freshGameState])
+
+// НЕПРАВИЛЬНО
+queryFn: async () => { const data = await api.game.getState(); setGameState(data); return data }
+```
+
+**Оптимистичные обновления баланса:** после мутации (invest, addInvestment) вызвать `updateBalance(-amount)` из Zustand, затем `qc.invalidateQueries(['gameState'])`. Не ждать рефетча — баланс обновится мгновенно.
+
+---
+
 ## Доменные типы
 
 ```
@@ -97,6 +128,11 @@ InvestorRank:     NEWBIE → AMBASSADOR → ANALYST → SHARK → LAMBO_SENSEI
 - `POTION_BREW`, `GUILD_SCHEME`: max `Math.floor(currentValueRubles × 0.25)` за раз
 - `CARD_GAME`, `TREASURE_HUNT`: любая сумма, −25% комиссия
 - `HONEST_TRADE`: без ограничений и без комиссии
+
+**Типы транзакций** (поле `type` в таблице `Transaction`):
+`INVEST` · `ADD` · `WITHDRAW` · `EXIT` · `RETURNED` · `REFERRAL_BONUS`
+
+> Комментарии к enum `InvestorRank` в `types.ts` содержат устаревшие пороги из Android-версии. Источник правды — функция `computeRank()` в `rankService.ts`.
 
 ---
 
@@ -183,11 +219,15 @@ PAGE_BG.portfolio           // '/backgrounds/BG_PORTFOLIO.webp'
 
 ## Ключевые правила
 
-- Скрытые поля проекта — только через `toPublicDTO()`, никогда напрямую
+- Скрытые поля проекта — только через `toPublicDTO()`, никогда напрямую. Скрытые поля в схеме: `fate`, `daysUntilCollapse`, `realDailyYieldRubles`, `lieTopics`, `truthTopics`, `npcTruthParams`; в AmaSession: `forgedIndices`
 - `recomputeRank(userId)` вызывать после: сабмита грамоты, выхода из дела, advance-day. **Не** при вложениях/выводах
 - `generatePostMortem` при `exitProject` — асинхронно (`.catch(console.error)`)
 - `tg/server/public/` — в `.gitignore`, не коммитить
 - Тёмная тема. UI на русском. UI-словарь: вложить / купеческий чин / покинуть дело / посул (APY) / летопись / ярмарочный рейтинг
+- Все денежные значения в UI: `Math.floor(n)` — никогда `.toFixed(0)`
+- `claimedAPY` генерируется сервером в `GenerateProjectService.ts` (`computeClaimedAPY()`), а не AI. В промпт не включать и от AI не ждать
+- `referrerId` и `referralBonusGranted` на `User` — **не сбрасывать** при сбросе игры (это связь аккаунта, а не игровая прогрессия). Сбрасывать только `pendingReferralParam: null`
+- `seenTypes` / `seenArchetypes` / `seenFates` в `GameStateDTO` — вычисляются из `PostMortem` на лету в `/api/game` (GET), в БД не хранятся
 
 ---
 
@@ -242,6 +282,12 @@ python compress.py --inplace output_backgrounds/
 - `PAYMENTS_ENABLED=false` → сервер активирует фичу бесплатно (dev-режим)
 - `bot.ts` содержит обязательный хендлер `pre_checkout_query` и логгер `successful_payment`
 - Stars зачисляются на баланс бота; смотреть через BotFather → /mybots → Revenue
+
+---
+
+## Мафиозные предложения (`mafiaOffers.ts`)
+
+За 2–3 дня до автозакрытия прибыльных дел (SURVIVOR/UNICORN) в ленту вставляется специальная весть с CTA «покинь дело сейчас». Если игрок не успевает выйти вручную — автозакрытие возвращает **50%** (`MAFIA_FORCED_CLOSURE_RETURN_PERCENT`). Шанс срабатывания предложения: 60% (`MAFIA_OFFER_CHANCE`).
 
 ---
 
