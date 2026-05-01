@@ -303,6 +303,13 @@ function AchievementDetailModal({
   const lore = achievement.revealTopic
     ? loreFor(achievement.revealTopic.kind, achievement.revealTopic.id)
     : null
+  const loreLang = lore && achievement.revealTopic
+    ? (
+        achievement.revealTopic.kind === 'type' ? t.lore.types[achievement.revealTopic.id] :
+        achievement.revealTopic.kind === 'archetype' ? t.lore.archetypes[achievement.revealTopic.id] :
+        t.lore.fates[achievement.revealTopic.id]
+      ) ?? null
+    : null
   const showLore = achievement.unlocked && lore !== null
 
   return (
@@ -389,12 +396,12 @@ function AchievementDetailModal({
               <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, marginBottom: '4px' }}>
                 <span style={{ fontSize: '22px' }}>{lore.emoji}</span>
                 <div>
-                  <div style={{ color: colors.fairyGold, fontSize: '15px', fontWeight: 700 }}>{lore.name}</div>
-                  <div style={{ color: colors.textMuted, fontSize: '11px' }}>{lore.title}</div>
+                  <div style={{ color: colors.fairyGold, fontSize: '15px', fontWeight: 700 }}>{loreLang?.name ?? lore.name}</div>
+                  <div style={{ color: colors.textMuted, fontSize: '11px' }}>{loreLang?.title ?? lore.title}</div>
                 </div>
               </div>
               <div style={{ color: colors.textSecondary, fontSize: '13px', lineHeight: 1.6, marginTop: spacing.sm }}>
-                {lore.description}
+                {loreLang?.description ?? lore.description}
               </div>
             </div>
 
@@ -408,7 +415,7 @@ function AchievementDetailModal({
                 <div style={{ color: colors.textMuted, fontSize: '11px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   {t.stats.achievementHints}
                 </div>
-                {lore.hints.map((h, i) => (
+                {(loreLang?.hints ?? lore.hints).map((h, i) => (
                   <div key={i} style={{ color: colors.textPrimary, fontSize: '12px', lineHeight: 1.5, marginTop: i === 0 ? 0 : '4px' }}>
                     ✦ {h}
                   </div>

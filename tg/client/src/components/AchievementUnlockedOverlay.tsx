@@ -99,6 +99,13 @@ function UnlockedBanner({
   const lore = achievement.revealTopic
     ? loreFor(achievement.revealTopic.kind, achievement.revealTopic.id)
     : null
+  const loreLang = lore && achievement.revealTopic
+    ? (
+        achievement.revealTopic.kind === 'type' ? t.lore.types[achievement.revealTopic.id] :
+        achievement.revealTopic.kind === 'archetype' ? t.lore.archetypes[achievement.revealTopic.id] :
+        t.lore.fates[achievement.revealTopic.id]
+      ) ?? null
+    : null
 
   return (
     <motion.div
@@ -159,16 +166,16 @@ function UnlockedBanner({
             <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, marginBottom: '6px' }}>
               <span style={{ fontSize: '22px' }}>{lore.emoji}</span>
               <div>
-                <div style={{ color: colors.fairyGold, fontSize: '14px', fontWeight: 700 }}>{lore.name}</div>
-                <div style={{ color: colors.textMuted, fontSize: '11px' }}>{lore.title}</div>
+                <div style={{ color: colors.fairyGold, fontSize: '14px', fontWeight: 700 }}>{loreLang?.name ?? lore.name}</div>
+                <div style={{ color: colors.textMuted, fontSize: '11px' }}>{loreLang?.title ?? lore.title}</div>
               </div>
             </div>
             <div style={{ color: colors.textSecondary, fontSize: '12px', lineHeight: 1.55 }}>
-              {lore.description}
+              {loreLang?.description ?? lore.description}
             </div>
             {lore.hints && lore.hints.length > 0 && (
               <div style={{ marginTop: spacing.sm, paddingTop: spacing.sm, borderTop: `1px solid ${colors.fairyGold}20` }}>
-                {lore.hints.map((h, i) => (
+                {(loreLang?.hints ?? lore.hints).map((h, i) => (
                   <div key={i} style={{ color: colors.textPrimary, fontSize: '11px', lineHeight: 1.5, marginTop: i === 0 ? 0 : '3px' }}>
                     ✦ {h}
                   </div>
