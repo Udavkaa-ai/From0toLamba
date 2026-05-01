@@ -15,6 +15,7 @@ import { CountUp } from '@/components/CountUp'
 import { EyeIcon, LockIcon } from '@/components/icons'
 import { api, type ProjectDTO, type DailyUpdateDTO, type ClosureSummaryDTO, type MyReferralEntryDTO } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
+import { useTourStore, isTourDone } from '@/stores/tourStore'
 import { colors, spacing, typography } from '@/theme'
 import { playSound, isMuted, setMuted, getVolume, setVolume } from '@/sounds'
 
@@ -43,6 +44,7 @@ export function HomePage() {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const { setGameState, gameState } = useGameStore()
+  const { start: startTour } = useTourStore()
   const [showSettings, setShowSettings] = useState(false)
   const [localModel, setLocalModel] = useState<string | null>(null)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
@@ -245,6 +247,15 @@ export function HomePage() {
     if ((!gameState.isOnboardingComplete || !seenV3) && !showTutorial) {
       setShowTutorial(true)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameState?.isOnboardingComplete])
+
+  // Запускаем пошаговый UI-тур после завершения онбординга (один раз)
+  useEffect(() => {
+    if (!gameState?.isOnboardingComplete) return
+    if (isTourDone()) return
+    const timer = setTimeout(() => startTour(), 1200)
+    return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState?.isOnboardingComplete])
 
@@ -647,6 +658,27 @@ export function HomePage() {
                     Частые вопросы — правила, типы дел, чуйка, судьбы
                   </div>
                 </button>
+                <button
+                  onClick={() => { playSound('tap'); setShowSettings(false); startTour() }}
+                  style={{
+                    width: '100%',
+                    marginTop: '8px',
+                    padding: '12px 16px',
+                    background: `${colors.fairyGold}18`,
+                    border: `1px solid ${colors.fairyGold}55`,
+                    borderRadius: '12px',
+                    color: colors.fairyGold,
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                  }}
+                >
+                  🗺️ Тур по интерфейсу
+                  <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '4px', fontWeight: 400 }}>
+                    Пошаговый гид по всем экранам игры
+                  </div>
+                </button>
               </div>
 
               {/* Пригласительная грамота */}
@@ -852,7 +884,7 @@ export function HomePage() {
         </motion.div>
 
         {/* Баланс */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+        <motion.div data-tour="balance" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <FairyCard accent style={{ marginBottom: spacing.lg, textAlign: 'center' }}>
             <div style={{ color: colors.textSecondary, fontSize: '12px', marginBottom: '4px' }}>Свободные гроши</div>
             <div style={{
@@ -911,7 +943,7 @@ export function HomePage() {
 
         {/* Входящие */}
         {gameState.inboxProjects.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+          <motion.div data-tour="inbox-section" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
             <div style={{ color: colors.fairyGold, fontSize: '13px', fontWeight: 600, margin: `${spacing.lg} 0 ${spacing.sm} 4px` }}>
               ✦ Входящие грамоты ({gameState.inboxProjects.length})
             </div>
@@ -1091,7 +1123,7 @@ function NextDayFab({
   const currentDayName = usedConsec > 0 ? WEEK_DAYS[Math.min(usedConsec, maxConsec) - 1] : null
 
   return (
-    <div style={{
+    <div data-tour="next-day-fab" style={{
       position: 'fixed',
       left: '50%',
       transform: 'translateX(-50%)',

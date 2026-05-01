@@ -41,12 +41,13 @@ export function InboxPage() {
         {projects.map((p, i) => (
           <motion.div
             key={p.id}
+            {...(i === 0 ? { 'data-tour': 'first-project' } : {})}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             whileTap={{ scale: 0.97 }}
             transition={{ delay: i * 0.07, duration: 0.1 }}
           >
-            <InboxCard project={p} onClick={() => navigate(`/charter/${p.id}`)} />
+            <InboxCard project={p} onClick={() => navigate(`/charter/${p.id}`)} tourAttr={i === 0} />
           </motion.div>
         ))}
       </div>
@@ -54,7 +55,7 @@ export function InboxPage() {
   )
 }
 
-function InboxCard({ project, onClick }: { project: ProjectDTO; onClick: () => void }) {
+function InboxCard({ project, onClick, tourAttr }: { project: ProjectDTO; onClick: () => void; tourAttr?: boolean }) {
   const typeLabel: Record<string, string> = {
     CARD_GAME: '🃏 Азартная игра',
     TREASURE_HUNT: '🗺️ Поиск клада',
@@ -118,9 +119,45 @@ function InboxCard({ project, onClick }: { project: ProjectDTO; onClick: () => v
         fontSize: '13px',
         textAlign: 'center',
         fontWeight: 600,
-      }}>
+      }}
+        {...(tourAttr ? { 'data-tour': 'charter-btn' } : {})}
+      >
         Изучить грамоту →
       </div>
+
+      {tourAttr && (
+        <div
+          data-tour="invest-btn"
+          style={{
+            marginTop: spacing.sm,
+            padding: `${spacing.sm} ${spacing.md}`,
+            background: 'rgba(255,255,255,0.04)',
+            borderRadius: '8px',
+            color: colors.textMuted,
+            fontSize: '12px',
+            textAlign: 'center',
+          }}
+        >
+          💰 Вложить гроши
+        </div>
+      )}
+
+      {tourAttr && (
+        <div
+          data-tour="ama-btn"
+          style={{
+            marginTop: spacing.sm,
+            padding: `${spacing.sm} ${spacing.md}`,
+            background: 'rgba(255,255,255,0.04)',
+            borderRadius: '8px',
+            color: colors.textMuted,
+            fontSize: '12px',
+            textAlign: 'center',
+          }}
+        >
+          💬 Беседа с дельцом
+        </div>
+      )}
     </FairyCard>
   )
 }

@@ -63,8 +63,12 @@ export function PortfolioPage() {
               Активные дела
             </div>
             {data.active.map((p, i) => (
-              <motion.div key={p.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                <ActiveProjectCard project={p} />
+              <motion.div
+                key={p.id}
+                {...(i === 0 ? { 'data-tour': 'portfolio-project' } : {})}
+                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+              >
+                <ActiveProjectCard project={p} tourFirst={i === 0} />
               </motion.div>
             ))}
           </section>
@@ -251,7 +255,7 @@ function MiniValueChart({ valueHistory, userCountHistory, userCount, invested }:
   )
 }
 
-function ActiveProjectCard({ project }: { project: ProjectDTO }) {
+function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFirst?: boolean }) {
   const qc = useQueryClient()
   const { gameState, updateBalance } = useGameStore()
   const [showWithdraw, setShowWithdraw] = useState(false)
@@ -374,7 +378,7 @@ function ActiveProjectCard({ project }: { project: ProjectDTO }) {
       <OrnamentDivider />
 
       {/* Action buttons */}
-      <div style={{ display: 'flex', gap: spacing.sm, flexWrap: 'wrap' }}>
+      <div data-tour={tourFirst ? 'portfolio-actions' : undefined} style={{ display: 'flex', gap: spacing.sm, flexWrap: 'wrap' }}>
         {!project.isWithdrawalLocked && (
           <motion.button
             whileTap={{ scale: 0.94 }}

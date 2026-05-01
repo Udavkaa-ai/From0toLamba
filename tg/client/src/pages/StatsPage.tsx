@@ -224,7 +224,7 @@ function AchievementsSection() {
   const categories = [...new Set(items.map(a => a.category))]
 
   return (
-    <div style={{ marginTop: spacing.xl }}>
+    <div data-tour="achievements-section" style={{ marginTop: spacing.xl }}>
       <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '15px', marginBottom: spacing.sm, textAlign: 'center' }}>
         🏆 Подвиги — {unlocked.length} из {items.length}
       </div>

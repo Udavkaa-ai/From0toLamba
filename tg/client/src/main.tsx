@@ -11,6 +11,7 @@ import { StatsPage } from './pages/StatsPage'
 import { LeaderboardPage } from './pages/LeaderboardPage'
 import { RegistryPage } from './pages/RegistryPage'
 import { BottomNav } from './components/BottomNav'
+import { TourOverlay } from './components/TourOverlay'
 import { useTelegramBackButton } from './hooks/useTelegramBackButton'
 import './styles.css'
 
@@ -29,6 +30,7 @@ function AppShell() {
         <Route path="/registry" element={<RegistryPage />} />
       </Routes>
       <BottomNav />
+      <TourOverlay />
     </>
   )
 }
