@@ -821,7 +821,7 @@ export function HomePage() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          style={{ textAlign: 'center', marginBottom: spacing.xxl, position: 'relative' }}
+          style={{ display: 'flex', alignItems: 'center', marginBottom: spacing.xxl }}
         >
           {/* Кнопка звука */}
           <button
@@ -832,7 +832,7 @@ export function HomePage() {
               setMuted(next)
             }}
             style={{
-              position: 'absolute', left: 0, top: 0,
+              flexShrink: 0,
               background: `${colors.fairyGold}14`,
               border: `1px solid ${colors.fairyGold}35`,
               borderRadius: '10px',
@@ -844,32 +844,19 @@ export function HomePage() {
           >
             {soundMuted ? '🔇' : '🔊'}
           </button>
-          {/* Кнопка настроек */}
-          <button
-            onClick={() => { playSound('tap'); setShowSettings(true) }}
-            style={{
-              position: 'absolute', right: 0, top: 0,
-              background: `${colors.fairyGold}14`,
-              border: `1px solid ${colors.fairyGold}35`,
-              borderRadius: '10px',
+
+          {/* Название + баннер */}
+          <div style={{ flex: 1, textAlign: 'center' }}>
+            <div style={{
+              fontFamily: typography.headingFontFamily,
+              fontSize: '24px',
+              fontWeight: 700,
               color: colors.fairyGold,
-              fontSize: '16px',
-              cursor: 'pointer', padding: '5px 8px',
-              lineHeight: 1,
-            }}
-          >
-            ⚙️
-          </button>
-          <div style={{
-            fontFamily: typography.headingFontFamily,
-            fontSize: '28px',
-            fontWeight: 700,
-            color: colors.fairyGold,
-            letterSpacing: '0.06em',
-            textShadow: `0 0 24px ${colors.fairyGold}40`,
-          }}>
-            {t.home.gameTitle}
-          </div>
+              letterSpacing: '0.06em',
+              textShadow: `0 0 24px ${colors.fairyGold}40`,
+            }}>
+              {t.home.gameTitle}
+            </div>
           <button
             onClick={() => setShowBannerModal(true)}
             style={{
@@ -902,6 +889,25 @@ export function HomePage() {
           <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '2px' }}>
             ✦ {t.home.dayLabel} {gameState.currentDay} · {(t.ranks as unknown as Record<string, string>)[gameState.investorRank] ?? gameState.investorRank} ✦
           </div>
+          </div>{/* end centre block */}
+
+          {/* Кнопка настроек */}
+          <button
+            onClick={() => { playSound('tap'); setShowSettings(true) }}
+            style={{
+              flexShrink: 0,
+              background: `${colors.fairyGold}14`,
+              border: `1px solid ${colors.fairyGold}35`,
+              borderRadius: '10px',
+              color: colors.fairyGold,
+              fontSize: '16px',
+              cursor: 'pointer', padding: '5px 8px',
+              lineHeight: 1,
+              alignSelf: 'flex-start',
+            }}
+          >
+            ⚙️
+          </button>
         </motion.div>
 
         {/* Баланс */}
