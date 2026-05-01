@@ -868,7 +868,7 @@ export function HomePage() {
             letterSpacing: '0.06em',
             textShadow: `0 0 24px ${colors.fairyGold}40`,
           }}>
-            Из грязи в князи
+            {t.home.gameTitle}
           </div>
           <button
             onClick={() => setShowBannerModal(true)}
