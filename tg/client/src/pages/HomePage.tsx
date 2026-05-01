@@ -821,35 +821,50 @@ export function HomePage() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          style={{ display: 'flex', alignItems: 'center', marginBottom: spacing.xxl }}
+          style={{ marginBottom: spacing.xxl }}
         >
-          {/* Кнопка звука */}
-          <button
-            onClick={() => {
-              playSound('tap')
-              const next = !soundMuted
-              setSoundMuted(next)
-              setMuted(next)
-            }}
-            style={{
-              flexShrink: 0,
-              background: `${colors.fairyGold}14`,
-              border: `1px solid ${colors.fairyGold}35`,
-              borderRadius: '10px',
-              color: soundMuted ? colors.textMuted : colors.fairyGold,
-              fontSize: '16px',
-              cursor: 'pointer', padding: '5px 8px',
-              lineHeight: 1,
-            }}
-          >
-            {soundMuted ? '🔇' : '🔊'}
-          </button>
+          {/* Кнопки звука и настроек — строка над заголовком */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <button
+              onClick={() => {
+                playSound('tap')
+                const next = !soundMuted
+                setSoundMuted(next)
+                setMuted(next)
+              }}
+              style={{
+                background: `${colors.fairyGold}14`,
+                border: `1px solid ${colors.fairyGold}35`,
+                borderRadius: '10px',
+                color: soundMuted ? colors.textMuted : colors.fairyGold,
+                fontSize: '16px',
+                cursor: 'pointer', padding: '5px 8px',
+                lineHeight: 1,
+              }}
+            >
+              {soundMuted ? '🔇' : '🔊'}
+            </button>
+            <button
+              onClick={() => { playSound('tap'); setShowSettings(true) }}
+              style={{
+                background: `${colors.fairyGold}14`,
+                border: `1px solid ${colors.fairyGold}35`,
+                borderRadius: '10px',
+                color: colors.fairyGold,
+                fontSize: '16px',
+                cursor: 'pointer', padding: '5px 8px',
+                lineHeight: 1,
+              }}
+            >
+              ⚙️
+            </button>
+          </div>
 
           {/* Название + баннер */}
-          <div style={{ flex: 1, textAlign: 'center' }}>
+          <div style={{ textAlign: 'center' }}>
             <div style={{
               fontFamily: typography.headingFontFamily,
-              fontSize: '24px',
+              fontSize: '28px',
               fontWeight: 700,
               color: colors.fairyGold,
               letterSpacing: '0.06em',
@@ -891,23 +906,6 @@ export function HomePage() {
           </div>
           </div>{/* end centre block */}
 
-          {/* Кнопка настроек */}
-          <button
-            onClick={() => { playSound('tap'); setShowSettings(true) }}
-            style={{
-              flexShrink: 0,
-              background: `${colors.fairyGold}14`,
-              border: `1px solid ${colors.fairyGold}35`,
-              borderRadius: '10px',
-              color: colors.fairyGold,
-              fontSize: '16px',
-              cursor: 'pointer', padding: '5px 8px',
-              lineHeight: 1,
-              alignSelf: 'flex-start',
-            }}
-          >
-            ⚙️
-          </button>
         </motion.div>
 
         {/* Баланс */}
