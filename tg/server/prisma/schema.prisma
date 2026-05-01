@@ -53,6 +53,7 @@ model GameState {
   investedHistory      Float[]   @default([])
   pendingRankUp        String?
   preferredModel       String    @default("deepseek/deepseek-v4-flash")
+  preferredLanguage    String    @default("ru")
   lastAdvancedAt       DateTime?
   // Флаг: отправлено ли уведомление о доступности следующего дня для текущего lastAdvancedAt.
   // Сбрасывается в false при advance-day, ставится в true в cron'е, когда уведомление отправлено.

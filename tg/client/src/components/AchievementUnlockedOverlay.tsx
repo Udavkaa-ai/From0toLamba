@@ -4,6 +4,7 @@ import { evaluateAchievements, type EvaluatedAchievement } from '@/game/achievem
 import { loreFor } from '@/game/lore'
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing } from '@/theme'
+import { useT } from '@/i18n'
 
 const LS_KEY = 'seenAchievements'
 
@@ -75,11 +76,11 @@ export function AchievementUnlockedOverlay() {
   )
 }
 
-function shareAchievement(achievement: EvaluatedAchievement, userId?: number) {
+function shareAchievement(achievement: EvaluatedAchievement, shareText: string, userId?: number) {
   const botLink = userId
     ? `https://t.me/vknyazi_bot?startapp=ref_${userId}`
     : 'https://t.me/vknyazi_bot'
-  const text = `${achievement.emoji} Совершил подвиг «${achievement.name}» в игре «Из грязи в князи»!\n${achievement.description}`
+  const text = `${achievement.emoji} ${shareText}`
   const url = `https://t.me/share/url?url=${encodeURIComponent(botLink)}&text=${encodeURIComponent(text)}`
   if (typeof window !== 'undefined') {
     if (window.Telegram?.WebApp?.openTelegramLink) {
@@ -94,6 +95,7 @@ function UnlockedBanner({
   achievement, onClose,
 }: { achievement: EvaluatedAchievement; onClose: () => void }) {
   const userId = useGameStore(s => s.gameState?.userId)
+  const t = useT()
   const lore = achievement.revealTopic
     ? loreFor(achievement.revealTopic.kind, achievement.revealTopic.id)
     : null
@@ -128,7 +130,7 @@ function UnlockedBanner({
       >
         <div style={{ textAlign: 'center', marginBottom: spacing.lg }}>
           <div style={{ color: colors.fairyGold, fontSize: '12px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '6px' }}>
-            ✦ Подвиг свершён ✦
+            {t.stats.achievementUnlocked}
           </div>
           <motion.div
             initial={{ scale: 0, rotate: -30 }}
@@ -178,7 +180,7 @@ function UnlockedBanner({
 
         <div style={{ display: 'flex', gap: '8px' }}>
           <button
-            onClick={() => shareAchievement(achievement, userId)}
+            onClick={() => shareAchievement(achievement, t.stats.achievementShareText(achievement.name, achievement.description), userId)}
             style={{
               flex: 1,
               padding: spacing.md,
@@ -190,7 +192,7 @@ function UnlockedBanner({
               cursor: 'pointer',
             }}
           >
-            Поделиться
+            {t.stats.achievementShare}
           </button>
           <button
             onClick={onClose}
@@ -205,7 +207,7 @@ function UnlockedBanner({
               cursor: 'pointer',
             }}
           >
-            К делам →
+            {t.stats.achievementToDeals}
           </button>
         </div>
       </motion.div>

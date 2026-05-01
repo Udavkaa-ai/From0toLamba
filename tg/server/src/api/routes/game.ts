@@ -165,6 +165,7 @@ export async function gameRoutes(app: FastifyInstance) {
       investedHistory: gameState.investedHistory,
       pendingRankUp: gameState.pendingRankUp,
       preferredModel: gameState.preferredModel,
+      preferredLanguage: gameState.preferredLanguage ?? 'ru',
       lastAdvancedAt: gameState.lastAdvancedAt ? gameState.lastAdvancedAt.toISOString() : null,
       advanceCooldownMs: ADVANCE_COOLDOWN_MS,
       consecutiveAdvances: gameState.consecutiveAdvances,
@@ -271,18 +272,22 @@ export async function gameRoutes(app: FastifyInstance) {
       preferredModel: z.enum([
         'deepseek/deepseek-v4-flash',
         'google/gemini-3.1-flash-lite-preview',
-      ]),
+      ]).optional(),
+      preferredLanguage: z.enum(['ru', 'en']).optional(),
     }).safeParse(request.body)
-    if (!body.success) return reply.status(400).send({ error: 'Неверная модель' })
+    if (!body.success) return reply.status(400).send({ error: 'Invalid settings' })
 
     const user = await prisma.user.findUniqueOrThrow({
       where: { telegramId: String(tgUser.id) },
     })
+    const updateData: Record<string, string> = {}
+    if (body.data.preferredModel) updateData.preferredModel = body.data.preferredModel
+    if (body.data.preferredLanguage) updateData.preferredLanguage = body.data.preferredLanguage
     await prisma.gameState.update({
       where: { userId: user.id },
-      data: { preferredModel: body.data.preferredModel },
+      data: updateData,
     })
-    return { success: true, preferredModel: body.data.preferredModel }
+    return { success: true, preferredModel: body.data.preferredModel, preferredLanguage: body.data.preferredLanguage }
   })
 
   // GET /api/leaderboard — топ-100 по общему состоянию

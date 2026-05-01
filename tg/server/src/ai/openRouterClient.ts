@@ -284,15 +284,30 @@ interface SendAmaMessageInput {
   fate: string
 }
 
-const FATE_BEHAVIOR: Record<string, string> = {
-  INSTANT_SCAM: 'Это мошенничество — деньги вкладчиков уже почти потрачены, дело скоро исчезнет. Уклоняйся от конкретных вопросов о доходах и сроках, переводи тему на пышные обещания. При прямых вопросах чуть нервничай, отвечай туманно и хвастайся без фактов.',
-  SLOW_DRAIN: 'Дело медленно тонет — доходы падают, хозяин уже думает как выйти. Преувеличивай прошлые успехи, избегай говорить о будущем конкретно, слегка уклоняйся от вопросов о выводе средств.',
-  HONEST_FAIL: 'Дело честное, но скоро прогорит по объективным причинам (рынок, конкуренты, неудача). Отвечай искренне и позитивно, но можешь проговориться о трудностях — «рынок сложный», «конкуренты наступают».',
-  SURVIVOR: 'Живучее дело с реальным стабильным доходом. Отвечай уверенно и с достоинством, показывай знание своего дела, хвастайся конкретными — пусть и скромными — успехами.',
-  UNICORN: 'Редкий единорог — дело действительно взрывного роста. Будь очень воодушевлён, почти сам не веришь насколько хорошо идёт, говори с азартом и удивлением от собственного успеха.',
+const FATE_BEHAVIOR: Record<string, Record<string, string>> = {
+  INSTANT_SCAM: {
+    ru: 'Это мошенничество — деньги вкладчиков уже почти потрачены, дело скоро исчезнет. Уклоняйся от конкретных вопросов о доходах и сроках, переводи тему на пышные обещания. При прямых вопросах чуть нервничай, отвечай туманно и хвастайся без фактов.',
+    en: 'This is a scam — the investors\' kopecks are nearly spent, the venture will soon vanish. Dodge specific questions about income and timelines, steer toward grand promises. Under direct questioning, grow slightly nervous, answer vaguely, and boast without facts.',
+  },
+  SLOW_DRAIN: {
+    ru: 'Дело медленно тонет — доходы падают, хозяин уже думает как выйти. Преувеличивай прошлые успехи, избегай говорить о будущем конкретно, слегка уклоняйся от вопросов о выводе средств.',
+    en: 'The venture is slowly sinking — income is falling, the owner is already thinking of an exit. Exaggerate past successes, avoid specific talk about the future, gently dodge questions about withdrawals.',
+  },
+  HONEST_FAIL: {
+    ru: 'Дело честное, но скоро прогорит по объективным причинам (рынок, конкуренты, неудача). Отвечай искренне и позитивно, но можешь проговориться о трудностях — «рынок сложный», «конкуренты наступают».',
+    en: 'The venture is honest but will soon fail for objective reasons (market, competitors, bad luck). Answer sincerely and positively, but slip in hints of difficulty — "the market is tough", "rivals are pressing hard".',
+  },
+  SURVIVOR: {
+    ru: 'Живучее дело с реальным стабильным доходом. Отвечай уверенно и с достоинством, показывай знание своего дела, хвастайся конкретными — пусть и скромными — успехами.',
+    en: 'A resilient venture with real, stable income. Answer with confidence and dignity, show mastery of your trade, boast of concrete — if modest — successes.',
+  },
+  UNICORN: {
+    ru: 'Редкий единорог — дело действительно взрывного роста. Будь очень воодушевлён, почти сам не веришь насколько хорошо идёт, говори с азартом и удивлением от собственного успеха.',
+    en: 'A rare Firebird — the venture is truly exploding with growth. Be very excited, barely believing how well things are going, speak with enthusiasm and genuine astonishment at your own success.',
+  },
 }
 
-function buildAmaSystemPrompt(input: AmaSessionInput | SendAmaMessageInput, questionNumber = 1): string {
+function buildAmaSystemPrompt(input: AmaSessionInput | SendAmaMessageInput, questionNumber = 1, lang = 'ru'): string {
   const { archetype, developerName, projectName, fate } = input
   const persona = PERSONA_MAP.get(archetype)
 
@@ -302,9 +317,32 @@ function buildAmaSystemPrompt(input: AmaSessionInput | SendAmaMessageInput, ques
         .join('\n')
     : ''
 
-  const speechStyle = persona?.speechStyle ?? 'Говори живым современным русским языком.'
+  const speechStyle = persona?.speechStyle ?? (lang === 'en' ? 'Speak in lively, natural English.' : 'Говори живым современным русским языком.')
   const favoriteTopics = persona?.favoriteTopics ?? ''
-  const fateBehavior = FATE_BEHAVIOR[fate] ?? ''
+  const fateBehavior = FATE_BEHAVIOR[fate]?.[lang] ?? FATE_BEHAVIOR[fate]?.ru ?? ''
+
+  if (lang === 'en') {
+    return `You are playing a role in the text game "From Rags to Riches" — a magical Rus', an audience with a venture owner. The player can ask you anything: about yourself, the venture, life, or a story.
+
+Your character: ${developerName}, owner of venture "${projectName}". Respond only in character, always in English.
+
+CHARACTER AND SPEECH STYLE: ${speechStyle} Maintain the atmosphere of a Russian fairy-tale merchant world — reference kopecks, tsars, boyars, Lukomorye, folk tales naturally as part of your world.
+
+FAVOURITE TOPICS FOR SMALL TALK: ${favoriteTopics}
+
+CHARACTERISTIC PHRASES (use as style inspiration, do not copy word for word):
+${phrases}
+
+HIDDEN TRUTH ABOUT THE VENTURE (for your eyes only — do not state it directly, but let it show):
+${fateBehavior}
+
+RULES:
+- Answer in 2–3 sentences, lively English. No long monologues.
+- Never break character. Start each response differently.
+- All amounts in kopecks (k). No crypto, TON, blockchain.
+- Do not explain to the player "I am character X". Just be them.
+- If the player asks a strange or meta question — deflect in character and bring up your own stories.`
+  }
 
   return `Ты играешь роль в текстовой игре «Из грязи в князи» — сказочная Русь, беседа с дельцом. Игрок может спрашивать о чём угодно: о тебе, о деле, о жизни, попросить байку.
 
@@ -328,10 +366,12 @@ ${fateBehavior}
 - Если игрок задал странный/мета-вопрос — отшутись в характере и переведи тему на свои байки.`
 }
 
-export async function startAmaSession(input: AmaSessionInput, model = DEFAULT_MODEL): Promise<string> {
+export async function startAmaSession(input: AmaSessionInput, model = DEFAULT_MODEL, lang = 'ru'): Promise<string> {
   const { developerName, projectName } = input
-  const systemPrompt = buildAmaSystemPrompt(input, 1)
-  const firstMessagePrompt = `Поприветствуй потенциального вкладчика как ${developerName}, делец и хозяин дела «${projectName}». Расскажи кратко о деле и предложи задавать вопросы. 2–3 предложения, живой современный русский язык.`
+  const systemPrompt = buildAmaSystemPrompt(input, 1, lang)
+  const firstMessagePrompt = lang === 'en'
+    ? `Greet a potential investor as ${developerName}, dealer and owner of the venture "${projectName}". Briefly describe the venture and invite questions. 2–3 sentences, lively English with Russian fairy-tale flavour.`
+    : `Поприветствуй потенциального вкладчика как ${developerName}, делец и хозяин дела «${projectName}». Расскажи кратко о деле и предложи задавать вопросы. 2–3 предложения, живой современный русский язык.`
 
   try {
     console.log(`[AI:ama-start] model=${model}`)
@@ -344,15 +384,18 @@ export async function startAmaSession(input: AmaSessionInput, model = DEFAULT_MO
       max_tokens: 300,
       reasoning: { enabled: false },
     } as any)
-    return response.choices[0]?.message?.content ?? `Здравствуй! Я ${developerName}, хозяин дела «${projectName}». Задавай вопросы!`
+    const fallback = lang === 'en'
+      ? `Greetings! I am ${developerName}, owner of the venture "${projectName}". Ask me anything!`
+      : `Здравствуй! Я ${developerName}, хозяин дела «${projectName}». Задавай вопросы!`
+    return response.choices[0]?.message?.content ?? fallback
   } catch (err) {
     console.error('[AMA startSession] OpenRouter error:', err)
     throw err
   }
 }
 
-export async function sendAmaMessage(input: SendAmaMessageInput, model = DEFAULT_MODEL): Promise<string> {
-  const systemPrompt = buildAmaSystemPrompt(input, input.questionCount)
+export async function sendAmaMessage(input: SendAmaMessageInput, model = DEFAULT_MODEL, lang = 'ru'): Promise<string> {
+  const systemPrompt = buildAmaSystemPrompt(input, input.questionCount, lang)
 
   const messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }> = [
     { role: 'system', content: systemPrompt },
@@ -416,9 +459,14 @@ export async function generateDailyUpdate(
   userCountDelta: number = 0,
   payoutStatus: string = 'NORMAL',
   model = DEFAULT_MODEL,
+  lang = 'ru',
 ): Promise<void> {
   const userCountStr = userCountDelta > 0 ? `+${userCountDelta}` : String(userCountDelta)
-  const payoutStatusRu = payoutStatus === 'DELAYED' ? 'ЗАДЕРЖАНЫ' : payoutStatus === 'BOOSTED' ? 'ПОВЫШЕНЫ' : 'ОБЫЧНЫЙ'
+  const payoutStatusLabel = payoutStatus === 'DELAYED'
+    ? (lang === 'en' ? 'DELAYED' : 'ЗАДЕРЖАНЫ')
+    : payoutStatus === 'BOOSTED'
+      ? (lang === 'en' ? 'BOOSTED' : 'ПОВЫШЕНЫ')
+      : (lang === 'en' ? 'NORMAL' : 'ОБЫЧНЫЙ')
 
   const archetypeLabel = PERSONA_LABEL[project.personaArchetype as PersonaArchetype] ?? project.personaArchetype
   const fateLabel = FATE_LABEL[project.fate as ProjectFate] ?? project.fate
@@ -445,11 +493,28 @@ export async function generateDailyUpdate(
   if (!inserted) return
 
   // ─── 2. Параллельно идём в AI и перезаписываем ту же запись качественным текстом ──
-  const prompt = `Ты — ведущий рубрики «Вести с ярмарки» в игре «Из грязи в князи».
+  const prompt = lang === 'en'
+    ? `You are the host of the "Market Dispatches" column in the game "From Rags to Riches" — a magical Rus' setting.
+Write a short dispatch about the venture "${project.name}" (day ${dayNumber}).
+Owner archetype: ${archetypeLabel}, type: ${project.type}, fate: ${fateLabel}.
+Investor count change today: ${userCountStr} people.
+Payout status: ${payoutStatusLabel}
+Do NOT use internal code words (BURATINO, INSTANT_SCAM, etc.) — only their English thematic labels or in-world names.
+
+Format — JSON:
+{
+  "title": "Short headline (up to 8 words)",
+  "body": "2–3 sentences, vivid English with Russian fairy-tale flavour, no crypto/blockchain, currency is kopecks or 'k'. Reflect investor count change and payout status in the text.",
+  "redFlags": ["optional array of 0–2 warning signs (strings)"],
+  "payoutStatus": "NORMAL|DELAYED|BOOSTED"
+}
+
+Reply ONLY with valid JSON.`
+    : `Ты — ведущий рубрики «Вести с ярмарки» в игре «Из грязи в князи».
 Напиши короткую весть о деле «${project.name}» (день ${dayNumber}).
 Архетип хозяина: ${archetypeLabel}, тип: ${project.type}, судьба: ${fateLabel}.
 Изменение числа вкладчиков сегодня: ${userCountStr} чел.
-Статус выплат: ${payoutStatusRu}
+Статус выплат: ${payoutStatusLabel}
 В тексте НЕ употребляй английские кодовые слова (BURATINO, ZOLUSHKA, INSTANT_SCAM, PATRON_COUNT и т.п.) — только русские названия.
 
 Формат — JSON:

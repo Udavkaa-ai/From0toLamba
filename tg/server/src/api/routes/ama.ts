@@ -16,7 +16,8 @@ export async function amaRoutes(app: FastifyInstance) {
     try {
       const gameState = await prisma.gameState.findUnique({ where: { userId: user.id } })
       const model = gameState?.preferredModel ?? 'deepseek/deepseek-v4-flash'
-      const result = await startSession(user.id, projectId, model)
+      const lang = (request.headers['x-lang'] as string) ?? gameState?.preferredLanguage ?? 'ru'
+      const result = await startSession(user.id, projectId, model, lang)
       return result
     } catch (err: any) {
       return reply.status(400).send({ error: err.message })
@@ -50,11 +51,12 @@ export async function amaRoutes(app: FastifyInstance) {
     try {
       const gameState = await prisma.gameState.findUnique({ where: { userId: user.id } })
       const model = gameState?.preferredModel ?? 'deepseek/deepseek-v4-flash'
-      const result = await sendMessage(user.id, projectId, body.data.message, model)
+      const lang = (request.headers['x-lang'] as string) ?? gameState?.preferredLanguage ?? 'ru'
+      const result = await sendMessage(user.id, projectId, body.data.message, model, lang)
       return result
     } catch (err: any) {
       if (err.message === 'SESSION_COMPLETE') {
-        return reply.status(410).send({ error: 'Беседа завершена — вопросы исчерпаны' })
+        return reply.status(410).send({ error: 'Session complete' })
       }
       throw err
     }

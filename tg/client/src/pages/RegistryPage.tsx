@@ -8,45 +8,26 @@ import { PageTitle } from '@/components/PageTitle'
 import { api, type ProjectDTO, type PostMortemDTO } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing } from '@/theme'
+import { useT } from '@/i18n'
 
-const RANK_LABEL: Record<string, string> = {
-  NEWBIE: 'Скоморох', AMBASSADOR: 'Купец', ANALYST: 'Мудрец', SHARK: 'Боярин', LAMBO_SENSEI: 'Князь',
+// Emoji and desc are not in i18n — kept locally
+const ARCHETYPE_META: Record<string, { emoji: string; desc: string }> = {
+  BURATINO:   { emoji: '🪆', desc: 'Наивный лжец — верил своим выдумкам' },
+  BOYARIN:    { emoji: '👘', desc: 'Пышно-официальный, ссылался на «людей при дворе»' },
+  KOLOBOK:    { emoji: '🫓', desc: 'Бодрый хвастун, укатывался от неудобных вопросов' },
+  KOSCHEI:    { emoji: '💀', desc: 'Холодный и уверенный, говорил цифрами как приговорами' },
+  ZOLUSHKA:   { emoji: '👠', desc: 'Давила на жалость и создавала дедлайны' },
+  BABA_YAGA:  { emoji: '🧙', desc: 'Отвечала загадками, скрывала всё за туманом' },
+  IVAN_DURAK: { emoji: '🤡', desc: 'Открыто говорил о провалах — и снова проваливался' },
 }
 
-const ARCHETYPE_DISPLAY: Record<string, { name: string; emoji: string; desc: string }> = {
-  BURATINO:   { name: 'Буратино',   emoji: '🪆', desc: 'Наивный лжец — верил своим выдумкам' },
-  BOYARIN:    { name: 'Боярин',     emoji: '👘', desc: 'Пышно-официальный, ссылался на «людей при дворе»' },
-  KOLOBOK:    { name: 'Колобок',    emoji: '🫓', desc: 'Бодрый хвастун, укатывался от неудобных вопросов' },
-  KOSCHEI:    { name: 'Кощей',     emoji: '💀', desc: 'Холодный и уверенный, говорил цифрами как приговорами' },
-  ZOLUSHKA:   { name: 'Золушка',   emoji: '👠', desc: 'Давила на жалость и создавала дедлайны' },
-  BABA_YAGA:  { name: 'Баба-яга',  emoji: '🧙', desc: 'Отвечала загадками, скрывала всё за туманом' },
-  IVAN_DURAK: { name: 'Иван-дурак',emoji: '🤡', desc: 'Открыто говорил о провалах — и снова проваливался' },
-}
-
-const FATE_DISPLAY: Record<string, { label: string; color: string }> = {
-  INSTANT_SCAM: { label: '💀 Сбежал с деньгами',   color: colors.danger },
-  SLOW_DRAIN:   { label: '🌫️ Тихо угас',             color: '#E8A060' },
-  HONEST_FAIL:  { label: '😔 Честный провал',         color: colors.textMuted },
-  SURVIVOR:     { label: '⚓ Выжил — дело передано', color: colors.success },
-  UNICORN:      { label: '🔥 Жар-птица за хвост',     color: colors.fairyGold },
-}
-
-const LIE_TOPIC_LABEL: Record<string, string> = {
-  PATRON_COUNT:       '👥 Вкладчики',
-  DAILY_PROFIT:       '💰 Доход',
-  PAYOUT_DATE:        '📅 Выплаты',
-  GUILD_SIZE:         '🏗️ Артель',
-  ELDER_BLESSING:     '📜 Проверка',
-  NOBLE_BACKING:      '🏰 Покровители',
-  WITHDRAWAL_LIMITS:  '🔒 Вывод',
-}
-
-const TYPE_LABEL: Record<string, string> = {
-  CARD_GAME: '🃏 Азартная игра',
-  TREASURE_HUNT: '🗺️ Поиск клада',
-  POTION_BREW: '🧪 Зелейное дело',
-  GUILD_SCHEME: '⚙️ Артель',
-  HONEST_TRADE: '🤝 Честная торговля',
+// Colors are not in i18n — kept locally
+const FATE_COLOR: Record<string, string> = {
+  INSTANT_SCAM: colors.danger,
+  SLOW_DRAIN:   '#E8A060',
+  HONEST_FAIL:  colors.textMuted,
+  SURVIVOR:     colors.success,
+  UNICORN:      colors.fairyGold,
 }
 
 type ClosedProject = ProjectDTO & { postMortem: PostMortemDTO | null }
@@ -54,6 +35,7 @@ type ClosedProject = ProjectDTO & { postMortem: PostMortemDTO | null }
 export function RegistryPage() {
   const navigate = useNavigate()
   const { gameState } = useGameStore()
+  const t = useT()
   const { data, isLoading } = useQuery({
     queryKey: ['portfolio'],
     queryFn: api.projects.getPortfolio,
@@ -68,26 +50,21 @@ export function RegistryPage() {
   const overallPnl = totalInvested > 0 ? ((totalReturned - totalInvested) / totalInvested) * 100 : 0
 
   const handleShare = () => {
-    const rank = gameState ? (RANK_LABEL[gameState.investorRank] ?? gameState.investorRank) : null
+    const rank = gameState ? ((t.ranks as unknown as Record<string, string>)[gameState.investorRank] ?? gameState.investorRank) : ''
+    const score = gameState?.intuitionScore ?? 0
     const wealth = gameState
       ? gameState.balance + gameState.activeProjects.reduce((s, p) => s + p.currentValueRubles, 0)
       : 0
+    const pnlStr = `${overallPnl >= 0 ? '+' : ''}${overallPnl.toFixed(1)}`
 
-    const lines = [
-      '📜 Моя Летопись в «Из грязи в князи»:',
-      rank ? `Чин: ${rank} · чуйка ${gameState?.intuitionScore ?? 0}` : null,
-      `Состояние: ${Math.floor(wealth)} г`,
-      closed.length > 0
-        ? `Закрытых дел: ${closed.length} · итог ${overallPnl >= 0 ? '+' : ''}${overallPnl.toFixed(1)}%`
-        : null,
-      '',
-      'Попробуй отличить купца от жулика — @vknyazi_bot',
-    ].filter(Boolean).join('\n')
+    const shareText = rank
+      ? t.registry.shareText(rank, score, Math.floor(wealth), closed.length, parseFloat(pnlStr))
+      : `${Math.floor(wealth)} г · ${closed.length} дел · ${pnlStr}%`
 
     const appUrl = gameState?.userId
       ? `https://t.me/vknyazi_bot?startapp=ref_${gameState.userId}`
       : 'https://t.me/vknyazi_bot'
-    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(appUrl)}&text=${encodeURIComponent(lines)}`
+    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(appUrl)}&text=${encodeURIComponent(shareText)}`
     const tg = (window as any).Telegram?.WebApp
     if (tg?.openTelegramLink) tg.openTelegramLink(shareUrl)
     else window.open(shareUrl, '_blank')
@@ -113,12 +90,12 @@ export function RegistryPage() {
             }}
           >
             <span style={{ fontSize: '16px', lineHeight: 1 }}>←</span>
-            Назад
+            {t.common.back}
           </button>
           <div style={{ flex: 1, textAlign: 'center' }}>
-            <PageTitle>Летопись</PageTitle>
+            <PageTitle>{t.registry.title}</PageTitle>
             <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '2px' }}>
-              Архив закрытых дел
+              {t.registry.subtitle}
             </div>
           </div>
           <div style={{ width: '76px' }} />
@@ -128,19 +105,19 @@ export function RegistryPage() {
         {closed.length > 0 && (
           <FairyCard style={{ marginBottom: spacing.md, textAlign: 'center' }}>
             <div style={{ color: colors.textMuted, fontSize: '12px', marginBottom: spacing.sm }}>
-              {closed.length} завершённых дел
+              {t.registry.dealsCount(closed.length)}
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-around' }}>
               <div>
-                <div style={{ color: colors.textMuted, fontSize: '10px' }}>Вложено всего</div>
+                <div style={{ color: colors.textMuted, fontSize: '10px' }}>{t.registry.invested}</div>
                 <div style={{ color: colors.textSecondary, fontWeight: 700 }}>{Math.floor(totalInvested)} г</div>
               </div>
               <div>
-                <div style={{ color: colors.textMuted, fontSize: '10px' }}>Получено</div>
+                <div style={{ color: colors.textMuted, fontSize: '10px' }}>{t.registry.returned}</div>
                 <div style={{ color: colors.textSecondary, fontWeight: 700 }}>{Math.floor(totalReturned)} г</div>
               </div>
               <div>
-                <div style={{ color: colors.textMuted, fontSize: '10px' }}>Итог</div>
+                <div style={{ color: colors.textMuted, fontSize: '10px' }}>{t.registry.roi}</div>
                 <div style={{ color: overallPnl >= 0 ? colors.success : colors.danger, fontWeight: 700 }}>
                   {overallPnl >= 0 ? '+' : ''}{overallPnl.toFixed(1)}%
                 </div>
@@ -172,8 +149,7 @@ export function RegistryPage() {
               gap: '8px',
             }}
           >
-            <span style={{ fontSize: '16px' }}>📤</span>
-            Поделиться Летописью
+            {t.registry.shareBtn}
           </motion.button>
         )}
 
@@ -182,9 +158,9 @@ export function RegistryPage() {
         {!isLoading && closed.length === 0 && (
           <FairyCard style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '32px', marginBottom: spacing.sm }}>📖</div>
-            <div style={{ color: colors.textSecondary }}>Летопись пуста</div>
+            <div style={{ color: colors.textSecondary }}>{t.registry.empty}</div>
             <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
-              Войди в дело и выйди или дождись его конца
+              {t.registry.emptyHint}
             </div>
           </FairyCard>
         )}
@@ -206,9 +182,14 @@ export function RegistryPage() {
 
 function RegistryCard({ project, postMortem }: { project: ClosedProject; postMortem: PostMortemDTO | null }) {
   const [expanded, setExpanded] = useState(false)
+  const t = useT()
 
-  const archetype = postMortem ? ARCHETYPE_DISPLAY[postMortem.revealedArchetype] : null
-  const fate = postMortem ? FATE_DISPLAY[postMortem.fate] : null
+  const archetypeMeta = postMortem ? ARCHETYPE_META[postMortem.revealedArchetype] : null
+  const archetypeName = postMortem ? (t.archetypes[postMortem.revealedArchetype as keyof typeof t.archetypes] ?? postMortem.revealedArchetype) : null
+  const archetype = archetypeMeta && archetypeName ? { ...archetypeMeta, name: archetypeName } : null
+  const fateColor = postMortem ? (FATE_COLOR[postMortem.fate] ?? colors.textMuted) : null
+  const fateLabel = postMortem ? (t.fates[postMortem.fate as keyof typeof t.fates] ?? postMortem.fate) : null
+  const fate = fateColor && fateLabel ? { color: fateColor, label: fateLabel } : null
   const profit = postMortem ? postMortem.profitPercent : 0
   const isProfit = profit >= 0
 
@@ -237,7 +218,7 @@ function RegistryCard({ project, postMortem }: { project: ClosedProject; postMor
             {project.name}
           </div>
           <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '2px' }}>
-            {TYPE_LABEL[project.type] ?? project.type}
+            {t.projectTypes[project.type as keyof typeof t.projectTypes] ?? project.type}
           </div>
           {fate && (
             <div style={{ color: fate.color, fontSize: '11px', marginTop: '3px' }}>
@@ -259,7 +240,7 @@ function RegistryCard({ project, postMortem }: { project: ClosedProject; postMor
 
       {/* Expand indicator */}
       <div style={{ textAlign: 'center', color: colors.textMuted, fontSize: '10px', marginTop: spacing.sm }}>
-        {expanded ? '▲ свернуть' : '▼ читать летопись'}
+        {expanded ? t.registry.collapse : t.registry.expand}
       </div>
 
       <AnimatePresence>
@@ -298,10 +279,10 @@ function RegistryCard({ project, postMortem }: { project: ClosedProject; postMor
             {/* Stats grid */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
               {[
-                { label: 'Вложено', value: `${Math.floor(postMortem.investedAmount)} г` },
-                { label: 'Получено', value: `${Math.floor(postMortem.returnedAmount)} г` },
-                { label: 'Дней', value: String(postMortem.daysActive) },
-                { label: 'Чуйка', value: postMortem.intuitionDelta !== 0 ? `${postMortem.intuitionDelta > 0 ? '+' : ''}${postMortem.intuitionDelta}` : '—', color: postMortem.intuitionDelta > 0 ? colors.success : postMortem.intuitionDelta < 0 ? colors.danger : colors.textMuted },
+                { label: t.registry.invested, value: `${Math.floor(postMortem.investedAmount)} ${t.common.currency}` },
+                { label: t.registry.returned, value: `${Math.floor(postMortem.returnedAmount)} ${t.common.currency}` },
+                { label: t.common.days, value: String(postMortem.daysActive) },
+                { label: t.common.intuition, value: postMortem.intuitionDelta !== 0 ? `${postMortem.intuitionDelta > 0 ? '+' : ''}${postMortem.intuitionDelta}` : '—', color: postMortem.intuitionDelta > 0 ? colors.success : postMortem.intuitionDelta < 0 ? colors.danger : colors.textMuted },
               ].map(s => (
                 <div key={s.label} style={{ textAlign: 'center' }}>
                   <div style={{ color: colors.textMuted, fontSize: '9px' }}>{s.label}</div>
@@ -314,11 +295,11 @@ function RegistryCard({ project, postMortem }: { project: ClosedProject; postMor
             {postMortem.lieTopics.length > 0 && (
               <div style={{ marginTop: spacing.md }}>
                 <div style={{ color: colors.textMuted, fontSize: '10px', marginBottom: '4px' }}>
-                  🎭 Темы лжи хозяина:
+                  {t.registry.lieLabelPrefix}
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                  {postMortem.lieTopics.map(t => (
-                    <span key={t} style={{
+                  {postMortem.lieTopics.map(topic => (
+                    <span key={topic} style={{
                       background: `${colors.danger}20`,
                       border: `1px solid ${colors.danger}30`,
                       borderRadius: '4px',
@@ -326,7 +307,7 @@ function RegistryCard({ project, postMortem }: { project: ClosedProject; postMor
                       color: colors.danger,
                       fontSize: '10px',
                     }}>
-                      {LIE_TOPIC_LABEL[t] ?? t}
+                      {t.registry.lieTopics[topic as keyof typeof t.registry.lieTopics] ?? topic}
                     </span>
                   ))}
                 </div>

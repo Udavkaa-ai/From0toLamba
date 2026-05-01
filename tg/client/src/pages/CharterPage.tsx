@@ -12,6 +12,7 @@ import type { MutTarget } from '@/components/Seal'
 import { CoinIcon } from '@/components/icons'
 import { useTelegramBackHandler } from '@/hooks/useTelegramBackButton'
 import { playSound } from '@/sounds'
+import { useT } from '@/i18n'
 
 const tg = (window as any).Telegram?.WebApp
 const haptic = tg?.HapticFeedback
@@ -174,6 +175,8 @@ export function CharterPage() {
   const selectedRef = useRef(selected)
   useEffect(() => { selectedRef.current = selected }, [selected])
 
+  const t = useT()
+
   if (isExpired) {
     return (
       <ScreenBackground showSparkles={false}>
@@ -182,9 +185,9 @@ export function CharterPage() {
           minHeight: '100dvh', padding: spacing.xxl, textAlign: 'center', gap: spacing.md,
         }}>
           <div style={{ fontSize: '56px' }}>📜</div>
-          <div style={{ color: colors.fairyGold, fontSize: '20px', fontWeight: 700 }}>Грамота истекла</div>
+          <div style={{ color: colors.fairyGold, fontSize: '20px', fontWeight: 700 }}>{t.charter.expired}</div>
           <div style={{ color: colors.textSecondary, fontSize: '14px', maxWidth: '320px', lineHeight: 1.5 }}>
-            Это дело было из прошлого дня и уже свернулось. Загляни во «Входящие» — там ждут новые грамоты.
+            {t.charter.expiredHint}
           </div>
           <button
             onClick={() => navigate('/inbox')}
@@ -194,7 +197,7 @@ export function CharterPage() {
               color: colors.nightBlue, fontWeight: 700, fontSize: '14px', cursor: 'pointer',
             }}
           >
-            К входящим →
+            {t.charter.expiredBtn}
           </button>
         </div>
       </ScreenBackground>
@@ -204,7 +207,7 @@ export function CharterPage() {
   if (isLoading || !charter) {
     return (
       <ScreenBackground>
-        <div style={loadingStyle}>Разворачиваем грамоту…</div>
+        <div style={loadingStyle}>{t.common.loading}</div>
       </ScreenBackground>
     )
   }
@@ -234,12 +237,12 @@ export function CharterPage() {
         <div style={headerStyle}>
           <button onClick={tryGoBack} style={backBtnStyle}>
             <span style={{ fontSize: '16px', lineHeight: 1 }}>←</span>
-            Назад
+            {t.common.back}
           </button>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '15px' }}>Купеческая грамота</div>
+            <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '15px' }}>{t.charter.title}</div>
             <div style={{ color: colors.textMuted, fontSize: '11px' }}>
-              {phaseCaption(phase, charter, scanCountdown)}
+              {phaseCaption(phase, charter, scanCountdown, t)}
             </div>
           </div>
           <button
@@ -287,14 +290,14 @@ export function CharterPage() {
         {phase === 'scan' && (
           <div style={footerStyle}>
             <div style={{ color: colors.textMuted, fontSize: '12px', marginBottom: spacing.sm, textAlign: 'center' }}>
-              Отмечено: {selected.size} · Осталось времени: {scanCountdown ?? '—'} с
+              {t.charter.seals}: {selected.size} · {t.charter.timer}: {scanCountdown ?? '—'}
             </div>
             <button
               onClick={handleSubmit}
               disabled={submitMutation.isPending}
               style={primaryBtnStyle}
             >
-              {submitMutation.isPending ? 'Проверяем…' : 'Готово'}
+              {submitMutation.isPending ? t.common.loading : t.common.done}
             </button>
           </div>
         )}
@@ -310,10 +313,10 @@ export function CharterPage() {
             style={bonusStyle}
           >
             <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '16px' }}>
-              🎉 +{onboardingBonus} г на счёт!
+              {t.charter.onboardingBonus.replace('{bonus}', String(onboardingBonus))}
             </div>
             <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
-              Онбординг-бонус за первую грамоту
+              {t.charter.onboardingBonusHint}
             </div>
           </motion.div>
         )}
@@ -363,26 +366,11 @@ export function CharterPage() {
 
 // ── Обучалка ──────────────────────────────────────────────────────────────
 
-const MUT_LABELS: Record<MutTarget, string> = {
-  shape:      'Форма изменена',
-  size:       'Размер изменён (крупнее или мельче)',
-  dots:       'Количество точек по краю',
-  colorHue:   'Тон цвета сдвинут',
-  rings:      'Число внутренних колец',
-  emblemSame: 'Знак заменён похожим',
-}
-
-const RANK_NEXT_HINT: Record<string, string | null> = {
-  NEWBIE:       'На чине Купца добавятся: размер и точки по краю',
-  AMBASSADOR:   'На чине Мудреца добавятся: тон цвета и число колец',
-  ANALYST:      null,
-  SHARK:        null,
-  LAMBO_SENSEI: null,
-}
-
 function TutorialSheet({ rank, onClose }: { rank: string; onClose: () => void }) {
+  const t = useT()
   const pool = RANK_MUT_POOLS[rank] ?? RANK_MUT_POOLS.NEWBIE
-  const nextHint = RANK_NEXT_HINT[rank] ?? null
+  const nextHintRaw = t.charter.rankNextHint[rank as keyof typeof t.charter.rankNextHint] ?? ''
+  const nextHint = nextHintRaw || null
 
   return (
     <motion.div
@@ -414,10 +402,10 @@ function TutorialSheet({ rank, onClose }: { rank: string; onClose: () => void })
             background: `${colors.fairyGold}50`, margin: '0 auto 12px',
           }} />
           <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '17px' }}>
-            Как читать грамоту
+            {t.charter.tutorialTitle}
           </div>
           <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
-            В грамоте 24 печати. Большинство — честные копии. Найди подделки.
+            {t.charter.tutorialBody}
           </div>
         </div>
 
@@ -436,20 +424,20 @@ function TutorialSheet({ rank, onClose }: { rank: string; onClose: () => void })
             <Seal params={TUTORIAL_REF} size={60} />
             <div>
               <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '13px' }}>
-                Эталонный знак
+                {t.charter.tutorialRef}
               </div>
               <div style={{ color: colors.textSecondary, fontSize: '12px', lineHeight: 1.5 }}>
-                Его покажут на 3 секунды. Запомни форму, цвет, кольца и точки.
+                {t.charter.tutorialRefHint}
               </div>
             </div>
           </div>
 
           {/* Виды подделок на текущем чине */}
           <div style={{ color: colors.textSecondary, fontSize: '12px', marginBottom: spacing.sm }}>
-            На твоём чине подделки отличаются:
+            {t.charter.tutorialMutations}
           </div>
 
-          {(Object.entries(MUT_LABELS) as [MutTarget, string][])
+          {(Object.entries(t.charter.mutLabels) as [MutTarget, string][])
             .filter(([target]) => pool.includes(target))
             .map(([target, label]) => (
               <div
@@ -494,13 +482,13 @@ function TutorialSheet({ rank, onClose }: { rank: string; onClose: () => void })
             borderRadius: '12px',
           }}>
             <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '13px', marginBottom: spacing.sm }}>
-              Как считается чуйка
+              {t.charter.tutorialIntuition}
             </div>
             <div style={{ fontSize: '12px', color: colors.textSecondary, lineHeight: 1.8 }}>
-              <div><span style={{ color: colors.success }}>+1</span> за каждую найденную подделку</div>
-              <div><span style={{ color: colors.danger }}>−1</span> за каждую ошибку (тапнул не ту)</div>
-              <div><span style={{ color: colors.warning }}>−2</span> за каждую пропущенную</div>
-              <div><span style={{ color: colors.fairyGold }}>+2</span> бонус, если грамота чистая и ты ничего не нажал</div>
+              <div><span style={{ color: colors.success }}>+1</span> {t.charter.tutorialFound}</div>
+              <div><span style={{ color: colors.danger }}>−1</span> {t.charter.tutorialFalse}</div>
+              <div><span style={{ color: colors.warning }}>−2</span> {t.charter.tutorialMiss}</div>
+              <div><span style={{ color: colors.fairyGold }}>+2</span> {t.charter.tutorialClean}</div>
             </div>
           </div>
 
@@ -514,7 +502,7 @@ function TutorialSheet({ rank, onClose }: { rank: string; onClose: () => void })
           flexShrink: 0,
         }}>
           <button onClick={onClose} style={primaryBtnStyle}>
-            Понятно, начать!
+            {t.charter.tutorialStart}
           </button>
         </div>
       </motion.div>
@@ -525,6 +513,7 @@ function TutorialSheet({ rank, onClose }: { rank: string; onClose: () => void })
 function ExitConfirmSheet({
   pending, onStay, onLeave,
 }: { pending: boolean; onStay: () => void; onLeave: () => void }) {
+  const t = useT()
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -552,10 +541,10 @@ function ExitConfirmSheet({
         <div style={{ textAlign: 'center', marginBottom: spacing.lg }}>
           <div style={{ fontSize: '44px', marginBottom: '4px' }}>⚠️</div>
           <div style={{ color: colors.fairyGold, fontSize: '17px', fontWeight: 700 }}>
-            Выйдешь сейчас — сделка не состоится
+            {t.charter.exitTitle}
           </div>
           <div style={{ color: colors.textSecondary, fontSize: '13px', marginTop: spacing.sm, lineHeight: 1.5 }}>
-            Грамота уйдёт в летопись как пропущенная, её эталон и печати больше не покажутся.
+            {t.charter.exitHint}
           </div>
         </div>
         <div style={{ display: 'flex', gap: spacing.sm }}>
@@ -572,7 +561,7 @@ function ExitConfirmSheet({
               cursor: 'pointer',
             }}
           >
-            Остаться
+            {t.charter.exitCancel}
           </button>
           <button
             onClick={onLeave}
@@ -588,7 +577,7 @@ function ExitConfirmSheet({
               opacity: pending ? 0.6 : 1,
             }}
           >
-            {pending ? 'Уходим…' : 'Выйти и пропустить'}
+            {pending ? t.common.loading : t.charter.exitConfirm}
           </button>
         </div>
       </motion.div>
@@ -597,12 +586,6 @@ function ExitConfirmSheet({
 }
 
 // ── Фазы ───────────────────────────────────────────────────────────────────
-
-const DIFF_MUTATION_HINT: Record<string, string> = {
-  EASY:   'Отличия явные — форма или размер',
-  MEDIUM: 'Отличия умеренные — знак или тон цвета',
-  HARD:   'Отличия тонкие — цвет, число колец',
-}
 
 function forgeryColor(n: number): string {
   if (n <= 2) return colors.success
@@ -621,6 +604,10 @@ function IntroScreen({
   onStart: () => void
   onChat: () => void
 }) {
+  const t = useT()
+  const diffHint = t.charter.diffHints[difficulty as keyof typeof t.charter.diffHints] ?? t.charter.diffHints.EASY
+  const diffValue = difficulty === 'EASY' ? t.charter.diffEasy : difficulty === 'MEDIUM' ? t.charter.diffMedium : t.charter.diffHard
+
   return (
     <div style={{ flex: 1, padding: spacing.lg, maxWidth: '500px', margin: '0 auto', width: '100%', boxSizing: 'border-box', overflowY: 'auto' }}>
       {project.bannerImageUrl && (
@@ -637,9 +624,9 @@ function IntroScreen({
       </div>
 
       <div style={paramsRowStyle}>
-        <ParamChip label="Посул APY" value={`${project.claimedAPY}%`} />
-        <ParamChip label="Вкладчиков" value={project.currentUserCount.toLocaleString('ru')} />
-        <ParamChip label="Артель" value={`${project.claimedTeamSize} чел.`} />
+        <ParamChip label={t.charter.apy} value={`${project.claimedAPY}%`} />
+        <ParamChip label={t.charter.users} value={project.currentUserCount.toLocaleString('ru')} />
+        <ParamChip label={t.charter.guild} value={`${project.claimedTeamSize} чел.`} />
       </div>
 
       <div style={{
@@ -664,24 +651,24 @@ function IntroScreen({
       }}>
         {showForgeryCount
           ? <CharterStat
-              label="Подделок"
-              value={`${forgeryCount} из 24`}
+              label={t.charter.seals}
+              value={t.charter.forgedCount(forgeryCount)}
               valueColor={forgeryColor(forgeryCount)}
             />
           : <CharterStat
-              label="Подделок"
-              value="???"
+              label={t.charter.seals}
+              value={t.charter.forgedUnknown}
               valueColor={colors.textMuted}
             />
         }
         <CharterStat
-          label="На поиск"
-          value={`${timeLimitSeconds} с`}
+          label={t.charter.timer}
+          value={`${timeLimitSeconds} ${t.charter.timer}`}
           valueColor={timeLimitSeconds <= 10 ? colors.danger : timeLimitSeconds <= 15 ? colors.warning : colors.textPrimary}
         />
         <CharterStat
-          label="Отличия"
-          value={difficulty === 'EASY' ? 'явные' : difficulty === 'MEDIUM' ? 'средние' : 'тонкие'}
+          label={t.charter.diffLabel}
+          value={diffValue}
           valueColor={difficulty === 'HARD' ? colors.warning : colors.textPrimary}
         />
       </div>
@@ -696,17 +683,17 @@ function IntroScreen({
         fontSize: '11px',
         lineHeight: 1.5,
       }}>
-        {DIFF_MUTATION_HINT[difficulty] ?? DIFF_MUTATION_HINT.EASY} · запомни эталон и ищи не такие же
+        {diffHint}
       </div>
 
       <button onClick={onStart} style={{ ...primaryBtnStyle, marginTop: spacing.lg }}>
-        Изучить грамоту
+        {t.inbox.studyBtn}
       </button>
 
       <button onClick={onChat} style={secondaryBtnStyle}>
-        💬 Расспросить дельца лично
+        💬 {t.inbox.amaBtn}
         <div style={{ fontSize: '10px', color: colors.textMuted, marginTop: '2px', fontWeight: 400 }}>
-          10 Telegram Stars · личная беседа с дельцом
+          10 Telegram Stars · {t.ama.paywallCost}
         </div>
       </button>
     </div>
@@ -729,11 +716,12 @@ function CharterStat({ label, value, valueColor }: { label: string; value: strin
 }
 
 function ReferenceScreen({ seed, countdown }: { seed: string; countdown: number }) {
+  const t = useT()
   const ref = useMemo(() => generateReferenceSeal(seed), [seed])
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: spacing.xl }}>
       <div style={{ color: colors.fairyGold, fontSize: '14px', marginBottom: spacing.lg, textAlign: 'center' }}>
-        Запомни купеческий знак
+        {t.charter.memorizeTitle}
       </div>
       <motion.div
         initial={{ scale: 0.85, opacity: 0 }}
@@ -753,7 +741,7 @@ function ReferenceScreen({ seed, countdown }: { seed: string; countdown: number 
         {countdown}
       </div>
       <div style={{ color: colors.textMuted, fontSize: '11px' }}>
-        Подделки будут отличаться от этого знака
+        {t.charter.memorizeHint}
       </div>
     </div>
   )
@@ -845,6 +833,7 @@ function ScanGrid({
 function ResultSheet({
   result, onInvest, onSkip,
 }: { result: CharterResultDTO; onInvest: () => void; onSkip: () => void }) {
+  const t = useT()
   const [collapsed, setCollapsed] = useState(false)
   const emoji = result.delta > 0 ? '🎯' : result.delta === 0 ? '🤔' : '😅'
   const tp = result.truePositives.length
@@ -852,8 +841,8 @@ function ResultSheet({
   const fn = result.falseNegatives.length
   const cleanBonus = tp === 0 && fp === 0 && fn === 0 && result.delta === 2
   const formula = cleanBonus
-    ? 'Грамота была чистая — +2 за верное чутьё'
-    : `+${tp} найдено${fp > 0 ? ` − ${fp} ошиб${fp === 1 ? 'ка' : fp < 5 ? 'ки' : 'ок'}` : ''}${fn > 0 ? ` − ${2 * fn} упущено (×2)` : ''} = ${result.delta >= 0 ? '+' : ''}${result.delta}`
+    ? t.charter.resultCleanBonus
+    : `+${tp} ${t.charter.resultFound.toLowerCase()}${fp > 0 ? ` − ${fp} ${t.charter.resultErrors.toLowerCase()}` : ''}${fn > 0 ? ` − ${2 * fn} ${t.charter.resultMissed.toLowerCase()} (×2)` : ''} = ${result.delta >= 0 ? '+' : ''}${result.delta}`
 
   // Действие обязательно, поэтому backdrop без onClose, выйти можно
   // только через «Миновать» или «Вложить». Но лист можно свернуть кнопкой
@@ -903,7 +892,7 @@ function ResultSheet({
             width: '40px', height: '4px', borderRadius: '2px',
             background: `${colors.fairyGold}50`, margin: '0 auto 4px',
           }} />
-          {collapsed ? '▲ Показать разбор' : '▼ Посмотреть печати'}
+          {collapsed ? '▲' : '▼'}
         </button>
 
         {!collapsed && (
@@ -911,7 +900,7 @@ function ResultSheet({
             <div style={{ textAlign: 'center', marginBottom: spacing.lg }}>
               <div style={{ fontSize: '40px' }}>{emoji}</div>
               <div style={{ color: colors.fairyGold, fontSize: '22px', fontWeight: 700, marginTop: '4px' }}>
-                {result.delta > 0 ? `+${result.delta}` : `${result.delta}`} к чуйке
+                {result.delta > 0 ? `+${result.delta}` : `${result.delta}`} {t.common.intuition.toLowerCase()}
               </div>
               <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
                 {formula}
@@ -919,16 +908,16 @@ function ResultSheet({
             </div>
 
             <div style={resultRowStyle}>
-              <ResultStat color={colors.success} label="Найдено" value={tp} />
-              <ResultStat color={colors.danger}  label="Ошибок"  value={fp} />
-              <ResultStat color={colors.warning} label="Упущено" value={fn} />
+              <ResultStat color={colors.success} label={t.charter.resultFound} value={tp} />
+              <ResultStat color={colors.danger}  label={t.charter.resultErrors} value={fp} />
+              <ResultStat color={colors.warning} label={t.charter.resultMissed} value={fn} />
             </div>
             <div style={{ color: colors.textMuted, fontSize: '10px', textAlign: 'center', marginTop: '6px' }}>
-              Каждая пропущенная подделка стоит −2 к чуйке
+              {t.charter.tutorialMiss}
             </div>
 
             <div style={{ color: colors.fairyGold, fontSize: '13px', fontWeight: 600, textAlign: 'center', marginTop: spacing.lg }}>
-              Что дальше?
+              {t.charter.resultNext}
             </div>
           </>
         )}
@@ -940,7 +929,7 @@ function ResultSheet({
             marginBottom: spacing.sm,
           }}>
             <span style={{ color: colors.fairyGold, fontWeight: 700 }}>
-              {result.delta > 0 ? `+${result.delta}` : result.delta} к чуйке
+              {result.delta > 0 ? `+${result.delta}` : result.delta} {t.common.intuition.toLowerCase()}
             </span>
             <span style={{ color: colors.success }}>✓ {tp}</span>
             {fp > 0 && <span style={{ color: colors.danger }}>✕ {fp}</span>}
@@ -950,10 +939,10 @@ function ResultSheet({
 
         <div style={{ display: 'flex', gap: spacing.sm, marginTop: collapsed ? 0 : spacing.sm }}>
           <button onClick={onSkip} style={{ ...secondaryBtnStyle, flex: 1, marginTop: 0 }}>
-            Миновать
+            {t.charter.resultSkip}
           </button>
           <button onClick={onInvest} style={{ ...primaryBtnStyle, flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-            <CoinIcon size={16} /> Вложить
+            <CoinIcon size={16} /> {t.charter.resultInvest}
           </button>
         </div>
       </motion.div>
@@ -989,6 +978,7 @@ function ParamChip({ label, value }: { label: string; value: string }) {
 // ── Оверлеи ───────────────────────────────────────────────────────────────
 
 function InvestSheet({ projectId, onClose, onSuccess }: { projectId: string; onClose: () => void; onSuccess: () => void }) {
+  const t = useT()
   const [amount, setAmount] = useState('')
   const qc = useQueryClient()
   const { gameState } = useGameStore()
@@ -1006,16 +996,16 @@ function InvestSheet({ projectId, onClose, onSuccess }: { projectId: string; onC
   return (
     <Sheet onClose={onClose}>
       <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '18px', marginBottom: spacing.sm, display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <CoinIcon size={20} /> Вложить гроши
+        <CoinIcon size={20} /> {t.inbox.investBtn}
       </div>
       <div style={{ color: colors.textMuted, fontSize: '12px', marginBottom: spacing.sm }}>
-        Баланс: {gameState != null ? Math.floor(gameState.balance) : '—'} г · Мин. 5 г · Макс. 5 000 г
+        {t.portfolio.balanceLabel}: {gameState != null ? Math.floor(gameState.balance) : '—'} {t.common.currency} · {t.portfolio.addBalance(5).split('·')[1]?.trim() ?? ''}
       </div>
       <input
         type="number"
         value={amount}
         onChange={e => setAmount(e.target.value)}
-        placeholder="Сумма в грошах"
+        placeholder={t.portfolio.confirmAdd}
         style={{
           width: '100%', boxSizing: 'border-box',
           background: 'rgba(42, 25, 96, 0.4)',
@@ -1038,7 +1028,7 @@ function InvestSheet({ projectId, onClose, onSuccess }: { projectId: string; onC
         disabled={!amount || investMutation.isPending}
         style={{ ...primaryBtnStyle, opacity: !amount || investMutation.isPending ? 0.6 : 1 }}
       >
-        {investMutation.isPending ? '⏳' : 'Вложить'}
+        {investMutation.isPending ? '⏳' : t.charter.resultInvest}
       </button>
     </Sheet>
   )
@@ -1074,11 +1064,11 @@ function Sheet({ children, onClose }: { children: React.ReactNode; onClose: () =
 
 // ── Вспомогательное ───────────────────────────────────────────────────────
 
-function phaseCaption(phase: Phase, charter: CharterDTO, scanCountdown: number | null): string {
-  if (phase === 'intro')     return 'Познакомься с делом'
-  if (phase === 'reference') return 'Запоминай знак'
-  if (phase === 'scan')      return `Найди подделки · ${scanCountdown ?? charter.timeLimitSeconds} с`
-  return 'Разбор грамоты'
+function phaseCaption(phase: Phase, charter: CharterDTO, scanCountdown: number | null, t: ReturnType<typeof useT>): string {
+  if (phase === 'intro')     return t.charter.phaseIntro
+  if (phase === 'reference') return t.charter.phaseMemorize
+  if (phase === 'scan')      return `${t.charter.phaseFind} · ${scanCountdown ?? charter.timeLimitSeconds} ${t.charter.timer}`
+  return t.charter.phaseResult
 }
 
 // ── Стили ─────────────────────────────────────────────────────────────────

@@ -12,22 +12,12 @@ import { colors, spacing, typography } from '@/theme'
 import { evaluateAchievements, CATEGORY_LABELS, type EvaluatedAchievement } from '@/game/achievements'
 import { loreFor } from '@/game/lore'
 import { ChannelTasksBlock } from '@/components/ChannelTasksBlock'
-
-const RANK_DISPLAY: Record<string, string> = {
-  NEWBIE: 'Скоморох', AMBASSADOR: 'Купец', ANALYST: 'Мудрец', SHARK: 'Боярин', LAMBO_SENSEI: 'Князь',
-}
-
-const RANK_NEXT_HINT: Record<string, string> = {
-  NEWBIE: '100 г и чуйка 20 → Купец',
-  AMBASSADOR: '1 000 г и чуйка 100 → Мудрец',
-  ANALYST: '10 000 г и чуйка 300 → Боярин',
-  SHARK: '50 000 г и чуйка 500 → Князь',
-  LAMBO_SENSEI: 'Ты достиг вершины! 👑',
-}
+import { useT } from '@/i18n'
 
 type ChartScale = 30 | 90 | 999
 
 export function StatsPage() {
+  const t = useT()
   const gameState = useGameStore(s => s.gameState)
   const [chartScale, setChartScale] = useState<ChartScale>(30)
 
@@ -59,16 +49,13 @@ export function StatsPage() {
     <ScreenBackground bgImage={PAGE_BG.stats}>
       <div style={{ padding: `${spacing.xxl} ${spacing.lg} 80px`, maxWidth: '500px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: spacing.xxl }}>
-          <PageTitle>Успехи</PageTitle>
+          <PageTitle>{t.stats.title}</PageTitle>
         </div>
 
         {/* Ранг */}
         <FairyCard accent style={{ marginBottom: spacing.lg, textAlign: 'center' }}>
           <div style={{ fontSize: '40px', marginBottom: spacing.sm }}>
-            {gameState.investorRank === 'LAMBO_SENSEI' ? '👑' :
-             gameState.investorRank === 'SHARK' ? '🧥' :
-             gameState.investorRank === 'ANALYST' ? '📖' :
-             gameState.investorRank === 'AMBASSADOR' ? '🛒' : '🎪'}
+            {t.ranks.emoji[gameState.investorRank as keyof typeof t.ranks.emoji] ?? '🎪'}
           </div>
           <div style={{
             color: colors.fairyGold,
@@ -78,41 +65,41 @@ export function StatsPage() {
             letterSpacing: '0.04em',
             textShadow: `0 0 16px ${colors.fairyGold}40`,
           }}>
-            {RANK_DISPLAY[gameState.investorRank] ?? gameState.investorRank}
+            {t.ranks[gameState.investorRank as keyof typeof t.ranks] as string ?? gameState.investorRank}
           </div>
           <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: spacing.sm }}>
-            {RANK_NEXT_HINT[gameState.investorRank]}
+            {t.stats.rankNextHints[gameState.investorRank as keyof typeof t.stats.rankNextHints]}
           </div>
         </FairyCard>
 
         {/* Финансы — единая тройка как на Главной */}
         <FairyCard style={{ marginBottom: spacing.lg }}>
           <div style={{ color: colors.textMuted, fontSize: '11px', textAlign: 'center', marginBottom: spacing.sm, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            Денежная летопись
+            {t.stats.financesTitle}
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-around' }}>
-            <Stat label="Вложено" value={`${Math.floor(gameState.totalInvested)} г`} />
-            <Stat label="Получено" value={`${Math.floor(received)} г`} />
+            <Stat label={t.stats.invested} value={`${Math.floor(gameState.totalInvested)} г`} />
+            <Stat label={t.stats.returned} value={`${Math.floor(received)} г`} />
             <Stat
-              label="Итог"
+              label={t.stats.roi}
               value={`${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%`}
               valueColor={roi >= 0 ? colors.success : colors.danger}
             />
           </div>
           <div style={{ marginTop: spacing.md, paddingTop: spacing.md, borderTop: `1px solid ${colors.cardBorder}`, display: 'flex', justifyContent: 'space-around' }}>
-            <Stat label="Свободные гроши" value={`${Math.floor(gameState.balance)} г`} small />
-            <Stat label="Всего злата" value={`${Math.floor(gameState.balance + activeValue)} г`} small />
+            <Stat label={t.stats.freeBalance} value={`${Math.floor(gameState.balance)} г`} small />
+            <Stat label={t.stats.totalWealth} value={`${Math.floor(gameState.balance + activeValue)} г`} small />
           </div>
         </FairyCard>
 
         {/* Игровые показатели */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing.sm, marginBottom: spacing.lg }}>
           {[
-            { label: 'Дней в игре', value: String(gameState.currentDay) },
-            { label: 'Завершено дел', value: String(gameState.closedProjectsCount) },
-            { label: 'Чуйка', value: String(gameState.intuitionScore) },
+            { label: t.stats.daysPlayed, value: String(gameState.currentDay) },
+            { label: t.stats.dealsCompleted, value: String(gameState.closedProjectsCount) },
+            { label: t.stats.intuitionScore, value: String(gameState.intuitionScore) },
             {
-              label: 'Точность чуйки',
+              label: t.stats.intuitionAccuracy,
               value: gameState.intuitionAccuracy === null
                 ? '—'
                 : Math.round(gameState.intuitionAccuracy * 100) + '%',
@@ -132,13 +119,13 @@ export function StatsPage() {
           <FairyCard style={{ marginBottom: spacing.lg }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md }}>
               <div style={{ color: colors.fairyGold, fontSize: '13px', fontWeight: 600 }}>
-                Ведомость баланса
+                {t.stats.balanceChart}
               </div>
               <div style={{ display: 'flex', gap: '4px' }}>
                 {([
-                  { v: 30 as ChartScale, label: '30 дн.' },
-                  { v: 90 as ChartScale, label: '90 дн.' },
-                  { v: 999 as ChartScale, label: 'Всё' },
+                  { v: 30 as ChartScale, label: t.stats.chart30 },
+                  { v: 90 as ChartScale, label: t.stats.chart90 },
+                  { v: 999 as ChartScale, label: t.stats.chartAll },
                 ]).map(opt => (
                   <button
                     key={opt.v}
@@ -166,7 +153,7 @@ export function StatsPage() {
                 <Tooltip
                   contentStyle={{ background: colors.nightBlue, border: `1px solid ${colors.cardBorder}`, borderRadius: '8px' }}
                   labelStyle={{ color: colors.textMuted, fontSize: '11px' }}
-                  formatter={(v: number, name: string) => [`${v} г`, name === 'balance' ? 'Свободно' : 'Вложено']}
+                  formatter={(v: number, name: string) => [`${v} г`, name === 'balance' ? t.stats.chartFree : t.stats.chartInvested]}
                   labelFormatter={(l: number) => `День ${l}`}
                 />
                 <Bar dataKey="balance" stackId="a" fill={colors.fairyGold} />
@@ -176,11 +163,11 @@ export function StatsPage() {
             <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginTop: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <div style={{ width: '12px', height: '8px', background: colors.fairyGold, borderRadius: '2px' }} />
-                <span style={{ color: colors.textMuted, fontSize: '10px' }}>Свободно</span>
+                <span style={{ color: colors.textMuted, fontSize: '10px' }}>{t.stats.chartFree}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <div style={{ width: '12px', height: '8px', background: '#5B3FC8', borderRadius: '2px' }} />
-                <span style={{ color: colors.textMuted, fontSize: '10px' }}>Вложено</span>
+                <span style={{ color: colors.textMuted, fontSize: '10px' }}>{t.stats.chartInvested}</span>
               </div>
             </div>
           </FairyCard>
@@ -213,6 +200,7 @@ function Stat({ label, value, valueColor, small }: { label: string; value: strin
 }
 
 function AchievementsSection() {
+  const t = useT()
   const gameState = useGameStore(s => s.gameState)
   const [opened, setOpened] = useState<EvaluatedAchievement | null>(null)
   if (!gameState) return null
@@ -226,7 +214,7 @@ function AchievementsSection() {
   return (
     <div data-tour="achievements-section" style={{ marginTop: spacing.xl }}>
       <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '15px', marginBottom: spacing.sm, textAlign: 'center' }}>
-        🏆 Подвиги — {unlocked.length} из {items.length}
+        {t.stats.achievementsTitle(unlocked.length, items.length)}
       </div>
       {categories.map(cat => {
         const inCat = items.filter(a => a.category === cat)
@@ -311,6 +299,7 @@ function AchievementsSection() {
 function AchievementDetailModal({
   achievement, onClose,
 }: { achievement: EvaluatedAchievement; onClose: () => void }) {
+  const t = useT()
   const lore = achievement.revealTopic
     ? loreFor(achievement.revealTopic.kind, achievement.revealTopic.id)
     : null
@@ -352,7 +341,7 @@ function AchievementDetailModal({
           </div>
           {achievement.unlocked && (
             <div style={{ color: colors.success, fontSize: '12px', marginTop: '4px' }}>
-              ✓ Совершено
+              {t.stats.achievementDone}
             </div>
           )}
         </div>
@@ -366,7 +355,7 @@ function AchievementDetailModal({
             borderRadius: '10px',
           }}>
             <div style={{ color: colors.textMuted, fontSize: '11px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Как совершить
+              {t.stats.achievementHow}
             </div>
             <div style={{ color: colors.textPrimary, fontSize: '14px', lineHeight: 1.5 }}>
               {achievement.description}
@@ -417,7 +406,7 @@ function AchievementDetailModal({
                 borderRadius: '10px',
               }}>
                 <div style={{ color: colors.textMuted, fontSize: '11px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Приметы
+                  {t.stats.achievementHints}
                 </div>
                 {lore.hints.map((h, i) => (
                   <div key={i} style={{ color: colors.textPrimary, fontSize: '12px', lineHeight: 1.5, marginTop: i === 0 ? 0 : '4px' }}>
@@ -449,7 +438,7 @@ function AchievementDetailModal({
             cursor: 'pointer',
           }}
         >
-          Закрыть
+          {t.common.close}
         </button>
       </motion.div>
     </motion.div>

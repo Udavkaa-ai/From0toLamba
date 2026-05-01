@@ -8,36 +8,17 @@ import { api } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing } from '@/theme'
 import { CoinIcon } from '@/components/icons'
+import { useT } from '@/i18n'
 
 const tg = (window as any).Telegram?.WebApp
 const haptic = tg?.HapticFeedback
 
-// Разговорные шаблоны — для болтовни «по приколу», без допросной механики
-const ALL_QUESTIONS = [
-  'Расскажи о себе',
-  'Откуда ты родом?',
-  'Как докатился до этого дела?',
-  'Самая дикая байка из жизни?',
-  'Что самое страшное видел?',
-  'Кто твой кумир?',
-  'Любимое блюдо?',
-  'Чего боишься больше всего?',
-  'Если завтра разоришься — куда подашься?',
-  'Был ли у тебя любимый человек?',
-  'Веришь ли в чудеса?',
-  'Что бы делал, если бы вдруг стал царём?',
-  'Расскажи свою любимую сказку',
-  'Что у тебя в карманах сейчас?',
-  'Какая твоя главная слабость?',
-  'Какую песню напеваешь, когда никто не слышит?',
-]
-
-function pickSessionQuestions(sessionId: string | undefined): string[] {
+function pickSessionQuestions(allQuestions: string[], sessionId: string | undefined): string[] {
   // Детерминированно выбираем 8 вопросов на сессию
   const seed = sessionId ? sessionId.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) : Date.now()
-  const shuffled = [...ALL_QUESTIONS].sort((a, b) => {
-    const ha = (seed * a.charCodeAt(0) * 2654435761) % ALL_QUESTIONS.length
-    const hb = (seed * b.charCodeAt(0) * 2654435761) % ALL_QUESTIONS.length
+  const shuffled = [...allQuestions].sort((a, b) => {
+    const ha = (seed * a.charCodeAt(0) * 2654435761) % allQuestions.length
+    const hb = (seed * b.charCodeAt(0) * 2654435761) % allQuestions.length
     return ha - hb
   })
   return shuffled.slice(0, 8)
@@ -54,6 +35,7 @@ export function AmaPage() {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const { gameState, setGameState } = useGameStore()
+  const t = useT()
   const [input, setInput] = useState('')
   const [showInvestSheet, setShowInvestSheet] = useState(false)
   const [onboardingBonus, setOnboardingBonus] = useState<number | null>(null)
@@ -131,8 +113,8 @@ export function AmaPage() {
   }
 
   const sessionQuestions = useMemo(
-    () => pickSessionQuestions(session?.sessionId),
-    [session?.sessionId],
+    () => pickSessionQuestions(t.ama.questions, session?.sessionId),
+    [session?.sessionId, t.ama.questions],
   )
 
   const sendMutation = useMutation({
@@ -205,7 +187,7 @@ export function AmaPage() {
     return (
       <ScreenBackground>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100dvh', color: colors.fairyGold, fontSize: '24px' }}>
-          Открываем беседу...
+          {t.ama.loading}
         </div>
       </ScreenBackground>
     )
@@ -231,7 +213,7 @@ export function AmaPage() {
                 color: colors.fairyGold, cursor: 'pointer',
                 padding: '6px 12px', fontSize: '13px', fontWeight: 600,
               }}
-            >← Назад</button>
+            >{t.common.back}</button>
             <div style={{ color: colors.textPrimary, fontSize: '14px', fontWeight: 600 }}>
               {project?.developerName ?? 'Делец'}
             </div>
@@ -239,10 +221,10 @@ export function AmaPage() {
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: `${spacing.xxl} ${spacing.lg}`, gap: spacing.lg, textAlign: 'center' }}>
             <div style={{ fontSize: '56px' }}>⭐</div>
             <div style={{ color: colors.fairyGold, fontSize: '20px', fontWeight: 700 }}>
-              Личная беседа с {project?.developerName ?? 'дельцом'}
+              {t.ama.title(project?.developerName ?? 'дельцом')}
             </div>
             <div style={{ color: colors.textSecondary, fontSize: '13px', lineHeight: 1.6, maxWidth: '320px' }}>
-              Задай до 10 вопросов хозяину дела лично. Разведай правду, прояви чуйку и реши — вкладываться или нет.
+              {t.ama.subtitle}
             </div>
             <div style={{
               background: `${colors.fairyGold}12`,
@@ -253,7 +235,7 @@ export function AmaPage() {
               fontSize: '12px',
               lineHeight: 1.5,
             }}>
-              Стоимость беседы: <strong style={{ color: colors.fairyGold }}>10 Telegram Stars</strong>
+              {t.ama.paywallCost}
             </div>
             <button
               onClick={handleAmaPayment}
@@ -268,7 +250,7 @@ export function AmaPage() {
                 opacity: amaPaymentPending ? 0.6 : 1,
               }}
             >
-              {amaPaymentPending ? 'Открываем оплату…' : '⭐ Начать беседу · 10 звёзд'}
+              {amaPaymentPending ? t.ama.paywallPending : t.ama.paywallBtn}
             </button>
           </div>
         </div>
@@ -335,7 +317,7 @@ export function AmaPage() {
             }}
           >
             <span style={{ fontSize: '16px', lineHeight: 1 }}>←</span>
-            Назад
+            {t.common.back}
           </button>
           <div style={{ textAlign: 'center', flex: 1, minWidth: 0 }}>
             <div style={{
@@ -345,7 +327,7 @@ export function AmaPage() {
               {session.developerName ?? project?.developerName ?? 'Беседа с Дельцом'}
             </div>
             <div style={{ color: colors.textMuted, fontSize: '11px' }}>
-              {session.isComplete ? 'Беседа завершена' : `Вопрос ${session.questionCount}/10`}
+              {session.isComplete ? t.ama.sessionDone : t.ama.questionCount(session.questionCount, 10)}
             </div>
           </div>
           <div style={{ width: '64px' }} />
@@ -396,7 +378,7 @@ export function AmaPage() {
                 fontSize: '14px',
                 backdropFilter: 'blur(6px)',
               }}>
-                Делец думает...
+                {t.ama.thinking}
               </div>
             </div>
           )}
@@ -419,10 +401,10 @@ export function AmaPage() {
             }}
           >
             <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '16px' }}>
-              🎉 +{onboardingBonus} г на счёт!
+              {t.ama.onboardingBonus.replace('{bonus}', String(onboardingBonus))}
             </div>
             <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
-              Онбординг-бонус за первую беседу
+              {t.ama.onboardingBonusHint}
             </div>
           </motion.div>
         )}
@@ -450,7 +432,7 @@ export function AmaPage() {
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
               }}
             >
-              <CoinIcon size={16} /> Вложить гроши
+              {t.ama.investBtn}
             </button>
           </div>
         )}
@@ -512,7 +494,7 @@ export function AmaPage() {
             }}>
               <button
                 onClick={() => setShowInvestSheet(true)}
-                title="Вложить гроши"
+                title={t.ama.investBtn}
                 style={{
                   flexShrink: 0,
                   padding: `${spacing.sm} 10px`,
@@ -531,7 +513,7 @@ export function AmaPage() {
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSend()}
-                placeholder="Спроси о чём угодно..."
+                placeholder={t.ama.placeholder}
                 maxLength={500}
                 style={{
                   flex: 1,
@@ -582,6 +564,7 @@ function InvestSheet({ projectId, onClose, onSuccess }: { projectId: string; onC
   const [amount, setAmount] = useState('')
   const qc = useQueryClient()
   const { gameState, updateBalance } = useGameStore()
+  const t = useT()
 
   const investMutation = useMutation({
     mutationFn: () => api.invest.invest(projectId, Number(amount)),
@@ -621,16 +604,16 @@ function InvestSheet({ projectId, onClose, onSuccess }: { projectId: string; onC
         }}
       >
         <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '18px', marginBottom: spacing.sm, display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <CoinIcon size={20} /> Вложить гроши
+          <CoinIcon size={20} /> {t.ama.investBtn.replace('💰 ', '')}
         </div>
         <div style={{ color: colors.textMuted, fontSize: '12px', marginBottom: spacing.sm }}>
-          Баланс: {gameState != null ? Math.floor(gameState.balance) : '—'} г · Мин. 5 г · Макс. 5 000 г
+          {t.portfolio.addBalance(gameState != null ? Math.floor(gameState.balance) : 0)}
         </div>
         <input
           type="number"
           value={amount}
           onChange={e => setAmount(e.target.value)}
-          placeholder="Сумма в грошах"
+          placeholder={`${t.common.currencyName}`}
           style={{
             width: '100%', boxSizing: 'border-box',
             background: 'rgba(42, 25, 96, 0.4)',
@@ -660,7 +643,7 @@ function InvestSheet({ projectId, onClose, onSuccess }: { projectId: string; onC
             opacity: !amount || investMutation.isPending ? 0.6 : 1,
           }}
         >
-          {investMutation.isPending ? '⏳' : 'Вложить'}
+          {investMutation.isPending ? '⏳' : t.portfolio.confirmAdd}
         </button>
       </motion.div>
     </motion.div>

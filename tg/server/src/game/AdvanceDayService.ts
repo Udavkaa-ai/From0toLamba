@@ -405,7 +405,7 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
           },
         }).catch(err => console.error('[Event news] insert failed:', err))
       } else if (fate !== ProjectFate.INSTANT_SCAM) {
-        generateDailyUpdate(project.id, userId, project, userCountDelta, payoutStatus).catch(console.error)
+        generateDailyUpdate(project.id, userId, project, userCountDelta, payoutStatus, gameState.preferredModel, gameState.preferredLanguage ?? 'ru').catch(console.error)
       }
     }
   }

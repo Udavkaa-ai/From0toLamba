@@ -2,21 +2,15 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { colors, typography, RANK_COLOR } from '@/theme'
 import { api } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
+import { useT } from '@/i18n'
 import { CrownIcon } from './icons'
-
-const RANK_DISPLAY: Record<string, string> = {
-  NEWBIE: 'Скоморох',
-  AMBASSADOR: 'Купец',
-  ANALYST: 'Мудрец',
-  SHARK: 'Боярин',
-  LAMBO_SENSEI: 'Князь',
-}
 
 interface RankUpOverlayProps {
   rank: string
 }
 
 export function RankUpOverlay({ rank }: RankUpOverlayProps) {
+  const t = useT()
   const clearPendingRankUp = useGameStore(s => s.clearPendingRankUp)
   const accent = RANK_COLOR[rank] ?? colors.fairyGold
 
@@ -94,7 +88,7 @@ export function RankUpOverlay({ rank }: RankUpOverlayProps) {
             textTransform: 'uppercase',
             fontWeight: 600,
           }}>
-            Новый купеческий чин
+            {t.rankup.title}
           </div>
 
           <div style={{
@@ -106,11 +100,11 @@ export function RankUpOverlay({ rank }: RankUpOverlayProps) {
             letterSpacing: '0.05em',
             textShadow: `0 0 24px ${accent}, 0 0 48px ${accent}80`,
           }}>
-            {RANK_DISPLAY[rank] ?? rank}
+            {t.ranks[rank as keyof typeof t.ranks] as string ?? rank}
           </div>
 
           <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px' }}>
-            Нажми, чтобы продолжить
+            {t.rankup.hint}
           </div>
         </motion.div>
       </motion.div>

@@ -5,7 +5,7 @@ import type { NpcTruthParams } from './projectUtils'
 
 const MAX_QUESTIONS = 10
 
-export async function startSession(userId: number, projectId: string, model?: string): Promise<{
+export async function startSession(userId: number, projectId: string, model?: string, lang = 'ru'): Promise<{
   sessionId: string
   firstMessage: string
 }> {
@@ -35,7 +35,7 @@ export async function startSession(userId: number, projectId: string, model?: st
         truthTopics: project.truthTopics as LieTopic[],
         npcTruthParams: project.npcTruthParams as NpcTruthParams | null,
         fate: project.fate,
-      }, model)
+      }, model, lang)
       await prisma.amaMessage.create({
         data: { sessionId: existing.id, role: 'assistant', content: firstMessage },
       })
@@ -65,7 +65,7 @@ export async function startSession(userId: number, projectId: string, model?: st
     lieTopics: project.lieTopics as LieTopic[],
     truthTopics: project.truthTopics as LieTopic[],
     npcTruthParams: project.npcTruthParams as NpcTruthParams | null,
-  }, model)
+  }, model, lang)
 
   await prisma.amaMessage.create({
     data: { sessionId: session.id, role: 'assistant', content: firstMessage },
@@ -74,7 +74,7 @@ export async function startSession(userId: number, projectId: string, model?: st
   return { sessionId: session.id, firstMessage }
 }
 
-export async function sendMessage(userId: number, projectId: string, userMessage: string, model?: string): Promise<{
+export async function sendMessage(userId: number, projectId: string, userMessage: string, model?: string, lang = 'ru'): Promise<{
   reply: string
   questionCount: number
   isSessionComplete: boolean
@@ -116,7 +116,7 @@ export async function sendMessage(userId: number, projectId: string, userMessage
       history: history.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
       userMessage,
       questionCount: session.questionCount + 1,
-    }, model)
+    }, model, lang)
   } catch (err) {
     console.error('[AmaSession] AI reply failed:', err)
     throw err

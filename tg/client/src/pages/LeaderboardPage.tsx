@@ -11,6 +11,7 @@ import {
   type ReferralLeaderboardEntryDTO,
 } from '@/api/client'
 import { colors, spacing } from '@/theme'
+import { useT } from '@/i18n'
 
 const RANK_EMOJI: Record<string, string> = {
   NEWBIE: '🎭',
@@ -35,24 +36,18 @@ function positionBadge(pos: number) {
   return `#${pos}`
 }
 
-type Tab = 'money' | 'intuition' | 'days' | 'achievements' | 'referrals'
-
-const TAB_LABELS: Record<Tab, string> = {
-  money: '💰 Злато',
-  intuition: '👁 Чуйка',
-  days: '📅 Дни',
-  achievements: '🎯 Дела',
-  referrals: '🤝 Сваты',
-}
+type Tab = 'wealth' | 'intuition' | 'days' | 'deals' | 'referrals'
 
 export function LeaderboardPage() {
-  const [tab, setTab] = useState<Tab>('money')
+  const t = useT()
+  const [tab, setTab] = useState<Tab>('wealth')
+  const tabKeys = Object.keys(t.leaderboard.tabs) as Tab[]
 
   return (
     <ScreenBackground bgImage={PAGE_BG.leaderboard}>
       <div style={{ padding: `${spacing.xxl} ${spacing.lg} 80px`, maxWidth: '500px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: spacing.lg }}>
-          <PageTitle>Ярмарочный Рейтинг</PageTitle>
+          <PageTitle>{t.leaderboard.title}</PageTitle>
         </div>
 
         {/* Tabs */}
@@ -65,31 +60,31 @@ export function LeaderboardPage() {
           border: `1px solid ${colors.cardBorder}`,
           borderRadius: '12px',
         }}>
-          {(Object.keys(TAB_LABELS) as Tab[]).map(t => (
+          {tabKeys.map(key => (
             <button
-              key={t}
-              onClick={() => setTab(t)}
+              key={key}
+              onClick={() => setTab(key)}
               style={{
                 flex: 1,
                 padding: '8px 4px',
-                background: tab === t ? `${colors.fairyGold}20` : 'transparent',
-                border: `1px solid ${tab === t ? colors.fairyGold + '60' : 'transparent'}`,
+                background: tab === key ? `${colors.fairyGold}20` : 'transparent',
+                border: `1px solid ${tab === key ? colors.fairyGold + '60' : 'transparent'}`,
                 borderRadius: '8px',
-                color: tab === t ? colors.fairyGold : colors.textMuted,
+                color: tab === key ? colors.fairyGold : colors.textMuted,
                 fontSize: '11px',
                 fontWeight: 600,
                 cursor: 'pointer',
               }}
             >
-              {TAB_LABELS[t]}
+              {t.leaderboard.tabs[key]}
             </button>
           ))}
         </div>
 
-        {tab === 'money' && <MoneyTab />}
+        {tab === 'wealth' && <MoneyTab />}
         {tab === 'intuition' && <IntuitionTab />}
         {tab === 'days' && <DaysTab />}
-        {tab === 'achievements' && <AchievementsTab />}
+        {tab === 'deals' && <AchievementsTab />}
         {tab === 'referrals' && <ReferralsTab />}
       </div>
     </ScreenBackground>
@@ -99,6 +94,7 @@ export function LeaderboardPage() {
 // ─── Tabs ──────────────────────────────────────────────────────────────────
 
 function ShowAllButton({ onClick }: { onClick: () => void }) {
+  const t = useT()
   return (
     <button
       onClick={onClick}
@@ -113,15 +109,16 @@ function ShowAllButton({ onClick }: { onClick: () => void }) {
         cursor: 'pointer',
       }}
     >
-      👥 Смотреть всех купцов
+      {t.leaderboard.showAll}
     </button>
   )
 }
 
 function MoneyTab() {
+  const t = useT()
   const [showAll, setShowAll] = useState(false)
   const { data, isLoading } = useQuery({
-    queryKey: ['leaderboard', 'money'],
+    queryKey: ['leaderboard', 'wealth'],
     queryFn: api.leaderboard.get,
     refetchInterval: 60_000,
   })
@@ -129,16 +126,16 @@ function MoneyTab() {
 
   return (
     <>
-      <Caption description="Богатейшие купцы Лукоморья" totalPlayers={data?.totalPlayers} />
+      <Caption description={t.leaderboard.captions.wealth} totalPlayers={data?.totalPlayers} />
       {isLoading && [1, 2, 3, 4, 5].map(i => <SkeletonCard key={i} lines={2} />)}
-      {entries?.length === 0 && !isLoading && <EmptyState icon="💰" text="Пока никто не накопил злата" />}
+      {entries?.length === 0 && !isLoading && <EmptyState icon="💰" text={t.leaderboard.empty.wealth} />}
       {entries?.map((entry, i) => (
         <motion.div key={entry.userId} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: Math.min(i * 0.03, 0.3) }}>
           <LeaderboardRow entry={entry} />
         </motion.div>
       ))}
       {data && data.myPosition && data.myPosition > (showAll ? data.entries.length : 5) && (
-        <MyOutsidePos myPosition={data.myPosition} total={data.totalPlayers} hint="Копи злато — поднимайся выше!" />
+        <MyOutsidePos myPosition={data.myPosition} total={data.totalPlayers} hint={t.leaderboard.hints.wealth} />
       )}
       {!showAll && data && data.entries.length > 5 && <ShowAllButton onClick={() => setShowAll(true)} />}
     </>
@@ -146,6 +143,7 @@ function MoneyTab() {
 }
 
 function IntuitionTab() {
+  const t = useT()
   const [showAll, setShowAll] = useState(false)
   const { data, isLoading } = useQuery({
     queryKey: ['leaderboard', 'intuition'],
@@ -156,16 +154,16 @@ function IntuitionTab() {
 
   return (
     <>
-      <Caption description="Острее всех чуют обман" totalPlayers={data?.totalPlayers} />
+      <Caption description={t.leaderboard.captions.intuition} totalPlayers={data?.totalPlayers} />
       {isLoading && [1, 2, 3, 4, 5].map(i => <SkeletonCard key={i} lines={2} />)}
-      {entries?.length === 0 && !isLoading && <EmptyState icon="👁" text="Ещё никто не проверял грамоты" />}
+      {entries?.length === 0 && !isLoading && <EmptyState icon="👁" text={t.leaderboard.empty.intuition} />}
       {entries?.map((entry, i) => (
         <motion.div key={entry.userId} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: Math.min(i * 0.03, 0.3) }}>
           <IntuitionRow entry={entry} />
         </motion.div>
       ))}
       {data && data.myPosition && data.myPosition > (showAll ? data.entries.length : 5) && (
-        <MyOutsidePos myPosition={data.myPosition} total={data.totalPlayers} hint="Разбирай грамоты — точнее видишь!" />
+        <MyOutsidePos myPosition={data.myPosition} total={data.totalPlayers} hint={t.leaderboard.hints.intuition} />
       )}
       {!showAll && data && data.entries.length > 5 && <ShowAllButton onClick={() => setShowAll(true)} />}
     </>
@@ -173,6 +171,7 @@ function IntuitionTab() {
 }
 
 function DaysTab() {
+  const t = useT()
   const [showAll, setShowAll] = useState(false)
   const { data, isLoading } = useQuery({
     queryKey: ['leaderboard', 'days'],
@@ -183,16 +182,16 @@ function DaysTab() {
 
   return (
     <>
-      <Caption description="Дольше всех на ярмарке" totalPlayers={data?.totalPlayers} />
+      <Caption description={t.leaderboard.captions.days} totalPlayers={data?.totalPlayers} />
       {isLoading && [1, 2, 3, 4, 5].map(i => <SkeletonCard key={i} lines={2} />)}
-      {entries?.length === 0 && !isLoading && <EmptyState icon="📅" text="Пока никто не прошёл и дня" />}
+      {entries?.length === 0 && !isLoading && <EmptyState icon="📅" text={t.leaderboard.empty.days} />}
       {entries?.map((entry, i) => (
         <motion.div key={entry.userId} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: Math.min(i * 0.03, 0.3) }}>
           <DaysRow entry={entry} />
         </motion.div>
       ))}
       {data && data.myPosition && data.myPosition > (showAll ? data.entries.length : 5) && (
-        <MyOutsidePos myPosition={data.myPosition} total={data.totalPlayers} hint="Жми следующий день каждый раз!" />
+        <MyOutsidePos myPosition={data.myPosition} total={data.totalPlayers} hint={t.leaderboard.hints.days} />
       )}
       {!showAll && data && data.entries.length > 5 && <ShowAllButton onClick={() => setShowAll(true)} />}
     </>
@@ -200,9 +199,10 @@ function DaysTab() {
 }
 
 function AchievementsTab() {
+  const t = useT()
   const [showAll, setShowAll] = useState(false)
   const { data, isLoading } = useQuery({
-    queryKey: ['leaderboard', 'achievements'],
+    queryKey: ['leaderboard', 'deals'],
     queryFn: api.leaderboard.getByAchievements,
     refetchInterval: 60_000,
   })
@@ -210,16 +210,16 @@ function AchievementsTab() {
 
   return (
     <>
-      <Caption description="Больше всего вложений в дела + грамот" totalPlayers={data?.totalPlayers} />
+      <Caption description={t.leaderboard.captions.deals} totalPlayers={data?.totalPlayers} />
       {isLoading && [1, 2, 3, 4, 5].map(i => <SkeletonCard key={i} lines={2} />)}
-      {entries?.length === 0 && !isLoading && <EmptyState icon="🎯" text="Пока никто не завершил дел" />}
+      {entries?.length === 0 && !isLoading && <EmptyState icon="🎯" text={t.leaderboard.empty.deals} />}
       {entries?.map((entry, i) => (
         <motion.div key={entry.userId} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: Math.min(i * 0.03, 0.3) }}>
           <AchievementRow entry={entry} />
         </motion.div>
       ))}
       {data && data.myPosition && data.myPosition > (showAll ? data.entries.length : 5) && (
-        <MyOutsidePos myPosition={data.myPosition} total={data.totalPlayers} hint="Входи в дела и разбирай грамоты!" />
+        <MyOutsidePos myPosition={data.myPosition} total={data.totalPlayers} hint={t.leaderboard.hints.deals} />
       )}
       {!showAll && data && data.entries.length > 5 && <ShowAllButton onClick={() => setShowAll(true)} />}
     </>
@@ -227,6 +227,7 @@ function AchievementsTab() {
 }
 
 function ReferralsTab() {
+  const t = useT()
   const [showAll, setShowAll] = useState(false)
   const { data, isLoading } = useQuery({
     queryKey: ['leaderboard', 'referrals'],
@@ -237,16 +238,16 @@ function ReferralsTab() {
 
   return (
     <>
-      <Caption description="Больше всего сосватанных купцов" totalPlayers={data?.totalPlayers} />
+      <Caption description={t.leaderboard.captions.referrals} totalPlayers={data?.totalPlayers} />
       {isLoading && [1, 2, 3, 4, 5].map(i => <SkeletonCard key={i} lines={2} />)}
-      {entries?.length === 0 && !isLoading && <EmptyState icon="🤝" text="Пока никто не сосватал купцов" />}
+      {entries?.length === 0 && !isLoading && <EmptyState icon="🤝" text={t.leaderboard.empty.referrals} />}
       {entries?.map((entry, i) => (
         <motion.div key={entry.userId} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: Math.min(i * 0.03, 0.3) }}>
           <ReferralRow entry={entry} />
         </motion.div>
       ))}
       {data && data.myPosition && data.myPosition > (showAll ? data.entries.length : 5) && (
-        <MyOutsidePos myPosition={data.myPosition} total={data.totalPlayers} hint="Зови купцов — расти в рейтинге!" />
+        <MyOutsidePos myPosition={data.myPosition} total={data.totalPlayers} hint={t.leaderboard.hints.referrals} />
       )}
       {!showAll && data && data.entries.length > 5 && <ShowAllButton onClick={() => setShowAll(true)} />}
     </>
@@ -276,10 +277,11 @@ function IntuitionRow({ entry }: { entry: LeaderboardEntryDTO }) {
 }
 
 function DaysRow({ entry }: { entry: LeaderboardEntryDTO }) {
+  const t = useT()
   return (
     <BaseRow
       entry={entry}
-      rightTop={`${entry.currentDay} дней`}
+      rightTop={t.leaderboard.days(entry.currentDay)}
       rightBottom={`👁 ${entry.intuitionScore}`}
       hideDayInSub
     />
@@ -287,16 +289,18 @@ function DaysRow({ entry }: { entry: LeaderboardEntryDTO }) {
 }
 
 function AchievementRow({ entry }: { entry: AchievementLeaderboardEntryDTO }) {
+  const t = useT()
   return (
     <BaseRow
       entry={entry}
-      rightTop={`📦 ${entry.closedProjectsCount} вложений`}
-      rightBottom={`📜 ${entry.chartersSubmitted} грамот`}
+      rightTop={`📦 ${t.leaderboard.investments(entry.closedProjectsCount)}`}
+      rightBottom={t.leaderboard.charters(entry.chartersSubmitted)}
     />
   )
 }
 
 function ReferralRow({ entry }: { entry: ReferralLeaderboardEntryDTO }) {
+  const t = useT()
   const displayName = entry.username ? `@${entry.username}` : entry.firstName
   const rankLabel = RANK_LABEL[entry.investorRank] ?? entry.investorRank
   const rankEmoji = RANK_EMOJI[entry.investorRank] ?? '🎭'
@@ -324,7 +328,7 @@ function ReferralRow({ entry }: { entry: ReferralLeaderboardEntryDTO }) {
       </div>
       <div style={{ textAlign: 'right', flexShrink: 0 }}>
         <div style={{ color: isTop3 ? colors.fairyGold : colors.textPrimary, fontWeight: 700, fontSize: '13px' }}>
-          🤝 {entry.referralCount} сватов
+          {t.leaderboard.refs(entry.referralCount)}
         </div>
       </div>
     </div>
@@ -340,6 +344,7 @@ function BaseRow({
   hideRankDay?: boolean
   hideDayInSub?: boolean
 }) {
+  const t = useT()
   const displayName = entry.username ? `@${entry.username}` : entry.firstName
   const rankLabel = RANK_LABEL[entry.investorRank] ?? entry.investorRank
   const rankEmoji = RANK_EMOJI[entry.investorRank] ?? '🎭'
@@ -384,7 +389,7 @@ function BaseRow({
         </div>
         {!hideRankDay && (
           <div style={{ color: colors.textMuted, fontSize: '10px', marginTop: '2px' }}>
-            {rankEmoji} {rankLabel}{!hideDayInSub ? ` · день ${entry.currentDay}` : ''}
+            {rankEmoji} {rankLabel}{!hideDayInSub ? ` · ${t.leaderboard.days(entry.currentDay)}` : ''}
           </div>
         )}
         {hideRankDay && (
@@ -415,11 +420,12 @@ function BaseRow({
 // ─── Bits ──────────────────────────────────────────────────────────────────
 
 function Caption({ description, totalPlayers }: { description: string; totalPlayers?: number }) {
+  const t = useT()
   return (
     <div style={{ textAlign: 'center', marginBottom: spacing.md }}>
       <div style={{ color: colors.fairyGold, fontSize: '12px', fontWeight: 600, opacity: 0.85 }}>{description}</div>
       {totalPlayers !== undefined && (
-        <div style={{ color: colors.textMuted, fontSize: '10px', marginTop: '2px' }}>{totalPlayers} купцов в игре</div>
+        <div style={{ color: colors.textMuted, fontSize: '10px', marginTop: '2px' }}>{t.leaderboard.badge(totalPlayers)}</div>
       )}
     </div>
   )
@@ -435,6 +441,7 @@ function EmptyState({ icon, text }: { icon: string; text: string }) {
 }
 
 function MyOutsidePos({ myPosition, total, hint }: { myPosition: number; total: number; hint: string }) {
+  const t = useT()
   return (
     <div style={{
       marginTop: spacing.lg,
@@ -445,7 +452,7 @@ function MyOutsidePos({ myPosition, total, hint }: { myPosition: number; total: 
       textAlign: 'center',
     }}>
       <div style={{ color: colors.fairyGold, fontSize: '13px' }}>
-        Ваше место: #{myPosition} из {total}
+        {t.leaderboard.yourPlace(myPosition, total)}
       </div>
       <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '2px' }}>{hint}</div>
     </div>

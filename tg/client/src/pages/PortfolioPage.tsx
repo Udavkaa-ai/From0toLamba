@@ -11,26 +11,28 @@ import { api, type ProjectDTO, type PostMortemDTO, type DailyUpdateDTO, type Tra
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing, typography } from '@/theme'
 import { CountUp } from '@/components/CountUp'
+import { useT } from '@/i18n'
 
 /** Конкретная подсказка для вывода: сумма в г, а не просто «25%». */
-function withdrawalHint(project: ProjectDTO): string | null {
+function withdrawalHint(project: ProjectDTO, t: ReturnType<typeof useT>): string | null {
   switch (project.type) {
     case 'POTION_BREW':
     case 'GUILD_SCHEME': {
       const maxRubles = Math.floor(project.currentValueRubles * 0.25)
-      return `Макс. за раз: ${maxRubles} г (25% от ${Math.floor(project.currentValueRubles)} г в деле)`
+      return t.portfolio.withdrawLimit25(maxRubles)
     }
     case 'CARD_GAME':
     case 'TREASURE_HUNT':
-      return 'Комиссия 25% с каждого вывода'
+      return t.portfolio.withdrawFeeCard
     case 'HONEST_TRADE':
-      return 'Без ограничений и комиссий'
+      return t.portfolio.withdrawFeeNone
     default:
       return null
   }
 }
 
 export function PortfolioPage() {
+  const t = useT()
   const navigate = useNavigate()
   const { data, isLoading } = useQuery({
     queryKey: ['portfolio'],
@@ -48,9 +50,9 @@ export function PortfolioPage() {
     <ScreenBackground bgImage={PAGE_BG.portfolio}>
       <div style={{ padding: `${spacing.xxl} ${spacing.lg} 80px`, maxWidth: '500px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: spacing.xxl }}>
-          <PageTitle>Казна</PageTitle>
+          <PageTitle>{t.portfolio.title}</PageTitle>
           <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
-            Активные дела и история
+            {t.portfolio.subtitle}
           </div>
         </div>
 
@@ -60,7 +62,7 @@ export function PortfolioPage() {
         {data?.active && data.active.length > 0 && (
           <section>
             <div style={{ color: colors.fairyGold, fontSize: '13px', fontWeight: 600, marginBottom: spacing.sm }}>
-              Активные дела
+              {t.portfolio.tabActive}
             </div>
             {data.active.map((p, i) => (
               <motion.div
@@ -77,9 +79,9 @@ export function PortfolioPage() {
         {data?.active?.length === 0 && !isLoading && (
           <FairyCard style={{ textAlign: 'center', marginBottom: spacing.lg }}>
             <div style={{ fontSize: '32px', marginBottom: spacing.sm }}>🏚️</div>
-            <div style={{ color: colors.textSecondary }}>Нет активных дел</div>
+            <div style={{ color: colors.textSecondary }}>{t.portfolio.empty}</div>
             <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
-              Загляни во входящие грамоты
+              {t.portfolio.emptyHint}
             </div>
           </FairyCard>
         )}
@@ -88,7 +90,7 @@ export function PortfolioPage() {
         {data?.closed && data.closed.filter(p => p.investedAmountRubles > 0).length > 0 && (
           <section style={{ marginTop: spacing.xl }}>
             <div style={{ color: colors.textMuted, fontSize: '13px', fontWeight: 600, marginBottom: spacing.sm }}>
-              История
+              {t.portfolio.tabHistory}
             </div>
             {data.closed.filter(p => p.investedAmountRubles > 0).slice(0, 3).map((p, i) => (
               <motion.div key={p.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}>
@@ -116,7 +118,7 @@ export function PortfolioPage() {
               }}
             >
               <span>📜</span>
-              <span>Вся летопись</span>
+              <span>{t.registry.title}</span>
               {data.closed.filter(p => p.investedAmountRubles > 0).length > 3 && (
                 <span style={{ fontSize: '11px', opacity: 0.7, fontWeight: 400 }}>
                   (+{data.closed.filter(p => p.investedAmountRubles > 0).length - 3} ещё)
@@ -134,6 +136,7 @@ export function PortfolioPage() {
 }
 
 function NewsItem({ update }: { update: DailyUpdateDTO }) {
+  const t = useT()
   const [expanded, setExpanded] = useState(false)
 
   // Случайное событие имеет приоритет в подсветке: красный/зелёный/серый ромб.
@@ -179,7 +182,7 @@ function NewsItem({ update }: { update: DailyUpdateDTO }) {
         </span>
         {update.redFlags.length > 0 && (
           <span style={{ color: colors.warning, fontSize: '10px', flexShrink: 0 }}>
-            ⚠️ {update.redFlags.length} сигн.
+            {t.portfolio.redFlags(update.redFlags.length)}
           </span>
         )}
       </div>
@@ -214,6 +217,7 @@ function MiniValueChart({ valueHistory, userCountHistory, userCount, invested }:
   userCount: number
   invested: number
 }) {
+  const t = useT()
   const uid = useId()
   if (valueHistory.length < 2) return null
   const len = Math.max(valueHistory.length, userCountHistory.length)
@@ -229,8 +233,8 @@ function MiniValueChart({ valueHistory, userCountHistory, userCount, invested }:
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-        <span style={{ color: '#aaa', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>История стоимости</span>
-        <span style={{ color: '#4a9eff', fontSize: '9px' }}>👥 {userCount} вкл.</span>
+        <span style={{ color: '#aaa', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.portfolio.chartTitle}</span>
+        <span style={{ color: '#4a9eff', fontSize: '9px' }}>👥 {userCount} {t.common.investors}</span>
       </div>
       <ResponsiveContainer width="100%" height={80}>
         <ComposedChart data={data} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
@@ -244,8 +248,8 @@ function MiniValueChart({ valueHistory, userCountHistory, userCount, invested }:
           <YAxis yAxisId="users" hide orientation="right" domain={['auto', 'auto']} />
           <Tooltip
             contentStyle={{ background: '#0D1735', border: 'none', borderRadius: '6px', fontSize: '10px', color: '#C8C8FF' }}
-            formatter={(v: number, name: string) => name === 'val' ? [`${Math.floor(v)} г`, 'Стоимость'] : [`${v} чел.`, 'Вкладчики']}
-            labelFormatter={(l: number) => `День ${l + 1}`}
+            formatter={(v: number, name: string) => name === 'val' ? [`${Math.floor(v)} ${t.common.currency}`, t.portfolio.valueLabel] : [`${v} чел.`, 'Вкладчики']}
+            labelFormatter={(l: number) => `${t.common.day} ${l + 1}`}
           />
           <Area yAxisId="val" type="monotone" dataKey="val" stroke={color} strokeWidth={1.5} fill={`url(#${gradId})`} dot={false} isAnimationActive={false} />
           <Line yAxisId="users" type="monotone" dataKey="users" stroke="#4a9eff" strokeWidth={1.5} strokeDasharray="3 3" dot={false} isAnimationActive={false} connectNulls />
@@ -256,6 +260,7 @@ function MiniValueChart({ valueHistory, userCountHistory, userCount, invested }:
 }
 
 function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFirst?: boolean }) {
+  const t = useT()
   const qc = useQueryClient()
   const { gameState, updateBalance } = useGameStore()
   const [showWithdraw, setShowWithdraw] = useState(false)
@@ -323,11 +328,11 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <div>
           <div style={{ color: colors.fairyGold, fontWeight: 700 }}>{project.name}</div>
-          <div style={{ color: colors.textMuted, fontSize: '11px' }}>{project.developerName} · {project.daysSinceJoined} дн.</div>
+          <div style={{ color: colors.textMuted, fontSize: '11px' }}>{project.developerName} · {project.daysSinceJoined} {t.common.days}</div>
         </div>
         <div style={{ textAlign: 'right' }}>
           <div style={{ color: colors.textMuted, fontSize: '10px', letterSpacing: '0.02em' }}>
-            вложено {Math.floor(project.investedAmountRubles)} г
+            {t.portfolio.investedIn} {Math.floor(project.investedAmountRubles)} {t.common.currency}
           </div>
           <div style={{
             color: colors.fairyGold,
@@ -340,7 +345,7 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
             textShadow: `0 0 16px ${colors.fairyGold}30`,
             marginTop: '2px',
           }}>
-            <CountUp value={project.currentValueRubles} /> г
+            <CountUp value={project.currentValueRubles} /> {t.common.currency}
           </div>
           <div style={{ color: profit >= 0 ? colors.success : colors.danger, fontSize: '12px', fontWeight: 600 }}>
             {profit >= 0 ? '+' : ''}{profit.toFixed(1)}%
@@ -350,7 +355,7 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
 
       {project.isWithdrawalLocked && (
         <div style={{ marginTop: spacing.sm, color: colors.warning, fontSize: '12px', padding: '4px 8px', background: `${colors.warning}15`, borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-          <LockIcon size={14} /> Вывод заблокирован хозяином
+          <LockIcon size={14} /> {t.home.activeCardLocked}
         </div>
       )}
 
@@ -367,7 +372,7 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
         <>
           <OrnamentDivider />
           <div style={{ color: colors.textMuted, fontSize: '11px', fontWeight: 600, marginBottom: '6px' }}>
-            Вести
+            {t.portfolio.newsTitle}
           </div>
           {recentUpdates.map(u => (
             <NewsItem key={u.id} update={u} />
@@ -390,7 +395,7 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
               color: colors.fairyGold, cursor: 'pointer', fontSize: '12px',
             }}
           >
-            Довложить
+            {t.portfolio.addBtn}
           </motion.button>
         )}
         {!project.isWithdrawalLocked && (
@@ -404,7 +409,7 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
               color: colors.textSecondary, cursor: 'pointer', fontSize: '12px',
             }}
           >
-            Вывести часть
+            {t.portfolio.withdrawBtn}
           </motion.button>
         )}
         <motion.button
@@ -419,7 +424,7 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
             cursor: project.isWithdrawalLocked ? 'not-allowed' : 'pointer', fontSize: '12px',
           }}
         >
-          Покинуть дело
+          {t.portfolio.exitBtn}
         </motion.button>
       </div>
 
@@ -440,9 +445,9 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
               borderRadius: '10px',
             }}>
               <div style={{ color: colors.textPrimary, fontSize: '13px', marginBottom: spacing.sm }}>
-                Покинуть дело? Вернётся <span style={{ color: colors.fairyGold, fontWeight: 700 }}>
-                  {Math.floor(project.currentValueRubles * (1 - (project.type === 'CARD_GAME' || project.type === 'TREASURE_HUNT' ? 0.25 : 0)))} г
-                </span> в казну.
+                {t.portfolio.exitConfirm(
+                  Math.floor(project.currentValueRubles * (1 - (project.type === 'CARD_GAME' || project.type === 'TREASURE_HUNT' ? 0.25 : 0)))
+                )}
               </div>
               <div style={{ display: 'flex', gap: spacing.sm }}>
                 <button
@@ -455,7 +460,7 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
                     cursor: 'pointer',
                   }}
                 >
-                  Остаться
+                  {t.common.cancel}
                 </button>
                 <button
                   onClick={() => { exitMutation.mutate(); setConfirmExit(false) }}
@@ -468,7 +473,7 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
                     opacity: exitMutation.isPending ? 0.6 : 1,
                   }}
                 >
-                  {exitMutation.isPending ? 'Выходим…' : 'Да, покинуть'}
+                  {exitMutation.isPending ? t.common.loading : t.portfolio.exitBtn}
                 </button>
               </div>
             </div>
@@ -476,9 +481,9 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
         )}
       </AnimatePresence>
 
-      {withdrawalHint(project) && (
+      {withdrawalHint(project, t) && (
         <div style={{ color: colors.textMuted, fontSize: '10px', marginTop: '4px' }}>
-          ℹ️ {withdrawalHint(project)}
+          ℹ️ {withdrawalHint(project, t)}
         </div>
       )}
 
@@ -488,14 +493,13 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
             <div style={{ marginTop: spacing.md }}>
               <div style={{ color: colors.textMuted, fontSize: '11px', marginBottom: '4px' }}>
-                В казне: <span style={{ color: colors.fairyGold, fontWeight: 600 }}>{Math.floor(gameState?.balance ?? 0)} г</span>
-                {' · '}мин. 5 г · макс. 5 000 г
+                {t.portfolio.addBalance(Math.floor(gameState?.balance ?? 0))}
               </div>
               <input
                 type="number"
                 value={addAmount}
                 onChange={e => setAddAmount(e.target.value)}
-                placeholder="Сумма довложения"
+                placeholder={t.portfolio.addBtn}
                 style={{
                   width: '100%', boxSizing: 'border-box',
                   background: 'rgba(42, 25, 96, 0.4)', border: `1px solid ${colors.cardBorder}`,
@@ -520,7 +524,7 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
                   color: colors.fairyGold, fontWeight: 600, cursor: 'pointer', fontSize: '13px',
                 }}
               >
-                {addInvestMutation.isPending ? 'Вкладываем...' : 'Довложить'}
+                {addInvestMutation.isPending ? t.common.loading : t.portfolio.confirmAdd}
               </motion.button>
             </div>
           </motion.div>
@@ -533,24 +537,23 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
             <div style={{ marginTop: spacing.md }}>
               <div style={{ color: colors.textMuted, fontSize: '11px', marginBottom: '4px' }}>
-                В деле: <span style={{ color: colors.fairyGold, fontWeight: 600 }}>{Math.floor(project.currentValueRubles)} г</span>
-                {' · '}в казне: <span style={{ color: colors.fairyGold, fontWeight: 600 }}>{Math.floor(gameState?.balance ?? 0)} г</span>
+                {t.portfolio.withdrawValue(Math.floor(project.currentValueRubles), Math.floor(gameState?.balance ?? 0))}
               </div>
               {(project.type === 'POTION_BREW' || project.type === 'GUILD_SCHEME') && (
                 <div style={{ color: colors.warning, fontSize: '11px', marginBottom: '4px' }}>
-                  ⚠️ Макс. за раз: {Math.floor(project.currentValueRubles * 0.25)} г (25% от {Math.floor(project.currentValueRubles)} г в деле)
+                  ⚠️ {t.portfolio.withdrawLimit25(Math.floor(project.currentValueRubles * 0.25))}
                 </div>
               )}
               {(project.type === 'CARD_GAME' || project.type === 'TREASURE_HUNT') && (
                 <div style={{ color: colors.warning, fontSize: '11px', marginBottom: '4px' }}>
-                  ⚠️ Комиссия 25% — получишь на руки 75% от введённой суммы
+                  {t.portfolio.withdrawFeeHint}
                 </div>
               )}
               <input
                 type="number"
                 value={withdrawAmount}
                 onChange={e => setWithdrawAmount(e.target.value)}
-                placeholder="Сумма"
+                placeholder={t.portfolio.withdrawBtn}
                 style={{
                   width: '100%', boxSizing: 'border-box',
                   background: 'rgba(42, 25, 96, 0.4)', border: `1px solid ${colors.cardBorder}`,
@@ -560,10 +563,7 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
               />
               {Number(withdrawAmount) > 0 && (project.type === 'CARD_GAME' || project.type === 'TREASURE_HUNT') && (
                 <div style={{ color: colors.success, fontSize: '12px', marginTop: '6px' }}>
-                  💰 На руки: <span style={{ fontWeight: 700 }}>{Math.floor(Number(withdrawAmount) * 0.75)} г</span>
-                  <span style={{ color: colors.textMuted, fontSize: '11px' }}>
-                    {' '}(комиссия {Math.floor(Number(withdrawAmount) * 0.25)} г)
-                  </span>
+                  {t.portfolio.withdrawPayout(Math.floor(Number(withdrawAmount) * 0.75), Math.floor(Number(withdrawAmount) * 0.25))}
                 </div>
               )}
               {withdrawMutation.isError && (
@@ -583,7 +583,7 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
                   color: colors.fairyGold, fontWeight: 600, cursor: 'pointer', fontSize: '13px',
                 }}
               >
-                Вывести
+                {t.portfolio.confirmWithdraw}
               </motion.button>
             </div>
           </motion.div>
@@ -593,17 +593,8 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
   )
 }
 
-const ARCHETYPE_DISPLAY: Record<string, string> = {
-  BURATINO: 'Буратино', BOYARIN: 'Боярин', KOLOBOK: 'Колобок',
-  KOSCHEI: 'Кощей', ZOLUSHKA: 'Золушка', BABA_YAGA: 'Баба-яга', IVAN_DURAK: 'Иван-дурак',
-}
-
-const FATE_DISPLAY: Record<string, string> = {
-  INSTANT_SCAM: '💀 Сбежал с деньгами', SLOW_DRAIN: '🌫️ Тихо угас', HONEST_FAIL: '😔 Честный провал',
-  SURVIVOR: '⚓ Выжил', UNICORN: '🔥 Жар-птица',
-}
-
 function ClosedProjectCard({ project, postMortem }: { project: ProjectDTO; postMortem: PostMortemDTO | null }) {
+  const t = useT()
   const [expanded, setExpanded] = useState(false)
   const profit = postMortem ? postMortem.profitPercent : 0
 
@@ -617,7 +608,7 @@ function ClosedProjectCard({ project, postMortem }: { project: ProjectDTO; postM
           <div style={{ color: colors.textSecondary, fontWeight: 600, fontSize: '13px' }}>{project.name}</div>
           {postMortem && (
             <div style={{ color: colors.textMuted, fontSize: '11px' }}>
-              {FATE_DISPLAY[postMortem.fate] ?? postMortem.fate}
+              {t.portfolio.fates[postMortem.fate as keyof typeof t.portfolio.fates] ?? t.fates[postMortem.fate as keyof typeof t.fates] ?? postMortem.fate}
             </div>
           )}
         </div>
@@ -633,27 +624,27 @@ function ClosedProjectCard({ project, postMortem }: { project: ProjectDTO; postM
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
             <OrnamentDivider />
             <div style={{ color: colors.fairyGold, fontSize: '12px', marginBottom: '4px' }}>
-              Архетип: {ARCHETYPE_DISPLAY[postMortem.revealedArchetype] ?? postMortem.revealedArchetype}
+              {t.archetypes[postMortem.revealedArchetype as keyof typeof t.archetypes] ?? postMortem.revealedArchetype}
             </div>
             <div style={{ color: colors.textSecondary, fontSize: '12px', lineHeight: 1.5 }}>
               {postMortem.analysis}
             </div>
             <div style={{ display: 'flex', gap: spacing.xl, marginTop: spacing.md }}>
               <div>
-                <div style={{ color: colors.textMuted, fontSize: '10px' }}>Вложено</div>
-                <div style={{ color: colors.textSecondary, fontSize: '12px' }}>{Math.floor(postMortem.investedAmount)} г</div>
+                <div style={{ color: colors.textMuted, fontSize: '10px' }}>{t.portfolio.investedIn}</div>
+                <div style={{ color: colors.textSecondary, fontSize: '12px' }}>{Math.floor(postMortem.investedAmount)} {t.common.currency}</div>
               </div>
               <div>
-                <div style={{ color: colors.textMuted, fontSize: '10px' }}>Получено</div>
-                <div style={{ color: colors.textSecondary, fontSize: '12px' }}>{Math.floor(postMortem.returnedAmount)} г</div>
+                <div style={{ color: colors.textMuted, fontSize: '10px' }}>{t.registry.returned}</div>
+                <div style={{ color: colors.textSecondary, fontSize: '12px' }}>{Math.floor(postMortem.returnedAmount)} {t.common.currency}</div>
               </div>
               <div>
-                <div style={{ color: colors.textMuted, fontSize: '10px' }}>Дней</div>
+                <div style={{ color: colors.textMuted, fontSize: '10px' }}>{t.common.days}</div>
                 <div style={{ color: colors.textSecondary, fontSize: '12px' }}>{postMortem.daysActive}</div>
               </div>
               {postMortem.intuitionDelta !== 0 && (
                 <div>
-                  <div style={{ color: colors.textMuted, fontSize: '10px' }}>Чуйка</div>
+                  <div style={{ color: colors.textMuted, fontSize: '10px' }}>{t.common.intuition}</div>
                   <div style={{ color: postMortem.intuitionDelta > 0 ? colors.success : colors.danger, fontSize: '12px' }}>
                     {postMortem.intuitionDelta > 0 ? '+' : ''}{postMortem.intuitionDelta}
                   </div>
@@ -670,11 +661,9 @@ function ClosedProjectCard({ project, postMortem }: { project: ProjectDTO; postM
 const TX_TYPE_ICON: Record<string, string> = {
   INVEST: '⬇️', ADD: '⬇️', WITHDRAW: '⬆️', EXIT: '🚪', RETURNED: '📬', REFERRAL_BONUS: '🤝',
 }
-const TX_TYPE_LABEL: Record<string, string> = {
-  INVEST: 'Вложено', ADD: 'Довложено', WITHDRAW: 'Выведено', EXIT: 'Выход', RETURNED: 'Возврат', REFERRAL_BONUS: 'Сватовство',
-}
 
 function TransactionSection({ transactions }: { transactions: TransactionDTO[] }) {
+  const t = useT()
   const [open, setOpen] = useState(false)
   if (transactions.length === 0) return null
   return (
@@ -687,7 +676,7 @@ function TransactionSection({ transactions }: { transactions: TransactionDTO[] }
           marginBottom: open ? spacing.sm : 0,
         }}
       >
-        <span style={{ color: colors.textMuted, fontSize: '13px', fontWeight: 600 }}>Движение средств</span>
+        <span style={{ color: colors.textMuted, fontSize: '13px', fontWeight: 600 }}>{t.portfolio.tabFlow}</span>
         <span style={{ color: colors.textMuted, fontSize: '18px', lineHeight: 1 }}>{open ? '−' : '+'}</span>
       </button>
       <AnimatePresence>
@@ -704,9 +693,11 @@ function TransactionSection({ transactions }: { transactions: TransactionDTO[] }
 }
 
 function TransactionRow({ tx }: { tx: TransactionDTO }) {
+  const t = useT()
   const isOut = tx.type === 'INVEST' || tx.type === 'ADD'
   const color = isOut ? '#E86060' : '#60C878'
   const sign = isOut ? '−' : '+'
+  const label = t.portfolio.txTypes[tx.type as keyof typeof t.portfolio.txTypes] ?? tx.type
 
   return (
     <div style={{
@@ -723,13 +714,13 @@ function TransactionRow({ tx }: { tx: TransactionDTO }) {
         <span style={{ fontSize: '14px' }}>{TX_TYPE_ICON[tx.type] ?? '•'}</span>
         <div>
           <div style={{ color: colors.textSecondary, fontSize: '12px' }}>
-            {TX_TYPE_LABEL[tx.type] ?? tx.type}: {tx.projectName}
+            {label}: {tx.projectName}
           </div>
-          <div style={{ color: colors.textMuted, fontSize: '10px' }}>День {tx.day}</div>
+          <div style={{ color: colors.textMuted, fontSize: '10px' }}>{t.common.day} {tx.day}</div>
         </div>
       </div>
       <div style={{ color, fontWeight: 700, fontSize: '13px', flexShrink: 0 }}>
-        {sign}{Math.floor(tx.amount)} г
+        {sign}{Math.floor(tx.amount)} {t.common.currency}
       </div>
     </div>
   )

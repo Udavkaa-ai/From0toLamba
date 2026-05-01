@@ -6,9 +6,11 @@ import { FairyCard, OrnamentDivider, SkeletonCard } from '@/components/FairyCard
 import { PageTitle } from '@/components/PageTitle'
 import { api, type ProjectDTO } from '@/api/client'
 import { colors, spacing } from '@/theme'
+import { useT } from '@/i18n'
 
 export function InboxPage() {
   const navigate = useNavigate()
+  const t = useT()
 
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ['inbox'],
@@ -20,9 +22,9 @@ export function InboxPage() {
     <ScreenBackground bgImage={PAGE_BG.inbox}>
       <div style={{ padding: `${spacing.xxl} ${spacing.lg} 80px`, maxWidth: '500px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: spacing.xxl }}>
-          <PageTitle>Входящие грамоты</PageTitle>
+          <PageTitle>{t.inbox.title}</PageTitle>
           <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
-            Новые предложения от хозяев дел
+            {t.inbox.subtitle}
           </div>
         </div>
 
@@ -31,9 +33,9 @@ export function InboxPage() {
         {!isLoading && projects.length === 0 && (
           <FairyCard style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '32px', marginBottom: spacing.md }}>📭</div>
-            <div style={{ color: colors.textSecondary }}>Новых предложений нет</div>
+            <div style={{ color: colors.textSecondary }}>{t.inbox.empty}</div>
             <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
-              Они появятся после следующего дня
+              {t.inbox.emptyHint}
             </div>
           </FairyCard>
         )}
@@ -56,13 +58,8 @@ export function InboxPage() {
 }
 
 function InboxCard({ project, onClick, tourAttr }: { project: ProjectDTO; onClick: () => void; tourAttr?: boolean }) {
-  const typeLabel: Record<string, string> = {
-    CARD_GAME: '🃏 Азартная игра',
-    TREASURE_HUNT: '🗺️ Поиск клада',
-    POTION_BREW: '🧪 Зелейное дело',
-    GUILD_SCHEME: '⚙️ Артель',
-    HONEST_TRADE: '🤝 Честная торговля',
-  }
+  const t = useT()
+  const typeLabel = t.inbox.types
 
   return (
     <FairyCard onClick={onClick} style={{ marginBottom: spacing.md, cursor: 'pointer' }}>
@@ -79,7 +76,7 @@ function InboxCard({ project, onClick, tourAttr }: { project: ProjectDTO; onClic
         <div>
           <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '15px' }}>{project.name}</div>
           <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '2px' }}>
-            {typeLabel[project.type] ?? project.type}
+            {(typeLabel as Record<string, string>)[project.type] ?? project.type}
           </div>
         </div>
         <div style={{
@@ -91,7 +88,7 @@ function InboxCard({ project, onClick, tourAttr }: { project: ProjectDTO; onClic
           fontSize: '12px',
           fontWeight: 700,
         }}>
-          {project.claimedAPY}% посул
+          {project.claimedAPY}{t.inbox.apySuffix}
         </div>
       </div>
 
@@ -103,10 +100,10 @@ function InboxCard({ project, onClick, tourAttr }: { project: ProjectDTO; onClic
 
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: spacing.md }}>
         <div style={{ color: colors.textMuted, fontSize: '11px' }}>
-          👤 {project.developerName}
+          {t.inbox.developer} {project.developerName}
         </div>
         <div style={{ color: colors.textMuted, fontSize: '11px' }}>
-          👥 {project.currentUserCount.toLocaleString('ru')} вкладчиков
+          {t.inbox.investors} {project.currentUserCount.toLocaleString('ru')} {t.inbox.investorsSuffix}
         </div>
       </div>
 
@@ -122,7 +119,7 @@ function InboxCard({ project, onClick, tourAttr }: { project: ProjectDTO; onClic
       }}
         {...(tourAttr ? { 'data-tour': 'charter-btn' } : {})}
       >
-        Изучить грамоту →
+        {t.inbox.studyBtn}
       </div>
 
       {tourAttr && (
@@ -138,7 +135,7 @@ function InboxCard({ project, onClick, tourAttr }: { project: ProjectDTO; onClic
             textAlign: 'center',
           }}
         >
-          💰 Вложить гроши
+          {t.inbox.investBtn}
         </div>
       )}
 
@@ -155,7 +152,7 @@ function InboxCard({ project, onClick, tourAttr }: { project: ProjectDTO; onClic
             textAlign: 'center',
           }}
         >
-          💬 Беседа с дельцом
+          {t.inbox.amaBtn}
         </div>
       )}
     </FairyCard>

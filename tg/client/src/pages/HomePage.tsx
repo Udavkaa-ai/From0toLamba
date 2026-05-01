@@ -16,12 +16,10 @@ import { EyeIcon, LockIcon } from '@/components/icons'
 import { api, type ProjectDTO, type DailyUpdateDTO, type ClosureSummaryDTO, type MyReferralEntryDTO } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
 import { useTourStore, isTourDone } from '@/stores/tourStore'
+import { useLangStore, type Lang } from '@/stores/langStore'
+import { useT } from '@/i18n'
 import { colors, spacing, typography } from '@/theme'
 import { playSound, isMuted, setMuted, getVolume, setVolume } from '@/sounds'
-
-const RANK_DISPLAY: Record<string, string> = {
-  NEWBIE: 'Скоморох', AMBASSADOR: 'Купец', ANALYST: 'Мудрец', SHARK: 'Боярин', LAMBO_SENSEI: 'Князь',
-}
 
 const MODEL_OPTIONS = [
   {
@@ -45,6 +43,8 @@ export function HomePage() {
   const qc = useQueryClient()
   const { setGameState, gameState } = useGameStore()
   const { start: startTour } = useTourStore()
+  const { lang, setLang } = useLangStore()
+  const t = useT()
   const [showSettings, setShowSettings] = useState(false)
   const [localModel, setLocalModel] = useState<string | null>(null)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
@@ -228,11 +228,14 @@ export function HomePage() {
   }
 
   const updateModelMutation = useMutation({
-    mutationFn: (model: string) => api.game.updateSettings(model),
-    onSuccess: (data) => {
-      setLocalModel(data.preferredModel)
-    },
+    mutationFn: (model: string) => api.game.updateSettings({ preferredModel: model }),
+    onSuccess: () => {},
   })
+
+  const updateLang = (l: Lang) => {
+    setLang(l)
+    api.game.updateSettings({ preferredLanguage: l }).catch(() => {})
+  }
 
   const completeOnboardingMutation = useMutation({
     mutationFn: api.game.completeOnboarding,
@@ -287,10 +290,10 @@ export function HomePage() {
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '100dvh', gap: '12px', padding: '24px' }}>
           <div style={{ color: colors.fairyGold, fontSize: '32px' }}>⚠️</div>
           <div style={{ color: colors.textPrimary, fontSize: '16px', fontWeight: 600, textAlign: 'center' }}>
-            Не удалось загрузить данные
+            {t.home.loadError}
           </div>
           <div style={{ color: colors.textMuted, fontSize: '13px', textAlign: 'center' }}>
-            {(error as Error)?.message ?? 'Ошибка соединения с сервером'}
+            {(error as Error)?.message ?? t.home.loadErrorHint}
           </div>
           <button
             onClick={() => qc.invalidateQueries({ queryKey: ['gameState'] })}
@@ -306,7 +309,7 @@ export function HomePage() {
               cursor: 'pointer',
             }}
           >
-            Попробовать снова
+            {t.common.retry}
           </button>
         </div>
       </ScreenBackground>
@@ -400,7 +403,7 @@ export function HomePage() {
                   color: colors.danger, fontSize: '20px', fontWeight: 900, marginBottom: '12px',
                 }}>!</div>
                 <div style={{ color: colors.textPrimary, fontSize: '16px', fontWeight: 700 }}>
-                  Начать заново?
+                  {t.home.settingsResetTitle}
                 </div>
               </div>
               <div style={{
@@ -413,19 +416,12 @@ export function HomePage() {
                 color: colors.textSecondary,
                 lineHeight: 1.6,
               }}>
-                <div style={{ fontWeight: 700, color: colors.danger, marginBottom: '6px' }}>Будет удалено:</div>
-                {[
-                  '🪙 Все гроши и история баланса',
-                  '📦 Все активные и закрытые дела',
-                  '👁 Чуйка и счётчик дней',
-                  '🎭 Купеческий чин',
-                  '📜 Разобранные грамоты',
-                  '🏆 Все подвиги',
-                ].map(item => (
+                <div style={{ fontWeight: 700, color: colors.danger, marginBottom: '6px' }}>{t.home.settingsResetDeleted}</div>
+                {t.home.settingsResetItems.map(item => (
                   <div key={item} style={{ marginTop: '3px' }}>{item}</div>
                 ))}
                 <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: `1px solid ${colors.danger}20`, color: colors.textMuted, fontSize: '11px' }}>
-                  Рефералы и настройки нейронки сохранятся
+                  {t.home.settingsResetSaved}
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
@@ -441,7 +437,7 @@ export function HomePage() {
                     cursor: 'pointer',
                   }}
                 >
-                  Отмена
+                  {t.common.cancel}
                 </button>
                 <button
                   onClick={() => resetMutation.mutate()}
@@ -457,7 +453,7 @@ export function HomePage() {
                     opacity: resetMutation.isPending ? 0.6 : 1,
                   }}
                 >
-                  {resetMutation.isPending ? 'Сброс...' : 'Да, начать заново'}
+                  {resetMutation.isPending ? t.home.settingsResetPending : t.home.settingsResetConfirm}
                 </button>
               </div>
             </motion.div>
@@ -506,7 +502,7 @@ export function HomePage() {
             >
               {/* Header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <div style={{ color: colors.fairyGold, fontSize: '18px', fontWeight: 700 }}>⚙️ Настройки</div>
+                <div style={{ color: colors.fairyGold, fontSize: '18px', fontWeight: 700 }}>{t.home.settingsTitle}</div>
                 <button
                   onClick={() => { setShowSettings(false); setShowResetConfirm(false) }}
                   style={{ background: 'none', border: 'none', color: colors.textMuted, fontSize: '20px', cursor: 'pointer', padding: '4px 8px' }}
@@ -518,7 +514,7 @@ export function HomePage() {
               {/* Model section */}
               <div style={{ marginBottom: '28px' }}>
                 <div style={{ color: colors.textSecondary, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Нейронка для хозяев дел
+                  {t.home.settingsSectionAI}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {MODEL_OPTIONS.map(option => {
@@ -546,7 +542,7 @@ export function HomePage() {
                             {option.label}
                           </div>
                           <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '2px' }}>
-                            {option.subtitle}
+                            {t.home.modelSubtitles[option.id] ?? option.subtitle}
                           </div>
                         </div>
                         <div style={{
@@ -567,11 +563,11 @@ export function HomePage() {
               {/* Звук */}
               <div style={{ marginBottom: '28px' }}>
                 <div style={{ color: colors.textSecondary, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Звук
+                  {t.home.settingsSectionSound}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                   <span style={{ color: colors.textPrimary, fontSize: '14px' }}>
-                    {soundMuted ? '🔇 Выключен' : '🔊 Включён'}
+                    {soundMuted ? t.home.settingsSoundOff : t.home.settingsSoundOn}
                   </span>
                   <button
                     onClick={() => {
@@ -589,12 +585,12 @@ export function HomePage() {
                       fontSize: '13px', fontWeight: 600, cursor: 'pointer',
                     }}
                   >
-                    {soundMuted ? 'Включить' : 'Выключить'}
+                    {soundMuted ? t.home.settingsSoundEnable : t.home.settingsSoundDisable}
                   </button>
                 </div>
                 {!soundMuted && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ color: colors.textMuted, fontSize: '12px', flexShrink: 0 }}>Тихо</span>
+                    <span style={{ color: colors.textMuted, fontSize: '12px', flexShrink: 0 }}>{t.home.settingsSoundLow}</span>
                     <input
                       type="range"
                       min={0} max={1} step={0.05}
@@ -608,7 +604,7 @@ export function HomePage() {
                       onTouchEnd={() => playSound('tap')}
                       style={{ flex: 1, accentColor: colors.fairyGold }}
                     />
-                    <span style={{ color: colors.textMuted, fontSize: '12px', flexShrink: 0 }}>Громко</span>
+                    <span style={{ color: colors.textMuted, fontSize: '12px', flexShrink: 0 }}>{t.home.settingsSoundHigh}</span>
                   </div>
                 )}
               </div>
@@ -616,7 +612,7 @@ export function HomePage() {
               {/* Повторный просмотр вводного рассказа */}
               <div style={{ marginBottom: '28px' }}>
                 <div style={{ color: colors.textSecondary, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Подсказки
+                  {t.home.settingsSectionHints}
                 </div>
                 <button
                   onClick={() => { setShowSettings(false); setShowTutorial(true) }}
@@ -633,9 +629,9 @@ export function HomePage() {
                     textAlign: 'left',
                   }}
                 >
-                  📖 Как играть
+                  {t.home.settingsHowToPlay}
                   <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '4px', fontWeight: 400 }}>
-                    Вводный рассказ о делах, хозяевах и судьбах
+                    {t.home.settingsHowToPlayHint}
                   </div>
                 </button>
                 <button
@@ -654,9 +650,9 @@ export function HomePage() {
                     textAlign: 'left',
                   }}
                 >
-                  ❓ ЧАВО
+                  {t.home.settingsFaq}
                   <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '4px', fontWeight: 400 }}>
-                    Частые вопросы — правила, типы дел, чуйка, судьбы
+                    {t.home.settingsFaqHint}
                   </div>
                 </button>
                 <button
@@ -675,20 +671,51 @@ export function HomePage() {
                     textAlign: 'left',
                   }}
                 >
-                  🗺️ Тур по интерфейсу
+                  {t.home.settingsTour}
                   <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '4px', fontWeight: 400 }}>
-                    Пошаговый гид по всем экранам игры
+                    {t.home.settingsTourHint}
                   </div>
                 </button>
+              </div>
+
+              {/* Язык / Language */}
+              <div style={{ marginBottom: '28px' }}>
+                <div style={{ color: colors.textSecondary, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  {t.home.settingsSectionLang}
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {([
+                    { l: 'ru' as Lang, flag: '🇷🇺', label: 'Русский' },
+                    { l: 'en' as Lang, flag: '🇬🇧', label: 'English' },
+                  ]).map(({ l, flag, label }) => (
+                    <button
+                      key={l}
+                      onClick={() => { playSound('tap'); updateLang(l) }}
+                      style={{
+                        flex: 1,
+                        padding: '12px 8px',
+                        background: lang === l ? `${colors.fairyGold}18` : 'rgba(255,255,255,0.05)',
+                        border: `1px solid ${lang === l ? colors.fairyGold : 'rgba(255,255,255,0.1)'}`,
+                        borderRadius: '12px',
+                        color: lang === l ? colors.fairyGold : colors.textSecondary,
+                        fontSize: '14px',
+                        fontWeight: lang === l ? 700 : 400,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {flag} {label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Пригласительная грамота */}
               <div style={{ marginBottom: '28px' }}>
                 <div style={{ color: colors.textSecondary, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Пригласительная грамота
+                  {t.home.settingsReferrals}
                 </div>
                 <button
-                  onClick={() => handleInvite(gameState)}
+                  onClick={() => handleInvite(gameState, t.home.inviteLines)}
                   style={{
                     width: '100%',
                     padding: '12px 16px',
@@ -702,9 +729,9 @@ export function HomePage() {
                     textAlign: 'left',
                   }}
                 >
-                  📜 Зазвать купца на ярмарку
+                  {t.home.settingsInvite}
                   <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '4px', fontWeight: 400 }}>
-                    Обоим по +100 г, когда сосватанный наберёт 10 чуйки
+                    {t.home.settingsInviteHint}
                   </div>
                 </button>
                 <button
@@ -726,7 +753,7 @@ export function HomePage() {
                     gap: '8px',
                   }}
                 >
-                  🤝 Мои сосватанные
+                  {t.home.settingsMyReferrals}
                   <span style={{ color: colors.textMuted, fontSize: '11px', fontWeight: 400 }}>→</span>
                 </button>
               </div>
@@ -734,7 +761,7 @@ export function HomePage() {
               {/* Правила · Отказ от ответственности */}
               <div style={{ marginBottom: '24px' }}>
                 <div style={{ color: colors.textMuted, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Правила и ответственность
+                  {t.home.settingsSectionLegal}
                 </div>
                 <div style={{
                   padding: '14px 16px',
@@ -746,19 +773,13 @@ export function HomePage() {
                   lineHeight: 1.7,
                 }}>
                   <strong style={{ color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>
-                    Из грязи в князи — симуляционная игра
+                    {t.home.settingsLegalTitle}
                   </strong>
-                  Все проекты, персонажи и события в игре <strong style={{ color: colors.textPrimary }}>вымышлены</strong> и не являются инвестиционными советами или рекомендациями. Любое сходство с реальными проектами или людьми случайно.
+                  {t.home.settingsLegalText.split('\n\n').map((para, i) => (
+                    <span key={i}>{i > 0 && <><br /><br /></>}{para}</span>
+                  ))}
                   <br /><br />
-                  Игровые гроши (г) — внутриигровая валюта, не имеющая реальной стоимости.
-                  <br /><br />
-                  Платежи за дополнительные возможности (Telegram Stars) обрабатываются Telegram. Разработчик игры не хранит данные платёжных карт и не несёт ответственности за действия платёжной платформы.
-                  <br /><br />
-                  Разработчик не несёт ответственности за действия третьих лиц, сбои сети, а также за любые убытки, возникшие в результате использования приложения.
-                  <br /><br />
-                  Используя приложение, вы подтверждаете, что вам исполнилось 18 лет или имеется согласие родителей/опекунов.
-                  <br /><br />
-                  <span style={{ color: `${colors.fairyGold}90` }}>@vknyazi_bot · Версия {APP_VERSION}</span>
+                  <span style={{ color: `${colors.fairyGold}90` }}>@vknyazi_bot · v{APP_VERSION}</span>
                 </div>
               </div>
 
@@ -786,7 +807,7 @@ export function HomePage() {
                     fontSize: '13px', fontWeight: 900, lineHeight: 1,
                     flexShrink: 0,
                   }}>!</span>
-                  Начать заново
+                  {t.home.settingsResetBtn}
                 </button>
               </div>
             </motion.div>
@@ -869,10 +890,9 @@ export function HomePage() {
             {IS_TOURNAMENT_ACTIVE ? '🏆 Майская Ярмарка — турнир идёт!' : '📢 Скоро перезапуск — читай'}
           </button>
           {(() => {
-            const WEEK_DAYS = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
             const maxC = gameState.maxConsecutiveAdvances ?? 7
             const usedC = gameState.consecutiveAdvances ?? 0
-            const dayName = usedC > 0 ? WEEK_DAYS[Math.min(usedC, maxC) - 1] : null
+            const dayName = usedC > 0 ? t.home.weekDays[Math.min(usedC, maxC) - 1] : null
             return dayName ? (
               <div style={{ color: `${colors.fairyGold}70`, fontSize: '11px', marginTop: '2px', letterSpacing: '0.05em' }}>
                 {dayName}
@@ -880,14 +900,14 @@ export function HomePage() {
             ) : null
           })()}
           <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '2px' }}>
-            ✦ День {gameState.currentDay} · {RANK_DISPLAY[gameState.investorRank] ?? gameState.investorRank} ✦
+            ✦ {t.home.dayLabel} {gameState.currentDay} · {(t.ranks as unknown as Record<string, string>)[gameState.investorRank] ?? gameState.investorRank} ✦
           </div>
         </motion.div>
 
         {/* Баланс */}
         <motion.div data-tour="balance" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <FairyCard accent style={{ marginBottom: spacing.lg, textAlign: 'center' }}>
-            <div style={{ color: colors.textSecondary, fontSize: '12px', marginBottom: '4px' }}>Свободные гроши</div>
+            <div style={{ color: colors.textSecondary, fontSize: '12px', marginBottom: '4px' }}>{t.home.freeBalance}</div>
             <div style={{
               color: colors.fairyGold,
               fontFamily: typography.headingFontFamily,
@@ -898,31 +918,31 @@ export function HomePage() {
               fontVariantNumeric: 'tabular-nums',
             }}>
               <CountUp value={gameState.balance} />
-              <span style={{ fontSize: '26px', marginLeft: '6px', opacity: 0.85 }}>г</span>
+              <span style={{ fontSize: '26px', marginLeft: '6px', opacity: 0.85 }}>{t.common.currency}</span>
             </div>
             <OrnamentDivider />
             <div style={{ display: 'flex', justifyContent: 'space-around' }}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ color: colors.textMuted, fontSize: '11px' }}>Вложено</div>
+                <div style={{ color: colors.textMuted, fontSize: '11px' }}>{t.home.balanceInvested}</div>
                 <div style={{ color: colors.textSecondary, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
-                  {Math.floor(gameState.totalInvested)} г
+                  {Math.floor(gameState.totalInvested)} {t.common.currency}
                 </div>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ color: colors.textMuted, fontSize: '11px' }}>Получено</div>
+                <div style={{ color: colors.textMuted, fontSize: '11px' }}>{t.home.balanceReturned}</div>
                 <div style={{ color: colors.textSecondary, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
-                  {Math.floor(gameState.totalReturned + activeValue)} г
+                  {Math.floor(gameState.totalReturned + activeValue)} {t.common.currency}
                 </div>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ color: colors.textMuted, fontSize: '11px' }}>Итог</div>
+                <div style={{ color: colors.textMuted, fontSize: '11px' }}>{t.home.roi}</div>
                 <div style={{ color: roi >= 0 ? colors.success : colors.danger, fontWeight: 700 }}>
                   {roi >= 0 ? '+' : ''}{roi.toFixed(1)}%
                 </div>
               </div>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ color: colors.textMuted, fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
-                  Чуйка <EyeIcon size={11} />
+                  {t.common.intuition} <EyeIcon size={11} />
                 </div>
                 <div style={{ color: colors.textPrimary, fontWeight: 600 }}>{gameState.intuitionScore}</div>
               </div>
@@ -934,7 +954,7 @@ export function HomePage() {
         {gameState.activeProjects.length > 0 && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
             <div style={{ color: colors.fairyGold, fontSize: '13px', fontWeight: 600, marginBottom: spacing.sm, marginLeft: '4px' }}>
-              ✦ Активные дела ({gameState.activeProjects.length})
+              {t.home.activeCount(gameState.activeProjects.length)}
             </div>
             {gameState.activeProjects.map((p, i) => (
               <ActiveProjectCard key={p.id} project={p} delay={0.2 + i * 0.05} onPress={() => navigate(`/portfolio`)} />
@@ -946,14 +966,14 @@ export function HomePage() {
         {gameState.inboxProjects.length > 0 && (
           <motion.div data-tour="inbox-section" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
             <div style={{ color: colors.fairyGold, fontSize: '13px', fontWeight: 600, margin: `${spacing.lg} 0 ${spacing.sm} 4px` }}>
-              ✦ Входящие грамоты ({gameState.inboxProjects.length})
+              {t.home.inboxCount(gameState.inboxProjects.length)}
             </div>
             <FairyCard onClick={() => navigate('/inbox')} style={{ cursor: 'pointer' }}>
               <div style={{ color: colors.textPrimary, fontSize: '14px' }}>
-                Новые предложения ждут тебя
+                {t.home.inboxWaiting}
               </div>
               <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
-                Открой и поговори с хозяевами →
+                {t.home.inboxOpenHint}
               </div>
             </FairyCard>
           </motion.div>
@@ -987,6 +1007,7 @@ export function HomePage() {
 }
 
 function MyReferralsSheet({ onClose }: { onClose: () => void }) {
+  const t = useT()
   const { data, isLoading } = useQuery({
     queryKey: ['referrals', 'my'],
     queryFn: api.referrals.getMy,
@@ -1016,11 +1037,11 @@ function MyReferralsSheet({ onClose }: { onClose: () => void }) {
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <div style={{ color: colors.fairyGold, fontSize: '17px', fontWeight: 700 }}>🤝 Мои сосватанные</div>
+          <div style={{ color: colors.fairyGold, fontSize: '17px', fontWeight: 700 }}>{t.home.referralsSheetTitle}</div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: colors.textMuted, fontSize: '20px', cursor: 'pointer', padding: '4px 8px' }}>✕</button>
         </div>
         <div style={{ color: colors.textMuted, fontSize: '11px', marginBottom: '16px', lineHeight: 1.5 }}>
-          Бонус +100 г обоим начисляется когда сосватанный набирает {threshold} чуйки
+          {t.home.referralsSheetBonus(threshold)}
         </div>
 
         {isLoading && [1, 2, 3].map(i => (
@@ -1030,8 +1051,8 @@ function MyReferralsSheet({ onClose }: { onClose: () => void }) {
         {!isLoading && data?.referrals.length === 0 && (
           <div style={{ textAlign: 'center', color: colors.textMuted, padding: '32px 0' }}>
             <div style={{ fontSize: '32px', marginBottom: '8px' }}>📜</div>
-            <div>Никого пока не сосватал</div>
-            <div style={{ fontSize: '11px', marginTop: '4px' }}>Поделись пригласительной грамотой</div>
+            <div>{t.home.referralsEmpty}</div>
+            <div style={{ fontSize: '11px', marginTop: '4px' }}>{t.home.referralsEmptyHint}</div>
           </div>
         )}
 
@@ -1058,16 +1079,16 @@ function MyReferralsSheet({ onClose }: { onClose: () => void }) {
                       <div style={{ height: '100%', width: pct + '%', background: colors.fairyGold, borderRadius: '2px', transition: 'width 0.3s' }} />
                     </div>
                     <div style={{ color: colors.textMuted, fontSize: '10px', marginTop: '3px' }}>
-                      Чуйка: {r.intuitionScore} / {threshold}
+                      {t.home.referralsIntuition(r.intuitionScore, threshold)}
                     </div>
                   </div>
                 )}
               </div>
               <div style={{ flexShrink: 0, textAlign: 'right' }}>
                 {done ? (
-                  <div style={{ color: colors.success, fontSize: '12px', fontWeight: 700 }}>+100 г ✓</div>
+                  <div style={{ color: colors.success, fontSize: '12px', fontWeight: 700 }}>{t.home.referralsDone}</div>
                 ) : (
-                  <div style={{ color: colors.textMuted, fontSize: '11px' }}>День {r.currentDay}</div>
+                  <div style={{ color: colors.textMuted, fontSize: '11px' }}>{t.home.referralsDay(r.currentDay)}</div>
                 )}
               </div>
             </div>
@@ -1078,18 +1099,14 @@ function MyReferralsSheet({ onClose }: { onClose: () => void }) {
   )
 }
 
-function handleInvite(gameState: { userId: number; firstName?: string } | any) {
+function handleInvite(gameState: { userId: number; firstName?: string } | any, inviteLines: string[]) {
   const userId = gameState?.userId
   if (!userId) return
   // ?startapp= — payload приходит в initData.start_param, не зависит от того,
   // жал ли получатель Start раньше (с ?start= deeplink молчит у активного юзера).
   // Требует настроенной Main Mini App в BotFather (см. CLAUDE.md → Реферальная программа).
   const botLink = `https://t.me/vknyazi_bot?startapp=ref_${userId}`
-  const text = [
-    '📜 Купеческая грамота для тебя!',
-    'Приходи на ярмарку «Из грязи в князи» — будем вкладывать гроши, ловить жуликов и расти в чинах.',
-    'Оба получим по +100 г в казну, когда ты наберёшь 10 чуйки в мини-игре «Купеческая грамота».',
-  ].join('\n')
+  const text = inviteLines.join('\n')
 
   const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(botLink)}&text=${encodeURIComponent(text)}`
   const tg = (window as any).Telegram?.WebApp
@@ -1106,6 +1123,7 @@ function NextDayFab({
   onAdvance: () => void
   onWatchAd: () => void
 }) {
+  const t = useT()
   const lastMs = gameState.lastAdvancedAt ? new Date(gameState.lastAdvancedAt).getTime() : 0
   const cooldownMs = gameState.advanceCooldownMs ?? 2 * 60 * 60 * 1000
   const remainingFreePresses = Math.max(0, (gameState.maxConsecutiveAdvances ?? 3) - (gameState.consecutiveAdvances ?? 0))
@@ -1113,15 +1131,14 @@ function NextDayFab({
   const isLocked = remainingFreePresses === 0 && remainingMs > 0
 
   const label = isPending
-    ? '⏳ Течёт время...'
+    ? t.home.nextDayPending
     : isLocked
-      ? `⏳ ${formatRemaining(remainingMs)}`
-      : '🌅 Следующий день'
+      ? t.home.nextDayFabCooldown(formatRemaining(remainingMs))
+      : `🌅 ${t.home.nextDay}`
 
   const maxConsec = gameState.maxConsecutiveAdvances ?? 7
   const usedConsec = gameState.consecutiveAdvances ?? 0
-  const WEEK_DAYS = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
-  const currentDayName = usedConsec > 0 ? WEEK_DAYS[Math.min(usedConsec, maxConsec) - 1] : null
+  const currentDayName = usedConsec > 0 ? t.home.weekDays[Math.min(usedConsec, maxConsec) - 1] : null
 
   return (
     <div data-tour="next-day-fab" style={{
@@ -1188,7 +1205,7 @@ function NextDayFab({
             whiteSpace: 'nowrap',
           }}
         >
-          ⭐ 10 звёзд · пропустить
+          {t.home.nextDaySkipFab}
         </motion.button>
       )}
     </div>
@@ -1211,6 +1228,7 @@ function NextDayButton({
   onAdvance: () => void
   onWatchAd: () => void
 }) {
+  const t = useT()
   const lastMs = gameState.lastAdvancedAt ? new Date(gameState.lastAdvancedAt).getTime() : 0
   const cooldownMs = gameState.advanceCooldownMs ?? 2 * 60 * 60 * 1000
   const maxConsec = gameState.maxConsecutiveAdvances ?? 3
@@ -1221,17 +1239,17 @@ function NextDayButton({
   const isLocked = remainingFreePresses === 0 && remainingMs > 0
 
   const label = isPending
-    ? '⏳ Течёт время...'
+    ? t.home.nextDayPending
     : isLocked
-      ? `⏳ Передышка: ${formatRemaining(remainingMs)}`
-      : '🌅 Следующий день'
+      ? t.home.nextDayCooldown(formatRemaining(remainingMs))
+      : `🌅 ${t.home.nextDay}`
 
   // Подпись под кнопкой: только когда пачка уже начала расходоваться
   let subline: string | null = null
   if (!isPending) {
-    if (isLocked) subline = `Перерыв · жди ${formatRemaining(remainingMs)} или потрать 10 ⭐`
+    if (isLocked) subline = t.home.nextDayBreak(formatRemaining(remainingMs))
     else if (usedConsec > 0 && remainingFreePresses > 0) {
-      subline = `Осталось переходов: ${remainingFreePresses} из ${maxConsec}`
+      subline = t.home.nextDayRemaining(remainingFreePresses, maxConsec)
     }
   }
 
@@ -1279,7 +1297,7 @@ function NextDayButton({
             cursor: 'pointer',
           }}
         >
-          ⭐ 10 звёзд · пропустить ожидание
+          {t.home.nextDaySkipBtn}
         </button>
       )}
       {isError && !isLocked && (
@@ -1304,6 +1322,7 @@ function formatRemaining(ms: number): string {
 function StarsPaymentOverlay({
   isPending, onConfirm, onClose,
 }: { isPending: boolean; onConfirm: () => void; onClose: () => void }) {
+  const t = useT()
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -1327,10 +1346,10 @@ function StarsPaymentOverlay({
       >
         <div style={{ fontSize: '40px', textAlign: 'center', marginBottom: spacing.md }}>⭐</div>
         <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '17px', textAlign: 'center', marginBottom: spacing.sm }}>
-          Пропустить ожидание
+          {t.home.starsSkipTitle}
         </div>
         <div style={{ color: colors.textSecondary, fontSize: '13px', textAlign: 'center', lineHeight: 1.5, marginBottom: spacing.lg }}>
-          За <strong style={{ color: colors.fairyGold }}>10 Telegram Stars</strong> перерыв закончится прямо сейчас — и можно идти дальше. Оплата через встроенный кошелёк Telegram.
+          {t.home.starsSkipBody}
         </div>
         <button
           onClick={onConfirm}
@@ -1349,7 +1368,7 @@ function StarsPaymentOverlay({
             marginBottom: spacing.sm,
           }}
         >
-          {isPending ? 'Открываем оплату…' : '⭐ Заплатить 10 звёзд'}
+          {isPending ? t.home.starsSkipPending : t.home.starsSkipBtn}
         </button>
         <button
           onClick={onClose}
@@ -1365,7 +1384,7 @@ function StarsPaymentOverlay({
             cursor: 'pointer',
           }}
         >
-          Подождать ещё
+          {t.home.starsSkipWait}
         </button>
       </motion.div>
     </motion.div>
@@ -1374,6 +1393,7 @@ function StarsPaymentOverlay({
 
 function ActiveProjectCard({ project, delay, onPress }: { project: ProjectDTO; delay: number; onPress: () => void }) {
   const navigate = useNavigate()
+  const t = useT()
   const profit = project.investedAmountRubles > 0
     ? ((project.currentValueRubles - project.investedAmountRubles) / project.investedAmountRubles * 100)
     : 0
@@ -1406,12 +1426,12 @@ function ActiveProjectCard({ project, delay, onPress }: { project: ProjectDTO; d
           <div>
             <div style={{ color: colors.textPrimary, fontWeight: 600, fontSize: '14px' }}>{project.name}</div>
             <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '2px' }}>
-              {project.developerName} · {project.daysSinceJoined} дн.
+              {project.developerName} · {project.daysSinceJoined} {t.common.days}
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ color: colors.textMuted, fontSize: '10px', letterSpacing: '0.02em' }}>
-              вложено {Math.floor(project.investedAmountRubles)} г
+              {t.home.activeCardInvested} {Math.floor(project.investedAmountRubles)} {t.common.currency}
             </div>
             <div style={{
               color: colors.fairyGold,
@@ -1424,7 +1444,7 @@ function ActiveProjectCard({ project, delay, onPress }: { project: ProjectDTO; d
               textShadow: `0 0 14px ${colors.fairyGold}30`,
               marginTop: '2px',
             }}>
-              <CountUp value={project.currentValueRubles} /> г
+              <CountUp value={project.currentValueRubles} /> {t.common.currency}
             </div>
             <div style={{ color: profit >= 0 ? colors.success : colors.danger, fontSize: '11px', fontWeight: 600 }}>
               {profit >= 0 ? '+' : ''}{profit.toFixed(1)}%
@@ -1456,7 +1476,7 @@ function ActiveProjectCard({ project, delay, onPress }: { project: ProjectDTO; d
           <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm }}>
             {project.isWithdrawalLocked && (
               <div style={{ color: colors.warning, fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                <LockIcon size={12} /> Вывод заблокирован
+                <LockIcon size={12} /> {t.home.activeCardLocked}
               </div>
             )}
             {newsSignal && !project.isWithdrawalLocked && (
@@ -1475,7 +1495,7 @@ function ActiveProjectCard({ project, delay, onPress }: { project: ProjectDTO; d
               color: colors.fairyGold, cursor: 'pointer', fontSize: '11px',
             }}
           >
-            + Довложить
+            {t.home.activeCardAddMore}
           </button>
         </div>
       </FairyCard>
@@ -1491,6 +1511,7 @@ function DayNewsOverlay({
   onClose: () => void
 }) {
   const navigate = useNavigate()
+  const t = useT()
   const [idx, setIdx] = useState(0)
 
   // Сначала карточки итогов закрытий (драма), потом — обычные новости активных дел
@@ -1584,7 +1605,7 @@ function DayNewsOverlay({
           {/* Counter */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <div style={{ color: colors.fairyGold, fontSize: '11px', fontWeight: 600 }}>
-              {isClosure ? `🏛 Итоги дела ${idx + 1}/${total}` : `📜 Вести ${idx + 1}/${total}`}
+              {isClosure ? t.home.dayNewsClosure(idx + 1, total) : t.home.dayNewsUpdate(idx + 1, total)}
             </div>
             <button
               onClick={onClose}
@@ -1614,7 +1635,7 @@ function DayNewsOverlay({
                 cursor: 'pointer',
               }}
             >
-              ← Дальше
+              {t.home.dayNewsNext}
             </button>
             <button
               onClick={e => { e.stopPropagation(); goPrimary() }}
@@ -1630,11 +1651,11 @@ function DayNewsOverlay({
                 cursor: 'pointer',
               }}
             >
-              {isClosure ? 'В летопись →' : 'К делу →'}
+              {isClosure ? t.home.dayNewsToRegistry : t.home.dayNewsToDeal}
             </button>
           </div>
           <div style={{ color: colors.textMuted, fontSize: '10px', textAlign: 'center', marginTop: '8px', opacity: 0.7 }}>
-            или смахни карточку
+            {t.home.dayNewsSwipe}
           </div>
         </motion.div>
       </AnimatePresence>
@@ -1643,6 +1664,7 @@ function DayNewsOverlay({
 }
 
 function ClosureCardContent({ closure }: { closure: ClosureSummaryDTO }) {
+  const t = useT()
   const profitable = closure.profitPercent >= 0
   const accent = closure.forcedByMafia
     ? colors.danger
@@ -1652,12 +1674,7 @@ function ClosureCardContent({ closure }: { closure: ClosureSummaryDTO }) {
         ? colors.danger
         : colors.warning
 
-  const fateLabel = closure.fate === 'INSTANT_SCAM' ? 'Сбежал с деньгами'
-    : closure.fate === 'SLOW_DRAIN' ? 'Тихо угас'
-    : closure.fate === 'HONEST_FAIL' ? 'Честный провал'
-    : closure.fate === 'SURVIVOR' ? 'Выжил с прибылью'
-    : closure.fate === 'UNICORN' ? 'Жар-птица за хвост'
-    : closure.fate
+  const fateLabel = (t.fates[closure.fate as keyof typeof t.fates] ?? closure.fate).replace(/^\S+\s/, '')
 
   const fateEmoji = closure.forcedByMafia ? '⚡'
     : closure.fate === 'UNICORN' ? '🔥'
@@ -1697,7 +1714,7 @@ function ClosureCardContent({ closure }: { closure: ClosureSummaryDTO }) {
           marginTop: '6px',
           textShadow: `0 0 16px ${accent}60`,
         }}>
-          Дело закрылось
+          {t.home.closedTitle}
         </div>
       </div>
 
@@ -1706,7 +1723,7 @@ function ClosureCardContent({ closure }: { closure: ClosureSummaryDTO }) {
         <div>
           <div style={{ color: colors.textPrimary, fontWeight: 700, fontSize: '15px' }}>{closure.name}</div>
           <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '2px' }}>
-            {closure.developerName} · {closure.daysActive} дн.
+            {closure.developerName} · {closure.daysActive} {t.common.days}
           </div>
         </div>
         <div style={{ textAlign: 'right' }}>
@@ -1731,7 +1748,7 @@ function ClosureCardContent({ closure }: { closure: ClosureSummaryDTO }) {
       }}>
         {closure.forcedByMafia && (
           <div style={{ color: colors.danger, fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>
-            ⚡ Не вышел вовремя — отдал половину
+            {t.home.mafiaForced}
           </div>
         )}
         {closure.closureReason}
@@ -1740,14 +1757,14 @@ function ClosureCardContent({ closure }: { closure: ClosureSummaryDTO }) {
       {/* Числа: Вложено → Получено */}
       <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '8px 0' }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ color: colors.textMuted, fontSize: '10px' }}>Вложено</div>
+          <div style={{ color: colors.textMuted, fontSize: '10px' }}>{t.home.balanceInvested}</div>
           <div style={{ color: colors.textSecondary, fontWeight: 600, fontSize: '14px', fontVariantNumeric: 'tabular-nums' }}>
-            {Math.floor(closure.investedAmount)} г
+            {Math.floor(closure.investedAmount)} {t.common.currency}
           </div>
         </div>
         <div style={{ color: colors.textMuted, fontSize: '14px' }}>→</div>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ color: colors.textMuted, fontSize: '10px' }}>Получено</div>
+          <div style={{ color: colors.textMuted, fontSize: '10px' }}>{t.home.balanceReturned}</div>
           <div style={{
             color: accent,
             fontFamily: typography.headingFontFamily,
@@ -1756,7 +1773,7 @@ function ClosureCardContent({ closure }: { closure: ClosureSummaryDTO }) {
             fontVariantNumeric: 'tabular-nums',
             textShadow: `0 0 12px ${accent}40`,
           }}>
-            {Math.floor(closure.returnedAmount)} г
+            {Math.floor(closure.returnedAmount)} {t.common.currency}
           </div>
         </div>
       </div>
@@ -1765,6 +1782,7 @@ function ClosureCardContent({ closure }: { closure: ClosureSummaryDTO }) {
 }
 
 function ProjectNewsCardContent({ project }: { project: ProjectDTO }) {
+  const t = useT()
   const { data: updates } = useQuery({
     queryKey: ['updates', project.id],
     queryFn: () => api.projects.getUpdates(project.id),
@@ -1794,7 +1812,7 @@ function ProjectNewsCardContent({ project }: { project: ProjectDTO }) {
           <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '2px' }}>{project.developerName}</div>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ color: colors.fairyGold, fontWeight: 700 }}>{Math.floor(project.currentValueRubles)} г</div>
+          <div style={{ color: colors.fairyGold, fontWeight: 700 }}>{Math.floor(project.currentValueRubles)} {t.common.currency}</div>
           <div style={{ color: profit >= 0 ? colors.success : colors.danger, fontSize: '11px' }}>
             {profit >= 0 ? '+' : ''}{profit.toFixed(1)}%
           </div>
@@ -1825,7 +1843,7 @@ function ProjectNewsCardContent({ project }: { project: ProjectDTO }) {
         </div>
       ) : (
         <div style={{ color: colors.textMuted, fontSize: '12px', textAlign: 'center', padding: '12px' }}>
-          Вести загружаются...
+          {t.common.loading}
         </div>
       )}
     </div>

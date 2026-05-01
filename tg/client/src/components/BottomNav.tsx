@@ -2,23 +2,22 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import type { ComponentType } from 'react'
 import { colors, spacing } from '@/theme'
 import { HomeIcon, ScrollIcon, ChestIcon, ChartIcon, CrownIcon } from './icons'
+import { useT } from '@/i18n'
 
 interface IconProps {
   size?: number
   style?: React.CSSProperties
 }
 
-const TABS: Array<{ path: string; Icon: ComponentType<IconProps>; label: string }> = [
-  { path: '/', Icon: HomeIcon, label: 'Главная' },
-  { path: '/inbox', Icon: ScrollIcon, label: 'Грамоты' },
-  { path: '/portfolio', Icon: ChestIcon, label: 'Казна' },
-  { path: '/stats', Icon: ChartIcon, label: 'Успехи' },
-  { path: '/leaderboard', Icon: CrownIcon, label: 'Рейтинг' },
-]
+const TAB_PATHS = ['/', '/inbox', '/portfolio', '/stats', '/leaderboard'] as const
+const TAB_ICONS: ComponentType<IconProps>[] = [HomeIcon, ScrollIcon, ChestIcon, ChartIcon, CrownIcon]
 
 export function BottomNav() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
+  const t = useT()
+
+  const tabLabels = [t.nav.home, t.nav.inbox, t.nav.portfolio, t.nav.stats, t.nav.leaderboard]
 
   if (pathname.startsWith('/ama/') || pathname.startsWith('/charter/') || pathname === '/registry') return null
 
@@ -37,7 +36,9 @@ export function BottomNav() {
         paddingBottom: 'env(safe-area-inset-bottom)',
       }}
     >
-      {TABS.map(({ path, Icon, label }) => {
+      {TAB_PATHS.map((path, idx) => {
+        const Icon = TAB_ICONS[idx]
+        const label = tabLabels[idx]
         const isActive = path === '/'
           ? pathname === '/'
           : pathname.startsWith(path)

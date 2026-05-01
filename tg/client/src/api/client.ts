@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { getLang } from '@/stores/langStore'
 
 // Получаем initData из Telegram WebApp
 function getTelegramInitData(): string {
@@ -14,9 +15,10 @@ export const apiClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-// Автоматически прокидываем initData в каждый запрос
+// Автоматически прокидываем initData и язык в каждый запрос
 apiClient.interceptors.request.use(config => {
   config.headers['X-Telegram-Init-Data'] = getTelegramInitData()
+  config.headers['X-Lang'] = getLang()
   return config
 })
 
@@ -109,6 +111,7 @@ export interface GameStateDTO {
   investedHistory: number[]
   pendingRankUp: string | null
   preferredModel: string
+  preferredLanguage: string
   lastAdvancedAt: string | null
   advanceCooldownMs: number
   consecutiveAdvances: number
@@ -277,7 +280,7 @@ export const api = {
     clearRankUp: () => apiClient.post('/game/clear-rank-up').then(r => r.data),
     completeOnboarding: () => apiClient.post('/game/complete-onboarding').then(r => r.data),
     getSettings: () => apiClient.get<{ preferredModel: string }>('/game/settings').then(r => r.data),
-    updateSettings: (preferredModel: string) => apiClient.post<{ success: boolean; preferredModel: string }>('/game/settings', { preferredModel }).then(r => r.data),
+    updateSettings: (data: { preferredModel?: string; preferredLanguage?: string }) => apiClient.post<{ success: boolean }>('/game/settings', data).then(r => r.data),
     resetGame: () => apiClient.post('/game/reset').then(r => r.data),
   },
 

@@ -3,113 +3,29 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { colors, spacing } from '@/theme'
 import { useTourStore, TOUR_TOTAL } from '@/stores/tourStore'
+import { useT } from '@/i18n'
 
-// ─── Шаги тура ────────────────────────────────────────────────────────────────
+// ─── Маршруты и цели для каждого шага тура ───────────────────────────────────
 
-interface Step {
+interface StepMeta {
   page: string | null   // куда нужно перейти для этого шага
   target: string | null // data-tour selector для подсветки
-  title: string
-  body: string
-  accent?: string
-  action: string        // текст кнопки
 }
 
-const STEPS: Step[] = [
-  {
-    page: null,
-    target: null,
-    title: 'Быстрый тур по игре',
-    body: 'Покажем основные элементы интерфейса. Займёт пару минут — потом легче разобраться.',
-    action: 'Начать',
-  },
-  {
-    page: '/',
-    target: '[data-tour="balance"]',
-    title: 'Твой баланс',
-    body: 'Здесь свободные гроши — внутриигровая валюта. Сейчас ноль, первые деньги появятся после первой завершённой беседы с дельцом.',
-    action: 'Понял',
-  },
-  {
-    page: '/',
-    target: '[data-tour="inbox-section"]',
-    title: 'Входящие грамоты',
-    body: 'Сюда приходят предложения от хозяев дел. Открой, чтобы изучить предложение перед вложением.',
-    action: 'Открыть входящие',
-  },
-  {
-    page: '/inbox',
-    target: '[data-tour="first-project"]',
-    title: 'Предложение от хозяина',
-    body: 'Каждая карточка — отдельное дело. Видишь посул (APY), тип дела, имя хозяина. Нажми «Изучить грамоту» чтобы начать разбор.',
-    action: 'К грамоте',
-  },
-  {
-    page: '/inbox',
-    target: '[data-tour="charter-btn"]',
-    title: 'Купеческая грамота',
-    body: 'Разбери сетку из 24 печатей: найди поддельные — они немного отличаются от эталона вверху. Чем больше подделок — тем сильнее хозяин врёт в обещаниях.',
-    accent: '1–2 подделки → скорее честно · 4–5 → почти наверняка скам',
-    action: 'Понял',
-  },
-  {
-    page: '/inbox',
-    target: '[data-tour="invest-btn"]',
-    title: 'Вложи деньги',
-    body: 'После разбора грамоты можно вложить гроши в дело. Минимум — 5 г. Активных дел одновременно может быть не больше 5.',
-    action: 'Понял',
-  },
-  {
-    page: '/',
-    target: '[data-tour="next-day-fab"]',
-    title: 'Следующий день',
-    body: 'Нажимай эту кнопку каждый день — дела развиваются, приходят новые вести, появляются события. Без этого время не идёт.',
-    action: 'Понял',
-  },
-  {
-    page: '/portfolio',
-    target: '[data-tour="portfolio-project"]',
-    title: 'Казна — твои вложения',
-    body: 'Здесь все активные дела. Нажми на дело чтобы открыть летопись: ежедневные вести от хозяина, доходность и число вкладчиков.',
-    action: 'Открыть казну',
-  },
-  {
-    page: '/portfolio',
-    target: '[data-tour="portfolio-actions"]',
-    title: 'Довложить или вывести',
-    body: 'Видишь что дело идёт хорошо? Вложи ещё. Замечаешь тревожные знаки — выводи деньги. Не жди пока сбегут.',
-    action: 'Понял',
-  },
-  {
-    page: '/inbox',
-    target: '[data-tour="ama-btn"]',
-    title: 'Беседа с дельцом',
-    body: 'У каждого предложения есть кнопка «Беседа» — можно задать хозяину до 10 вопросов. Слушай внимательно: опытный жулик говорит убедительно, но под давлением проговаривается.',
-    action: 'Понял',
-  },
-  {
-    page: '/stats',
-    target: '[data-tour="achievements-section"]',
-    title: 'Подвиги открываются',
-    body: 'После первых закрытых дел здесь появятся карточки — правила вывода по типам, личины хозяев, судьбы проектов. Пользуйся как шпаргалкой.',
-    action: 'Понял',
-  },
-  {
-    page: null,
-    target: null,
-    title: 'Совет: читай печати внимательно',
-    body: 'Число фальшивых печатей напрямую связано с типом исхода дела. Тренируй глаз — со временем начнёшь угадывать скам ещё на этапе грамоты.',
-    accent: 'Чуйка растёт за каждый правильно опознанный исход',
-    action: 'Понял',
-  },
-  {
-    page: null,
-    target: null,
-    title: 'Что-то непонятно? Есть ЧАВО',
-    body: 'Все правила, типы дел, судьбы проектов и особенности вывода — в разделе «ЧАВО».',
-    accent: '⚙️ Настройки → ЧАВО',
-    action: 'Завершить тур',
-  },
+const STEP_META: StepMeta[] = [
+  { page: null,        target: null },
+  { page: '/',         target: '[data-tour="balance"]' },
+  { page: '/',         target: '[data-tour="inbox-section"]' },
+  { page: '/inbox',    target: '[data-tour="first-project"]' },
+  { page: '/inbox',    target: '[data-tour="charter-btn"]' },
+  { page: '/inbox',    target: '[data-tour="invest-btn"]' },
+  { page: '/',         target: '[data-tour="next-day-fab"]' },
+  { page: '/portfolio',target: '[data-tour="portfolio-project"]' },
+  { page: '/portfolio',target: '[data-tour="portfolio-actions"]' },
+  { page: '/inbox',    target: '[data-tour="ama-btn"]' },
+  { page: '/stats',    target: '[data-tour="achievements-section"]' },
+  { page: null,        target: null },
+  { page: null,        target: null },
 ]
 
 // ─── Spotlight — подсветка элемента через 4 тёмных прямоугольника ─────────────
@@ -148,9 +64,10 @@ function Spotlight({ rect }: { rect: DOMRect }) {
 // ─── TourCard — карточка с текстом и кнопкой ─────────────────────────────────
 
 function TourCard({
-  step, total, targetRect, onNext, onDismiss,
+  stepIdx, stepData, total, targetRect, onNext, onDismiss,
 }: {
-  step: Step
+  stepIdx: number
+  stepData: { title: string; body: string; accent?: string | null; action: string }
   total: number
   targetRect: DOMRect | null
   onNext: () => void
@@ -193,19 +110,16 @@ function TourCard({
         {/* Прогресс */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
           <div style={{ display: 'flex', gap: '4px' }}>
-            {Array.from({ length: total }).map((_, i) => {
-              const idx = STEPS.indexOf(step)
-              return (
-                <div key={i} style={{
-                  width: i === idx ? '16px' : '6px', height: '4px',
-                  borderRadius: '2px',
-                  background: i < idx
-                    ? `${colors.fairyGold}80`
-                    : i === idx ? colors.fairyGold : 'rgba(255,255,255,0.15)',
-                  transition: 'all 0.25s',
-                }} />
-              )
-            })}
+            {Array.from({ length: total }).map((_, i) => (
+              <div key={i} style={{
+                width: i === stepIdx ? '16px' : '6px', height: '4px',
+                borderRadius: '2px',
+                background: i < stepIdx
+                  ? `${colors.fairyGold}80`
+                  : i === stepIdx ? colors.fairyGold : 'rgba(255,255,255,0.15)',
+                transition: 'all 0.25s',
+              }} />
+            ))}
           </div>
           <button
             onClick={onDismiss}
@@ -218,12 +132,12 @@ function TourCard({
         </div>
 
         <div style={{ color: colors.fairyGold, fontSize: '15px', fontWeight: 700, marginBottom: '6px' }}>
-          {step.title}
+          {stepData.title}
         </div>
-        <div style={{ color: colors.textPrimary, fontSize: '13px', lineHeight: 1.55, marginBottom: step.accent ? '10px' : '14px' }}>
-          {step.body}
+        <div style={{ color: colors.textPrimary, fontSize: '13px', lineHeight: 1.55, marginBottom: stepData.accent ? '10px' : '14px' }}>
+          {stepData.body}
         </div>
-        {step.accent && (
+        {stepData.accent && (
           <div style={{
             padding: '7px 12px', marginBottom: '14px',
             background: `${colors.fairyGold}12`,
@@ -232,7 +146,7 @@ function TourCard({
             color: colors.fairyGold,
             fontSize: '12px', fontWeight: 600,
           }}>
-            {step.accent}
+            {stepData.accent}
           </div>
         )}
         <button
@@ -246,7 +160,7 @@ function TourCard({
             cursor: 'pointer',
           }}
         >
-          {step.action}
+          {stepData.action}
         </button>
       </div>
     </motion.div>
@@ -256,30 +170,32 @@ function TourCard({
 // ─── TourOverlay — точка входа, рендерится в AppShell ─────────────────────────
 
 export function TourOverlay() {
+  const t = useT()
   const { step: stepIdx, next, dismiss } = useTourStore()
   const navigate = useNavigate()
   const location = useLocation()
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null)
   const rafRef = useRef<number | null>(null)
 
-  const step = stepIdx !== null && stepIdx < STEPS.length ? STEPS[stepIdx] : null
+  const meta = stepIdx !== null && stepIdx < STEP_META.length ? STEP_META[stepIdx] : null
+  const stepData = stepIdx !== null && stepIdx < t.tour.steps.length ? t.tour.steps[stepIdx] : null
 
   // Навигация при смене шага
   useEffect(() => {
-    if (!step) return
-    if (step.page && location.pathname !== step.page) {
-      navigate(step.page)
+    if (!meta) return
+    if (meta.page && location.pathname !== meta.page) {
+      navigate(meta.page)
     }
   }, [stepIdx])
 
   // Поиск целевого элемента — опрашиваем каждые 200мс (элемент может появиться
   // после загрузки данных)
   useEffect(() => {
-    if (!step?.target) { setTargetRect(null); return }
+    if (!meta?.target) { setTargetRect(null); return }
 
     let scrolled = false
     const tick = () => {
-      const el = document.querySelector(step.target!) as HTMLElement | null
+      const el = document.querySelector(meta.target!) as HTMLElement | null
       if (el) {
         if (!scrolled) {
           scrolled = true
@@ -305,10 +221,10 @@ export function TourOverlay() {
     next()
   }
 
-  if (step === null || stepIdx === null) return null
+  if (meta === null || stepData === null || stepIdx === null) return null
 
   // Шаги без целевой страницы — центрированная модалка
-  const isCentered = !step.page || !step.target
+  const isCentered = !meta.page || !meta.target
 
   return (
     <AnimatePresence>
@@ -363,18 +279,18 @@ export function TourOverlay() {
               </div>
 
               <div style={{ color: colors.fairyGold, fontSize: '17px', fontWeight: 700, marginBottom: '10px' }}>
-                {step.title}
+                {stepData.title}
               </div>
-              <div style={{ color: colors.textPrimary, fontSize: '14px', lineHeight: 1.6, marginBottom: step.accent ? '14px' : '18px' }}>
-                {step.body}
+              <div style={{ color: colors.textPrimary, fontSize: '14px', lineHeight: 1.6, marginBottom: stepData.accent ? '14px' : '18px' }}>
+                {stepData.body}
               </div>
-              {step.accent && (
+              {stepData.accent && (
                 <div style={{
                   padding: '8px 14px', marginBottom: '18px',
                   background: `${colors.fairyGold}12`, border: `1px solid ${colors.fairyGold}35`,
                   borderRadius: '10px', color: colors.fairyGold, fontSize: '13px', fontWeight: 600,
                 }}>
-                  {step.accent}
+                  {stepData.accent}
                 </div>
               )}
               <button onClick={handleNext} style={{
@@ -382,13 +298,14 @@ export function TourOverlay() {
                 background: colors.fairyGold, border: 'none', borderRadius: '12px',
                 color: colors.nightBlue, fontSize: '15px', fontWeight: 700, cursor: 'pointer',
               }}>
-                {step.action}
+                {stepData.action}
               </button>
             </div>
           </motion.div>
         ) : (
           <TourCard
-            step={step}
+            stepIdx={stepIdx}
+            stepData={stepData}
             total={TOUR_TOTAL}
             targetRect={targetRect}
             onNext={handleNext}
