@@ -18,4 +18,12 @@ export const CHANNEL_TASKS: ChannelTask[] = [
     description: 'Официальный канал игры — новости и обновления',
     rewardRubles: 50,
   },
+  {
+    id: 'channel_signet_ring',
+    channelUsername: 'ssignet_ring',
+    channelTitle: 'Драгоценная печатка',
+    channelLink: 'https://t.me/ssignet_ring',
+    description: 'Канал о редких находках и коллекционировании',
+    rewardRubles: 50,
+  },
 ]
