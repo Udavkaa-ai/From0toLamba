@@ -65,7 +65,7 @@ export async function gameRoutes(app: FastifyInstance) {
     if (!gameState.isOnboardingComplete) {
       const inboxCount = await prisma.project.count({ where: { userId: user.id, isInbox: true } })
       if (inboxCount === 0) {
-        generateOnboardingProject(user.id, gameState.preferredModel).catch(console.error)
+        generateOnboardingProject(user.id, gameState.preferredModel, gameState.preferredLanguage ?? 'ru').catch(console.error)
       }
     }
 
@@ -75,7 +75,7 @@ export async function gameRoutes(app: FastifyInstance) {
     if (preloadedCount === 0) {
       const { generateProject } = await import('../../game/GenerateProjectService')
       for (let i = 0; i < 2; i++) {
-        generateProject(user.id, undefined, gameState.preferredModel, { preloaded: true })
+        generateProject(user.id, undefined, gameState.preferredModel, { preloaded: true }, gameState.preferredLanguage ?? 'ru')
           .catch(err => console.error('[preload seed]', err))
       }
     }
@@ -118,7 +118,7 @@ export async function gameRoutes(app: FastifyInstance) {
     const { enrichPlaceholderProject } = await import('../../game/GenerateProjectService')
     for (const p of inboxProjects) {
       if (p.name === 'Тайное дело') {
-        enrichPlaceholderProject(p.id, gameState.preferredModel).catch(console.error)
+        enrichPlaceholderProject(p.id, gameState.preferredModel, gameState.preferredLanguage ?? 'ru').catch(console.error)
       }
     }
 

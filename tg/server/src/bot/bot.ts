@@ -163,6 +163,7 @@ function setupHandlers(bot: Bot) {
         if (user.telegramId.startsWith('system:')) continue
 
         const preferredModel = user.gameState.preferredModel ?? 'deepseek/deepseek-v4-flash'
+        const preferredLanguage = user.gameState.preferredLanguage ?? 'ru'
 
         await prisma.project.deleteMany({ where: { userId: user.id } })
         await prisma.transaction.deleteMany({ where: { userId: user.id } })
@@ -195,7 +196,7 @@ function setupHandlers(bot: Bot) {
           },
         })
 
-        generateOnboardingProject(user.id, preferredModel).catch(e =>
+        generateOnboardingProject(user.id, preferredModel, preferredLanguage).catch(e =>
           console.error(`[resetall] userId=${user.id} onboarding error:`, e),
         )
 

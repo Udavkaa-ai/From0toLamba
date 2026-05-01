@@ -140,13 +140,67 @@ const PROJECT_TYPE_RU: Record<ProjectType, string> = {
   [ProjectType.HONEST_TRADE]: 'честная торговля',
 }
 
+const PROJECT_TYPE_EN: Record<ProjectType, string> = {
+  [ProjectType.CARD_GAME]: 'card gambling game',
+  [ProjectType.TREASURE_HUNT]: 'treasure hunt',
+  [ProjectType.POTION_BREW]: 'potion brewing venture (passive income)',
+  [ProjectType.GUILD_SCHEME]: 'guild / merchant circle (referral pyramid)',
+  [ProjectType.HONEST_TRADE]: 'honest trade',
+}
 
-export async function generateProjectData(input: GenerateProjectInput, model = DEFAULT_MODEL): Promise<GeneratedProjectData> {
+const LIE_TOPIC_LABEL_EN: Record<LieTopic, string> = {
+  [LieTopic.PATRON_COUNT]: 'Investors',
+  [LieTopic.DAILY_PROFIT]: 'Income',
+  [LieTopic.PAYOUT_DATE]: 'Payouts',
+  [LieTopic.GUILD_SIZE]: 'Guild size',
+  [LieTopic.ELDER_BLESSING]: 'Certification',
+  [LieTopic.NOBLE_BACKING]: 'Backers',
+  [LieTopic.WITHDRAWAL_LIMITS]: 'Withdrawals',
+}
+
+const PERSONA_LABEL_EN: Record<PersonaArchetype, string> = {
+  [PersonaArchetype.BURATINO]:   'Buratino (the wooden puppet boy)',
+  [PersonaArchetype.BOYARIN]:    'Tsar Gorokh (the ancient king)',
+  [PersonaArchetype.KOLOBOK]:    'Kolobok (the runaway bread roll)',
+  [PersonaArchetype.KOSCHEI]:    'Koschei the Deathless',
+  [PersonaArchetype.ZOLUSHKA]:   'Cinderella (Zolushka)',
+  [PersonaArchetype.BABA_YAGA]:  'Baba Yaga (the forest witch)',
+  [PersonaArchetype.IVAN_DURAK]: 'Ivan the Fool',
+}
+
+const FATE_LABEL_EN: Record<ProjectFate, string> = {
+  [ProjectFate.INSTANT_SCAM]: 'Ran off with the money',
+  [ProjectFate.SLOW_DRAIN]:   'Quietly collapsed',
+  [ProjectFate.HONEST_FAIL]:  'Honest failure',
+  [ProjectFate.SURVIVOR]:     'Survived',
+  [ProjectFate.UNICORN]:      'Firebird by the tail',
+}
+
+export async function generateProjectData(input: GenerateProjectInput, model = DEFAULT_MODEL, lang = 'ru'): Promise<GeneratedProjectData> {
   const { type, archetype, lieTopics } = input
-  const typeName = PROJECT_TYPE_RU[type]
-  const liesStr = lieTopics.map(t => `${LIE_TOPIC_EMOJI[t]} ${LIE_TOPIC_LABEL[t]}`).join(', ')
 
-  const prompt = `Ты придумываешь новое дело для игры «Из грязи в князи» — симулятора купца-инвестора в сказочной Руси.
+  let prompt: string
+  if (lang === 'en') {
+    const typeName = PROJECT_TYPE_EN[type]
+    const liesStr = lieTopics.map(t => `${LIE_TOPIC_EMOJI[t]} ${LIE_TOPIC_LABEL_EN[t]}`).join(', ')
+    prompt = `You are creating a new venture for "From Rags to Riches" — a merchant-investor simulator set in a magical fairy-tale Rus'.
+
+Venture type: ${typeName}
+Owner archetype: ${PERSONA_LABEL_EN[archetype] ?? archetype}
+Topics the owner LIES about (the player must spot them): ${liesStr}
+
+Create:
+1. name — venture name (2–4 words, fairy-tale merchant style, in English)
+2. developerName — owner's name with a colourful nickname or epithet in folk style (MUST be 2–3 words). Examples: "Emelya the Fool", "Fyodor Goldtooth", "Nikita Sly-Ruble", "Gavril the Cunning", "Ivan Crooked-Smile", "Stefan Quick-Ruble". Should be vivid and memorable.
+3. description — venture description (3–4 sentences, first person from the owner, no blockchain/crypto, currency is kopecks or "k")
+4. roadmap — plan (exactly 3 items, array of strings)
+
+Reply ONLY with valid JSON, no explanation:
+{"name":"...","developerName":"...","description":"...","roadmap":["...","...","..."]}`
+  } else {
+    const typeName = PROJECT_TYPE_RU[type]
+    const liesStr = lieTopics.map(t => `${LIE_TOPIC_EMOJI[t]} ${LIE_TOPIC_LABEL[t]}`).join(', ')
+    prompt = `Ты придумываешь новое дело для игры «Из грязи в князи» — симулятора купца-инвестора в сказочной Руси.
 
 Тип дела: ${typeName}
 Архетип хозяина: ${PERSONA_LABEL[archetype] ?? archetype}
@@ -160,6 +214,7 @@ export async function generateProjectData(input: GenerateProjectInput, model = D
 
 Отвечай ТОЛЬКО валидным JSON без пояснений:
 {"name":"...","developerName":"...","description":"...","roadmap":["...","...","..."]}`
+  }
 
   try {
     console.log(`[AI:project] model=${model}`)
@@ -183,21 +238,33 @@ export async function generateProjectData(input: GenerateProjectInput, model = D
       throw parseErr
     }
 
+    const fallbackName = lang === 'en' ? 'Secret Venture' : 'Тайное дело'
+    const fallbackDev = lang === 'en' ? 'Emelya the Sly' : 'Ефим Лукавый'
+    const fallbackDesc = lang === 'en' ? 'A profitable venture for bold investors.' : 'Прибыльное дело для смелых вкладчиков.'
+    const fallbackRoadmap = lang === 'en'
+      ? ['Open the venture', 'Collect kopecks', 'Distribute profits']
+      : ['Открыть дело', 'Собрать гроши', 'Распределить прибыль']
     return {
-      name: parsed.name ?? 'Тайное дело',
-      developerName: parsed.developerName ?? 'Ефим Лукавый',
-      claimedName: parsed.name ?? 'Тайное дело',
-      description: parsed.description ?? 'Прибыльное дело для смелых вкладчиков.',
-      roadmap: parsed.roadmap ?? ['Открыть дело', 'Собрать гроши', 'Распределить прибыль'],
+      name: parsed.name ?? fallbackName,
+      developerName: parsed.developerName ?? fallbackDev,
+      claimedName: parsed.name ?? fallbackName,
+      description: parsed.description ?? fallbackDesc,
+      roadmap: parsed.roadmap ?? fallbackRoadmap,
     }
   } catch (err) {
     console.error('generateProjectData failed:', err)
+    const fallbackName = lang === 'en' ? 'Secret Venture' : 'Тайное дело'
+    const fallbackDev = lang === 'en' ? 'Emelya the Sly' : 'Ефим Лукавый'
+    const fallbackDesc = lang === 'en' ? 'A profitable venture for bold investors.' : 'Прибыльное дело для смелых вкладчиков.'
+    const fallbackRoadmap = lang === 'en'
+      ? ['Open the venture', 'Collect kopecks', 'Distribute profits']
+      : ['Открыть дело', 'Собрать гроши', 'Распределить прибыль']
     return {
-      name: 'Тайное дело',
-      developerName: 'Ефим Лукавый',
-      claimedName: 'Тайное дело',
-      description: 'Прибыльное дело для смелых вкладчиков.',
-      roadmap: ['Открыть дело', 'Собрать гроши', 'Распределить прибыль'],
+      name: fallbackName,
+      developerName: fallbackDev,
+      claimedName: fallbackName,
+      description: fallbackDesc,
+      roadmap: fallbackRoadmap,
     }
   }
 }
@@ -575,14 +642,28 @@ interface PostMortemInput {
   intuitionDelta: number
 }
 
-export async function generatePostMortem(input: PostMortemInput, model = DEFAULT_MODEL): Promise<void> {
+export async function generatePostMortem(input: PostMortemInput, model = DEFAULT_MODEL, lang = 'ru'): Promise<void> {
   const { projectId, userId, archetype, fate, lieTopics, investedAmount, returnedAmount, profitPercent, daysActive, intuitionDelta } = input
 
-  const liesStr = lieTopics.map(t => LIE_TOPIC_LABEL[t as LieTopic] ?? t).join(', ')
-  const archetypeLabel = PERSONA_LABEL[archetype as PersonaArchetype] ?? archetype
-  const fateLabel = FATE_LABEL[fate as ProjectFate] ?? fate
+  let prompt: string
+  if (lang === 'en') {
+    const liesStr = lieTopics.map(t => LIE_TOPIC_LABEL_EN[t as LieTopic] ?? t).join(', ')
+    const archetypeLabel = PERSONA_LABEL_EN[archetype as PersonaArchetype] ?? archetype
+    const fateLabel = FATE_LABEL_EN[fate as ProjectFate] ?? fate
+    prompt = `You are the chronicler of "From Rags to Riches". Write a post-mortem analysis of a closed venture.
 
-  const prompt = `Ты — летописец игры «Из грязи в князи». Напиши разбор закрытого дела.
+Owner archetype: ${archetypeLabel}
+Fate: ${fateLabel}
+Lie topics: ${liesStr || 'none'}
+Invested: ${investedAmount.toFixed(0)} k, returned: ${returnedAmount.toFixed(0)} k (${profitPercent.toFixed(1)}%)
+Days active: ${daysActive}
+
+Write 3–4 sentences: reveal the archetype, explain what happened, give a lesson for future investments. Refer to the owner by their archetype name ("${archetypeLabel}"). Natural English, no crypto, no markdown asterisks.`
+  } else {
+    const liesStr = lieTopics.map(t => LIE_TOPIC_LABEL[t as LieTopic] ?? t).join(', ')
+    const archetypeLabel = PERSONA_LABEL[archetype as PersonaArchetype] ?? archetype
+    const fateLabel = FATE_LABEL[fate as ProjectFate] ?? fate
+    prompt = `Ты — летописец игры «Из грязи в князи». Напиши разбор закрытого дела.
 
 Архетип хозяина: ${archetypeLabel}
 Судьба: ${fateLabel}
@@ -591,6 +672,7 @@ export async function generatePostMortem(input: PostMortemInput, model = DEFAULT
 Дней в деле: ${daysActive}
 
 Напиши 3–4 предложения: раскрой архетип, объясни что произошло, дай урок для будущих вложений. В тексте употребляй именно русское имя архетипа («${archetypeLabel}»), а не код. Современный русский, без крипты, без английских слов, без markdown-звёздочек.`
+  }
 
   try {
     console.log(`[AI:postmortem] model=${model} projectId=${projectId}`)
@@ -601,7 +683,7 @@ export async function generatePostMortem(input: PostMortemInput, model = DEFAULT
       reasoning: { enabled: false },
     } as any)
 
-    const analysis = response.choices[0]?.message?.content ?? 'Дело закрылось.'
+    const analysis = response.choices[0]?.message?.content ?? (lang === 'en' ? 'The venture has closed.' : 'Дело закрылось.')
 
     await prisma.postMortem.create({
       data: {

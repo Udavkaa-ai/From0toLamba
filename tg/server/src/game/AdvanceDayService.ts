@@ -181,7 +181,7 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
         profitPercent,
         daysActive: project.daysSinceJoined,
         intuitionDelta: amaSession?.intuitionDelta ?? 0,
-      }).catch(console.error)
+      }, undefined, gameState.preferredLanguage ?? 'ru').catch(console.error)
 
       await prisma.project.update({
         where: { id: project.id },
@@ -321,7 +321,7 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
         profitPercent: profitPct,
         daysActive: project.daysSinceJoined,
         intuitionDelta: amaSessionAbandoned?.intuitionDelta ?? 0,
-      }).catch(console.error)
+      }, undefined, gameState.preferredLanguage ?? 'ru').catch(console.error)
 
       await prisma.project.update({
         where: { id: project.id },
@@ -461,16 +461,17 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
 
   // Предзагружаем дела на следующий день в фоне — AI успевает сгенерить имена/описания
   // за время между advance-day'ями (обычно минимум 2 часа кулдауна)
+  const lang = gameState.preferredLanguage ?? 'ru'
   const preloadCount = irng(NEW_PROJECTS_PER_DAY_MIN, NEW_PROJECTS_PER_DAY_MAX)
   for (let i = 0; i < preloadCount; i++) {
-    generateProject(userId, undefined, undefined, { preloaded: true }).catch(console.error)
+    generateProject(userId, undefined, undefined, { preloaded: true }, lang).catch(console.error)
   }
 
   // Fallback: если из предзагрузки ничего не пришло (первый advance-day игрока),
   // запускаем обычную синхронную генерацию прямо в inbox как раньше — хоть что-то да появится
   if (promoted.count === 0) {
     for (let i = 0; i < preloadCount; i++) {
-      generateProject(userId).catch(console.error)
+      generateProject(userId, undefined, undefined, {}, lang).catch(console.error)
     }
   }
 

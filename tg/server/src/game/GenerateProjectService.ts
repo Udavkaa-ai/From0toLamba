@@ -35,6 +35,7 @@ export async function generateProject(
   overrideFate?: ProjectFate,
   model?: string,
   options: { preloaded?: boolean } = {},
+  lang = 'ru',
 ): Promise<string> {
   // Случайные базовые параметры
   const type = ALL_TYPES[Math.floor(Math.random() * ALL_TYPES.length)]
@@ -54,10 +55,17 @@ export async function generateProject(
   // Имена/описания AI подтянет в фоне через update ниже.
   const claimedAPY = computeClaimedAPY(realDailyYieldRubles, fate)
 
+  const placeholderName = lang === 'en' ? 'Secret Venture' : 'Тайное дело'
+  const placeholderDev = lang === 'en' ? 'Emelya the Sly' : 'Ефим Лукавый'
+  const placeholderDesc = lang === 'en' ? 'A profitable venture for bold investors.' : 'Прибыльное дело для смелых вкладчиков.'
+  const placeholderRoadmap = lang === 'en'
+    ? ['Open the venture', 'Collect kopecks', 'Distribute profits']
+    : ['Открыть дело', 'Собрать гроши', 'Распределить прибыль']
+
   const project = await prisma.project.create({
     data: {
       userId,
-      name: 'Тайное дело',
+      name: placeholderName,
       type,
       fate,
       personaArchetype: archetype,
@@ -65,14 +73,14 @@ export async function generateProject(
       realDailyYieldRubles,
       lieTopics,
       truthTopics,
-      developerName: 'Ефим Лукавый',
+      developerName: placeholderDev,
       developerAvatarSeed: avatarSeed,
-      claimedName: 'Тайное дело',
+      claimedName: placeholderName,
       claimedAPY,
       claimedUserCount: irng(50, 5000),
       claimedTeamSize: irng(3, 30),
-      description: 'Прибыльное дело для смелых вкладчиков.',
-      roadmap: ['Открыть дело', 'Собрать гроши', 'Распределить прибыль'],
+      description: placeholderDesc,
+      roadmap: placeholderRoadmap,
       currentUserCount: irng(50, 5000),
       npcTruthParams,
       isInbox: !options.preloaded,
@@ -83,7 +91,7 @@ export async function generateProject(
   // AI-обогащение имён/описания и баннер — в фоне, не блокируем вызывающего
   ;(async () => {
     try {
-      const aiData = await generateProjectData({ type, fate, archetype, lieTopics }, model)
+      const aiData = await generateProjectData({ type, fate, archetype, lieTopics }, model, lang)
       await prisma.project.update({
         where: { id: project.id },
         data: {
@@ -104,8 +112,8 @@ export async function generateProject(
 }
 
 /** Онбординг-проект (всегда HONEST_FAIL, гарантированная выплата) */
-export async function generateOnboardingProject(userId: number, model?: string): Promise<string> {
-  return generateProject(userId, ProjectFate.HONEST_FAIL, model)
+export async function generateOnboardingProject(userId: number, model?: string, lang = 'ru'): Promise<string> {
+  return generateProject(userId, ProjectFate.HONEST_FAIL, model, {}, lang)
 }
 
 // Чтобы heal не стартовал одну и ту же генерацию многократно (например,
@@ -121,25 +129,27 @@ const enrichingInFlight = new Set<string>()
 export async function enrichPlaceholderProject(
   projectId: string,
   model?: string,
+  lang = 'ru',
 ): Promise<void> {
   if (enrichingInFlight.has(projectId)) return
   enrichingInFlight.add(projectId)
+  const placeholder = lang === 'en' ? 'Secret Venture' : 'Тайное дело'
   try {
     const project = await prisma.project.findUnique({ where: { id: projectId } })
     if (!project) return
     // Проверяем что дело всё ещё с плейсхолдером — иначе заменим качественный
     // текст пустым фолбэком при очередной неудачной генерации
-    if (project.name !== 'Тайное дело') return
+    if (project.name !== 'Тайное дело' && project.name !== 'Secret Venture') return
 
     const aiData = await generateProjectData({
       type: project.type as ProjectType,
       fate: project.fate as ProjectFate,
       archetype: project.personaArchetype as PersonaArchetype,
       lieTopics: project.lieTopics as any,
-    }, model)
+    }, model, lang)
 
     // Если AI снова вернул плейсхолдер — не трогаем запись, попробуем в другой раз
-    if (aiData.name === 'Тайное дело') return
+    if (aiData.name === placeholder) return
 
     await prisma.project.update({
       where: { id: projectId },

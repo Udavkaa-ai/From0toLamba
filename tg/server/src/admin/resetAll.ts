@@ -35,6 +35,7 @@ async function resetAll() {
     }
 
     const preferredModel = user.gameState.preferredModel ?? 'deepseek/deepseek-v4-flash'
+    const preferredLanguage = user.gameState.preferredLanguage ?? 'ru'
 
     // Удаляем все проекты (cascade: AmaSession, AmaMessage, DailyUpdate, PostMortem)
     await prisma.project.deleteMany({ where: { userId: user.id } })
@@ -76,7 +77,7 @@ async function resetAll() {
     })
 
     // Генерируем стартовый проект
-    generateOnboardingProject(user.id, preferredModel).catch(e =>
+    generateOnboardingProject(user.id, preferredModel, preferredLanguage).catch(e =>
       console.error(`  [warn] userId=${user.id} onboarding error:`, e),
     )
 

@@ -176,7 +176,7 @@ export async function exitProject(userId: number, projectId: string): Promise<nu
     profitPercent,
     daysActive: project.daysSinceJoined,
     intuitionDelta: amaSession?.intuitionDelta ?? 0,
-  }).catch(console.error)
+  }, undefined, gameState.preferredLanguage ?? 'ru').catch(console.error)
 
   // Достаток заметно меняется — пересчитываем ранг сразу, а не ждём advance-day
   await recomputeRank(userId)
