@@ -254,6 +254,7 @@ export function HomePage() {
   useEffect(() => {
     if (!gameState?.isOnboardingComplete) return
     if (isTourDone()) return
+    if (useTourStore.getState().step !== null) return  // тур уже активен — не сбрасывать
     const timer = setTimeout(() => startTour(), 1200)
     return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
