@@ -887,7 +887,7 @@ export function HomePage() {
               fontFamily: 'inherit',
             }}
           >
-            {IS_TOURNAMENT_ACTIVE ? '🏆 Майская Ярмарка — турнир идёт!' : '📢 Скоро перезапуск — читай'}
+            {IS_TOURNAMENT_ACTIVE ? t.home.tournamentBannerBtn : t.home.preResetBannerBtn}
           </button>
           {(() => {
             const maxC = gameState.maxConsecutiveAdvances ?? 7
@@ -1853,48 +1853,9 @@ function ProjectNewsCardContent({ project }: { project: ProjectDTO }) {
 // Переключатель вручную: true = показывать правила турнира, false = объявление о перезапуске
 const IS_TOURNAMENT_ACTIVE = true
 
-const PRE_RESET_CONTENT = {
-  title: '📢 Перед стартом турнира — важное объявление!',
-  sections: [
-    {
-      heading: 'Что произойдёт',
-      body: 'Прогресс всех игроков обнуляется — злато, чины, дни, подвиги, грамоты. Все начинают с чистого листа. Это нужно, чтобы турнир был честным.',
-    },
-    {
-      heading: 'Реферальные связи сохраняются',
-      body: 'Если ты уже кого-то позвал, связь останется. Бонус нужно будет заработать заново: сосватанный набирает 10 чуйки → оба получают +100 г.',
-    },
-    {
-      heading: 'Что изменится',
-      body: '— Купеческие печати обновятся — старые паттерны не сработают, придётся смотреть внимательнее.\n— Открывается платная беседа с дельцом — можно разузнать у хозяина правду о его деле перед вложением (10 Telegram Stars).\n— Пропуск двухчасового ожидания между неделями становится платным (10 Telegram Stars). В бете это было бесплатно — теперь по-честному. Для тех, кто метит в «Старожилы ярмарки», это важно учитывать.',
-    },
-    {
-      heading: null,
-      body: 'Спасибо всем, кто тестировал — вы помогли сделать игру лучше.\n\nВперёд — за грош, за чин, за сказочный турнир! 🏆',
-    },
-  ],
-}
-
-const TOURNAMENT_CONTENT = {
-  title: '🏆 Майская Ярмарка — первый турнир',
-  sections: [
-    {
-      heading: '1–9 мая · итоги 10 мая в 10:00 МСК',
-      body: 'Участвует каждый, кто наберёт хотя бы 10 чуйки за период турнира. Один игрок — один приз.',
-    },
-    {
-      heading: '🎁 Номинации и призы',
-      body: '🗓 Старожил ярмарки — наибольшее число игровых дней → 🗝 Input Key\n\n💰 Богатейший купец — наибольшее количество грошей на 9 мая → 📖 Timeless Book\n\n👁 Зоркий глаз — наивысший показатель чуйки → 🔮 Hex Pot\n\n📦 Деятельный купец — больше всего дел, в которых поучаствовал → 🪙 Money Pot\n\n🤝 Главный сват — больше всего засчитанных рефералов (10+ чуйки) → 🃏 Jester Hat\n\n🎲 Приз Жар-птицы — случайный розыгрыш среди всех участников → 🔥 Chill Flame',
-    },
-    {
-      heading: 'Правила',
-      body: 'Результаты фиксируются на 9 мая в 23:59 МСК.\n\nЕсли побеждаешь в нескольких номинациях — выбираешь любую, приз в оставшейся уходит второму месту.\n\nПобедители получают подарки напрямую в Telegram или на Thermos.',
-    },
-  ],
-}
-
 function BannerAnnouncementModal({ onClose }: { onClose: () => void }) {
-  const content = IS_TOURNAMENT_ACTIVE ? TOURNAMENT_CONTENT : PRE_RESET_CONTENT
+  const t = useT()
+  const content = IS_TOURNAMENT_ACTIVE ? t.home.tournament : t.home.preReset
 
   return (
     <motion.div
@@ -1980,7 +1941,7 @@ function BannerAnnouncementModal({ onClose }: { onClose: () => void }) {
               cursor: 'pointer', fontFamily: 'inherit',
             }}
           >
-            Понял, вперёд! →
+            {t.common.close}
           </button>
         </div>
       </motion.div>

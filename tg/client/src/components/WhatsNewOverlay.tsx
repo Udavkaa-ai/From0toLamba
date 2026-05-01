@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { colors, spacing } from '@/theme'
+import { useT } from '@/i18n'
 
 // Заметки по версиям — что поменялось. Показываются один раз: клиент
 // хранит последнюю увиденную версию в localStorage (см. useWhatsNew).
@@ -81,6 +82,7 @@ export function markChangelogSeen(currentVersion: string) {
 export function WhatsNewOverlay({
   entry, onClose,
 }: { entry: ChangelogEntry; onClose: () => void }) {
+  const t = useT()
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -110,10 +112,10 @@ export function WhatsNewOverlay({
         <div style={{ textAlign: 'center', marginBottom: spacing.lg }}>
           <div style={{ fontSize: '48px', marginBottom: '4px' }}>📯</div>
           <div style={{ color: colors.fairyGold, fontSize: '18px', fontWeight: 800 }}>
-            Вести с ярмарки
+            {t.whatsNew.header}
           </div>
           <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
-            Обновление v{entry.version}
+            {t.whatsNew.versionLabel(entry.version)}
           </div>
         </div>
 
@@ -156,7 +158,7 @@ export function WhatsNewOverlay({
             cursor: 'pointer',
           }}
         >
-          К делам →
+          {t.whatsNew.closeBtn}
         </button>
       </motion.div>
     </motion.div>

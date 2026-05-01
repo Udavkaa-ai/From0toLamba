@@ -141,10 +141,10 @@ function UnlockedBanner({
             {achievement.emoji}
           </motion.div>
           <div style={{ color: colors.fairyGold, fontSize: '22px', fontWeight: 800 }}>
-            {achievement.name}
+            {(t.achievements.items[achievement.id]?.name ?? achievement.name)}
           </div>
           <div style={{ color: colors.textSecondary, fontSize: '13px', marginTop: '4px' }}>
-            {achievement.description}
+            {(t.achievements.items[achievement.id]?.description ?? achievement.description)}
           </div>
         </div>
 
@@ -180,7 +180,7 @@ function UnlockedBanner({
 
         <div style={{ display: 'flex', gap: '8px' }}>
           <button
-            onClick={() => shareAchievement(achievement, t.stats.achievementShareText(achievement.name, achievement.description), userId)}
+            onClick={() => shareAchievement(achievement, t.stats.achievementShareText(t.achievements.items[achievement.id]?.name ?? achievement.name, t.achievements.items[achievement.id]?.description ?? achievement.description), userId)}
             style={{
               flex: 1,
               padding: spacing.md,

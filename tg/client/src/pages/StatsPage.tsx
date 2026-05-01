@@ -221,7 +221,7 @@ function AchievementsSection() {
         return (
           <div key={cat} style={{ marginBottom: spacing.md }}>
             <div style={{ color: colors.textMuted, fontSize: '11px', fontWeight: 600, marginBottom: '6px', marginLeft: '4px' }}>
-              {CATEGORY_LABELS[cat]}
+              {t.achievements.categories[cat] ?? CATEGORY_LABELS[cat]}
             </div>
             <div style={{ display: 'grid', gap: '6px' }}>
               {inCat.map(a => (
@@ -257,10 +257,10 @@ function AchievementsSection() {
                       fontWeight: 600,
                       fontSize: '13px',
                     }}>
-                      {a.name}
+                      {(t.achievements.items[a.id]?.name ?? a.name)}
                     </div>
                     <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '1px' }}>
-                      {a.description}
+                      {(t.achievements.items[a.id]?.description ?? a.description)}
                     </div>
                     {!a.unlocked && a.progress && a.progress.target > 1 && (
                       <div style={{ marginTop: '4px' }}>
@@ -337,7 +337,7 @@ function AchievementDetailModal({
             {achievement.unlocked ? achievement.emoji : '🔒'}
           </div>
           <div style={{ color: colors.fairyGold, fontSize: '18px', fontWeight: 700 }}>
-            {achievement.name}
+            {(t.achievements.items[achievement.id]?.name ?? achievement.name)}
           </div>
           {achievement.unlocked && (
             <div style={{ color: colors.success, fontSize: '12px', marginTop: '4px' }}>
@@ -358,7 +358,7 @@ function AchievementDetailModal({
               {t.stats.achievementHow}
             </div>
             <div style={{ color: colors.textPrimary, fontSize: '14px', lineHeight: 1.5 }}>
-              {achievement.description}
+              {(t.achievements.items[achievement.id]?.description ?? achievement.description)}
             </div>
             {achievement.progress && achievement.progress.target > 1 && (
               <div style={{ marginTop: spacing.sm }}>
@@ -421,7 +421,7 @@ function AchievementDetailModal({
         {/* Обычный разблокированный подвиг без справки */}
         {achievement.unlocked && !showLore && (
           <div style={{ color: colors.textSecondary, fontSize: '14px', lineHeight: 1.5, textAlign: 'center' }}>
-            {achievement.description}
+            {(t.achievements.items[achievement.id]?.description ?? achievement.description)}
           </div>
         )}
 
