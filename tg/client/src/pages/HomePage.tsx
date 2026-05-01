@@ -58,6 +58,9 @@ export function HomePage() {
   const [showBannerModal, setShowBannerModal] = useState(false)
   const [showFaq, setShowFaq] = useState(false)
   const [showFaqAnnouncement, setShowFaqAnnouncement] = useState(useFaqAnnouncement)
+  const [nicknameInput, setNicknameInput] = useState<string>('')
+  const [nicknameError, setNicknameError] = useState<string | null>(null)
+  const [nicknameSaving, setNicknameSaving] = useState(false)
   const [soundMuted, setSoundMuted] = useState(isMuted)
   const [soundVolume, setSoundVolume] = useState(getVolume)
 
@@ -273,6 +276,28 @@ export function HomePage() {
       navigate('/')
     },
   })
+
+  const handleOpenSettings = () => {
+    setNicknameInput(gameState?.nickname ?? '')
+    setNicknameError(null)
+    setShowSettings(true)
+  }
+
+  const handleSaveNickname = async () => {
+    const val = nicknameInput.trim()
+    if (val.length > 20) { setNicknameError(t.nickname.errorChars); return }
+    setNicknameSaving(true)
+    setNicknameError(null)
+    try {
+      await api.user.setNickname(val || null)
+      qc.invalidateQueries({ queryKey: ['gameState'] })
+    } catch (e: any) {
+      const code = e?.response?.data?.error
+      setNicknameError(code === 'PROFANITY' ? t.nickname.errorProfanity : t.nickname.errorChars)
+    } finally {
+      setNicknameSaving(false)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -509,6 +534,44 @@ export function HomePage() {
                 >
                   ✕
                 </button>
+              </div>
+
+              {/* Nickname section */}
+              <div style={{ marginBottom: '28px' }}>
+                <div style={{ color: colors.textSecondary, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  {t.nickname.sectionLabel}
+                </div>
+                <div style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '8px' }}>{t.nickname.hint}</div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    value={nicknameInput}
+                    onChange={e => { setNicknameInput(e.target.value); setNicknameError(null) }}
+                    placeholder={t.nickname.placeholder}
+                    maxLength={20}
+                    style={{
+                      flex: 1, padding: '10px 14px',
+                      background: 'rgba(255,255,255,0.07)',
+                      border: `1px solid ${nicknameError ? '#ff6b6b' : 'rgba(255,255,255,0.15)'}`,
+                      borderRadius: '10px', color: colors.textPrimary,
+                      fontSize: '14px', outline: 'none',
+                    }}
+                  />
+                  <button
+                    onClick={handleSaveNickname}
+                    disabled={nicknameSaving}
+                    style={{
+                      padding: '10px 16px', background: colors.fairyGold,
+                      border: 'none', borderRadius: '10px',
+                      color: colors.nightBlue, fontSize: '13px', fontWeight: 700,
+                      cursor: 'pointer', opacity: nicknameSaving ? 0.6 : 1,
+                    }}
+                  >
+                    {t.nickname.save}
+                  </button>
+                </div>
+                {nicknameError && (
+                  <div style={{ color: '#ff6b6b', fontSize: '11px', marginTop: '6px' }}>{nicknameError}</div>
+                )}
               </div>
 
               {/* Model section */}
@@ -845,7 +908,7 @@ export function HomePage() {
               {soundMuted ? '🔇' : '🔊'}
             </button>
             <button
-              onClick={() => { playSound('tap'); setShowSettings(true) }}
+              onClick={() => { playSound('tap'); handleOpenSettings() }}
               style={{
                 background: `${colors.fairyGold}14`,
                 border: `1px solid ${colors.fairyGold}35`,

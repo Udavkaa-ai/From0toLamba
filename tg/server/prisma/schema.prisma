@@ -25,6 +25,7 @@ model User {
   // Нужно потому, что Telegram доставляет start_param в WebApp initData только
   // если у бота настроена Main Mini App в BotFather. Через команду бота — надёжнее.
   pendingReferralParam  String?
+  nickname              String?
 
   gameState      GameState?
   projects       Project[]
@@ -34,6 +35,7 @@ model User {
   transactions   Transaction[]
   channelClaims  ChannelClaim[]
   starPurchases  StarPurchase[]
+  chatMessages   ChatMessage[]
 }
 
 model GameState {
@@ -285,4 +287,19 @@ model AdRevenue {
   currency  String   @default("RUB")
   meta      String?  // JSON: доп. данные от рекламной сети
   recordedAt DateTime @default(now())
+}
+
+model ChatMessage {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  displayName String   // nickname ?? firstName at time of posting
+  investorRank String  @default("NEWBIE")
+  text        String   @db.Text
+  isDeleted   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([userId])
 }

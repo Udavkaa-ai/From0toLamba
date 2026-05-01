@@ -99,6 +99,7 @@ export interface GameStateDTO {
   balance: number
   currentDay: number
   investorRank: string
+  nickname: string | null
   intuitionScore: number
   intuitionAccuracy: number | null  // 0..1 или null если грамот не было
   chartersSubmitted: number
@@ -340,4 +341,25 @@ export const api = {
     activateAmaUnlock: (projectId: string) =>
       apiClient.post<{ success: boolean }>('/payments/activate', { feature: 'ama_unlock', projectId }).then(r => r.data),
   },
+
+  chat: {
+    getMessages: (since?: number) =>
+      apiClient.get<ChatMessageDTO[]>('/chat/messages', { params: since ? { since } : undefined }).then(r => r.data),
+    sendMessage: (text: string) =>
+      apiClient.post<ChatMessageDTO>('/chat/message', { text }).then(r => r.data),
+  },
+
+  user: {
+    setNickname: (nickname: string | null) =>
+      apiClient.patch<{ nickname: string | null }>('/user/nickname', { nickname }).then(r => r.data),
+  },
+}
+
+export interface ChatMessageDTO {
+  id: number
+  userId: number
+  displayName: string
+  investorRank: string
+  text: string
+  createdAt: string
 }

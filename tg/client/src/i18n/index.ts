@@ -702,6 +702,29 @@ whatsNew: {
   closeBtn: 'К делам →',
 },
 
+// ─── Чат ─────────────────────────────────────────────────────────────────────
+chat: {
+  title: 'Ярмарочная площадь',
+  placeholder: 'Что скажешь, купец...',
+  send: 'Отправить',
+  errorProfanity: 'Такие слова на ярмарке не приняты',
+  errorRateLimit: 'Подожди немного перед следующим сообщением',
+  errorGeneral: 'Не удалось отправить',
+  empty: 'Пока тишина. Будь первым!',
+},
+
+// ─── Ник ─────────────────────────────────────────────────────────────────────
+nickname: {
+  sectionLabel: 'Торговое имя',
+  label: 'Имя в чате',
+  placeholder: 'Твоё имя на площади...',
+  hint: 'Отображается в общем чате вместо имени Telegram',
+  save: 'Сохранить',
+  reset: 'Сбросить',
+  errorChars: 'Допустимы буквы, цифры, пробел, дефис, точка (макс. 20)',
+  errorProfanity: 'Такое имя не пройдёт',
+},
+
 // ─── Конец блока RU ───────────────────────────────────────────────────────────
 }, // end ru
 
@@ -1363,6 +1386,29 @@ whatsNew: {
   header: 'News from the Fair',
   versionLabel: (v: string) => `Update v${v}`,
   closeBtn: 'To ventures →',
+},
+
+// ─── Chat ─────────────────────────────────────────────────────────────────────
+chat: {
+  title: 'The Marketplace',
+  placeholder: 'Say something, merchant...',
+  send: 'Send',
+  errorProfanity: 'Such words are not welcome at the fair',
+  errorRateLimit: 'Wait a moment before your next message',
+  errorGeneral: 'Failed to send',
+  empty: 'Silence for now. Be the first!',
+},
+
+// ─── Nickname ─────────────────────────────────────────────────────────────────
+nickname: {
+  sectionLabel: 'Trade Name',
+  label: 'Name in chat',
+  placeholder: 'Your name at the marketplace...',
+  hint: 'Shown in the public chat instead of your Telegram name',
+  save: 'Save',
+  reset: 'Reset',
+  errorChars: 'Letters, digits, space, dash, dot allowed (max 20)',
+  errorProfanity: 'That name won\'t pass',
 },
 
 }, // end en

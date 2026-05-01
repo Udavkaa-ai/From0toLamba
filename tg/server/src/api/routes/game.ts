@@ -150,6 +150,7 @@ export async function gameRoutes(app: FastifyInstance) {
       balance: gameState.balance,
       currentDay: gameState.currentDay,
       investorRank: gameState.investorRank,
+      nickname: user.nickname ?? null,
       intuitionScore: gameState.intuitionScore,
       intuitionAccuracy,       // 0..1 или null, если грамот не было
       chartersSubmitted: charterSessions.length,

@@ -12,6 +12,7 @@ import { StatsPage } from './pages/StatsPage'
 import { LeaderboardPage } from './pages/LeaderboardPage'
 import { RegistryPage } from './pages/RegistryPage'
 import { BottomNav } from './components/BottomNav'
+import { ChatPanel } from './components/ChatPanel'
 import { TourOverlay } from './components/TourOverlay'
 import { LanguagePicker } from './components/LanguagePicker'
 import { useLangStore } from './stores/langStore'
@@ -50,6 +51,7 @@ function AppShell() {
             <Route path="/registry" element={<RegistryPage />} />
           </Routes>
           <BottomNav />
+          <ChatPanel />
           <TourOverlay />
         </>
       )}
