@@ -277,9 +277,20 @@ export function TourOverlay() {
   useEffect(() => {
     if (!step?.target) { setTargetRect(null); return }
 
+    let scrolled = false
     const tick = () => {
       const el = document.querySelector(step.target!) as HTMLElement | null
       if (el) {
+        if (!scrolled) {
+          scrolled = true
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          // Берём rect после небольшой паузы — scrollIntoView ещё не завершился
+          rafRef.current = window.setTimeout(() => {
+            setTargetRect(el.getBoundingClientRect())
+            rafRef.current = window.setTimeout(tick, 300)
+          }, 400)
+          return
+        }
         setTargetRect(el.getBoundingClientRect())
       } else {
         setTargetRect(null)
