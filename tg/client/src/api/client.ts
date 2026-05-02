@@ -346,8 +346,10 @@ export const api = {
   chat: {
     getMessages: (since?: number) =>
       apiClient.get<ChatMessageDTO[]>('/chat/messages', { params: since ? { since } : undefined }).then(r => r.data),
-    sendMessage: (text: string) =>
-      apiClient.post<ChatMessageDTO>('/chat/message', { text }).then(r => r.data),
+    sendMessage: (text: string, replyToId?: number) =>
+      apiClient.post<ChatMessageDTO>('/chat/message', { text, replyToId }).then(r => r.data),
+    deleteMessage: (id: number) =>
+      apiClient.delete(`/chat/message/${id}`).then(r => r.data),
   },
 
   user: {
@@ -362,5 +364,8 @@ export interface ChatMessageDTO {
   displayName: string
   investorRank: string
   text: string
+  replyToId: number | null
+  replyToText: string | null
+  replyToDisplayName: string | null
   createdAt: string
 }

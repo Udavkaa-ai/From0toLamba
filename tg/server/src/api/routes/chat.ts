@@ -5,7 +5,6 @@ import { telegramAuthHook } from '../../middleware/telegramAuth'
 // @ts-ignore
 import leoProfanity from 'leo-profanity'
 
-// Load Russian and English dictionaries
 leoProfanity.loadDictionary('ru')
 leoProfanity.add(leoProfanity.getDictionary('en'))
 
@@ -29,20 +28,22 @@ export async function chatRoutes(app: FastifyInstance) {
       take: MESSAGES_LIMIT,
     })
 
-    // When fetching initial batch (no since), reverse to get oldest first
     return sinceId > 0 ? messages : messages.reverse()
   })
 
   // POST /api/chat/message
   app.post('/api/chat/message', { preHandler: telegramAuthHook }, async (request, reply) => {
     const tgUser = request.telegramUser
-    const body = z.object({ text: z.string().min(1).max(MAX_MSG_LENGTH) }).safeParse(request.body)
+    const body = z.object({
+      text: z.string().min(1).max(MAX_MSG_LENGTH),
+      replyToId: z.number().int().positive().optional(),
+    }).safeParse(request.body)
     if (!body.success) return reply.status(400).send({ error: 'Invalid message' })
 
-    const text = body.data.text.trim()
+    const { text, replyToId } = body.data
+    const trimmed = text.trim()
 
-    // Anti-profanity check — auto-reject
-    if (leoProfanity.check(text)) {
+    if (leoProfanity.check(trimmed)) {
       return reply.status(400).send({ error: 'PROFANITY' })
     }
 
@@ -51,7 +52,6 @@ export async function chatRoutes(app: FastifyInstance) {
       include: { gameState: true },
     })
 
-    // Rate limit: no more than 1 message per RATE_LIMIT_SECONDS
     const recent = await prisma.chatMessage.findFirst({
       where: { userId: user.id },
       orderBy: { createdAt: 'desc' },
@@ -66,11 +66,44 @@ export async function chatRoutes(app: FastifyInstance) {
     const displayName = user.nickname ?? user.firstName
     const investorRank = user.gameState?.investorRank ?? 'NEWBIE'
 
+    // Snapshot reply context so it survives deletion of original
+    let replyToText: string | null = null
+    let replyToDisplayName: string | null = null
+    if (replyToId) {
+      const orig = await prisma.chatMessage.findUnique({ where: { id: replyToId } })
+      if (orig && !orig.isDeleted) {
+        replyToText = orig.text.slice(0, 100)
+        replyToDisplayName = orig.displayName
+      }
+    }
+
     const message = await prisma.chatMessage.create({
-      data: { userId: user.id, displayName, investorRank, text },
+      data: {
+        userId: user.id, displayName, investorRank, text: trimmed,
+        replyToId: replyToId ?? null,
+        replyToText,
+        replyToDisplayName,
+      },
     })
 
     return message
+  })
+
+  // DELETE /api/chat/message/:id — soft-delete own message
+  app.delete('/api/chat/message/:id', { preHandler: telegramAuthHook }, async (request, reply) => {
+    const tgUser = request.telegramUser
+    const id = parseInt((request.params as { id: string }).id, 10)
+    if (isNaN(id)) return reply.status(400).send({ error: 'Invalid id' })
+
+    const user = await prisma.user.findUnique({ where: { telegramId: String(tgUser.id) } })
+    if (!user) return reply.status(401).send({ error: 'Unauthorized' })
+
+    const msg = await prisma.chatMessage.findUnique({ where: { id } })
+    if (!msg) return reply.status(404).send({ error: 'Not found' })
+    if (msg.userId !== user.id) return reply.status(403).send({ error: 'Forbidden' })
+
+    await prisma.chatMessage.update({ where: { id }, data: { isDeleted: true } })
+    return { ok: true }
   })
 
   // PATCH /api/user/nickname
@@ -80,7 +113,6 @@ export async function chatRoutes(app: FastifyInstance) {
     if (!body.success) return reply.status(400).send({ error: 'Invalid nickname' })
 
     const raw = body.data.nickname
-    // Allow null (reset to Telegram name), otherwise validate charset
     if (raw !== null) {
       const valid = /^[a-zA-Zа-яёА-ЯЁ0-9 \-_.]{1,20}$/.test(raw)
       if (!valid) return reply.status(400).send({ error: 'INVALID_CHARS' })

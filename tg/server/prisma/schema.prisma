@@ -290,15 +290,18 @@ model AdRevenue {
 }
 
 model ChatMessage {
-  id          Int      @id @default(autoincrement())
-  userId      Int
-  displayName String   // nickname ?? firstName at time of posting
-  investorRank String  @default("NEWBIE")
-  text        String   @db.Text
-  isDeleted   Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  id                 Int      @id @default(autoincrement())
+  userId             Int
+  displayName        String
+  investorRank       String   @default("NEWBIE")
+  text               String   @db.Text
+  isDeleted          Boolean  @default(false)
+  replyToId          Int?
+  replyToText        String?  @db.Text
+  replyToDisplayName String?
+  createdAt          DateTime @default(now())
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([createdAt])
   @@index([userId])

@@ -711,6 +711,9 @@ chat: {
   errorRateLimit: 'Подожди немного перед следующим сообщением',
   errorGeneral: 'Не удалось отправить',
   empty: 'Пока тишина. Будь первым!',
+  replyTo: 'Ответ',
+  cancelReply: 'Отменить',
+  deleted: 'Сообщение удалено',
 },
 
 // ─── Ник ─────────────────────────────────────────────────────────────────────
@@ -1397,6 +1400,9 @@ chat: {
   errorRateLimit: 'Wait a moment before your next message',
   errorGeneral: 'Failed to send',
   empty: 'Silence for now. Be the first!',
+  replyTo: 'Reply to',
+  cancelReply: 'Cancel',
+  deleted: 'Message deleted',
 },
 
 // ─── Nickname ─────────────────────────────────────────────────────────────────

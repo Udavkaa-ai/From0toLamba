@@ -27,12 +27,14 @@ export function ChatPanel() {
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [unread, setUnread] = useState(0)
+  const [replyTo, setReplyTo] = useState<ChatMessageDTO | null>(null)
+  const [selectedId, setSelectedId] = useState<number | null>(null)
 
   const lastIdRef = useRef(0)
   const listRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // Hide on pages without bottom nav
   const hidden = location.pathname.startsWith('/ama/') ||
     location.pathname.startsWith('/charter/') ||
     location.pathname === '/registry'
@@ -50,33 +52,23 @@ export function ChatPanel() {
         if (!open) setUnread(u => u + msgs.length)
         lastIdRef.current = msgs[msgs.length - 1].id
       }
-    } catch {
-      // silently ignore polling errors
-    }
+    } catch { /* silent */ }
   }, [open])
 
-  // Initial load
-  useEffect(() => {
-    fetchMessages(true)
-  }, [])
+  useEffect(() => { fetchMessages(true) }, [])
 
-  // Polling
   useEffect(() => {
     pollRef.current = setInterval(() => fetchMessages(false), POLL_INTERVAL)
     return () => { if (pollRef.current) clearInterval(pollRef.current) }
   }, [fetchMessages])
 
-  // Scroll to bottom when opened or new messages arrive
   useEffect(() => {
     if (open && listRef.current) {
       listRef.current.scrollTop = listRef.current.scrollHeight
     }
   }, [open, messages.length])
 
-  const handleOpen = () => {
-    setOpen(true)
-    setUnread(0)
-  }
+  const handleOpen = () => { setOpen(true); setUnread(0) }
 
   const handleSend = async () => {
     const val = text.trim()
@@ -84,25 +76,38 @@ export function ChatPanel() {
     setSending(true)
     setError(null)
     try {
-      const msg = await api.chat.sendMessage(val)
+      const msg = await api.chat.sendMessage(val, replyTo?.id)
       setText('')
-      setMessages(prev => {
-        // avoid duplicate if polling already picked it up
-        if (prev.find(m => m.id === msg.id)) return prev
-        return [...prev, msg]
-      })
+      setReplyTo(null)
+      setMessages(prev => prev.find(m => m.id === msg.id) ? prev : [...prev, msg])
       lastIdRef.current = Math.max(lastIdRef.current, msg.id)
-      setTimeout(() => {
-        if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight
-      }, 50)
+      setTimeout(() => { if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight }, 50)
     } catch (e: any) {
       const code = e?.response?.data?.error
       if (code === 'PROFANITY') setError(t.chat.errorProfanity)
       else if (code === 'RATE_LIMIT') setError(t.chat.errorRateLimit)
       else setError(t.chat.errorGeneral)
     } finally {
-      setSending(false)
-    }
+      setSending(false) }
+  }
+
+  const handleDelete = async (id: number) => {
+    setSelectedId(null)
+    try {
+      await api.chat.deleteMessage(id)
+      setMessages(prev => prev.filter(m => m.id !== id))
+    } catch { /* silent */ }
+  }
+
+  const handleReply = (msg: ChatMessageDTO) => {
+    setSelectedId(null)
+    setReplyTo(msg)
+    setTimeout(() => inputRef.current?.focus(), 50)
+  }
+
+  const handleMsgTap = (msg: ChatMessageDTO, isMe: boolean) => {
+    if (selectedId === msg.id) { setSelectedId(null); return }
+    setSelectedId(msg.id)
   }
 
   if (hidden) return null
@@ -121,30 +126,22 @@ export function ChatPanel() {
             exit={{ scale: 0, opacity: 0 }}
             onClick={handleOpen}
             style={{
-              position: 'fixed',
-              right: '16px',
+              position: 'fixed', right: '16px',
               bottom: `calc(72px + env(safe-area-inset-bottom))`,
-              zIndex: 150,
-              width: '48px',
-              height: '48px',
-              borderRadius: '50%',
+              zIndex: 150, width: '48px', height: '48px', borderRadius: '50%',
               background: `linear-gradient(135deg, ${colors.enchantedPurple}, #1a0f4e)`,
               border: `1.5px solid ${colors.fairyGold}60`,
               boxShadow: `0 4px 20px rgba(0,0,0,0.5), 0 0 16px ${colors.fairyGold}20`,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '22px',
+              cursor: 'pointer', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', fontSize: '22px',
             }}
           >
             💬
             {unread > 0 && (
               <div style={{
                 position: 'absolute', top: '-4px', right: '-4px',
-                background: '#e74c3c', color: '#fff',
-                borderRadius: '50%', width: '18px', height: '18px',
-                fontSize: '10px', fontWeight: 700,
+                background: '#e74c3c', color: '#fff', borderRadius: '50%',
+                width: '18px', height: '18px', fontSize: '10px', fontWeight: 700,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
                 {unread > 9 ? '9+' : unread}
@@ -160,36 +157,28 @@ export function ChatPanel() {
           <>
             <motion.div
               key="chat-backdrop"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setOpen(false)}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => { setOpen(false); setSelectedId(null) }}
               style={{ position: 'fixed', inset: 0, zIndex: 160, background: 'rgba(0,0,0,0.55)' }}
             />
             <motion.div
               key="chat-panel"
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
+              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 32, stiffness: 320 }}
               style={{
-                position: 'fixed',
-                bottom: 0, left: 0, right: 0,
-                zIndex: 161,
+                position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 161,
                 height: '72dvh',
                 background: `linear-gradient(180deg, ${colors.enchantedPurple} 0%, ${colors.nightBlue} 100%)`,
                 borderTop: `1px solid ${colors.fairyGold}40`,
                 borderRadius: '20px 20px 0 0',
-                display: 'flex',
-                flexDirection: 'column',
+                display: 'flex', flexDirection: 'column',
               }}
             >
               {/* Header */}
               <div style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 padding: `${spacing.md} ${spacing.lg}`,
-                borderBottom: `1px solid rgba(255,255,255,0.07)`,
-                flexShrink: 0,
+                borderBottom: `1px solid rgba(255,255,255,0.07)`, flexShrink: 0,
               }}>
                 <div style={{ color: colors.fairyGold, fontSize: '16px', fontWeight: 700 }}>
                   🏪 {t.chat.title}
@@ -197,18 +186,17 @@ export function ChatPanel() {
                 <button
                   onClick={() => setOpen(false)}
                   style={{ background: 'none', border: 'none', color: colors.textMuted, fontSize: '20px', cursor: 'pointer', padding: '4px 8px' }}
-                >
-                  ✕
-                </button>
+                >✕</button>
               </div>
 
               {/* Message list */}
               <div
                 ref={listRef}
+                onClick={() => setSelectedId(null)}
                 style={{
                   flex: 1, overflowY: 'auto',
                   padding: `${spacing.sm} ${spacing.md}`,
-                  display: 'flex', flexDirection: 'column', gap: '8px',
+                  display: 'flex', flexDirection: 'column', gap: '6px',
                 }}
               >
                 {messages.length === 0 && (
@@ -218,11 +206,13 @@ export function ChatPanel() {
                 )}
                 {messages.map(msg => {
                   const isMe = msg.userId === myUserId
+                  const isSelected = selectedId === msg.id
                   return (
-                    <div key={msg.id} style={{
-                      alignSelf: isMe ? 'flex-end' : 'flex-start',
-                      maxWidth: '80%',
-                    }}>
+                    <div
+                      key={msg.id}
+                      style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '82%' }}
+                      onClick={e => { e.stopPropagation(); handleMsgTap(msg, isMe) }}
+                    >
                       {!isMe && (
                         <div style={{ fontSize: '11px', color: colors.fairyGold, marginBottom: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <span>{RANK_EMOJI[msg.investorRank] ?? '🪙'}</span>
@@ -232,15 +222,71 @@ export function ChatPanel() {
                       <div style={{
                         padding: '8px 12px',
                         background: isMe ? `${colors.fairyGold}22` : 'rgba(255,255,255,0.07)',
-                        border: `1px solid ${isMe ? colors.fairyGold + '40' : 'rgba(255,255,255,0.1)'}`,
+                        border: `1px solid ${isSelected ? colors.fairyGold + '80' : isMe ? colors.fairyGold + '40' : 'rgba(255,255,255,0.1)'}`,
                         borderRadius: isMe ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
-                        color: colors.textPrimary,
-                        fontSize: '13px',
-                        lineHeight: 1.45,
-                        wordBreak: 'break-word',
+                        color: colors.textPrimary, fontSize: '13px', lineHeight: 1.45,
+                        wordBreak: 'break-word', transition: 'border-color 0.15s',
                       }}>
+                        {/* Quoted reply */}
+                        {msg.replyToText && (
+                          <div style={{
+                            borderLeft: `2px solid ${colors.fairyGold}70`,
+                            paddingLeft: '8px', marginBottom: '6px',
+                            color: colors.textMuted, fontSize: '11px', lineHeight: 1.4,
+                          }}>
+                            <span style={{ color: colors.fairyGold, fontWeight: 600 }}>{msg.replyToDisplayName}</span>
+                            <div style={{ marginTop: '1px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', maxWidth: '200px' }}>
+                              {msg.replyToText}
+                            </div>
+                          </div>
+                        )}
                         {msg.text}
                       </div>
+
+                      {/* Action buttons — appear when selected */}
+                      <AnimatePresence>
+                        {isSelected && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -4 }}
+                            transition={{ duration: 0.12 }}
+                            style={{
+                              display: 'flex', gap: '6px', marginTop: '4px',
+                              justifyContent: isMe ? 'flex-end' : 'flex-start',
+                            }}
+                            onClick={e => e.stopPropagation()}
+                          >
+                            {!isMe && (
+                              <button
+                                onClick={() => handleReply(msg)}
+                                style={{
+                                  padding: '4px 10px', fontSize: '11px', fontWeight: 600,
+                                  background: `${colors.fairyGold}20`,
+                                  border: `1px solid ${colors.fairyGold}50`,
+                                  borderRadius: '8px', color: colors.fairyGold, cursor: 'pointer',
+                                }}
+                              >
+                                ↩ {t.chat.replyTo}
+                              </button>
+                            )}
+                            {isMe && (
+                              <button
+                                onClick={() => handleDelete(msg.id)}
+                                style={{
+                                  padding: '4px 10px', fontSize: '11px', fontWeight: 600,
+                                  background: 'rgba(231,76,60,0.15)',
+                                  border: '1px solid rgba(231,76,60,0.4)',
+                                  borderRadius: '8px', color: '#e74c3c', cursor: 'pointer',
+                                }}
+                              >
+                                🗑
+                              </button>
+                            )}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
                       <div style={{ fontSize: '10px', color: colors.textMuted, marginTop: '2px', textAlign: isMe ? 'right' : 'left' }}>
                         {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </div>
@@ -249,18 +295,47 @@ export function ChatPanel() {
                 })}
               </div>
 
-              {/* Input */}
+              {/* Input area */}
               <div style={{
                 padding: `${spacing.sm} ${spacing.md}`,
                 paddingBottom: `calc(${spacing.md} + env(safe-area-inset-bottom))`,
-                borderTop: `1px solid rgba(255,255,255,0.07)`,
-                flexShrink: 0,
+                borderTop: `1px solid rgba(255,255,255,0.07)`, flexShrink: 0,
               }}>
+                {/* Reply preview */}
+                <AnimatePresence>
+                  {replyTo && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '8px',
+                        marginBottom: '6px', padding: '6px 10px',
+                        background: `${colors.fairyGold}10`,
+                        border: `1px solid ${colors.fairyGold}30`,
+                        borderRadius: '10px',
+                      }}
+                    >
+                      <div style={{ flex: 1, overflow: 'hidden' }}>
+                        <div style={{ color: colors.fairyGold, fontSize: '10px', fontWeight: 600 }}>{replyTo.displayName}</div>
+                        <div style={{ color: colors.textMuted, fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {replyTo.text}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setReplyTo(null)}
+                        style={{ background: 'none', border: 'none', color: colors.textMuted, cursor: 'pointer', fontSize: '14px', padding: '2px 4px', flexShrink: 0 }}
+                      >✕</button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 {error && (
                   <div style={{ color: '#ff6b6b', fontSize: '11px', marginBottom: '6px' }}>{error}</div>
                 )}
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <input
+                    ref={inputRef}
                     value={text}
                     onChange={e => { setText(e.target.value); setError(null) }}
                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
@@ -270,8 +345,8 @@ export function ChatPanel() {
                       flex: 1, padding: '10px 14px',
                       background: 'rgba(255,255,255,0.07)',
                       border: '1px solid rgba(255,255,255,0.15)',
-                      borderRadius: '12px',
-                      color: colors.textPrimary, fontSize: '14px', outline: 'none',
+                      borderRadius: '12px', color: colors.textPrimary,
+                      fontSize: '14px', outline: 'none',
                     }}
                   />
                   <button
