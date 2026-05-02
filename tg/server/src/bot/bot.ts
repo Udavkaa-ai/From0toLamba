@@ -10,6 +10,10 @@ let _bot: Bot | null = null
 let broadcastActive = false
 let broadcastCancelled = false
 
+export function cancelBroadcast() {
+  broadcastCancelled = true
+}
+
 export function getBot(): Bot {
   if (!_bot) {
     const token = process.env.TELEGRAM_BOT_TOKEN
