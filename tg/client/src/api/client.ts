@@ -158,6 +158,7 @@ export interface LeaderboardDTO {
   entries: LeaderboardEntryDTO[]
   myPosition: number | null
   totalPlayers: number
+  totalAllPlayers?: number
 }
 
 export interface WeeklyLeaderboardEntryDTO extends LeaderboardEntryDTO {

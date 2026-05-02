@@ -300,7 +300,7 @@ export async function gameRoutes(app: FastifyInstance) {
       select: { id: true },
     })
 
-    const [gameStates, projectSums] = await Promise.all([
+    const [gameStates, projectSums, totalAllPlayers] = await Promise.all([
       prisma.gameState.findMany({
         where: { isOnboardingComplete: true },
         include: {
@@ -312,6 +312,7 @@ export async function gameRoutes(app: FastifyInstance) {
         where: { isActive: true },
         _sum: { currentValueRubles: true },
       }),
+      prisma.gameState.count(),
     ])
 
     const sumByUserId = new Map(
@@ -340,7 +341,7 @@ export async function gameRoutes(app: FastifyInstance) {
       if (myIdx >= 0) myPosition = myIdx + 1
     }
 
-    return reply.send({ entries: top100, myPosition, totalPlayers })
+    return reply.send({ entries: top100, myPosition, totalPlayers, totalAllPlayers })
   })
 
   // GET /api/leaderboard/week — «ярмарка недели»: рост состояния за текущую неделю (с понедельника МСК)

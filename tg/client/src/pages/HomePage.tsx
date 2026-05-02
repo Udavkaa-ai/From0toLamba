@@ -813,11 +813,22 @@ export function HomePage() {
                     textAlign: 'left',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
+                    justifyContent: 'space-between',
                   }}
                 >
-                  {t.home.settingsMyReferrals}
-                  <span style={{ color: colors.textMuted, fontSize: '11px', fontWeight: 400 }}>→</span>
+                  <span>{t.home.settingsMyReferrals}</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {gameState.referralCount > 0 && (
+                      <span style={{
+                        background: colors.fairyGold, color: colors.nightBlue,
+                        borderRadius: '10px', padding: '1px 8px',
+                        fontSize: '11px', fontWeight: 700,
+                      }}>
+                        {gameState.referralCount}
+                      </span>
+                    )}
+                    <span style={{ color: colors.textMuted, fontSize: '11px', fontWeight: 400 }}>→</span>
+                  </span>
                 </button>
               </div>
 

@@ -126,7 +126,7 @@ function MoneyTab() {
 
   return (
     <>
-      <Caption description={t.leaderboard.captions.wealth} totalPlayers={data?.totalPlayers} />
+      <Caption description={t.leaderboard.captions.wealth} totalPlayers={data?.totalPlayers} totalAllPlayers={data?.totalAllPlayers} />
       {isLoading && [1, 2, 3, 4, 5].map(i => <SkeletonCard key={i} lines={2} />)}
       {entries?.length === 0 && !isLoading && <EmptyState icon="💰" text={t.leaderboard.empty.wealth} />}
       {entries?.map((entry, i) => (
@@ -419,13 +419,14 @@ function BaseRow({
 
 // ─── Bits ──────────────────────────────────────────────────────────────────
 
-function Caption({ description, totalPlayers }: { description: string; totalPlayers?: number }) {
+function Caption({ description, totalPlayers, totalAllPlayers }: { description: string; totalPlayers?: number; totalAllPlayers?: number }) {
   const t = useT()
+  const displayCount = totalAllPlayers ?? totalPlayers
   return (
     <div style={{ textAlign: 'center', marginBottom: spacing.md }}>
       <div style={{ color: colors.fairyGold, fontSize: '12px', fontWeight: 600, opacity: 0.85 }}>{description}</div>
-      {totalPlayers !== undefined && (
-        <div style={{ color: colors.textMuted, fontSize: '10px', marginTop: '2px' }}>{t.leaderboard.badge(totalPlayers)}</div>
+      {displayCount !== undefined && (
+        <div style={{ color: colors.textMuted, fontSize: '10px', marginTop: '2px' }}>{t.leaderboard.badge(displayCount)}</div>
       )}
     </div>
   )
