@@ -227,15 +227,26 @@ function setupHandlers(bot: Bot) {
     }
   })
 
+let broadcastCancelled = false
+let broadcastActive = false
+
   // /broadcast <text> — рассылка всем игрокам, прошедшим онбординг
   bot.command('broadcast', async (ctx) => {
     if (ctx.from?.id !== ADMIN_TELEGRAM_ID) return
+
+    if (broadcastActive) {
+      await ctx.reply('⚠️ Рассылка уже идёт. Останови её командой /broadcaststop, потом запусти снова.')
+      return
+    }
 
     const text = (ctx.match ?? '').trim()
     if (!text) {
       await ctx.reply('Использование: /broadcast <текст сообщения>')
       return
     }
+
+    broadcastActive = true
+    broadcastCancelled = false
 
     await ctx.reply('📡 Запускаю рассылку...')
 
@@ -249,6 +260,7 @@ function setupHandlers(bot: Bot) {
 
     let sent = 0, failed = 0
     for (const user of users) {
+      if (broadcastCancelled) break
       if (user.telegramId.startsWith('system:')) continue
       try {
         await bot.api.sendMessage(user.telegramId, text, {
@@ -259,11 +271,23 @@ function setupHandlers(bot: Bot) {
       } catch {
         failed++
       }
-      // небольшая пауза чтобы не упереться в rate-limit Telegram
       await new Promise(r => setTimeout(r, 50))
     }
 
-    await ctx.reply(`✅ Рассылка завершена. Доставлено: ${sent}, ошибок: ${failed}.`)
+    broadcastActive = false
+    const stopped = broadcastCancelled ? ' (остановлена досрочно)' : ''
+    await ctx.reply(`✅ Рассылка завершена${stopped}. Доставлено: ${sent}, ошибок: ${failed}.`)
+  })
+
+  // /broadcaststop — остановить текущую рассылку
+  bot.command('broadcaststop', async (ctx) => {
+    if (ctx.from?.id !== ADMIN_TELEGRAM_ID) return
+    if (!broadcastActive) {
+      await ctx.reply('Нет активной рассылки.')
+      return
+    }
+    broadcastCancelled = true
+    await ctx.reply('🛑 Рассылка будет остановлена после текущего сообщения.')
   })
 
   bot.on('message', async (ctx) => {
