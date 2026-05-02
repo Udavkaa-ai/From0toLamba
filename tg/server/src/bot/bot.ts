@@ -274,8 +274,11 @@ function setupHandlers(bot: Bot) {
     }
 
     broadcastActive = false
-    const stopped = broadcastCancelled ? ' (остановлена досрочно)' : ''
-    await ctx.reply(`✅ Рассылка завершена${stopped}. Доставлено: ${sent}, ошибок: ${failed}.`)
+    if (broadcastCancelled) {
+      await bot.api.sendMessage(String(ADMIN_TELEGRAM_ID), `✅ Рассылка остановлена. Доставлено: ${sent}, ошибок: ${failed}.`)
+    } else {
+      await ctx.reply(`✅ Рассылка завершена. Доставлено: ${sent}, ошибок: ${failed}.`)
+    }
   })
 
   // /broadcaststop — остановить текущую рассылку
@@ -286,7 +289,7 @@ function setupHandlers(bot: Bot) {
       return
     }
     broadcastCancelled = true
-    await ctx.reply('🛑 Рассылка будет остановлена после текущего сообщения.')
+    await ctx.reply('🛑 Останавливаю рассылку...')
   })
 
   bot.on('message', async (ctx) => {
