@@ -7,6 +7,8 @@ const STARS_AMA_UNLOCK = 10
 const STARS_EXTRA_SLOT = 10
 
 let _bot: Bot | null = null
+let broadcastActive = false
+let broadcastCancelled = false
 
 export function getBot(): Bot {
   if (!_bot) {
@@ -226,9 +228,6 @@ function setupHandlers(bot: Bot) {
       await ctx.reply('❌ Ошибка при сбросе. Проверьте логи.')
     }
   })
-
-let broadcastCancelled = false
-let broadcastActive = false
 
   // /broadcast <text> — рассылка всем игрокам, прошедшим онбординг
   bot.command('broadcast', async (ctx) => {
