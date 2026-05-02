@@ -120,6 +120,7 @@ export interface GameStateDTO {
   referralCount: number
   weekStartWealth: number
   userId: number
+  extraSlotsBalance: number
   activeProjects: ProjectDTO[]
   inboxProjects: ProjectDTO[]
   // Увиденные породы/личины/судьбы — чтобы подвиги знали, какие справки
@@ -322,7 +323,8 @@ export const api = {
   },
 
   invest: {
-    invest: (projectId: string, amount: number) => apiClient.post(`/invest/${projectId}`, { amount }).then(r => r.data),
+    invest: (projectId: string, amount: number, extraSlot?: 'groshy' | 'stars') =>
+      apiClient.post(`/invest/${projectId}`, { amount, ...(extraSlot ? { extraSlot } : {}) }).then(r => r.data),
     addInvestment: (projectId: string, amount: number) => apiClient.post(`/invest/${projectId}/add`, { amount }).then(r => r.data),
     withdraw: (projectId: string, amount: number) => apiClient.post(`/invest/${projectId}/withdraw`, { amount }).then(r => r.data),
     exit: (projectId: string) => apiClient.post(`/invest/${projectId}/exit`).then(r => r.data),
@@ -335,12 +337,14 @@ export const api = {
   },
 
   payments: {
-    createInvoice: (feature: 'timer_skip' | 'ama_unlock', projectId?: string, merchantName?: string) =>
-      apiClient.post<{ invoiceLink: string }>('/payments/invoice', { feature, projectId, merchantName }).then(r => r.data),
+    createInvoice: (feature: 'timer_skip' | 'ama_unlock' | 'extra_slot', projectId?: string, merchantName?: string) =>
+      apiClient.post<{ invoiceLink: string | null }>('/payments/invoice', { feature, projectId, merchantName }).then(r => r.data),
     activateTimerSkip: () =>
       apiClient.post<AdvanceDayResultDTO>('/payments/activate', { feature: 'timer_skip' }).then(r => r.data),
     activateAmaUnlock: (projectId: string) =>
       apiClient.post<{ success: boolean }>('/payments/activate', { feature: 'ama_unlock', projectId }).then(r => r.data),
+    activateExtraSlot: () =>
+      apiClient.post<{ success: boolean }>('/payments/activate', { feature: 'extra_slot' }).then(r => r.data),
   },
 
   chat: {

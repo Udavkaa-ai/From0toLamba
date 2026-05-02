@@ -6,8 +6,15 @@ import { recomputeRank } from './rankService'
 const MIN_INVEST = 5
 const MAX_INVEST_PER_PROJECT = 5000
 const MAX_ACTIVE_PROJECTS = 5
+const MAX_EXTRA_SLOTS = 5
+const EXTRA_SLOT_COST_GROSHY = 1000
 
-export async function invest(userId: number, projectId: string, amount: number): Promise<void> {
+export async function invest(
+  userId: number,
+  projectId: string,
+  amount: number,
+  extraSlot?: 'groshy' | 'stars',
+): Promise<void> {
   if (amount < MIN_INVEST) throw new Error('AMOUNT_TOO_SMALL')
   if (amount > MAX_INVEST_PER_PROJECT) throw new Error('AMOUNT_TOO_LARGE')
 
@@ -16,10 +23,71 @@ export async function invest(userId: number, projectId: string, amount: number):
     prisma.project.findFirstOrThrow({ where: { id: projectId, userId } }),
   ])
 
-  if (gameState.balance < amount) throw new Error('INSUFFICIENT_BALANCE')
-
   const activeCount = await prisma.project.count({ where: { userId, isActive: true } })
-  if (activeCount >= MAX_ACTIVE_PROJECTS) throw new Error('MAX_PROJECTS_REACHED')
+
+  if (activeCount >= MAX_ACTIVE_PROJECTS) {
+    if (!extraSlot) throw new Error('MAX_PROJECTS_REACHED')
+
+    const extraActiveCount = await prisma.project.count({ where: { userId, isActive: true, isExtraSlot: true } })
+    if (extraActiveCount >= MAX_EXTRA_SLOTS) throw new Error('MAX_EXTRA_SLOTS_REACHED')
+
+    if (extraSlot === 'groshy') {
+      if (gameState.balance < amount + EXTRA_SLOT_COST_GROSHY) throw new Error('INSUFFICIENT_BALANCE')
+      await prisma.$transaction([
+        prisma.gameState.update({
+          where: { userId },
+          data: {
+            balance: { decrement: amount + EXTRA_SLOT_COST_GROSHY },
+            totalInvested: { increment: amount },
+          },
+        }),
+        prisma.project.update({
+          where: { id: projectId },
+          data: {
+            investedAmountRubles: { increment: amount },
+            currentValueRubles: { increment: amount },
+            isActive: true,
+            isInbox: false,
+            isExtraSlot: true,
+          },
+        }),
+      ])
+      await prisma.transaction.create({
+        data: { userId, projectId, projectName: project.name, type: 'INVEST', amount, day: gameState.currentDay },
+      })
+      return
+    }
+
+    // stars path: use pre-purchased slot token
+    if (gameState.extraSlotsBalance <= 0) throw new Error('NO_EXTRA_SLOTS')
+    if (gameState.balance < amount) throw new Error('INSUFFICIENT_BALANCE')
+    await prisma.$transaction([
+      prisma.gameState.update({
+        where: { userId },
+        data: {
+          balance: { decrement: amount },
+          totalInvested: { increment: amount },
+          extraSlotsBalance: { decrement: 1 },
+        },
+      }),
+      prisma.project.update({
+        where: { id: projectId },
+        data: {
+          investedAmountRubles: { increment: amount },
+          currentValueRubles: { increment: amount },
+          isActive: true,
+          isInbox: false,
+          isExtraSlot: true,
+        },
+      }),
+    ])
+    await prisma.transaction.create({
+      data: { userId, projectId, projectName: project.name, type: 'INVEST', amount, day: gameState.currentDay },
+    })
+    return
+  }
+
+  if (gameState.balance < amount) throw new Error('INSUFFICIENT_BALANCE')
 
   await prisma.$transaction([
     prisma.gameState.update({
@@ -90,7 +158,6 @@ export async function partialWithdraw(userId: number, projectId: string, amount:
   const type = project.type as ProjectType
   const rules = WITHDRAWAL_RULES[type]
 
-  // Проверяем лимит — 25% от текущего баланса дела, округление вниз
   if (rules.maxPercent !== null) {
     const maxAllowed = Math.floor(project.currentValueRubles * rules.maxPercent)
     if (amount > maxAllowed) throw new Error('EXCEEDS_LIMIT')
@@ -98,7 +165,6 @@ export async function partialWithdraw(userId: number, projectId: string, amount:
 
   if (amount > project.currentValueRubles) throw new Error('EXCEEDS_CURRENT_VALUE')
 
-  // Применяем комиссию
   const received = amount * (1 - rules.feePercent)
 
   await prisma.$transaction([
@@ -159,7 +225,6 @@ export async function exitProject(userId: number, projectId: string): Promise<nu
   })
 
   const amaSession = await prisma.amaSession.findUnique({ where: { projectId } })
-  // totalWithdrawnRubles хранится на проекте — не нужен отдельный агрегат
   const totalWithdrawn = project.totalWithdrawnRubles
   const profitPercent = project.investedAmountRubles > 0
     ? ((received + totalWithdrawn - project.investedAmountRubles) / project.investedAmountRubles) * 100
@@ -178,7 +243,6 @@ export async function exitProject(userId: number, projectId: string): Promise<nu
     intuitionDelta: amaSession?.intuitionDelta ?? 0,
   }, undefined, gameState.preferredLanguage ?? 'ru').catch(console.error)
 
-  // Достаток заметно меняется — пересчитываем ранг сразу, а не ждём advance-day
   await recomputeRank(userId)
 
   return received

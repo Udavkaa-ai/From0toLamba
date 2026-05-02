@@ -70,6 +70,7 @@ model GameState {
   weekStartWealth      Float     @default(0)
   weekStartAt          DateTime?
   timerSkipTokens      Int       @default(0)
+  extraSlotsBalance    Int       @default(0)
   updatedAt            DateTime  @updatedAt
 
   user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -131,6 +132,7 @@ model Project {
   // прибыльных дел (SURVIVOR/UNICORN). Если игрок не успел выйти руками —
   // получит 50% при автозакрытии. См. mafiaOffers.ts.
   mafiaOfferIssued     Boolean   @default(false)
+  isExtraSlot          Boolean   @default(false)
   closureReason        String?
   bannerImageUrl       String?
   bannerPromptUsed     String?

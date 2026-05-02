@@ -728,6 +728,18 @@ nickname: {
   errorProfanity: 'Такое имя не пройдёт',
 },
 
+// ─── Дополнительный слот ─────────────────────────────────────────────────────
+extraSlot: {
+  title: 'Все 5 дел заняты',
+  body: 'Можно открыть дополнительный торговый слот — он позволит вложиться в это дело сверх обычного лимита. После закрытия дела слот исчезнет.',
+  available: (n: number) => `У тебя ${n} куп. ${n === 1 ? 'слот' : n < 5 ? 'слота' : 'слотов'}`,
+  useSlot: 'Использовать слот',
+  buyGroshy: 'Открыть слот · 1000 г',
+  buyStars: 'Открыть слот · 10 ⭐',
+  maxReached: 'Достигнут лимит 5 дополнительных дел',
+  noBalance: 'Недостаточно грошей для слота',
+},
+
 // ─── Конец блока RU ───────────────────────────────────────────────────────────
 }, // end ru
 
@@ -1415,6 +1427,17 @@ nickname: {
   reset: 'Reset',
   errorChars: 'Letters, digits, space, dash, dot allowed (max 20)',
   errorProfanity: 'That name won\'t pass',
+},
+
+extraSlot: {
+  title: 'All 5 ventures are occupied',
+  body: 'You can open an extra trading slot to invest in this venture beyond the usual limit. The slot disappears when the venture closes.',
+  available: (n: number) => `You have ${n} extra slot${n !== 1 ? 's' : ''}`,
+  useSlot: 'Use slot',
+  buyGroshy: 'Open slot · 1000 k',
+  buyStars: 'Open slot · 10 ⭐',
+  maxReached: 'Limit of 5 extra ventures reached',
+  noBalance: 'Not enough kopecks for a slot',
 },
 
 }, // end en
