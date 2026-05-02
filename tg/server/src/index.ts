@@ -13,7 +13,7 @@ import { bannerRoutes } from './api/routes/banner'
 import { tasksRoutes } from './api/routes/tasks'
 import { paymentsRoutes } from './api/routes/payments'
 import { chatRoutes } from './api/routes/chat'
-import { createWebhookHandler, getBot } from './bot/bot'
+import { createWebhookHandler, getBot, cancelBroadcast } from './bot/bot'
 import { startDailyScheduler } from './scheduler/dailyJob'
 import { prisma } from './db/prisma'
 
@@ -105,6 +105,7 @@ async function main() {
   for (const signal of signals) {
     process.on(signal, async () => {
       console.log(`[Server] ${signal} received — shutting down`)
+      cancelBroadcast()
       await app.close()
       await prisma.$disconnect()
       process.exit(0)
