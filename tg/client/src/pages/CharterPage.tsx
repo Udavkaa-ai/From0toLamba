@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ScreenBackground } from '@/components/ScreenBackground'
 import { api } from '@/api/client'
-import type { CharterDTO, CharterResultDTO, CharterSubmitDTO } from '@/api/client'
+import type { CharterDTO, CharterResultDTO, CharterSubmitDTO, GameStateDTO } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing } from '@/theme'
 import { Seal, generateReferenceSeal, sealForCell, mutateSeal, RANK_MUT_POOLS } from '@/components/Seal'
@@ -980,6 +980,7 @@ function ParamChip({ label, value }: { label: string; value: string }) {
 function InvestSheet({ projectId, onClose, onSuccess }: { projectId: string; onClose: () => void; onSuccess: () => void }) {
   const t = useT()
   const [amount, setAmount] = useState('')
+  const [showExtraSlot, setShowExtraSlot] = useState(false)
   const qc = useQueryClient()
   const { gameState } = useGameStore()
 
@@ -990,8 +991,26 @@ function InvestSheet({ projectId, onClose, onSuccess }: { projectId: string; onC
       qc.invalidateQueries({ queryKey: ['gameState'] })
       onSuccess()
     },
-    onError: () => haptic?.notificationOccurred('error'),
+    onError: (err: Error) => {
+      haptic?.notificationOccurred('error')
+      if (err.message === 'MAX_PROJECTS_REACHED') setShowExtraSlot(true)
+    },
   })
+
+  if (showExtraSlot) {
+    return (
+      <ExtraSlotModal
+        projectId={projectId}
+        amount={Number(amount)}
+        gameState={gameState}
+        onClose={onClose}
+        onSuccess={() => {
+          qc.invalidateQueries({ queryKey: ['gameState'] })
+          onSuccess()
+        }}
+      />
+    )
+  }
 
   return (
     <Sheet onClose={onClose}>
@@ -1018,7 +1037,7 @@ function InvestSheet({ projectId, onClose, onSuccess }: { projectId: string; onC
           marginBottom: spacing.lg,
         }}
       />
-      {investMutation.isError && (
+      {investMutation.isError && (investMutation.error as Error).message !== 'MAX_PROJECTS_REACHED' && (
         <div style={{ color: colors.danger, fontSize: '12px', marginBottom: spacing.sm }}>
           {(investMutation.error as Error).message}
         </div>
@@ -1029,6 +1048,149 @@ function InvestSheet({ projectId, onClose, onSuccess }: { projectId: string; onC
         style={{ ...primaryBtnStyle, opacity: !amount || investMutation.isPending ? 0.6 : 1 }}
       >
         {investMutation.isPending ? '⏳' : t.charter.resultInvest}
+      </button>
+    </Sheet>
+  )
+}
+
+function ExtraSlotModal({
+  projectId, amount, gameState, onClose, onSuccess,
+}: {
+  projectId: string
+  amount: number
+  gameState: GameStateDTO | null
+  onClose: () => void
+  onSuccess: () => void
+}) {
+  const t = useT()
+  const [error, setError] = useState<string | null>(null)
+  const [starsPending, setStarsPending] = useState(false)
+
+  const groshyMutation = useMutation({
+    mutationFn: () => api.invest.invest(projectId, amount, 'groshy'),
+    onSuccess: () => {
+      haptic?.notificationOccurred('success')
+      onSuccess()
+    },
+    onError: (err: Error) => {
+      haptic?.notificationOccurred('error')
+      setError(err.message === 'MAX_EXTRA_SLOTS_REACHED' ? t.extraSlot.maxReached
+        : err.message === 'INSUFFICIENT_BALANCE' ? t.extraSlot.noBalance
+        : err.message)
+    },
+  })
+
+  const usePrePurchasedMutation = useMutation({
+    mutationFn: () => api.invest.invest(projectId, amount, 'stars'),
+    onSuccess: () => {
+      haptic?.notificationOccurred('success')
+      onSuccess()
+    },
+    onError: (err: Error) => {
+      haptic?.notificationOccurred('error')
+      setError(err.message)
+    },
+  })
+
+  const handleStars = async () => {
+    setError(null)
+    setStarsPending(true)
+    try {
+      const { invoiceLink } = await api.payments.createInvoice('extra_slot')
+      if (invoiceLink) {
+        tg.openInvoice(invoiceLink, async (status: string) => {
+          if (status === 'paid') {
+            try {
+              await api.payments.activateExtraSlot()
+              await api.invest.invest(projectId, amount, 'stars')
+              haptic?.notificationOccurred('success')
+              onSuccess()
+            } catch (err: any) {
+              setError(err.message)
+            }
+          }
+          setStarsPending(false)
+        })
+      } else {
+        // Dev mode: already activated in invoice call
+        await api.invest.invest(projectId, amount, 'stars')
+        haptic?.notificationOccurred('success')
+        onSuccess()
+        setStarsPending(false)
+      }
+    } catch (err: any) {
+      setError(err.message)
+      setStarsPending(false)
+    }
+  }
+
+  const balance = gameState?.balance ?? 0
+  const extraSlotsBalance = gameState?.extraSlotsBalance ?? 0
+  const canAffordGroshy = balance >= amount + 1000
+  const isPending = groshyMutation.isPending || usePrePurchasedMutation.isPending || starsPending
+
+  return (
+    <Sheet onClose={onClose}>
+      <div style={{ textAlign: 'center', marginBottom: spacing.lg }}>
+        <div style={{ fontSize: '40px', marginBottom: spacing.sm }}>🏪</div>
+        <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '17px' }}>
+          {t.extraSlot.title}
+        </div>
+        <div style={{ color: colors.textSecondary, fontSize: '13px', marginTop: spacing.sm, lineHeight: 1.5 }}>
+          {t.extraSlot.body}
+        </div>
+      </div>
+
+      {error && (
+        <div style={{ color: colors.danger, fontSize: '12px', marginBottom: spacing.sm, textAlign: 'center' }}>
+          {error}
+        </div>
+      )}
+
+      {extraSlotsBalance > 0 && (
+        <>
+          <div style={{ color: colors.fairyGold, fontSize: '12px', textAlign: 'center', marginBottom: spacing.sm }}>
+            {t.extraSlot.available(extraSlotsBalance)}
+          </div>
+          <button
+            onClick={() => usePrePurchasedMutation.mutate()}
+            disabled={isPending}
+            style={{
+              ...primaryBtnStyle,
+              marginBottom: spacing.sm,
+              opacity: isPending ? 0.6 : 1,
+            }}
+          >
+            {isPending ? '⏳' : t.extraSlot.useSlot}
+          </button>
+        </>
+      )}
+
+      <button
+        onClick={() => groshyMutation.mutate()}
+        disabled={!canAffordGroshy || isPending}
+        style={{
+          ...primaryBtnStyle,
+          marginBottom: spacing.sm,
+          background: canAffordGroshy ? colors.fairyGold : 'rgba(255,255,255,0.1)',
+          color: canAffordGroshy ? colors.nightBlue : colors.textMuted,
+          cursor: canAffordGroshy ? 'pointer' : 'default',
+          opacity: isPending ? 0.6 : 1,
+        }}
+      >
+        {isPending ? '⏳' : t.extraSlot.buyGroshy}
+      </button>
+
+      <button
+        onClick={handleStars}
+        disabled={isPending}
+        style={{
+          ...secondaryBtnStyle,
+          marginTop: 0,
+          opacity: isPending ? 0.6 : 1,
+        }}
+      >
+        {isPending ? '⏳' : t.extraSlot.buyStars}
       </button>
     </Sheet>
   )

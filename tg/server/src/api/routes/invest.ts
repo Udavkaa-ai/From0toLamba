@@ -11,7 +11,10 @@ export async function investRoutes(app: FastifyInstance) {
     const { projectId } = request.params as { projectId: string }
     const tgUser = request.telegramUser
 
-    const bodySchema = z.object({ amount: z.number().positive() })
+    const bodySchema = z.object({
+      amount: z.number().positive(),
+      extraSlot: z.enum(['groshy', 'stars']).optional(),
+    })
     const body = bodySchema.safeParse(request.body)
     if (!body.success) {
       return reply.status(400).send({ error: 'Неверный формат запроса' })
@@ -20,14 +23,16 @@ export async function investRoutes(app: FastifyInstance) {
     const user = await prisma.user.findUniqueOrThrow({ where: { telegramId: String(tgUser.id) } })
 
     try {
-      await invest(user.id, projectId, body.data.amount)
+      await invest(user.id, projectId, body.data.amount, body.data.extraSlot)
       return { success: true }
     } catch (err: any) {
       const errMap: Record<string, [number, string]> = {
         AMOUNT_TOO_SMALL: [400, 'Минимальное вложение — 5 ₽'],
         AMOUNT_TOO_LARGE: [400, 'Максимальное вложение — 5 000 ₽ на дело'],
         INSUFFICIENT_BALANCE: [400, 'Недостаточно рублей'],
-        MAX_PROJECTS_REACHED: [400, 'Нельзя вести больше 5 дел одновременно'],
+        MAX_PROJECTS_REACHED: [400, 'MAX_PROJECTS_REACHED'],
+        MAX_EXTRA_SLOTS_REACHED: [400, 'MAX_EXTRA_SLOTS_REACHED'],
+        NO_EXTRA_SLOTS: [400, 'NO_EXTRA_SLOTS'],
       }
       const mapped = errMap[err.message]
       if (mapped) return reply.status(mapped[0]).send({ error: mapped[1] })

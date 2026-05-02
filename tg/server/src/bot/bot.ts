@@ -4,6 +4,7 @@ import { generateOnboardingProject } from '../game/GenerateProjectService'
 
 const STARS_TIMER_SKIP = 10
 const STARS_AMA_UNLOCK = 10
+const STARS_EXTRA_SLOT = 10
 
 let _bot: Bot | null = null
 
@@ -42,6 +43,17 @@ export async function createAmaUnlockInvoice(merchantName: string, userId: numbe
     '',
     'XTR',
     [{ label: 'Беседа с дельцом', amount: STARS_AMA_UNLOCK }],
+  )
+}
+
+export async function createExtraSlotInvoice(userId: number, payload: string): Promise<string> {
+  return getBot().api.createInvoiceLink(
+    'Дополнительный слот для дела',
+    'Открыть один слот сверх лимита 5 дел — для одного нового вложения',
+    payload,
+    '',
+    'XTR',
+    [{ label: 'Доп. слот', amount: STARS_EXTRA_SLOT }],
   )
 }
 

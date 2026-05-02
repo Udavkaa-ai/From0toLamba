@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { randomUUID } from 'crypto'
 import { prisma } from '../../db/prisma'
 import { telegramAuthHook } from '../../middleware/telegramAuth'
-import { createTimerSkipInvoice, createAmaUnlockInvoice } from '../../bot/bot'
+import { createTimerSkipInvoice, createAmaUnlockInvoice, createExtraSlotInvoice } from '../../bot/bot'
 import { advanceDay } from '../../game/AdvanceDayService'
 
 const STARS_AMOUNT = 10
@@ -19,7 +19,7 @@ export async function paymentsRoutes(app: FastifyInstance) {
   app.post('/api/payments/invoice', { preHandler: telegramAuthHook }, async (request, reply) => {
     const tgUser = request.telegramUser
     const bodySchema = z.object({
-      feature: z.enum(['timer_skip', 'ama_unlock']),
+      feature: z.enum(['timer_skip', 'ama_unlock', 'extra_slot']),
       projectId: z.string().optional(),
       merchantName: z.string().optional(),
     })
@@ -41,6 +41,9 @@ export async function paymentsRoutes(app: FastifyInstance) {
     if (body.data.feature === 'timer_skip') {
       payload = `ts:${uuid}`
       invoiceLink = await createTimerSkipInvoice(user.id, payload)
+    } else if (body.data.feature === 'extra_slot') {
+      payload = `es:${uuid}`
+      invoiceLink = await createExtraSlotInvoice(user.id, payload)
     } else {
       const projectId = body.data.projectId
       if (!projectId) return reply.status(400).send({ error: 'projectId обязателен для ama_unlock' })
@@ -54,7 +57,7 @@ export async function paymentsRoutes(app: FastifyInstance) {
       data: {
         userId: user.id,
         feature: body.data.feature,
-        projectId: body.data.projectId ?? null,
+        projectId: body.data.feature !== 'extra_slot' ? (body.data.projectId ?? null) : null,
         starsAmount: STARS_AMOUNT,
         payload,
       },
@@ -68,7 +71,7 @@ export async function paymentsRoutes(app: FastifyInstance) {
   app.post('/api/payments/activate', { preHandler: telegramAuthHook }, async (request, reply) => {
     const tgUser = request.telegramUser
     const bodySchema = z.object({
-      feature: z.enum(['timer_skip', 'ama_unlock']),
+      feature: z.enum(['timer_skip', 'ama_unlock', 'extra_slot']),
       projectId: z.string().optional(),
     })
     const body = bodySchema.safeParse(request.body)
@@ -96,6 +99,11 @@ async function activateFeature(userId: number, feature: string, projectId?: stri
     } else {
       await prisma.amaSession.create({ data: { projectId, userId, isPaid: true } })
     }
+    return { success: true }
+  }
+
+  if (feature === 'extra_slot') {
+    await prisma.gameState.update({ where: { userId }, data: { extraSlotsBalance: { increment: 1 } } })
     return { success: true }
   }
 

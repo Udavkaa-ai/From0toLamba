@@ -178,6 +178,7 @@ export async function gameRoutes(app: FastifyInstance) {
       seenFates,
       amaSessionsStarted,
       amaSessionsCompleted,
+      extraSlotsBalance: gameState.extraSlotsBalance,
     }
   })
 
