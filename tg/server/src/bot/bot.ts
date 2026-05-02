@@ -227,6 +227,45 @@ function setupHandlers(bot: Bot) {
     }
   })
 
+  // /broadcast <text> — рассылка всем игрокам, прошедшим онбординг
+  bot.command('broadcast', async (ctx) => {
+    if (ctx.from?.id !== ADMIN_TELEGRAM_ID) return
+
+    const text = (ctx.match ?? '').trim()
+    if (!text) {
+      await ctx.reply('Использование: /broadcast <текст сообщения>')
+      return
+    }
+
+    await ctx.reply('📡 Запускаю рассылку...')
+
+    const users = await prisma.user.findMany({
+      where: { gameState: { isOnboardingComplete: true } },
+      select: { telegramId: true },
+    })
+
+    const appUrl = process.env.MINI_APP_URL ?? ''
+    const keyboard = appUrl ? new InlineKeyboard().webApp('🏪 Открыть ярмарку', appUrl) : undefined
+
+    let sent = 0, failed = 0
+    for (const user of users) {
+      if (user.telegramId.startsWith('system:')) continue
+      try {
+        await bot.api.sendMessage(user.telegramId, text, {
+          parse_mode: 'Markdown',
+          ...(keyboard ? { reply_markup: keyboard } : {}),
+        })
+        sent++
+      } catch {
+        failed++
+      }
+      // небольшая пауза чтобы не упереться в rate-limit Telegram
+      await new Promise(r => setTimeout(r, 50))
+    }
+
+    await ctx.reply(`✅ Рассылка завершена. Доставлено: ${sent}, ошибок: ${failed}.`)
+  })
+
   bot.on('message', async (ctx) => {
     const appUrl = process.env.MINI_APP_URL ?? ''
     const keyboard = new InlineKeyboard().webApp('🏪 Открыть ярмарку', appUrl)
