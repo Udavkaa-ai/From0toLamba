@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Суть проекта
 
-«Из грязи в князи» — Telegram Mini App, симулятор купца-инвестора в сказочной Руси. Игрок вкладывает гроши (г) в «дела», большинство из которых обман. Ключевая механика — **«Купеческая грамота»**: мини-игра на внимательность (24 SVG-печати, ищем подделки; таймер зависит от чина). Текущая версия: **3.0.0**.
+«Из грязи в князи» — Telegram Mini App, симулятор купца-инвестора в сказочной Руси. Игрок вкладывает гроши (г) в «дела», большинство из которых обман. Ключевая механика — **«Купеческая грамота»**: мини-игра на внимательность (24 SVG-печати, ищем подделки; таймер зависит от чина). Текущая версия: **3.2.0**.
 
 - **Активная версия:** `tg/`. `app/` (Android) — заморожен (`CODEMAP.md` описывает Android-архитектуру, к `tg/` не относится).
 - **Валюта:** гроши (г) в UI; DB-поля (`currentValueRubles`, `investedAmountRubles` и т.д.) не переименованы — только отображение. Всегда `Math.floor(n)`, **не** `.toFixed(0)` — `.toFixed` округляет вверх и вызывает «Недостаточно средств».
@@ -53,12 +53,13 @@ tg/
 │   ├── components/
 │   │   ├── ScreenBackground.tsx  # фоновые изображения + версионирование + PAGE_BG + homeBackground()
 │   │   ├── Seal.tsx              # процедурная SVG-печать (6 параметров, детерминирована из seed)
+│   │   ├── ChatPanel.tsx         # ярмарочная площадь — общий чат, висит поверх всех страниц
 │   │   ├── FairyCard.tsx         # базовая карточка + OrnamentDivider + SkeletonCard
 │   │   └── BottomNav.tsx         # нижняя навигация
 │   └── theme/colors.ts        # FairyGold #FFB800 · EnchantedPurple #2A1960 · NightBlue #0D1735
 └── server/src/
     ├── index.ts               # точка входа: регистрация плагинов, роутов, статики
-    ├── api/routes/            # game · projects · ama · charter · invest · banner · payments · tasks
+    ├── api/routes/            # game · projects · ama · charter · invest · banner · payments · tasks · chat
     ├── game/
     │   ├── types.ts           # все enum + FATE_CONFIG + WITHDRAWAL_RULES
     │   ├── GenerateProjectService.ts
@@ -73,7 +74,9 @@ tg/
     │   ├── mafiaOffers.ts     # «мафиозные» принудительные выкупы за 50% при закрытии
     │   └── randomEvents.ts    # случайные события NEGATIVE/POSITIVE/NEUTRAL при advance-day
     ├── ai/openRouterClient.ts # OpenRouter + staticBannerFilename()
-    ├── bot/bot.ts             # Grammy бот
+    ├── bot/
+    │   ├── bot.ts             # Grammy бот; экспортирует cancelBroadcast() для SIGTERM
+    │   └── channelTasksConfig.ts  # CHANNEL_TASKS — список каналов с наградами
     ├── scheduler/dailyJob.ts  # cron advance-day 09:00 MSK + уведомления каждые 5 мин
     ├── middleware/telegramAuth.ts
     └── db/prisma.ts           # PrismaClient singleton
@@ -172,6 +175,8 @@ PAGE_BG.portfolio           // '/backgrounds/BG_PORTFOLIO.webp'
 - **Число подделок на интро-экране**: Скоморох видит точное число, Купец и выше — `???`
 - `sealForCell(refSeed, index, isForged, difficulty, rank?)` — `rank` используется для выбора пула мутаций вместо `difficulty`
 
+**Навигация назад в CharterPage:** `useBlocker` из React Router **не работает** с `BrowserRouter`. Для перехвата свайпа-назад (edge swipe) используется трюк: при монтировании пушится дубль текущего URL в `history.pushState`, затем `popstate` перехватывается вручную и показывает ExitConfirmSheet. Telegram BackButton перехватывается через `useTelegramBackHandler`.
+
 ---
 
 ## Звуки и музыка
@@ -205,7 +210,7 @@ PAGE_BG.portfolio           // '/backgrounds/BG_PORTFOLIO.webp'
 |---|---|
 | Стартовый баланс | 0 г → онбординг-бонус ~50 г |
 | Мин./макс. вложение | 5 г / 5 000 г на дело |
-| Активных дел | max 5 |
+| Активных дел | max 5 (+ до 5 extra slots) |
 | Кулдаун дней | 7 быстрых подряд (`MAX_CONSECUTIVE_ADVANCES`) → блокировка 2 ч; 10 Stars сбрасывают пачку |
 | SURVIVOR | 1.5–7.5%/день, 15–30 дней |
 | UNICORN | 10–50%/день, 20–30 дней |
@@ -222,6 +227,31 @@ PAGE_BG.portfolio           // '/backgrounds/BG_PORTFOLIO.webp'
 | Мудрец (ANALYST) | ≥ 1 000 г | ≥ 100 |
 | Боярин (SHARK) | ≥ 10 000 г | ≥ 300 |
 | Князь (LAMBO_SENSEI) | ≥ 50 000 г | ≥ 500 |
+
+---
+
+## Дополнительные слоты (extra slots)
+
+Когда у игрока 5 активных дел, он может купить до 5 дополнительных слотов:
+- **1 000 г** — списывается вместе с вложением в одной атомарной транзакции (`prisma.$transaction`)
+- **10 Stars** (`STARS_EXTRA_SLOT`) — пополняет `extraSlotsBalance` на GameState, тратится при инвестиции
+
+`isExtraSlot: true` на Project означает, что дело занимает купленный слот. При закрытии дела слот сгорает (не возвращается).
+
+Ошибки из `InvestService.invest()`, которые клиент обрабатывает программно (не локализованы на сервере):
+- `MAX_PROJECTS_REACHED` → показать ExtraSlotModal
+- `MAX_EXTRA_SLOTS_REACHED` → лимит 5 доп. слотов достигнут
+- `NO_EXTRA_SLOTS` → `extraSlotsBalance = 0`, нужно купить
+
+---
+
+## Чат (Ярмарочная площадь)
+
+`ChatPanel.tsx` — глобальный оверлей поверх всех страниц (не в роутинге). Данные: `GET /api/chat/messages?since=<id>` (polling), `POST /api/chat/message`.
+
+Ограничения (`chatRoutes.ts`): 300 символов, 5-секундный rate limit на сообщение, автомодерация через `leo-profanity` (RU + EN словари). Сервер возвращает `{ error: 'PROFANITY' }` — клиент должен обработать отдельно.
+
+`displayName` в `ChatMessage` — снимок имени на момент отправки. Торговое имя (`nickname`) хранится на `User`, устанавливается в настройках на главной. Используется в чате вместо Telegram-имени, если задано.
 
 ---
 
@@ -297,11 +327,26 @@ python compress.py --inplace output_backgrounds/
 
 ## Telegram Stars (платежи)
 
-- Пропуск кулдауна: **10 Stars** (`STARS_TIMER_SKIP` в `bot.ts`)
-- Беседа с дельцом (AMA): **10 Stars** (`STARS_AMA_UNLOCK`)
-- `PAYMENTS_ENABLED=false` → сервер активирует фичу бесплатно (dev-режим)
+Три фичи, все по **10 Stars** (`bot.ts`):
+- `timer_skip` — пропуск 2-часового кулдауна; payload prefix `ts:`
+- `ama_unlock` — открыть беседу с дельцом; payload prefix `au:`
+- `extra_slot` — докупить слот сверх лимита 5 дел; payload prefix `es:`
+
+Флоу: `POST /api/payments/invoice` → клиент вызывает `Telegram.WebApp.openInvoice(link)` → по callback `'paid'` → `POST /api/payments/activate`. `PAYMENTS_ENABLED=false` в `.env` пропускает весь флоу и активирует фичу бесплатно.
+
 - `bot.ts` содержит обязательный хендлер `pre_checkout_query` и логгер `successful_payment`
 - Stars зачисляются на баланс бота; смотреть через BotFather → /mybots → Revenue
+
+---
+
+## Бот (bot.ts)
+
+Команды администратора (только `ADMIN_TELEGRAM_ID = 424553547`):
+- `/resetall` — сброс всех игроков (защита от повторного запуска через маркер в БД)
+- `/broadcast <текст>` — рассылка всем прошедшим онбординг; 50мс задержка между сообщениями
+- `/broadcaststop` — остановить текущую рассылку
+
+Флаги `broadcastActive` / `broadcastCancelled` — модульного уровня (не внутри `setupHandlers`). `cancelBroadcast()` экспортируется и вызывается в `index.ts` при SIGTERM — гарантирует остановку цикла при редеплое. Без этого Railway отправляет SIGTERM, `app.close()` завершается, но цикл broadcast продолжает работать до SIGKILL.
 
 ---
 
