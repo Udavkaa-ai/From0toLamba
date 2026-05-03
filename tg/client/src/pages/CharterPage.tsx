@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useParams, useNavigate, useBlocker } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ScreenBackground } from '@/components/ScreenBackground'
@@ -81,15 +81,20 @@ export function CharterPage() {
   // Системный «назад» в Telegram Mini App тоже перехватываем в те же правила
   useTelegramBackHandler(tryGoBack)
 
-  // Перехватываем свайп-назад (edge swipe) — он идёт через React Router history,
-  // минуя Telegram BackButton. Отменяем навигацию и показываем тот же попап.
-  const blocker = useBlocker(phase !== 'result')
+  // Перехватываем свайп-назад (edge swipe на iOS/Android). useBlocker не работает
+  // с BrowserRouter, поэтому используем трюк: пушим дубль текущего URL в history,
+  // тогда свайп-назад попадает обратно на тот же URL (React Router не демонтирует
+  // компонент) и мы перехватываем popstate, чтобы показать тот же попап.
   useEffect(() => {
-    if (blocker.state === 'blocked') {
-      blocker.reset()
+    if (phase === 'result') return
+    window.history.pushState(null, '', window.location.pathname)
+    const handlePopState = () => {
+      window.history.pushState(null, '', window.location.pathname)
       setShowExitConfirm(true)
     }
-  }, [blocker.state])
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [phase])
 
   // Сессия-грамота: create-or-return. startCharter идемпотентен —
   // существующую сессию вернёт как есть, закрытый проект даст 410 CHARTER_EXPIRED
