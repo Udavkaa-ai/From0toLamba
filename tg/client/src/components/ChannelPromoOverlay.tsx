@@ -5,7 +5,12 @@ import { api, type ChannelTaskDTO } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing } from '@/theme'
 
-const LS_KEY = 'channel_promo_date'
+// Ключ включает Telegram user ID чтобы разные аккаунты на одном устройстве
+// не мешали друг другу (общий localStorage, но разные юзеры).
+function lsKey(): string {
+  const uid = (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id
+  return uid ? `channel_promo_date_${uid}` : 'channel_promo_date'
+}
 
 function todayKey() {
   return new Date().toISOString().slice(0, 10)
@@ -13,11 +18,11 @@ function todayKey() {
 
 export function shouldShowChannelPromo(): boolean {
   if (typeof window === 'undefined') return false
-  return localStorage.getItem(LS_KEY) !== todayKey()
+  return localStorage.getItem(lsKey()) !== todayKey()
 }
 
 export function markChannelPromoSeen() {
-  localStorage.setItem(LS_KEY, todayKey())
+  localStorage.setItem(lsKey(), todayKey())
 }
 
 export function ChannelPromoOverlay({ onClose }: { onClose: () => void }) {
