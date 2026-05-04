@@ -26,4 +26,12 @@ export const CHANNEL_TASKS: ChannelTask[] = [
     description: 'Канал о редких находках и коллекционировании',
     rewardRubles: 50,
   },
+  {
+    id: 'channel_clicermania',
+    channelUsername: 'clicermania',
+    channelTitle: 'Летопись девицы Кликерманки',
+    channelLink: 'https://t.me/clicermania',
+    description: 'Летопись об играх заморских',
+    rewardRubles: 50,
+  },
 ]
