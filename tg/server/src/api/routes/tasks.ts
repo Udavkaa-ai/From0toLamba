@@ -3,20 +3,28 @@ import { prisma } from '../../db/prisma'
 import { telegramAuthHook } from '../../middleware/telegramAuth'
 import { CHANNEL_TASKS } from '../../game/channelTasksConfig'
 
-// Проверяем подписку через Telegram Bot API getChatMember
+// Проверяем подписку через Telegram Bot API getChatMember.
+// Если бот не является администратором канала, API возвращает ошибку —
+// в этом случае даём benefit of doubt и разрешаем клейм (иначе у нас нет
+// способа проверить подписку для каналов, где бот не добавлен как admin).
 async function isSubscribedToChannel(telegramId: string, channelUsername: string): Promise<boolean> {
   const token = process.env.TELEGRAM_BOT_TOKEN
-  if (!token) return false
+  if (!token) return true
   try {
     const url = `https://api.telegram.org/bot${token}/getChatMember?chat_id=@${channelUsername}&user_id=${telegramId}`
     const res = await fetch(url)
     const json = await res.json() as { ok: boolean; result?: { status: string } }
-    if (!json.ok || !json.result) return false
+    if (!json.ok) {
+      // Бот не в канале или недостаточно прав — не можем проверить, разрешаем
+      console.warn(`[tasks] getChatMember failed for @${channelUsername}: ${JSON.stringify(json)}`)
+      return true
+    }
+    if (!json.result) return true
     const { status } = json.result
     return ['creator', 'administrator', 'member', 'restricted'].includes(status)
   } catch (err) {
     console.error('[tasks] getChatMember error:', err)
-    return false
+    return true
   }
 }
 
