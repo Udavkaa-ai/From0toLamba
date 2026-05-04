@@ -112,31 +112,40 @@ export function WhatsNewOverlay({
         onClick={e => e.stopPropagation()}
         style={{
           width: '100%', maxWidth: '420px',
+          maxHeight: '85dvh',
+          display: 'flex', flexDirection: 'column',
           background: `linear-gradient(145deg, ${colors.enchantedPurple}, ${colors.nightBlue})`,
           border: `1px solid ${colors.fairyGold}55`,
           borderRadius: '16px',
-          padding: spacing.xl,
           boxShadow: '0 16px 48px rgba(0,0,0,0.6)',
         }}
       >
-        <div style={{ textAlign: 'center', marginBottom: spacing.lg }}>
-          <div style={{ fontSize: '48px', marginBottom: '4px' }}>📯</div>
-          <div style={{ color: colors.fairyGold, fontSize: '18px', fontWeight: 800 }}>
-            {t.whatsNew.header}
+        {/* Шапка — фиксирована */}
+        <div style={{ padding: spacing.xl, paddingBottom: 0, flexShrink: 0 }}>
+          <div style={{ textAlign: 'center', marginBottom: spacing.lg }}>
+            <div style={{ fontSize: '48px', marginBottom: '4px' }}>📯</div>
+            <div style={{ color: colors.fairyGold, fontSize: '18px', fontWeight: 800 }}>
+              {t.whatsNew.header}
+            </div>
+            <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
+              {t.whatsNew.versionLabel(entry.version)}
+            </div>
           </div>
-          <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
-            {t.whatsNew.versionLabel(entry.version)}
+
+          <div style={{
+            color: colors.fairyGold, fontSize: '15px', fontWeight: 700,
+            textAlign: 'center', marginBottom: spacing.md,
+          }}>
+            {entry.title}
           </div>
         </div>
 
+        {/* Список — прокручиваемый */}
         <div style={{
-          color: colors.fairyGold, fontSize: '15px', fontWeight: 700,
-          textAlign: 'center', marginBottom: spacing.md,
+          overflowY: 'auto', flex: 1,
+          padding: `0 ${spacing.xl}`,
+          display: 'flex', flexDirection: 'column', gap: spacing.sm,
         }}>
-          {entry.title}
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.sm }}>
           {entry.items.map((item, i) => (
             <div
               key={i}
@@ -153,23 +162,27 @@ export function WhatsNewOverlay({
               {item}
             </div>
           ))}
+          <div style={{ height: spacing.sm }} />
         </div>
 
-        <button
-          onClick={onClose}
-          style={{
-            width: '100%', marginTop: spacing.xl,
-            padding: spacing.md,
-            background: colors.fairyGold,
-            border: 'none',
-            borderRadius: '12px',
-            color: colors.nightBlue,
-            fontSize: '14px', fontWeight: 700,
-            cursor: 'pointer',
-          }}
-        >
-          {t.whatsNew.closeBtn}
-        </button>
+        {/* Кнопка — зафиксирована снизу */}
+        <div style={{ padding: spacing.xl, paddingTop: spacing.md, flexShrink: 0 }}>
+          <button
+            onClick={onClose}
+            style={{
+              width: '100%',
+              padding: spacing.md,
+              background: colors.fairyGold,
+              border: 'none',
+              borderRadius: '12px',
+              color: colors.nightBlue,
+              fontSize: '14px', fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            {t.whatsNew.closeBtn}
+          </button>
+        </div>
       </motion.div>
     </motion.div>
   )
