@@ -13,6 +13,7 @@ import { bannerRoutes } from './api/routes/banner'
 import { tasksRoutes } from './api/routes/tasks'
 import { paymentsRoutes } from './api/routes/payments'
 import { chatRoutes } from './api/routes/chat'
+import { publicRoutes } from './api/routes/public'
 import { createWebhookHandler, getBot, cancelBroadcast } from './bot/bot'
 import { startDailyScheduler } from './scheduler/dailyJob'
 import { prisma } from './db/prisma'
@@ -46,6 +47,7 @@ async function main() {
   await app.register(tasksRoutes)
   await app.register(paymentsRoutes)
   await app.register(chatRoutes)
+  await app.register(publicRoutes)
 
   // Telegram webhook
   const webhookSecret = process.env.TELEGRAM_BOT_TOKEN?.split(':')[0]
