@@ -98,7 +98,7 @@ def call_vertex(client, model: str, prompt: str) -> tuple[bytes, str]:
         config=types.GenerateImagesConfig(
             number_of_images=1,
             aspect_ratio="16:9",
-            safety_filter_level="block_few",
+            safety_filter_level="BLOCK_ONLY_HIGH",
             person_generation="allow_adult",
         ),
     )
