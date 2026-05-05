@@ -25,6 +25,7 @@ export async function publicRoutes(app: FastifyInstance) {
     return {
       exists: true,
       onboarding_complete: user.gameState.isOnboardingComplete,
+      utm_source: user.utmSource ?? null,
     }
   })
 }
