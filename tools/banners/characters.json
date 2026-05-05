@@ -1,5 +1,5 @@
 {
-  "_comment": "Seven archetypes; for each — 5 named visual variants. Each variant is one distinct individual of that archetype. The generator uses desc for the image prompt and name for the game NPC identity.",
+  "_comment": "Seven archetypes; for each — 8 named visual variants. Each variant is one distinct individual of that archetype. The generator uses desc for the image prompt and name for the game NPC identity.",
 
   "BURATINO": [
     {
@@ -21,6 +21,18 @@
     {
       "name": "Буратино Простак",
       "desc": "scruffy little wooden puppet with a chipped long nose and peeling paint on his cheeks, wearing a too-short patched linen shirt and bare wooden feet, sitting cross-legged with a blissfully oblivious grin, sawdust spilling from a crack in his elbow"
+    },
+    {
+      "name": "Буратино Скоморох",
+      "desc": "nimble wooden puppet in a jester's motley costume of red and green diamond patches, extra-long pointed nose painted with gold tip, tiny bells on the collar, performing an exaggerated bow, one carved hand flourishing a small playing card"
+    },
+    {
+      "name": "Буратино Тёмный",
+      "desc": "small wooden puppet carved from dark walnut wood, long tapered nose with a slight downward hook, wearing a charcoal-grey kaftan with silver buttons, glass-bead eyes narrowed in a calculating squint, a tiny leather satchel slung over one shoulder"
+    },
+    {
+      "name": "Буратино Позолоченный",
+      "desc": "elegant wooden puppet with a long gilt-tipped nose, fine gilded lacquer coating on his carved face and hands, wearing a tiny court costume of sky-blue velvet with gold braid, glass eyes rimmed with painted gilt lashes, a miniature merchant ledger tucked under his arm"
     }
   ],
 
@@ -44,6 +56,18 @@
     {
       "name": "Ванька Перо-Жар",
       "desc": "lanky sandy-haired youth in a crooked papakha and a too-big embroidered coat, balancing a bundle of magic firebird feathers under one arm, expression naively pleased"
+    },
+    {
+      "name": "Иванушка Соломенный",
+      "desc": "gap-toothed curly-haired village boy with sun-browned skin, wearing a loose cream rubakha with a straw belt and wide linen trousers, a straw hat pushed back on his head, holding a half-eaten honey cake with a sheepish grin"
+    },
+    {
+      "name": "Ванька Кудрявый",
+      "desc": "auburn-curled youth with a garland of wildflowers askew on his head, barefoot in a long embroidered shirt, leaning on a birch tree with a relaxed smile, a frog sitting on his outstretched palm"
+    },
+    {
+      "name": "Иван Большой",
+      "desc": "broad-shouldered blonde teenager with muddy felt boots and honest grey eyes, wearing a thick russet homespun coat, an oversized shapka of rabbit fur, a wooden yoke across his shoulders and two empty pails, bewildered but cheerful expression"
     }
   ],
 
@@ -67,6 +91,18 @@
     {
       "name": "Бабушка Нечистая",
       "desc": "ancient toothless granny crouched on the stove ledge of her hut on chicken legs, wrapped in many shawls of black and rust-red, clutching a small wooden bowl, single tooth showing"
+    },
+    {
+      "name": "Яга Серебряная",
+      "desc": "wiry old witch with long silver hair braided with owl feathers, wearing a layered dark robe hung with dried roots and tiny skulls, one hand gripping a lantern made from a hollowed skull emitting green flame, pale amber eyes narrowed in cunning"
+    },
+    {
+      "name": "Яга Прядильщица",
+      "desc": "bent ancient crone seated at a carved bone spinning wheel in a shadowy corner, grey plaits trailing to the floor, wearing a patched dark sarafan with embroidered snakes at the hem, fingers unnaturally long on the thread, a black cat curled at her feet"
+    },
+    {
+      "name": "Яга-Воительница",
+      "desc": "formidable barrel-chested hag standing upright in a coat of stitched animal hides, iron-grey hair loose and wild, holding a great iron pestle like a war club, eyes burning with orange fire, the skulls of defeated suitors on posts around her"
     }
   ],
 
@@ -90,6 +126,18 @@
     {
       "name": "Алёнушка Волшебная",
       "desc": "girl half-transformed: torn working dress on one side, shimmering pearl-embroidered sarafan and silver kokoshnik on the other, fairy-godmother light pouring over her shoulder, smooth clear face no scars"
+    },
+    {
+      "name": "Марьюшка Пепловая",
+      "desc": "pale-skinned young woman with ash-white hair pinned under a plain dark kerchief, wearing a faded indigo sarafan with worn embroidery, kneeling to scrub stone steps, hands reddened by cold water, expression quietly determined, smooth clear complexion"
+    },
+    {
+      "name": "Варварушка Рыжая",
+      "desc": "freckle-faced auburn-haired stepchild in a russet homespun sarafan and coarse linen apron, one braid coming loose, cheeks flushed from hard work, leaning on a wooden windowsill looking out at the snow with a wistful half-smile, smooth clear skin"
+    },
+    {
+      "name": "Лушенька Тёмная",
+      "desc": "dark-haired young woman with large dark eyes and a silk sash of deep blue knotted at her waist over a plain grey sarafan, holding a lit tallow candle that casts warm light on her smooth unblemished face, a small silver thimble on her finger"
     }
   ],
 
@@ -113,6 +161,18 @@
     {
       "name": "Кощей Тёмный",
       "desc": "lean noble with bone-white braided hair, in a high-collared black brocade kaftan stitched with silver runes, behind him a chained iron chest in a treasury of skulls"
+    },
+    {
+      "name": "Кощей Ледяной",
+      "desc": "ancient skeletal figure enthroned on a great seat carved from pale blue ice, wearing armour of frost-white iron inlaid with dark sapphires, long colourless hair hanging still, breath misting in frozen air, eyes like two cold white flames"
+    },
+    {
+      "name": "Кощей Чёрный Плащ",
+      "desc": "gaunt hollow-cheeked sorcerer in a sweeping black travelling cloak lined with dark wolf fur, one skeletal hand bearing a massive obsidian ring, striding through a dead forest at midnight, bare birch trees casting jagged shadows behind him"
+    },
+    {
+      "name": "Кощей Придворный",
+      "desc": "pale cadaverous noble in tattered black brocade court robes trimmed with tarnished gold, a many-pointed crown of rusted iron on his thin skull, one clawed finger turning a poison ring on the other hand, sunken eyes calculating"
     }
   ],
 
@@ -136,6 +196,18 @@
     {
       "name": "Царь-Соня",
       "desc": "rumpled folk-tale king in slippers and a long nightcap with a tassel, brocade kaftan unbuttoned at the chest, surrounded by piles of scattered gold coins and ledgers"
+    },
+    {
+      "name": "Царь Краснолицый",
+      "desc": "jovial barrel-shaped tsar with a bushy red beard shot through with grey, wearing a rich burgundy kaftan embroidered with a pattern of golden peas and leaves, a wide jewelled belt at his considerable girth, laughing heartily with one fist on his knee"
+    },
+    {
+      "name": "Царь Серебряный",
+      "desc": "tall stately old king with a long silver beard plaited with gold thread, in an embroidered white and silver ceremonial robe with a high brocade collar, holding a jewelled orb, expression grave but kind, deep-set wise eyes under silver brows"
+    },
+    {
+      "name": "Царь Пурпурный",
+      "desc": "portly middle-aged tsar with a neatly trimmed dark beard going grey at the chin, in a deep purple mantle edged with sable fur, a heavy gold chain on his chest, seated on a gilded throne with a weary but authoritative expression, hands folded over a scroll"
     }
   ],
 
@@ -159,6 +231,18 @@
     {
       "name": "Колобок Ленивый",
       "desc": "fat sourdough roll with poppy-seed freckles, a wide grin showing crumb-teeth, leaning back lazily on a hay bale in a sunlit field"
+    },
+    {
+      "name": "Колобок Кунжутный",
+      "desc": "plump sesame-speckled bread roll with a wide jagged crust grin and glossy amber glaze, small flour-dusted arms crossed confidently, balancing on its rounded bottom on a market counter, raisin eyes glinting with mischief"
+    },
+    {
+      "name": "Колобок Бантик",
+      "desc": "perfectly round sourdough roll with a dainty twisted-dough bow tie on its crust, two berry-black eyes and a little curved smile, rolling along proudly on a village road, a string of small golden coins jingling from its flour-dusted hand"
+    },
+    {
+      "name": "Колобок Медовый",
+      "desc": "glossy honey-glazed bread roll of deep amber-brown, plump and perfectly round, with a wide confident smirk and half-closed seed eyes, tiny doughy hands on its curved sides, a drizzle of golden honey catching the light on its smooth top"
     }
   ]
 }

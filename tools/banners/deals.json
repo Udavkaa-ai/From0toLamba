@@ -1,33 +1,43 @@
 {
-  "_comment": "Five deal types; for each — exactly 3 distinct compositions/scenarios. Pure scene/staging description (no character — character comes from characters.json). The merchant should be the focal point of the composition.",
+  "_comment": "Five deal types; for each — exactly 5 distinct compositions/scenarios. Pure scene/staging description (no character — character comes from characters.json). The merchant should be the focal point of the composition.",
 
   "TREASURE_HUNT": [
     "kneeling beside a half-buried oak chest in a moonlit pine forest, lid cracked open spilling silver coins and pearl strings, a shovel stuck in dark earth, will-o'-the-wisp lights drifting between trees",
     "standing at the prow of a small wooden barque on a misty river at dawn, holding an unrolled treasure map made of birch bark with red marks, ancient stone idols watching from the riverbank",
-    "stepping into a low limestone cave entrance flanked by carved pagan stone faces, a torch burning in one hand throwing warm light, glints of gold visible deep in the darkness behind"
+    "stepping into a low limestone cave entrance flanked by carved pagan stone faces, a torch burning in one hand throwing warm light, glints of gold visible deep in the darkness behind",
+    "sorting ancient silver coins and amber beads on a large stone table inside a crumbling tower room lit by a single oil lantern, illustrated maps pinned to the cracked walls, a worn compass and small telescope lying nearby",
+    "rowing a narrow birch-bark canoe across a still black lake at midnight, a lantern hung at the prow casting orange reflections, a waterproof oilcloth sack of tools stowed at the bow, the silhouette of a sunken wooden chest barely visible below the surface"
   ],
 
   "POTION_BREW": [
     "leaning over a bubbling copper cauldron in a smoky log izba, jars of strange roots and dried mushrooms on shelves, green steam curling up, dried herbs hanging from low ceiling beams",
     "in a dim wooden hut surrounded by glass apothecary bottles of luminous liquids on a long oak workbench, mortar and pestle, candles burning low, a cat watching from the windowsill",
-    "outdoors at twilight in a forest clearing, gathering glowing blue herbs into a wicker basket, a small portable cauldron simmering on stones, fireflies and moths around"
+    "outdoors at twilight in a forest clearing, gathering glowing blue herbs into a wicker basket, a small portable cauldron simmering on stones, fireflies and moths around",
+    "in a low root cellar by firelight, carefully sealing small clay bottles with dark wax, rows of labelled earthen crocks of fermenting liquid on the shelves behind, strings of dried mushrooms overhead",
+    "at dawn in a dew-soaked meadow, tending a copper alembic propped over a small stone fire, clear distillate dripping into a glass flask, pale mist rising from the ground, birch trees catching early gold light"
   ],
 
   "CARD_GAME": [
     "seated at a square wooden tavern table cluttered with playing cards face down and stacks of silver coins, candle in an iron holder casting long shadows, two empty chairs across, kvass jug nearby",
     "in a noisy smoky inn, dealing cards across a fur-trimmed table to unseen rich opponents, gold rings on fingers, sly half-smile, samovar steaming on a side table",
-    "alone late at night in a moonlit chamber, fanning a hand of painted cards, dice and gold coins on a velvet cloth, an open ledger and a crow feather quill nearby"
+    "alone late at night in a moonlit chamber, fanning a hand of painted cards, dice and gold coins on a velvet cloth, an open ledger and a crow feather quill nearby",
+    "in a cramped candlelit back room, a single guttering tallow candle on a barrel between players, a crumpled heap of silver coins and a turned-down card in the centre, every shadow sharp and tense",
+    "at a corner table of a roadside inn, a worn deck spread face-down on rough wood, a mug of dark ale to one side, orange firelight from the nearby hearth throwing copper glints on scattered coins"
   ],
 
   "GUILD_SCHEME": [
     "standing in front of a long polished oak table where rich seated boyars in tall fur shapkas listen intently, a parchment scroll unfurled in his hand showing painted diagrams, an ornate samovar in the background",
     "addressing a small gathering of merchants in fur-trimmed kaftans inside a guild hall, gesturing toward a wooden chest of stacked gold ingots, painted icons of saints on the walls behind",
-    "outdoors at a marketplace, raised on a low wooden platform, holding up a wax-sealed charter to a curious crowd of townsfolk, a clerk in a black robe writing names in a thick book"
+    "outdoors at a marketplace, raised on a low wooden platform, holding up a wax-sealed charter to a curious crowd of townsfolk, a clerk in a black robe writing names in a thick book",
+    "bent over a wide writing desk by candlelight, quill moving rapidly across a long parchment, stacks of folded sealed letters arranged around, a signet ring and pool of hot wax at hand, a heavy purse of gold coins at the corner",
+    "in a snowy courtyard at dusk, whispering to a fur-wrapped associate leaning against a stone wall, a folded document passing between gloved hands, distant torchlight catching the faces of guards in the archway behind"
   ],
 
   "HONEST_TRADE": [
     "behind a sturdy wooden market stall hung with strings of dried fish and bunches of onions, weighing goods on a brass scale, customers in homespun coats waiting, a shaggy horse and cart in the background",
     "inside a clean modest wooden shop, neat shelves of birch-bark boxes, jars of honey and pots of butter, a customer counting copper coins on a worn counter, sun streaming through a small window",
-    "loading bolts of woven linen and clay jars onto a sturdy wooden cart in a snowy village square, breath visible in cold air, a calm draught horse hitched up, frosty rooftops behind"
+    "loading bolts of woven linen and clay jars onto a sturdy wooden cart in a snowy village square, breath visible in cold air, a calm draught horse hitched up, frosty rooftops behind",
+    "in a riverside dock warehouse, checking bolts of dyed wool against a hand-written list by daylight from wide-open doors, two assistants rolling bales in the background, neat stacks of goods on oak shelves",
+    "at a crossroads village market under a canvas awning, arranging colourful clay pottery and braided baskets on a trestle, an abacus on the table, a small knot of buyers examining the wares with interest"
   ]
 }
