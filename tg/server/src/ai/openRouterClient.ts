@@ -293,7 +293,7 @@ const TYPE_TO_BANNER: Record<ProjectType, string> = {
 /** Детерминированный вариант 1–5 из projectId */
 function bannerVariant(projectId: string): number {
   const hash = parseInt(projectId.replace(/-/g, '').slice(-8), 16)
-  return (hash % 5) + 1
+  return (hash % 8) + 1
 }
 
 /** Имя файла баннера для данного проекта */
