@@ -152,6 +152,8 @@ def main() -> int:
                         help="папка для результатов (default: tools/banners/output)")
     parser.add_argument("--rpm", type=int, default=REQUESTS_PER_MINUTE)
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument("--min-variant", type=int, default=None, metavar="N",
+                        help="генерировать только варианты >= N (например --min-variant 6 пропустит 1-5)")
     parser.add_argument("--test", action="store_true",
                         help="3 тестовых картинки (BABA_YAGA/IVAN_DURAK/KOLOBOK × POTION_BREW)")
     parser.add_argument("--dry", action="store_true")
@@ -262,6 +264,8 @@ def main() -> int:
 
     todo = []
     for j in jobs:
+        if args.min_variant is not None and j.variant < args.min_variant:
+            continue
         existing = already_done(j.filename_stem)
         if existing and not args.force:
             print(f"[skip] {j.filename_stem} (exists: {existing.name})")
