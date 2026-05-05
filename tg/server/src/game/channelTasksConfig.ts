@@ -34,4 +34,12 @@ export const CHANNEL_TASKS: ChannelTask[] = [
     description: 'Летопись об играх заморских',
     rewardRubles: 50,
   },
+  {
+    id: 'channel_cryptomaxbablo',
+    channelUsername: 'cryptomaxbablo',
+    channelTitle: 'Лев среди Князей',
+    channelLink: 'https://t.me/cryptomaxbablo',
+    description: 'Все способы заработать в правильных делах',
+    rewardRubles: 50,
+  },
 ]
