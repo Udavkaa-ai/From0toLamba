@@ -26,7 +26,7 @@ export async function projectRoutes(app: FastifyInstance) {
     const [active, closed] = await Promise.all([
       prisma.project.findMany({
         where: { userId: user.id, isActive: true },
-        orderBy: { updatedAt: 'desc' },
+        orderBy: { createdAt: 'desc' },
       }),
       prisma.project.findMany({
         where: {
