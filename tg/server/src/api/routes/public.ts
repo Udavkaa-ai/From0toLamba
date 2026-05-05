@@ -28,4 +28,38 @@ export async function publicRoutes(app: FastifyInstance) {
       utm_source: user.utmSource ?? null,
     }
   })
+
+  // GET /api/public/partner-stats?utm_source=utm_gk
+  // Агрегатная статистика по партнёрскому UTM-источнику.
+  // Аналог "Player Statistics" в партнёрских дашбордах (Gift Kombat и др.).
+  app.get('/api/public/partner-stats', async (request, reply) => {
+    const { utm_source } = request.query as { utm_source?: string }
+
+    if (!utm_source) {
+      return reply.status(400).send({ error: 'utm_source is required' })
+    }
+
+    const users = await prisma.user.findMany({
+      where: { utmSource: utm_source },
+      include: { gameState: true },
+    })
+
+    const total = users.length
+    const active = users.filter(u => u.gameState?.isOnboardingComplete).length
+    const experienced = users.filter(u =>
+      u.gameState && ['ANALYST', 'SHARK', 'LAMBO_SENSEI'].includes(u.gameState.investorRank)
+    ).length
+    const totalIntuition = users.reduce((s, u) => s + (u.gameState?.intuitionScore ?? 0), 0)
+    const totalWealth = users.reduce((s, u) => s + (u.gameState?.balance ?? 0), 0)
+    const avgWealth = total > 0 ? Math.floor(totalWealth / total) : 0
+
+    return {
+      partner: utm_source,
+      total_players: total,
+      active_players: active,           // прошли онбординг
+      experienced_players: experienced, // достигли чина Мудрец и выше
+      total_intuition_score: totalIntuition,
+      avg_balance_groshy: avgWealth,
+    }
+  })
 }
