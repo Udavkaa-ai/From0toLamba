@@ -26,6 +26,7 @@ model User {
   // если у бота настроена Main Mini App в BotFather. Через команду бота — надёжнее.
   pendingReferralParam  String?
   nickname              String?
+  utmSource             String?   // источник первого входа: utm_gk, utm_cm и т.д.
 
   gameState      GameState?
   projects       Project[]

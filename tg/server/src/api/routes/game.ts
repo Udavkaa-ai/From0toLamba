@@ -36,6 +36,14 @@ export async function gameRoutes(app: FastifyInstance) {
 
     let gameState = user.gameState!
 
+    // Сохраняем UTM-источник при первом входе через партнёрскую ссылку
+    if (!user.utmSource && request.telegramStartParam?.startsWith('utm_')) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { utmSource: request.telegramStartParam },
+      })
+    }
+
     // Мигрируем устаревшие ID модели Gemini
     const oldGeminiIds = ['google/gemini-2.5-flash-preview', 'google/gemini-2.5-flash-preview-05-20']
     if (oldGeminiIds.includes(gameState.preferredModel)) {
