@@ -224,6 +224,7 @@ def main() -> int:
                         template = base[(v - 1) % len(base)]
                         jobs.append(Job(
                             archetype=arch, deal=deal, variant=v,
+                            character_name=template.character_name,
                             character_desc=template.character_desc,
                             deal_desc=template.deal_desc,
                             style_block=template.style_block,
