@@ -44,6 +44,16 @@ export async function publicRoutes(app: FastifyInstance) {
       include: { gameState: true },
     })
 
+    const userIds = users.map(u => u.id)
+
+    const starsResult = userIds.length > 0
+      ? await prisma.starPurchase.aggregate({
+          where: { userId: { in: userIds } },
+          _sum: { starsAmount: true },
+          _count: true,
+        })
+      : { _sum: { starsAmount: 0 }, _count: 0 }
+
     const total = users.length
     const active = users.filter(u => u.gameState?.isOnboardingComplete).length
     const experienced = users.filter(u =>
@@ -60,6 +70,8 @@ export async function publicRoutes(app: FastifyInstance) {
       experienced_players: experienced, // достигли чина Мудрец и выше
       total_intuition_score: totalIntuition,
       avg_balance_groshy: avgWealth,
+      total_stars_spent: starsResult._sum.starsAmount ?? 0,
+      total_star_purchases: starsResult._count,
     }
   })
 }
