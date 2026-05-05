@@ -89,6 +89,26 @@ function setupHandlers(bot: Bot) {
       }
     }
 
+    if (telegramId && /^utm_/.test(payload)) {
+      try {
+        await prisma.user.upsert({
+          where: { telegramId },
+          create: {
+            telegramId,
+            firstName: ctx.from!.first_name ?? 'купец',
+            lastName: ctx.from!.last_name,
+            username: ctx.from!.username,
+            utmSource: payload,
+            gameState: { create: { balance: 0 } },
+          },
+          // Не перезаписываем если UTM уже записан (первый вход — приоритет)
+          update: {},
+        })
+      } catch (err) {
+        console.error('[Bot] Failed to store utmSource:', err)
+      }
+    }
+
     const keyboard = new InlineKeyboard().webApp('🏪 Открыть ярмарку', appUrl)
 
     await ctx.reply(
