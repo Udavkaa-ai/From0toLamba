@@ -54,6 +54,11 @@ export function ChatPanel() {
   const [translations, setTranslations] = useState<Record<number, string>>({})
   const [translating, setTranslating] = useState<number | null>(null)
 
+  const uiLang = gameState?.preferredLanguage === 'en' ? 'en' : 'ru'
+
+  // Сбрасываем кэш переводов при смене языка интерфейса
+  useEffect(() => { setTranslations({}) }, [uiLang])
+
   const lastIdRef = useRef(0)
   const listRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -244,7 +249,6 @@ export function ChatPanel() {
                 {messages.map(msg => {
                   const isMe = msg.userId === myUserId
                   const isSelected = selectedId === msg.id
-                  const uiLang = gameState?.preferredLanguage === 'en' ? 'en' : 'ru'
                   const foreignLang = detectForeignLanguage(msg.text)
                   // Кнопка нужна только если язык сообщения отличается от языка интерфейса
                   const needsTranslation = foreignLang !== null && foreignLang !== uiLang
