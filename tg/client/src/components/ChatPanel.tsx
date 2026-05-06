@@ -127,8 +127,9 @@ export function ChatPanel() {
     setSelectedId(null)
     if (translations[msg.id]) return // уже есть
     setTranslating(msg.id)
+    const targetLang = (gameState?.preferredLanguage === 'en') ? 'en' : 'ru'
     try {
-      const { translation } = await api.chat.translate(msg.text)
+      const { translation } = await api.chat.translate(msg.text, targetLang)
       setTranslations(prev => ({ ...prev, [msg.id]: translation }))
     } catch { /* silent */ } finally {
       setTranslating(null)
@@ -243,7 +244,10 @@ export function ChatPanel() {
                 {messages.map(msg => {
                   const isMe = msg.userId === myUserId
                   const isSelected = selectedId === msg.id
+                  const uiLang = gameState?.preferredLanguage === 'en' ? 'en' : 'ru'
                   const foreignLang = detectForeignLanguage(msg.text)
+                  // Кнопка нужна только если язык сообщения отличается от языка интерфейса
+                  const needsTranslation = foreignLang !== null && foreignLang !== uiLang
                   const translation = translations[msg.id]
                   const isTranslating = translating === msg.id
                   return (
@@ -327,7 +331,7 @@ export function ChatPanel() {
                                 ↩ {t.chat.replyTo}
                               </button>
                             )}
-                            {foreignLang && !translation && !isTranslating && (
+                            {needsTranslation && !translation && !isTranslating && (
                               <button
                                 onClick={() => handleTranslate(msg)}
                                 style={{

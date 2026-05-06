@@ -116,10 +116,15 @@ export async function chatRoutes(app: FastifyInstance) {
     return { ok: true }
   })
 
-  // POST /api/chat/translate — перевести сообщение на русский
+  // POST /api/chat/translate — перевести сообщение на нужный язык
   app.post('/api/chat/translate', { preHandler: telegramAuthHook }, async (request, reply) => {
-    const body = z.object({ text: z.string().min(1).max(MAX_MSG_LENGTH) }).safeParse(request.body)
+    const body = z.object({
+      text: z.string().min(1).max(MAX_MSG_LENGTH),
+      targetLang: z.enum(['ru', 'en']).default('ru'),
+    }).safeParse(request.body)
     if (!body.success) return reply.status(400).send({ error: 'Invalid text' })
+
+    const targetName = body.data.targetLang === 'en' ? 'English' : 'Russian'
 
     try {
       const completion = await openai.chat.completions.create({
@@ -127,7 +132,7 @@ export async function chatRoutes(app: FastifyInstance) {
         messages: [
           {
             role: 'system',
-            content: 'Переведи текст на русский язык. Верни ТОЛЬКО перевод без пояснений и кавычек. Если текст уже на русском — верни его без изменений.',
+            content: `Translate the text to ${targetName}. Return ONLY the translation with no explanations or quotes. If the text is already in ${targetName} — return it unchanged.`,
           },
           { role: 'user', content: body.data.text },
         ],

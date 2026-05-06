@@ -354,8 +354,8 @@ export const api = {
       apiClient.post<ChatMessageDTO>('/chat/message', { text, replyToId }).then(r => r.data),
     deleteMessage: (id: number) =>
       apiClient.delete(`/chat/message/${id}`).then(r => r.data),
-    translate: (text: string) =>
-      apiClient.post<{ translation: string }>('/chat/translate', { text }).then(r => r.data),
+    translate: (text: string, targetLang: 'ru' | 'en') =>
+      apiClient.post<{ translation: string }>('/chat/translate', { text, targetLang }).then(r => r.data),
   },
 
   user: {
