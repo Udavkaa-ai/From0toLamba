@@ -6,6 +6,28 @@ import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing } from '@/theme'
 import { useT } from '@/i18n'
 
+// Определяет язык по доминирующему скрипту, возвращает null если русский или неизвестно
+function detectForeignLanguage(text: string): string | null {
+  if (!text || text.length < 2) return null
+  const chars = text.replace(/\s+/g, '')
+  if (!chars.length) return null
+  const cyrillic = (chars.match(/[Ѐ-ӿ]/g) ?? []).length
+  if (cyrillic / chars.length > 0.25) return null // русский
+  const arabic = (chars.match(/[؀-ۿݐ-ݿ]/g) ?? []).length
+  if (arabic / chars.length > 0.2) return 'ar'
+  const chinese = (chars.match(/[一-鿿㐀-䶿]/g) ?? []).length
+  if (chinese / chars.length > 0.15) return 'zh'
+  const latin = (chars.match(/[a-zA-Z]/g) ?? []).length
+  if (latin / chars.length > 0.25) return 'en'
+  return null
+}
+
+const LANG_LABEL: Record<string, string> = {
+  en: '🇬🇧 English',
+  ar: '🇸🇦 Arabic',
+  zh: '🇨🇳 Chinese',
+}
+
 const RANK_EMOJI: Record<string, string> = {
   NEWBIE: '🪙',
   AMBASSADOR: '🏪',
@@ -29,6 +51,8 @@ export function ChatPanel() {
   const [unread, setUnread] = useState(0)
   const [replyTo, setReplyTo] = useState<ChatMessageDTO | null>(null)
   const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [translations, setTranslations] = useState<Record<number, string>>({})
+  const [translating, setTranslating] = useState<number | null>(null)
 
   const lastIdRef = useRef(0)
   const listRef = useRef<HTMLDivElement>(null)
@@ -97,6 +121,18 @@ export function ChatPanel() {
       await api.chat.deleteMessage(id)
       setMessages(prev => prev.filter(m => m.id !== id))
     } catch { /* silent */ }
+  }
+
+  const handleTranslate = async (msg: ChatMessageDTO) => {
+    setSelectedId(null)
+    if (translations[msg.id]) return // уже есть
+    setTranslating(msg.id)
+    try {
+      const { translation } = await api.chat.translate(msg.text)
+      setTranslations(prev => ({ ...prev, [msg.id]: translation }))
+    } catch { /* silent */ } finally {
+      setTranslating(null)
+    }
   }
 
   const handleReply = (msg: ChatMessageDTO) => {
@@ -207,6 +243,9 @@ export function ChatPanel() {
                 {messages.map(msg => {
                   const isMe = msg.userId === myUserId
                   const isSelected = selectedId === msg.id
+                  const foreignLang = detectForeignLanguage(msg.text)
+                  const translation = translations[msg.id]
+                  const isTranslating = translating === msg.id
                   return (
                     <div
                       key={msg.id}
@@ -217,6 +256,11 @@ export function ChatPanel() {
                         <div style={{ fontSize: '11px', color: colors.fairyGold, marginBottom: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <span>{RANK_EMOJI[msg.investorRank] ?? '🪙'}</span>
                           <span style={{ fontWeight: 600 }}>{msg.displayName}</span>
+                          {foreignLang && (
+                            <span style={{ color: colors.textMuted, fontWeight: 400 }}>
+                              · {LANG_LABEL[foreignLang] ?? foreignLang}
+                            </span>
+                          )}
                         </div>
                       )}
                       <div style={{
@@ -241,6 +285,19 @@ export function ChatPanel() {
                           </div>
                         )}
                         {msg.text}
+                        {/* Перевод */}
+                        {isTranslating && (
+                          <div style={{ marginTop: '6px', color: colors.textMuted, fontSize: '11px' }}>⏳ Перевожу...</div>
+                        )}
+                        {translation && (
+                          <div style={{
+                            marginTop: '6px', paddingTop: '6px',
+                            borderTop: `1px solid rgba(255,255,255,0.1)`,
+                            color: colors.textMuted, fontSize: '12px', fontStyle: 'italic',
+                          }}>
+                            🌐 {translation}
+                          </div>
+                        )}
                       </div>
 
                       {/* Action buttons — appear when selected */}
@@ -268,6 +325,19 @@ export function ChatPanel() {
                                 }}
                               >
                                 ↩ {t.chat.replyTo}
+                              </button>
+                            )}
+                            {foreignLang && !translation && !isTranslating && (
+                              <button
+                                onClick={() => handleTranslate(msg)}
+                                style={{
+                                  padding: '4px 10px', fontSize: '11px', fontWeight: 600,
+                                  background: 'rgba(255,255,255,0.08)',
+                                  border: '1px solid rgba(255,255,255,0.2)',
+                                  borderRadius: '8px', color: colors.textMuted, cursor: 'pointer',
+                                }}
+                              >
+                                🌐 Перевести
                               </button>
                             )}
                             {isMe && (

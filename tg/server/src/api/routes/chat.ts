@@ -4,6 +4,16 @@ import { prisma } from '../../db/prisma'
 import { telegramAuthHook } from '../../middleware/telegramAuth'
 // @ts-ignore
 import leoProfanity from 'leo-profanity'
+import OpenAI from 'openai'
+
+const openai = new OpenAI({
+  baseURL: 'https://openrouter.ai/api/v1',
+  apiKey: process.env.OPENROUTER_API_KEY ?? '',
+  defaultHeaders: {
+    'HTTP-Referer': process.env.MINI_APP_URL ?? '',
+    'X-Title': 'Iz gryazi v knyazi',
+  },
+})
 
 leoProfanity.loadDictionary('ru')
 leoProfanity.add(leoProfanity.getDictionary('en'))
@@ -104,6 +114,30 @@ export async function chatRoutes(app: FastifyInstance) {
 
     await prisma.chatMessage.update({ where: { id }, data: { isDeleted: true } })
     return { ok: true }
+  })
+
+  // POST /api/chat/translate — перевести сообщение на русский
+  app.post('/api/chat/translate', { preHandler: telegramAuthHook }, async (request, reply) => {
+    const body = z.object({ text: z.string().min(1).max(MAX_MSG_LENGTH) }).safeParse(request.body)
+    if (!body.success) return reply.status(400).send({ error: 'Invalid text' })
+
+    try {
+      const completion = await openai.chat.completions.create({
+        model: 'deepseek/deepseek-v4-flash',
+        messages: [
+          {
+            role: 'system',
+            content: 'Переведи текст на русский язык. Верни ТОЛЬКО перевод без пояснений и кавычек. Если текст уже на русском — верни его без изменений.',
+          },
+          { role: 'user', content: body.data.text },
+        ],
+        max_tokens: 300,
+      })
+      const translation = completion.choices[0]?.message?.content?.trim() ?? body.data.text
+      return { translation }
+    } catch {
+      return reply.status(500).send({ error: 'Translation failed' })
+    }
   })
 
   // PATCH /api/user/nickname
