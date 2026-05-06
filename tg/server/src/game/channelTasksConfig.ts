@@ -42,4 +42,12 @@ export const CHANNEL_TASKS: ChannelTask[] = [
     description: 'Все способы заработать в правильных делах',
     rewardRubles: 50,
   },
+  {
+    id: 'channel_game_gain',
+    channelUsername: 'Game_Gain',
+    channelTitle: 'Game Gain',
+    channelLink: 'https://t.me/Game_Gain',
+    description: 'Меч в цифровой империи. Играй и зарабатывай',
+    rewardRubles: 50,
+  },
 ]
