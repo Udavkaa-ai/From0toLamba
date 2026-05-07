@@ -187,7 +187,50 @@ export async function gameRoutes(app: FastifyInstance) {
       amaSessionsStarted,
       amaSessionsCompleted,
       extraSlotsBalance: gameState.extraSlotsBalance,
+      pendingMarketAnnouncement: !gameState.marketAnnouncementSeen,
     }
+  })
+
+  // POST /api/announcement/market — отметить объявление просмотренным; action=claim → +100 г
+  app.post('/api/announcement/market', { preHandler: telegramAuthHook }, async (request, reply) => {
+    const tgUser = request.telegramUser
+    const body = z.object({ action: z.enum(['dismiss', 'claim']) }).safeParse(request.body)
+    const action = body.success ? body.data.action : 'dismiss'
+
+    const user = await prisma.user.findUniqueOrThrow({
+      where: { telegramId: String(tgUser.id) },
+      include: { gameState: true },
+    })
+    const gs = user.gameState!
+    if (gs.marketAnnouncementSeen) return { rewardGranted: false, balance: gs.balance }
+
+    const rewardGranted = action === 'claim' && !gs.marketAnnouncementRewardClaimed
+    const newBalance = rewardGranted ? gs.balance + 100 : gs.balance
+
+    await prisma.gameState.update({
+      where: { userId: user.id },
+      data: {
+        marketAnnouncementSeen: true,
+        ...(rewardGranted ? {
+          marketAnnouncementRewardClaimed: true,
+          balance: newBalance,
+        } : {}),
+      },
+    })
+
+    if (rewardGranted) {
+      await prisma.transaction.create({
+        data: {
+          userId: user.id,
+          projectName: 'Объявление',
+          type: 'REFERRAL_BONUS',
+          amount: 100,
+          day: gs.currentDay,
+        },
+      })
+    }
+
+    return { rewardGranted, balance: newBalance }
   })
 
   // POST /api/game/advance-day — следующий день

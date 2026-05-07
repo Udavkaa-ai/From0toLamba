@@ -132,6 +132,7 @@ export interface GameStateDTO {
   amaSessionsStarted: number
   // Сколько бесед довёл до конца — задал все 10 вопросов
   amaSessionsCompleted: number
+  pendingMarketAnnouncement: boolean
 }
 
 export interface ChannelTaskDTO {
@@ -276,6 +277,10 @@ export interface CharterDTO {
 // ─── API методы ────────────────────────────────────────────────────────────
 
 export const api = {
+  announcement: {
+    dismiss: () => apiClient.post<{ rewardGranted: boolean; balance: number }>('/announcement/market', { action: 'dismiss' }).then(r => r.data),
+    claim: () => apiClient.post<{ rewardGranted: boolean; balance: number }>('/announcement/market', { action: 'claim' }).then(r => r.data),
+  },
   game: {
     getState: () => apiClient.get<GameStateDTO>('/game').then(r => r.data),
     advanceDay: () => apiClient.post<AdvanceDayResultDTO>('/game/advance-day').then(r => r.data),

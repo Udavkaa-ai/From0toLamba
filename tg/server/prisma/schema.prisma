@@ -72,6 +72,9 @@ model GameState {
   weekStartAt          DateTime?
   timerSkipTokens      Int       @default(0)
   extraSlotsBalance    Int       @default(0)
+  // Внеочередное объявление о группе купцов — показывается один раз
+  marketAnnouncementSeen          Boolean   @default(false)
+  marketAnnouncementRewardClaimed Boolean   @default(false)
   updatedAt            DateTime  @updatedAt
 
   user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)

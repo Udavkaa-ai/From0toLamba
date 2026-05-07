@@ -12,6 +12,7 @@ import {
 import { AchievementUnlockedOverlay } from '@/components/AchievementUnlockedOverlay'
 import { FaqModal, FaqAnnouncementModal, useFaqAnnouncement } from '@/components/FaqModal'
 import { ChannelPromoOverlay, shouldShowChannelPromo, markChannelPromoSeen } from '@/components/ChannelPromoOverlay'
+import { MarketAnnouncementOverlay } from '@/components/MarketAnnouncementOverlay'
 import { CountUp } from '@/components/CountUp'
 import { EyeIcon, LockIcon } from '@/components/icons'
 import { api, type ProjectDTO, type DailyUpdateDTO, type ClosureSummaryDTO, type MyReferralEntryDTO } from '@/api/client'
@@ -60,6 +61,7 @@ export function HomePage() {
   const [showFaq, setShowFaq] = useState(false)
   const [showFaqAnnouncement, setShowFaqAnnouncement] = useState(useFaqAnnouncement)
   const [showChannelPromo, setShowChannelPromo] = useState(false)
+  const [showMarketAnnouncement, setShowMarketAnnouncement] = useState(false)
   const [nicknameInput, setNicknameInput] = useState<string>('')
   const [nicknameError, setNicknameError] = useState<string | null>(null)
   const [nicknameSaving, setNicknameSaving] = useState(false)
@@ -152,6 +154,7 @@ export function HomePage() {
     const entry = getPendingChangelog(APP_VERSION, gameState.isOnboardingComplete)
     if (entry) setPendingChangelog(entry)
     if (gameState.isOnboardingComplete && shouldShowChannelPromo()) setShowChannelPromo(true)
+    if (gameState.isOnboardingComplete && gameState.pendingMarketAnnouncement) setShowMarketAnnouncement(true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState?.isOnboardingComplete])
   // Тикает каждую секунду, чтобы перерисовывать таймер кулдауна
@@ -387,7 +390,12 @@ export function HomePage() {
         )}
       </AnimatePresence>
       <AnimatePresence>
-        {showChannelPromo && !showTutorial && !pendingChangelog && !showFaqAnnouncement && (
+        {showMarketAnnouncement && !showTutorial && !pendingChangelog && !showFaqAnnouncement && (
+          <MarketAnnouncementOverlay onClose={() => setShowMarketAnnouncement(false)} />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {showChannelPromo && !showTutorial && !pendingChangelog && !showFaqAnnouncement && !showMarketAnnouncement && (
           <ChannelPromoOverlay
             onClose={() => {
               markChannelPromoSeen()

@@ -695,6 +695,16 @@ achievements: {
   } as Record<string, { name: string; description: string }>,
 },
 
+// ─── Объявление — Сбор купцов ─────────────────────────────────────────────────
+marketAnnouncement: {
+  title: 'Сбор купцов!',
+  subtitle: 'Официальная группа игры',
+  body: 'Читайте последние новости, рассказы от Хозяина Ярмарки и лучших купцов. Делитесь своим опытом и учитесь у лучших!',
+  visitBtn: 'Посетить сбор купцов',
+  closeBtn: 'Закрыть',
+  reward: '+100 г за визит',
+},
+
 // ─── Вести с ярмарки (WhatsNew) ───────────────────────────────────────────────
 whatsNew: {
   header: 'Вести с ярмарки',
@@ -1394,6 +1404,16 @@ achievements: {
     seen_survivor:     { name: 'Firm Anchor',              description: 'Bring a long-lived venture to a worthy closure' },
     seen_unicorn:      { name: 'Caught the Firebird',      description: 'Encounter the rarest venture that multiplies coins many times over' },
   } as Record<string, { name: string; description: string }>,
+},
+
+// ─── Market Announcement ──────────────────────────────────────────────────────
+marketAnnouncement: {
+  title: 'Merchants\' Assembly!',
+  subtitle: 'Official game community',
+  body: 'Read the latest news, stories from the Market Master and top merchants. Share your experience and learn from the best!',
+  visitBtn: 'Visit the Merchants\' Guild',
+  closeBtn: 'Close',
+  reward: '+100 coins for visiting',
 },
 
 // ─── WhatsNew ─────────────────────────────────────────────────────────────────
