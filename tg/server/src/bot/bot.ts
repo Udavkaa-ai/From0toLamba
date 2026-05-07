@@ -316,6 +316,116 @@ function setupHandlers(bot: Bot) {
     await ctx.reply('🛑 Останавливаю рассылку...')
   })
 
+  // /stats — статистика активности и языков (только для админа)
+  bot.command('stats', async (ctx) => {
+    if (ctx.from?.id !== ADMIN_TELEGRAM_ID) return
+
+    const now = new Date()
+
+    // Московское время: UTC+3
+    const mskOffset = 3 * 60 * 60 * 1000
+    const mskNow = new Date(now.getTime() + mskOffset)
+    const startOfDayMsk = new Date(Date.UTC(
+      mskNow.getUTCFullYear(), mskNow.getUTCMonth(), mskNow.getUTCDate()
+    ) - mskOffset)
+    const ago7d  = new Date(now.getTime() - 7  * 24 * 60 * 60 * 1000)
+    const ago30d = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+
+    const [
+      totalUsers,
+      onboardedUsers,
+      dauCount,
+      wauCount,
+      mauCount,
+      engLangCount,
+      ruLangCount,
+      utmGroups,
+      rankGroups,
+      newToday,
+      new7d,
+    ] = await Promise.all([
+      // Всего зарегистрированных (без system-маркеров)
+      prisma.user.count({ where: { telegramId: { not: { startsWith: 'system:' } } } }),
+      // Прошли онбординг
+      prisma.user.count({ where: { gameState: { isOnboardingComplete: true } } }),
+      // Заходили сегодня (МСК) — updatedAt обновляется при каждом GET /api/game
+      prisma.user.count({ where: { updatedAt: { gte: startOfDayMsk }, telegramId: { not: { startsWith: 'system:' } } } }),
+      // Заходили за 7 дней
+      prisma.user.count({ where: { updatedAt: { gte: ago7d }, telegramId: { not: { startsWith: 'system:' } } } }),
+      // Заходили за 30 дней
+      prisma.user.count({ where: { updatedAt: { gte: ago30d }, telegramId: { not: { startsWith: 'system:' } } } }),
+      // Выбрали английский язык
+      prisma.gameState.count({ where: { preferredLanguage: 'en' } }),
+      // Русский язык (по умолчанию 'ru', поэтому null быть не должно)
+      prisma.gameState.count({ where: { preferredLanguage: 'ru' } }),
+      // Группировка по UTM-источникам через raw SQL (utmSource — новое поле, Prisma-клиент может быть устаревшим)
+      prisma.$queryRaw<Array<{ utm_source: string; cnt: bigint }>>`
+        SELECT "utmSource" AS utm_source, COUNT(*) AS cnt
+        FROM "User"
+        WHERE "utmSource" IS NOT NULL
+          AND "telegramId" NOT LIKE 'system:%'
+        GROUP BY "utmSource"
+        ORDER BY cnt DESC
+      `,
+      // Распределение по чинам
+      prisma.gameState.groupBy({
+        by: ['investorRank'],
+        _count: { id: true },
+        orderBy: { _count: { id: 'desc' } },
+      }),
+      // Зарегистрировались сегодня
+      prisma.user.count({ where: { createdAt: { gte: startOfDayMsk }, telegramId: { not: { startsWith: 'system:' } } } }),
+      // Зарегистрировались за 7 дней
+      prisma.user.count({ where: { createdAt: { gte: ago7d }, telegramId: { not: { startsWith: 'system:' } } } }),
+    ])
+
+    const RANK_LABEL: Record<string, string> = {
+      NEWBIE: 'Скоморох',
+      AMBASSADOR: 'Купец',
+      ANALYST: 'Мудрец',
+      SHARK: 'Боярин',
+      LAMBO_SENSEI: 'Князь',
+    }
+
+    const rankLines = rankGroups
+      .map(r => `  ${RANK_LABEL[r.investorRank] ?? r.investorRank}: ${r._count.id}`)
+      .join('\n')
+
+    const utmLines = utmGroups.length > 0
+      ? utmGroups.map(u => `  ${u.utm_source}: ${Number(u.cnt)}`).join('\n')
+      : '  нет данных'
+
+    const dateStr = mskNow.toISOString().slice(0, 10)
+    const timeStr = mskNow.toISOString().slice(11, 16) + ' МСК'
+
+    const msg = [
+      `📊 *Статистика игры* — ${dateStr} ${timeStr}`,
+      ``,
+      `👥 *Активность*`,
+      `  DAU (сегодня): *${dauCount}*`,
+      `  WAU (7 дней): *${wauCount}*`,
+      `  MAU (30 дней): *${mauCount}*`,
+      ``,
+      `📈 *Регистрации*`,
+      `  Сегодня: *${newToday}*`,
+      `  За 7 дней: *${new7d}*`,
+      `  Всего: *${totalUsers}*`,
+      `  Прошли онбординг: *${onboardedUsers}*`,
+      ``,
+      `🌍 *Язык интерфейса*`,
+      `  🇷🇺 Русский: *${ruLangCount}*`,
+      `  🇬🇧 English: *${engLangCount}*`,
+      ``,
+      `👑 *Чины*`,
+      rankLines,
+      ``,
+      `🔗 *UTM-источники*`,
+      utmLines,
+    ].join('\n')
+
+    await ctx.reply(msg, { parse_mode: 'Markdown' })
+  })
+
   bot.on('message', async (ctx) => {
     const appUrl = process.env.MINI_APP_URL ?? ''
     const keyboard = new InlineKeyboard().webApp('🏪 Открыть ярмарку', appUrl)
