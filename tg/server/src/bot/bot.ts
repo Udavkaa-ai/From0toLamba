@@ -413,45 +413,47 @@ function setupHandlers(bot: Bot) {
         LAMBO_SENSEI: 'Князь',
       }
 
+      const b = (s: string | number) => `<b>${s}</b>`
+
       const rankLines = rankGroups
-        .map(r => `  ${RANK_LABEL[r.key] ?? r.key}: ${Number(r.cnt)}`)
+        .map(r => `  ${RANK_LABEL[r.key] ?? r.key}: ${b(Number(r.cnt))}`)
         .join('\n') || '  нет данных'
 
       const utmLines = utmGroups.length > 0
-        ? utmGroups.map(u => `  ${u.key}: ${Number(u.cnt)}`).join('\n')
+        ? utmGroups.map(u => `  ${u.key}: ${b(Number(u.cnt))}`).join('\n')
         : '  нет данных'
 
       const dateStr = mskNow.toISOString().slice(0, 10)
       const timeStr = mskNow.toISOString().slice(11, 16) + ' МСК'
 
       const msg = [
-        `📊 *Статистика* — ${dateStr} ${timeStr}`,
+        `📊 ${b('Статистика')} — ${dateStr} ${timeStr}`,
         ``,
-        `👥 *Активность*`,
-        `  DAU сегодня: *${Number(dauCount)}*`,
-        `  WAU 7 дней: *${Number(wauCount)}*`,
-        `  MAU 30 дней: *${Number(mauCount)}*`,
+        `👥 ${b('Активность')}`,
+        `  DAU сегодня: ${b(Number(dauCount))}`,
+        `  WAU 7 дней: ${b(Number(wauCount))}`,
+        `  MAU 30 дней: ${b(Number(mauCount))}`,
         ``,
-        `📈 *Регистрации*`,
-        `  Сегодня: *${Number(newToday)}*`,
-        `  За 7 дней: *${Number(new7d)}*`,
-        `  Всего: *${Number(totalUsers)}*`,
-        `  Прошли онбординг: *${Number(onboardedUsers)}*`,
+        `📈 ${b('Регистрации')}`,
+        `  Сегодня: ${b(Number(newToday))}`,
+        `  За 7 дней: ${b(Number(new7d))}`,
+        `  Всего: ${b(Number(totalUsers))}`,
+        `  Прошли онбординг: ${b(Number(onboardedUsers))}`,
         ``,
-        `🌍 *Язык интерфейса*`,
-        `  RU: *${Number(ruLangCount)}*`,
-        `  EN: *${Number(engLangCount)}*`,
+        `🌍 ${b('Язык интерфейса')}`,
+        `  RU: ${b(Number(ruLangCount))}`,
+        `  EN: ${b(Number(engLangCount))}`,
         ``,
-        `👑 *Чины*`,
+        `👑 ${b('Чины')}`,
         rankLines,
         ``,
-        `🔗 *UTM-источники*`,
+        `🔗 ${b('UTM-источники')}`,
         utmLines,
       ].join('\n')
 
-      await ctx.reply(msg, { parse_mode: 'Markdown' })
+      await ctx.reply(msg, { parse_mode: 'HTML' })
     } catch (err: any) {
-      await ctx.reply(`❌ Ошибка в /stats:\n\`${String(err?.message ?? err).slice(0, 500)}\``, { parse_mode: 'Markdown' })
+      await ctx.reply(`❌ Ошибка в /stats: ${String(err?.message ?? err).slice(0, 500)}`)
     }
   })
 
