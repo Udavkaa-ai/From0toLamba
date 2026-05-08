@@ -50,4 +50,20 @@ export const CHANNEL_TASKS: ChannelTask[] = [
     description: 'Меч в цифровой империи',
     rewardRubles: 50,
   },
+  {
+    id: 'channel_o_my_gift',
+    channelUsername: 'o_my_gift',
+    channelTitle: 'Ох, вы ж мои подарочки!',
+    channelLink: 'https://t.me/o_my_gift',
+    description: 'О дарах для лучших друзей',
+    rewardRubles: 50,
+  },
+  {
+    id: 'channel_krypto_mechta',
+    channelUsername: 'krypto_mechta',
+    channelTitle: 'Мечтания о волшебных монетах',
+    channelLink: 'https://t.me/krypto_mechta',
+    description: 'Записи о магических деньгах и играх',
+    rewardRubles: 50,
+  },
 ]
