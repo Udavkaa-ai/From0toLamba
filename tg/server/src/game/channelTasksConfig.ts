@@ -63,7 +63,7 @@ export const CHANNEL_TASKS: ChannelTask[] = [
     channelUsername: 'krypto_mechta',
     channelTitle: 'Мечтания о волшебных монетах',
     channelLink: 'https://t.me/krypto_mechta',
-    description: 'Записи о магических деньгах и играх',
+    description: 'Записи в книгах магических о деньгах и играх',
     rewardRubles: 50,
   },
 ]
