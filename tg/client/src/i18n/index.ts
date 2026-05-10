@@ -160,14 +160,17 @@ home: {
     'Приходи на ярмарку «Из грязи в князи» — будем вкладывать гроши, ловить жуликов и расти в чинах.',
     'Оба получим по +100 г в казну, когда ты наберёшь 10 чуйки в мини-игре «Купеческая грамота».',
   ],
-  tournamentBannerBtn: '🏆 Майская Ярмарка — турнир идёт!',
+  tournamentBannerBtn: '🎉 Итоги Майской Ярмарки — победители!',
   preResetBannerBtn: '📢 Скоро перезапуск — читай',
   tournament: {
-    title: '🏆 Майская Ярмарка — первый турнир',
+    title: '🎉 Итоги Майской Ярмарки',
     sections: [
-      { heading: '1–9 мая · итоги 10 мая в 10:00 МСК', body: 'Участвует каждый, кто наберёт хотя бы 10 чуйки за период турнира. Один игрок — один приз.' },
-      { heading: '🎁 Номинации и призы', body: '🗓 Старожил ярмарки — наибольшее число игровых дней → 🗝 Input Key\n\n💰 Богатейший купец — наибольшее количество грошей на 9 мая → 📖 Timeless Book\n\n👁 Зоркий глаз — наивысший показатель чуйки → 🔮 Hex Pot\n\n📦 Деятельный купец — больше всего дел, в которых поучаствовал → 🪙 Money Pot\n\n🤝 Главный сват — больше всего засчитанных рефералов (10+ чуйки) → 🃏 Jester Hat\n\n🎲 Приз Жар-птицы — случайный розыгрыш среди всех участников → 🔥 Chill Flame' },
-      { heading: 'Правила', body: 'Результаты фиксируются на 9 мая в 23:59 МСК.\n\nЕсли побеждаешь в нескольких номинациях — выбираешь любую, приз в оставшейся уходит второму месту.\n\nПобедители получают подарки напрямую в Telegram или на Thermos.' },
+      { heading: '🗓 Старожил ярмарки — наибольшее число игровых дней', body: '380 дней\n→ 🗝 Input Key получает @laurasobbir' },
+      { heading: '💰 Богатейший купец — наибольшее количество грошей', body: '182 152 г\n→ 📖 Timeless Book получает @flow_sim' },
+      { heading: '👁 Зоркий глаз — наивысший показатель чуйки', body: '1595\n→ 🔮 Hex Pot получает @blest2' },
+      { heading: '📦 Деятельный купец — больше всего дел и грамот', body: '302 дела + 549 грамот\n→ 🪙 Money Pot получает @tg_here_18' },
+      { heading: '🤝 Главный сват — привёл больше всего новых игроков', body: '32 сосватанных\n→ 🃏 Jester Hat получает @LeoKing555777555' },
+      { heading: '🎲 Приз Жар-птицы — случайный розыгрыш среди всех участников', body: '→ 🔥 Chill Flame\n\nПроведём розыгрыш сегодня в 10:00' },
     ],
   },
   preReset: {
@@ -693,16 +696,6 @@ achievements: {
     seen_survivor:     { name: 'Крепкий якорь',                description: 'Доведи дело-долгожителя до достойного закрытия' },
     seen_unicorn:      { name: 'Поймал Жар-птицу за хвост',    description: 'Застань редчайшее дело, которое приумножает гроши в разы' },
   } as Record<string, { name: string; description: string }>,
-},
-
-// ─── Объявление — Сбор купцов ─────────────────────────────────────────────────
-marketAnnouncement: {
-  title: 'Сбор купцов!',
-  subtitle: 'Официальная группа игры',
-  body: 'Читайте последние новости, рассказы от Хозяина Ярмарки и лучших купцов. Делитесь своим опытом и учитесь у лучших!',
-  visitBtn: 'Посетить сбор купцов',
-  closeBtn: 'Закрыть',
-  reward: '+100 г за визит',
 },
 
 // ─── Вести с ярмарки (WhatsNew) ───────────────────────────────────────────────
@@ -1404,16 +1397,6 @@ achievements: {
     seen_survivor:     { name: 'Firm Anchor',              description: 'Bring a long-lived venture to a worthy closure' },
     seen_unicorn:      { name: 'Caught the Firebird',      description: 'Encounter the rarest venture that multiplies coins many times over' },
   } as Record<string, { name: string; description: string }>,
-},
-
-// ─── Market Announcement ──────────────────────────────────────────────────────
-marketAnnouncement: {
-  title: 'Merchants\' Assembly!',
-  subtitle: 'Official game community',
-  body: 'Read the latest news, stories from the Market Master and top merchants. Share your experience and learn from the best!',
-  visitBtn: 'Visit the Merchants\' Guild',
-  closeBtn: 'Close',
-  reward: '+100 coins for visiting',
 },
 
 // ─── WhatsNew ─────────────────────────────────────────────────────────────────
