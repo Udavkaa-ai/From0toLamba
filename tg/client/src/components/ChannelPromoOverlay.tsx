@@ -62,6 +62,8 @@ export function ChannelPromoOverlay({ onClose }: { onClose: () => void }) {
         onClick={e => e.stopPropagation()}
         style={{
           width: '100%',
+          maxHeight: '90dvh',
+          display: 'flex', flexDirection: 'column',
           background: `linear-gradient(180deg, ${colors.enchantedPurple} 0%, ${colors.nightBlue} 100%)`,
           borderTop: `1px solid ${colors.fairyGold}55`,
           borderRadius: '20px 20px 0 0',
@@ -74,6 +76,7 @@ export function ChannelPromoOverlay({ onClose }: { onClose: () => void }) {
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: `${spacing.lg} ${spacing.lg} ${spacing.md}`,
           borderBottom: `1px solid ${colors.fairyGold}25`,
+          flexShrink: 0,
         }}>
           <div>
             <div style={{ color: colors.fairyGold, fontSize: '16px', fontWeight: 800 }}>
@@ -94,7 +97,7 @@ export function ChannelPromoOverlay({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Список каналов */}
-        <div style={{ padding: `${spacing.md} ${spacing.lg}`, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ padding: `${spacing.md} ${spacing.lg}`, display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', flex: 1 }}>
           {tasks.map(task => (
             <ChannelPromoRow
               key={task.id}
@@ -110,7 +113,7 @@ export function ChannelPromoOverlay({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Кнопка закрыть */}
-        <div style={{ padding: `${spacing.sm} ${spacing.lg} ${spacing.lg}` }}>
+        <div style={{ padding: `${spacing.sm} ${spacing.lg} ${spacing.lg}`, flexShrink: 0 }}>
           <button
             onClick={onClose}
             style={{
