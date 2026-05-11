@@ -53,13 +53,15 @@ tg/
 │   ├── components/
 │   │   ├── ScreenBackground.tsx  # фоновые изображения + версионирование + PAGE_BG + homeBackground()
 │   │   ├── Seal.tsx              # процедурная SVG-печать (6 параметров, детерминирована из seed)
-│   │   ├── ChatPanel.tsx         # ярмарочная площадь — общий чат, висит поверх всех страниц
-│   │   ├── FairyCard.tsx         # базовая карточка + OrnamentDivider + SkeletonCard
-│   │   └── BottomNav.tsx         # нижняя навигация
+│   │   ├── ChatPanel.tsx              # ярмарочная площадь — общий чат, висит поверх всех страниц
+│   │   ├── MarketAnnouncementOverlay.tsx  # оверлей «Сбор купцов» с наградой +100 г за визит канала
+│   │   ├── FairyCard.tsx              # базовая карточка + OrnamentDivider + SkeletonCard
+│   │   └── BottomNav.tsx              # нижняя навигация
+│   ├── i18n/index.ts          # RU + EN переводы; хук useT(); langStore (Zustand)
 │   └── theme/colors.ts        # FairyGold #FFB800 · EnchantedPurple #2A1960 · NightBlue #0D1735
 └── server/src/
     ├── index.ts               # точка входа: регистрация плагинов, роутов, статики
-    ├── api/routes/            # game · projects · ama · charter · invest · banner · payments · tasks · chat
+    ├── api/routes/            # game · projects · ama · charter · invest · banner · payments · tasks · chat · public
     ├── game/
     │   ├── types.ts           # все enum + FATE_CONFIG + WITHDRAWAL_RULES
     │   ├── GenerateProjectService.ts
@@ -245,6 +247,19 @@ PAGE_BG.portfolio           // '/backgrounds/BG_PORTFOLIO.webp'
 
 ---
 
+## Локализация (i18n)
+
+`tg/client/src/i18n/index.ts` — все строки UI на RU и EN. Структура:
+- `translations.ru` и `translations.en` — объекты с идентичными ключами
+- `useT()` — React-хук, читает язык из `langStore` (Zustand), возвращает нужный объект
+- `langStore` — хранит `lang: 'ru' | 'en'`, синхронизируется с `gameState.preferredLanguage` при загрузке
+
+**Правило:** любой новый текст в компонентах добавлять в оба языка. TypeScript выдаст ошибку сборки, если ключ есть в RU но не в EN (тип `Translations` выведен из `translations.ru`).
+
+**Объявление-баннер турнира** — `BannerAnnouncementModal` в `HomePage.tsx`. Переключатель `IS_TOURNAMENT_ACTIVE` (константа в конце файла) управляет что показывать: `true` = `t.home.tournament`, `false` = `t.home.preReset`. Менять вручную при смене фазы.
+
+---
+
 ## Чат (Ярмарочная площадь)
 
 `ChatPanel.tsx` — глобальный оверлей поверх всех страниц (не в роутинге). Данные: `GET /api/chat/messages?since=<id>` (polling), `POST /api/chat/message`.
@@ -278,12 +293,15 @@ PAGE_BG.portfolio           // '/backgrounds/BG_PORTFOLIO.webp'
 - `seenTypes` / `seenArchetypes` / `seenFates` в `GameStateDTO` — вычисляются из `PostMortem` на лету в `/api/game` (GET), в БД не хранятся
 - Поле чина в `GameStateDTO` называется **`investorRank`** (не `rank`) — частая ошибка при обращении к `gameState`
 - **localStorage-ключи онбординга:** `onboarding_v3_seen` — тур показан после v3.0 (сбрасывать при мажорных обновлениях, меняя ключ); `charter_tutorial_seen` — обучалка грамоты показана
+- `marketAnnouncementSeen` / `marketAnnouncementRewardClaimed` — поля на `GameState` в БД (не в localStorage). `pendingMarketAnnouncement: boolean` в `GameStateDTO` — вычисляется на лету. Награда +100 г, `POST /api/announcement/market` с `action: 'claim' | 'dismiss'`
+- **Не сбрасывать** `utmSource` на `User` при сбросе игры — это аналитика привлечения, не игровой прогресс
 
 ---
 
 ## Деплой (Railway)
 
 - Репо: `udavkaa-ai/from0tolamba`, Dockerfile в корне
+- **Деплой-ветка:** `claude/telegram-game-migration-FDnlX` (не `main` — у них нет общего предка)
 - Домен: `https://from0tolamba-production.up.railway.app`, бот: `@vknyazi_bot`
 - При старте контейнера: `prisma db push --accept-data-loss` → `tsx src/index.ts`
 - `NODE_ENV=production`: Telegram webhook + cron 09:00 MSK
@@ -345,6 +363,10 @@ python compress.py --inplace output_backgrounds/
 - `/resetall` — сброс всех игроков (защита от повторного запуска через маркер в БД)
 - `/broadcast <текст>` — рассылка всем прошедшим онбординг; 50мс задержка между сообщениями
 - `/broadcaststop` — остановить текущую рассылку
+
+**UTM-трекинг:** `/start utm_xxx` payload из бота сохраняется в `User.utmSource`. Команда `/stats` для ADMIN показывает разбивку по источникам. Публичные партнёрские эндпоинты (без авторизации):
+- `GET /api/public/check-player?tg_user_id=<ID>` — есть ли игрок и прошёл ли онбординг
+- `GET /api/public/partner-stats?utm_source=<UTM>` — агрегатная статистика по партнёру
 
 Флаги `broadcastActive` / `broadcastCancelled` — модульного уровня (не внутри `setupHandlers`). `cancelBroadcast()` экспортируется и вызывается в `index.ts` при SIGTERM — гарантирует остановку цикла при редеплое. Без этого Railway отправляет SIGTERM, `app.close()` завершается, но цикл broadcast продолжает работать до SIGKILL.
 
