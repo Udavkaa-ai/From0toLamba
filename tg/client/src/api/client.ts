@@ -105,6 +105,9 @@ export interface GameStateDTO {
   chartersSubmitted: number
   closedProjectsCount: number
   dealsCount: number                  // число взятых дел — основа ранга
+  /** Статистика мини-игр по архетипам: «сколько раз играл с этим дельцом, как закончил».
+   *  Ключ — personaArchetype (BURATINO, KOSCHEI и т.д.). errorCount: 0 = perfect, 1 = won, ≥2 = lost. */
+  minigameStats: Record<string, { played: number; perfect: number; won: number; lost: number }>
   dayStreak: number
   isOnboardingComplete: boolean
   totalInvested: number

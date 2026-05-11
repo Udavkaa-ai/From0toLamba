@@ -673,6 +673,118 @@ function forgeryColor(n: number): string {
 
 // Интро для не-BOYARIN: тот же блок дела (баннер, имя, чипсы, описание), но вместо
 // характеристик грамоты — название и описание мини-игры.
+// ── Общие подкомпоненты для интро и результата ─────────────────────────────
+
+/** 3-уровневая лесенка-индикатор: 0 ошибок / 1 ошибка / ≥2 ошибок.
+ *  Если передан currentTier — соответствующий уровень подсвечивается. */
+function TierLadder({ currentTier }: { currentTier?: 0 | 1 | 2 }) {
+  const tiers: Array<{ emoji: string; title: string; subtitle: string; color: string }> = [
+    { emoji: '🎯', title: '0 ошибок',  subtitle: 'совет чуйки + посул + тип', color: colors.success },
+    { emoji: '🙂', title: '1 ошибка',  subtitle: 'посул и тип, без совета',   color: colors.fairyGold },
+    { emoji: '😅', title: '≥2 ошибок', subtitle: 'только за 10⭐',             color: colors.danger },
+  ]
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: spacing.sm }}>
+      {tiers.map((tier, i) => {
+        const isCurrent = currentTier === i
+        return (
+          <div key={i} style={{
+            display: 'flex', alignItems: 'center', gap: spacing.sm,
+            padding: '6px 10px',
+            borderRadius: 8,
+            background: isCurrent ? `${tier.color}22` : 'rgba(255,255,255,0.03)',
+            border: `1px solid ${isCurrent ? tier.color : colors.cardBorder}`,
+            opacity: currentTier !== undefined && !isCurrent ? 0.45 : 1,
+            transition: 'all 0.2s',
+          }}>
+            <div style={{ fontSize: 18 }}>{tier.emoji}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ color: isCurrent ? tier.color : colors.textPrimary, fontWeight: 700, fontSize: 12 }}>
+                {tier.title}
+              </div>
+              <div style={{ color: colors.textMuted, fontSize: 10 }}>
+                {tier.subtitle}
+              </div>
+            </div>
+            {isCurrent && (
+              <div style={{ color: tier.color, fontSize: 14, fontWeight: 800 }}>← ты</div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+interface MinigameStatsRow {
+  played: number; perfect: number; won: number; lost: number
+}
+
+/** Сводка по архетипу: «сыграно с дельцом N раз, из них M идеально и т.д.».
+ *  Если передан `delta` — для соответствующего счётчика подсветим «+1». */
+function MinigameStatsBlock({
+  stats, delta, gameName,
+}: {
+  stats: MinigameStatsRow
+  delta?: 'perfect' | 'won' | 'lost' | null
+  gameName: string
+}) {
+  if (stats.played === 0 && !delta) {
+    return (
+      <div style={{
+        padding: spacing.sm + ' ' + spacing.md,
+        background: 'rgba(255,255,255,0.04)',
+        border: `1px solid ${colors.cardBorder}`,
+        borderRadius: 10,
+        color: colors.textMuted,
+        fontSize: 12,
+        textAlign: 'center',
+      }}>
+        Впервые играешь в «{gameName}» — покажи, на что способен.
+      </div>
+    )
+  }
+  const Cell = ({ label, value, color, highlight }: { label: string; value: number; color: string; highlight: boolean }) => (
+    <div style={{
+      flex: 1,
+      padding: '6px 4px',
+      background: highlight ? `${color}33` : 'rgba(255,255,255,0.03)',
+      border: `1px solid ${highlight ? color : colors.cardBorder}`,
+      borderRadius: 8,
+      textAlign: 'center',
+      transition: 'all 0.2s',
+    }}>
+      <div style={{ color, fontWeight: 800, fontSize: 16, fontVariantNumeric: 'tabular-nums' }}>
+        {value}{highlight ? ' +1' : ''}
+      </div>
+      <div style={{ color: colors.textMuted, fontSize: 9, marginTop: 2 }}>{label}</div>
+    </div>
+  )
+  return (
+    <div style={{
+      padding: spacing.md,
+      background: 'rgba(42, 25, 96, 0.3)',
+      border: `1px solid ${colors.cardBorder}`,
+      borderRadius: 12,
+    }}>
+      <div style={{ color: colors.textSecondary, fontSize: 11, marginBottom: 6, textAlign: 'center' }}>
+        Твоя история с этим дельцом · сыграно <b style={{ color: colors.fairyGold }}>{stats.played}{delta ? ' +1' : ''}</b>
+      </div>
+      <div style={{ display: 'flex', gap: 6 }}>
+        <Cell label="🎯 идеал"  value={stats.perfect} color={colors.success}   highlight={delta === 'perfect'} />
+        <Cell label="🙂 победа" value={stats.won}     color={colors.fairyGold} highlight={delta === 'won'} />
+        <Cell label="😅 провал" value={stats.lost}    color={colors.danger}    highlight={delta === 'lost'} />
+      </div>
+    </div>
+  )
+}
+
+const EMPTY_STATS: MinigameStatsRow = { played: 0, perfect: 0, won: 0, lost: 0 }
+
+function getMinigameStats(gs: GameStateDTO | null, archetype: string): MinigameStatsRow {
+  return gs?.minigameStats?.[archetype] ?? EMPTY_STATS
+}
+
 function MiniGameIntroScreen({
   project, onStart, onChat,
 }: {
@@ -681,10 +793,12 @@ function MiniGameIntroScreen({
   onChat: () => void
 }) {
   const t = useT()
+  const { gameState } = useGameStore()
   const info = MINIGAME_INFO[project.personaArchetype]
   const gameName = info?.name ?? 'Испытание хозяина'
   const gameHint = info?.hint ?? 'Хозяин предложит испытание. Пройди его — и сможешь вложиться.'
   const gameBtn  = info?.startBtn ?? 'Принять испытание →'
+  const stats = getMinigameStats(gameState, project.personaArchetype)
 
   return (
     <div style={{ flex: 1, padding: spacing.lg, maxWidth: '500px', margin: '0 auto', width: '100%', boxSizing: 'border-box', overflowY: 'auto' }}>
@@ -733,6 +847,14 @@ function MiniGameIntroScreen({
         <div style={{ color: colors.textSecondary, fontSize: '12px', lineHeight: 1.5 }}>
           {gameHint}
         </div>
+        <div style={{ color: colors.textMuted, fontSize: 11, marginTop: spacing.sm, marginBottom: 4 }}>
+          За что получишь награду:
+        </div>
+        <TierLadder />
+      </div>
+
+      <div style={{ marginTop: spacing.md }}>
+        <MinigameStatsBlock stats={stats} gameName={gameName} />
       </div>
 
       <button onClick={onStart} style={{ ...primaryBtnStyle, marginTop: spacing.lg }}>
@@ -1004,6 +1126,7 @@ function MiniGameResultSheet({
   onSkip: () => void
 }) {
   const t = useT()
+  const { gameState } = useGameStore()
   const [bypassPending, setBypassPending] = useState(false)
   const [bypassError, setBypassError] = useState<string | null>(null)
   const [bypassed, setBypassed] = useState(false)
@@ -1011,6 +1134,21 @@ function MiniGameResultSheet({
   const effectiveErrorCount = bypassed ? 0 : errorCount
   const effectiveInsight = bypassed ? revealedInsight : perfectInsight
   const canInvest = bypassed || errorCount <= 1
+  // Уровень-«ступенька» в лесенке: 0=идеал, 1=победа, 2=провал.
+  // bypassed смещает в идеал визуально.
+  const currentTier: 0 | 1 | 2 = effectiveErrorCount === 0 ? 0 : effectiveErrorCount === 1 ? 1 : 2
+  // Сразу показываем обновлённую статистику (gameState ещё не подтянулся — считаем сами).
+  const archetype = project.personaArchetype
+  const baseStats = getMinigameStats(gameState, archetype)
+  const deltaKey: 'perfect' | 'won' | 'lost' = errorCount === 0 ? 'perfect' : errorCount === 1 ? 'won' : 'lost'
+  const liveStats: MinigameStatsRow = {
+    played: baseStats.played + 1,
+    perfect: baseStats.perfect + (deltaKey === 'perfect' ? 1 : 0),
+    won:     baseStats.won     + (deltaKey === 'won' ? 1 : 0),
+    lost:    baseStats.lost    + (deltaKey === 'lost' ? 1 : 0),
+  }
+  const info = MINIGAME_INFO[archetype]
+  const gameName = info?.name ?? 'Испытание'
   const emoji = effectiveErrorCount === 0 ? '🎯' : effectiveErrorCount === 1 ? '🙂' : '😅'
   const titleText = bypassed
     ? 'Дело раскрыто за звёзды'
@@ -1139,6 +1277,19 @@ function MiniGameResultSheet({
             Посул, тип дела и совет чуйки не раскрыты. Заплати 10 звёзд — увидишь полную картину и сможешь вложиться, если захочешь.
           </div>
         )}
+
+        {/* Лесенка наград — показываем игроку, какой уровень он взял и до какого не дотянул */}
+        <div style={{ marginTop: spacing.md }}>
+          <div style={{ color: colors.textMuted, fontSize: 11, marginBottom: 4, textAlign: 'center' }}>
+            Лесенка наград:
+          </div>
+          <TierLadder currentTier={currentTier} />
+        </div>
+
+        {/* Сводная статистика по этой мини-игре */}
+        <div style={{ marginTop: spacing.md }}>
+          <MinigameStatsBlock stats={liveStats} delta={deltaKey} gameName={gameName} />
+        </div>
 
         {bypassError && (
           <div style={{ color: colors.danger, fontSize: '12px', textAlign: 'center', marginTop: spacing.sm }}>

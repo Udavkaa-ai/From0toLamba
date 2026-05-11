@@ -106,7 +106,7 @@ export async function gameRoutes(app: FastifyInstance) {
       console.log(`[Referral] NOT attached (already attached or self-ref) user=${user.id}`)
     }
 
-    const [activeProjects, inboxProjects, closedProjectsCount, charterSessions, referralCount, amaSessionsStarted, amaSessionsCompleted] = await Promise.all([
+    const [activeProjects, inboxProjects, closedProjectsCount, charterSessions, referralCount, amaSessionsStarted, amaSessionsCompleted, minigameSessions] = await Promise.all([
       prisma.project.findMany({ where: { userId: user.id, isActive: true }, orderBy: { createdAt: 'desc' } }),
       prisma.project.findMany({ where: { userId: user.id, isInbox: true }, orderBy: { createdAt: 'desc' }, take: 10 }),
       prisma.project.count({ where: { userId: user.id, isClosed: true, investedAmountRubles: { gt: 0 } } }),
@@ -119,6 +119,11 @@ export async function gameRoutes(app: FastifyInstance) {
       prisma.amaSession.count({ where: { userId: user.id, messages: { some: { role: 'user' } } } }),
       // В скольких беседах дошёл до конца (10 вопросов задано)
       prisma.amaSession.count({ where: { userId: user.id, isComplete: true } }),
+      // Все сабмиченные мини-игры с архетипом — для статистики «сыграно с дельцом»
+      prisma.amaSession.findMany({
+        where: { userId: user.id, charterSubmittedAt: { not: null } },
+        select: { intuitionDelta: true, project: { select: { personaArchetype: true } } },
+      }),
     ])
 
     // Догенерим имена для дел, которые застряли с плейсхолдером
@@ -159,6 +164,20 @@ export async function gameRoutes(app: FastifyInstance) {
       where: { userId: user.id, investedAmountRubles: { gt: 0 } },
     })
 
+    // Статистика по мини-играм: сгруппирована по архетипу хозяина.
+    //   intuitionDelta хранит errorCount: 0 = идеал, 1 = победа, ≥2 = поражение.
+    //   На BOYARIN intuitionDelta — это FP+FN (по той же шкале).
+    const minigameStats: Record<string, { played: number; perfect: number; won: number; lost: number }> = {}
+    for (const s of minigameSessions as Array<{ intuitionDelta: number; project: { personaArchetype: string } }>) {
+      const arch = s.project.personaArchetype
+      if (!minigameStats[arch]) minigameStats[arch] = { played: 0, perfect: 0, won: 0, lost: 0 }
+      minigameStats[arch].played += 1
+      const err = s.intuitionDelta
+      if (err === 0)      minigameStats[arch].perfect += 1
+      else if (err === 1) minigameStats[arch].won += 1
+      else                minigameStats[arch].lost += 1
+    }
+
     return {
       balance: gameState.balance,
       currentDay: gameState.currentDay,
@@ -169,6 +188,7 @@ export async function gameRoutes(app: FastifyInstance) {
       chartersSubmitted: charterSessions.length,
       closedProjectsCount,
       dealsCount,              // число дел, в которые игрок вложил гроши
+      minigameStats,           // статистика игр по архетипам: {BURATINO: {played, perfect, won, lost}, ...}
       referralCount,           // число приведённых купцов
       weekStartWealth,         // снимок состояния на начало текущей недели
       userId: user.id,         // нужен для построения пригласительной ссылки
