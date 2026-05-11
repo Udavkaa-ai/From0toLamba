@@ -21,10 +21,10 @@ const TARGET_PERFECT = 12
 
 const COIN_SIZE = 60
 const COIN_HIT_RADIUS = COIN_SIZE  // ~ вдвое шире самой монеты — толстым пальцам легче
-const COIN_FALL_SPEED = 160        // px / sec
-const SPAWN_INTERVAL_SEC = 0.6
-const FAKE_PROBABILITY = 0.55
-const ROTATION_PERIOD_SEC = 2.0    // полный оборот (видна обе стороны) за 2 сек
+const COIN_FALL_SPEED = 110        // px / sec (медленнее: было 160)
+const SPAWN_INTERVAL_SEC = 0.75    // спавн пореже — соответствует более медленному падению
+const FAKE_PROBABILITY = 0.5
+const ROTATION_PERIOD_SEC = 2.2    // полный оборот (видна обе стороны)
 
 interface ZolushkaGameProps {
   seed: string
@@ -57,52 +57,29 @@ const REAL_COIN: CoinType = {
   backMotif: 'sun',
 }
 
-// Подделки. Чтобы было интереснее, часть из них совпадает с эталоном по
-// аверсу или реверсу — придётся дождаться, пока монета повернётся.
+// Подделки — сокращённый набор: 2 очевидных + 2 хитрых (1 отличается аверсом,
+// 1 — реверсом). Меньше шумит, легче читать.
 const FAKE_COINS: CoinType[] = [
-  // ── Очевидные фальшаки: оба бока отличаются ──
+  // Очевидная: медь с крестом — другой цвет, другой номинал, другой символ
   {
     rim: 0x4A2A05, shade: 0x8C5A20, base: 0xC97A30, lite: 0xE9A050, hi: 0xF5C880,
     label: '5', caption: 'медяков', frontMotif: 'cross', backMotif: 'cross',
   },
+  // Очевидная: серебро с фракцией — холодный цвет, выделяется в потоке
   {
     rim: 0x4A4A55, shade: 0x7A7A85, base: 0xB0B0BB, lite: 0xD0D0D8, hi: 0xEFEFF5,
     label: '½', caption: 'полушка', frontMotif: 'fraction', backMotif: 'fraction',
   },
-  {
-    rim: 0x5A4A10, shade: 0x8C7A20, base: 0xC9B040, lite: 0xE9D080, hi: 0xF8E9B0,
-    label: '3', caption: 'гривны', frontMotif: 'leaf', backMotif: 'leaf',
-  },
-  {
-    rim: 0x402A05, shade: 0x7A5A18, base: 0xB08840, lite: 0xD0AC60, hi: 0xEFCC90,
-    label: '½', caption: 'денга', frontMotif: 'star', backMotif: 'star',
-  },
-  // ── Хитрая подделка: ОТЛИЧАЕТСЯ ТОЛЬКО АВЕРС (номинал) ──
-  // Цвет золота, реверс — солнце как у эталона. На аверсе «5 золотых» вместо «1 золотой».
-  // Если игрок поймает её на реверсе, подумает «настоящая». Нужно увидеть аверс.
+  // Хитрая: тот же цвет золота, реверс совпадает (солнце), но аверс — «5 золотых».
+  // Игрок ловит её на реверсе как настоящую — надо дождаться поворота.
   {
     rim: 0x6B4A00, shade: 0xB07A10, base: 0xE8A800, lite: 0xFFC838, hi: 0xFFE490,
     label: '5', caption: 'золотых', frontMotif: 'sun', backMotif: 'sun',
   },
-  {
-    rim: 0x6B4A00, shade: 0xB07A10, base: 0xE8A800, lite: 0xFFC838, hi: 0xFFE490,
-    label: '2', caption: 'золотых', frontMotif: 'sun', backMotif: 'sun',
-  },
-  // ── Хитрая подделка: ОТЛИЧАЕТСЯ ТОЛЬКО РЕВЕРС (символ на обороте) ──
-  // Аверс точь-в-точь как у эталона: «1 золотой» с солнышком. На реверсе вместо
-  // солнца — луна. Чтобы вскрыть, надо дождаться пол-оборота.
+  // Хитрая: аверс совпадает точь-в-точь («1 золотой» с солнышком), но на реверсе луна.
   {
     rim: 0x6B4A00, shade: 0xB07A10, base: 0xE8A800, lite: 0xFFC838, hi: 0xFFE490,
     label: '1', caption: 'золотой', frontMotif: 'sun', backMotif: 'moon',
-  },
-  {
-    rim: 0x6B4A00, shade: 0xB07A10, base: 0xE8A800, lite: 0xFFC838, hi: 0xFFE490,
-    label: '1', caption: 'золотой', frontMotif: 'sun', backMotif: 'gear',
-  },
-  // ── Хитрая подделка: тот же цвет/реверс, но цифра «1» и подпись «грош» ──
-  {
-    rim: 0x6B4A00, shade: 0xB07A10, base: 0xE8A800, lite: 0xFFC838, hi: 0xFFE490,
-    label: '1', caption: 'грош', frontMotif: 'sun', backMotif: 'sun',
   },
 ]
 

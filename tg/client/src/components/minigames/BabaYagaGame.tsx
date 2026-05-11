@@ -147,14 +147,45 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
     [slotOrder, consumed],
   )
 
-  // Раскладка по X, центрируем оставшиеся
+  // Раскладка зависит от количества оставшихся ингредиентов:
+  //   5 — 3 сверху, 2 снизу (так модели можно сделать крупнее, чем в одну линию)
+  //   4 — 2 + 2
+  //   3 — 3 в один ряд
+  //   2 — 2 в один ряд
+  //   1 — по центру
   const positions = useMemo(() => {
     const n = activeIngredients.length
-    const spacing3D = 1.5
-    return activeIngredients.map((_, i) => ({
-      x: (i - (n - 1) / 2) * spacing3D,
-      y: 0,
-    }))
+    if (n === 5) {
+      // 3 + 2
+      return [
+        { x: -1.9, y:  1.0 }, { x: 0, y:  1.0 }, { x: 1.9, y:  1.0 },
+        { x: -1.0, y: -1.1 }, { x: 1.0, y: -1.1 },
+      ]
+    }
+    if (n === 4) {
+      // 2 + 2
+      return [
+        { x: -1.1, y:  1.0 }, { x: 1.1, y:  1.0 },
+        { x: -1.1, y: -1.0 }, { x: 1.1, y: -1.0 },
+      ]
+    }
+    if (n === 3) {
+      return [{ x: -2.0, y: 0 }, { x: 0, y: 0 }, { x: 2.0, y: 0 }]
+    }
+    if (n === 2) {
+      return [{ x: -1.4, y: 0 }, { x: 1.4, y: 0 }]
+    }
+    return [{ x: 0, y: 0 }]
+  }, [activeIngredients])
+
+  // Масштаб моделей — крупнее, чем раньше (1.05 → 1.8+)
+  const modelScale = useMemo(() => {
+    const n = activeIngredients.length
+    if (n === 5) return 1.7
+    if (n === 4) return 2.0
+    if (n === 3) return 2.2
+    if (n === 2) return 2.6
+    return 3.0
   }, [activeIngredients])
 
   // Цифры-метки 1..5 в фазе reference: номер шага рецепта для каждого ингредиента
@@ -201,7 +232,7 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
       <div style={{ flex: 1, width: '100%', minHeight: '400px', position: 'relative' }}>
         <Canvas
           dpr={Math.min(window.devicePixelRatio, 2)}
-          camera={{ position: [0, 0, 5.5], fov: 35 }}
+          camera={{ position: [0, 0, 6.5], fov: 50 }}
           gl={{ antialias: true, alpha: true }}
           style={{ background: 'transparent', touchAction: 'manipulation' }}
         >
@@ -218,7 +249,7 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
                 <group key={ingredientIdx} position={[pos.x, pos.y, 0]}>
                   <SpinningModel
                     url={url}
-                    scale={1.05}
+                    scale={modelScale}
                     rotationSpeed={0.6}
                     spinPhase={ingredientIdx * 0.5}
                     onClick={(e: ThreeEvent<MouseEvent>) => {

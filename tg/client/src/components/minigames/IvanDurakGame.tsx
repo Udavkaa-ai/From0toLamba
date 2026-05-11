@@ -10,10 +10,10 @@ const tg = (window as any).Telegram?.WebApp
 const haptic = tg?.HapticFeedback
 
 const HAND_SIZE = 7
-const ROUNDS = 10
-const ROUND_SECONDS = 1.0       // 1 секунда на каждый ход
+const ROUNDS = 7
+const ROUND_SECONDS = 2.0       // 2 секунды на каждый ход
 const FEEDBACK_MS = 300         // длительность фидбека (зелёная/красная подсветка)
-const DECK_POOL_SIZE = HAND_SIZE + ROUNDS  // 17 уникальных карт нужно подготовить
+const DECK_POOL_SIZE = HAND_SIZE + ROUNDS  // 14 уникальных карт нужно подготовить
 
 // Лесенка ошибок:
 //   0   ошибок — идеальная игра (совет чуйки)
