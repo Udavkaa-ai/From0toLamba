@@ -976,31 +976,41 @@ function ScanGrid({
 }
 
 // Лист результата по числу ошибок:
-//   0 ошибок → раскрываем посул, тип дела и «шёпот чуйки», даём вложить
-//   1 ошибка → раскрываем посул и тип дела, даём вложить (без намёка)
+//   0 ошибок → раскрываем посул, тип дела и совет по делу, даём вложить
+//   1 ошибка → раскрываем посул и тип дела, даём вложить (без совета)
 //   ≥2 ошибок → ничего не раскрываем, только звёздный bypass
+//
+// После выкупа за 10⭐ (bypassed=true) считаем игру как идеальную: показываем
+// полную картину (посул + тип + совет) и кнопку «Вложить», чтобы игрок мог
+// принять осознанное решение, а не сразу вводить сумму вслепую.
 function MiniGameResultSheet({
   errorCount, perfectInsight, project, onInvest, onSkip,
 }: {
   errorCount: number
   perfectInsight: string | null
-  project: { claimedAPY: number; type: string; personaArchetype: string }
+  project: { id: string; claimedAPY: number; type: string; personaArchetype: string }
   onInvest: () => void
   onSkip: () => void
 }) {
   const t = useT()
   const [bypassPending, setBypassPending] = useState(false)
   const [bypassError, setBypassError] = useState<string | null>(null)
-  const canInvest = errorCount <= 1
-  const emoji = errorCount === 0 ? '🎯' : errorCount === 1 ? '🙂' : '😅'
-  const titleText =
-    errorCount === 0 ? 'Безупречно!' :
-    errorCount === 1 ? 'Почти в точку' :
-    'Чуйка промахнулась'
-  const subtitleText =
-    errorCount === 0 ? 'Хозяин не утаит от тебя ничего важного' :
-    errorCount === 1 ? `Одна осечка — детали дела открыты, но без подсказок` :
-    'Дело осталось тайной — раскроется только за звёзды'
+  const [bypassed, setBypassed] = useState(false)
+  const [revealedInsight, setRevealedInsight] = useState<string | null>(null)
+  const effectiveErrorCount = bypassed ? 0 : errorCount
+  const effectiveInsight = bypassed ? revealedInsight : perfectInsight
+  const canInvest = bypassed || errorCount <= 1
+  const emoji = effectiveErrorCount === 0 ? '🎯' : effectiveErrorCount === 1 ? '🙂' : '😅'
+  const titleText = bypassed
+    ? 'Дело раскрыто за звёзды'
+    : errorCount === 0 ? 'Безупречно!'
+    : errorCount === 1 ? 'Почти в точку'
+    : 'Чуйка промахнулась'
+  const subtitleText = bypassed
+    ? 'Посмотри детали и реши — вкладываться или передумать'
+    : errorCount === 0 ? 'Хозяин не утаит от тебя ничего важного'
+    : errorCount === 1 ? 'Одна осечка — детали дела открыты, но без подсказок'
+    : 'Дело осталось тайной — раскроется только за звёзды'
   const dealTypeLabel = (t.inbox.types as Record<string, string>)[project.type] ?? project.type
 
   const handleBypass = async () => {
@@ -1008,14 +1018,18 @@ function MiniGameResultSheet({
     setBypassError(null)
     setBypassPending(true)
     try {
-      const { invoiceLink } = await api.payments.createInvoice('minigame_bypass')
-      if (invoiceLink) {
-        tg.openInvoice(invoiceLink, async (status: string) => {
+      const resp = await api.payments.createInvoice('minigame_bypass', project.id) as {
+        invoiceLink: string | null
+        perfectInsight?: string | null
+      }
+      if (resp.invoiceLink) {
+        tg.openInvoice(resp.invoiceLink, async (status: string) => {
           if (status === 'paid') {
             try {
-              await api.payments.activateMinigameBypass()
+              const activation = await api.payments.activateMinigameBypass(project.id)
               haptic?.notificationOccurred('success')
-              onInvest()
+              setRevealedInsight(activation.perfectInsight ?? null)
+              setBypassed(true)
             } catch (err: any) {
               setBypassError(err.message)
             }
@@ -1023,9 +1037,10 @@ function MiniGameResultSheet({
           setBypassPending(false)
         })
       } else {
-        // Dev-режим: фича уже «активирована» при createInvoice
+        // Dev-режим: при createInvoice фича уже активирована, insight пришёл сразу.
         haptic?.notificationOccurred('success')
-        onInvest()
+        setRevealedInsight(resp.perfectInsight ?? null)
+        setBypassed(true)
         setBypassPending(false)
       }
     } catch (err: any) {
@@ -1070,7 +1085,7 @@ function MiniGameResultSheet({
           </div>
         </div>
 
-        {/* 0..1 ошибки — раскрываем посул и тип дела. */}
+        {/* 0..1 ошибки (или выкуп) — раскрываем посул и тип дела. */}
         {canInvest && (
           <div style={paramsRowStyle}>
             <ParamChip label={t.charter.apy} value={`${project.claimedAPY}%`} />
@@ -1078,8 +1093,8 @@ function MiniGameResultSheet({
           </div>
         )}
 
-        {/* Совет по типу дела — только при идеальной игре. */}
-        {errorCount === 0 && perfectInsight && (
+        {/* Совет по типу дела — при идеальной игре или после выкупа. */}
+        {effectiveErrorCount === 0 && effectiveInsight && (
           <div style={{
             marginTop: spacing.md,
             padding: spacing.md,
@@ -1092,9 +1107,9 @@ function MiniGameResultSheet({
             textAlign: 'center',
           }}>
             <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '12px', marginBottom: '4px' }}>
-              🔮 Совет по делу · идеальная игра
+              🔮 Совет по делу{bypassed ? ' · раскрыто за звёзды' : ' · идеальная игра'}
             </div>
-            {perfectInsight}
+            {effectiveInsight}
           </div>
         )}
 
@@ -1110,7 +1125,7 @@ function MiniGameResultSheet({
             lineHeight: 1.5,
             textAlign: 'center',
           }}>
-            Посул и тип дела не раскрыты. Чтобы всё равно вложиться, заплати 10 звёзд — откроем дело и проведём вложение.
+            Посул, тип дела и совет чуйки не раскрыты. Заплати 10 звёзд — увидишь полную картину и сможешь вложиться, если захочешь.
           </div>
         )}
 
@@ -1137,7 +1152,7 @@ function MiniGameResultSheet({
               disabled={bypassPending}
               style={{ ...primaryBtnStyle, flex: 1, opacity: bypassPending ? 0.6 : 1 }}
             >
-              {bypassPending ? '⏳' : '10 ⭐ — вложить'}
+              {bypassPending ? '⏳' : '10 ⭐ — раскрыть дело'}
             </button>
           )}
         </div>

@@ -5,6 +5,8 @@ import { prisma } from '../../db/prisma'
 import { telegramAuthHook } from '../../middleware/telegramAuth'
 import { createTimerSkipInvoice, createAmaUnlockInvoice, createExtraSlotInvoice, createMinigameBypassInvoice } from '../../bot/bot'
 import { advanceDay } from '../../game/AdvanceDayService'
+import { buildPerfectInsight } from '../../game/CharterService'
+import { ProjectFate } from '../../game/types'
 
 const STARS_AMOUNT = 10
 
@@ -115,8 +117,17 @@ async function activateFeature(userId: number, feature: string, projectId?: stri
   }
 
   if (feature === 'minigame_bypass') {
-    // Одноразовый пропуск — БД не трогаем. Клиент после success открывает InvestSheet.
-    return { success: true }
+    // Одноразовый пропуск — БД не трогаем. После оплаты раскрываем игроку
+    // perfectInsight по делу — он должен увидеть полную картину, как при
+    // идеальной игре, и уже сам решить, вкладываться или нет.
+    if (!projectId) return { success: true, perfectInsight: null as string | null }
+    const project = await prisma.project.findFirst({
+      where: { id: projectId, userId },
+      select: { fate: true },
+    })
+    if (!project) return { success: true, perfectInsight: null as string | null }
+    const insight = buildPerfectInsight(project.fate as ProjectFate)
+    return { success: true, perfectInsight: insight || null }
   }
 
   throw new Error('Неизвестная фича')

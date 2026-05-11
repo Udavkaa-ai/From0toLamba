@@ -359,8 +359,8 @@ export const api = {
       apiClient.post<{ success: boolean }>('/payments/activate', { feature: 'ama_unlock', projectId }).then(r => r.data),
     activateExtraSlot: () =>
       apiClient.post<{ success: boolean }>('/payments/activate', { feature: 'extra_slot' }).then(r => r.data),
-    activateMinigameBypass: () =>
-      apiClient.post<{ success: boolean }>('/payments/activate', { feature: 'minigame_bypass' }).then(r => r.data),
+    activateMinigameBypass: (projectId: string) =>
+      apiClient.post<{ success: boolean; perfectInsight: string | null }>('/payments/activate', { feature: 'minigame_bypass', projectId }).then(r => r.data),
   },
 
   chat: {

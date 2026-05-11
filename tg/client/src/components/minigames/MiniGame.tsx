@@ -1,5 +1,6 @@
 import { BuratinoGame } from './BuratinoGame'
 import { KoscheiGame } from './KoscheiGame'
+import { KolobokGame } from './KolobokGame'
 import type { MiniGameDifficulty } from './BuratinoGame'
 import { colors, spacing } from '@/theme'
 
@@ -26,6 +27,14 @@ export function MiniGame(props: MiniGameProps) {
     case 'KOSCHEI':
       return (
         <KoscheiGame
+          seed={props.seed}
+          difficulty={props.difficulty}
+          onComplete={props.onComplete}
+        />
+      )
+    case 'KOLOBOK':
+      return (
+        <KolobokGame
           seed={props.seed}
           difficulty={props.difficulty}
           onComplete={props.onComplete}

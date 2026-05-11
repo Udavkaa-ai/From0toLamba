@@ -13,6 +13,7 @@ import { AchievementUnlockedOverlay } from '@/components/AchievementUnlockedOver
 import { FaqModal, FaqAnnouncementModal, useFaqAnnouncement } from '@/components/FaqModal'
 import { ChannelPromoOverlay, shouldShowChannelPromo, markChannelPromoSeen } from '@/components/ChannelPromoOverlay'
 import { MarketAnnouncementOverlay } from '@/components/MarketAnnouncementOverlay'
+import { DayTransitionOverlay } from '@/components/DayTransitionOverlay'
 import { CountUp } from '@/components/CountUp'
 import { EyeIcon, LockIcon } from '@/components/icons'
 import { api, type ProjectDTO, type DailyUpdateDTO, type ClosureSummaryDTO, type MyReferralEntryDTO } from '@/api/client'
@@ -182,35 +183,60 @@ export function HomePage() {
 
   const tgHaptic = (window as any).Telegram?.WebApp?.HapticFeedback
 
+  // Видимый «бесшовный» переход — оверлей с купцом на ярмарке держится пока
+  // данные нового дня не подтянутся (мутация в процессе + краткая буферная пауза).
+  const [isDayTransition, setIsDayTransition] = useState(false)
+
   const advanceMutation = useMutation({
     mutationFn: api.game.advanceDay,
+    onMutate: () => setIsDayTransition(true),
     onSuccess: (data) => {
       tgHaptic?.notificationOccurred('success')
       playSound('day')
       qc.invalidateQueries({ queryKey: ['gameState'] })
       qc.invalidateQueries({ queryKey: ['updates'] })
+      qc.invalidateQueries({ queryKey: ['inbox'] })
+      qc.invalidateQueries({ queryKey: ['portfolio'] })
       setDayClosures(data.closures ?? [])
-      setShowDayNews(true)
+      // Держим оверлей ещё ~800мс, чтобы refetch инбокса/портфеля успел осесть,
+      // и игрок не увидел ни старых грамот, ни «инбокс пуст».
+      setTimeout(() => {
+        setIsDayTransition(false)
+        setShowDayNews(true)
+      }, 800)
     },
-    onError: () => tgHaptic?.notificationOccurred('error'),
+    onError: () => {
+      tgHaptic?.notificationOccurred('error')
+      setIsDayTransition(false)
+    },
   })
 
   const handleTimerSkipPayment = async () => {
     setPaymentPending(true)
+    const finishTransition = (closures: ClosureSummaryDTO[]) => {
+      qc.invalidateQueries({ queryKey: ['gameState'] })
+      qc.invalidateQueries({ queryKey: ['updates'] })
+      qc.invalidateQueries({ queryKey: ['inbox'] })
+      qc.invalidateQueries({ queryKey: ['portfolio'] })
+      setShowPaymentModal(false)
+      setDayClosures(closures ?? [])
+      tgHaptic?.notificationOccurred('success')
+      setTimeout(() => {
+        setIsDayTransition(false)
+        setShowDayNews(true)
+      }, 800)
+    }
     try {
+      setIsDayTransition(true)
       const resp = await api.payments.createInvoice('timer_skip') as any
       if (!resp.invoiceLink) {
-        qc.invalidateQueries({ queryKey: ['gameState'] })
-        qc.invalidateQueries({ queryKey: ['updates'] })
-        setShowPaymentModal(false)
-        setDayClosures(resp.closures ?? [])
-        setShowDayNews(true)
-        tgHaptic?.notificationOccurred('success')
+        finishTransition(resp.closures ?? [])
         setPaymentPending(false)
         return
       }
       const tgWebApp = (window as any).Telegram?.WebApp
       if (!tgWebApp?.openInvoice) {
+        setIsDayTransition(false)
         setPaymentPending(false)
         return
       }
@@ -218,20 +244,19 @@ export function HomePage() {
         if (status === 'paid') {
           try {
             const result = await api.payments.activateTimerSkip()
-            qc.invalidateQueries({ queryKey: ['gameState'] })
-            qc.invalidateQueries({ queryKey: ['updates'] })
-            setShowPaymentModal(false)
-            setDayClosures(result.closures ?? [])
-            setShowDayNews(true)
-            tgHaptic?.notificationOccurred('success')
+            finishTransition(result.closures ?? [])
           } catch {
             tgHaptic?.notificationOccurred('error')
+            setIsDayTransition(false)
           }
+        } else {
+          setIsDayTransition(false)
         }
         setPaymentPending(false)
       })
     } catch {
       tgHaptic?.notificationOccurred('error')
+      setIsDayTransition(false)
       setPaymentPending(false)
     }
   }
@@ -388,6 +413,9 @@ export function HomePage() {
         {showFaqAnnouncement && !showTutorial && (
           <FaqAnnouncementModal onClose={() => setShowFaqAnnouncement(false)} />
         )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {isDayTransition && <DayTransitionOverlay />}
       </AnimatePresence>
       <AnimatePresence>
         {showMarketAnnouncement && !showTutorial && !pendingChangelog && !showFaqAnnouncement && (

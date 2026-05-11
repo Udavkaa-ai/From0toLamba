@@ -199,9 +199,10 @@ export async function submitCharter(
   }
 }
 
-/** При идеальной игре (won && perfect) раскрываем игроку «шёпот чуйки» — короткий
- *  намёк о реальном характере дела на основе скрытого fate. */
-function buildPerfectInsight(fate: ProjectFate): string {
+/** При идеальной игре (или после выкупа за звёзды) раскрываем игроку «совет
+ *  чуйки» — короткий намёк о реальном характере дела на основе скрытого fate.
+ *  Экспортирован для использования из payments.ts при minigame_bypass. */
+export function buildPerfectInsight(fate: ProjectFate): string {
   switch (fate) {
     case ProjectFate.INSTANT_SCAM:
       return 'Чуйка кричит: чистый обман, сгорит за пару дней.'
