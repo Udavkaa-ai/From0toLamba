@@ -1,15 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Application, Container, Graphics } from 'pixi.js'
-import { rngFromSeed, pickInt, pickOne } from './seedRng'
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { Canvas, type ThreeEvent } from '@react-three/fiber'
+import { Environment } from '@react-three/drei'
+import { SpinningModel, preloadModel } from './three/SpinningModel'
+import { rngFromSeed, pickInt } from './seedRng'
 import { colors, spacing } from '@/theme'
 import { playSound } from '@/sounds'
 
 const tg = (window as any).Telegram?.WebApp
 const haptic = tg?.HapticFeedback
-
-const REFERENCE_SECONDS = 10
-const PLAY_SECONDS = 10
-const ROTATION_PERIOD_SEC = 5  // полный оборот за 5 секунд
 
 export type MiniGameDifficulty = 'EASY' | 'MEDIUM' | 'HARD'
 
@@ -19,214 +17,56 @@ interface BuratinoGameProps {
   onComplete: (errorCount: number) => void
 }
 
-interface KeyParams {
-  headShape: 'circle' | 'diamond' | 'square'
-  headRadius: number
-  shaftLength: number
-  shaftWidth: number
-  teethCount: number
-  teeth: Array<{ depth: number; thickness: number }>
+const REFERENCE_SECONDS = 10
+const PLAY_SECONDS = 10
+const KEY_COUNT = 7
+
+// Загруженные GLB-модели ключей. Каждая визуально уникальна — головка, шток,
+// бороздки разной формы. Игрок ищет среди 7 ключей точную копию эталона.
+const KEY_MODELS = [
+  '/models/buratino/key-1.glb',
+  '/models/buratino/key-2.glb',
+  '/models/buratino/key-3.glb',
+  '/models/buratino/key-4.glb',
+] as const
+
+// Преload при загрузке модуля — пока игрок смотрит интро-экран, модели уже грузятся
+KEY_MODELS.forEach(preloadModel)
+
+interface KeySlot {
+  modelUrl: string
+  isCorrect: boolean
 }
 
-const HEAD_SHAPES: KeyParams['headShape'][] = ['circle', 'diamond', 'square']
-
-function generateBaseKey(rng: () => number): KeyParams {
-  const teethCount = pickInt(rng, 3, 6)
-  return {
-    headShape: pickOne(rng, HEAD_SHAPES),
-    headRadius: pickInt(rng, 22, 28),
-    shaftLength: 110,
-    shaftWidth: 14,
-    teethCount,
-    teeth: Array.from({ length: teethCount }, () => ({
-      depth: pickInt(rng, 8, 16),
-      thickness: pickInt(rng, 7, 10),
-    })),
-  }
-}
-
-function mutateKey(base: KeyParams, rng: () => number, difficulty: MiniGameDifficulty): KeyParams {
-  const out: KeyParams = { ...base, teeth: base.teeth.map(t => ({ ...t })) }
-  if (difficulty === 'EASY') {
-    const choice = pickInt(rng, 0, 3)
-    if (choice === 0) {
-      const others = HEAD_SHAPES.filter(s => s !== base.headShape)
-      out.headShape = pickOne(rng, others)
-    } else if (choice === 1) {
-      const delta = rng() < 0.5 ? -1 : 1
-      out.teethCount = Math.max(2, Math.min(5, base.teethCount + delta))
-      if (out.teethCount > base.teethCount) {
-        out.teeth = [...base.teeth, { depth: pickInt(rng, 8, 16), thickness: pickInt(rng, 7, 10) }]
-      } else {
-        out.teeth = base.teeth.slice(0, out.teethCount)
-      }
+function buildKeyLineup(seed: string, _difficulty: MiniGameDifficulty): { reference: string; slots: KeySlot[] } {
+  const rng = rngFromSeed(seed)
+  // Эталон — одна из 4 моделей
+  const referenceIdx = pickInt(rng, 0, KEY_MODELS.length)
+  const reference = KEY_MODELS[referenceIdx]
+  // Где разместить правильный ключ
+  const correctSlot = pickInt(rng, 0, KEY_COUNT)
+  const decoyModels = KEY_MODELS.filter((_, i) => i !== referenceIdx)
+  const slots: KeySlot[] = []
+  for (let i = 0; i < KEY_COUNT; i++) {
+    if (i === correctSlot) {
+      slots.push({ modelUrl: reference, isCorrect: true })
     } else {
-      const i = pickInt(rng, 0, base.teethCount)
-      out.teeth[i] = { ...out.teeth[i], depth: out.teeth[i].depth + 8 }
+      slots.push({ modelUrl: decoyModels[Math.floor(rng() * decoyModels.length)], isCorrect: false })
     }
-  } else if (difficulty === 'MEDIUM') {
-    const i = pickInt(rng, 0, base.teethCount)
-    const delta = (rng() < 0.5 ? -1 : 1) * pickInt(rng, 4, 7)
-    out.teeth[i] = { ...out.teeth[i], depth: Math.max(4, out.teeth[i].depth + delta) }
-  } else {
-    const i = pickInt(rng, 0, base.teethCount)
-    const delta = (rng() < 0.5 ? -1 : 1) * pickInt(rng, 2, 4)
-    out.teeth[i] = { ...out.teeth[i], depth: Math.max(4, out.teeth[i].depth + delta) }
   }
-  return out
-}
-
-function keysEqual(a: KeyParams, b: KeyParams): boolean {
-  if (a.headShape !== b.headShape) return false
-  if (a.headRadius !== b.headRadius) return false
-  if (a.teethCount !== b.teethCount) return false
-  for (let i = 0; i < a.teethCount; i++) {
-    if (a.teeth[i].depth !== b.teeth[i].depth) return false
-    if (a.teeth[i].thickness !== b.teeth[i].thickness) return false
-  }
-  return true
-}
-
-/** Рисует ключ с иллюзией объёма: шток-«цилиндр» (5 вертикальных полос
- *  от тёмного рима через блик к тёмной правой кромке), головка-«сфера»
- *  (концентрические круги от тёмного края к специальному блику), бороздки
- *  с верхним хайлайтом и глубокой тенью на правом ребре.
- *  Координаты центрированы относительно (0,0) — это важно для вращения. */
-function drawKey(g: Graphics, p: KeyParams, scale: number) {
-  // Палитра: «золото при свете сверху-слева»
-  const goldRim   = 0x6B4A00 // глубокая рим-тень
-  const goldDeep  = 0x8C6200 // тень
-  const goldShade = 0xB07A10 // средняя
-  const gold      = 0xE8A800 // база
-  const goldLite  = 0xFFC838 // светлая
-  const goldHi    = 0xFFE490 // блик
-  const goldSpec  = 0xFFFAEC // спекуляр
-  const hole      = 0x0A1020
-
-  const r  = p.headRadius * scale
-  const sw = p.shaftWidth * scale
-  const sh = p.shaftLength * scale
-
-  const shaftTopY    = -sh / 2
-  const shaftBottomY = sh / 2
-  const headCenterY  = shaftTopY - r * 0.85
-
-  // ── Шток-цилиндр: 6 полос слева-направо (рим→блик→база→тень→рим) ────────
-  const stripWidths = [0.05, 0.13, 0.20, 0.22, 0.25, 0.15]
-  const stripColors = [goldRim, goldHi, goldLite, gold, goldShade, goldDeep]
-  let cursor = -sw / 2
-  for (let i = 0; i < stripWidths.length; i++) {
-    const w = sw * stripWidths[i]
-    g.rect(cursor, shaftTopY, w + 0.6, sh).fill(stripColors[i])
-    cursor += w
-  }
-
-  // ── Кончик (фаска) ──────────────────────────────────────────────────────
-  g.rect(-sw * 0.42, shaftBottomY, sw * 0.84, 5 * scale).fill(goldDeep)
-  g.rect(-sw * 0.42, shaftBottomY, sw * 0.84, 1.4).fill(goldHi)
-  g.rect(-sw * 0.42, shaftBottomY + 5 * scale - 1, sw * 0.84, 1).fill(goldRim)
-
-  // ── Бороздки справа (3D-бруски с фасками) ───────────────────────────────
-  const teethSpacing = 12 * scale
-  const teethTotalH = (p.teethCount - 1) * teethSpacing
-  const firstTeethY = shaftBottomY - 10 * scale - teethTotalH
-  for (let i = 0; i < p.teethCount; i++) {
-    const t = p.teeth[i]
-    const y = firstTeethY + i * teethSpacing - (t.thickness * scale) / 2
-    const w = t.depth * scale
-    const h = t.thickness * scale
-    // База
-    g.rect(sw / 2, y, w, h).fill(gold)
-    // Верхний хайлайт
-    g.rect(sw / 2, y, w, h * 0.28).fill(goldLite)
-    g.rect(sw / 2, y, w, h * 0.12).fill(goldHi)
-    // Нижняя тень
-    g.rect(sw / 2, y + h * 0.7, w, h * 0.3).fill(goldShade)
-    g.rect(sw / 2, y + h * 0.88, w, h * 0.12).fill(goldDeep)
-    // Глубокая тень на правом торце
-    g.rect(sw / 2 + w - 1.5, y, 1.5, h).fill(goldRim)
-  }
-
-  // ── Головка-«сфера»: набор концентрических фигур ────────────────────────
-  if (p.headShape === 'circle') {
-    // Тёмный рим
-    g.circle(0, headCenterY, r + 1).fill(goldRim)
-    // Затемнённая база
-    g.circle(0, headCenterY, r).fill(goldDeep)
-    // Слой средней тени, чуть смещён вправо-вниз — тень
-    g.circle(r * 0.08, headCenterY + r * 0.08, r * 0.92).fill(goldShade)
-    // Основной цвет — смещён слегка влево-вверх
-    g.circle(-r * 0.04, headCenterY - r * 0.04, r * 0.84).fill(gold)
-    // Световая зона
-    g.circle(-r * 0.18, headCenterY - r * 0.18, r * 0.6).fill(goldLite)
-    // Блик
-    g.circle(-r * 0.32, headCenterY - r * 0.32, r * 0.3).fill(goldHi)
-    // Спекуляр
-    g.circle(-r * 0.42, headCenterY - r * 0.42, r * 0.09).fill(goldSpec)
-  } else if (p.headShape === 'diamond') {
-    g.poly([0, headCenterY - r - 1, r + 1, headCenterY, 0, headCenterY + r + 1, -r - 1, headCenterY]).fill(goldRim)
-    g.poly([0, headCenterY - r,  r,  headCenterY, 0, headCenterY + r,  -r,  headCenterY]).fill(goldDeep)
-    // Светлая (левая-верхняя) грань
-    g.poly([0, headCenterY - r * 0.95, -r * 0.95, headCenterY, 0, headCenterY * 0 + headCenterY]).fill(gold)
-    g.poly([0, headCenterY - r * 0.85, -r * 0.45, headCenterY - r * 0.05, 0, headCenterY - r * 0.2]).fill(goldLite)
-    g.poly([0, headCenterY - r * 0.7, -r * 0.2, headCenterY - r * 0.25, 0, headCenterY - r * 0.4]).fill(goldHi)
-  } else {
-    // square
-    g.rect(-r - 1, headCenterY - r - 1, 2 * r + 2, 2 * r + 2).fill(goldRim)
-    g.rect(-r, headCenterY - r, 2 * r, 2 * r).fill(goldDeep)
-    g.rect(-r, headCenterY - r, 2 * r, 2 * r * 0.65).fill(goldShade)
-    g.rect(-r, headCenterY - r, 2 * r * 0.55, 2 * r * 0.55).fill(gold)
-    g.rect(-r, headCenterY - r, 2 * r * 0.4, 2 * r * 0.35).fill(goldLite)
-    g.rect(-r * 0.9, headCenterY - r * 0.9, r * 0.6, r * 0.25).fill(goldHi)
-    g.rect(-r * 0.8, headCenterY - r * 0.85, r * 0.2, r * 0.1).fill(goldSpec)
-  }
-  // Дыра в головке (с фаской)
-  g.circle(0, headCenterY, r * 0.42).fill(goldRim)
-  g.circle(0, headCenterY, r * 0.36).fill(hole)
-  // Чёрная тень внутри дыры справа-снизу
-  g.circle(r * 0.06, headCenterY + r * 0.06, r * 0.32).fill({ color: 0x000000, alpha: 0.55 })
-}
-
-/** Тень-эллипс под ключом — не вращается. */
-function drawShadow(g: Graphics, width: number) {
-  g.ellipse(0, 95, width * 0.6, 8).fill({ color: 0x000000, alpha: 0.35 })
+  return { reference, slots }
 }
 
 export function BuratinoGame({ seed, difficulty, onComplete }: BuratinoGameProps) {
-  const refMount = useRef<HTMLDivElement>(null)
-  const refApp = useRef<Application | null>(null)
   const doneRef = useRef(false)
-  const spinnersRef = useRef<Container[]>([])
-  const tickerCbRef = useRef<(() => void) | null>(null)
   const [phase, setPhase] = useState<'reference' | 'play'>('reference')
   const [refCountdown, setRefCountdown] = useState(REFERENCE_SECONDS)
   const [playCountdown, setPlayCountdown] = useState(PLAY_SECONDS)
   const onCompleteRef = useRef(onComplete)
   useEffect(() => { onCompleteRef.current = onComplete }, [onComplete])
 
-  const { target, keys, correctIdx } = useMemo(() => {
-    const rng = rngFromSeed(seed)
-    const target = generateBaseKey(rng)
-    const correctIdx = pickInt(rng, 0, 7)
-    const keys: KeyParams[] = []
-    for (let i = 0; i < 7; i++) {
-      if (i === correctIdx) {
-        keys.push(target)
-        continue
-      }
-      let attempts = 0
-      let candidate = mutateKey(target, rng, difficulty)
-      while (keysEqual(candidate, target) && attempts < 6) {
-        candidate = mutateKey(target, rng, difficulty)
-        attempts++
-      }
-      keys.push(candidate)
-    }
-    return { target, keys, correctIdx }
-  }, [seed, difficulty])
+  const { reference, slots } = useMemo(() => buildKeyLineup(seed, difficulty), [seed, difficulty])
 
-  // У Буратино одна попытка: правильный тап = 0 ошибок, неправильный или таймаут = 2
-  // (т.е. сразу попадает в категорию «вложиться только за звёзды»).
   const complete = (won: boolean) => {
     if (doneRef.current) return
     doneRef.current = true
@@ -235,7 +75,6 @@ export function BuratinoGame({ seed, difficulty, onComplete }: BuratinoGameProps
     onCompleteRef.current(won ? 0 : 2)
   }
 
-  // Таймер показа эталона
   useEffect(() => {
     if (phase !== 'reference') return
     setRefCountdown(REFERENCE_SECONDS)
@@ -252,7 +91,6 @@ export function BuratinoGame({ seed, difficulty, onComplete }: BuratinoGameProps
     return () => clearInterval(id)
   }, [phase])
 
-  // Таймер раунда
   useEffect(() => {
     if (phase !== 'play') return
     setPlayCountdown(PLAY_SECONDS)
@@ -270,131 +108,24 @@ export function BuratinoGame({ seed, difficulty, onComplete }: BuratinoGameProps
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase])
 
-  // Инициализация Pixi
-  useEffect(() => {
-    if (!refMount.current) return
-    let app: Application | null = null
-    let cancelled = false
-    ;(async () => {
-      app = new Application()
-      await app.init({
-        resizeTo: refMount.current!,
-        backgroundAlpha: 0,
-        antialias: true,
-        resolution: window.devicePixelRatio || 1,
-        autoDensity: true,
-      })
-      if (cancelled || !refMount.current) {
-        app.destroy(true, { children: true })
-        return
+  // Раскладка 7 ключей: ряд 1 = 4, ряд 2 = 3.
+  const layout = useMemo(() => {
+    const rows = [4, 3]
+    const positions: Array<{ x: number; y: number }> = []
+    const rowSpacing = 1.4
+    const colSpacing = 1.4
+    let idx = 0
+    for (let row = 0; row < rows.length; row++) {
+      const cnt = rows[row]
+      const offsetX = -((cnt - 1) * colSpacing) / 2
+      const y = (rows.length - 1 - row) * rowSpacing - (rows.length - 1) * rowSpacing / 2
+      for (let col = 0; col < cnt; col++) {
+        positions.push({ x: offsetX + col * colSpacing, y })
+        idx++
       }
-      refMount.current.appendChild(app.canvas)
-      refApp.current = app
-
-      // Глобальный синхронизированный тикер — все ключи крутятся в одной фазе
-      const startTime = performance.now()
-      const cb = () => {
-        const t = (performance.now() - startTime) / 1000
-        const scale = Math.cos((t / ROTATION_PERIOD_SEC) * 2 * Math.PI)
-        for (const c of spinnersRef.current) {
-          c.scale.x = scale
-        }
-      }
-      app.ticker.add(cb)
-      tickerCbRef.current = cb
-    })()
-    return () => {
-      cancelled = true
-      if (refApp.current) {
-        try { refApp.current.destroy(true, { children: true }) } catch { /* noop */ }
-        refApp.current = null
-      }
-      tickerCbRef.current = null
-      spinnersRef.current = []
     }
+    return positions
   }, [])
-
-  // Рендер сцены по фазе
-  useEffect(() => {
-    let cancelled = false
-    const render = () => {
-      const app = refApp.current
-      if (cancelled) return
-      if (!app) {
-        // Pixi ещё инициализируется — повторим на следующем кадре
-        requestAnimationFrame(render)
-        return
-      }
-      app.stage.removeChildren()
-      spinnersRef.current = []
-
-      if (phase === 'reference') {
-        const outer = new Container()
-        outer.x = app.screen.width / 2
-        outer.y = app.screen.height / 2
-
-        // Тень не вращается
-        const shadow = new Graphics()
-        drawShadow(shadow, 80)
-        shadow.scale.set(1.4)
-        outer.addChild(shadow)
-
-        const spinner = new Container()
-        const g = new Graphics()
-        drawKey(g, target, 1.5)
-        spinner.addChild(g)
-        outer.addChild(spinner)
-        spinnersRef.current.push(spinner)
-
-        app.stage.addChild(outer)
-      } else {
-        const layout = [4, 3]
-        const colWidth = app.screen.width / 4
-        const rowSpacing = Math.min(180, (app.screen.height - 40) / 2)
-        let idx = 0
-        for (let row = 0; row < layout.length; row++) {
-          const rowCount = layout[row]
-          const rowOffsetX = (app.screen.width - rowCount * colWidth) / 2 + colWidth / 2
-          for (let col = 0; col < rowCount; col++) {
-            const myIdx = idx++
-            const outer = new Container()
-            outer.eventMode = 'static'
-            outer.cursor = 'pointer'
-            outer.x = rowOffsetX + col * colWidth
-            outer.y = 90 + row * rowSpacing
-
-            // Чувствительная зона побольше самой графики
-            const hit = new Graphics()
-            hit.rect(-colWidth / 2 + 4, -90, colWidth - 8, 180)
-              .fill({ color: 0xFFFFFF, alpha: 0.0001 })
-            outer.addChild(hit)
-
-            // Тень — не вращается
-            const shadow = new Graphics()
-            drawShadow(shadow, 70)
-            outer.addChild(shadow)
-
-            // Вращающийся контейнер с ключом
-            const spinner = new Container()
-            const g = new Graphics()
-            drawKey(g, keys[myIdx], 0.78)
-            spinner.addChild(g)
-            outer.addChild(spinner)
-            spinnersRef.current.push(spinner)
-
-            outer.on('pointertap', () => {
-              const won = myIdx === correctIdx
-              complete(won)
-            })
-            app.stage.addChild(outer)
-          }
-        }
-      }
-    }
-    render()
-    return () => { cancelled = true }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, target, keys, correctIdx])
 
   return (
     <div style={{
@@ -404,7 +135,7 @@ export function BuratinoGame({ seed, difficulty, onComplete }: BuratinoGameProps
     }}>
       <div style={{
         textAlign: 'center',
-        color: phase === 'reference' ? colors.fairyGold : (playCountdown <= 5 ? colors.danger : colors.fairyGold),
+        color: phase === 'reference' ? colors.fairyGold : (playCountdown <= 3 ? colors.danger : colors.fairyGold),
         fontWeight: 700, fontSize: '17px',
         marginBottom: spacing.sm,
       }}>
@@ -420,15 +151,39 @@ export function BuratinoGame({ seed, difficulty, onComplete }: BuratinoGameProps
           ? 'Через мгновение Буратино перемешает ключи'
           : 'Тапни ключ, что в точности повторяет образец'}
       </div>
-      <div
-        ref={refMount}
-        style={{
-          flex: 1,
-          width: '100%',
-          minHeight: '420px',
-          touchAction: 'manipulation',
-        }}
-      />
+
+      <div style={{ flex: 1, width: '100%', minHeight: '420px', position: 'relative' }}>
+        <Canvas
+          dpr={Math.min(window.devicePixelRatio, 2)}
+          camera={{ position: [0, 0, 5.5], fov: 35 }}
+          gl={{ antialias: true, alpha: true }}
+          style={{ background: 'transparent', touchAction: 'manipulation' }}
+        >
+          <ambientLight intensity={0.6} />
+          <directionalLight position={[3, 4, 5]} intensity={1.2} castShadow />
+          <directionalLight position={[-3, 2, -4]} intensity={0.4} color={0xFFB800} />
+          <Suspense fallback={null}>
+            <Environment preset="sunset" background={false} />
+            {phase === 'reference' && (
+              <SpinningModel url={reference} position={[0, 0, 0]} scale={2.2} rotationSpeed={0.9} />
+            )}
+            {phase === 'play' && slots.map((slot, i) => (
+              <SpinningModel
+                key={i}
+                url={slot.modelUrl}
+                position={[layout[i].x, layout[i].y, 0]}
+                scale={0.95}
+                rotationSpeed={0.9}
+                spinPhase={i * 0.4}
+                onClick={(e: ThreeEvent<MouseEvent>) => {
+                  e.stopPropagation()
+                  complete(slot.isCorrect)
+                }}
+              />
+            ))}
+          </Suspense>
+        </Canvas>
+      </div>
     </div>
   )
 }
