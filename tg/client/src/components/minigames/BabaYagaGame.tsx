@@ -147,45 +147,43 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
     [slotOrder, consumed],
   )
 
-  // Раскладка зависит от количества оставшихся ингредиентов:
-  //   5 — 3 сверху, 2 снизу (так модели можно сделать крупнее, чем в одну линию)
+  // Раскладка: даём моделям максимум места.
+  //   5 — 3 + 2 (тесная сетка)
   //   4 — 2 + 2
-  //   3 — 3 в один ряд
-  //   2 — 2 в один ряд
-  //   1 — по центру
+  //   3 — 3 в ряд
+  //   2 — 2 в ряд (крупно)
+  //   1 — центр (огромно)
   const positions = useMemo(() => {
     const n = activeIngredients.length
     if (n === 5) {
-      // 3 + 2
       return [
-        { x: -1.9, y:  1.0 }, { x: 0, y:  1.0 }, { x: 1.9, y:  1.0 },
-        { x: -1.0, y: -1.1 }, { x: 1.0, y: -1.1 },
+        { x: -1.7, y:  1.2 }, { x: 0, y:  1.2 }, { x: 1.7, y:  1.2 },
+        { x: -1.0, y: -1.3 }, { x: 1.0, y: -1.3 },
       ]
     }
     if (n === 4) {
-      // 2 + 2
       return [
-        { x: -1.1, y:  1.0 }, { x: 1.1, y:  1.0 },
-        { x: -1.1, y: -1.0 }, { x: 1.1, y: -1.0 },
+        { x: -1.1, y:  1.2 }, { x: 1.1, y:  1.2 },
+        { x: -1.1, y: -1.2 }, { x: 1.1, y: -1.2 },
       ]
     }
     if (n === 3) {
-      return [{ x: -2.0, y: 0 }, { x: 0, y: 0 }, { x: 2.0, y: 0 }]
+      return [{ x: -1.9, y: 0 }, { x: 0, y: 0 }, { x: 1.9, y: 0 }]
     }
     if (n === 2) {
-      return [{ x: -1.4, y: 0 }, { x: 1.4, y: 0 }]
+      return [{ x: -1.3, y: 0 }, { x: 1.3, y: 0 }]
     }
     return [{ x: 0, y: 0 }]
   }, [activeIngredients])
 
-  // Масштаб моделей — крупнее, чем раньше (1.05 → 1.8+)
+  // Масштаб моделей — заметно крупнее (по фидбеку «не разглядеть»).
   const modelScale = useMemo(() => {
     const n = activeIngredients.length
-    if (n === 5) return 1.7
-    if (n === 4) return 2.0
-    if (n === 3) return 2.2
-    if (n === 2) return 2.6
-    return 3.0
+    if (n === 5) return 2.4
+    if (n === 4) return 2.8
+    if (n === 3) return 3.0
+    if (n === 2) return 3.5
+    return 4.2
   }, [activeIngredients])
 
   // Цифры-метки 1..5 в фазе reference: номер шага рецепта для каждого ингредиента
@@ -232,7 +230,7 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
       <div style={{ flex: 1, width: '100%', minHeight: '400px', position: 'relative' }}>
         <Canvas
           dpr={Math.min(window.devicePixelRatio, 2)}
-          camera={{ position: [0, 0, 6.5], fov: 50 }}
+          camera={{ position: [0, 0, 5.0], fov: 60 }}
           gl={{ antialias: true, alpha: true }}
           style={{ background: 'transparent', touchAction: 'manipulation' }}
         >

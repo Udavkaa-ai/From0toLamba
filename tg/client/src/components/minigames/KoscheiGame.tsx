@@ -9,11 +9,12 @@ const tg = (window as any).Telegram?.WebApp
 const haptic = tg?.HapticFeedback
 
 const PLAY_SECONDS = 20
-// MAX_ATTEMPTS убран — ограничение только по времени. Лестница ошибок:
-//   6 открытий пар   = 0 ошибок (идеальная игра, совет чуйки)
-//   7–9 открытий пар = 1 ошибка (победа, посул + тип, без совета)
-//   ≥10 открытий пар = 2 ошибки (победа, но вложить можно только за звёзды)
-//   таймер вышел до сбора всех пар — поражение (errorCount = 2)
+// MAX_ATTEMPTS убран — ограничение только по времени.
+// Шкала результата БИНАРНАЯ: «собрал все пары» / «не собрал».
+// В memory match нельзя «ошибиться» — открытие пары, которая не совпала, это
+// часть игрового процесса, а не промах. Поэтому:
+//   собрал все 6 пар в 20 секунд → 0 ошибок (победа, совет чуйки)
+//   не собрал                    → 2 ошибки (поражение, только за звёзды)
 const REVEAL_DELAY_MS = 700
 const SYMBOL_COUNT = 6
 const COLS = 3
@@ -229,22 +230,11 @@ export function KoscheiGame({ seed, onComplete }: KoscheiGameProps) {
     doneRef.current = true
     haptic?.notificationOccurred(won ? 'success' : 'error')
     playSound(won ? 'win' : 'lose')
-    // Шкала ошибок для memory match (типичный внимательный игрок берёт 10–12 открытий,
-    // так что строгий «6 = идеал, 7+ = провал» был слишком жёсток):
-    //   6     открытий — идеал (errorCount = 0)
-    //   7–9   открытий — победа (errorCount = 1)
-    //   ≥10   открытий — поражение (errorCount = 2)
-    //   таймер вышел — поражение независимо от числа открытий
-    let errorCount: number
-    if (!won) {
-      errorCount = 2
-    } else if (attemptsAtFinish <= SYMBOL_COUNT) {
-      errorCount = 0
-    } else if (attemptsAtFinish <= SYMBOL_COUNT + 3) {
-      errorCount = 1
-    } else {
-      errorCount = 2
-    }
+    // В memory match понятие «ошибки» неприменимо — есть только «собрал все пары»
+    // или «не успел». Поэтому бинарная шкала:
+    //   собрал все 6 пар в отведённое время → 0 ошибок (победа, совет чуйки)
+    //   не собрал                            → 2 ошибки (поражение, только за звёзды)
+    const errorCount = won ? 0 : 2
     onCompleteRef.current(errorCount)
   }
 
@@ -420,7 +410,7 @@ export function KoscheiGame({ seed, onComplete }: KoscheiGameProps) {
         marginBottom: spacing.sm, lineHeight: 1.4,
       }}>
         Найди {SYMBOL_COUNT} пар: дуб, сундук, заяц, утка, яйцо, игла. <br />
-        6 — раскрыть совет чуйки, до 9 — пройти без подсказок
+        Соберёшь все пары вовремя — раскроется совет чуйки
       </div>
       <div style={{
         display: 'flex', gap: spacing.md, justifyContent: 'center',

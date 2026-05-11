@@ -10,14 +10,14 @@ const tg = (window as any).Telegram?.WebApp
 const haptic = tg?.HapticFeedback
 
 const REFERENCE_SECONDS = 5
-const PLAY_SECONDS = 15
+const PLAY_SECONDS = 20
 
 // Лесенка результата по числу пойманных НАСТОЯЩИХ монет:
-//   ≥ 12 — идеальная игра (совет чуйки)
-//   ≥ 7  — победа (посул + тип, без совета)
-//   < 7  — поражение (только за звёзды)
-const TARGET_OK = 7
-const TARGET_PERFECT = 12
+//   ≥ 10 — идеальная игра (совет чуйки)
+//   ≥ 6  — победа (посул + тип, без совета)
+//   < 6  — поражение (только за звёзды)
+const TARGET_OK = 6
+const TARGET_PERFECT = 10
 
 const COIN_SIZE = 60
 const COIN_HIT_RADIUS = COIN_SIZE  // ~ вдвое шире самой монеты — толстым пальцам легче
@@ -474,7 +474,7 @@ export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
       }}>
         {phase === 'reference'
           ? 'Запомни обе стороны: аверс с цифрой и реверс с солнцем'
-          : 'Тапай настоящую (+1), не тапай подделки (−2). 7 — пройти, 12 — раскрыть совет'}
+          : 'Тапай настоящую (+1), не тапай подделки (−2). 6 — пройти, 10 — раскрыть совет'}
       </div>
 
       {phase === 'play' && (

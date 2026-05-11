@@ -434,6 +434,7 @@ export function CharterPage() {
         {showTutorial && (
           <TutorialSheet
             rank={gameState?.investorRank ?? 'NEWBIE'}
+            archetype={project?.personaArchetype ?? 'BOYARIN'}
             onClose={() => setShowTutorial(false)}
           />
         )}
@@ -444,11 +445,15 @@ export function CharterPage() {
 
 // ── Обучалка ──────────────────────────────────────────────────────────────
 
-function TutorialSheet({ rank, onClose }: { rank: string; onClose: () => void }) {
+function TutorialSheet({ rank, archetype, onClose }: { rank: string; archetype: string; onClose: () => void }) {
   const t = useT()
+  const isBoyarin = archetype === 'BOYARIN'
   const pool = RANK_MUT_POOLS[rank] ?? RANK_MUT_POOLS.NEWBIE
   const nextHintRaw = t.charter.rankNextHint[rank as keyof typeof t.charter.rankNextHint] ?? ''
   const nextHint = nextHintRaw || null
+  const info = MINIGAME_INFO[archetype]
+  const gameName = info?.name ?? t.charter.tutorialTitle
+  const gameHint = info?.hint ?? ''
 
   return (
     <motion.div
@@ -480,95 +485,101 @@ function TutorialSheet({ rank, onClose }: { rank: string; onClose: () => void })
             background: `${colors.fairyGold}50`, margin: '0 auto 12px',
           }} />
           <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '17px' }}>
-            {t.charter.tutorialTitle}
+            {gameName}
           </div>
           <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
-            {t.charter.tutorialBody}
+            {isBoyarin ? t.charter.tutorialBody : 'Правила испытания и лесенка наград'}
           </div>
         </div>
 
         {/* Прокручиваемое тело */}
         <div style={{ overflowY: 'auto', flex: 1, padding: `0 ${spacing.xl}` }}>
 
-          {/* Эталон */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: spacing.md,
-            marginBottom: spacing.lg,
-            padding: spacing.md,
-            background: `${colors.fairyGold}12`,
-            border: `1px solid ${colors.fairyGold}40`,
-            borderRadius: '12px',
-          }}>
-            <Seal params={TUTORIAL_REF} size={60} />
-            <div>
-              <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '13px' }}>
-                {t.charter.tutorialRef}
-              </div>
-              <div style={{ color: colors.textSecondary, fontSize: '12px', lineHeight: 1.5 }}>
-                {t.charter.tutorialRefHint}
-              </div>
-            </div>
-          </div>
-
-          {/* Виды подделок на текущем чине */}
-          <div style={{ color: colors.textSecondary, fontSize: '12px', marginBottom: spacing.sm }}>
-            {t.charter.tutorialMutations}
-          </div>
-
-          {(Object.entries(t.charter.mutLabels) as [MutTarget, string][])
-            .filter(([target]) => pool.includes(target))
-            .map(([target, label]) => (
-              <div
-                key={target}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: spacing.sm,
-                  marginBottom: '8px',
-                  padding: `${spacing.sm} ${spacing.md}`,
-                  background: 'rgba(42,25,96,0.35)',
-                  borderRadius: '10px',
-                }}
-              >
-                <Seal params={TUTORIAL_REF} size={44} />
-                <div style={{ color: colors.textMuted, fontSize: '18px', lineHeight: 1 }}>→</div>
-                <Seal params={TUTORIAL_EXAMPLES[target]} size={44} />
-                <div style={{ color: colors.textSecondary, fontSize: '12px', flex: 1, lineHeight: 1.4 }}>
-                  {label}
-                </div>
-              </div>
-            ))
-          }
-
-          {/* Подсказка о следующем чине */}
-          {nextHint && (
+          {/* Правила игры — общее для всех архетипов */}
+          {gameHint && (
             <div style={{
-              marginTop: spacing.sm,
-              padding: spacing.sm,
-              color: colors.textMuted, fontSize: '11px',
-              fontStyle: 'italic',
-              textAlign: 'center',
+              padding: spacing.md,
+              background: `${colors.fairyGold}12`,
+              border: `1px solid ${colors.fairyGold}40`,
+              borderRadius: '12px',
+              color: colors.textSecondary,
+              fontSize: '13px',
+              lineHeight: 1.6,
+              marginBottom: spacing.md,
             }}>
-              📈 {nextHint}
+              {gameHint}
             </div>
           )}
 
-          {/* Формула чуйки */}
-          <div style={{
-            marginTop: spacing.lg,
-            padding: spacing.md,
-            background: 'rgba(42,25,96,0.35)',
-            border: `1px solid ${colors.cardBorder}`,
-            borderRadius: '12px',
-          }}>
-            <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '13px', marginBottom: spacing.sm }}>
-              {t.charter.tutorialIntuition}
-            </div>
-            <div style={{ fontSize: '12px', color: colors.textSecondary, lineHeight: 1.8 }}>
-              <div><span style={{ color: colors.success }}>+1</span> {t.charter.tutorialFound}</div>
-              <div><span style={{ color: colors.danger }}>−1</span> {t.charter.tutorialFalse}</div>
-              <div><span style={{ color: colors.warning }}>−2</span> {t.charter.tutorialMiss}</div>
-              <div><span style={{ color: colors.fairyGold }}>+2</span> {t.charter.tutorialClean}</div>
-            </div>
+          {/* Лесенка наград — единый блок для всех мини-игр */}
+          <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '13px', marginBottom: spacing.sm }}>
+            За что получишь награду:
           </div>
+          <TierLadder />
+
+          {isBoyarin && (
+            <>
+              {/* Подделки печатей — только для BOYARIN */}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: spacing.md,
+                marginTop: spacing.lg,
+                marginBottom: spacing.lg,
+                padding: spacing.md,
+                background: `${colors.fairyGold}12`,
+                border: `1px solid ${colors.fairyGold}40`,
+                borderRadius: '12px',
+              }}>
+                <Seal params={TUTORIAL_REF} size={60} />
+                <div>
+                  <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '13px' }}>
+                    {t.charter.tutorialRef}
+                  </div>
+                  <div style={{ color: colors.textSecondary, fontSize: '12px', lineHeight: 1.5 }}>
+                    {t.charter.tutorialRefHint}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ color: colors.textSecondary, fontSize: '12px', marginBottom: spacing.sm }}>
+                {t.charter.tutorialMutations}
+              </div>
+
+              {(Object.entries(t.charter.mutLabels) as [MutTarget, string][])
+                .filter(([target]) => pool.includes(target))
+                .map(([target, label]) => (
+                  <div
+                    key={target}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: spacing.sm,
+                      marginBottom: '8px',
+                      padding: `${spacing.sm} ${spacing.md}`,
+                      background: 'rgba(42,25,96,0.35)',
+                      borderRadius: '10px',
+                    }}
+                  >
+                    <Seal params={TUTORIAL_REF} size={44} />
+                    <div style={{ color: colors.textMuted, fontSize: '18px', lineHeight: 1 }}>→</div>
+                    <Seal params={TUTORIAL_EXAMPLES[target]} size={44} />
+                    <div style={{ color: colors.textSecondary, fontSize: '12px', flex: 1, lineHeight: 1.4 }}>
+                      {label}
+                    </div>
+                  </div>
+                ))
+              }
+
+              {nextHint && (
+                <div style={{
+                  marginTop: spacing.sm,
+                  padding: spacing.sm,
+                  color: colors.textMuted, fontSize: '11px',
+                  fontStyle: 'italic',
+                  textAlign: 'center',
+                }}>
+                  📈 {nextHint}
+                </div>
+              )}
+            </>
+          )}
 
           <div style={{ height: spacing.lg }} />
         </div>

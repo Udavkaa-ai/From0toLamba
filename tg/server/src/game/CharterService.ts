@@ -161,11 +161,10 @@ export async function submitCharter(
   const falsePositives = [...selectedSet].filter(i => !forgedSet.has(i)).sort((a, b) => a - b)
   const falseNegatives = [...forgedSet].filter(i => !selectedSet.has(i)).sort((a, b) => a - b)
 
-  // С версии 4 «чуйка» из игры убрана: delta больше не используется для прокачки,
-  // но поле intuitionDelta в БД сохраняем равным числу ошибок (FP+FN) — на случай
-  // будущей аналитики и для отображения старых PostMortem.
+  // С версии 4 «чуйка» из игры убрана: delta больше не используется для прокачки.
+  // В поле intuitionDelta храним errorCount (число ошибок) — единый формат для
+  // BOYARIN и мини-игр, корректно отображается при reload.
   const errorCount = falsePositives.length + falseNegatives.length
-  const delta = 0
 
   const project = await prisma.project.findUniqueOrThrow({ where: { id: projectId } })
   const perfectInsight = errorCount === 0 ? buildPerfectInsight(project.fate as ProjectFate) : null
@@ -177,7 +176,7 @@ export async function submitCharter(
         charterSelectedIndices: clean,
         charterSubmittedAt: new Date(),
         isIntuitionEvaluated: true,
-        intuitionDelta: delta,
+        intuitionDelta: errorCount,
       },
     }),
     // Только сейчас — когда игрок действительно разобрал грамоту — убираем её из инбокса
@@ -193,7 +192,7 @@ export async function submitCharter(
     truePositives,
     falsePositives,
     falseNegatives,
-    delta,
+    delta: 0,             // legacy-поле, всегда 0 — UI смотрит на errorCount
     errorCount,
     perfectInsight,
   }
@@ -290,8 +289,9 @@ function toPublicView(
   const falseNegatives = [...forgedSet].filter(i => !selectedSet.has(i)).sort((a, b) => a - b)
 
   // На reload (после сабмита) показываем сохранённый результат, но без раскрытия
-  // «шёпота чуйки» — он одноразовый.
-  const errorCount = falsePositives.length + falseNegatives.length
+  // «шёпота чуйки» — он одноразовый. errorCount берём из intuitionDelta — это единый
+  // источник правды и для BOYARIN'a, и для мини-игр (вычисление FP+FN на лету
+  // неверно для мини-игр, где charterSelectedIndices всегда пуст).
   return {
     ...base,
     result: {
@@ -299,8 +299,8 @@ function toPublicView(
       truePositives,
       falsePositives,
       falseNegatives,
-      delta: session.intuitionDelta,
-      errorCount,
+      delta: 0,
+      errorCount: Math.max(0, session.intuitionDelta),
       perfectInsight: null,
     },
   }
