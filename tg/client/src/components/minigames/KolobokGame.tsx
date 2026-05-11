@@ -9,7 +9,7 @@ import type { MiniGameDifficulty } from './BuratinoGame'
 const tg = (window as any).Telegram?.WebApp
 const haptic = tg?.HapticFeedback
 
-const PLAY_SECONDS = 15
+const PLAY_SECONDS = 10
 // Лесенка результата (по аналогии с печатями):
 //   ≥ TARGET_PERFECT — идеальная игра (errorCount = 0)
 //   ≥ TARGET_OK      — победа (errorCount = 1), посул + тип, но без совета

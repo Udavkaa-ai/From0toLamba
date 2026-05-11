@@ -7,8 +7,8 @@ import { playSound } from '@/sounds'
 const tg = (window as any).Telegram?.WebApp
 const haptic = tg?.HapticFeedback
 
-const REFERENCE_SECONDS = 5
-const PLAY_SECONDS = 15
+const REFERENCE_SECONDS = 10
+const PLAY_SECONDS = 10
 const ROTATION_PERIOD_SEC = 5  // полный оборот за 5 секунд
 
 export type MiniGameDifficulty = 'EASY' | 'MEDIUM' | 'HARD'

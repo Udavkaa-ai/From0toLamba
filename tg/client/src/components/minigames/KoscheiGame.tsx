@@ -8,7 +8,7 @@ import type { MiniGameDifficulty } from './BuratinoGame'
 const tg = (window as any).Telegram?.WebApp
 const haptic = tg?.HapticFeedback
 
-const PLAY_SECONDS = 15
+const PLAY_SECONDS = 20
 // MAX_ATTEMPTS убран — ограничение только по времени. Лестница ошибок:
 //   6 открытий пар = 0 ошибок (идеальная игра, совет чуйки)
 //   7 открытий пар = 1 ошибка (победа, посул + тип)
