@@ -3,6 +3,7 @@ import { KoscheiGame } from './KoscheiGame'
 import { KolobokGame } from './KolobokGame'
 import { ZolushkaGame } from './ZolushkaGame'
 import { BabaYagaGame } from './BabaYagaGame'
+import { IvanDurakGame } from './IvanDurakGame'
 import type { MiniGameDifficulty } from './BuratinoGame'
 import { colors, spacing } from '@/theme'
 
@@ -53,6 +54,14 @@ export function MiniGame(props: MiniGameProps) {
     case 'BABA_YAGA':
       return (
         <BabaYagaGame
+          seed={props.seed}
+          difficulty={props.difficulty}
+          onComplete={props.onComplete}
+        />
+      )
+    case 'IVAN_DURAK':
+      return (
+        <IvanDurakGame
           seed={props.seed}
           difficulty={props.difficulty}
           onComplete={props.onComplete}

@@ -6,11 +6,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Суть проекта
 
-«Из грязи в князи» — Telegram Mini App, симулятор купца-инвестора в сказочной Руси. Игрок вкладывает гроши (г) в «дела», большинство из которых обман. Ключевая механика — **«Купеческая грамота»**: мини-игра на внимательность (24 SVG-печати, ищем подделки; таймер зависит от чина). Текущая версия: **3.2.0**.
+«Из грязи в князи» — Telegram Mini App, симулятор купца-инвестора в сказочной Руси. Игрок вкладывает гроши (г) в «дела», большинство из которых обман. Перед каждым вложением — испытание (мини-игра по архетипу хозяина). Текущая версия: **бета 4.0.1**.
 
 - **Активная версия:** `tg/`. `app/` (Android) — заморожен (`CODEMAP.md` описывает Android-архитектуру, к `tg/` не относится).
 - **Валюта:** гроши (г) в UI; DB-поля (`currentValueRubles`, `investedAmountRubles` и т.д.) не переименованы — только отображение. Всегда `Math.floor(n)`, **не** `.toFixed(0)` — `.toFixed` округляет вверх и вызывает «Недостаточно средств».
 - **Архетип хозяина** (`personaArchetype`) публичный — нужен клиенту для баннера/беседы. Все остальные скрытые поля до PostMortem — через `toPublicDTO()`.
+
+### Революция версии 4.0 (бета)
+
+- **«Чуйка» (intuitionScore) полностью убрана из игры** — поле в БД остаётся для совместимости со старыми PostMortem, но больше не растёт, не отображается в UI и не влияет на ранг. Реферальный бонус тоже переведён со «чуйки ≥10» на «взято дел ≥3».
+- **Чины — по числу взятых дел** (Project.investedAmountRubles > 0):
+  - Скоморох → Купец: 5 дел
+  - Купец → Мудрец: 20 дел
+  - Мудрец → Боярин: 50 дел
+  - Боярин → Князь: 100 дел
+  - `recomputeRank` пересчитывает после каждого `invest` и в `advance-day`.
+- **Единый поток интро + результата** для всех 7 архетипов (включая BOYARIN) через `MiniGameIntroScreen` + `MiniGameResultSheet`. Старый ResultSheet и старый IntroScreen удалены, фаза `'result'` тоже.
 
 ---
 
@@ -163,19 +174,71 @@ PAGE_BG.portfolio           // '/backgrounds/BG_PORTFOLIO.webp'
 
 ---
 
-## Механика «Купеческой грамоты»
+## Мини-игры по архетипам (`tg/client/src/components/minigames/`)
 
-- Сетка 4×6 = 24 печати; по истечении таймера — автосабмит
-- **Таймер зависит от чина** (`RANK_TIME_LIMIT` в `CharterService.ts`): NEWBIE 25 с · AMBASSADOR 20 с · ANALYST 15 с · SHARK 10 с · LAMBO_SENSEI 5 с
-- Число подделок: `lieTopics.length + extra(fate)` (INSTANT_SCAM +2, SLOW_DRAIN +1)
-- **`forgedIndices` отправляются клиенту** в `CharterDTO` при старте — клиент должен знать, какие ячейки рисовать мутированными. «Не покидают сервер» — устаревший комментарий.
-- Difficulty по fate: EASY (INSTANT_SCAM/HONEST_FAIL) → явная мутация; MEDIUM (SLOW_DRAIN) → похожий зверь/цвет; HARD (SURVIVOR/UNICORN) → сдвиг тона ±20°
-- **Мутации по чину** (`RANK_MUT_POOLS` в `Seal.tsx`): NEWBIE → только `shape`; AMBASSADOR → `shape, size, dots`; ANALYST+ → все типы включая `colorHue, rings, emblemSame`
-- Формула чуйки: `delta = TP − FP − 2·FN` + бонус `+2` за верно опознанную чистую грамоту
-- **Число подделок на интро-экране**: Скоморох видит точное число, Купец и выше — `???`
-- `sealForCell(refSeed, index, isForged, difficulty, rank?)` — `rank` используется для выбора пула мутаций вместо `difficulty`
+Каждый архетип хозяина (`personaArchetype`) запускает свою мини-игру вместо изучения дела. Все игры используют **PixiJS v8** и общий каркас. Маршрут `/charter/:projectId` остался.
 
-**Навигация назад в CharterPage:** `useBlocker` из React Router **не работает** с `BrowserRouter`. Для перехвата свайпа-назад (edge swipe) используется трюк: при монтировании пушится дубль текущего URL в `history.pushState`, затем `popstate` перехватывается вручную и показывает ExitConfirmSheet. Telegram BackButton перехватывается через `useTelegramBackHandler`.
+| Архетип | Игра | Файл | Таймер |
+|---|---|---|---|
+| `BOYARIN` | Купеческая грамота (24 печати) | `tg/client/src/pages/CharterPage.tsx` + `Seal.tsx` | 15 сек |
+| `BURATINO` | Золотой ключик | `BuratinoGame.tsx` | 10 сек эталон + 10 сек выбор |
+| `KOSCHEI` | Память Кощея (memory match) | `KoscheiGame.tsx` | 20 сек, без лимита открытий |
+| `KOLOBOK` | Нора-нора-нора (whack-a-mole) | `KolobokGame.tsx` | 10 сек |
+| `ZOLUSHKA` | Золушкино счастье (падающие монеты) | `ZolushkaGame.tsx` | 5 сек эталон + 15 сек ловли |
+| `BABA_YAGA` | Котёл (последовательность ингредиентов) | `BabaYagaGame.tsx` | 6 сек эталон + 15 сек выбора |
+| `IVAN_DURAK` | Переводной дурак (повтори карту) | `IvanDurakGame.tsx` | 15 сек |
+
+**Диспетчер**: `MiniGame.tsx` — `switch (archetype)` → нужная игра. Архетипы без файла → `PlaceholderGame` (две тест-кнопки).
+
+**Справочник архетип → название/подсказка**: `info.ts` (`MINIGAME_INFO`). Используется для:
+- Заголовка страницы (`pageTitle`) — заменяет «Купеческая грамота» для не-BOYARIN
+- Подсказки на интро-экране (блок «🎯 Название · правила»)
+- Текста кнопки «Принять испытание →»
+
+**Единая лесенка ошибок (errorCount)** — на ней построены результат и инвест:
+- **0 ошибок** → 🎯 идеальная игра: посул + тип дела + 🔮 совет чуйки + «Вложить»
+- **1 ошибка** → 🙂 победа: посул + тип, без совета, «Вложить»
+- **≥2 ошибок** → 😅 поражение: ничего не раскрыто, только «10⭐ — раскрыть дело»
+
+Что считается ошибкой в каждой игре:
+- BOYARIN: `FP + FN` (false positives + false negatives при разборе печатей)
+- BURATINO: правильный тап = 0, неверный/таймаут = 2
+- KOSCHEI: `attemptsUsed - 6` (число лишних открытий сверх минимума 6 пар); поражение = ≥2
+- KOLOBOK: 12 баллов = 0 ошибок, 7–11 = 1, <7 = 2
+- ZOLUSHKA: 12 пойманных = 0 ошибок, 7–11 = 1, <7 = 2 (фальшак = −2, настоящая = +1)
+- BABA_YAGA: число неверных выборов; недосбор по таймеру = оставшиеся шаги тоже ошибки
+- IVAN_DURAK: число неверных карт
+
+**После выкупа за 10⭐** (`MiniGameResultSheet` → `handleBypass`) сервер `activateMinigameBypass(projectId)` возвращает `perfectInsight` и лист обновляется как при идеальной игре (посул + тип + совет). Игрок может всё взвесить и нажать «Вложить» — или передумать.
+
+**Pixi-паттерны**:
+- Каждая игра рендерит `Application` в свой `<div ref>`. Lifecycle: `app.init({ resizeTo, backgroundAlpha:0, antialias:true, resolution: dpr, autoDensity:true })` в `useEffect`, `destroy(true, {children:true})` в cleanup. Cancelled-флаг от React StrictMode-двойного запуска.
+- Глобальный тикер `app.ticker.add(cb)` — обновляет позиции/анимации.
+- Тапы: `container.eventMode = 'static'; container.cursor = 'pointer'; container.on('pointertap', ...)`. Хит-зона часто шире графики — добавляется отдельный прозрачный `Graphics` поверх.
+- Псевдо-вращение вокруг вертикальной оси: `container.scale.x = Math.cos(t / period * 2π)`. Когда `scale.x < 0` — спрайт мирроится Pixi автоматически, что естественно для «обратной стороны».
+- Двусторонние спрайты (`ZolushkaGame`): два дочерних Container'а (`frontFace`, `backFace`), `visible` переключается по знаку `scale.x`.
+- Всплывающие очки `+1/−2/−3`: DOM-overlay с `framer-motion`, абсолютное позиционирование над канвасом, длительность 0.9с.
+
+**Эталонный RNG**: `seedRng.ts` — FNV-1a → mulberry32. Один и тот же `charter.gridSeed` всегда даёт одну и ту же конфигурацию ассетов мини-игры. Любая «рандомизация» в игре должна идти через этот rng.
+
+**Интро-экран**: `MiniGameIntroScreen` в `CharterPage.tsx`. **Не показывает APY** — посул раскрывается только при победе. Показывает: баннер дела, имя хозяина, число вкладчиков, размер артели, описание, блок с названием/правилами мини-игры, кнопку «Принять испытание →» и AMA-кнопку (10⭐).
+
+**Старая `RANK_TIME_LIMIT` сетка** (NEWBIE 25 → LAMBO 5) удалена — Купеческая грамота теперь всегда 15 сек для всех чинов. Для не-BOYARIN — таймер задаётся внутри игры. Поле `timeLimitSeconds` в `CharterDTO` оставлено для совместимости (всегда 15).
+
+**Серверный сабмит**:
+- `POST /api/charter/:projectId/submit` — BOYARIN, тело `{ selectedIndices: number[] }`, ответ `{ ...result, errorCount, perfectInsight }`
+- `POST /api/charter/:projectId/submit-minigame` — остальные, тело `{ errorCount: number }`, ответ `{ errorCount, perfectInsight }`
+- `submitMiniGame` и `submitCharter` помечают `AmaSession.charterSubmittedAt` и `Project.isInbox=false`, **не** инкрементят `intuitionScore` (поле в БД хранит errorCount для аналитики).
+
+**Навигация назад в CharterPage:** `useBlocker` из React Router **не работает** с `BrowserRouter`. Для перехвата свайпа-назад используется трюк: при монтировании пушится дубль текущего URL в `history.pushState`, затем `popstate` перехватывается вручную и показывает ExitConfirmSheet. Telegram BackButton перехватывается через `useTelegramBackHandler`.
+
+---
+
+## Плавный переход «Следующий день»
+
+`DayTransitionOverlay` (`tg/client/src/components/DayTransitionOverlay.tsx`) — полноэкранный анимированный плейсхолдер с купцом, идущим по ярмарке. Показывается на время advance-day мутации + 800мс буфера, чтобы рефетч инбокса/портфеля успел осесть. Без него игрок видел старые грамоты или «инбокс пуст» на пару секунд.
+
+В `HomePage.tsx` после успешного advance-day и timer_skip инвалидируются: `['gameState']`, `['updates']`, `['inbox']`, `['portfolio']`.
 
 ---
 
@@ -356,6 +419,64 @@ python compress.py --inplace output_backgrounds/
 
 ---
 
+## План на 3D-апгрейд мини-игр
+
+Текущая графика мини-игр — процедурная через `Pixi.Graphics` (примитивы: круги, прямоугольники, поли). Это инди-уровень. Для премиального ощущения планируется поэтапная замена на 3D-модели через **Three.js + react-three-fiber**.
+
+### Решения по стеку
+
+- **Формат моделей**: GLB (binary glTF) — оптимально. Один файл, текстуры PBR + материалы + анимации + скелет внутри. OBJ — работает, но без анимаций и со внешними `.mtl` (конвертим в GLB через `obj2gltf` на intake).
+- **Рантайм**: Three.js (`GLTFLoader` / `OBJLoader`) + **react-three-fiber** + `@react-three/drei` для готовых `useGLTF` / `Environment` / `OrbitControls`. Pixi.js остаётся для тех игр, где 3D не нужен (Купеческая грамота, Память Кощея).
+- **Сосуществование**: Pixi и Three.js работают параллельно — у каждой мини-игры свой канвас. Один и тот же `MiniGameProps` интерфейс, выбор рантайма — внутри игры.
+- **Бандл**: Three.js core ~150 кб gz + R3F ~30 кб + drei (selective) ~30 кб. Можно code-split: `import('./IvanDurakGame3D')` — рантайм грузится только когда открыта 3D-игра.
+- **Папка ассетов**: `tg/client/public/models/<archetype>/<asset>.glb`. Vite копирует в дистрибутив автоматически.
+- **Telegram Mini App совместимость**: WebGL работает на iOS/Android. На самых старых Android FPS может падать — мы должны держать polygon count низким (<5k треугольников на модель) и избегать тяжёлого post-processing.
+
+### Источники моделей
+
+| Источник | Что | Лицензия | Стиль |
+|---|---|---|---|
+| [Poly Pizza](https://poly.pizza/) | сундук, череп, гриб, монета, ключ | CC0 | Low-poly, дёшево по полигонам |
+| [Sketchfab](https://sketchfab.com/) (CC0 filter) | разное | CC0 | От арт-стайла до фотореализма |
+| [Quaternius](https://quaternius.com/) | модульные паки (фэнтези/средневековье) | CC0 | Low-poly, единый стиль |
+| [Kenney.nl](https://kenney.nl/) | геймдев-сеты | CC0 | Минимальный, чистый |
+| [Mixamo](https://www.mixamo.com/) | rigged-персонажи + анимации ходьбы/прыжков | free для проекта | Реалистичный человек |
+| **Свой Vertex AI** (`tools/banners/`) | произвольные ассеты в фирменном стиле | проектное | Сказочная Русь (как баннеры) |
+
+Предпочтительный путь: для **визуала** — Poly Pizza / Sketchfab CC0; для **анимаций** — Mixamo + кастомные через Blender. Альтернатива: всё в Vertex AI + meshy.ai (text-to-3D в фирменном стиле).
+
+### Поэтапный план миграции
+
+1. **Этап Α — инфраструктура** (1 коммит):
+   - Добавить `three`, `@react-three/fiber`, `@react-three/drei` в `tg/client/package.json`
+   - Создать `tools/convert-models.sh` (батч-конверсия OBJ→GLB через npx obj2gltf)
+   - Создать `tg/client/public/models/` (gitignored крупные файлы, мелкие коммитим)
+   - Утилита `tg/client/src/components/minigames/three/useModel.ts` — обёртка над `useGLTF` с preload и кэшем
+2. **Этап Β — пилот: Buratino 3D**:
+   - Заменить `BuratinoGame.tsx` на `BuratinoGame3D.tsx` с Three.js: 7 GLB-ключей с PBR, вращение вокруг Y-оси через `useFrame`, кликабельные `<mesh>` с raycasting
+   - Если визуал устроит — продолжаем; если нет — откатываем
+3. **Этап Γ — остальные кандидаты на 3D**:
+   - **Zolushka**: монеты как 3D-диски с frontTexture/backTexture, реальное вращение
+   - **Kolobok**: 5 GLB-зверушек, простая прыжковая анимация через `useFrame`
+   - **BabaYaga**: котёл-фон + 3D-ингредиенты на карточках
+4. **Этап Δ — остаются на Pixi** (2D хватает):
+   - **Koschei**: карточная сетка — 3D не добавляет ценности
+   - **BOYARIN**: 24 печати — текущая `Seal.tsx` неплохо смотрится
+
+### Что НЕ делать пока
+
+- Не подключать Three.js до пилота — лишний бандл.
+- Не модифицировать Pixi-игры под GLB — это другой рантайм, лучше отдельная версия.
+- Не покупать платные паки до проверки на одной игре — может не понравиться визуально.
+
+### Полезные комбинации
+
+- **Lottie / Rive** для UI-микровзаимодействий (открытие карточки, фейерверк при идеальной игре) — независимо от 3D-выбора. `@rive-app/canvas` или `lottie-react`.
+- **Particle emitters** (`@pixi/particle-emitter` для Pixi, `three-nebula` для Three.js) — искры, дым, пузыри. Дёшево по коду, дорого выглядит.
+- **Spine / DragonBones** — если захочется скелетных 2D-анимаций (например, говорящий Буратино). Spine Pro ~$300.
+
+---
+
 ## Известные TODO
 
 | Задача | Где |
@@ -363,3 +484,7 @@ python compress.py --inplace output_backgrounds/
 | Push-уведомления через бота | `bot/bot.ts` |
 | Экран «Вести с ярмарки» (News feed) | новая страница клиента |
 | Admin-панель | отдельный роут/сервис |
+| 3D-апгрейд мини-игр | см. секцию выше |
+| `LeaderboardPage.IntuitionTab` — мёртвый код, удалить в v4.1 | `LeaderboardPage.tsx` |
+| FAQ / туториал — упоминания «чуйки» в текстах | `i18n/index.ts`, `FaqModal.tsx`, `OnboardingTutorial.tsx` |
+| Реферальный прогресс-бар на главной — крутится по нулю `intuitionScore` | `HomePage.tsx`, `MyReferralEntryDTO` |
