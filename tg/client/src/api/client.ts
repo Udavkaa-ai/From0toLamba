@@ -312,6 +312,8 @@ export const api = {
     get: (projectId: string) => apiClient.get<CharterDTO>(`/charter/${projectId}`).then(r => r.data),
     submit: (projectId: string, selectedIndices: number[]) =>
       apiClient.post<CharterSubmitDTO>(`/charter/${projectId}/submit`, { selectedIndices }).then(r => r.data),
+    submitMiniGame: (projectId: string, won: boolean) =>
+      apiClient.post<{ delta: number }>(`/charter/${projectId}/submit-minigame`, { won }).then(r => r.data),
   },
 
   leaderboard: {
@@ -342,7 +344,11 @@ export const api = {
   },
 
   payments: {
-    createInvoice: (feature: 'timer_skip' | 'ama_unlock' | 'extra_slot', projectId?: string, merchantName?: string) =>
+    createInvoice: (
+      feature: 'timer_skip' | 'ama_unlock' | 'extra_slot' | 'minigame_bypass',
+      projectId?: string,
+      merchantName?: string,
+    ) =>
       apiClient.post<{ invoiceLink: string | null }>('/payments/invoice', { feature, projectId, merchantName }).then(r => r.data),
     activateTimerSkip: () =>
       apiClient.post<AdvanceDayResultDTO>('/payments/activate', { feature: 'timer_skip' }).then(r => r.data),
@@ -350,6 +356,8 @@ export const api = {
       apiClient.post<{ success: boolean }>('/payments/activate', { feature: 'ama_unlock', projectId }).then(r => r.data),
     activateExtraSlot: () =>
       apiClient.post<{ success: boolean }>('/payments/activate', { feature: 'extra_slot' }).then(r => r.data),
+    activateMinigameBypass: () =>
+      apiClient.post<{ success: boolean }>('/payments/activate', { feature: 'minigame_bypass' }).then(r => r.data),
   },
 
   chat: {

@@ -5,6 +5,7 @@ import { generateOnboardingProject } from '../game/GenerateProjectService'
 const STARS_TIMER_SKIP = 10
 const STARS_AMA_UNLOCK = 10
 const STARS_EXTRA_SLOT = 10
+const STARS_MINIGAME_BYPASS = 10
 
 let _bot: Bot | null = null
 let broadcastActive = false
@@ -60,6 +61,17 @@ export async function createExtraSlotInvoice(userId: number, payload: string): P
     '',
     'XTR',
     [{ label: 'Доп. слот', amount: STARS_EXTRA_SLOT }],
+  )
+}
+
+export async function createMinigameBypassInvoice(userId: number, payload: string): Promise<string> {
+  return getBot().api.createInvoiceLink(
+    'Вложить, минуя испытание',
+    'Пропустить проверку чуйки и вложиться в дело несмотря на проигрыш в мини-игре',
+    payload,
+    '',
+    'XTR',
+    [{ label: 'Пропуск проверки', amount: STARS_MINIGAME_BYPASS }],
   )
 }
 
@@ -172,7 +184,12 @@ function setupHandlers(bot: Bot) {
 
       // Фича активируется клиентом через /api/payments/activate после callback "paid".
       // Здесь только обновляем telegramChargeId для учёта и возможных возвратов.
-      console.log(`[Payment] logged userId=${user.id} feature=${payload.startsWith('ts:') ? 'timer_skip' : 'ama_unlock'}`)
+      const featureFromPayload =
+        payload.startsWith('ts:') ? 'timer_skip' :
+        payload.startsWith('au:') ? 'ama_unlock' :
+        payload.startsWith('es:') ? 'extra_slot' :
+        payload.startsWith('mb:') ? 'minigame_bypass' : 'unknown'
+      console.log(`[Payment] logged userId=${user.id} feature=${featureFromPayload}`)
     } catch (err) {
       console.error('[Payment] Error processing successful_payment:', err)
     }

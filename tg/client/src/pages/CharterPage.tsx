@@ -29,9 +29,18 @@ const TUTORIAL_EXAMPLES: Record<MutTarget, ReturnType<typeof generateReferenceSe
   emblemSame: mutateSeal(TUTORIAL_REF, TUTORIAL_SEED, 5, 'EASY', ['emblemSame']),
 }
 
-type Phase = 'intro' | 'reference' | 'scan' | 'result'
+type Phase = 'intro' | 'reference' | 'scan' | 'result' | 'minigame' | 'miniresult'
 
 const REFERENCE_SECONDS = 3
+
+// Архетипы, для которых интро ведёт в мини-игру вместо Купеческой грамоты.
+// BOYARIN остаётся на классическом потоке (Грамота).
+const MINIGAME_ARCHETYPES = new Set([
+  'BURATINO', 'KOLOBOK', 'KOSCHEI', 'ZOLUSHKA', 'BABA_YAGA', 'IVAN_DURAK',
+])
+function isMiniGameArchetype(archetype: string | undefined | null): boolean {
+  return !!archetype && MINIGAME_ARCHETYPES.has(archetype)
+}
 
 export function CharterPage() {
   const { projectId } = useParams<{ projectId: string }>()
@@ -44,6 +53,7 @@ export function CharterPage() {
   const [refCountdown, setRefCountdown] = useState(REFERENCE_SECONDS)
   const [scanCountdown, setScanCountdown] = useState<number | null>(null)
   const [result, setResult] = useState<CharterResultDTO | null>(null)
+  const [miniGameResult, setMiniGameResult] = useState<{ won: boolean; delta: number } | null>(null)
   const [showInvest, setShowInvest] = useState(false)
   const [onboardingBonus, setOnboardingBonus] = useState<number | null>(null)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
@@ -71,7 +81,7 @@ export function CharterPage() {
 
   const tryGoBack = () => {
     // Уже разобрано — просто уходим
-    if (phase === 'result') {
+    if (phase === 'result' || phase === 'miniresult') {
       navigate(-1)
       return
     }
@@ -86,7 +96,7 @@ export function CharterPage() {
   // тогда свайп-назад попадает обратно на тот же URL (React Router не демонтирует
   // компонент) и мы перехватываем popstate, чтобы показать тот же попап.
   useEffect(() => {
-    if (phase === 'result') return
+    if (phase === 'result' || phase === 'miniresult') return
     window.history.pushState(null, '', window.location.pathname)
     const handlePopState = () => {
       window.history.pushState(null, '', window.location.pathname)
@@ -109,9 +119,14 @@ export function CharterPage() {
   const project = charter?.project ?? null
   const isExpired = !!charterError && /истекла/i.test((charterError as Error).message)
 
-  // Если грамота уже сабмичена — сразу на result
+  // Если сессия уже сабмичена — сразу на нужный экран результата.
+  // Для не-BOYARIN мини-игр результат — только delta (won = delta > 0).
   useEffect(() => {
-    if (charter?.isSubmitted && charter.result) {
+    if (!charter?.isSubmitted || !charter.result) return
+    if (isMiniGameArchetype(charter.project.personaArchetype)) {
+      setMiniGameResult({ won: charter.result.delta > 0, delta: charter.result.delta })
+      setPhase('miniresult')
+    } else {
       setResult(charter.result)
       setSelected(new Set(charter.result.selectedIndices))
       setPhase('result')
@@ -134,6 +149,39 @@ export function CharterPage() {
     }, 1000)
     return () => clearInterval(id)
   }, [phase])
+
+  // Сабмит результата мини-игры (не-BOYARIN архетипы)
+  const submitMiniGameMutation = useMutation({
+    mutationFn: (won: boolean) => api.charter.submitMiniGame(projectId!, won),
+    onSuccess: ({ delta }, won) => {
+      setMiniGameResult({ won, delta })
+      setPhase('miniresult')
+      haptic?.notificationOccurred(won ? 'success' : 'warning')
+      playSound(won ? 'win' : 'lose')
+      qc.invalidateQueries({ queryKey: ['gameState'] })
+
+      if (gameState?.isOnboardingComplete === false && !onboardingTriggeredRef.current) {
+        onboardingTriggeredRef.current = true
+        api.game.completeOnboarding().then((r: any) => {
+          if (r?.bonusAwarded) {
+            setOnboardingBonus(r.bonusAwarded)
+            if (gameState) {
+              setGameState({
+                ...gameState,
+                balance: gameState.balance + r.bonusAwarded,
+                isOnboardingComplete: true,
+              })
+            }
+          }
+        }).catch(() => {})
+      }
+    },
+  })
+
+  const handleMiniGameComplete = (won: boolean) => {
+    if (submitMiniGameMutation.isPending) return
+    submitMiniGameMutation.mutate(won)
+  }
 
   // Таймер проверки
   const submitMutation = useMutation({
@@ -282,8 +330,17 @@ export function CharterPage() {
             timeLimitSeconds={charter.timeLimitSeconds}
             difficulty={charter.difficulty}
             showForgeryCount={!gameState?.investorRank || gameState.investorRank === 'NEWBIE'}
-            onStart={() => setPhase('reference')}
+            onStart={() => setPhase(isMiniGameArchetype(project.personaArchetype) ? 'minigame' : 'reference')}
             onChat={() => navigate(`/ama/${projectId}`)}
+          />
+        )}
+
+        {phase === 'minigame' && project && (
+          <MiniGameStub
+            archetype={project.personaArchetype}
+            seed={charter.gridSeed}
+            pending={submitMiniGameMutation.isPending}
+            onComplete={handleMiniGameComplete}
           />
         )}
 
@@ -341,6 +398,18 @@ export function CharterPage() {
         {phase === 'result' && result && !showInvest && (
           <ResultSheet
             result={result}
+            onInvest={() => setShowInvest(true)}
+            onSkip={() => navigate('/inbox')}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {phase === 'miniresult' && miniGameResult && project && !showInvest && (
+          <MiniGameResultSheet
+            won={miniGameResult.won}
+            delta={miniGameResult.delta}
+            project={project}
             onInvest={() => setShowInvest(true)}
             onSkip={() => navigate('/inbox')}
           />
@@ -845,6 +914,172 @@ function ScanGrid({
   )
 }
 
+// Заглушка вместо реальной мини-игры (Этап 0). Когда придёт время Этапа 1 (Buratino),
+// этот компонент будет заменён на dispatcher по архетипу → конкретный <XxxGame seed onComplete />.
+function MiniGameStub({
+  archetype, seed, pending, onComplete,
+}: {
+  archetype: string
+  seed: string
+  pending: boolean
+  onComplete: (won: boolean) => void
+}) {
+  return (
+    <div style={{
+      flex: 1, padding: spacing.xxl,
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      gap: spacing.lg, maxWidth: '500px', margin: '0 auto', width: '100%', boxSizing: 'border-box',
+    }}>
+      <div style={{ fontSize: '52px' }}>🪆</div>
+      <div style={{ color: colors.fairyGold, fontSize: '20px', fontWeight: 700, textAlign: 'center' }}>
+        Здесь будет испытание
+      </div>
+      <div style={{ color: colors.textMuted, fontSize: '13px', textAlign: 'center', lineHeight: 1.5 }}>
+        Архетип: {archetype}<br />
+        Скоро здесь появится мини-игра. Пока — служебные кнопки для теста механики.
+      </div>
+      <div style={{ color: colors.textMuted, fontSize: '10px', opacity: 0.6 }}>
+        seed: {seed.slice(0, 12)}…
+      </div>
+      <div style={{ display: 'flex', gap: spacing.sm, width: '100%' }}>
+        <button
+          onClick={() => onComplete(false)}
+          disabled={pending}
+          style={{ ...secondaryBtnStyle, flex: 1, marginTop: 0, opacity: pending ? 0.6 : 1 }}
+        >
+          Проиграть (тест)
+        </button>
+        <button
+          onClick={() => onComplete(true)}
+          disabled={pending}
+          style={{ ...primaryBtnStyle, flex: 1, opacity: pending ? 0.6 : 1 }}
+        >
+          Победить (тест)
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function MiniGameResultSheet({
+  won, delta, project, onInvest, onSkip,
+}: {
+  won: boolean
+  delta: number
+  project: { claimedAPY: number; type: string; personaArchetype: string }
+  onInvest: () => void
+  onSkip: () => void
+}) {
+  const t = useT()
+  const [bypassPending, setBypassPending] = useState(false)
+  const [bypassError, setBypassError] = useState<string | null>(null)
+  const emoji = won ? '🎯' : '😅'
+  const dealTypeLabel = (t.inbox.types as Record<string, string>)[project.type] ?? project.type
+
+  const handleBypass = async () => {
+    if (bypassPending) return
+    setBypassError(null)
+    setBypassPending(true)
+    try {
+      const { invoiceLink } = await api.payments.createInvoice('minigame_bypass')
+      if (invoiceLink) {
+        tg.openInvoice(invoiceLink, async (status: string) => {
+          if (status === 'paid') {
+            try {
+              await api.payments.activateMinigameBypass()
+              haptic?.notificationOccurred('success')
+              onInvest()
+            } catch (err: any) {
+              setBypassError(err.message)
+            }
+          }
+          setBypassPending(false)
+        })
+      } else {
+        // Dev-режим: фича уже «активирована» при createInvoice
+        haptic?.notificationOccurred('success')
+        onInvest()
+        setBypassPending(false)
+      }
+    } catch (err: any) {
+      setBypassError(err.message)
+      setBypassPending(false)
+    }
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 220,
+        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+        background: 'rgba(0,0,0,0.55)',
+      }}
+    >
+      <motion.div
+        initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+        style={{
+          width: '100%', maxWidth: '500px',
+          background: colors.nightBlue,
+          borderRadius: '20px 20px 0 0',
+          border: `1px solid ${colors.cardBorder}`,
+          padding: `${spacing.xxl} ${spacing.xl} calc(${spacing.xl} + env(safe-area-inset-bottom))`,
+          boxShadow: '0 -8px 32px rgba(0,0,0,0.6)',
+        }}
+      >
+        <div style={{
+          width: '40px', height: '4px', borderRadius: '2px',
+          background: `${colors.fairyGold}50`, margin: `0 auto ${spacing.md}`,
+        }} />
+
+        <div style={{ textAlign: 'center', marginBottom: spacing.lg }}>
+          <div style={{ fontSize: '40px' }}>{emoji}</div>
+          <div style={{ color: colors.fairyGold, fontSize: '22px', fontWeight: 700, marginTop: '4px' }}>
+            {won ? `+${delta} ${t.common.intuition.toLowerCase()}` : `${t.common.intuition} ${delta >= 0 ? '+' : ''}${delta}`}
+          </div>
+          <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
+            {won ? 'Чуйка не подвела' : 'Чуйка промахнулась — вложение под вопросом'}
+          </div>
+        </div>
+
+        <div style={paramsRowStyle}>
+          <ParamChip label={t.charter.apy} value={`${project.claimedAPY}%`} />
+          <ParamChip label={t.charter.diffLabel} value={dealTypeLabel} />
+        </div>
+
+        {bypassError && (
+          <div style={{ color: colors.danger, fontSize: '12px', textAlign: 'center', marginTop: spacing.sm }}>
+            {bypassError}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: spacing.sm, marginTop: spacing.lg }}>
+          <button onClick={onSkip} style={{ ...secondaryBtnStyle, flex: 1, marginTop: 0 }}>
+            {t.charter.resultSkip}
+          </button>
+          {won ? (
+            <button
+              onClick={onInvest}
+              style={{ ...primaryBtnStyle, flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+            >
+              <CoinIcon size={16} /> {t.charter.resultInvest}
+            </button>
+          ) : (
+            <button
+              onClick={handleBypass}
+              disabled={bypassPending}
+              style={{ ...primaryBtnStyle, flex: 1, opacity: bypassPending ? 0.6 : 1 }}
+            >
+              {bypassPending ? '⏳' : '10 ⭐ — вложить'}
+            </button>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  )
+}
+
 function ResultSheet({
   result, onInvest, onSkip,
 }: { result: CharterResultDTO; onInvest: () => void; onSkip: () => void }) {
@@ -1245,6 +1480,7 @@ function phaseCaption(phase: Phase, charter: CharterDTO, scanCountdown: number |
   if (phase === 'intro')     return t.charter.phaseIntro
   if (phase === 'reference') return t.charter.phaseMemorize
   if (phase === 'scan')      return `${t.charter.phaseFind} · ${scanCountdown ?? charter.timeLimitSeconds} ${t.charter.timer}`
+  if (phase === 'minigame')  return t.charter.phaseFind
   return t.charter.phaseResult
 }
 

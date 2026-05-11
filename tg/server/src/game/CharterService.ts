@@ -6,18 +6,10 @@ import { recomputeRank } from './rankService'
 const GRID_SIZE = 24
 const MAX_FORGERIES = GRID_SIZE - 1
 
-// Чем выше чин — тем меньше времени на рассматривание грамоты
-const RANK_TIME_LIMIT: Record<string, number> = {
-  NEWBIE:       25,
-  AMBASSADOR:   20,
-  ANALYST:      15,
-  SHARK:        10,
-  LAMBO_SENSEI:  5,
-}
-
-function timeLimitForRank(rank: string): number {
-  return RANK_TIME_LIMIT[rank] ?? 15
-}
+// С версии 3.3 таймер Купеческой грамоты (BOYARIN) фиксирован — 15 секунд для всех
+// чинов. Прочие архетипы запускают свои мини-игры (тоже на 15 сек), сервер этот
+// таймер для них не использует, но шлёт согласованное значение в DTO.
+const CHARTER_TIME_LIMIT_SECONDS = 15
 
 /** Сила мутации подделок — чем честнее дело, тем тоньше мутации */
 export type CharterDifficulty = 'EASY' | 'MEDIUM' | 'HARD'
@@ -81,8 +73,9 @@ export interface CharterPublicView {
   }
 }
 
-/** Создать или вернуть существующую сессию-грамоту */
-export async function startCharter(userId: number, projectId: string, rank = 'NEWBIE'): Promise<CharterPublicView> {
+/** Создать или вернуть существующую сессию-грамоту.
+ *  `rank` оставлен для обратной совместимости вызовов, но больше не влияет на таймер. */
+export async function startCharter(userId: number, projectId: string, _rank = 'NEWBIE'): Promise<CharterPublicView> {
   const project = await prisma.project.findFirstOrThrow({ where: { id: projectId, userId } })
 
   // Грамота закрыта (истекла или дело завершилось) — новую сессию не создаём,
@@ -92,7 +85,7 @@ export async function startCharter(userId: number, projectId: string, rank = 'NE
     throw new Error('CHARTER_EXPIRED')
   }
   if (existing && existing.gridSeed) {
-    return toPublicView(existing, project, rank)
+    return toPublicView(existing, project)
   }
 
   const fate = project.fate as ProjectFate
@@ -121,17 +114,17 @@ export async function startCharter(userId: number, projectId: string, rank = 'NE
         },
       })
 
-  return toPublicView(session, project, rank)
+  return toPublicView(session, project)
 }
 
-export async function getCharter(userId: number, projectId: string, rank = 'NEWBIE'): Promise<CharterPublicView | null> {
+export async function getCharter(userId: number, projectId: string, _rank = 'NEWBIE'): Promise<CharterPublicView | null> {
   const session = await prisma.amaSession.findUnique({ where: { projectId } })
   if (!session || session.userId !== userId || !session.gridSeed) return null
   const project = await prisma.project.findUnique({ where: { id: projectId } })
   if (!project) return null
   // Дело уже закрылось (advance-day откатил грамоту) — сигнализируем клиенту отдельным кодом
   if (project.isClosed) throw new Error('CHARTER_EXPIRED')
-  return toPublicView(session, project, rank)
+  return toPublicView(session, project)
 }
 
 export interface SubmitCharterResult {
@@ -206,6 +199,45 @@ export async function submitCharter(
   }
 }
 
+/** Сабмит результата мини-игры (не-BOYARIN архетипы). Победа = +3 интуиции, поражение = 0.
+ *  В отличие от submitCharter, не сверяет индексы — доверяет клиенту (мини-игра идёт в реальном
+ *  времени, серверной валидации нет). */
+export async function submitMiniGame(
+  userId: number,
+  projectId: string,
+  won: boolean,
+): Promise<{ delta: number }> {
+  const session = await prisma.amaSession.findUniqueOrThrow({ where: { projectId } })
+  if (session.userId !== userId) throw new Error('FORBIDDEN')
+  if (!session.gridSeed) throw new Error('NO_CHARTER')
+  if (session.charterSubmittedAt) throw new Error('ALREADY_SUBMITTED')
+
+  const delta = won ? 3 : 0
+
+  await prisma.$transaction([
+    prisma.amaSession.update({
+      where: { id: session.id },
+      data: {
+        charterSubmittedAt: new Date(),
+        isIntuitionEvaluated: true,
+        intuitionDelta: delta,
+      },
+    }),
+    prisma.gameState.update({
+      where: { userId },
+      data: { intuitionScore: { increment: delta } },
+    }),
+    prisma.project.update({
+      where: { id: projectId },
+      data: { isInbox: false },
+    }),
+  ])
+
+  await recomputeRank(userId)
+
+  return { delta }
+}
+
 function toPublicView(
   session: {
     id: string
@@ -218,7 +250,6 @@ function toPublicView(
     intuitionDelta: number
   },
   project: Parameters<typeof toPublicDTO>[0],
-  rank = 'NEWBIE',
 ): CharterPublicView {
   const isSubmitted = !!session.charterSubmittedAt
   const base: CharterPublicView = {
@@ -226,7 +257,7 @@ function toPublicView(
     gridSeed: session.gridSeed ?? '',
     gridSize: session.gridSize,
     difficulty: (session.difficulty as CharterDifficulty) ?? 'MEDIUM',
-    timeLimitSeconds: timeLimitForRank(rank),
+    timeLimitSeconds: CHARTER_TIME_LIMIT_SECONDS,
     forgedIndices: session.forgedIndices,
     isSubmitted,
     project: toPublicDTO(project),
