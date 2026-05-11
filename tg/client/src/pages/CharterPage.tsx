@@ -10,6 +10,7 @@ import { colors, spacing } from '@/theme'
 import { Seal, generateReferenceSeal, sealForCell, mutateSeal, RANK_MUT_POOLS } from '@/components/Seal'
 import type { MutTarget } from '@/components/Seal'
 import { MiniGame } from '@/components/minigames/MiniGame'
+import { MINIGAME_INFO, isMiniGameArchetype } from '@/components/minigames/info'
 import { CoinIcon } from '@/components/icons'
 import { useTelegramBackHandler } from '@/hooks/useTelegramBackButton'
 import { playSound } from '@/sounds'
@@ -34,15 +35,6 @@ type Phase = 'intro' | 'reference' | 'scan' | 'result' | 'minigame' | 'miniresul
 
 const REFERENCE_SECONDS = 3
 
-// Архетипы, для которых интро ведёт в мини-игру вместо Купеческой грамоты.
-// BOYARIN остаётся на классическом потоке (Грамота).
-const MINIGAME_ARCHETYPES = new Set([
-  'BURATINO', 'KOLOBOK', 'KOSCHEI', 'ZOLUSHKA', 'BABA_YAGA', 'IVAN_DURAK',
-])
-function isMiniGameArchetype(archetype: string | undefined | null): boolean {
-  return !!archetype && MINIGAME_ARCHETYPES.has(archetype)
-}
-
 export function CharterPage() {
   const { projectId } = useParams<{ projectId: string }>()
   const navigate = useNavigate()
@@ -54,7 +46,7 @@ export function CharterPage() {
   const [refCountdown, setRefCountdown] = useState(REFERENCE_SECONDS)
   const [scanCountdown, setScanCountdown] = useState<number | null>(null)
   const [result, setResult] = useState<CharterResultDTO | null>(null)
-  const [miniGameResult, setMiniGameResult] = useState<{ won: boolean; delta: number } | null>(null)
+  const [miniGameResult, setMiniGameResult] = useState<{ won: boolean; delta: number; perfectInsight: string | null } | null>(null)
   const [showInvest, setShowInvest] = useState(false)
   const [onboardingBonus, setOnboardingBonus] = useState<number | null>(null)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
@@ -125,7 +117,8 @@ export function CharterPage() {
   useEffect(() => {
     if (!charter?.isSubmitted || !charter.result) return
     if (isMiniGameArchetype(charter.project.personaArchetype)) {
-      setMiniGameResult({ won: charter.result.delta > 0, delta: charter.result.delta })
+      // При перезаходе после сабмита insight не показываем — он был доступен только один раз.
+      setMiniGameResult({ won: charter.result.delta > 0, delta: charter.result.delta, perfectInsight: null })
       setPhase('miniresult')
     } else {
       setResult(charter.result)
@@ -153,9 +146,10 @@ export function CharterPage() {
 
   // Сабмит результата мини-игры (не-BOYARIN архетипы)
   const submitMiniGameMutation = useMutation({
-    mutationFn: (won: boolean) => api.charter.submitMiniGame(projectId!, won),
-    onSuccess: ({ delta }, won) => {
-      setMiniGameResult({ won, delta })
+    mutationFn: ({ won, perfect }: { won: boolean; perfect: boolean }) =>
+      api.charter.submitMiniGame(projectId!, won, perfect),
+    onSuccess: ({ delta, perfectInsight }, { won }) => {
+      setMiniGameResult({ won, delta, perfectInsight })
       setPhase('miniresult')
       haptic?.notificationOccurred(won ? 'success' : 'warning')
       playSound(won ? 'win' : 'lose')
@@ -179,9 +173,9 @@ export function CharterPage() {
     },
   })
 
-  const handleMiniGameComplete = (won: boolean) => {
+  const handleMiniGameComplete = (won: boolean, perfect: boolean) => {
     if (submitMiniGameMutation.isPending) return
-    submitMiniGameMutation.mutate(won)
+    submitMiniGameMutation.mutate({ won, perfect })
   }
 
   // Таймер проверки
@@ -304,7 +298,7 @@ export function CharterPage() {
             {t.common.back}
           </button>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '15px' }}>{t.charter.title}</div>
+            <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '15px' }}>{pageTitle(project?.personaArchetype, t)}</div>
             <div style={{ color: colors.textMuted, fontSize: '11px' }}>
               {phaseCaption(phase, charter, scanCountdown, t)}
             </div>
@@ -325,15 +319,23 @@ export function CharterPage() {
 
         {/* Тело — зависит от фазы */}
         {phase === 'intro' && project && (
-          <IntroScreen
-            project={project}
-            forgeryCount={charter.forgedIndices.length}
-            timeLimitSeconds={charter.timeLimitSeconds}
-            difficulty={charter.difficulty}
-            showForgeryCount={!gameState?.investorRank || gameState.investorRank === 'NEWBIE'}
-            onStart={() => setPhase(isMiniGameArchetype(project.personaArchetype) ? 'minigame' : 'reference')}
-            onChat={() => navigate(`/ama/${projectId}`)}
-          />
+          isMiniGameArchetype(project.personaArchetype) ? (
+            <MiniGameIntroScreen
+              project={project}
+              onStart={() => setPhase('minigame')}
+              onChat={() => navigate(`/ama/${projectId}`)}
+            />
+          ) : (
+            <IntroScreen
+              project={project}
+              forgeryCount={charter.forgedIndices.length}
+              timeLimitSeconds={charter.timeLimitSeconds}
+              difficulty={charter.difficulty}
+              showForgeryCount={!gameState?.investorRank || gameState.investorRank === 'NEWBIE'}
+              onStart={() => setPhase('reference')}
+              onChat={() => navigate(`/ama/${projectId}`)}
+            />
+          )
         )}
 
         {phase === 'minigame' && project && (
@@ -411,6 +413,7 @@ export function CharterPage() {
           <MiniGameResultSheet
             won={miniGameResult.won}
             delta={miniGameResult.delta}
+            perfectInsight={miniGameResult.perfectInsight}
             project={project}
             onInvest={() => setShowInvest(true)}
             onSkip={() => navigate('/inbox')}
@@ -679,6 +682,84 @@ function forgeryColor(n: number): string {
   return colors.danger
 }
 
+// Интро для не-BOYARIN: тот же блок дела (баннер, имя, чипсы, описание), но вместо
+// характеристик грамоты — название и описание мини-игры.
+function MiniGameIntroScreen({
+  project, onStart, onChat,
+}: {
+  project: any
+  onStart: () => void
+  onChat: () => void
+}) {
+  const t = useT()
+  const info = MINIGAME_INFO[project.personaArchetype]
+  const gameName = info?.name ?? 'Испытание хозяина'
+  const gameHint = info?.hint ?? 'Хозяин предложит испытание. Пройди его — и сможешь вложиться.'
+  const gameBtn  = info?.startBtn ?? 'Принять испытание →'
+
+  return (
+    <div style={{ flex: 1, padding: spacing.lg, maxWidth: '500px', margin: '0 auto', width: '100%', boxSizing: 'border-box', overflowY: 'auto' }}>
+      {project.bannerImageUrl && (
+        <img
+          src={project.bannerImageUrl}
+          alt={project.name}
+          style={{ width: '100%', aspectRatio: '16 / 9', objectFit: 'cover', borderRadius: '12px', marginBottom: spacing.md, display: 'block' }}
+          onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+        />
+      )}
+      <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '18px' }}>{project.name}</div>
+      <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '2px' }}>
+        👤 {project.developerName}
+      </div>
+
+      <div style={paramsRowStyle}>
+        <ParamChip label={t.charter.apy} value={`${project.claimedAPY}%`} />
+        <ParamChip label={t.charter.users} value={project.currentUserCount.toLocaleString('ru')} />
+        <ParamChip label={t.charter.guild} value={`${project.claimedTeamSize} чел.`} />
+      </div>
+
+      <div style={{
+        marginTop: spacing.lg,
+        padding: spacing.md,
+        background: 'rgba(42, 25, 96, 0.35)',
+        border: `1px solid ${colors.cardBorder}`,
+        borderRadius: '12px',
+        color: colors.textSecondary,
+        fontSize: '13px',
+        lineHeight: 1.5,
+      }}>
+        {project.description}
+      </div>
+
+      <div style={{
+        marginTop: spacing.lg,
+        padding: spacing.md,
+        background: `${colors.fairyGold}12`,
+        border: `1px solid ${colors.fairyGold}50`,
+        borderRadius: '12px',
+      }}>
+        <div style={{ color: colors.fairyGold, fontSize: '14px', fontWeight: 700, marginBottom: spacing.sm }}>
+          🎯 {gameName}
+        </div>
+        <div style={{ color: colors.textSecondary, fontSize: '12px', lineHeight: 1.5 }}>
+          {gameHint}
+        </div>
+      </div>
+
+      <button onClick={onStart} style={{ ...primaryBtnStyle, marginTop: spacing.lg }}>
+        {gameBtn}
+      </button>
+
+      <button onClick={onChat} style={secondaryBtnStyle}>
+        💬 {t.inbox.amaBtn}
+        <div style={{ fontSize: '10px', color: colors.textMuted, marginTop: '2px', fontWeight: 400 }}>
+          10 Telegram Stars · {t.ama.paywallCost}
+        </div>
+      </button>
+    </div>
+  )
+}
+
 function IntroScreen({
   project, forgeryCount, timeLimitSeconds, difficulty, showForgeryCount, onStart, onChat,
 }: {
@@ -917,10 +998,11 @@ function ScanGrid({
 }
 
 function MiniGameResultSheet({
-  won, delta, project, onInvest, onSkip,
+  won, delta, perfectInsight, project, onInvest, onSkip,
 }: {
   won: boolean
   delta: number
+  perfectInsight: string | null
   project: { claimedAPY: number; type: string; personaArchetype: string }
   onInvest: () => void
   onSkip: () => void
@@ -1000,8 +1082,27 @@ function MiniGameResultSheet({
 
         <div style={paramsRowStyle}>
           <ParamChip label={t.charter.apy} value={`${project.claimedAPY}%`} />
-          <ParamChip label={t.charter.diffLabel} value={dealTypeLabel} />
+          <ParamChip label="Тип дела" value={dealTypeLabel} />
         </div>
+
+        {perfectInsight && (
+          <div style={{
+            marginTop: spacing.md,
+            padding: spacing.md,
+            background: `${colors.fairyGold}15`,
+            border: `1px solid ${colors.fairyGold}60`,
+            borderRadius: '12px',
+            color: colors.textPrimary,
+            fontSize: '13px',
+            lineHeight: 1.5,
+            textAlign: 'center',
+          }}>
+            <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '12px', marginBottom: '4px' }}>
+              🔮 Шёпот чуйки · идеальная игра
+            </div>
+            {perfectInsight}
+          </div>
+        )}
 
         {bypassError && (
           <div style={{ color: colors.danger, fontSize: '12px', textAlign: 'center', marginTop: spacing.sm }}>
@@ -1432,11 +1533,19 @@ function Sheet({ children, onClose }: { children: React.ReactNode; onClose: () =
 // ── Вспомогательное ───────────────────────────────────────────────────────
 
 function phaseCaption(phase: Phase, charter: CharterDTO, scanCountdown: number | null, t: ReturnType<typeof useT>): string {
+  const archetype = charter.project.personaArchetype
+  const isMG = isMiniGameArchetype(archetype)
   if (phase === 'intro')     return t.charter.phaseIntro
   if (phase === 'reference') return t.charter.phaseMemorize
   if (phase === 'scan')      return `${t.charter.phaseFind} · ${scanCountdown ?? charter.timeLimitSeconds} ${t.charter.timer}`
-  if (phase === 'minigame')  return t.charter.phaseFind
+  if (phase === 'minigame')  return MINIGAME_INFO[archetype]?.name ?? 'Испытание'
+  if (phase === 'miniresult') return isMG ? 'Разбор испытания' : t.charter.phaseResult
   return t.charter.phaseResult
+}
+
+function pageTitle(archetype: string | undefined, t: ReturnType<typeof useT>): string {
+  if (archetype && MINIGAME_INFO[archetype]) return MINIGAME_INFO[archetype].name
+  return t.charter.title
 }
 
 // ── Стили ─────────────────────────────────────────────────────────────────

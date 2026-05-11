@@ -312,8 +312,8 @@ export const api = {
     get: (projectId: string) => apiClient.get<CharterDTO>(`/charter/${projectId}`).then(r => r.data),
     submit: (projectId: string, selectedIndices: number[]) =>
       apiClient.post<CharterSubmitDTO>(`/charter/${projectId}/submit`, { selectedIndices }).then(r => r.data),
-    submitMiniGame: (projectId: string, won: boolean) =>
-      apiClient.post<{ delta: number }>(`/charter/${projectId}/submit-minigame`, { won }).then(r => r.data),
+    submitMiniGame: (projectId: string, won: boolean, perfect?: boolean) =>
+      apiClient.post<{ delta: number; perfectInsight: string | null }>(`/charter/${projectId}/submit-minigame`, { won, perfect }).then(r => r.data),
   },
 
   leaderboard: {

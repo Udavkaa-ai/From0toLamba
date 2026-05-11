@@ -199,19 +199,41 @@ export async function submitCharter(
   }
 }
 
+/** При идеальной игре (won && perfect) раскрываем игроку «шёпот чуйки» — короткий
+ *  намёк о реальном характере дела на основе скрытого fate. */
+function buildPerfectInsight(fate: ProjectFate): string {
+  switch (fate) {
+    case ProjectFate.INSTANT_SCAM:
+      return 'Чуйка кричит: чистый обман, сгорит за пару дней.'
+    case ProjectFate.SLOW_DRAIN:
+      return 'Дело будет тихо высасывать гроши — выйди заранее.'
+    case ProjectFate.HONEST_FAIL:
+      return 'Хозяин честный, но затея шаткая — большой прибыли не жди.'
+    case ProjectFate.SURVIVOR:
+      return 'Дело надёжное — продержится дольше большинства.'
+    case ProjectFate.UNICORN:
+      return 'Чую жар-птицу: редкое дело с огнём прибыли.'
+    default:
+      return ''
+  }
+}
+
 /** Сабмит результата мини-игры (не-BOYARIN архетипы). Победа = +3 интуиции, поражение = 0.
  *  В отличие от submitCharter, не сверяет индексы — доверяет клиенту (мини-игра идёт в реальном
- *  времени, серверной валидации нет). */
+ *  времени, серверной валидации нет). При `perfect=true` (победа без единой ошибки) возвращает
+ *  раскрывающий намёк об истинном характере дела. */
 export async function submitMiniGame(
   userId: number,
   projectId: string,
   won: boolean,
-): Promise<{ delta: number }> {
+  perfect: boolean,
+): Promise<{ delta: number; perfectInsight: string | null }> {
   const session = await prisma.amaSession.findUniqueOrThrow({ where: { projectId } })
   if (session.userId !== userId) throw new Error('FORBIDDEN')
   if (!session.gridSeed) throw new Error('NO_CHARTER')
   if (session.charterSubmittedAt) throw new Error('ALREADY_SUBMITTED')
 
+  const project = await prisma.project.findUniqueOrThrow({ where: { id: projectId } })
   const delta = won ? 3 : 0
 
   await prisma.$transaction([
@@ -235,7 +257,8 @@ export async function submitMiniGame(
 
   await recomputeRank(userId)
 
-  return { delta }
+  const perfectInsight = won && perfect ? buildPerfectInsight(project.fate as ProjectFate) : null
+  return { delta, perfectInsight: perfectInsight || null }
 }
 
 function toPublicView(

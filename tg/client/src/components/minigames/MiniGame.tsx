@@ -1,4 +1,5 @@
 import { BuratinoGame } from './BuratinoGame'
+import { KoscheiGame } from './KoscheiGame'
 import type { MiniGameDifficulty } from './BuratinoGame'
 import { colors, spacing } from '@/theme'
 
@@ -7,7 +8,7 @@ interface MiniGameProps {
   seed: string
   difficulty: MiniGameDifficulty
   pending: boolean
-  onComplete: (won: boolean) => void
+  onComplete: (won: boolean, perfect: boolean) => void
 }
 
 // Диспетчер по архетипу. Сейчас реализован BURATINO, остальные показывают заглушку
@@ -17,6 +18,14 @@ export function MiniGame(props: MiniGameProps) {
     case 'BURATINO':
       return (
         <BuratinoGame
+          seed={props.seed}
+          difficulty={props.difficulty}
+          onComplete={props.onComplete}
+        />
+      )
+    case 'KOSCHEI':
+      return (
+        <KoscheiGame
           seed={props.seed}
           difficulty={props.difficulty}
           onComplete={props.onComplete}
@@ -40,7 +49,7 @@ function PlaceholderGame({
   archetype: string
   seed: string
   pending: boolean
-  onComplete: (won: boolean) => void
+  onComplete: (won: boolean, perfect: boolean) => void
 }) {
   return (
     <div style={{
@@ -61,7 +70,7 @@ function PlaceholderGame({
       </div>
       <div style={{ display: 'flex', gap: spacing.sm, width: '100%' }}>
         <button
-          onClick={() => onComplete(false)}
+          onClick={() => onComplete(false, false)}
           disabled={pending}
           style={{
             flex: 1,
@@ -78,7 +87,7 @@ function PlaceholderGame({
           Проиграть (тест)
         </button>
         <button
-          onClick={() => onComplete(true)}
+          onClick={() => onComplete(true, true)}
           disabled={pending}
           style={{
             flex: 1,

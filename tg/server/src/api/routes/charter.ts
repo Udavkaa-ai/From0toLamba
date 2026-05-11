@@ -55,7 +55,7 @@ export async function charterRoutes(app: FastifyInstance) {
     const { projectId } = request.params as { projectId: string }
     const tgUser = request.telegramUser
 
-    const bodySchema = z.object({ won: z.boolean() })
+    const bodySchema = z.object({ won: z.boolean(), perfect: z.boolean().optional() })
     const body = bodySchema.safeParse(request.body)
     if (!body.success) {
       return reply.status(400).send({ error: 'Неверный формат запроса' })
@@ -64,7 +64,7 @@ export async function charterRoutes(app: FastifyInstance) {
     const user = await prisma.user.findUniqueOrThrow({ where: { telegramId: String(tgUser.id) } })
 
     try {
-      const result = await submitMiniGame(user.id, projectId, body.data.won)
+      const result = await submitMiniGame(user.id, projectId, body.data.won, body.data.perfect ?? false)
       checkAndGrantReferralBonus(user.id).catch(console.error)
       return result
     } catch (err: any) {
