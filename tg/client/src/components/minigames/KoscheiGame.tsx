@@ -9,7 +9,11 @@ const tg = (window as any).Telegram?.WebApp
 const haptic = tg?.HapticFeedback
 
 const PLAY_SECONDS = 15
-const MAX_ATTEMPTS = 15
+// MAX_ATTEMPTS убран — ограничение только по времени. Лестница ошибок:
+//   6 открытий пар = 0 ошибок (идеальная игра, совет чуйки)
+//   7 открытий пар = 1 ошибка (победа, посул + тип)
+//   ≥8 открытий пар = 2 ошибки (победа, но вложить можно только за звёзды)
+//   таймер вышел до сбора всех пар — поражение (errorCount ≥ 2)
 const REVEAL_DELAY_MS = 700
 const SYMBOL_COUNT = 6
 const COLS = 3
@@ -276,17 +280,13 @@ export function KoscheiGame({ seed, onComplete }: KoscheiGameProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedA, selectedB])
 
-  // Условия завершения
+  // Условия завершения: ловим момент сбора всех пар. Поражение — только по таймеру.
   useEffect(() => {
     if (doneRef.current) return
     if (selectedA !== null || selectedB !== null) return
     const allMatched = cards.every(c => c.state === 'matched')
     if (allMatched) {
       complete(true, attemptsUsed)
-      return
-    }
-    if (attemptsUsed >= MAX_ATTEMPTS) {
-      complete(false, attemptsUsed)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cards, attemptsUsed, selectedA, selectedB])
@@ -387,7 +387,6 @@ export function KoscheiGame({ seed, onComplete }: KoscheiGameProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cards])
 
-  const attemptsLeft = MAX_ATTEMPTS - attemptsUsed
   const matchedCount = cards.filter(c => c.state === 'matched').length / 2
 
   return (
@@ -405,19 +404,20 @@ export function KoscheiGame({ seed, onComplete }: KoscheiGameProps) {
       </div>
       <div style={{
         color: colors.textMuted, fontSize: '12px', textAlign: 'center',
-        marginBottom: spacing.sm,
+        marginBottom: spacing.sm, lineHeight: 1.4,
       }}>
-        Найди {SYMBOL_COUNT} пар: дуб, сундук, заяц, утка, яйцо, игла
+        Найди {SYMBOL_COUNT} пар: дуб, сундук, заяц, утка, яйцо, игла. <br />
+        6 открытий — раскрыть совет чуйки, 7 — пройти без подсказок
       </div>
       <div style={{
         display: 'flex', gap: spacing.md, justifyContent: 'center',
-        marginBottom: spacing.sm, fontSize: '12px',
+        marginBottom: spacing.sm, fontSize: '13px',
       }}>
-        <span style={{ color: colors.fairyGold, fontWeight: 600 }}>
+        <span style={{ color: matchedCount === SYMBOL_COUNT ? colors.success : colors.fairyGold, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
           Пары: {matchedCount}/{SYMBOL_COUNT}
         </span>
-        <span style={{ color: attemptsLeft <= 2 ? colors.danger : colors.textSecondary }}>
-          Попыток: {attemptsLeft}
+        <span style={{ color: colors.textSecondary, fontVariantNumeric: 'tabular-nums' }}>
+          Открытий: {attemptsUsed}
         </span>
       </div>
       <div
