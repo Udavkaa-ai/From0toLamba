@@ -96,14 +96,9 @@ export function StatsPage() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing.sm, marginBottom: spacing.lg }}>
           {[
             { label: t.stats.daysPlayed, value: String(gameState.currentDay) },
+            { label: 'Взято дел', value: String(gameState.dealsCount) },
             { label: t.stats.dealsCompleted, value: String(gameState.closedProjectsCount) },
-            { label: t.stats.intuitionScore, value: String(gameState.intuitionScore) },
-            {
-              label: t.stats.intuitionAccuracy,
-              value: gameState.intuitionAccuracy === null
-                ? '—'
-                : Math.round(gameState.intuitionAccuracy * 100) + '%',
-            },
+            { label: 'Активных дел', value: String(gameState.activeProjects.length) },
           ].map(({ label, value }) => (
             <FairyCard key={label} padding={spacing.md} style={{ textAlign: 'center' }}>
               <div style={{ color: colors.textMuted, fontSize: '11px', marginBottom: '4px' }}>{label}</div>

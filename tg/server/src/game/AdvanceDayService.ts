@@ -1,6 +1,6 @@
 import { prisma } from '../db/prisma'
 import { ProjectFate, FATE_CONFIG, ProjectType, InvestorRank } from './types'
-import { computeRank, isRankUp } from './rankService'
+import { computeRank, isRankUp, countDeals } from './rankService'
 import { randomInRange as rng, randomIntInRange as irng } from './projectUtils'
 import { generateDailyUpdate, generatePostMortem } from '../ai/openRouterClient'
 import { generateProject } from './GenerateProjectService'
@@ -415,18 +415,14 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
   const newDay = gameState.currentDay + 1
   const newStreak = gameState.dayStreak + 1
 
-  // Считаем totalWealth для ранга
+  // Считаем totalWealth для истории графика и ранг — по числу взятых дел
   const updatedActiveProjects = await prisma.project.findMany({
     where: { userId, isActive: true },
     select: { currentValueRubles: true },
   })
   const totalWealth = newBalance + updatedActiveProjects.reduce((s, p) => s + p.currentValueRubles, 0)
-
-  const newRank = computeRank({
-    currentDay: newDay,
-    totalWealth,
-    intuitionScore: gameState.intuitionScore,
-  })
+  const dealsCount = await countDeals(userId)
+  const newRank = computeRank({ dealsCount })
 
   const oldRank = gameState.investorRank as InvestorRank
   const rankChanged = newRank !== oldRank

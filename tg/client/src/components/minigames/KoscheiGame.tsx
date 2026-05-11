@@ -18,7 +18,7 @@ const ROWS = 4
 interface KoscheiGameProps {
   seed: string
   difficulty: MiniGameDifficulty
-  onComplete: (won: boolean, perfect: boolean) => void
+  onComplete: (errorCount: number) => void
 }
 
 type CardState = 'closed' | 'open' | 'matched'
@@ -218,14 +218,17 @@ export function KoscheiGame({ seed, onComplete }: KoscheiGameProps) {
   const onCompleteRef = useRef(onComplete)
   useEffect(() => { onCompleteRef.current = onComplete }, [onComplete])
 
-  // «Без единой ошибки» = победил И использовал ровно столько попыток, сколько пар (=SYMBOL_COUNT).
+  // Число ошибок = лишние попытки сверх минимума (SYMBOL_COUNT). На таймауте/исчерпании
+  // попыток без полного набора пар — ставим заведомо ≥2 (категория «только звёзды»).
   const complete = (won: boolean, attemptsAtFinish: number) => {
     if (doneRef.current) return
     doneRef.current = true
     haptic?.notificationOccurred(won ? 'success' : 'error')
     playSound(won ? 'win' : 'lose')
-    const perfect = won && attemptsAtFinish === SYMBOL_COUNT
-    onCompleteRef.current(won, perfect)
+    const errorCount = won
+      ? Math.max(0, attemptsAtFinish - SYMBOL_COUNT)
+      : Math.max(2, attemptsAtFinish - SYMBOL_COUNT)
+    onCompleteRef.current(errorCount)
   }
 
   // Таймер

@@ -1040,10 +1040,8 @@ export function HomePage() {
                 </div>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ color: colors.textMuted, fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
-                  {t.common.intuition} <EyeIcon size={11} />
-                </div>
-                <div style={{ color: colors.textPrimary, fontWeight: 600 }}>{gameState.intuitionScore}</div>
+                <div style={{ color: colors.textMuted, fontSize: '11px' }}>Дел взято</div>
+                <div style={{ color: colors.textPrimary, fontWeight: 600 }}>{gameState.dealsCount}</div>
               </div>
             </div>
           </FairyCard>

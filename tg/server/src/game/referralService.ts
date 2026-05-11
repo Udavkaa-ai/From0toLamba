@@ -1,11 +1,12 @@
 import { prisma } from '../db/prisma'
 
 export const REFERRAL_BONUS_RUBLES = 100
-export const REFERRAL_INTUITION_THRESHOLD = 10
+// С версии 4 порог реферального бонуса по числу взятых дел (взамен чуйки).
+export const REFERRAL_DEALS_THRESHOLD = 3
 
 /**
  * Привязывает реферера к пользователю, НО НЕ выдаёт бонус сразу.
- * Бонус начисляется позже — когда приглашённый наберёт REFERRAL_INTUITION_THRESHOLD чуйки.
+ * Бонус начисляется позже — когда приглашённый возьмёт REFERRAL_DEALS_THRESHOLD дел.
  * Идемпотентен: второй вызов ничего не делает.
  */
 export async function tryAttachReferrer(userId: number, startParam: string | null): Promise<{
@@ -42,8 +43,8 @@ export async function tryAttachReferrer(userId: number, startParam: string | nul
 
 /**
  * Проверяет, заслужил ли приглашённый игрок реферальный бонус
- * (чуйка >= REFERRAL_INTUITION_THRESHOLD), и начисляет его обоим, если да.
- * Вызывать после каждого submitCharter.
+ * (взял >= REFERRAL_DEALS_THRESHOLD дел), и начисляет его обоим, если да.
+ * Вызывать после каждого инвеста.
  */
 export async function checkAndGrantReferralBonus(userId: number): Promise<boolean> {
   const user = await prisma.user.findUnique({
@@ -52,12 +53,13 @@ export async function checkAndGrantReferralBonus(userId: number): Promise<boolea
   })
   if (!user?.referrerId || user.referralBonusGranted) return false
 
-  const [gameState, referrer] = await Promise.all([
-    prisma.gameState.findUnique({ where: { userId }, select: { intuitionScore: true, currentDay: true } }),
+  const [gameState, referrer, dealsCount] = await Promise.all([
+    prisma.gameState.findUnique({ where: { userId }, select: { currentDay: true } }),
     prisma.user.findUnique({ where: { id: user.referrerId }, select: { firstName: true } }),
+    prisma.project.count({ where: { userId, investedAmountRubles: { gt: 0 } } }),
   ])
   if (!gameState || !referrer) return false
-  if (gameState.intuitionScore < REFERRAL_INTUITION_THRESHOLD) return false
+  if (dealsCount < REFERRAL_DEALS_THRESHOLD) return false
 
   await prisma.$transaction([
     prisma.user.update({
@@ -92,7 +94,7 @@ export async function checkAndGrantReferralBonus(userId: number): Promise<boolea
     }),
   ])
 
-  console.log(`[Referral] BONUS GRANTED user=${userId} referrerId=${user.referrerId} intuition=${gameState.intuitionScore}`)
+  console.log(`[Referral] BONUS GRANTED user=${userId} referrerId=${user.referrerId} dealsCount=${dealsCount}`)
   return true
 }
 

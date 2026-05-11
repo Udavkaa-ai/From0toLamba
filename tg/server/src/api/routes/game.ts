@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { prisma } from '../../db/prisma'
 import { telegramAuthHook } from '../../middleware/telegramAuth'
 import { advanceDay, ADVANCE_COOLDOWN_MS, MAX_CONSECUTIVE_ADVANCES } from '../../game/AdvanceDayService'
-import { tryAttachReferrer, countReferrals, REFERRAL_INTUITION_THRESHOLD } from '../../game/referralService'
+import { tryAttachReferrer, countReferrals, REFERRAL_DEALS_THRESHOLD } from '../../game/referralService'
 import { ensureWeekStartSnapshot } from '../../game/weeklyService'
 import { generateOnboardingProject } from '../../game/GenerateProjectService'
 import { toPublicDTO } from '../../game/projectUtils'
@@ -154,6 +154,11 @@ export async function gameRoutes(app: FastifyInstance) {
     const seenArchetypes = Array.from(new Set(postMortems.map(p => p.revealedArchetype)))
     const seenFates = Array.from(new Set(postMortems.map(p => p.fate)))
 
+    // Число «взятых дел» — основа для ранга с версии 4
+    const dealsCount = await prisma.project.count({
+      where: { userId: user.id, investedAmountRubles: { gt: 0 } },
+    })
+
     return {
       balance: gameState.balance,
       currentDay: gameState.currentDay,
@@ -163,6 +168,7 @@ export async function gameRoutes(app: FastifyInstance) {
       intuitionAccuracy,       // 0..1 или null, если грамот не было
       chartersSubmitted: charterSessions.length,
       closedProjectsCount,
+      dealsCount,              // число дел, в которые игрок вложил гроши
       referralCount,           // число приведённых купцов
       weekStartWealth,         // снимок состояния на начало текущей недели
       userId: user.id,         // нужен для построения пригласительной ссылки
@@ -676,7 +682,7 @@ export async function gameRoutes(app: FastifyInstance) {
         intuitionScore: r.gameState?.intuitionScore ?? 0,
         currentDay: r.gameState?.currentDay ?? 0,
       })),
-      threshold: REFERRAL_INTUITION_THRESHOLD,
+      threshold: REFERRAL_DEALS_THRESHOLD,
     })
   })
 

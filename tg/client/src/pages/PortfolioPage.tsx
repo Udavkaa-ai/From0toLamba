@@ -642,14 +642,7 @@ function ClosedProjectCard({ project, postMortem }: { project: ProjectDTO; postM
                 <div style={{ color: colors.textMuted, fontSize: '10px' }}>{t.common.days}</div>
                 <div style={{ color: colors.textSecondary, fontSize: '12px' }}>{postMortem.daysActive}</div>
               </div>
-              {postMortem.intuitionDelta !== 0 && (
-                <div>
-                  <div style={{ color: colors.textMuted, fontSize: '10px' }}>{t.common.intuition}</div>
-                  <div style={{ color: postMortem.intuitionDelta > 0 ? colors.success : colors.danger, fontSize: '12px' }}>
-                    {postMortem.intuitionDelta > 0 ? '+' : ''}{postMortem.intuitionDelta}
-                  </div>
-                </div>
-              )}
+              {/* «Чуйка» с версии 4 убрана из игры — поле intuitionDelta не показываем */}
             </div>
           </motion.div>
         )}

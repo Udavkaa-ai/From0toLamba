@@ -8,7 +8,7 @@ interface MiniGameProps {
   seed: string
   difficulty: MiniGameDifficulty
   pending: boolean
-  onComplete: (won: boolean, perfect: boolean) => void
+  onComplete: (errorCount: number) => void
 }
 
 // Диспетчер по архетипу. Сейчас реализован BURATINO, остальные показывают заглушку
@@ -49,7 +49,7 @@ function PlaceholderGame({
   archetype: string
   seed: string
   pending: boolean
-  onComplete: (won: boolean, perfect: boolean) => void
+  onComplete: (errorCount: number) => void
 }) {
   return (
     <div style={{
@@ -70,7 +70,7 @@ function PlaceholderGame({
       </div>
       <div style={{ display: 'flex', gap: spacing.sm, width: '100%' }}>
         <button
-          onClick={() => onComplete(false, false)}
+          onClick={() => onComplete(2)}
           disabled={pending}
           style={{
             flex: 1,
@@ -87,7 +87,7 @@ function PlaceholderGame({
           Проиграть (тест)
         </button>
         <button
-          onClick={() => onComplete(true, true)}
+          onClick={() => onComplete(0)}
           disabled={pending}
           style={{
             flex: 1,

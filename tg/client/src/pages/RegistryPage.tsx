@@ -51,14 +51,14 @@ export function RegistryPage() {
 
   const handleShare = () => {
     const rank = gameState ? ((t.ranks as unknown as Record<string, string>)[gameState.investorRank] ?? gameState.investorRank) : ''
-    const score = gameState?.intuitionScore ?? 0
+    const dealsCount = gameState?.dealsCount ?? 0
     const wealth = gameState
       ? gameState.balance + gameState.activeProjects.reduce((s, p) => s + p.currentValueRubles, 0)
       : 0
     const pnlStr = `${overallPnl >= 0 ? '+' : ''}${overallPnl.toFixed(1)}`
 
     const shareText = rank
-      ? t.registry.shareText(rank, score, Math.floor(wealth), closed.length, parseFloat(pnlStr))
+      ? t.registry.shareText(rank, dealsCount, Math.floor(wealth), closed.length, parseFloat(pnlStr))
       : `${Math.floor(wealth)} г · ${closed.length} дел · ${pnlStr}%`
 
     const appUrl = gameState?.userId
@@ -282,11 +282,10 @@ function RegistryCard({ project, postMortem }: { project: ClosedProject; postMor
                 { label: t.registry.invested, value: `${Math.floor(postMortem.investedAmount)} ${t.common.currency}` },
                 { label: t.registry.returned, value: `${Math.floor(postMortem.returnedAmount)} ${t.common.currency}` },
                 { label: t.common.days, value: String(postMortem.daysActive) },
-                { label: t.common.intuition, value: postMortem.intuitionDelta !== 0 ? `${postMortem.intuitionDelta > 0 ? '+' : ''}${postMortem.intuitionDelta}` : '—', color: postMortem.intuitionDelta > 0 ? colors.success : postMortem.intuitionDelta < 0 ? colors.danger : colors.textMuted },
-              ].map(s => (
+              ].map((s) => (
                 <div key={s.label} style={{ textAlign: 'center' }}>
                   <div style={{ color: colors.textMuted, fontSize: '9px' }}>{s.label}</div>
-                  <div style={{ color: s.color ?? colors.textSecondary, fontSize: '12px', fontWeight: 600 }}>{s.value}</div>
+                  <div style={{ color: colors.textSecondary, fontSize: '12px', fontWeight: 600 }}>{s.value}</div>
                 </div>
               ))}
             </div>

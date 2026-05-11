@@ -31,7 +31,11 @@ const TUTORIAL_EXAMPLES: Record<MutTarget, ReturnType<typeof generateReferenceSe
   emblemSame: mutateSeal(TUTORIAL_REF, TUTORIAL_SEED, 5, 'EASY', ['emblemSame']),
 }
 
-type Phase = 'intro' | 'reference' | 'scan' | 'result' | 'minigame' | 'miniresult'
+// Все архетипы теперь идут через единый интро-экран в стиле мини-игр и единый
+// лист результата по errorCount. BOYARIN сохраняет свою механику (24 печати,
+// фазы reference→scan), остальные — мини-игры (фаза minigame). Лист результата
+// общий — miniresult.
+type Phase = 'intro' | 'reference' | 'scan' | 'minigame' | 'miniresult'
 
 const REFERENCE_SECONDS = 3
 
@@ -46,7 +50,7 @@ export function CharterPage() {
   const [refCountdown, setRefCountdown] = useState(REFERENCE_SECONDS)
   const [scanCountdown, setScanCountdown] = useState<number | null>(null)
   const [result, setResult] = useState<CharterResultDTO | null>(null)
-  const [miniGameResult, setMiniGameResult] = useState<{ won: boolean; delta: number; perfectInsight: string | null } | null>(null)
+  const [miniGameResult, setMiniGameResult] = useState<{ errorCount: number; perfectInsight: string | null } | null>(null)
   const [showInvest, setShowInvest] = useState(false)
   const [onboardingBonus, setOnboardingBonus] = useState<number | null>(null)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
@@ -74,7 +78,7 @@ export function CharterPage() {
 
   const tryGoBack = () => {
     // Уже разобрано — просто уходим
-    if (phase === 'result' || phase === 'miniresult') {
+    if (phase === 'miniresult') {
       navigate(-1)
       return
     }
@@ -89,7 +93,7 @@ export function CharterPage() {
   // тогда свайп-назад попадает обратно на тот же URL (React Router не демонтирует
   // компонент) и мы перехватываем popstate, чтобы показать тот же попап.
   useEffect(() => {
-    if (phase === 'result' || phase === 'miniresult') return
+    if (phase === 'miniresult') return
     window.history.pushState(null, '', window.location.pathname)
     const handlePopState = () => {
       window.history.pushState(null, '', window.location.pathname)
@@ -112,19 +116,14 @@ export function CharterPage() {
   const project = charter?.project ?? null
   const isExpired = !!charterError && /истекла/i.test((charterError as Error).message)
 
-  // Если сессия уже сабмичена — сразу на нужный экран результата.
-  // Для не-BOYARIN мини-игр результат — только delta (won = delta > 0).
+  // Если сессия уже сабмичена — сразу на лист результата. perfectInsight на reload
+  // null (одноразовое раскрытие).
   useEffect(() => {
     if (!charter?.isSubmitted || !charter.result) return
-    if (isMiniGameArchetype(charter.project.personaArchetype)) {
-      // При перезаходе после сабмита insight не показываем — он был доступен только один раз.
-      setMiniGameResult({ won: charter.result.delta > 0, delta: charter.result.delta, perfectInsight: null })
-      setPhase('miniresult')
-    } else {
-      setResult(charter.result)
-      setSelected(new Set(charter.result.selectedIndices))
-      setPhase('result')
-    }
+    setMiniGameResult({ errorCount: charter.result.errorCount, perfectInsight: null })
+    setSelected(new Set(charter.result.selectedIndices))
+    setResult(charter.result)
+    setPhase('miniresult')
   }, [charter?.isSubmitted])
 
   // Таймер показа эталона
@@ -146,13 +145,13 @@ export function CharterPage() {
 
   // Сабмит результата мини-игры (не-BOYARIN архетипы)
   const submitMiniGameMutation = useMutation({
-    mutationFn: ({ won, perfect }: { won: boolean; perfect: boolean }) =>
-      api.charter.submitMiniGame(projectId!, won, perfect),
-    onSuccess: ({ delta, perfectInsight }, { won }) => {
-      setMiniGameResult({ won, delta, perfectInsight })
+    mutationFn: (errorCount: number) => api.charter.submitMiniGame(projectId!, errorCount),
+    onSuccess: ({ errorCount, perfectInsight }) => {
+      setMiniGameResult({ errorCount, perfectInsight })
       setPhase('miniresult')
-      haptic?.notificationOccurred(won ? 'success' : 'warning')
-      playSound(won ? 'win' : 'lose')
+      const ok = errorCount <= 1
+      haptic?.notificationOccurred(errorCount === 0 ? 'success' : ok ? 'warning' : 'error')
+      playSound(ok ? 'win' : 'lose')
       qc.invalidateQueries({ queryKey: ['gameState'] })
 
       if (gameState?.isOnboardingComplete === false && !onboardingTriggeredRef.current) {
@@ -173,20 +172,22 @@ export function CharterPage() {
     },
   })
 
-  const handleMiniGameComplete = (won: boolean, perfect: boolean) => {
+  const handleMiniGameComplete = (errorCount: number) => {
     if (submitMiniGameMutation.isPending) return
-    submitMiniGameMutation.mutate({ won, perfect })
+    submitMiniGameMutation.mutate(errorCount)
   }
 
-  // Таймер проверки
+  // Сабмит грамоты BOYARIN: тоже идёт через единый лист результата (по errorCount)
   const submitMutation = useMutation({
     mutationFn: (indices: number[]) => api.charter.submit(projectId!, indices),
     onSuccess: (res: CharterSubmitDTO) => {
       const { forgedIndices, ...rest } = res
       setResult(rest)
-      setPhase('result')
-      haptic?.notificationOccurred(res.delta > 0 ? 'success' : res.delta < 0 ? 'error' : 'warning')
-      playSound(res.delta >= 0 ? 'win' : 'lose')
+      setMiniGameResult({ errorCount: res.errorCount, perfectInsight: res.perfectInsight })
+      setPhase('miniresult')
+      const ok = res.errorCount <= 1
+      haptic?.notificationOccurred(res.errorCount === 0 ? 'success' : ok ? 'warning' : 'error')
+      playSound(ok ? 'win' : 'lose')
       qc.invalidateQueries({ queryKey: ['gameState'] })
 
       // Онбординг-бонус по первой проверенной грамоте
@@ -319,23 +320,11 @@ export function CharterPage() {
 
         {/* Тело — зависит от фазы */}
         {phase === 'intro' && project && (
-          isMiniGameArchetype(project.personaArchetype) ? (
-            <MiniGameIntroScreen
-              project={project}
-              onStart={() => setPhase('minigame')}
-              onChat={() => navigate(`/ama/${projectId}`)}
-            />
-          ) : (
-            <IntroScreen
-              project={project}
-              forgeryCount={charter.forgedIndices.length}
-              timeLimitSeconds={charter.timeLimitSeconds}
-              difficulty={charter.difficulty}
-              showForgeryCount={!gameState?.investorRank || gameState.investorRank === 'NEWBIE'}
-              onStart={() => setPhase('reference')}
-              onChat={() => navigate(`/ama/${projectId}`)}
-            />
-          )
+          <MiniGameIntroScreen
+            project={project}
+            onStart={() => setPhase(project.personaArchetype === 'BOYARIN' ? 'reference' : 'minigame')}
+            onChat={() => navigate(`/ama/${projectId}`)}
+          />
         )}
 
         {phase === 'minigame' && project && (
@@ -352,11 +341,11 @@ export function CharterPage() {
           <ReferenceScreen seed={charter.gridSeed} countdown={refCountdown} />
         )}
 
-        {(phase === 'scan' || phase === 'result') && (
+        {(phase === 'scan' || (phase === 'miniresult' && charter.project.personaArchetype === 'BOYARIN')) && (
           <ScanGrid
             charter={charter}
             selected={selected}
-            result={phase === 'result' ? result : null}
+            result={phase === 'miniresult' ? result : null}
             onToggle={toggleCell}
             rank={gameState?.investorRank ?? 'NEWBIE'}
           />
@@ -399,20 +388,9 @@ export function CharterPage() {
       </div>
 
       <AnimatePresence>
-        {phase === 'result' && result && !showInvest && (
-          <ResultSheet
-            result={result}
-            onInvest={() => setShowInvest(true)}
-            onSkip={() => navigate('/inbox')}
-          />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
         {phase === 'miniresult' && miniGameResult && project && !showInvest && (
           <MiniGameResultSheet
-            won={miniGameResult.won}
-            delta={miniGameResult.delta}
+            errorCount={miniGameResult.errorCount}
             perfectInsight={miniGameResult.perfectInsight}
             project={project}
             onInvest={() => setShowInvest(true)}
@@ -712,8 +690,8 @@ function MiniGameIntroScreen({
         👤 {project.developerName}
       </div>
 
+      {/* Посул скрыт до прохождения испытания — он часть награды за победу. */}
       <div style={paramsRowStyle}>
-        <ParamChip label={t.charter.apy} value={`${project.claimedAPY}%`} />
         <ParamChip label={t.charter.users} value={project.currentUserCount.toLocaleString('ru')} />
         <ParamChip label={t.charter.guild} value={`${project.claimedTeamSize} чел.`} />
       </div>
@@ -997,11 +975,14 @@ function ScanGrid({
   )
 }
 
+// Лист результата по числу ошибок:
+//   0 ошибок → раскрываем посул, тип дела и «шёпот чуйки», даём вложить
+//   1 ошибка → раскрываем посул и тип дела, даём вложить (без намёка)
+//   ≥2 ошибок → ничего не раскрываем, только звёздный bypass
 function MiniGameResultSheet({
-  won, delta, perfectInsight, project, onInvest, onSkip,
+  errorCount, perfectInsight, project, onInvest, onSkip,
 }: {
-  won: boolean
-  delta: number
+  errorCount: number
   perfectInsight: string | null
   project: { claimedAPY: number; type: string; personaArchetype: string }
   onInvest: () => void
@@ -1010,7 +991,16 @@ function MiniGameResultSheet({
   const t = useT()
   const [bypassPending, setBypassPending] = useState(false)
   const [bypassError, setBypassError] = useState<string | null>(null)
-  const emoji = won ? '🎯' : '😅'
+  const canInvest = errorCount <= 1
+  const emoji = errorCount === 0 ? '🎯' : errorCount === 1 ? '🙂' : '😅'
+  const titleText =
+    errorCount === 0 ? 'Безупречно!' :
+    errorCount === 1 ? 'Почти в точку' :
+    'Чуйка промахнулась'
+  const subtitleText =
+    errorCount === 0 ? 'Хозяин не утаит от тебя ничего важного' :
+    errorCount === 1 ? `Одна осечка — детали дела открыты, но без подсказок` :
+    'Дело осталось тайной — раскроется только за звёзды'
   const dealTypeLabel = (t.inbox.types as Record<string, string>)[project.type] ?? project.type
 
   const handleBypass = async () => {
@@ -1072,19 +1062,16 @@ function MiniGameResultSheet({
 
         <div style={{ textAlign: 'center', marginBottom: spacing.lg }}>
           <div style={{ fontSize: '40px' }}>{emoji}</div>
-          <div style={{ color: colors.fairyGold, fontSize: '22px', fontWeight: 700, marginTop: '4px' }}>
-            {won ? `+${delta} ${t.common.intuition.toLowerCase()}` : `${t.common.intuition} ${delta >= 0 ? '+' : ''}${delta}`}
+          <div style={{ color: colors.fairyGold, fontSize: '20px', fontWeight: 700, marginTop: '4px' }}>
+            {titleText}
           </div>
-          <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
-            {won
-              ? 'Чуйка не подвела'
-              : 'Чуйка промахнулась — дело осталось тайной'}
+          <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px', maxWidth: 320, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.5 }}>
+            {subtitleText}
           </div>
         </div>
 
-        {/* На победе — раскрываем посул и тип дела. На поражении — ничего,
-            только звёздный bypass. */}
-        {won && (
+        {/* 0..1 ошибки — раскрываем посул и тип дела. */}
+        {canInvest && (
           <div style={paramsRowStyle}>
             <ParamChip label={t.charter.apy} value={`${project.claimedAPY}%`} />
             <ParamChip label="Тип дела" value={dealTypeLabel} />
@@ -1092,7 +1079,7 @@ function MiniGameResultSheet({
         )}
 
         {/* Совет по типу дела — только при идеальной игре. */}
-        {won && perfectInsight && (
+        {errorCount === 0 && perfectInsight && (
           <div style={{
             marginTop: spacing.md,
             padding: spacing.md,
@@ -1105,13 +1092,13 @@ function MiniGameResultSheet({
             textAlign: 'center',
           }}>
             <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '12px', marginBottom: '4px' }}>
-              🔮 Шёпот чуйки · идеальная игра
+              🔮 Совет по делу · идеальная игра
             </div>
             {perfectInsight}
           </div>
         )}
 
-        {!won && (
+        {!canInvest && (
           <div style={{
             marginTop: spacing.md,
             padding: spacing.md,
@@ -1123,7 +1110,7 @@ function MiniGameResultSheet({
             lineHeight: 1.5,
             textAlign: 'center',
           }}>
-            Посул и тип дела не раскрыты. Чтобы всё равно вложиться, заплати 10 звёзд — откроем и проведём вложение.
+            Посул и тип дела не раскрыты. Чтобы всё равно вложиться, заплати 10 звёзд — откроем дело и проведём вложение.
           </div>
         )}
 
@@ -1137,7 +1124,7 @@ function MiniGameResultSheet({
           <button onClick={onSkip} style={{ ...secondaryBtnStyle, flex: 1, marginTop: 0 }}>
             {t.charter.resultSkip}
           </button>
-          {won ? (
+          {canInvest ? (
             <button
               onClick={onInvest}
               style={{ ...primaryBtnStyle, flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
@@ -1557,13 +1544,11 @@ function Sheet({ children, onClose }: { children: React.ReactNode; onClose: () =
 
 function phaseCaption(phase: Phase, charter: CharterDTO, scanCountdown: number | null, t: ReturnType<typeof useT>): string {
   const archetype = charter.project.personaArchetype
-  const isMG = isMiniGameArchetype(archetype)
-  if (phase === 'intro')     return t.charter.phaseIntro
-  if (phase === 'reference') return t.charter.phaseMemorize
-  if (phase === 'scan')      return `${t.charter.phaseFind} · ${scanCountdown ?? charter.timeLimitSeconds} ${t.charter.timer}`
-  if (phase === 'minigame')  return MINIGAME_INFO[archetype]?.name ?? 'Испытание'
-  if (phase === 'miniresult') return isMG ? 'Разбор испытания' : t.charter.phaseResult
-  return t.charter.phaseResult
+  if (phase === 'intro')      return t.charter.phaseIntro
+  if (phase === 'reference')  return t.charter.phaseMemorize
+  if (phase === 'scan')       return `${t.charter.phaseFind} · ${scanCountdown ?? charter.timeLimitSeconds} ${t.charter.timer}`
+  if (phase === 'minigame')   return MINIGAME_INFO[archetype]?.name ?? 'Испытание'
+  return 'Разбор испытания'
 }
 
 function pageTitle(archetype: string | undefined, t: ReturnType<typeof useT>): string {

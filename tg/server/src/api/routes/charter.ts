@@ -3,7 +3,6 @@ import { z } from 'zod'
 import { prisma } from '../../db/prisma'
 import { telegramAuthHook } from '../../middleware/telegramAuth'
 import { startCharter, getCharter, submitCharter, submitMiniGame } from '../../game/CharterService'
-import { checkAndGrantReferralBonus } from '../../game/referralService'
 
 export async function charterRoutes(app: FastifyInstance) {
 
@@ -55,7 +54,7 @@ export async function charterRoutes(app: FastifyInstance) {
     const { projectId } = request.params as { projectId: string }
     const tgUser = request.telegramUser
 
-    const bodySchema = z.object({ won: z.boolean(), perfect: z.boolean().optional() })
+    const bodySchema = z.object({ errorCount: z.number().int().nonnegative() })
     const body = bodySchema.safeParse(request.body)
     if (!body.success) {
       return reply.status(400).send({ error: 'Неверный формат запроса' })
@@ -64,8 +63,7 @@ export async function charterRoutes(app: FastifyInstance) {
     const user = await prisma.user.findUniqueOrThrow({ where: { telegramId: String(tgUser.id) } })
 
     try {
-      const result = await submitMiniGame(user.id, projectId, body.data.won, body.data.perfect ?? false)
-      checkAndGrantReferralBonus(user.id).catch(console.error)
+      const result = await submitMiniGame(user.id, projectId, body.data.errorCount)
       return result
     } catch (err: any) {
       if (err.message === 'ALREADY_SUBMITTED') {
@@ -98,8 +96,6 @@ export async function charterRoutes(app: FastifyInstance) {
 
     try {
       const result = await submitCharter(user.id, projectId, body.data.selectedIndices)
-      // Проверяем реферальный бонус — мог дозреть после этой грамоты
-      checkAndGrantReferralBonus(user.id).catch(console.error)
       return result
     } catch (err: any) {
       if (err.message === 'ALREADY_SUBMITTED') {

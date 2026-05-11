@@ -36,12 +36,15 @@ function positionBadge(pos: number) {
   return `#${pos}`
 }
 
-type Tab = 'wealth' | 'intuition' | 'days' | 'deals' | 'referrals'
+// С версии 4 «чуйка» убрана из игры — вкладка intuition больше не используется,
+// в т.ч. строка переключателя её не показывает.
+type Tab = 'wealth' | 'days' | 'deals' | 'referrals'
 
 export function LeaderboardPage() {
   const t = useT()
   const [tab, setTab] = useState<Tab>('wealth')
-  const tabKeys = Object.keys(t.leaderboard.tabs) as Tab[]
+  // Фильтруем — intuition больше не существует
+  const tabKeys = (Object.keys(t.leaderboard.tabs) as Tab[]).filter(k => k !== ('intuition' as any))
 
   return (
     <ScreenBackground bgImage={PAGE_BG.leaderboard}>
@@ -82,7 +85,6 @@ export function LeaderboardPage() {
         </div>
 
         {tab === 'wealth' && <MoneyTab />}
-        {tab === 'intuition' && <IntuitionTab />}
         {tab === 'days' && <DaysTab />}
         {tab === 'deals' && <AchievementsTab />}
         {tab === 'referrals' && <ReferralsTab />}

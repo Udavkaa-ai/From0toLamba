@@ -16,7 +16,7 @@ export type MiniGameDifficulty = 'EASY' | 'MEDIUM' | 'HARD'
 interface BuratinoGameProps {
   seed: string
   difficulty: MiniGameDifficulty
-  onComplete: (won: boolean, perfect: boolean) => void
+  onComplete: (errorCount: number) => void
 }
 
 interface KeyParams {
@@ -225,14 +225,14 @@ export function BuratinoGame({ seed, difficulty, onComplete }: BuratinoGameProps
     return { target, keys, correctIdx }
   }, [seed, difficulty])
 
-  // У Буратино «без единой ошибки» = «победил» (всего один тап на ключ),
-  // поэтому perfect совпадает с won.
+  // У Буратино одна попытка: правильный тап = 0 ошибок, неправильный или таймаут = 2
+  // (т.е. сразу попадает в категорию «вложиться только за звёзды»).
   const complete = (won: boolean) => {
     if (doneRef.current) return
     doneRef.current = true
     haptic?.notificationOccurred(won ? 'success' : 'error')
     playSound(won ? 'win' : 'lose')
-    onCompleteRef.current(won, won)
+    onCompleteRef.current(won ? 0 : 2)
   }
 
   // Таймер показа эталона

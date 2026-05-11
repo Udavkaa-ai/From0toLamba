@@ -100,10 +100,11 @@ export interface GameStateDTO {
   currentDay: number
   investorRank: string
   nickname: string | null
-  intuitionScore: number
-  intuitionAccuracy: number | null  // 0..1 или null если грамот не было
+  intuitionScore: number              // legacy: с версии 4 не растёт
+  intuitionAccuracy: number | null    // legacy: с версии 4 не используется в UI
   chartersSubmitted: number
   closedProjectsCount: number
+  dealsCount: number                  // число взятых дел — основа ранга
   dayStreak: number
   isOnboardingComplete: boolean
   totalInvested: number
@@ -255,7 +256,9 @@ export interface CharterResultDTO {
   truePositives: number[]
   falsePositives: number[]
   falseNegatives: number[]
-  delta: number
+  delta: number                       // legacy, всегда 0 с версии 4
+  errorCount: number                  // FP + FN — ключ для рендера результата
+  perfectInsight: string | null       // только при сабмите (0 ошибок); на reload — null
 }
 
 export interface CharterSubmitDTO extends CharterResultDTO {
@@ -312,8 +315,8 @@ export const api = {
     get: (projectId: string) => apiClient.get<CharterDTO>(`/charter/${projectId}`).then(r => r.data),
     submit: (projectId: string, selectedIndices: number[]) =>
       apiClient.post<CharterSubmitDTO>(`/charter/${projectId}/submit`, { selectedIndices }).then(r => r.data),
-    submitMiniGame: (projectId: string, won: boolean, perfect?: boolean) =>
-      apiClient.post<{ delta: number; perfectInsight: string | null }>(`/charter/${projectId}/submit-minigame`, { won, perfect }).then(r => r.data),
+    submitMiniGame: (projectId: string, errorCount: number) =>
+      apiClient.post<{ errorCount: number; perfectInsight: string | null }>(`/charter/${projectId}/submit-minigame`, { errorCount }).then(r => r.data),
   },
 
   leaderboard: {
