@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Application, Container, Graphics, Ticker } from 'pixi.js'
+import { Application, Container, Graphics, Text, Ticker } from 'pixi.js'
 import { rngFromSeed } from './seedRng'
 import { colors, spacing } from '@/theme'
 import { playSound } from '@/sounds'
@@ -19,11 +19,12 @@ const PLAY_SECONDS = 15
 const TARGET_OK = 7
 const TARGET_PERFECT = 12
 
-const COIN_SIZE = 56
+const COIN_SIZE = 60
+const COIN_HIT_RADIUS = COIN_SIZE  // ~ вдвое шире самой монеты — толстым пальцам легче
 const COIN_FALL_SPEED = 160        // px / sec
 const SPAWN_INTERVAL_SEC = 0.6
-const FAKE_PROBABILITY = 0.5       // настоящих и фальшивых поровну
-const ROTATION_PERIOD_SEC = 1.6    // полный оборот вокруг вертикальной оси
+const FAKE_PROBABILITY = 0.55
+const ROTATION_PERIOD_SEC = 2.0    // полный оборот (видна обе стороны) за 2 сек
 
 interface ZolushkaGameProps {
   seed: string
@@ -31,50 +32,77 @@ interface ZolushkaGameProps {
   onComplete: (errorCount: number) => void
 }
 
+type Motif = 'sun' | 'star' | 'cross' | 'leaf' | 'fraction' | 'moon' | 'gear'
+
 interface CoinType {
-  /** Главный символ в центре (число номинала) */
-  label: string
-  /** Подпись номинала под полем */
-  caption: string
-  /** Цвета: рим, тень, база, светлая зона, блик */
+  /** Цвета: рим, тень, база, светлая, блик */
   rim: number
   shade: number
   base: number
   lite: number
   hi: number
-  /** Лёгкий доп.штрих в центре, чтобы монеты различались на одной палитре */
-  motif?: 'sun' | 'star' | 'cross' | 'leaf' | 'fraction'
+  /** Аверс (номинал) */
+  label: string         // крупная цифра
+  caption: string       // мелкая подпись под числом
+  frontMotif: Motif     // маленький мотив справа от числа
+  /** Реверс (символ) */
+  backMotif: Motif      // крупный мотив, занимающий ~всю монету
 }
 
-// Эталонная (настоящая) монета и набор подделок.
-// Все монеты одной палитры — это часть сложности: глаз должен ловить символ,
-// а не цвет. Размер и шрифт одинаковые.
+// Эталонная (настоящая) монета
 const REAL_COIN: CoinType = {
-  label: '1', caption: 'золотой',
   rim: 0x6B4A00, shade: 0xB07A10, base: 0xE8A800, lite: 0xFFC838, hi: 0xFFE490,
-  motif: 'sun',
+  label: '1', caption: 'золотой',
+  frontMotif: 'sun',
+  backMotif: 'sun',
 }
 
+// Подделки. Чтобы было интереснее, часть из них совпадает с эталоном по
+// аверсу или реверсу — придётся дождаться, пока монета повернётся.
 const FAKE_COINS: CoinType[] = [
+  // ── Очевидные фальшаки: оба бока отличаются ──
   {
-    label: '5', caption: 'медяков',
     rim: 0x4A2A05, shade: 0x8C5A20, base: 0xC97A30, lite: 0xE9A050, hi: 0xF5C880,
-    motif: 'cross',
+    label: '5', caption: 'медяков', frontMotif: 'cross', backMotif: 'cross',
   },
   {
-    label: '½', caption: 'полушка',
     rim: 0x4A4A55, shade: 0x7A7A85, base: 0xB0B0BB, lite: 0xD0D0D8, hi: 0xEFEFF5,
-    motif: 'fraction',
+    label: '½', caption: 'полушка', frontMotif: 'fraction', backMotif: 'fraction',
   },
   {
-    label: '3', caption: 'гривны',
     rim: 0x5A4A10, shade: 0x8C7A20, base: 0xC9B040, lite: 0xE9D080, hi: 0xF8E9B0,
-    motif: 'leaf',
+    label: '3', caption: 'гривны', frontMotif: 'leaf', backMotif: 'leaf',
   },
   {
-    label: '½', caption: 'денга',
     rim: 0x402A05, shade: 0x7A5A18, base: 0xB08840, lite: 0xD0AC60, hi: 0xEFCC90,
-    motif: 'star',
+    label: '½', caption: 'денга', frontMotif: 'star', backMotif: 'star',
+  },
+  // ── Хитрая подделка: ОТЛИЧАЕТСЯ ТОЛЬКО АВЕРС (номинал) ──
+  // Цвет золота, реверс — солнце как у эталона. На аверсе «5 золотых» вместо «1 золотой».
+  // Если игрок поймает её на реверсе, подумает «настоящая». Нужно увидеть аверс.
+  {
+    rim: 0x6B4A00, shade: 0xB07A10, base: 0xE8A800, lite: 0xFFC838, hi: 0xFFE490,
+    label: '5', caption: 'золотых', frontMotif: 'sun', backMotif: 'sun',
+  },
+  {
+    rim: 0x6B4A00, shade: 0xB07A10, base: 0xE8A800, lite: 0xFFC838, hi: 0xFFE490,
+    label: '2', caption: 'золотых', frontMotif: 'sun', backMotif: 'sun',
+  },
+  // ── Хитрая подделка: ОТЛИЧАЕТСЯ ТОЛЬКО РЕВЕРС (символ на обороте) ──
+  // Аверс точь-в-точь как у эталона: «1 золотой» с солнышком. На реверсе вместо
+  // солнца — луна. Чтобы вскрыть, надо дождаться пол-оборота.
+  {
+    rim: 0x6B4A00, shade: 0xB07A10, base: 0xE8A800, lite: 0xFFC838, hi: 0xFFE490,
+    label: '1', caption: 'золотой', frontMotif: 'sun', backMotif: 'moon',
+  },
+  {
+    rim: 0x6B4A00, shade: 0xB07A10, base: 0xE8A800, lite: 0xFFC838, hi: 0xFFE490,
+    label: '1', caption: 'золотой', frontMotif: 'sun', backMotif: 'gear',
+  },
+  // ── Хитрая подделка: тот же цвет/реверс, но цифра «1» и подпись «грош» ──
+  {
+    rim: 0x6B4A00, shade: 0xB07A10, base: 0xE8A800, lite: 0xFFC838, hi: 0xFFE490,
+    label: '1', caption: 'грош', frontMotif: 'sun', backMotif: 'sun',
   },
 ]
 
@@ -85,77 +113,140 @@ function pickCoinType(rng: () => number): { type: CoinType; isReal: boolean } {
   return { type: REAL_COIN, isReal: true }
 }
 
-// ── Рисование монеты с объёмом (концентрические круги) ─────────────────────
-
-function drawCoin(g: Graphics, c: CoinType, radius: number) {
-  // Тёмный рим
+// ── Базовая шейдинг-подложка монеты ────────────────────────────────────────
+function drawCoinShading(g: Graphics, c: CoinType, radius: number) {
   g.circle(0, 0, radius + 1).fill(c.rim)
-  // База-затенение
   g.circle(0, 0, radius).fill(c.shade)
-  // Средний тон, чуть смещён вправо-вниз (теневая сторона)
   g.circle(radius * 0.08, radius * 0.08, radius * 0.92).fill(c.base)
-  // Основной цвет, смещён влево-вверх
   g.circle(-radius * 0.05, -radius * 0.05, radius * 0.82).fill(c.base)
-  // Светлая зона
   g.circle(-radius * 0.18, -radius * 0.18, radius * 0.58).fill(c.lite)
-  // Блик
   g.circle(-radius * 0.32, -radius * 0.32, radius * 0.28).fill(c.hi)
-  // Спекуляр
   g.circle(-radius * 0.4, -radius * 0.4, radius * 0.08).fill(0xFFFAEC)
-  // Внутренний ободок (медальон)
-  g.circle(0, 0, radius * 0.78).stroke({ width: 2, color: c.rim, alpha: 0.7 })
-
-  // Дополнительный мотив — рисуется ДО надписи
-  drawMotif(g, c.motif ?? null, radius, c.rim)
+  g.circle(0, 0, radius * 0.82).stroke({ width: 2, color: c.rim, alpha: 0.6 })
 }
 
-function drawMotif(g: Graphics, motif: CoinType['motif'] | null, r: number, rim: number) {
-  if (!motif) return
+function drawMotif(g: Graphics, motif: Motif, r: number, color: number, scale = 1) {
+  const sR = r * scale
   if (motif === 'sun') {
-    // Солнце с лучами вокруг номинала
     const rays = 12
     for (let i = 0; i < rays; i++) {
       const a = (i / rays) * Math.PI * 2
-      const x1 = Math.cos(a) * r * 0.55
-      const y1 = Math.sin(a) * r * 0.55
-      const x2 = Math.cos(a) * r * 0.7
-      const y2 = Math.sin(a) * r * 0.7
-      g.moveTo(x1, y1).lineTo(x2, y2).stroke({ width: 2, color: rim, alpha: 0.7 })
+      const x1 = Math.cos(a) * sR * 0.55
+      const y1 = Math.sin(a) * sR * 0.55
+      const x2 = Math.cos(a) * sR * 0.78
+      const y2 = Math.sin(a) * sR * 0.78
+      g.moveTo(x1, y1).lineTo(x2, y2).stroke({ width: 2.5, color, alpha: 0.85 })
     }
+    g.circle(0, 0, sR * 0.36).fill({ color, alpha: 0.6 })
   } else if (motif === 'star') {
-    // 8-конечная звезда
     const pts: number[] = []
     for (let i = 0; i < 16; i++) {
       const a = (i / 16) * Math.PI * 2 - Math.PI / 2
-      const rad = i % 2 === 0 ? r * 0.55 : r * 0.32
+      const rad = i % 2 === 0 ? sR * 0.62 : sR * 0.32
       pts.push(Math.cos(a) * rad, Math.sin(a) * rad)
     }
-    g.poly(pts).fill({ color: rim, alpha: 0.25 })
+    g.poly(pts).fill({ color, alpha: 0.7 })
   } else if (motif === 'cross') {
-    // Крест
-    g.rect(-r * 0.04, -r * 0.5, r * 0.08, r * 1.0).fill({ color: rim, alpha: 0.4 })
-    g.rect(-r * 0.5, -r * 0.04, r * 1.0, r * 0.08).fill({ color: rim, alpha: 0.4 })
+    g.rect(-sR * 0.08, -sR * 0.62, sR * 0.16, sR * 1.24).fill({ color, alpha: 0.75 })
+    g.rect(-sR * 0.62, -sR * 0.08, sR * 1.24, sR * 0.16).fill({ color, alpha: 0.75 })
   } else if (motif === 'leaf') {
-    // Простой колос (две диагональные линии)
-    g.poly([0, -r * 0.6, r * 0.12, -r * 0.3, 0, 0, -r * 0.12, -r * 0.3]).fill({ color: rim, alpha: 0.35 })
-    g.poly([0, 0, r * 0.12, r * 0.3, 0, r * 0.6, -r * 0.12, r * 0.3]).fill({ color: rim, alpha: 0.35 })
+    g.poly([0, -sR * 0.65, sR * 0.18, -sR * 0.3, 0, 0, -sR * 0.18, -sR * 0.3])
+      .fill({ color, alpha: 0.7 })
+    g.poly([0, 0, sR * 0.18, sR * 0.3, 0, sR * 0.65, -sR * 0.18, sR * 0.3])
+      .fill({ color, alpha: 0.7 })
   } else if (motif === 'fraction') {
-    // Горизонтальная черта дроби
-    g.rect(-r * 0.3, -r * 0.04, r * 0.6, r * 0.08).fill({ color: rim, alpha: 0.45 })
+    g.rect(-sR * 0.45, -sR * 0.06, sR * 0.9, sR * 0.12).fill({ color, alpha: 0.8 })
+  } else if (motif === 'moon') {
+    g.circle(0, 0, sR * 0.6).fill({ color, alpha: 0.8 })
+    g.circle(sR * 0.22, -sR * 0.05, sR * 0.55).fill(0xFFFAEC)
+  } else if (motif === 'gear') {
+    const teeth = 8
+    for (let i = 0; i < teeth; i++) {
+      const a = (i / teeth) * Math.PI * 2
+      const cx = Math.cos(a) * sR * 0.6
+      const cy = Math.sin(a) * sR * 0.6
+      g.circle(cx, cy, sR * 0.15).fill({ color, alpha: 0.8 })
+    }
+    g.circle(0, 0, sR * 0.4).fill({ color, alpha: 0.8 })
+    g.circle(0, 0, sR * 0.18).fill(0xFFFAEC)
   }
 }
 
-// Текст рисуется через DOM — Pixi v8 Text усложняет жизнь со шрифтами в Mini App,
-// а нам нужно всего пара символов на монету. Координаты тоже DOM (px относительно
-// контейнера канваса), потому что у нас уже есть слой всплывающих очков.
+// ── Текстовые подписи (Pixi Text) ─────────────────────────────────────────
+function makeLabelText(label: string, radius: number, color: number): Text {
+  const t = new Text({
+    text: label,
+    style: {
+      fontFamily: 'Georgia, "Times New Roman", serif',
+      fontSize: radius * 0.85,
+      fill: color,
+      fontWeight: '700',
+      align: 'center',
+    },
+  })
+  t.anchor.set(0.5)
+  return t
+}
+
+function makeCaptionText(caption: string, radius: number, color: number): Text {
+  const t = new Text({
+    text: caption,
+    style: {
+      fontFamily: 'Georgia, "Times New Roman", serif',
+      fontSize: radius * 0.26,
+      fill: color,
+      fontWeight: '600',
+      letterSpacing: 0.5,
+      align: 'center',
+    },
+  })
+  t.anchor.set(0.5)
+  return t
+}
+
+// ── Сборка front/back контейнеров ─────────────────────────────────────────
+function buildFrontFace(c: CoinType, radius: number): Container {
+  const container = new Container()
+  const g = new Graphics()
+  drawCoinShading(g, c, radius)
+  // Маленький мотив над цифрой
+  const motifG = new Graphics()
+  drawMotif(motifG, c.frontMotif, radius * 0.35, c.rim)
+  motifG.y = -radius * 0.45
+  container.addChild(g)
+  container.addChild(motifG)
+  // Большая цифра
+  const label = makeLabelText(c.label, radius, c.rim)
+  label.y = radius * 0.05
+  container.addChild(label)
+  // Подпись
+  const cap = makeCaptionText(c.caption, radius, c.rim)
+  cap.y = radius * 0.55
+  container.addChild(cap)
+  return container
+}
+
+function buildBackFace(c: CoinType, radius: number): Container {
+  const container = new Container()
+  const g = new Graphics()
+  drawCoinShading(g, c, radius)
+  const motifG = new Graphics()
+  drawMotif(motifG, c.backMotif, radius * 0.75, c.rim)
+  container.addChild(g)
+  container.addChild(motifG)
+  return container
+}
+
 interface CoinSprite {
   id: number
   type: CoinType
   isReal: boolean
   x: number
   y: number
-  spawnTime: number   // ms
+  spawnTime: number
   container: Container
+  frontFace: Container
+  backFace: Container
   removed: boolean
 }
 
@@ -175,7 +266,6 @@ export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
   const coinsRef = useRef<CoinSprite[]>([])
   const lastSpawnRef = useRef<number>(0)
   const scoreRef = useRef(0)
-  const startTimeRef = useRef(performance.now())
   const tickerCbRef = useRef<((ticker: Ticker) => void) | null>(null)
   const coinIdRef = useRef(0)
   const floatIdRef = useRef(0)
@@ -188,7 +278,6 @@ export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
   const onCompleteRef = useRef(onComplete)
   useEffect(() => { onCompleteRef.current = onComplete }, [onComplete])
 
-  // Pre-render-ref: чтобы handler видел актуальную фазу
   const phaseRef = useRef<'reference' | 'play'>('reference')
   useEffect(() => { phaseRef.current = phase }, [phase])
 
@@ -213,7 +302,6 @@ export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
     setTimeout(() => setFloats(prev => prev.filter(f => f.id !== id)), 1000)
   }
 
-  // ── Таймер показа эталона ──────────────────────────────────────────────
   useEffect(() => {
     if (phase !== 'reference') return
     setRefCountdown(REFERENCE_SECONDS)
@@ -230,10 +318,8 @@ export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
     return () => clearInterval(id)
   }, [phase])
 
-  // ── Таймер раунда ──────────────────────────────────────────────────────
   useEffect(() => {
     if (phase !== 'play') return
-    startTimeRef.current = performance.now()
     setPlayCountdown(PLAY_SECONDS)
     const id = setInterval(() => {
       setPlayCountdown(prev => {
@@ -249,7 +335,6 @@ export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase])
 
-  // ── Инициализация Pixi ─────────────────────────────────────────────────
   useEffect(() => {
     if (!refMount.current) return
     let app: Application | null = null
@@ -286,8 +371,6 @@ export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // ── Логика спавна / падения / тапов ────────────────────────────────────
-
   const spawnCoin = (now: number) => {
     const app = refApp.current
     if (!app) return
@@ -295,19 +378,23 @@ export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
     const margin = COIN_SIZE * 0.7
     const x = margin + rngRef.current() * (app.screen.width - margin * 2)
     const y = -COIN_SIZE
+
     const container = new Container()
     container.x = x
     container.y = y
     container.eventMode = 'static'
     container.cursor = 'pointer'
 
-    const gfx = new Graphics()
-    drawCoin(gfx, type, COIN_SIZE / 2)
-    container.addChild(gfx)
+    const radius = COIN_SIZE / 2
+    const frontFace = buildFrontFace(type, radius)
+    const backFace = buildBackFace(type, radius)
+    backFace.visible = false
+    container.addChild(frontFace)
+    container.addChild(backFace)
 
-    // Хит-зона побольше монеты — толстые пальцы тоже должны попадать
+    // Хит-зона — сильно шире самой монеты, перекрывает оба бока
     const hit = new Graphics()
-    hit.circle(0, 0, COIN_SIZE * 0.7).fill({ color: 0xFFFFFF, alpha: 0.0001 })
+    hit.circle(0, 0, COIN_HIT_RADIUS).fill({ color: 0xFFFFFF, alpha: 0.0001 })
     container.addChild(hit)
 
     const sprite: CoinSprite = {
@@ -315,7 +402,7 @@ export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
       type, isReal,
       x, y,
       spawnTime: now,
-      container,
+      container, frontFace, backFace,
       removed: false,
     }
     container.on('pointertap', () => onCoinTap(sprite))
@@ -352,24 +439,30 @@ export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
 
     const now = performance.now()
     const dt = app.ticker.deltaMS / 1000
+    const height = app.screen.height
+    const remaining: CoinSprite[] = []
 
-    // Спавн новых монет
     if ((now - lastSpawnRef.current) / 1000 >= SPAWN_INTERVAL_SEC) {
       spawnCoin(now)
       lastSpawnRef.current = now
     }
 
-    // Обновляем позиции и вращение
-    const height = app.screen.height
-    const remaining: CoinSprite[] = []
     for (const sprite of coinsRef.current) {
       if (sprite.removed) continue
       sprite.y += COIN_FALL_SPEED * dt
       sprite.container.y = sprite.y
-      // Псевдо-вращение вокруг вертикальной оси
+
+      // Вращение вокруг вертикальной оси — scale.x от 1 до -1 и обратно.
       const t = (now - sprite.spawnTime) / 1000
-      sprite.container.scale.x = Math.cos((t / ROTATION_PERIOD_SEC) * 2 * Math.PI)
-      // Снизу экрана — удаляем (упущенная монета)
+      const sx = Math.cos((t / ROTATION_PERIOD_SEC) * 2 * Math.PI)
+      sprite.container.scale.x = Math.abs(sx) < 0.04 ? 0.04 : sx
+      // Переключаем видимую сторону: положительный scale.x — аверс, отрицательный — реверс.
+      const showFront = sx >= 0
+      if (sprite.frontFace.visible !== showFront) {
+        sprite.frontFace.visible = showFront
+        sprite.backFace.visible = !showFront
+      }
+
       if (sprite.y > height + COIN_SIZE) {
         sprite.container.destroy({ children: true })
         continue
@@ -379,7 +472,6 @@ export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
     coinsRef.current = remaining
   }
 
-  // ── Стили ──────────────────────────────────────────────────────────────
   const scoreColor = score >= TARGET_PERFECT ? colors.success
     : score >= TARGET_OK ? colors.fairyGold
     : colors.textPrimary
@@ -404,7 +496,7 @@ export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
         marginBottom: spacing.sm, lineHeight: 1.4,
       }}>
         {phase === 'reference'
-          ? 'Только эту монету нужно ловить — остальные пропускай'
+          ? 'Запомни обе стороны: аверс с цифрой и реверс с солнцем'
           : 'Тапай настоящую (+1), не тапай подделки (−2). 7 — пройти, 12 — раскрыть совет'}
       </div>
 
@@ -419,7 +511,6 @@ export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
         </div>
       )}
 
-      {/* Эталон-монета (большой превью на reference, мини на play) */}
       <ReferenceSample phase={phase} />
 
       <div
@@ -462,41 +553,54 @@ export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
 }
 
 /**
- * Эталонная монета: на reference фазе — большая по центру, на play — маленькая
- * наклейка в шапке, чтобы можно было свериться.
+ * Эталон: на reference фазе показываем обе стороны в крупном виде и большим
+ * шрифтом, на play — компактную плашку с двумя бочками. Игрок должен запомнить
+ * аверс (цифра + подпись) и реверс (символ).
  */
 function ReferenceSample({ phase }: { phase: 'reference' | 'play' }) {
-  const refMount = useRef<HTMLDivElement>(null)
-  const sizePx = phase === 'reference' ? 140 : 48
+  const frontRef = useRef<HTMLDivElement>(null)
+  const backRef = useRef<HTMLDivElement>(null)
+  const sizePx = phase === 'reference' ? 120 : 50
 
   useEffect(() => {
-    if (!refMount.current) return
-    let app: Application | null = null
+    let appFront: Application | null = null
+    let appBack: Application | null = null
     let cancelled = false
+    const radius = sizePx * 0.42
     ;(async () => {
-      app = new Application()
-      await app.init({
-        width: sizePx,
-        height: sizePx,
-        backgroundAlpha: 0,
-        antialias: true,
-        resolution: window.devicePixelRatio || 1,
-        autoDensity: true,
-      })
-      if (cancelled || !refMount.current) {
-        app.destroy(true, { children: true })
-        return
+      if (frontRef.current) {
+        appFront = new Application()
+        await appFront.init({
+          width: sizePx, height: sizePx,
+          backgroundAlpha: 0, antialias: true,
+          resolution: window.devicePixelRatio || 1, autoDensity: true,
+        })
+        if (cancelled) { appFront.destroy(true, { children: true }); return }
+        frontRef.current.innerHTML = ''
+        frontRef.current.appendChild(appFront.canvas)
+        const face = buildFrontFace(REAL_COIN, radius)
+        face.x = sizePx / 2; face.y = sizePx / 2
+        appFront.stage.addChild(face)
       }
-      refMount.current.appendChild(app.canvas)
-      const g = new Graphics()
-      drawCoin(g, REAL_COIN, sizePx * 0.42)
-      g.x = sizePx / 2
-      g.y = sizePx / 2
-      app.stage.addChild(g)
+      if (backRef.current) {
+        appBack = new Application()
+        await appBack.init({
+          width: sizePx, height: sizePx,
+          backgroundAlpha: 0, antialias: true,
+          resolution: window.devicePixelRatio || 1, autoDensity: true,
+        })
+        if (cancelled) { appBack.destroy(true, { children: true }); return }
+        backRef.current.innerHTML = ''
+        backRef.current.appendChild(appBack.canvas)
+        const face = buildBackFace(REAL_COIN, radius)
+        face.x = sizePx / 2; face.y = sizePx / 2
+        appBack.stage.addChild(face)
+      }
     })()
     return () => {
       cancelled = true
-      if (app) app.destroy(true, { children: true })
+      if (appFront) appFront.destroy(true, { children: true })
+      if (appBack) appBack.destroy(true, { children: true })
     }
   }, [sizePx])
 
@@ -506,7 +610,17 @@ function ReferenceSample({ phase }: { phase: 'reference' | 'play' }) {
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         gap: spacing.sm, marginBottom: spacing.md,
       }}>
-        <div ref={refMount} style={{ width: sizePx, height: sizePx }} />
+        <div style={{ display: 'flex', gap: spacing.lg, alignItems: 'center' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div ref={frontRef} style={{ width: sizePx, height: sizePx }} />
+            <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: 4 }}>Аверс</div>
+          </div>
+          <div style={{ color: colors.fairyGold, fontSize: 24 }}>↻</div>
+          <div style={{ textAlign: 'center' }}>
+            <div ref={backRef} style={{ width: sizePx, height: sizePx }} />
+            <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: 4 }}>Реверс</div>
+          </div>
+        </div>
         <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '14px' }}>
           {REAL_COIN.label} {REAL_COIN.caption}
         </div>
@@ -519,10 +633,12 @@ function ReferenceSample({ phase }: { phase: 'reference' | 'play' }) {
       marginBottom: spacing.sm,
     }}>
       <span style={{ color: colors.textMuted, fontSize: '11px' }}>Эталон:</span>
-      <div ref={refMount} style={{ width: sizePx, height: sizePx }} />
+      <div ref={frontRef} style={{ width: sizePx, height: sizePx }} />
+      <div ref={backRef} style={{ width: sizePx, height: sizePx }} />
       <span style={{ color: colors.fairyGold, fontSize: '12px', fontWeight: 600 }}>
         {REAL_COIN.label} {REAL_COIN.caption}
       </span>
     </div>
   )
 }
+
