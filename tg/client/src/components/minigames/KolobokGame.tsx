@@ -19,8 +19,8 @@ const TARGET_PERFECT = 12
 const COLS = 3
 const ROWS = 3
 
-const SPAWN_INTERVAL_SEC = 0.65       // как часто появляется новый персонаж
-const VISIBLE_DURATION_SEC = 0.7      // как долго персонаж виден (включая анимации)
+const SPAWN_INTERVAL_SEC = 0.75       // как часто появляется новый персонаж
+const VISIBLE_DURATION_SEC = 0.9      // как долго персонаж виден (включая анимации появления/ухода)
 const APPEAR_SEC = 0.12
 const DISAPPEAR_SEC = 0.12
 const KOLOBOK_PROBABILITY = 0.32      // доля Колобков в общей выборке
@@ -249,20 +249,30 @@ export function KolobokGame({ seed, onComplete }: KolobokGameProps) {
           holeGfx.y = cy + cellH * 0.18
           app!.stage.addChild(holeGfx)
 
+          // Внешний контейнер — не масштабируется, держит хит-зону. Без сжатия
+          // в моменты появления/ухода персонажа, поэтому пальцем легко попасть
+          // в любой кадр анимации.
           const charBox = new Container()
           charBox.x = cx
           charBox.y = cy + cellH * 0.08
-          charBox.eventMode = 'static'
+          charBox.eventMode = 'none'
           charBox.cursor = 'pointer'
           charBox.visible = false
 
+          // Хит-зона: больше визуальной клетки во все стороны (1.5×1.5 cell).
+          // Кружок — комфортнее для пальца, чем прямоугольник.
           const hit = new Graphics()
-          hit.rect(-cellW * 0.42, -cellH * 0.5, cellW * 0.84, cellH).fill({ color: 0xFFFFFF, alpha: 0.0001 })
+          hit.circle(0, 0, Math.max(cellW, cellH) * 0.75).fill({ color: 0xFFFFFF, alpha: 0.0001 })
           charBox.addChild(hit)
 
+          // Внутренний контейнер — здесь scale.y анимируется (выскакивание).
+          const inner = new Container()
+          charBox.addChild(inner)
+
           const charGfx = new Graphics()
-          charBox.addChild(charGfx)
+          inner.addChild(charGfx)
           ;(charBox as any).__charGfx = charGfx
+          ;(charBox as any).__inner = inner
           ;(charBox as any).__cellH = cellH
 
           const idx = r * COLS + c
@@ -270,7 +280,6 @@ export function KolobokGame({ seed, onComplete }: KolobokGameProps) {
 
           app!.stage.addChild(charBox)
           characterContainers.push(charBox)
-          // Позиция для всплывающих цифр — над персонажем
           positions.push({ x: cx, y: cy - cellH * 0.2 })
         }
       }
@@ -350,9 +359,13 @@ export function KolobokGame({ seed, onComplete }: KolobokGameProps) {
       const hole = holesRef.current[i]
       const box = charContainersRef.current[i]
       if (!box) continue
+      const inner: Container = (box as any).__inner
 
       if (hole.appearedAt === null || !hole.character) {
-        if (box.visible) box.visible = false
+        if (box.visible) {
+          box.visible = false
+          box.eventMode = 'none'
+        }
         continue
       }
 
@@ -361,6 +374,7 @@ export function KolobokGame({ seed, onComplete }: KolobokGameProps) {
         hole.appearedAt = null
         hole.character = null
         box.visible = false
+        box.eventMode = 'none'
         continue
       }
 
@@ -377,9 +391,13 @@ export function KolobokGame({ seed, onComplete }: KolobokGameProps) {
         g.clear()
         DRAWERS[hole.character](g, cellH * 0.32)
         box.visible = true
+        box.eventMode = 'static'
       }
-      box.scale.y = s
-      box.scale.x = 0.85 + 0.15 * s
+      // Сжимаем только визуал, хит-зона на внешнем контейнере остаётся в полном размере
+      if (inner) {
+        inner.scale.y = s
+        inner.scale.x = 0.85 + 0.15 * s
+      }
     }
   }
 
