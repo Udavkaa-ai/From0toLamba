@@ -1076,16 +1076,23 @@ function MiniGameResultSheet({
             {won ? `+${delta} ${t.common.intuition.toLowerCase()}` : `${t.common.intuition} ${delta >= 0 ? '+' : ''}${delta}`}
           </div>
           <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
-            {won ? 'Чуйка не подвела' : 'Чуйка промахнулась — вложение под вопросом'}
+            {won
+              ? 'Чуйка не подвела'
+              : 'Чуйка промахнулась — дело осталось тайной'}
           </div>
         </div>
 
-        <div style={paramsRowStyle}>
-          <ParamChip label={t.charter.apy} value={`${project.claimedAPY}%`} />
-          <ParamChip label="Тип дела" value={dealTypeLabel} />
-        </div>
+        {/* На победе — раскрываем посул и тип дела. На поражении — ничего,
+            только звёздный bypass. */}
+        {won && (
+          <div style={paramsRowStyle}>
+            <ParamChip label={t.charter.apy} value={`${project.claimedAPY}%`} />
+            <ParamChip label="Тип дела" value={dealTypeLabel} />
+          </div>
+        )}
 
-        {perfectInsight && (
+        {/* Совет по типу дела — только при идеальной игре. */}
+        {won && perfectInsight && (
           <div style={{
             marginTop: spacing.md,
             padding: spacing.md,
@@ -1101,6 +1108,22 @@ function MiniGameResultSheet({
               🔮 Шёпот чуйки · идеальная игра
             </div>
             {perfectInsight}
+          </div>
+        )}
+
+        {!won && (
+          <div style={{
+            marginTop: spacing.md,
+            padding: spacing.md,
+            background: 'rgba(42, 25, 96, 0.4)',
+            border: `1px solid ${colors.cardBorder}`,
+            borderRadius: '12px',
+            color: colors.textSecondary,
+            fontSize: '12px',
+            lineHeight: 1.5,
+            textAlign: 'center',
+          }}>
+            Посул и тип дела не раскрыты. Чтобы всё равно вложиться, заплати 10 звёзд — откроем и проведём вложение.
           </div>
         )}
 

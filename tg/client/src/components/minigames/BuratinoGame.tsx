@@ -87,15 +87,21 @@ function keysEqual(a: KeyParams, b: KeyParams): boolean {
   return true
 }
 
-/** Рисует ключ. Расчёт сделан так, чтобы (0,0) в локальных координатах
- *  контейнера было центром ключа — это нужно для корректного вращения. */
+/** Рисует ключ с иллюзией объёма: шток-«цилиндр» (5 вертикальных полос
+ *  от тёмного рима через блик к тёмной правой кромке), головка-«сфера»
+ *  (концентрические круги от тёмного края к специальному блику), бороздки
+ *  с верхним хайлайтом и глубокой тенью на правом ребре.
+ *  Координаты центрированы относительно (0,0) — это важно для вращения. */
 function drawKey(g: Graphics, p: KeyParams, scale: number) {
-  const gold       = 0xFFB800
-  const goldDark   = 0xCC8F00
-  const goldShade  = 0x8C6200
-  const highlight  = 0xFFE082
-  const accent     = 0x3D2A05
-  const hole       = 0x0D1735
+  // Палитра: «золото при свете сверху-слева»
+  const goldRim   = 0x6B4A00 // глубокая рим-тень
+  const goldDeep  = 0x8C6200 // тень
+  const goldShade = 0xB07A10 // средняя
+  const gold      = 0xE8A800 // база
+  const goldLite  = 0xFFC838 // светлая
+  const goldHi    = 0xFFE490 // блик
+  const goldSpec  = 0xFFFAEC // спекуляр
+  const hole      = 0x0A1020
 
   const r  = p.headRadius * scale
   const sw = p.shaftWidth * scale
@@ -105,61 +111,80 @@ function drawKey(g: Graphics, p: KeyParams, scale: number) {
   const shaftBottomY = sh / 2
   const headCenterY  = shaftTopY - r * 0.85
 
-  // ── Подложка-тень: смещена вправо-вниз ──────────────────────────────────
-  g.rect(-sw / 2 + 2, shaftTopY + 2, sw, sh).fill({ color: goldShade, alpha: 0.55 })
+  // ── Шток-цилиндр: 6 полос слева-направо (рим→блик→база→тень→рим) ────────
+  const stripWidths = [0.05, 0.13, 0.20, 0.22, 0.25, 0.15]
+  const stripColors = [goldRim, goldHi, goldLite, gold, goldShade, goldDeep]
+  let cursor = -sw / 2
+  for (let i = 0; i < stripWidths.length; i++) {
+    const w = sw * stripWidths[i]
+    g.rect(cursor, shaftTopY, w + 0.6, sh).fill(stripColors[i])
+    cursor += w
+  }
 
-  // ── Шток ────────────────────────────────────────────────────────────────
-  g.rect(-sw / 2, shaftTopY, sw, sh).fill(goldDark).stroke({ width: 1.5, color: accent })
-  // Подсветка слева — иллюзия цилиндра
-  g.rect(-sw / 2 + 1, shaftTopY + 1, 2, sh - 2).fill({ color: highlight, alpha: 0.6 })
+  // ── Кончик (фаска) ──────────────────────────────────────────────────────
+  g.rect(-sw * 0.42, shaftBottomY, sw * 0.84, 5 * scale).fill(goldDeep)
+  g.rect(-sw * 0.42, shaftBottomY, sw * 0.84, 1.4).fill(goldHi)
+  g.rect(-sw * 0.42, shaftBottomY + 5 * scale - 1, sw * 0.84, 1).fill(goldRim)
 
-  // ── Кончик ──────────────────────────────────────────────────────────────
-  g.rect(-sw * 0.35, shaftBottomY, sw * 0.7, 5 * scale).fill(goldDark).stroke({ width: 1, color: accent })
-
-  // ── Бороздки справа ─────────────────────────────────────────────────────
-  const teethSpacing = 11 * scale
+  // ── Бороздки справа (3D-бруски с фасками) ───────────────────────────────
+  const teethSpacing = 12 * scale
   const teethTotalH = (p.teethCount - 1) * teethSpacing
-  const firstTeethY = shaftBottomY - 8 * scale - teethTotalH
+  const firstTeethY = shaftBottomY - 10 * scale - teethTotalH
   for (let i = 0; i < p.teethCount; i++) {
     const t = p.teeth[i]
     const y = firstTeethY + i * teethSpacing - (t.thickness * scale) / 2
     const w = t.depth * scale
     const h = t.thickness * scale
-    // Тень зуба
-    g.rect(sw / 2 + 1, y + 1, w, h).fill({ color: goldShade, alpha: 0.6 })
-    // Сам зуб
-    g.rect(sw / 2, y, w, h).fill(goldDark).stroke({ width: 1, color: accent })
-    // Подсветка сверху зуба
-    g.rect(sw / 2, y, w, 1.5).fill({ color: highlight, alpha: 0.7 })
+    // База
+    g.rect(sw / 2, y, w, h).fill(gold)
+    // Верхний хайлайт
+    g.rect(sw / 2, y, w, h * 0.28).fill(goldLite)
+    g.rect(sw / 2, y, w, h * 0.12).fill(goldHi)
+    // Нижняя тень
+    g.rect(sw / 2, y + h * 0.7, w, h * 0.3).fill(goldShade)
+    g.rect(sw / 2, y + h * 0.88, w, h * 0.12).fill(goldDeep)
+    // Глубокая тень на правом торце
+    g.rect(sw / 2 + w - 1.5, y, 1.5, h).fill(goldRim)
   }
 
-  // ── Головка ─────────────────────────────────────────────────────────────
-  // Тень-подложка
+  // ── Головка-«сфера»: набор концентрических фигур ────────────────────────
   if (p.headShape === 'circle') {
-    g.circle(2, headCenterY + 2, r).fill({ color: goldShade, alpha: 0.55 })
+    // Тёмный рим
+    g.circle(0, headCenterY, r + 1).fill(goldRim)
+    // Затемнённая база
+    g.circle(0, headCenterY, r).fill(goldDeep)
+    // Слой средней тени, чуть смещён вправо-вниз — тень
+    g.circle(r * 0.08, headCenterY + r * 0.08, r * 0.92).fill(goldShade)
+    // Основной цвет — смещён слегка влево-вверх
+    g.circle(-r * 0.04, headCenterY - r * 0.04, r * 0.84).fill(gold)
+    // Световая зона
+    g.circle(-r * 0.18, headCenterY - r * 0.18, r * 0.6).fill(goldLite)
+    // Блик
+    g.circle(-r * 0.32, headCenterY - r * 0.32, r * 0.3).fill(goldHi)
+    // Спекуляр
+    g.circle(-r * 0.42, headCenterY - r * 0.42, r * 0.09).fill(goldSpec)
   } else if (p.headShape === 'diamond') {
-    g.poly([2, headCenterY - r + 2, r + 2, headCenterY + 2, 2, headCenterY + r + 2, -r + 2, headCenterY + 2])
-      .fill({ color: goldShade, alpha: 0.55 })
+    g.poly([0, headCenterY - r - 1, r + 1, headCenterY, 0, headCenterY + r + 1, -r - 1, headCenterY]).fill(goldRim)
+    g.poly([0, headCenterY - r,  r,  headCenterY, 0, headCenterY + r,  -r,  headCenterY]).fill(goldDeep)
+    // Светлая (левая-верхняя) грань
+    g.poly([0, headCenterY - r * 0.95, -r * 0.95, headCenterY, 0, headCenterY * 0 + headCenterY]).fill(gold)
+    g.poly([0, headCenterY - r * 0.85, -r * 0.45, headCenterY - r * 0.05, 0, headCenterY - r * 0.2]).fill(goldLite)
+    g.poly([0, headCenterY - r * 0.7, -r * 0.2, headCenterY - r * 0.25, 0, headCenterY - r * 0.4]).fill(goldHi)
   } else {
-    g.rect(-r + 2, headCenterY - r + 2, 2 * r, 2 * r).fill({ color: goldShade, alpha: 0.55 })
+    // square
+    g.rect(-r - 1, headCenterY - r - 1, 2 * r + 2, 2 * r + 2).fill(goldRim)
+    g.rect(-r, headCenterY - r, 2 * r, 2 * r).fill(goldDeep)
+    g.rect(-r, headCenterY - r, 2 * r, 2 * r * 0.65).fill(goldShade)
+    g.rect(-r, headCenterY - r, 2 * r * 0.55, 2 * r * 0.55).fill(gold)
+    g.rect(-r, headCenterY - r, 2 * r * 0.4, 2 * r * 0.35).fill(goldLite)
+    g.rect(-r * 0.9, headCenterY - r * 0.9, r * 0.6, r * 0.25).fill(goldHi)
+    g.rect(-r * 0.8, headCenterY - r * 0.85, r * 0.2, r * 0.1).fill(goldSpec)
   }
-  // Сама головка
-  if (p.headShape === 'circle') {
-    g.circle(0, headCenterY, r).fill(gold).stroke({ width: 2, color: accent })
-  } else if (p.headShape === 'diamond') {
-    g.poly([0, headCenterY - r, r, headCenterY, 0, headCenterY + r, -r, headCenterY])
-      .fill(gold).stroke({ width: 2, color: accent })
-  } else {
-    g.rect(-r, headCenterY - r, 2 * r, 2 * r).fill(gold).stroke({ width: 2, color: accent })
-  }
-  // Подсветка-блик слева-сверху (имитирует выпуклость)
-  if (p.headShape === 'circle') {
-    g.circle(-r * 0.35, headCenterY - r * 0.35, r * 0.35).fill({ color: highlight, alpha: 0.55 })
-  } else {
-    g.rect(-r * 0.7, headCenterY - r * 0.9, r * 0.6, 3).fill({ color: highlight, alpha: 0.7 })
-  }
-  // Дыра в головке
-  g.circle(0, headCenterY, r * 0.38).fill(hole).stroke({ width: 1.5, color: accent })
+  // Дыра в головке (с фаской)
+  g.circle(0, headCenterY, r * 0.42).fill(goldRim)
+  g.circle(0, headCenterY, r * 0.36).fill(hole)
+  // Чёрная тень внутри дыры справа-снизу
+  g.circle(r * 0.06, headCenterY + r * 0.06, r * 0.32).fill({ color: 0x000000, alpha: 0.55 })
 }
 
 /** Тень-эллипс под ключом — не вращается. */

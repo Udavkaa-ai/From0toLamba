@@ -9,7 +9,7 @@ const tg = (window as any).Telegram?.WebApp
 const haptic = tg?.HapticFeedback
 
 const PLAY_SECONDS = 15
-const MAX_ATTEMPTS = 7
+const MAX_ATTEMPTS = 15
 const REVEAL_DELAY_MS = 700
 const SYMBOL_COUNT = 6
 const COLS = 3
