@@ -9,6 +9,7 @@ import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing } from '@/theme'
 import { Seal, generateReferenceSeal, sealForCell, mutateSeal, RANK_MUT_POOLS } from '@/components/Seal'
 import type { MutTarget } from '@/components/Seal'
+import { MiniGame } from '@/components/minigames/MiniGame'
 import { CoinIcon } from '@/components/icons'
 import { useTelegramBackHandler } from '@/hooks/useTelegramBackButton'
 import { playSound } from '@/sounds'
@@ -336,9 +337,10 @@ export function CharterPage() {
         )}
 
         {phase === 'minigame' && project && (
-          <MiniGameStub
+          <MiniGame
             archetype={project.personaArchetype}
             seed={charter.gridSeed}
+            difficulty={charter.difficulty}
             pending={submitMiniGameMutation.isPending}
             onComplete={handleMiniGameComplete}
           />
@@ -909,53 +911,6 @@ function ScanGrid({
             </button>
           )
         })}
-      </div>
-    </div>
-  )
-}
-
-// Заглушка вместо реальной мини-игры (Этап 0). Когда придёт время Этапа 1 (Buratino),
-// этот компонент будет заменён на dispatcher по архетипу → конкретный <XxxGame seed onComplete />.
-function MiniGameStub({
-  archetype, seed, pending, onComplete,
-}: {
-  archetype: string
-  seed: string
-  pending: boolean
-  onComplete: (won: boolean) => void
-}) {
-  return (
-    <div style={{
-      flex: 1, padding: spacing.xxl,
-      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      gap: spacing.lg, maxWidth: '500px', margin: '0 auto', width: '100%', boxSizing: 'border-box',
-    }}>
-      <div style={{ fontSize: '52px' }}>🪆</div>
-      <div style={{ color: colors.fairyGold, fontSize: '20px', fontWeight: 700, textAlign: 'center' }}>
-        Здесь будет испытание
-      </div>
-      <div style={{ color: colors.textMuted, fontSize: '13px', textAlign: 'center', lineHeight: 1.5 }}>
-        Архетип: {archetype}<br />
-        Скоро здесь появится мини-игра. Пока — служебные кнопки для теста механики.
-      </div>
-      <div style={{ color: colors.textMuted, fontSize: '10px', opacity: 0.6 }}>
-        seed: {seed.slice(0, 12)}…
-      </div>
-      <div style={{ display: 'flex', gap: spacing.sm, width: '100%' }}>
-        <button
-          onClick={() => onComplete(false)}
-          disabled={pending}
-          style={{ ...secondaryBtnStyle, flex: 1, marginTop: 0, opacity: pending ? 0.6 : 1 }}
-        >
-          Проиграть (тест)
-        </button>
-        <button
-          onClick={() => onComplete(true)}
-          disabled={pending}
-          style={{ ...primaryBtnStyle, flex: 1, opacity: pending ? 0.6 : 1 }}
-        >
-          Победить (тест)
-        </button>
       </div>
     </div>
   )
