@@ -48,16 +48,18 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
   const onCompleteRef = useRef(onComplete)
   useEffect(() => { onCompleteRef.current = onComplete }, [onComplete])
 
-  // Порядок ингредиентов в шапке (фиксирован — те же 5 позиций оба фазы)
+  // Стабильный порядок ингредиентов для reference-экрана (с цифрами 1..5)
   const slotOrder = useMemo(() => shuffle(INGREDIENT_MODELS.map((_, i) => i), rngRef.current), [])
-  // Рецепт — все 5 в случайном порядке, по которому игрок должен ловить
+  // Рецепт — все 5 в случайном порядке, по которому игрок должен класть
   const recipe = useMemo(() => shuffle(INGREDIENT_MODELS.map((_, i) => i), rngRef.current), [])
 
   const [phase, setPhase] = useState<'reference' | 'play'>('reference')
   const [refCountdown, setRefCountdown] = useState(REFERENCE_SECONDS)
   const [playCountdown, setPlayCountdown] = useState(PLAY_SECONDS)
   const [round, setRound] = useState(0)
-  const [feedback, setFeedback] = useState<{ slotIdx: number; state: 'correct' | 'wrong' } | null>(null)
+  // Уже правильно добавленные в рецепт ингредиенты — пропадают со стола
+  const [consumed, setConsumed] = useState<Set<number>>(() => new Set())
+  const [feedback, setFeedback] = useState<{ ingredientIdx: number; state: 'correct' | 'wrong' } | null>(null)
   const phaseRef = useRef(phase)
   useEffect(() => { phaseRef.current = phase }, [phase])
   const roundRef = useRef(0)
@@ -106,25 +108,29 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase])
 
-  const onPick = (slotIdx: number) => {
+  const onPick = (ingredientIdx: number) => {
     if (doneRef.current) return
     if (phaseRef.current !== 'play') return
     if (feedback) return
-    const ingredientIdx = slotOrder[slotIdx]
+    if (consumed.has(ingredientIdx)) return
     const correctIngredientIdx = recipe[roundRef.current]
     const isCorrect = ingredientIdx === correctIngredientIdx
     if (isCorrect) {
       haptic?.notificationOccurred('success')
       playSound('seal')
-      setFeedback({ slotIdx, state: 'correct' })
+      setFeedback({ ingredientIdx, state: 'correct' })
     } else {
       haptic?.notificationOccurred('error')
       playSound('lose')
       errorsRef.current += 1
-      setFeedback({ slotIdx, state: 'wrong' })
+      setFeedback({ ingredientIdx, state: 'wrong' })
     }
     setTimeout(() => {
       setFeedback(null)
+      if (isCorrect) {
+        // Ингредиент уходит со стола → остальные сдвигаются к центру
+        setConsumed(prev => new Set(prev).add(ingredientIdx))
+      }
       const next = roundRef.current + 1
       if (next >= RECIPE_LENGTH) {
         complete(errorsRef.current)
@@ -134,20 +140,25 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
     }, 500)
   }
 
-  // Раскладка 5 слотов в ряд по X
+  // Текущие слоты: ингредиенты, которые ещё не легли в котёл, в исходном порядке.
+  // На фазе reference показываем ВСЕ 5 (consumed пуст). На play — оставшиеся.
+  const activeIngredients = useMemo(
+    () => slotOrder.filter(i => !consumed.has(i)),
+    [slotOrder, consumed],
+  )
+
+  // Раскладка по X, центрируем оставшиеся
   const positions = useMemo(() => {
+    const n = activeIngredients.length
     const spacing3D = 1.5
-    return Array.from({ length: RECIPE_LENGTH }, (_, i) => ({
-      x: (i - (RECIPE_LENGTH - 1) / 2) * spacing3D,
+    return activeIngredients.map((_, i) => ({
+      x: (i - (n - 1) / 2) * spacing3D,
       y: 0,
     }))
-  }, [])
+  }, [activeIngredients])
 
-  // Цифры-метки 1..5 в фазе reference: номер шага рецепта для каждого слота
-  const refStepNum = (slotIdx: number) => {
-    const ingredientIdx = slotOrder[slotIdx]
-    return recipe.indexOf(ingredientIdx) + 1
-  }
+  // Цифры-метки 1..5 в фазе reference: номер шага рецепта для каждого ингредиента
+  const refStepNum = (ingredientIdx: number) => recipe.indexOf(ingredientIdx) + 1
 
   return (
     <div style={{
@@ -199,23 +210,22 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
           <directionalLight position={[-3, 2, -4]} intensity={0.4} color={0x8C5AFF} />
           <Suspense fallback={null}>
             <Environment preset="forest" background={false} />
-            {positions.map((pos, slotIdx) => {
-              const ingredientIdx = slotOrder[slotIdx]
+            {activeIngredients.map((ingredientIdx, slotIdx) => {
+              const pos = positions[slotIdx]
               const url = INGREDIENT_MODELS[ingredientIdx].url
-              const fb = feedback?.slotIdx === slotIdx ? feedback.state : null
+              const fb = feedback?.ingredientIdx === ingredientIdx ? feedback.state : null
               return (
-                <group key={slotIdx} position={[pos.x, pos.y, 0]}>
+                <group key={ingredientIdx} position={[pos.x, pos.y, 0]}>
                   <SpinningModel
                     url={url}
                     scale={1.05}
                     rotationSpeed={0.6}
-                    spinPhase={slotIdx * 0.5}
+                    spinPhase={ingredientIdx * 0.5}
                     onClick={(e: ThreeEvent<MouseEvent>) => {
                       e.stopPropagation()
-                      onPick(slotIdx)
+                      onPick(ingredientIdx)
                     }}
                   />
-                  {/* Цифра шага в reference */}
                   {phase === 'reference' && (
                     <Html position={[0, 0.9, 0]} center distanceFactor={6} style={{ pointerEvents: 'none' }}>
                       <div style={{
@@ -228,11 +238,10 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
                         border: '2px solid #3D2A05',
                         boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
                       }}>
-                        {refStepNum(slotIdx)}
+                        {refStepNum(ingredientIdx)}
                       </div>
                     </Html>
                   )}
-                  {/* Кольцо-фидбек */}
                   <AnimatePresenceHtml fb={fb} />
                 </group>
               )

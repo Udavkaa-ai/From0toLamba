@@ -553,56 +553,79 @@ export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
 }
 
 /**
- * Эталон: на reference фазе показываем обе стороны в крупном виде и большим
- * шрифтом, на play — компактную плашку с двумя бочками. Игрок должен запомнить
- * аверс (цифра + подпись) и реверс (символ).
+ * Эталон: на reference фазе показываем обе стороны крупно, на play —
+ * компактную плашку. Раньше использовали отдельные Pixi.Application'ы для
+ * front/back превью, но они конкурировали с основным канвасом за WebGL-контекст
+ * и иногда не успевали почиститься при unmount-е, оставляя «зависший» чёрный
+ * прямоугольник поверх результата. Теперь чисто CSS-кружки — никаких канвасов
+ * вне основной игровой сцены.
  */
-function ReferenceSample({ phase }: { phase: 'reference' | 'play' }) {
-  const frontRef = useRef<HTMLDivElement>(null)
-  const backRef = useRef<HTMLDivElement>(null)
-  const sizePx = phase === 'reference' ? 120 : 50
+function CoinFaceCss({ size, kind }: { size: number; kind: 'front' | 'back' }) {
+  // Радиальный градиент имитирует объём (рим → база → блик → спекуляр)
+  const bgGradient = `radial-gradient(circle at 32% 32%,
+    #FFFAEC 0%,
+    #FFE490 12%,
+    #FFC838 30%,
+    #E8A800 55%,
+    #B07A10 80%,
+    #6B4A00 100%)`
+  return (
+    <div style={{
+      width: size, height: size,
+      borderRadius: '50%',
+      background: bgGradient,
+      boxShadow: 'inset 0 -2px 6px rgba(74,42,0,0.45), 0 2px 8px rgba(0,0,0,0.5)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      position: 'relative',
+      flexShrink: 0,
+    }}>
+      {kind === 'front' ? (
+        <>
+          <div style={{
+            fontFamily: 'Georgia, "Times New Roman", serif',
+            fontWeight: 800,
+            fontSize: size * 0.55,
+            color: '#6B4A00',
+            lineHeight: 1,
+            textShadow: '0 1px 0 rgba(255,228,144,0.5)',
+          }}>
+            1
+          </div>
+          {/* Малое солнце над цифрой */}
+          <div style={{
+            position: 'absolute',
+            top: size * 0.07,
+            color: '#6B4A00',
+            fontSize: size * 0.16,
+            fontWeight: 800,
+          }}>☀</div>
+          {/* Caption */}
+          <div style={{
+            position: 'absolute',
+            bottom: size * 0.08,
+            color: '#6B4A00',
+            fontFamily: 'Georgia, serif',
+            fontSize: size * 0.13,
+            fontWeight: 700,
+            letterSpacing: 0.3,
+          }}>золотой</div>
+        </>
+      ) : (
+        // Реверс — крупное солнце с лучами
+        <div style={{
+          color: '#6B4A00',
+          fontSize: size * 0.75,
+          fontWeight: 900,
+          lineHeight: 1,
+          textShadow: '0 1px 0 rgba(255,228,144,0.4)',
+        }}>☀</div>
+      )}
+    </div>
+  )
+}
 
-  useEffect(() => {
-    let appFront: Application | null = null
-    let appBack: Application | null = null
-    let cancelled = false
-    const radius = sizePx * 0.42
-    ;(async () => {
-      if (frontRef.current) {
-        appFront = new Application()
-        await appFront.init({
-          width: sizePx, height: sizePx,
-          backgroundAlpha: 0, antialias: true,
-          resolution: window.devicePixelRatio || 1, autoDensity: true,
-        })
-        if (cancelled) { appFront.destroy(true, { children: true }); return }
-        frontRef.current.innerHTML = ''
-        frontRef.current.appendChild(appFront.canvas)
-        const face = buildFrontFace(REAL_COIN, radius)
-        face.x = sizePx / 2; face.y = sizePx / 2
-        appFront.stage.addChild(face)
-      }
-      if (backRef.current) {
-        appBack = new Application()
-        await appBack.init({
-          width: sizePx, height: sizePx,
-          backgroundAlpha: 0, antialias: true,
-          resolution: window.devicePixelRatio || 1, autoDensity: true,
-        })
-        if (cancelled) { appBack.destroy(true, { children: true }); return }
-        backRef.current.innerHTML = ''
-        backRef.current.appendChild(appBack.canvas)
-        const face = buildBackFace(REAL_COIN, radius)
-        face.x = sizePx / 2; face.y = sizePx / 2
-        appBack.stage.addChild(face)
-      }
-    })()
-    return () => {
-      cancelled = true
-      if (appFront) appFront.destroy(true, { children: true })
-      if (appBack) appBack.destroy(true, { children: true })
-    }
-  }, [sizePx])
+function ReferenceSample({ phase }: { phase: 'reference' | 'play' }) {
+  const sizePx = phase === 'reference' ? 110 : 44
 
   if (phase === 'reference') {
     return (
@@ -612,17 +635,17 @@ function ReferenceSample({ phase }: { phase: 'reference' | 'play' }) {
       }}>
         <div style={{ display: 'flex', gap: spacing.lg, alignItems: 'center' }}>
           <div style={{ textAlign: 'center' }}>
-            <div ref={frontRef} style={{ width: sizePx, height: sizePx }} />
-            <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: 4 }}>Аверс</div>
+            <CoinFaceCss size={sizePx} kind="front" />
+            <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: 6 }}>Аверс</div>
           </div>
           <div style={{ color: colors.fairyGold, fontSize: 24 }}>↻</div>
           <div style={{ textAlign: 'center' }}>
-            <div ref={backRef} style={{ width: sizePx, height: sizePx }} />
-            <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: 4 }}>Реверс</div>
+            <CoinFaceCss size={sizePx} kind="back" />
+            <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: 6 }}>Реверс</div>
           </div>
         </div>
         <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '14px' }}>
-          {REAL_COIN.label} {REAL_COIN.caption}
+          1 золотой
         </div>
       </div>
     )
@@ -633,11 +656,9 @@ function ReferenceSample({ phase }: { phase: 'reference' | 'play' }) {
       marginBottom: spacing.sm,
     }}>
       <span style={{ color: colors.textMuted, fontSize: '11px' }}>Эталон:</span>
-      <div ref={frontRef} style={{ width: sizePx, height: sizePx }} />
-      <div ref={backRef} style={{ width: sizePx, height: sizePx }} />
-      <span style={{ color: colors.fairyGold, fontSize: '12px', fontWeight: 600 }}>
-        {REAL_COIN.label} {REAL_COIN.caption}
-      </span>
+      <CoinFaceCss size={sizePx} kind="front" />
+      <CoinFaceCss size={sizePx} kind="back" />
+      <span style={{ color: colors.fairyGold, fontSize: '12px', fontWeight: 600 }}>1 золотой</span>
     </div>
   )
 }

@@ -165,7 +165,13 @@ export function BuratinoGame({ seed, difficulty, onComplete }: BuratinoGameProps
           <Suspense fallback={null}>
             <Environment preset="sunset" background={false} />
             {phase === 'reference' && (
-              <SpinningModel url={reference} position={[0, 0, 0]} scale={2.2} rotationSpeed={0.9} />
+              <SpinningModel
+                url={reference}
+                position={[0, 0, 0]}
+                scale={2.2}
+                rotationSpeed={0.9}
+                tiltX={Math.PI / 2}
+              />
             )}
             {phase === 'play' && slots.map((slot, i) => (
               <SpinningModel
@@ -175,6 +181,7 @@ export function BuratinoGame({ seed, difficulty, onComplete }: BuratinoGameProps
                 scale={0.95}
                 rotationSpeed={0.9}
                 spinPhase={i * 0.4}
+                tiltX={Math.PI / 2}
                 onClick={(e: ThreeEvent<MouseEvent>) => {
                   e.stopPropagation()
                   complete(slot.isCorrect)

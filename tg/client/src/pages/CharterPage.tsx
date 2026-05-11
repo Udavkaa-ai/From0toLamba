@@ -155,6 +155,8 @@ export function CharterPage() {
       qc.invalidateQueries({ queryKey: ['gameState'] })
 
       if (gameState?.isOnboardingComplete === false && !onboardingTriggeredRef.current) {
+
+
         onboardingTriggeredRef.current = true
         api.game.completeOnboarding().then((r: any) => {
           if (r?.bonusAwarded) {
@@ -169,6 +171,15 @@ export function CharterPage() {
           }
         }).catch(() => {})
       }
+    },
+    // Если API упал — не оставляем игрока на чёрном экране. Показываем лист
+    // как при поражении: ничего о деле не раскрыто, доступен только звёздный bypass.
+    onError: (err: Error, errorCount) => {
+      console.error('[submitMiniGame] failed:', err)
+      setMiniGameResult({ errorCount: Math.max(2, errorCount), perfectInsight: null })
+      setPhase('miniresult')
+      haptic?.notificationOccurred('error')
+      playSound('lose')
     },
   })
 
