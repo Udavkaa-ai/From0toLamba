@@ -9,8 +9,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@react-three/drei": "^9.122.0",
-    "@react-three/fiber": "^8.18.0",
     "@tanstack/react-query": "^5.62.8",
     "axios": "^1.7.9",
     "framer-motion": "^11.15.0",
@@ -19,7 +17,6 @@
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.0",
     "recharts": "^2.15.4",
-    "three": "^0.166.1",
     "zustand": "^5.0.2"
   },
   "devDependencies": {

@@ -622,8 +622,60 @@ export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
           touchAction: 'manipulation',
           position: 'relative',
           overflow: 'hidden',
+          borderRadius: 16,
+          // Сказочный замок-бал: тёплая ночь + светящиеся окна
+          background: `
+            radial-gradient(ellipse at 50% 100%, rgba(255,180,80,0.15) 0%, transparent 60%),
+            linear-gradient(to bottom,
+              #1A1040 0%,
+              #2A1860 40%,
+              #3A2070 75%,
+              #1A0F30 100%
+            )
+          `,
+          boxShadow: 'inset 0 0 80px rgba(0,0,0,0.5)',
         }}
       >
+        {/* SVG-декор: силуэт замка снизу + звёзды */}
+        <svg
+          viewBox="0 0 320 420"
+          preserveAspectRatio="xMidYMax slice"
+          style={{
+            position: 'absolute', inset: 0, width: '100%', height: '100%',
+            pointerEvents: 'none', opacity: 0.6,
+          }}
+        >
+          <defs>
+            <linearGradient id="castle1" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#2A1850" />
+              <stop offset="100%" stopColor="#0F0820" />
+            </linearGradient>
+          </defs>
+          {/* Силуэт замка по нижнему краю */}
+          <path d="M 0 420 L 0 380 L 40 380 L 40 350 L 60 350 L 60 380 L 100 380 L 100 320 L 110 320 L 110 305 L 130 305 L 130 320 L 140 320 L 140 380 L 180 380 L 180 340 L 200 340 L 200 380 L 240 380 L 240 360 L 260 360 L 260 380 L 320 380 L 320 420 Z"
+                fill="url(#castle1)" />
+          {/* Светящиеся окна */}
+          <rect x="48" y="362" width="4" height="6" fill="#FFE090" opacity="0.8">
+            <animate attributeName="opacity" values="0.5;1;0.5" dur="3s" repeatCount="indefinite" />
+          </rect>
+          <rect x="115" y="312" width="4" height="6" fill="#FFE090" opacity="0.7" />
+          <rect x="185" y="350" width="4" height="6" fill="#FFE090" opacity="0.8">
+            <animate attributeName="opacity" values="0.4;1;0.4" dur="2.5s" repeatCount="indefinite" />
+          </rect>
+          <rect x="245" y="368" width="4" height="6" fill="#FFE090" opacity="0.6" />
+          {/* Звёзды по небу */}
+          {[[40,40],[100,25],[160,50],[220,35],[280,55],[60,90],[200,80],[260,100],[140,15]].map(([x,y], i) => (
+            <circle key={i} cx={x} cy={y} r={1 + (i % 2)} fill="#FFE9A0" opacity={0.6 + (i % 3) * 0.1}>
+              {i % 3 === 0 && (
+                <animate attributeName="opacity" values="0.5;1;0.5" dur={`${2 + (i % 3)}s`} repeatCount="indefinite" />
+              )}
+            </circle>
+          ))}
+          {/* Луна слева сверху */}
+          <circle cx="40" cy="50" r="14" fill="#FFE9A0" opacity="0.5" />
+          <circle cx="36" cy="46" r="11" fill="#FFF4C0" opacity="0.6" />
+        </svg>
+
         <AnimatePresence>
           {floats.map(f => (
             <motion.div

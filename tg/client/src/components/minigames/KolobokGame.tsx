@@ -21,9 +21,19 @@ const ROWS = 3
 
 const SPAWN_INTERVAL_SEC = 0.75       // как часто появляется новый персонаж
 const VISIBLE_DURATION_SEC = 0.9      // как долго персонаж виден (включая анимации появления/ухода)
-const APPEAR_SEC = 0.12
-const DISAPPEAR_SEC = 0.12
+const APPEAR_SEC = 0.18               // длительность выпрыгивания с overshoot
+const DISAPPEAR_SEC = 0.15            // длительность утаптывания в нору
 const KOLOBOK_PROBABILITY = 0.32      // доля Колобков в общей выборке
+
+// Easing-функции для весёлой анимации выпрыгивания
+function easeOutBack(x: number): number {
+  const c1 = 1.70158
+  const c3 = c1 + 1
+  return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2)
+}
+function easeInCubic(x: number): number {
+  return x * x * x
+}
 
 interface KolobokGameProps {
   seed: string
@@ -191,6 +201,11 @@ export function KolobokGame({ seed, onComplete }: KolobokGameProps) {
     if (!showCelebration) return
     const app = refApp.current
     if (!app) return
+    // Снимаем игровой тикер, чтобы не дёргать ушедшие контейнеры
+    if (tickerCbRef.current) {
+      try { app.ticker.remove(tickerCbRef.current) } catch { /* noop */ }
+      tickerCbRef.current = null
+    }
     app.stage.removeChildren()
     const cx = app.screen.width / 2
     const cy = app.screen.height / 2
@@ -205,20 +220,40 @@ export function KolobokGame({ seed, onComplete }: KolobokGameProps) {
 
     // 4 зверушки вокруг — по часовой стрелке, начиная сверху
     const radius = Math.min(app.screen.width, app.screen.height) * 0.32
-    const ring: Array<{ ch: Character; angle: number }> = [
-      { ch: 'hare', angle: -Math.PI / 2 },        // сверху
-      { ch: 'wolf', angle: 0 },                   // справа
-      { ch: 'bear', angle: Math.PI / 2 },         // снизу
-      { ch: 'fox',  angle: Math.PI },             // слева
+    const ring: Array<{ ch: Character; angle: number; ctr: Container }> = [
+      { ch: 'hare', angle: -Math.PI / 2, ctr: new Container() },        // сверху
+      { ch: 'wolf', angle: 0, ctr: new Container() },                   // справа
+      { ch: 'bear', angle: Math.PI / 2, ctr: new Container() },         // снизу
+      { ch: 'fox',  angle: Math.PI, ctr: new Container() },             // слева
     ]
     for (const item of ring) {
-      const c = new Container()
+      const c = item.ctr
       c.x = cx + Math.cos(item.angle) * radius
       c.y = cy + Math.sin(item.angle) * radius
       const g = new Graphics()
       DRAWERS[item.ch](g, 44)
       c.addChild(g)
       app.stage.addChild(c)
+    }
+
+    // Праздничный тикер — Колобок пульсирует, зверушки прыгают по фазам
+    const start = performance.now()
+    const cb = () => {
+      const t = (performance.now() - start) / 1000
+      koloC.scale.set(1 + Math.sin(t * 3) * 0.08)
+      koloC.rotation = Math.sin(t * 2) * 0.08
+      for (let i = 0; i < ring.length; i++) {
+        const phase = t * 2.5 + i * Math.PI / 2
+        const bob = Math.abs(Math.sin(phase)) * 14
+        const item = ring[i]
+        item.ctr.x = cx + Math.cos(item.angle) * radius
+        item.ctr.y = cy + Math.sin(item.angle) * radius - bob
+        item.ctr.rotation = Math.sin(phase * 2) * 0.12
+      }
+    }
+    app.ticker.add(cb)
+    return () => {
+      try { app.ticker.remove(cb) } catch { /* noop */ }
     }
   }, [showCelebration])
 
@@ -420,11 +455,28 @@ export function KolobokGame({ seed, onComplete }: KolobokGameProps) {
         continue
       }
 
-      let s = 1
+      // Bouncy выпрыгивание (overshoot до 1.15) + утаптывание в нору.
+      // В стабильной фазе — лёгкое покачивание (wiggle) + плавающая высота.
+      let sy = 1
+      let sx = 1
+      let wiggle = 0
+      let bobY = 0
       if (t < APPEAR_SEC) {
-        s = t / APPEAR_SEC
+        // Squash → stretch: x растягивается вниз, y вытягивается вверх
+        const k = easeOutBack(t / APPEAR_SEC)
+        sy = k
+        sx = 1.15 - 0.15 * k
       } else if (t > VISIBLE_DURATION_SEC - DISAPPEAR_SEC) {
-        s = Math.max(0, (VISIBLE_DURATION_SEC - t) / DISAPPEAR_SEC)
+        const k = (VISIBLE_DURATION_SEC - t) / DISAPPEAR_SEC
+        sy = easeInCubic(Math.max(0, k))
+        sx = 1.0 + 0.15 * (1 - sy)
+      } else {
+        // Стабильная фаза — wiggle и bob
+        const localT = (now - hole.appearedAt) / 1000
+        wiggle = Math.sin(localT * 14) * 0.05
+        bobY = -Math.sin(localT * 8) * 2
+        sy = 1 + Math.sin(localT * 10) * 0.04
+        sx = 1 - Math.sin(localT * 10) * 0.04
       }
 
       if (!box.visible) {
@@ -437,8 +489,10 @@ export function KolobokGame({ seed, onComplete }: KolobokGameProps) {
       }
       // Сжимаем только визуал, хит-зона на внешнем контейнере остаётся в полном размере
       if (inner) {
-        inner.scale.y = s
-        inner.scale.x = 0.85 + 0.15 * s
+        inner.scale.y = sy
+        inner.scale.x = sx
+        inner.rotation = wiggle
+        inner.y = bobY
       }
     }
   }
@@ -483,8 +537,53 @@ export function KolobokGame({ seed, onComplete }: KolobokGameProps) {
           minHeight: '460px',
           touchAction: 'manipulation',
           position: 'relative',
+          borderRadius: 16,
+          overflow: 'hidden',
+          // Лесной фон: вечернее небо → силуэты елей → земля
+          background: `
+            linear-gradient(to bottom,
+              #0D1735 0%,
+              #1A2256 35%,
+              #2B1F4A 60%,
+              #1A0F30 85%,
+              #0A0512 100%
+            )
+          `,
+          boxShadow: 'inset 0 0 60px rgba(0,0,0,0.6)',
         }}
       >
+        {/* Силуэты елей по краям сцены */}
+        <svg
+          viewBox="0 0 320 460"
+          preserveAspectRatio="xMidYMax slice"
+          style={{
+            position: 'absolute', inset: 0, width: '100%', height: '100%',
+            pointerEvents: 'none', opacity: 0.55,
+          }}
+        >
+          <defs>
+            <linearGradient id="treeGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#1E3025" />
+              <stop offset="100%" stopColor="#0A1410" />
+            </linearGradient>
+          </defs>
+          {/* Дальние ели слева */}
+          <polygon points="10,300 30,200 50,300" fill="url(#treeGrad)" />
+          <polygon points="35,320 60,220 85,320" fill="url(#treeGrad)" />
+          {/* Дальние ели справа */}
+          <polygon points="280,300 300,210 320,300" fill="url(#treeGrad)" />
+          <polygon points="245,320 270,225 295,320" fill="url(#treeGrad)" />
+          {/* Звёзды над лесом */}
+          <circle cx="80" cy="50" r="1.5" fill="#FFE090" opacity="0.7" />
+          <circle cx="150" cy="35" r="1" fill="#FFE090" opacity="0.5" />
+          <circle cx="220" cy="60" r="1.5" fill="#FFE090" opacity="0.7" />
+          <circle cx="60" cy="90" r="1" fill="#FFE090" opacity="0.5" />
+          <circle cx="260" cy="100" r="1.2" fill="#FFE090" opacity="0.6" />
+          {/* Луна */}
+          <circle cx="280" cy="50" r="14" fill="#FFE9A0" opacity="0.55" />
+          <circle cx="275" cy="46" r="11" fill="#FFF4C0" opacity="0.7" />
+        </svg>
+
         {/* Финальное число очков — крупно над праздничной сценой */}
         {showCelebration && (
           <motion.div

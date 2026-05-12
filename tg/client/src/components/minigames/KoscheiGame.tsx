@@ -477,8 +477,60 @@ export function KoscheiGame({ seed, onComplete }: KoscheiGameProps) {
           minHeight: '480px',
           touchAction: 'manipulation',
           position: 'relative',
+          borderRadius: 16,
+          overflow: 'hidden',
+          // Кащеев чертог: мрачные камни, голубоватый ледяной отсвет
+          background: `
+            radial-gradient(ellipse at 50% 0%, rgba(120,160,210,0.18) 0%, transparent 60%),
+            linear-gradient(to bottom,
+              #0E1024 0%,
+              #1A1830 35%,
+              #20223A 70%,
+              #14182A 100%
+            )
+          `,
+          boxShadow: 'inset 0 0 80px rgba(0,0,0,0.6)',
         }}
       >
+        {/* SVG-декор: сталагмиты + хрусталь + сине-зелёные искры */}
+        <svg
+          viewBox="0 0 320 480"
+          preserveAspectRatio="xMidYMax slice"
+          style={{
+            position: 'absolute', inset: 0, width: '100%', height: '100%',
+            pointerEvents: 'none', opacity: 0.75,
+          }}
+        >
+          <defs>
+            <linearGradient id="stone1" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#2A2640" />
+              <stop offset="100%" stopColor="#10101A" />
+            </linearGradient>
+            <radialGradient id="crystal1" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#80C0FF" stopOpacity="0.8" />
+              <stop offset="100%" stopColor="#80C0FF" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          {/* Сталактиты с потолка */}
+          <polygon points="20,0 35,80 50,0" fill="url(#stone1)" />
+          <polygon points="80,0 95,60 110,0" fill="url(#stone1)" />
+          <polygon points="210,0 225,70 240,0" fill="url(#stone1)" />
+          <polygon points="270,0 285,55 300,0" fill="url(#stone1)" />
+          {/* Сталагмиты снизу */}
+          <polygon points="10,480 30,400 50,480" fill="url(#stone1)" />
+          <polygon points="270,480 290,410 310,480" fill="url(#stone1)" />
+          {/* Голубые искры */}
+          <circle cx="60" cy="120" r="8" fill="url(#crystal1)">
+            <animate attributeName="opacity" values="0.3;1;0.3" dur="3s" repeatCount="indefinite" />
+          </circle>
+          <circle cx="260" cy="160" r="6" fill="url(#crystal1)">
+            <animate attributeName="opacity" values="0.6;1;0.6" dur="2.5s" repeatCount="indefinite" />
+          </circle>
+          <circle cx="160" cy="40" r="5" fill="url(#crystal1)">
+            <animate attributeName="opacity" values="0.5;1;0.5" dur="4s" repeatCount="indefinite" />
+          </circle>
+        </svg>
+
         {/* Подпись к пирамидке — отсылка к сказке «Кощей Бессмертный» */}
         {showPyramid && (
           <motion.div

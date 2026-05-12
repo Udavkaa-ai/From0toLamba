@@ -387,8 +387,33 @@ export function IvanDurakGame({ seed, onComplete }: IvanDurakGameProps) {
           minHeight: '460px',
           touchAction: 'manipulation',
           position: 'relative',
+          borderRadius: 16,
+          overflow: 'hidden',
+          // Игровой стол: зелёное сукно + тёплая лампа сверху
+          background: `
+            radial-gradient(ellipse at 50% 40%, rgba(255,200,100,0.18) 0%, transparent 50%),
+            radial-gradient(ellipse at 50% 50%, #2A5F40 0%, #1A4030 60%, #0F2418 100%)
+          `,
+          boxShadow: 'inset 0 0 100px rgba(0,0,0,0.7)',
         }}
-      />
+      >
+        {/* SVG-декор: контур стола + рамка лампы */}
+        <svg
+          viewBox="0 0 320 460"
+          preserveAspectRatio="xMidYMax slice"
+          style={{
+            position: 'absolute', inset: 0, width: '100%', height: '100%',
+            pointerEvents: 'none', opacity: 0.5,
+          }}
+        >
+          {/* Чёткие границы стола */}
+          <ellipse cx="160" cy="230" rx="155" ry="200" fill="none" stroke="#8C6200" strokeWidth="2" opacity="0.5" />
+          <ellipse cx="160" cy="230" rx="148" ry="192" fill="none" stroke="#4A3210" strokeWidth="1" opacity="0.5" />
+          {/* Лампа сверху */}
+          <ellipse cx="160" cy="20" rx="40" ry="6" fill="#3A2410" />
+          <path d="M 130 24 Q 160 50 190 24 Q 175 28 160 28 Q 145 28 130 24" fill="#FFC060" opacity="0.4" />
+        </svg>
+      </div>
     </div>
   )
 }
