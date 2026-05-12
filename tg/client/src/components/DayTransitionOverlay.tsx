@@ -7,8 +7,8 @@ import { colors, spacing } from '@/theme'
  * рефетчем инбокса/портфеля — без него игрок видел бы старые грамоты или
  * пустой инбокс на пару секунд.
  *
- * Анимация: купец гуляет туда-сюда по ярмарке, вокруг — палатка, мешок монет
- * и пляшущая грамота.
+ * Сцена в духе сказочной русской ярмарки: царские палаты, матрёшка, грамота,
+ * купец-странник в шляпе и волшебные искры.
  */
 export function DayTransitionOverlay() {
   return (
@@ -28,71 +28,97 @@ export function DayTransitionOverlay() {
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         gap: spacing.lg, maxWidth: 320, padding: `0 ${spacing.lg}`,
       }}>
-        {/* Сцена */}
-        <div style={{ position: 'relative', width: 240, height: 140 }}>
-          {/* Палатка */}
+        {/* Сцена ярмарки */}
+        <div style={{ position: 'relative', width: 240, height: 160 }}>
+          {/* Царские палаты слева */}
           <motion.div
             initial={{ scale: 0.7, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.05 }}
             style={{
               position: 'absolute',
-              left: 8, top: 6,
-              fontSize: 48,
-              filter: `drop-shadow(0 4px 8px ${colors.fairyGold}40)`,
+              left: 6, top: 4,
+              fontSize: 56,
+              filter: `drop-shadow(0 4px 10px ${colors.fairyGold}50)`,
             }}
-          >🏪</motion.div>
+          >🏰</motion.div>
 
-          {/* Мешок монет */}
+          {/* Матрёшка справа — слегка покачивается */}
           <motion.div
             initial={{ y: 10, opacity: 0 }}
-            animate={{ y: [0, -6, 0], opacity: 1 }}
-            transition={{ y: { duration: 1.8, repeat: Infinity, ease: 'easeInOut' }, opacity: { delay: 0.2 } }}
+            animate={{ y: [0, -5, 0], rotate: [-3, 3, -3], opacity: 1 }}
+            transition={{
+              y: { duration: 2.0, repeat: Infinity, ease: 'easeInOut' },
+              rotate: { duration: 2.4, repeat: Infinity, ease: 'easeInOut' },
+              opacity: { delay: 0.18 },
+            }}
             style={{
               position: 'absolute',
-              right: 12, top: 24,
-              fontSize: 38,
+              right: 10, top: 18,
+              fontSize: 50,
+              filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))',
             }}
-          >💰</motion.div>
+          >🪆</motion.div>
 
-          {/* Грамота — слегка качается */}
+          {/* Грамота — пляшет внизу-справа */}
           <motion.div
             initial={{ rotate: -8, opacity: 0 }}
-            animate={{ rotate: [-8, 8, -8], opacity: 1 }}
-            transition={{ rotate: { duration: 2.4, repeat: Infinity, ease: 'easeInOut' }, opacity: { delay: 0.3 } }}
+            animate={{ rotate: [-8, 10, -8], opacity: 1 }}
+            transition={{
+              rotate: { duration: 2.6, repeat: Infinity, ease: 'easeInOut' },
+              opacity: { delay: 0.3 },
+            }}
             style={{
               position: 'absolute',
-              right: 26, bottom: 10,
-              fontSize: 30,
+              right: 28, bottom: 12,
+              fontSize: 32,
             }}
           >📜</motion.div>
 
-          {/* Купец, идущий слева-направо */}
+          {/* Самовар — у правого нижнего края */}
           <motion.div
-            animate={{ x: [0, 130, 0], scaleX: [1, 1, -1, -1, 1] }}
+            initial={{ scale: 0.6, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.22 }}
+            style={{
+              position: 'absolute',
+              left: 14, bottom: 6,
+              fontSize: 28,
+            }}
+          >🫖</motion.div>
+
+          {/* Купец-странник: идёт по ярмарке туда-сюда.
+              🧙‍♂️ обычно смотрит ВЛЕВО на большинстве платформ, поэтому
+              при движении ВПРАВО его надо отзеркалить (scaleX = -1), а при
+              движении ВЛЕВО оставлять как есть. Прошлая версия делала
+              наоборот — отсюда был эффект «ходит задом наперёд». */}
+          <motion.div
+            animate={{ x: [0, 130, 0], scaleX: [-1, -1, 1, 1, -1] }}
             transition={{
-              x: { duration: 3.2, repeat: Infinity, ease: 'easeInOut' },
-              scaleX: { duration: 3.2, repeat: Infinity, times: [0, 0.45, 0.5, 0.95, 1] },
+              x: { duration: 3.4, repeat: Infinity, ease: 'easeInOut' },
+              scaleX: { duration: 3.4, repeat: Infinity, times: [0, 0.45, 0.5, 0.95, 1] },
             }}
             style={{
               position: 'absolute',
-              left: 40, bottom: 0,
-              fontSize: 46,
-              filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.6))',
+              left: 50, bottom: 0,
+              fontSize: 48,
+              filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.7))',
             }}
-          >🚶‍♂️</motion.div>
+          >🧙‍♂️</motion.div>
 
-          {/* Маленькие звёздочки-пылинки */}
-          {[0, 1, 2].map(i => (
+          {/* Сказочные искры по всей сцене */}
+          {[0, 1, 2, 3].map(i => (
             <motion.div
               key={i}
-              animate={{ y: [-2, -10, -2], opacity: [0.3, 1, 0.3] }}
-              transition={{ duration: 2 + i * 0.4, repeat: Infinity, ease: 'easeInOut', delay: i * 0.5 }}
+              animate={{ y: [-2, -14, -2], opacity: [0.3, 1, 0.3] }}
+              transition={{ duration: 2 + i * 0.4, repeat: Infinity, ease: 'easeInOut', delay: i * 0.4 }}
               style={{
                 position: 'absolute',
-                left: 30 + i * 70, top: -4 + i * 12,
-                fontSize: 14, color: colors.fairyGold,
-                opacity: 0.6,
+                left: 20 + i * 56,
+                top: i % 2 === 0 ? -4 : 10,
+                fontSize: 14,
+                color: colors.fairyGold,
+                opacity: 0.7,
               }}
             >✨</motion.div>
           ))}
@@ -110,7 +136,7 @@ export function DayTransitionOverlay() {
             letterSpacing: '0.02em',
           }}
         >
-          Ходишь по ярмарке…
+          На ярмарке светает…
         </motion.div>
 
         {/* Подтекст */}
@@ -120,7 +146,7 @@ export function DayTransitionOverlay() {
           textAlign: 'center',
           lineHeight: 1.5,
         }}>
-          Купцы зазывают, гроши шуршат — ищешь, куда вложиться сегодня.
+          Гости съезжаются, купцы товар раскладывают — ищешь, куда вложиться сегодня.
         </div>
       </div>
     </motion.div>
