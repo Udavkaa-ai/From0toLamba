@@ -660,19 +660,118 @@ export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
  * прямоугольник поверх результата. Теперь чисто CSS-кружки — никаких канвасов
  * вне основной игровой сцены.
  */
-// Текстовый символ для каждого мотива — для DOM-превью эталонной монеты
-const MOTIF_GLYPH: Record<Motif, string> = {
-  sun: '☀',
-  star: '★',
-  cross: '✚',
-  leaf: '☘',
-  fraction: '½',
-  moon: '☾',
-  gear: '✺',
-}
-
 function hexToCss(h: number): string {
   return '#' + h.toString(16).padStart(6, '0').toUpperCase()
+}
+
+/**
+ * SVG-эквивалент Pixi-функции drawMotif. Нужен, чтобы DOM-превью эталона
+ * показывало ТАКОЙ ЖЕ рисунок, как у Pixi-монет в игре. Раньше тут были
+ * эмодзи (☀ ★ ✚ ☘ ½ ☾ ✺), которые не совпадали с процедурными формами в Pixi.
+ * Координаты внутри SVG сдвинуты так, что (0,0) в локальной системе мотива
+ * соответствует центру viewBox.
+ */
+function MotifSVG({ motif, size, color }: { motif: Motif; size: number; color: string }) {
+  const r = size / 2
+  // Перевод Pixi-координат (центр 0,0) в SVG (центр в r,r)
+  const cx = (x: number) => x + r
+  const cy = (y: number) => y + r
+
+  if (motif === 'sun') {
+    const sR = r
+    const lines: JSX.Element[] = []
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2
+      lines.push(
+        <line
+          key={i}
+          x1={cx(Math.cos(a) * sR * 0.55)} y1={cy(Math.sin(a) * sR * 0.55)}
+          x2={cx(Math.cos(a) * sR * 0.78)} y2={cy(Math.sin(a) * sR * 0.78)}
+          stroke={color} strokeWidth={Math.max(1.5, size * 0.04)} strokeOpacity={0.85}
+          strokeLinecap="round"
+        />,
+      )
+    }
+    return (
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        {lines}
+        <circle cx={cx(0)} cy={cy(0)} r={sR * 0.36} fill={color} fillOpacity={0.6} />
+      </svg>
+    )
+  }
+  if (motif === 'star') {
+    const sR = r
+    const pts: string[] = []
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * Math.PI * 2 - Math.PI / 2
+      const rad = i % 2 === 0 ? sR * 0.62 : sR * 0.32
+      pts.push(`${cx(Math.cos(a) * rad)},${cy(Math.sin(a) * rad)}`)
+    }
+    return (
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <polygon points={pts.join(' ')} fill={color} fillOpacity={0.7} />
+      </svg>
+    )
+  }
+  if (motif === 'cross') {
+    const sR = r
+    return (
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <rect x={cx(-sR * 0.08)} y={cy(-sR * 0.62)} width={sR * 0.16} height={sR * 1.24} fill={color} fillOpacity={0.75} />
+        <rect x={cx(-sR * 0.62)} y={cy(-sR * 0.08)} width={sR * 1.24} height={sR * 0.16} fill={color} fillOpacity={0.75} />
+      </svg>
+    )
+  }
+  if (motif === 'leaf') {
+    const sR = r
+    return (
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <polygon
+          points={`${cx(0)},${cy(-sR * 0.65)} ${cx(sR * 0.18)},${cy(-sR * 0.3)} ${cx(0)},${cy(0)} ${cx(-sR * 0.18)},${cy(-sR * 0.3)}`}
+          fill={color} fillOpacity={0.7}
+        />
+        <polygon
+          points={`${cx(0)},${cy(0)} ${cx(sR * 0.18)},${cy(sR * 0.3)} ${cx(0)},${cy(sR * 0.65)} ${cx(-sR * 0.18)},${cy(sR * 0.3)}`}
+          fill={color} fillOpacity={0.7}
+        />
+      </svg>
+    )
+  }
+  if (motif === 'fraction') {
+    const sR = r
+    return (
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <rect x={cx(-sR * 0.45)} y={cy(-sR * 0.06)} width={sR * 0.9} height={sR * 0.12} fill={color} fillOpacity={0.8} />
+      </svg>
+    )
+  }
+  if (motif === 'moon') {
+    const sR = r
+    return (
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <circle cx={cx(0)} cy={cy(0)} r={sR * 0.6} fill={color} fillOpacity={0.8} />
+        <circle cx={cx(sR * 0.22)} cy={cy(-sR * 0.05)} r={sR * 0.55} fill="#FFFAEC" />
+      </svg>
+    )
+  }
+  if (motif === 'gear') {
+    const sR = r
+    const teeth: JSX.Element[] = []
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2
+      teeth.push(
+        <circle key={i} cx={cx(Math.cos(a) * sR * 0.6)} cy={cy(Math.sin(a) * sR * 0.6)} r={sR * 0.15} fill={color} fillOpacity={0.8} />,
+      )
+    }
+    return (
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        {teeth}
+        <circle cx={cx(0)} cy={cy(0)} r={sR * 0.4} fill={color} fillOpacity={0.8} />
+        <circle cx={cx(0)} cy={cy(0)} r={sR * 0.18} fill="#FFFAEC" />
+      </svg>
+    )
+  }
+  return null
 }
 
 function CoinFaceCss({ size, kind, coin }: { size: number; kind: 'front' | 'back'; coin: CoinType }) {
@@ -688,6 +787,11 @@ function CoinFaceCss({ size, kind, coin }: { size: number; kind: 'front' | 'back
     ${baseCss} 55%,
     ${shadeCss} 80%,
     ${rimCss} 100%)`
+
+  // Размеры мотивов соответствуют Pixi-функции drawMotif:
+  //   front: r * 0.35 (35% от радиуса = 17.5% от диаметра)
+  //   back:  r * 0.75
+  const motifSizePx = kind === 'front' ? size * 0.35 : size * 0.75
   return (
     <div style={{
       width: size, height: size,
@@ -712,11 +816,13 @@ function CoinFaceCss({ size, kind, coin }: { size: number; kind: 'front' | 'back
           </div>
           <div style={{
             position: 'absolute',
-            top: size * 0.07,
-            color: rimCss,
-            fontSize: size * 0.16,
-            fontWeight: 800,
-          }}>{MOTIF_GLYPH[coin.frontMotif]}</div>
+            top: size * 0.08,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <MotifSVG motif={coin.frontMotif} size={motifSizePx} color={rimCss} />
+          </div>
           <div style={{
             position: 'absolute',
             bottom: size * 0.08,
@@ -728,13 +834,7 @@ function CoinFaceCss({ size, kind, coin }: { size: number; kind: 'front' | 'back
           }}>{coin.caption}</div>
         </>
       ) : (
-        <div style={{
-          color: rimCss,
-          fontSize: size * 0.75,
-          fontWeight: 900,
-          lineHeight: 1,
-          textShadow: `0 1px 0 ${hiCss}66`,
-        }}>{MOTIF_GLYPH[coin.backMotif]}</div>
+        <MotifSVG motif={coin.backMotif} size={motifSizePx} color={rimCss} />
       )}
     </div>
   )
