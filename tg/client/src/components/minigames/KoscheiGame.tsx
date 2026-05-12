@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { motion } from 'framer-motion'
 import { Application, Container, Graphics } from 'pixi.js'
 import { rngFromSeed } from './seedRng'
 import { colors, spacing } from '@/theme'
@@ -225,7 +226,7 @@ export function KoscheiGame({ seed, onComplete }: KoscheiGameProps) {
 
   // Число ошибок = лишние попытки сверх минимума (SYMBOL_COUNT). На таймауте/исчерпании
   // попыток без полного набора пар — ставим заведомо ≥2 (категория «только звёзды»).
-  const complete = (won: boolean, attemptsAtFinish: number) => {
+  const complete = (won: boolean, _attemptsAtFinish: number) => {
     if (doneRef.current) return
     doneRef.current = true
     haptic?.notificationOccurred(won ? 'success' : 'error')
@@ -235,8 +236,53 @@ export function KoscheiGame({ seed, onComplete }: KoscheiGameProps) {
     //   собрал все 6 пар в отведённое время → 0 ошибок (победа, совет чуйки)
     //   не собрал                            → 2 ошибки (поражение, только за звёзды)
     const errorCount = won ? 0 : 2
+    // Показываем «пирамидку Кощея» — отсылка к сказке «дуб → сундук → заяц → утка → яйцо → игла»
+    setTimeout(() => setShowPyramid(true), 80)
     onCompleteRef.current(errorCount)
   }
+
+  // Финальная пирамидка из 6 символов
+  const [showPyramid, setShowPyramid] = useState(false)
+  useEffect(() => {
+    if (!showPyramid) return
+    const app = refApp.current
+    if (!app) return
+    app.stage.removeChildren()
+    const W = app.screen.width
+    const H = app.screen.height
+    // Пирамидка 1+2+3: верх — дуб, потом сундук+заяц, потом утка+яйцо+игла.
+    // Так читается «по сказке»: дуб содержит сундук, в нём заяц с уткой,
+    // в утке — яйцо, а в яйце — игла со смертью Кощея.
+    const layout: Array<{ row: number; col: number; symbolIdx: number; cols: number }> = [
+      { row: 0, col: 0, symbolIdx: 0, cols: 1 },                                     // Дуб
+      { row: 1, col: 0, symbolIdx: 1, cols: 2 }, { row: 1, col: 1, symbolIdx: 2, cols: 2 }, // Сундук, Заяц
+      { row: 2, col: 0, symbolIdx: 3, cols: 3 }, { row: 2, col: 1, symbolIdx: 4, cols: 3 }, { row: 2, col: 2, symbolIdx: 5, cols: 3 }, // Утка, Яйцо, Игла
+    ]
+    const cellSize = Math.min(W / 4, H / 4.5)
+    const rowGap = cellSize * 0.15
+    const colGap = cellSize * 0.1
+    const startY = H * 0.18
+    for (const item of layout) {
+      const rowWidth = item.cols * cellSize + (item.cols - 1) * colGap
+      const startX = (W - rowWidth) / 2
+      const x = startX + item.col * (cellSize + colGap) + cellSize / 2
+      const y = startY + item.row * (cellSize + rowGap) + cellSize / 2
+
+      // Карточка-фон
+      const card = new Graphics()
+      card.roundRect(-cellSize / 2, -cellSize / 2, cellSize, cellSize, 12)
+        .fill(0x1B1438)
+        .stroke({ width: 2, color: 0xFFB800 })
+      const c = new Container()
+      c.x = x; c.y = y
+      c.addChild(card)
+      // Сам символ — рисуем процедурно из набора DRAWERS
+      const sym = new Graphics()
+      SYMBOL_DRAWERS[item.symbolIdx](sym, cellSize * 0.36)
+      c.addChild(sym)
+      app.stage.addChild(c)
+    }
+  }, [showPyramid])
 
   // Таймер
   useEffect(() => {
@@ -430,8 +476,31 @@ export function KoscheiGame({ seed, onComplete }: KoscheiGameProps) {
           width: '100%',
           minHeight: '480px',
           touchAction: 'manipulation',
+          position: 'relative',
         }}
-      />
+      >
+        {/* Подпись к пирамидке — отсылка к сказке «Кощей Бессмертный» */}
+        {showPyramid && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            style={{
+              position: 'absolute',
+              bottom: 16, left: 0, right: 0,
+              textAlign: 'center',
+              color: colors.fairyGold,
+              fontSize: 12,
+              fontWeight: 600,
+              letterSpacing: 0.3,
+              pointerEvents: 'none',
+              textShadow: '0 2px 10px rgba(0,0,0,0.7)',
+            }}
+          >
+            Дуб → сундук → заяц → утка → яйцо → игла
+          </motion.div>
+        )}
+      </div>
     </div>
   )
 }

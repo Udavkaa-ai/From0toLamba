@@ -1,7 +1,8 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Canvas, type ThreeEvent } from '@react-three/fiber'
+import { Canvas, useFrame, type ThreeEvent } from '@react-three/fiber'
 import { Environment, Html } from '@react-three/drei'
+import * as THREE from 'three'
 import { SpinningModel, preloadModel } from './three/SpinningModel'
 import { rngFromSeed } from './seedRng'
 import { colors, spacing } from '@/theme'
@@ -76,8 +77,13 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
     const ec = Math.max(0, errors)
     haptic?.notificationOccurred(ec === 0 ? 'success' : ec === 1 ? 'warning' : 'error')
     playSound(ec <= 1 ? 'win' : 'lose')
+    setTimeout(() => setShowCauldron(true), 80)
     onCompleteRef.current(ec)
   }
+
+  // Финальная анимация — большой котёл и 5 ингредиентов поочерёдно падают в него.
+  // Через 5.5 сек анимация перезапускается, пока MiniGameResultSheet висит наверху.
+  const [showCauldron, setShowCauldron] = useState(false)
 
   useEffect(() => {
     if (phase !== 'reference') return
@@ -161,33 +167,35 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
     [slotOrder, consumed],
   )
 
-  // Раскладка зависит от количества активных ингредиентов
+  // Раскладка зависит от количества активных ингредиентов.
+  // Расстояние между моделями подобрано так, чтобы они НЕ накладывались
+  // (раньше с большим scale они визуально перекрывались).
   const positions = useMemo(() => {
     const n = activeIngredients.length
     if (n === 5) {
       return [
-        { x: -1.7, y:  1.2 }, { x: 0, y:  1.2 }, { x: 1.7, y:  1.2 },
-        { x: -1.0, y: -1.3 }, { x: 1.0, y: -1.3 },
+        { x: -2.2, y:  1.3 }, { x: 0, y:  1.3 }, { x: 2.2, y:  1.3 },
+        { x: -1.3, y: -1.4 }, { x: 1.3, y: -1.4 },
       ]
     }
     if (n === 4) {
       return [
-        { x: -1.1, y:  1.2 }, { x: 1.1, y:  1.2 },
-        { x: -1.1, y: -1.2 }, { x: 1.1, y: -1.2 },
+        { x: -1.5, y:  1.3 }, { x: 1.5, y:  1.3 },
+        { x: -1.5, y: -1.3 }, { x: 1.5, y: -1.3 },
       ]
     }
-    if (n === 3) return [{ x: -1.9, y: 0 }, { x: 0, y: 0 }, { x: 1.9, y: 0 }]
-    if (n === 2) return [{ x: -1.3, y: 0 }, { x: 1.3, y: 0 }]
+    if (n === 3) return [{ x: -2.3, y: 0 }, { x: 0, y: 0 }, { x: 2.3, y: 0 }]
+    if (n === 2) return [{ x: -1.6, y: 0 }, { x: 1.6, y: 0 }]
     return [{ x: 0, y: 0 }]
   }, [activeIngredients])
 
   const modelScale = useMemo(() => {
     const n = activeIngredients.length
-    if (n === 5) return 3.0
-    if (n === 4) return 3.4
-    if (n === 3) return 3.6
-    if (n === 2) return 4.0
-    return 4.6
+    if (n === 5) return 1.9    // меньше, чтобы вошли в раскладку без перекрытий
+    if (n === 4) return 2.3
+    if (n === 3) return 2.4
+    if (n === 2) return 2.8
+    return 3.5
   }, [activeIngredients])
 
   const refStepNum = (ingredientIdx: number) => recipe.indexOf(ingredientIdx) + 1
@@ -233,7 +241,7 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
       <div style={{ flex: 1, width: '100%', minHeight: '300px', position: 'relative' }}>
         <Canvas
           dpr={Math.min(window.devicePixelRatio, 2)}
-          camera={{ position: [0, 0, 5.0], fov: 60 }}
+          camera={{ position: [0, 0, 5.0], fov: 70 }}
           gl={{ antialias: true, alpha: true }}
           style={{ background: 'transparent', touchAction: 'manipulation' }}
         >
@@ -248,7 +256,18 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
             </Html>
           }>
             <Environment preset="forest" background={false} />
-            {activeIngredients.map((ingredientIdx, slotIdx) => {
+            {/* Финальная сцена «котёл и падающие ингредиенты» — заменяет
+                обычные слоты после завершения игры. Зацикленная анимация. */}
+            {showCauldron && INGREDIENT_MODELS.map((m, i) => (
+              <FallingIngredient
+                key={`fall-${i}`}
+                url={m.url}
+                delay={i * 0.8}
+                cycle={5.5}
+                fallDur={1.4}
+              />
+            ))}
+            {!showCauldron && activeIngredients.map((ingredientIdx, slotIdx) => {
               const pos = positions[slotIdx]
               const url = INGREDIENT_MODELS[ingredientIdx].url
               const fb = feedback?.ingredientIdx === ingredientIdx ? feedback.state : null
@@ -286,10 +305,29 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
             })}
           </Suspense>
         </Canvas>
+
+        {/* Большой котёл внизу — куда падают ингредиенты на финальной сцене */}
+        {showCauldron && (
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.05, duration: 0.4 }}
+            style={{
+              position: 'absolute',
+              bottom: 6, left: 0, right: 0,
+              textAlign: 'center',
+              fontSize: 100,
+              pointerEvents: 'none',
+              userSelect: 'none',
+              filter: 'drop-shadow(0 6px 14px rgba(0,0,0,0.8))',
+              lineHeight: 1,
+            }}
+          >🍲</motion.div>
+        )}
       </div>
 
       {/* Прогресс рецепта внизу: 5 слотов котла, заполняются правильными ингредиентами */}
-      {phase === 'play' && (
+      {phase === 'play' && !showCauldron && (
         <div style={{
           display: 'flex', gap: 6, justifyContent: 'center',
           marginTop: spacing.sm, padding: `${spacing.sm} 0`,
@@ -329,6 +367,41 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
         </div>
       )}
     </div>
+  )
+}
+
+/**
+ * Один «падающий» ингредиент для финальной сцены. Использует useFrame: каждый
+ * ингредиент стартует с задержкой = i * 0.8 сек, падает с y=3 до y=-2.5 за
+ * 1.4 секунды, потом скрывается. Полный цикл — 5.5 сек, потом повтор.
+ */
+function FallingIngredient({ url, delay, cycle, fallDur }: {
+  url: string
+  delay: number
+  cycle: number
+  fallDur: number
+}) {
+  const group = useRef<THREE.Group>(null)
+  useFrame((state) => {
+    if (!group.current) return
+    const t = state.clock.getElapsedTime() % cycle - delay
+    if (t < 0 || t > fallDur) {
+      group.current.visible = false
+      return
+    }
+    group.current.visible = true
+    const progress = t / fallDur
+    // Падает с верхней части сцены в центр-низ, где «котёл»
+    group.current.position.y = 3.0 - progress * 5.5
+    group.current.position.x = 0
+    // Лёгкое покачивание/вращение в полёте
+    group.current.rotation.y += 0.06
+    group.current.rotation.z = Math.sin(state.clock.getElapsedTime() * 5 + delay) * 0.15
+  })
+  return (
+    <group ref={group} visible={false}>
+      <SpinningModel url={url} scale={1.5} rotationSpeed={0} />
+    </group>
   )
 }
 

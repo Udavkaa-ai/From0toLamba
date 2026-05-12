@@ -180,8 +180,47 @@ export function KolobokGame({ seed, onComplete }: KolobokGameProps) {
     const err = errorCountForScore(finalScore)
     haptic?.notificationOccurred(err === 0 ? 'success' : err === 1 ? 'warning' : 'error')
     playSound(err <= 1 ? 'win' : 'lose')
+    // Слегка с задержкой — финальная сцена и плавающие очки успеют отрисоваться
+    setTimeout(() => setShowCelebration(true), 80)
     onCompleteRef.current(err)
   }
+
+  // После завершения показываем праздничную сцену: Колобок в центре + 4 зверушки.
+  const [showCelebration, setShowCelebration] = useState(false)
+  useEffect(() => {
+    if (!showCelebration) return
+    const app = refApp.current
+    if (!app) return
+    app.stage.removeChildren()
+    const cx = app.screen.width / 2
+    const cy = app.screen.height / 2
+
+    // Колобок крупным планом по центру
+    const koloC = new Container()
+    koloC.x = cx; koloC.y = cy
+    const koloG = new Graphics()
+    drawKolobok(koloG, 64)
+    koloC.addChild(koloG)
+    app.stage.addChild(koloC)
+
+    // 4 зверушки вокруг — по часовой стрелке, начиная сверху
+    const radius = Math.min(app.screen.width, app.screen.height) * 0.32
+    const ring: Array<{ ch: Character; angle: number }> = [
+      { ch: 'hare', angle: -Math.PI / 2 },        // сверху
+      { ch: 'wolf', angle: 0 },                   // справа
+      { ch: 'bear', angle: Math.PI / 2 },         // снизу
+      { ch: 'fox',  angle: Math.PI },             // слева
+    ]
+    for (const item of ring) {
+      const c = new Container()
+      c.x = cx + Math.cos(item.angle) * radius
+      c.y = cy + Math.sin(item.angle) * radius
+      const g = new Graphics()
+      DRAWERS[item.ch](g, 44)
+      c.addChild(g)
+      app.stage.addChild(c)
+    }
+  }, [showCelebration])
 
   const spawnFloat = (x: number, y: number, value: string, color: string) => {
     const id = floatIdRef.current++
@@ -446,6 +485,32 @@ export function KolobokGame({ seed, onComplete }: KolobokGameProps) {
           position: 'relative',
         }}
       >
+        {/* Финальное число очков — крупно над праздничной сценой */}
+        {showCelebration && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.5 }}
+            style={{
+              position: 'absolute',
+              top: 12, left: 0, right: 0,
+              textAlign: 'center',
+              color: scoreColor,
+              fontSize: 40,
+              fontWeight: 900,
+              textShadow: '0 4px 14px rgba(0,0,0,0.7)',
+              pointerEvents: 'none',
+              userSelect: 'none',
+              fontVariantNumeric: 'tabular-nums',
+            }}
+          >
+            {score}
+            <div style={{ color: colors.textMuted, fontSize: 12, fontWeight: 600, marginTop: 2 }}>
+              очков набрано
+            </div>
+          </motion.div>
+        )}
+
         {/* Всплывающие очки */}
         <AnimatePresence>
           {floats.map(f => (
