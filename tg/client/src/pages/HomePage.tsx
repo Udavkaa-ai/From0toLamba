@@ -110,21 +110,58 @@ export function HomePage() {
     }
 
     // Пауза/восстановление при сворачивании приложения (в т.ч. Telegram Mini App
-    // на iOS/Android) — иначе музыка продолжает играть в фоне, что бесит игрока.
-    const onVisibilityChange = () => {
-      if (document.hidden) {
+    // на iOS/Android). visibilitychange один не справляется: при сворачивании
+    // Telegram на Android он часто не приходит. Слушаем сразу несколько событий:
+    //   visibilitychange   — стандарт (большинство браузеров)
+    //   pagehide/pageshow  — iOS Safari, надёжнее всего для бэкграунда
+    //   blur/focus         — Telegram WebApp на Android при сворачивании к чату
+    //   viewportChanged    — событие Telegram WebApp при коллапсе мини-аппа
+    let userPaused = false  // не возобновляем, если игрок сам выключил звук
+    const pause = () => {
+      if (!audio.paused) {
+        userPaused = false
         audio.pause()
-      } else if (!isMuted() && audio.paused) {
+      }
+    }
+    const resume = () => {
+      if (isMuted() || userPaused) return
+      if (audio.paused && !audio.ended) {
         audio.volume = musicVol()
         audio.play().catch(() => {})
       }
     }
+    const onVisibilityChange = () => {
+      if (document.hidden) pause()
+      else resume()
+    }
+    const onPageHide = () => pause()
+    const onPageShow = () => resume()
+    const onBlur = () => pause()
+    const onFocus = () => resume()
     document.addEventListener('visibilitychange', onVisibilityChange)
+    window.addEventListener('pagehide', onPageHide)
+    window.addEventListener('pageshow', onPageShow)
+    window.addEventListener('blur', onBlur)
+    window.addEventListener('focus', onFocus)
+
+    // Telegram WebApp: при сворачивании мини-аппа viewport меняет состояние.
+    // Если isExpanded=false и стабильно — мини-апп свёрнут, ставим на паузу.
+    const tgApp = (window as any).Telegram?.WebApp
+    const onTgViewportChange = () => {
+      if (!tgApp?.isExpanded) pause()
+      else resume()
+    }
+    tgApp?.onEvent?.('viewportChanged', onTgViewportChange)
 
     tryPlay()
 
     return () => {
       document.removeEventListener('visibilitychange', onVisibilityChange)
+      window.removeEventListener('pagehide', onPageHide)
+      window.removeEventListener('pageshow', onPageShow)
+      window.removeEventListener('blur', onBlur)
+      window.removeEventListener('focus', onFocus)
+      tgApp?.offEvent?.('viewportChanged', onTgViewportChange)
       if (touchHandler) {
         document.removeEventListener('touchstart', touchHandler)
         document.removeEventListener('click', touchHandler)
