@@ -63,6 +63,8 @@ export function HomePage() {
   const [showFaqAnnouncement, setShowFaqAnnouncement] = useState(useFaqAnnouncement)
   const [showChannelPromo, setShowChannelPromo] = useState(false)
   const [showMarketAnnouncement, setShowMarketAnnouncement] = useState(false)
+  // Подтверждение перехода на следующий день, если в инбоксе остались дела
+  const [showInboxLeftConfirm, setShowInboxLeftConfirm] = useState(false)
   const [nicknameInput, setNicknameInput] = useState<string>('')
   const [nicknameError, setNicknameError] = useState<string | null>(null)
   const [nicknameSaving, setNicknameSaving] = useState(false)
@@ -1123,11 +1125,116 @@ export function HomePage() {
           gameState={gameState}
           now={now}
           isPending={advanceMutation.isPending}
-          onAdvance={() => { tgHaptic?.impactOccurred('medium'); advanceMutation.mutate() }}
+          onAdvance={() => {
+            tgHaptic?.impactOccurred('medium')
+            // Не все дела рассмотрены — предупреждаем, чтобы игрок не «уходил спать»
+            // забыв про входящие предложения
+            if (gameState.inboxProjects.length > 0) {
+              setShowInboxLeftConfirm(true)
+            } else {
+              advanceMutation.mutate()
+            }
+          }}
           onWatchAd={() => setShowPaymentModal(true)}
         />
       )}
+
+      <AnimatePresence>
+        {showInboxLeftConfirm && (
+          <InboxLeftConfirmSheet
+            leftCount={gameState?.inboxProjects.length ?? 0}
+            pending={advanceMutation.isPending}
+            onStay={() => setShowInboxLeftConfirm(false)}
+            onAdvance={() => {
+              setShowInboxLeftConfirm(false)
+              advanceMutation.mutate()
+            }}
+          />
+        )}
+      </AnimatePresence>
     </ScreenBackground>
+  )
+}
+
+function InboxLeftConfirmSheet({
+  leftCount, pending, onStay, onAdvance,
+}: {
+  leftCount: number
+  pending: boolean
+  onStay: () => void
+  onAdvance: () => void
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      onClick={onStay}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 250,
+        background: 'rgba(6, 4, 18, 0.85)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: spacing.lg,
+        backdropFilter: 'blur(4px)',
+      }}
+    >
+      <motion.div
+        initial={{ scale: 0.92, y: 16 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.92, y: 16 }}
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: '100%', maxWidth: 380,
+          background: `linear-gradient(145deg, ${colors.enchantedPurple}, ${colors.nightBlue})`,
+          border: `1px solid ${colors.fairyGold}80`,
+          borderRadius: 16,
+          padding: spacing.xl,
+        }}
+      >
+        <div style={{ textAlign: 'center', marginBottom: spacing.lg }}>
+          <div style={{ fontSize: 44, marginBottom: 4 }}>📜</div>
+          <div style={{ color: colors.fairyGold, fontSize: 17, fontWeight: 700 }}>
+            Не все дела ещё рассмотрены
+          </div>
+          <div style={{ color: colors.textSecondary, fontSize: 13, marginTop: spacing.sm, lineHeight: 1.5 }}>
+            В инбоксе осталось <b style={{ color: colors.fairyGold }}>{leftCount}</b>{' '}
+            {leftCount === 1 ? 'предложение' : leftCount < 5 ? 'предложения' : 'предложений'}.
+            Уйдёшь до утра — пропустишь шанс вложиться.
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: spacing.sm }}>
+          <button
+            onClick={onStay}
+            disabled={pending}
+            style={{
+              flex: 1, padding: spacing.md,
+              background: colors.fairyGold,
+              border: 'none',
+              borderRadius: 12,
+              color: colors.nightBlue,
+              fontSize: 14, fontWeight: 800,
+              cursor: 'pointer',
+            }}
+          >
+            Остаться на ярмарке
+          </button>
+          <button
+            onClick={onAdvance}
+            disabled={pending}
+            style={{
+              flex: 1, padding: spacing.md,
+              background: `${colors.fairyGold}18`,
+              border: `1px solid ${colors.fairyGold}55`,
+              borderRadius: 12,
+              color: colors.fairyGold,
+              fontSize: 14, fontWeight: 700,
+              cursor: 'pointer',
+              opacity: pending ? 0.6 : 1,
+            }}
+          >
+            {pending ? '⏳' : 'Всё равно уйти'}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
   )
 }
 
