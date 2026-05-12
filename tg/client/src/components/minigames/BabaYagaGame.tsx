@@ -167,35 +167,41 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
     [slotOrder, consumed],
   )
 
-  // Раскладка зависит от количества активных ингредиентов.
-  // Расстояние между моделями подобрано так, чтобы они НЕ накладывались
-  // (раньше с большим scale они визуально перекрывались).
+  // Раскладка: 5 шт → 2+2+1 (3 ряда по высоте, не больше 2 в ряд) — каждой
+  // модели хватает места, чтобы быть крупной и не наезжать на соседок.
   const positions = useMemo(() => {
     const n = activeIngredients.length
     if (n === 5) {
       return [
-        { x: -2.2, y:  1.3 }, { x: 0, y:  1.3 }, { x: 2.2, y:  1.3 },
-        { x: -1.3, y: -1.4 }, { x: 1.3, y: -1.4 },
+        { x: -1.4, y:  2.1 }, { x: 1.4, y:  2.1 },  // верх
+        { x: -1.4, y:  0   }, { x: 1.4, y:  0   },  // середина
+        { x:  0,   y: -2.1 },                       // низ
       ]
     }
     if (n === 4) {
       return [
-        { x: -1.5, y:  1.3 }, { x: 1.5, y:  1.3 },
-        { x: -1.5, y: -1.3 }, { x: 1.5, y: -1.3 },
+        { x: -1.5, y:  1.4 }, { x: 1.5, y:  1.4 },
+        { x: -1.5, y: -1.4 }, { x: 1.5, y: -1.4 },
       ]
     }
-    if (n === 3) return [{ x: -2.3, y: 0 }, { x: 0, y: 0 }, { x: 2.3, y: 0 }]
-    if (n === 2) return [{ x: -1.6, y: 0 }, { x: 1.6, y: 0 }]
+    if (n === 3) {
+      return [
+        { x: 0, y:  1.6 },
+        { x: -1.4, y: -1.0 }, { x: 1.4, y: -1.0 },
+      ]
+    }
+    if (n === 2) return [{ x: -1.4, y: 0 }, { x: 1.4, y: 0 }]
     return [{ x: 0, y: 0 }]
   }, [activeIngredients])
 
+  // Модели заметно крупнее — раньше казались «мелочью на чёрном экране».
   const modelScale = useMemo(() => {
     const n = activeIngredients.length
-    if (n === 5) return 1.9    // меньше, чтобы вошли в раскладку без перекрытий
-    if (n === 4) return 2.3
-    if (n === 3) return 2.4
-    if (n === 2) return 2.8
-    return 3.5
+    if (n === 5) return 2.4
+    if (n === 4) return 2.6
+    if (n === 3) return 2.8
+    if (n === 2) return 3.4
+    return 4.2
   }, [activeIngredients])
 
   const refStepNum = (ingredientIdx: number) => recipe.indexOf(ingredientIdx) + 1

@@ -341,7 +341,10 @@ export function CharterPage() {
           />
         )}
 
-        {phase === 'minigame' && project && (
+        {/* Канвас мини-игры остаётся видимым и в 'miniresult' — за счёт этого
+            играли финальные сцены (Колобок + 4 зверя, пирамидка Кощея, котёл
+            Бабы-Яги). Если свернуть лист результата, игрок их увидит. */}
+        {(phase === 'minigame' || (phase === 'miniresult' && project?.personaArchetype !== 'BOYARIN')) && project && (
           <MiniGame
             archetype={project.personaArchetype}
             seed={charter.gridSeed}

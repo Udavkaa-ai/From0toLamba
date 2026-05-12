@@ -322,8 +322,76 @@ export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
     const err = errorCountForScore(finalScore)
     haptic?.notificationOccurred(err === 0 ? 'success' : err === 1 ? 'warning' : 'error')
     playSound(err <= 1 ? 'win' : 'lose')
+    // Финальная сцена: три столбика «настоящих» монет, поочерёдно падают
+    setTimeout(() => setShowPiles(true), 80)
     onCompleteRef.current(err)
   }
+
+  const [showPiles, setShowPiles] = useState(false)
+  // Анимация столбиков: каждая монетка стартует с задержкой col*0.25 + row*0.1
+  // и падает 0.5 сек на своё место. Все столбики из настоящей монеты — победный
+  // декор.
+  useEffect(() => {
+    if (!showPiles) return
+    const app = refApp.current
+    if (!app) return
+    // Очистить активно падающие монеты
+    for (const s of coinsRef.current) {
+      if (!s.removed) {
+        try { s.container.destroy({ children: true }) } catch { /* noop */ }
+      }
+    }
+    coinsRef.current = []
+    app.stage.removeChildren()
+
+    const startMs = performance.now()
+    const W = app.screen.width
+    const H = app.screen.height
+    const real = realCoinRef.current
+    const radius = COIN_SIZE / 2
+    const colX = [W * 0.22, W * 0.5, W * 0.78]
+    const coinsPerCol = 5
+    const verticalStep = COIN_SIZE * 0.4   // монеты перекрываются, столбик плотный
+    const baseY = H - 50
+
+    interface PileItem { container: Container; targetY: number; spawnDelay: number; x: number }
+    const piles: PileItem[] = []
+    for (let col = 0; col < 3; col++) {
+      for (let row = 0; row < coinsPerCol; row++) {
+        const container = new Container()
+        // Аверс монеты (со светом, бликом, цифрой, мотивом)
+        const face = buildFrontFace(real, radius)
+        container.addChild(face)
+        container.x = colX[col]
+        container.y = -50
+        container.alpha = 0
+        const targetY = baseY - row * verticalStep
+        const spawnDelay = col * 0.25 + row * 0.12
+        piles.push({ container, targetY, spawnDelay, x: colX[col] })
+        app.stage.addChild(container)
+      }
+    }
+
+    const cb = () => {
+      const elapsed = (performance.now() - startMs) / 1000
+      for (const c of piles) {
+        const t = (elapsed - c.spawnDelay) / 0.5  // 0..1 за 0.5 сек
+        if (t < 0) { c.container.alpha = 0; continue }
+        c.container.alpha = 1
+        if (t >= 1) {
+          c.container.y = c.targetY
+        } else {
+          // ease-out: квадратичное замедление + лёгкий bounce
+          const eased = 1 - Math.pow(1 - t, 3)
+          c.container.y = -50 + (c.targetY + 50) * eased
+        }
+      }
+    }
+    app.ticker.add(cb)
+    return () => {
+      try { app.ticker.remove(cb) } catch { /* noop */ }
+    }
+  }, [showPiles])
 
   const spawnFloat = (x: number, y: number, value: string, color: string) => {
     const id = floatIdRef.current++
