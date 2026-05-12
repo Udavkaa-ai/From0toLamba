@@ -240,7 +240,13 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
           <ambientLight intensity={0.7} />
           <directionalLight position={[3, 4, 5]} intensity={1.3} />
           <directionalLight position={[-3, 2, -4]} intensity={0.4} color={0x8C5AFF} />
-          <Suspense fallback={null}>
+          <Suspense fallback={
+            <Html center>
+              <div style={{ color: '#FFB800', fontSize: 14, fontWeight: 700, pointerEvents: 'none' }}>
+                Готовим ингредиенты…
+              </div>
+            </Html>
+          }>
             <Environment preset="forest" background={false} />
             {activeIngredients.map((ingredientIdx, slotIdx) => {
               const pos = positions[slotIdx]

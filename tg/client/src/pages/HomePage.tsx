@@ -86,7 +86,7 @@ export function HomePage() {
     mainThemePlayed = true
 
     const audio = new Audio('/main_theme.mp3')
-    audio.loop = false
+    audio.loop = true                     // тема крутится по кругу всю сессию
     audio.volume = musicVol()
     audioElement = audio
     audioRef.current = audio
@@ -109,20 +109,22 @@ export function HomePage() {
       })
     }
 
-    const FADE_SEC = 10
-    const onTimeUpdate = () => {
-      const remaining = audio.duration - audio.currentTime
-      if (!isFinite(remaining)) return
-      if (remaining <= FADE_SEC) {
-        audio.volume = Math.max(0, musicVol() * (remaining / FADE_SEC))
+    // Пауза/восстановление при сворачивании приложения (в т.ч. Telegram Mini App
+    // на iOS/Android) — иначе музыка продолжает играть в фоне, что бесит игрока.
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        audio.pause()
+      } else if (!isMuted() && audio.paused) {
+        audio.volume = musicVol()
+        audio.play().catch(() => {})
       }
     }
+    document.addEventListener('visibilitychange', onVisibilityChange)
 
-    audio.addEventListener('timeupdate', onTimeUpdate)
     tryPlay()
 
     return () => {
-      audio.removeEventListener('timeupdate', onTimeUpdate)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
       if (touchHandler) {
         document.removeEventListener('touchstart', touchHandler)
         document.removeEventListener('click', touchHandler)

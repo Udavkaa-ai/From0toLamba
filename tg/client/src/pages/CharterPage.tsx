@@ -290,6 +290,9 @@ export function CharterPage() {
       const next = new Set(prev)
       if (next.has(i)) next.delete(i)
       else next.add(i)
+      // Сразу обновляем ref, чтобы автосабмит на последней секунде увидел
+      // актуальный выбор (раньше ref обновлялся в useEffect — мог отстать на тик)
+      selectedRef.current = next
       return next
     })
   }
@@ -1282,6 +1285,8 @@ function MiniGameResultSheet({
   const [bypassError, setBypassError] = useState<string | null>(null)
   const [bypassed, setBypassed] = useState(false)
   const [revealedInsight, setRevealedInsight] = useState<string | null>(null)
+  // Свернуть лист, чтобы посмотреть поле под ним (где сыграно — где ошибся)
+  const [collapsed, setCollapsed] = useState(false)
   const effectiveErrorCount = bypassed ? 0 : errorCount
   const effectiveInsight = bypassed ? revealedInsight : perfectInsight
   const canInvest = bypassed || errorCount <= 1
@@ -1355,7 +1360,9 @@ function MiniGameResultSheet({
       style={{
         position: 'fixed', inset: 0, zIndex: 220,
         display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-        background: 'rgba(0,0,0,0.55)',
+        background: collapsed ? 'transparent' : 'rgba(0,0,0,0.55)',
+        pointerEvents: collapsed ? 'none' : 'auto',
+        transition: 'background 0.2s',
       }}
     >
       <motion.div
@@ -1366,14 +1373,50 @@ function MiniGameResultSheet({
           background: colors.nightBlue,
           borderRadius: '20px 20px 0 0',
           border: `1px solid ${colors.cardBorder}`,
-          padding: `${spacing.xxl} ${spacing.xl} calc(${spacing.xl} + env(safe-area-inset-bottom))`,
+          padding: collapsed
+            ? `${spacing.sm} ${spacing.xl}`
+            : `${spacing.xxl} ${spacing.xl} calc(${spacing.xl} + env(safe-area-inset-bottom))`,
+          paddingBottom: collapsed
+            ? `calc(${spacing.sm} + env(safe-area-inset-bottom))`
+            : `calc(${spacing.xl} + env(safe-area-inset-bottom))`,
           boxShadow: '0 -8px 32px rgba(0,0,0,0.6)',
+          pointerEvents: 'auto',
         }}
       >
-        <div style={{
-          width: '40px', height: '4px', borderRadius: '2px',
-          background: `${colors.fairyGold}50`, margin: `0 auto ${spacing.md}`,
-        }} />
+        {/* Маркер-ручка: тап по верху листа переключает свёрнутое состояние —
+            игрок может подсмотреть, где он ошибся, на доске под листом */}
+        <button
+          onClick={() => setCollapsed(c => !c)}
+          style={{
+            display: 'block',
+            width: '100%',
+            background: 'transparent', border: 'none', cursor: 'pointer',
+            color: colors.textMuted, fontSize: 11,
+            padding: '4px 0',
+            margin: `0 0 ${collapsed ? '4px' : spacing.sm}`,
+          }}
+        >
+          <div style={{
+            width: '40px', height: '4px', borderRadius: '2px',
+            background: `${colors.fairyGold}50`, margin: '0 auto 4px',
+          }} />
+          {collapsed ? '▲ Развернуть' : '▼ Свернуть лист'}
+        </button>
+
+        {collapsed && (
+          <div style={{
+            display: 'flex', justifyContent: 'center', gap: spacing.md,
+            color: colors.textSecondary, fontSize: 12,
+            paddingBottom: spacing.sm,
+          }}>
+            <span>{emoji}</span>
+            <span style={{ color: colors.fairyGold, fontWeight: 700 }}>{titleText}</span>
+            <span>· ошибок: {errorCount}</span>
+          </div>
+        )}
+
+        {!collapsed && (
+          <>
 
         <div style={{ textAlign: 'center', marginBottom: spacing.lg }}>
           <div style={{ fontSize: '40px' }}>{emoji}</div>
@@ -1447,8 +1490,10 @@ function MiniGameResultSheet({
             {bypassError}
           </div>
         )}
+          </>
+        )}
 
-        <div style={{ display: 'flex', gap: spacing.sm, marginTop: spacing.lg }}>
+        <div style={{ display: 'flex', gap: spacing.sm, marginTop: collapsed ? 0 : spacing.lg }}>
           <button onClick={onSkip} style={{ ...secondaryBtnStyle, flex: 1, marginTop: 0 }}>
             {t.charter.resultSkip}
           </button>

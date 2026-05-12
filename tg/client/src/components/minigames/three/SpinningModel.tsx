@@ -59,6 +59,13 @@ export function SpinningModel({
 
   return (
     <group position={position} scale={scaleArr} onClick={onClick}>
+      {/* Невидимая сфера-хитзона: ловит тапы вокруг модели, даже если та узкая
+          (как бутылка зелья у Бабы-Яги). Без неё raycast попадал только по
+          реальной геометрии, и узкие модели тапались через раз. */}
+      <mesh>
+        <sphereGeometry args={[0.7, 16, 16]} />
+        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+      </mesh>
       <group ref={groupRef} rotation={[tiltX, 0, 0]}>
         <primitive object={scene} />
       </group>

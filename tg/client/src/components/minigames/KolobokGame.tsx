@@ -314,8 +314,11 @@ export function KolobokGame({ seed, onComplete }: KolobokGameProps) {
     if (doneRef.current) return
     const hole = holesRef.current[idx]
     if (hole.appearedAt === null || !hole.character) return
+    // Раньше тут было ограничение «не считать тап в последние 0.12с (фаза
+    // ухода)» — игрок жаловался, что тап перед самым концом не засчитывается.
+    // Теперь принимаем тапы пока персонаж в норе хоть как-то виден.
     const t = (performance.now() - hole.appearedAt) / 1000
-    if (t > VISIBLE_DURATION_SEC - DISAPPEAR_SEC) return
+    if (t > VISIBLE_DURATION_SEC) return
 
     haptic?.impactOccurred('light')
     const pos = holePositionsRef.current[idx]

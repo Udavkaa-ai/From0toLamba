@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, type ThreeEvent } from '@react-three/fiber'
-import { Environment } from '@react-three/drei'
+import { Environment, Html } from '@react-three/drei'
 import { SpinningModel, preloadModel } from './three/SpinningModel'
 import { rngFromSeed, pickInt } from './seedRng'
 import { colors, spacing } from '@/theme'
@@ -162,7 +162,13 @@ export function BuratinoGame({ seed, difficulty, onComplete }: BuratinoGameProps
           <ambientLight intensity={0.6} />
           <directionalLight position={[3, 4, 5]} intensity={1.2} castShadow />
           <directionalLight position={[-3, 2, -4]} intensity={0.4} color={0xFFB800} />
-          <Suspense fallback={null}>
+          <Suspense fallback={
+            <Html center>
+              <div style={{ color: '#FFB800', fontSize: 14, fontWeight: 700, pointerEvents: 'none' }}>
+                Готовим ключи…
+              </div>
+            </Html>
+          }>
             <Environment preset="sunset" background={false} />
             {phase === 'reference' && (
               <SpinningModel
