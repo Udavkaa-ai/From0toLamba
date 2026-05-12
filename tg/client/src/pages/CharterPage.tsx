@@ -1018,12 +1018,54 @@ function MiniGameIntroScreen({
         {gameBtn}
       </button>
 
-      <button onClick={onChat} style={secondaryBtnStyle}>
-        💬 {t.inbox.amaBtn}
-        <div style={{ fontSize: '10px', color: colors.textMuted, marginTop: '2px', fontWeight: 400 }}>
-          10 Telegram Stars · {t.ama.paywallCost}
+      {/* Альтернативный путь — беседа с хозяином. Сделана крупно и активно:
+          пульсирующий ободок и подзаголовок-намёк. */}
+      <div style={{ marginTop: spacing.md, display: 'flex', alignItems: 'center', gap: spacing.sm }}>
+        <div style={{ flex: 1, height: 1, background: `${colors.fairyGold}25` }} />
+        <div style={{ color: colors.textMuted, fontSize: 11, letterSpacing: '0.08em' }}>ИЛИ</div>
+        <div style={{ flex: 1, height: 1, background: `${colors.fairyGold}25` }} />
+      </div>
+
+      <motion.button
+        onClick={onChat}
+        whileTap={{ scale: 0.98 }}
+        animate={{ boxShadow: [
+          `0 0 0 0 ${colors.fairyGold}55`,
+          `0 0 0 8px ${colors.fairyGold}00`,
+        ] }}
+        transition={{ duration: 1.8, repeat: Infinity, ease: 'easeOut' }}
+        style={{
+          width: '100%',
+          marginTop: spacing.sm,
+          padding: spacing.md,
+          background: `linear-gradient(135deg, ${colors.enchantedPurple}cc, ${colors.nightBlue}cc)`,
+          border: `2px solid ${colors.fairyGold}`,
+          borderRadius: '14px',
+          color: colors.fairyGold,
+          fontWeight: 700,
+          fontSize: '15px',
+          cursor: 'pointer',
+          textAlign: 'left',
+          display: 'flex',
+          alignItems: 'center',
+          gap: spacing.md,
+        }}
+      >
+        <div style={{ fontSize: 32, lineHeight: 1 }}>💬</div>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span>Беседа с дельцом</span>
+            <span style={{
+              fontSize: 10, padding: '2px 6px',
+              background: colors.fairyGold, color: colors.nightBlue,
+              borderRadius: 6, fontWeight: 800, letterSpacing: '0.04em',
+            }}>10 ⭐</span>
+          </div>
+          <div style={{ fontSize: 12, color: colors.textSecondary, fontWeight: 400, marginTop: 3, lineHeight: 1.4 }}>
+            Задай до 10 вопросов лично. Опытный жулик звучит убедительно, но под давлением проговаривается — самый верный способ почуять скам.
+          </div>
         </div>
-      </button>
+      </motion.button>
     </div>
   )
 }

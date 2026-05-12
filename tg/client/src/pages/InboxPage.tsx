@@ -79,17 +79,6 @@ function InboxCard({ project, onClick, tourAttr }: { project: ProjectDTO; onClic
             {(typeLabel as Record<string, string>)[project.type] ?? project.type}
           </div>
         </div>
-        <div style={{
-          background: `${colors.fairyGold}20`,
-          border: `1px solid ${colors.fairyGold}40`,
-          borderRadius: '8px',
-          padding: '4px 8px',
-          color: colors.fairyGold,
-          fontSize: '12px',
-          fontWeight: 700,
-        }}>
-          {project.claimedAPY}{t.inbox.apySuffix}
-        </div>
       </div>
 
       <OrnamentDivider />
@@ -121,40 +110,6 @@ function InboxCard({ project, onClick, tourAttr }: { project: ProjectDTO; onClic
       >
         {t.inbox.studyBtn}
       </div>
-
-      {tourAttr && (
-        <div
-          data-tour="invest-btn"
-          style={{
-            marginTop: spacing.sm,
-            padding: `${spacing.sm} ${spacing.md}`,
-            background: 'rgba(255,255,255,0.04)',
-            borderRadius: '8px',
-            color: colors.textMuted,
-            fontSize: '12px',
-            textAlign: 'center',
-          }}
-        >
-          {t.inbox.investBtn}
-        </div>
-      )}
-
-      {tourAttr && (
-        <div
-          data-tour="ama-btn"
-          style={{
-            marginTop: spacing.sm,
-            padding: `${spacing.sm} ${spacing.md}`,
-            background: 'rgba(255,255,255,0.04)',
-            borderRadius: '8px',
-            color: colors.textMuted,
-            fontSize: '12px',
-            textAlign: 'center',
-          }}
-        >
-          {t.inbox.amaBtn}
-        </div>
-      )}
     </FairyCard>
   )
 }

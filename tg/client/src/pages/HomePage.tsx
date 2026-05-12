@@ -22,7 +22,7 @@ import { useTourStore, isTourDone } from '@/stores/tourStore'
 import { useLangStore, type Lang } from '@/stores/langStore'
 import { useT } from '@/i18n'
 import { colors, spacing, typography } from '@/theme'
-import { playSound, isMuted, setMuted, getVolume, setVolume } from '@/sounds'
+import { playSound, isMuted, setMuted, isMusicMuted, setMusicMuted, getVolume, setVolume } from '@/sounds'
 
 const MODEL_OPTIONS = [
   {
@@ -69,13 +69,14 @@ export function HomePage() {
   const [nicknameError, setNicknameError] = useState<string | null>(null)
   const [nicknameSaving, setNicknameSaving] = useState(false)
   const [soundMuted, setSoundMuted] = useState(isMuted)
+  const [musicMuted, setMusicMutedState] = useState(isMusicMuted)
   const [soundVolume, setSoundVolume] = useState(getVolume)
 
   // ─── Фоновая музыка — только один раз за сессию ────────────────────────────
   const audioRef = useRef<HTMLAudioElement | null>(null)
   // Множитель: при ползунке 0.5 (по умолчанию) музыка на 20% (0.5 × 0.4 = 0.2)
   const MUSIC_FACTOR = 0.4
-  const musicVol = () => isMuted() ? 0 : getVolume() * MUSIC_FACTOR
+  const musicVol = () => isMusicMuted() ? 0 : getVolume() * MUSIC_FACTOR
 
   useEffect(() => {
     if (mainThemePlayed) {
@@ -124,7 +125,7 @@ export function HomePage() {
       }
     }
     const resume = () => {
-      if (isMuted() || userPaused) return
+      if (isMusicMuted() || userPaused) return
       if (audio.paused && !audio.ended) {
         audio.volume = musicVol()
         audio.play().catch(() => {})
@@ -172,18 +173,18 @@ export function HomePage() {
     }
   }, [])
 
-  // Реагируем на изменения громкости и mute
+  // Реагируем на изменения громкости и music-mute
   useEffect(() => {
     const audio = audioRef.current
     if (!audio) return
-    if (soundMuted) {
+    if (musicMuted) {
       audio.volume = 0
       audio.pause()
     } else {
       audio.volume = soundVolume * MUSIC_FACTOR
       if (audio.paused && !audio.ended) audio.play().catch(() => {})
     }
-  }, [soundMuted, soundVolume])
+  }, [musicMuted, soundVolume])
 
   useEffect(() => {
     if (gameState?.pendingRankUp) playSound('rankup')
@@ -718,9 +719,35 @@ export function HomePage() {
                 <div style={{ color: colors.textSecondary, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   {t.home.settingsSectionSound}
                 </div>
+
+                {/* Музыка */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <span style={{ color: colors.textPrimary, fontSize: '14px' }}>
+                    🎵 {musicMuted ? 'Музыка выключена' : 'Музыка играет'}
+                  </span>
+                  <button
+                    onClick={() => {
+                      const next = !musicMuted
+                      setMusicMutedState(next)
+                      setMusicMuted(next)
+                    }}
+                    style={{
+                      padding: '6px 16px',
+                      background: musicMuted ? `${colors.textMuted}20` : `${colors.fairyGold}20`,
+                      border: `1px solid ${musicMuted ? colors.textMuted : colors.fairyGold}55`,
+                      borderRadius: '10px',
+                      color: musicMuted ? colors.textMuted : colors.fairyGold,
+                      fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                    }}
+                  >
+                    {musicMuted ? 'Включить' : 'Выключить'}
+                  </button>
+                </div>
+
+                {/* Звуковые эффекты */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                   <span style={{ color: colors.textPrimary, fontSize: '14px' }}>
-                    {soundMuted ? t.home.settingsSoundOff : t.home.settingsSoundOn}
+                    🔔 {soundMuted ? 'Звуки выключены' : 'Звуки включены'}
                   </span>
                   <button
                     onClick={() => {
@@ -738,10 +765,11 @@ export function HomePage() {
                       fontSize: '13px', fontWeight: 600, cursor: 'pointer',
                     }}
                   >
-                    {soundMuted ? t.home.settingsSoundEnable : t.home.settingsSoundDisable}
+                    {soundMuted ? 'Включить' : 'Выключить'}
                   </button>
                 </div>
-                {!soundMuted && (
+
+                {(!soundMuted || !musicMuted) && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <span style={{ color: colors.textMuted, fontSize: '12px', flexShrink: 0 }}>{t.home.settingsSoundLow}</span>
                     <input
@@ -753,8 +781,8 @@ export function HomePage() {
                         setSoundVolume(v)
                         setVolume(v)
                       }}
-                      onMouseUp={() => playSound('tap')}
-                      onTouchEnd={() => playSound('tap')}
+                      onMouseUp={() => !soundMuted && playSound('tap')}
+                      onTouchEnd={() => !soundMuted && playSound('tap')}
                       style={{ flex: 1, accentColor: colors.fairyGold }}
                     />
                     <span style={{ color: colors.textMuted, fontSize: '12px', flexShrink: 0 }}>{t.home.settingsSoundHigh}</span>
@@ -992,21 +1020,26 @@ export function HomePage() {
             <button
               onClick={() => {
                 playSound('tap')
-                const next = !soundMuted
+                // Кнопка-выключатель «всё разом»: если хоть что-то играет — выключить всё;
+                // если всё выключено — включить и музыку, и звуки
+                const allOff = soundMuted && musicMuted
+                const next = !allOff
                 setSoundMuted(next)
                 setMuted(next)
+                setMusicMutedState(next)
+                setMusicMuted(next)
               }}
               style={{
                 background: `${colors.fairyGold}14`,
                 border: `1px solid ${colors.fairyGold}35`,
                 borderRadius: '10px',
-                color: soundMuted ? colors.textMuted : colors.fairyGold,
+                color: (soundMuted && musicMuted) ? colors.textMuted : colors.fairyGold,
                 fontSize: '16px',
                 cursor: 'pointer', padding: '5px 8px',
                 lineHeight: 1,
               }}
             >
-              {soundMuted ? '🔇' : '🔊'}
+              {(soundMuted && musicMuted) ? '🔇' : '🔊'}
             </button>
             <button
               onClick={() => { playSound('tap'); handleOpenSettings() }}
@@ -2121,12 +2154,12 @@ function ProjectNewsCardContent({ project }: { project: ProjectDTO }) {
   )
 }
 
-// Переключатель вручную: true = показывать правила турнира, false = объявление о перезапуске
+// Переключатель вручную: true = баннер «Тестируем 2 сезон», false = объявление о перезапуске
 const IS_TOURNAMENT_ACTIVE = true
 
 function BannerAnnouncementModal({ onClose }: { onClose: () => void }) {
   const t = useT()
-  const content = IS_TOURNAMENT_ACTIVE ? t.home.tournament : t.home.preReset
+  const content = IS_TOURNAMENT_ACTIVE ? null : t.home.preReset
 
   return (
     <motion.div
@@ -2161,7 +2194,7 @@ function BannerAnnouncementModal({ onClose }: { onClose: () => void }) {
           flexShrink: 0,
         }}>
           <div style={{ color: colors.fairyGold, fontSize: '16px', fontWeight: 800, flex: 1, paddingRight: spacing.sm }}>
-            {content.title}
+            {content ? content.title : '🧪 Тестируем 2 сезон!'}
           </div>
           <button
             onClick={onClose}
@@ -2173,25 +2206,29 @@ function BannerAnnouncementModal({ onClose }: { onClose: () => void }) {
 
         {/* Скроллируемый контент */}
         <div style={{ overflowY: 'auto', flex: 1, padding: spacing.lg }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.md }}>
-            {content.sections.map((s, i) => (
-              <div key={i} style={{
-                padding: `${spacing.sm} ${spacing.md}`,
-                background: 'rgba(255,255,255,0.04)',
-                border: `1px solid ${colors.cardBorder}`,
-                borderRadius: '10px',
-              }}>
-                {s.heading && (
-                  <div style={{ color: colors.fairyGold, fontSize: '12px', fontWeight: 700, marginBottom: '4px' }}>
-                    {s.heading}
+          {content ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.md }}>
+              {content.sections.map((s, i) => (
+                <div key={i} style={{
+                  padding: `${spacing.sm} ${spacing.md}`,
+                  background: 'rgba(255,255,255,0.04)',
+                  border: `1px solid ${colors.cardBorder}`,
+                  borderRadius: '10px',
+                }}>
+                  {s.heading && (
+                    <div style={{ color: colors.fairyGold, fontSize: '12px', fontWeight: 700, marginBottom: '4px' }}>
+                      {s.heading}
+                    </div>
+                  )}
+                  <div style={{ color: colors.textPrimary, fontSize: '13px', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
+                    {s.body}
                   </div>
-                )}
-                <div style={{ color: colors.textPrimary, fontSize: '13px', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
-                  {s.body}
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <Season2TestingScene />
+          )}
         </div>
 
         {/* Кнопка — фиксирована снизу */}
@@ -2217,5 +2254,198 @@ function BannerAnnouncementModal({ onClose }: { onClose: () => void }) {
         </div>
       </motion.div>
     </motion.div>
+  )
+}
+
+// ─── Сцена «Тестируем 2 сезон» ──────────────────────────────────────────────
+// Живая SVG-картинка: 3 купца-тестировщика играют на телефонах. Над каждым
+// летят монетки/искорки, пальцы тапают по экрану. Тап по фигурке — взлетает +1.
+function Season2TestingScene() {
+  const [pops, setPops] = useState<Array<{ id: number; x: number; y: number; value: string }>>([])
+  const idRef = useRef(0)
+
+  const spawnPop = (x: number, y: number) => {
+    const id = idRef.current++
+    const v = Math.random() < 0.4 ? '⭐' : '+1'
+    setPops(prev => [...prev, { id, x, y, value: v }])
+    setTimeout(() => setPops(prev => prev.filter(p => p.id !== id)), 900)
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.md }}>
+      <div style={{ position: 'relative', width: '100%', aspectRatio: '5 / 4', maxWidth: 360, margin: '0 auto' }}>
+        <svg viewBox="0 0 500 400" width="100%" height="100%" style={{ display: 'block' }}>
+          <defs>
+            <linearGradient id="phoneScreen" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#FFE090" stopOpacity="0.9" />
+              <stop offset="100%" stopColor="#FFB800" stopOpacity="0.75" />
+            </linearGradient>
+          </defs>
+
+          {/* Деревянная скамья / стол */}
+          <rect x="20" y="320" width="460" height="14" rx="3" fill="#3A2210" />
+          <rect x="20" y="334" width="460" height="34" rx="3" fill="#2A1808" />
+          <line x1="60" y1="320" x2="60" y2="368" stroke="#1A1004" strokeWidth="1" />
+          <line x1="260" y1="320" x2="260" y2="368" stroke="#1A1004" strokeWidth="1" />
+          <line x1="440" y1="320" x2="440" y2="368" stroke="#1A1004" strokeWidth="1" />
+
+          {/* — Тестировщик 1 (слева, скоморох в красном колпаке) — */}
+          <g transform="translate(110, 220)">
+            <circle cx="0" cy="-90" r="32" fill="#E8C28A" stroke="#8C6230" strokeWidth="2" />
+            <path d="M -28 -106 Q -16 -150 0 -150 Q 16 -150 28 -106 Z" fill="#C03030" stroke="#5A0808" strokeWidth="2" />
+            <circle cx="-28" cy="-106" r="5" fill="#FFE090" />
+            <circle cx="-10" cy="-92" r="2.5" fill="#0D1735" />
+            <circle cx="10" cy="-92" r="2.5" fill="#0D1735" />
+            <path d="M -8 -80 Q 0 -74 8 -80" fill="none" stroke="#5A2A10" strokeWidth="2" />
+            <path d="M -20 -75 Q 0 -50 20 -75 Q 14 -68 0 -66 Q -14 -68 -20 -75 Z" fill="#3D2A05" />
+            <path d="M -40 -55 L 40 -55 L 50 60 L -50 60 Z" fill="#2A1960" stroke="#FFB800" strokeWidth="1.5" />
+            <path d="M -30 -55 L 30 -55 L 30 -42 Q 0 -36 -30 -42 Z" fill="#FFB800" opacity="0.6" />
+            <rect x="-28" y="-30" width="56" height="80" rx="10" fill="#1A1024" stroke="#FFB800" strokeWidth="2" />
+            <rect x="-22" y="-22" width="44" height="62" rx="3" fill="url(#phoneScreen)" />
+            <rect x="-18" y="-18" width="14" height="14" rx="2" fill="#0D1735" opacity="0.6" />
+            <rect x="-2" y="-18" width="14" height="14" rx="2" fill="#0D1735" opacity="0.6" />
+            <rect x="-18" y="-2" width="14" height="14" rx="2" fill="#0D1735" opacity="0.6" />
+            <rect x="-2" y="-2" width="14" height="14" rx="2" fill="#0D1735" opacity="0.6" />
+            <g>
+              <ellipse cx="6" cy="20" rx="5" ry="3" fill="#E8C28A" stroke="#8C6230" strokeWidth="1">
+                <animate attributeName="cy" values="20;8;20" dur="1.4s" repeatCount="indefinite" />
+                <animate attributeName="rx" values="5;6;5" dur="1.4s" repeatCount="indefinite" />
+              </ellipse>
+              <circle cx="6" cy="20" r="4" fill="none" stroke="#FFE090" strokeWidth="2" opacity="0.7">
+                <animate attributeName="r" values="4;14;4" dur="1.4s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.7;0;0.7" dur="1.4s" repeatCount="indefinite" />
+              </circle>
+            </g>
+          </g>
+          <rect x="80" y="290" width="60" height="40" rx="6" fill="transparent"
+                style={{ cursor: 'pointer' }}
+                onClick={(e) => spawnPop((e.nativeEvent as MouseEvent).offsetX, (e.nativeEvent as MouseEvent).offsetY)} />
+
+          {/* — Тестировщица 2 (центр, кокошник) — */}
+          <g transform="translate(250, 230)">
+            <circle cx="0" cy="-100" r="32" fill="#F5D4A0" stroke="#8C6230" strokeWidth="2" />
+            <path d="M -32 -120 Q 0 -160 32 -120 L 32 -110 L -32 -110 Z" fill="#9060C0" stroke="#3A1850" strokeWidth="2" />
+            <circle cx="0" cy="-130" r="3" fill="#FFE090" />
+            <circle cx="-12" cy="-122" r="2" fill="#FFE090" />
+            <circle cx="12" cy="-122" r="2" fill="#FFE090" />
+            <path d="M -24 -90 Q -40 -50 -32 -10 Q -28 -8 -28 -14 Q -32 -50 -22 -86" fill="#5A3A10" />
+            <circle cx="-10" cy="-100" r="2.5" fill="#0D1735" />
+            <circle cx="10" cy="-100" r="2.5" fill="#0D1735" />
+            <path d="M -8 -88 Q 0 -82 8 -88" fill="none" stroke="#C03030" strokeWidth="2" />
+            <path d="M -42 -65 L 42 -65 L 52 50 L -52 50 Z" fill="#7D2030" stroke="#FFB800" strokeWidth="1.5" />
+            <path d="M -30 -65 L 30 -65 L 30 -52 Q 0 -46 -30 -52 Z" fill="#FFB800" opacity="0.6" />
+            <rect x="-30" y="-40" width="60" height="86" rx="10" fill="#1A1024" stroke="#FFB800" strokeWidth="2" />
+            <rect x="-24" y="-32" width="48" height="68" rx="3" fill="url(#phoneScreen)" />
+            <rect x="-20" y="-28" width="40" height="18" rx="2" fill="#2A1960" />
+            <circle cx="-12" cy="-19" r="3" fill="#FFB800" />
+            <rect x="-6" y="-22" width="22" height="2" fill="#FFB800" opacity="0.7" />
+            <rect x="-6" y="-18" width="16" height="2" fill="#FFB800" opacity="0.4" />
+            <rect x="-18" y="20" width="36" height="10" rx="3" fill="#FFB800">
+              <animate attributeName="opacity" values="0.4;1;0.4" dur="1.5s" repeatCount="indefinite" />
+            </rect>
+            <g>
+              <ellipse cx="0" cy="40" rx="5" ry="3" fill="#F5D4A0" stroke="#8C6230" strokeWidth="1">
+                <animate attributeName="cy" values="40;26;40" dur="1.1s" repeatCount="indefinite" />
+              </ellipse>
+              <circle cx="0" cy="40" r="4" fill="none" stroke="#FFE090" strokeWidth="2" opacity="0.7">
+                <animate attributeName="r" values="4;16;4" dur="1.1s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.7;0;0.7" dur="1.1s" repeatCount="indefinite" />
+              </circle>
+            </g>
+          </g>
+          <rect x="220" y="300" width="60" height="40" rx="6" fill="transparent"
+                style={{ cursor: 'pointer' }}
+                onClick={(e) => spawnPop((e.nativeEvent as MouseEvent).offsetX, (e.nativeEvent as MouseEvent).offsetY)} />
+
+          {/* — Тестировщик 3 (справа, боярин в шапке) — */}
+          <g transform="translate(390, 220)">
+            <circle cx="0" cy="-90" r="32" fill="#D6A878" stroke="#5A3A10" strokeWidth="2" />
+            <path d="M -30 -106 Q -16 -140 0 -142 Q 16 -140 30 -106 L 30 -100 L -30 -100 Z" fill="#3D2810" stroke="#1A0A04" strokeWidth="2" />
+            <path d="M -30 -106 L 30 -106" stroke="#8C6230" strokeWidth="3" />
+            <path d="M -22 -78 Q 0 -30 22 -78 Q 16 -62 0 -56 Q -16 -62 -22 -78 Z" fill="#2A1A05" />
+            <circle cx="-10" cy="-92" r="2.5" fill="#0D1735" />
+            <circle cx="10" cy="-92" r="2.5" fill="#0D1735" />
+            <path d="M -40 -55 L 40 -55 L 50 60 L -50 60 Z" fill="#3A4060" stroke="#FFB800" strokeWidth="1.5" />
+            <path d="M -30 -55 L 30 -55 L 30 -42 Q 0 -36 -30 -42 Z" fill="#FFB800" opacity="0.6" />
+            <rect x="-28" y="-30" width="56" height="80" rx="10" fill="#1A1024" stroke="#FFB800" strokeWidth="2" />
+            <rect x="-22" y="-22" width="44" height="62" rx="3" fill="url(#phoneScreen)" />
+            {[0,1,2].map(r => [0,1,2].map(c => (
+              <rect key={`${r}-${c}`} x={-18 + c * 13} y={-18 + r * 13} width="10" height="10" rx="2"
+                    fill={(r + c) % 2 === 0 ? '#2A1960' : '#7D2030'} opacity="0.7" />
+            )))}
+            <g>
+              <ellipse cx="-4" cy="22" rx="5" ry="3" fill="#D6A878" stroke="#5A3A10" strokeWidth="1">
+                <animate attributeName="cy" values="22;10;22" dur="1.7s" repeatCount="indefinite" />
+              </ellipse>
+              <circle cx="-4" cy="22" r="4" fill="none" stroke="#FFE090" strokeWidth="2" opacity="0.7">
+                <animate attributeName="r" values="4;14;4" dur="1.7s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.7;0;0.7" dur="1.7s" repeatCount="indefinite" />
+              </circle>
+            </g>
+          </g>
+          <rect x="360" y="290" width="60" height="40" rx="6" fill="transparent"
+                style={{ cursor: 'pointer' }}
+                onClick={(e) => spawnPop((e.nativeEvent as MouseEvent).offsetX, (e.nativeEvent as MouseEvent).offsetY)} />
+
+          {/* Парящие монетки и искры */}
+          <circle cx="80" cy="60" r="6" fill="#FFB800" opacity="0.85">
+            <animate attributeName="cy" values="60;40;60" dur="3s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.85;0.4;0.85" dur="3s" repeatCount="indefinite" />
+          </circle>
+          <circle cx="160" cy="40" r="4" fill="#FFE090" opacity="0.6">
+            <animate attributeName="cy" values="40;20;40" dur="2.4s" repeatCount="indefinite" />
+          </circle>
+          <circle cx="320" cy="50" r="6" fill="#FFB800" opacity="0.8">
+            <animate attributeName="cy" values="50;30;50" dur="2.8s" repeatCount="indefinite" />
+          </circle>
+          <circle cx="420" cy="70" r="5" fill="#FFE090" opacity="0.7">
+            <animate attributeName="cy" values="70;48;70" dur="3.2s" repeatCount="indefinite" />
+          </circle>
+          {/* Реплики-облачка */}
+          <g transform="translate(160, 130)">
+            <path d="M 0 0 Q -8 -2 -10 6 Q -4 8 0 6 L 4 12 L 4 6 Q 12 4 10 -2 Q 6 -6 0 0" fill="rgba(255,255,255,0.85)" />
+            <text x="-3" y="6" fontSize="8" fill="#0D1735" fontWeight="700">!</text>
+          </g>
+          <g transform="translate(340, 140)">
+            <path d="M 0 0 Q 8 -2 10 6 Q 4 8 0 6 L -4 12 L -4 6 Q -12 4 -10 -2 Q -6 -6 0 0" fill="rgba(255,255,255,0.85)" />
+            <text x="-2" y="6" fontSize="8" fill="#0D1735" fontWeight="700">?</text>
+          </g>
+        </svg>
+
+        {/* Всплывающие +1 при тапе по фигуркам */}
+        <AnimatePresence>
+          {pops.map(p => (
+            <motion.div
+              key={p.id}
+              initial={{ opacity: 1, y: 0, scale: 1 }}
+              animate={{ opacity: 0, y: -50, scale: 1.5 }}
+              transition={{ duration: 0.9, ease: 'easeOut' }}
+              style={{
+                position: 'absolute', left: p.x, top: p.y,
+                transform: 'translate(-50%, -100%)',
+                color: colors.fairyGold, fontSize: 22, fontWeight: 900,
+                textShadow: '0 2px 8px rgba(0,0,0,0.6)',
+                pointerEvents: 'none', userSelect: 'none',
+              }}
+            >
+              {p.value}
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+
+      <div style={{
+        padding: `${spacing.md} ${spacing.lg}`,
+        background: 'rgba(255,255,255,0.04)',
+        border: `1px solid ${colors.cardBorder}`,
+        borderRadius: '12px',
+        color: colors.textPrimary,
+        fontSize: 13, lineHeight: 1.6, textAlign: 'center',
+      }}>
+        Сейчас обкатываем второй сезон: 7 разных мини-игр, новые чины,
+        живые сцены и убрали «чуйку». Спасибо что тестируешь — пиши фидбек
+        в обсуждении канала, любая мелочь поможет.
+      </div>
+    </div>
   )
 }
