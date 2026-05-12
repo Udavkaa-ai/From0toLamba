@@ -12,10 +12,10 @@ const tg = (window as any).Telegram?.WebApp
 const haptic = tg?.HapticFeedback
 
 const REFERENCE_SECONDS = 6
-const PLAY_SECONDS = 15
+const PLAY_SECONDS = 20    // больше времени, так как теперь не штрафуем переходом
 const RECIPE_LENGTH = 5
+const FEEDBACK_MS = 450
 
-// 5 GLB-ингредиентов. С версии 4 рисуем именно их в 3D вместо процедурного 2D.
 const INGREDIENT_MODELS = [
   { url: '/models/baba-yaga/mineral.glb',   name: 'Лунный камень' },
   { url: '/models/baba-yaga/potion.glb',    name: 'Зелье' },
@@ -59,6 +59,11 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
   const [round, setRound] = useState(0)
   // Уже правильно добавленные в рецепт ингредиенты — пропадают со стола
   const [consumed, setConsumed] = useState<Set<number>>(() => new Set())
+  // Прогресс рецепта: для каждой позиции 0..RECIPE_LENGTH-1 — индекс правильно
+  // добавленного ингредиента (null = ещё не заполнено).
+  const [recipeProgress, setRecipeProgress] = useState<(number | null)[]>(() => Array(RECIPE_LENGTH).fill(null))
+  // Счётчик ошибок на ТЕКУЩЕМ шаге — показываем игроку «попыток подряд»
+  const [stepErrors, setStepErrors] = useState(0)
   const [feedback, setFeedback] = useState<{ ingredientIdx: number; state: 'correct' | 'wrong' } | null>(null)
   const phaseRef = useRef(phase)
   useEffect(() => { phaseRef.current = phase }, [phase])
@@ -97,6 +102,7 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
       setPlayCountdown(prev => {
         if (prev <= 1) {
           clearInterval(id)
+          // Таймер вышел — оставшиеся незаполненные шаги добавляем как ошибки
           const remaining = RECIPE_LENGTH - roundRef.current
           complete(errorsRef.current + remaining)
           return 0
@@ -123,36 +129,39 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
       haptic?.notificationOccurred('error')
       playSound('lose')
       errorsRef.current += 1
+      setStepErrors(prev => prev + 1)
       setFeedback({ ingredientIdx, state: 'wrong' })
     }
     setTimeout(() => {
       setFeedback(null)
       if (isCorrect) {
-        // Ингредиент уходит со стола → остальные сдвигаются к центру
+        // Правильный ингредиент уходит со стола, заполняет слот рецепта.
+        // Шаг переходит к следующему, счётчик попыток сбрасывается.
         setConsumed(prev => new Set(prev).add(ingredientIdx))
+        setRecipeProgress(prev => {
+          const next = prev.slice()
+          next[roundRef.current] = ingredientIdx
+          return next
+        })
+        setStepErrors(0)
+        const nextRound = roundRef.current + 1
+        if (nextRound >= RECIPE_LENGTH) {
+          complete(errorsRef.current)
+          return
+        }
+        setRound(nextRound)
       }
-      const next = roundRef.current + 1
-      if (next >= RECIPE_LENGTH) {
-        complete(errorsRef.current)
-        return
-      }
-      setRound(next)
-    }, 500)
+      // Если неверно — НЕ переходим к следующему шагу, ингредиент остаётся
+      // на столе, игрок выбирает другой. Ошибка засчитана.
+    }, FEEDBACK_MS)
   }
 
-  // Текущие слоты: ингредиенты, которые ещё не легли в котёл, в исходном порядке.
-  // На фазе reference показываем ВСЕ 5 (consumed пуст). На play — оставшиеся.
   const activeIngredients = useMemo(
     () => slotOrder.filter(i => !consumed.has(i)),
     [slotOrder, consumed],
   )
 
-  // Раскладка: даём моделям максимум места.
-  //   5 — 3 + 2 (тесная сетка)
-  //   4 — 2 + 2
-  //   3 — 3 в ряд
-  //   2 — 2 в ряд (крупно)
-  //   1 — центр (огромно)
+  // Раскладка зависит от количества активных ингредиентов
   const positions = useMemo(() => {
     const n = activeIngredients.length
     if (n === 5) {
@@ -167,26 +176,20 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
         { x: -1.1, y: -1.2 }, { x: 1.1, y: -1.2 },
       ]
     }
-    if (n === 3) {
-      return [{ x: -1.9, y: 0 }, { x: 0, y: 0 }, { x: 1.9, y: 0 }]
-    }
-    if (n === 2) {
-      return [{ x: -1.3, y: 0 }, { x: 1.3, y: 0 }]
-    }
+    if (n === 3) return [{ x: -1.9, y: 0 }, { x: 0, y: 0 }, { x: 1.9, y: 0 }]
+    if (n === 2) return [{ x: -1.3, y: 0 }, { x: 1.3, y: 0 }]
     return [{ x: 0, y: 0 }]
   }, [activeIngredients])
 
-  // Масштаб моделей — заметно крупнее (по фидбеку «не разглядеть»).
   const modelScale = useMemo(() => {
     const n = activeIngredients.length
-    if (n === 5) return 2.4
-    if (n === 4) return 2.8
-    if (n === 3) return 3.0
-    if (n === 2) return 3.5
-    return 4.2
+    if (n === 5) return 3.0
+    if (n === 4) return 3.4
+    if (n === 3) return 3.6
+    if (n === 2) return 4.0
+    return 4.6
   }, [activeIngredients])
 
-  // Цифры-метки 1..5 в фазе reference: номер шага рецепта для каждого ингредиента
   const refStepNum = (ingredientIdx: number) => recipe.indexOf(ingredientIdx) + 1
 
   return (
@@ -210,7 +213,7 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
       }}>
         {phase === 'reference'
           ? `Цифры — порядок добавления в котёл. Запомни и кидай по очереди.`
-          : `Шаг ${Math.min(round + 1, RECIPE_LENGTH)} из ${RECIPE_LENGTH}. Какой ингредиент следующий?`}
+          : `Шаг ${Math.min(round + 1, RECIPE_LENGTH)} из ${RECIPE_LENGTH}. Какой ингредиент следующий?${stepErrors > 0 ? ` Попыток: ${stepErrors + 1}` : ''}`}
       </div>
 
       {phase === 'play' && (
@@ -221,13 +224,13 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
           <span style={{ color: colors.fairyGold, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
             {round}/{RECIPE_LENGTH}
           </span>
-          <span style={{ color: colors.textSecondary, fontVariantNumeric: 'tabular-nums' }}>
+          <span style={{ color: errorsRef.current >= 2 ? colors.danger : colors.textSecondary, fontVariantNumeric: 'tabular-nums' }}>
             Ошибки: {errorsRef.current}
           </span>
         </div>
       )}
 
-      <div style={{ flex: 1, width: '100%', minHeight: '400px', position: 'relative' }}>
+      <div style={{ flex: 1, width: '100%', minHeight: '300px', position: 'relative' }}>
         <Canvas
           dpr={Math.min(window.devicePixelRatio, 2)}
           camera={{ position: [0, 0, 5.0], fov: 60 }}
@@ -271,21 +274,59 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
                       </div>
                     </Html>
                   )}
-                  <AnimatePresenceHtml fb={fb} />
+                  <FeedbackRing fb={fb} />
                 </group>
               )
             })}
           </Suspense>
         </Canvas>
       </div>
+
+      {/* Прогресс рецепта внизу: 5 слотов котла, заполняются правильными ингредиентами */}
+      {phase === 'play' && (
+        <div style={{
+          display: 'flex', gap: 6, justifyContent: 'center',
+          marginTop: spacing.sm, padding: `${spacing.sm} 0`,
+          borderTop: `1px solid ${colors.cardBorder}`,
+        }}>
+          {recipeProgress.map((filledIdx, i) => {
+            const isCurrent = i === round
+            const filled = filledIdx !== null
+            const borderColor = filled ? colors.success : isCurrent ? colors.fairyGold : colors.cardBorder
+            const bgColor = filled ? `${colors.success}22` : isCurrent ? `${colors.fairyGold}18` : 'rgba(255,255,255,0.03)'
+            return (
+              <div key={i} style={{
+                flex: 1, maxWidth: 64,
+                aspectRatio: '1',
+                background: bgColor,
+                border: `2px solid ${borderColor}`,
+                borderRadius: 10,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                position: 'relative',
+                transition: 'all 0.25s',
+              }}>
+                <div style={{
+                  position: 'absolute', top: 2, left: 4,
+                  color: filled ? colors.success : colors.textMuted,
+                  fontSize: 10, fontWeight: 700,
+                }}>{i + 1}</div>
+                {filled ? (
+                  <div style={{ color: colors.success, fontSize: 28, fontWeight: 800 }}>✓</div>
+                ) : isCurrent ? (
+                  <div style={{ color: colors.fairyGold, fontSize: 20, fontWeight: 800 }}>?</div>
+                ) : (
+                  <div style={{ color: colors.textMuted, fontSize: 14 }}>·</div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
 
-/**
- * Кольцо-фидбек поверх ингредиента, оборачивает AnimatePresence в Html.
- */
-function AnimatePresenceHtml({ fb }: { fb: 'correct' | 'wrong' | null }) {
+function FeedbackRing({ fb }: { fb: 'correct' | 'wrong' | null }) {
   return (
     <Html position={[0, 0, 0]} center distanceFactor={5} style={{ pointerEvents: 'none' }}>
       <AnimatePresence>
@@ -296,10 +337,10 @@ function AnimatePresenceHtml({ fb }: { fb: 'correct' | 'wrong' | null }) {
             exit={{ scale: 1.6, opacity: 0 }}
             transition={{ duration: 0.45 }}
             style={{
-              width: 120, height: 120,
+              width: 140, height: 140,
               borderRadius: '50%',
-              border: `4px solid ${fb === 'correct' ? '#4FD89C' : '#E06060'}`,
-              boxShadow: `0 0 24px ${fb === 'correct' ? '#4FD89C' : '#E06060'}`,
+              border: `5px solid ${fb === 'correct' ? '#4FD89C' : '#E06060'}`,
+              boxShadow: `0 0 30px ${fb === 'correct' ? '#4FD89C' : '#E06060'}`,
             }}
           />
         )}

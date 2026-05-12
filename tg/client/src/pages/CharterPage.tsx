@@ -445,6 +445,143 @@ export function CharterPage() {
 
 // ── Обучалка ──────────────────────────────────────────────────────────────
 
+/**
+ * Графический примерчик для подсказки `?`: показывает игроку наглядно, что
+ * отличает правильный выбор от неправильного в конкретной мини-игре. Тут не
+ * рендерим Pixi/Three (сложно и тяжеловесно), а собираем картинки из CSS-
+ * кружков и эмодзи — этого хватает, чтобы пояснить механику.
+ */
+function TutorialGraphicalExample({ archetype }: { archetype: string }) {
+  const Card = ({ children, label, tone = 'neutral' }: {
+    children: React.ReactNode
+    label: string
+    tone?: 'good' | 'bad' | 'neutral'
+  }) => {
+    const borderColor =
+      tone === 'good' ? colors.success :
+      tone === 'bad' ? colors.danger :
+      colors.fairyGold
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: 1 }}>
+        <div style={{
+          width: 64, height: 64,
+          borderRadius: 12,
+          background: 'rgba(42, 25, 96, 0.4)',
+          border: `2px solid ${borderColor}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 30,
+        }}>
+          {children}
+        </div>
+        <div style={{ color: borderColor, fontSize: 10, fontWeight: 700, textAlign: 'center' }}>
+          {label}
+        </div>
+      </div>
+    )
+  }
+
+  if (archetype === 'BURATINO') {
+    return (
+      <div style={{ marginBottom: spacing.md }}>
+        <div style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 6 }}>
+          Среди 7 ключей один в точности совпадает с эталоном по форме головки и рисунку бороздок:
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Card label="Эталон" tone="neutral">🗝️</Card>
+          <div style={{ alignSelf: 'center', color: colors.textMuted, fontSize: 18 }}>→</div>
+          <Card label="Тот же" tone="good">🗝️</Card>
+          <Card label="Похож, но не он" tone="bad">🪛</Card>
+        </div>
+      </div>
+    )
+  }
+
+  if (archetype === 'KOSCHEI') {
+    return (
+      <div style={{ marginBottom: spacing.md }}>
+        <div style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 6 }}>
+          Открывай по две карточки. Совпали символы — пара остаётся открытой:
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Card label="🌳 дуб" tone="good">🌳</Card>
+          <Card label="🌳 дуб" tone="good">🌳</Card>
+          <div style={{ alignSelf: 'center', color: colors.success, fontSize: 22 }}>✓</div>
+          <Card label="не пара" tone="bad">🐇</Card>
+          <Card label="не пара" tone="bad">🦆</Card>
+        </div>
+      </div>
+    )
+  }
+
+  if (archetype === 'KOLOBOK') {
+    return (
+      <div style={{ marginBottom: spacing.md }}>
+        <div style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 6 }}>
+          Тапай зверушек, обходи Колобка. Цель — 7 баллов за 15 секунд (12 для совета):
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Card label="+1" tone="good">🐇</Card>
+          <Card label="+1" tone="good">🐺</Card>
+          <Card label="+1" tone="good">🦊</Card>
+          <Card label="−3" tone="bad">🥮</Card>
+        </div>
+      </div>
+    )
+  }
+
+  if (archetype === 'ZOLUSHKA') {
+    return (
+      <div style={{ marginBottom: spacing.md }}>
+        <div style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 6 }}>
+          Лови монету, что совпадает с эталоном с обеих сторон. Подделка может быть похожа только аверсом ИЛИ только реверсом:
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Card label="Эталон" tone="neutral">🪙</Card>
+          <Card label="Та же (лови)" tone="good">🪙</Card>
+          <Card label="Подделка" tone="bad">🥈</Card>
+          <Card label="Подделка" tone="bad">🥉</Card>
+        </div>
+      </div>
+    )
+  }
+
+  if (archetype === 'BABA_YAGA') {
+    return (
+      <div style={{ marginBottom: spacing.md }}>
+        <div style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 6 }}>
+          Запомни порядок и кидай ингредиенты в котёл по очереди. Ошибся — шаг остаётся, выбирай другой:
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <Card label="1️⃣" tone="good">🪨</Card>
+          <div style={{ color: colors.textMuted, fontSize: 16 }}>→</div>
+          <Card label="2️⃣" tone="good">🧪</Card>
+          <div style={{ color: colors.textMuted, fontSize: 16 }}>→</div>
+          <Card label="3️⃣" tone="good">📜</Card>
+        </div>
+      </div>
+    )
+  }
+
+  if (archetype === 'IVAN_DURAK') {
+    return (
+      <div style={{ marginBottom: spacing.md }}>
+        <div style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 6 }}>
+          Иван открывает карту — найди такую же в своей руке за 2 секунды. Карты тасуются после каждого хода:
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <Card label="Иван" tone="neutral">7♠</Card>
+          <div style={{ color: colors.textMuted, fontSize: 16 }}>↓</div>
+          <Card label="Тапни" tone="good">7♠</Card>
+          <Card label="Не она" tone="bad">9♦</Card>
+          <Card label="Не она" tone="bad">К♥</Card>
+        </div>
+      </div>
+    )
+  }
+
+  return null
+}
+
 function TutorialSheet({ rank, archetype, onClose }: { rank: string; archetype: string; onClose: () => void }) {
   const t = useT()
   const isBoyarin = archetype === 'BOYARIN'
@@ -494,6 +631,9 @@ function TutorialSheet({ rank, archetype, onClose }: { rank: string; archetype: 
 
         {/* Прокручиваемое тело */}
         <div style={{ overflowY: 'auto', flex: 1, padding: `0 ${spacing.xl}` }}>
+
+          {/* Графический пример — для не-BOYARIN'a показывает наглядную механику */}
+          {!isBoyarin && <TutorialGraphicalExample archetype={archetype} />}
 
           {/* Правила игры — общее для всех архетипов */}
           {gameHint && (

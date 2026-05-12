@@ -49,45 +49,92 @@ interface CoinType {
   backMotif: Motif      // крупный мотив, занимающий ~всю монету
 }
 
-// Эталонная (настоящая) монета
-const REAL_COIN: CoinType = {
-  rim: 0x6B4A00, shade: 0xB07A10, base: 0xE8A800, lite: 0xFFC838, hi: 0xFFE490,
-  label: '1', caption: 'золотой',
-  frontMotif: 'sun',
-  backMotif: 'sun',
+// ── Палитры цветов и пул кандидатов для «настоящей» монеты ────────────────
+// Каждый запуск seed выбирает одну из этих монет как эталон.
+
+interface CoinPalette { rim: number; shade: number; base: number; lite: number; hi: number; name: string }
+const GOLD: CoinPalette   = { rim: 0x6B4A00, shade: 0xB07A10, base: 0xE8A800, lite: 0xFFC838, hi: 0xFFE490, name: 'gold'   }
+const SILVER: CoinPalette = { rim: 0x4A4A55, shade: 0x7A7A85, base: 0xB0B0BB, lite: 0xD0D0D8, hi: 0xEFEFF5, name: 'silver' }
+const COPPER: CoinPalette = { rim: 0x4A2A05, shade: 0x8C5A20, base: 0xC97A30, lite: 0xE9A050, hi: 0xF5C880, name: 'copper' }
+const BRASS: CoinPalette  = { rim: 0x5A4A10, shade: 0x8C7A20, base: 0xC9B040, lite: 0xE9D080, hi: 0xF8E9B0, name: 'brass'  }
+
+interface CoinTemplate {
+  palette: CoinPalette
+  label: string
+  caption: string
+  frontMotif: Motif
+  backMotif: Motif
 }
 
-// Подделки — сокращённый набор: 2 очевидных + 2 хитрых (1 отличается аверсом,
-// 1 — реверсом). Меньше шумит, легче читать.
-const FAKE_COINS: CoinType[] = [
-  // Очевидная: медь с крестом — другой цвет, другой номинал, другой символ
-  {
-    rim: 0x4A2A05, shade: 0x8C5A20, base: 0xC97A30, lite: 0xE9A050, hi: 0xF5C880,
-    label: '5', caption: 'медяков', frontMotif: 'cross', backMotif: 'cross',
-  },
-  // Очевидная: серебро с фракцией — холодный цвет, выделяется в потоке
-  {
-    rim: 0x4A4A55, shade: 0x7A7A85, base: 0xB0B0BB, lite: 0xD0D0D8, hi: 0xEFEFF5,
-    label: '½', caption: 'полушка', frontMotif: 'fraction', backMotif: 'fraction',
-  },
-  // Хитрая: тот же цвет золота, реверс совпадает (солнце), но аверс — «5 золотых».
-  // Игрок ловит её на реверсе как настоящую — надо дождаться поворота.
-  {
-    rim: 0x6B4A00, shade: 0xB07A10, base: 0xE8A800, lite: 0xFFC838, hi: 0xFFE490,
-    label: '5', caption: 'золотых', frontMotif: 'sun', backMotif: 'sun',
-  },
-  // Хитрая: аверс совпадает точь-в-точь («1 золотой» с солнышком), но на реверсе луна.
-  {
-    rim: 0x6B4A00, shade: 0xB07A10, base: 0xE8A800, lite: 0xFFC838, hi: 0xFFE490,
-    label: '1', caption: 'золотой', frontMotif: 'sun', backMotif: 'moon',
-  },
+const REAL_TEMPLATES: CoinTemplate[] = [
+  { palette: GOLD,   label: '1', caption: 'золотой',  frontMotif: 'sun',      backMotif: 'sun'      },
+  { palette: GOLD,   label: '3', caption: 'червонца', frontMotif: 'star',     backMotif: 'star'     },
+  { palette: SILVER, label: '2', caption: 'рубля',    frontMotif: 'cross',    backMotif: 'leaf'     },
+  { palette: COPPER, label: '5', caption: 'медяков',  frontMotif: 'cross',    backMotif: 'cross'    },
+  { palette: BRASS,  label: '7', caption: 'алтын',    frontMotif: 'leaf',     backMotif: 'sun'      },
+  { palette: SILVER, label: '½', caption: 'полушка',  frontMotif: 'fraction', backMotif: 'fraction' },
 ]
 
-function pickCoinType(rng: () => number): { type: CoinType; isReal: boolean } {
-  if (rng() < FAKE_PROBABILITY) {
-    return { type: FAKE_COINS[Math.floor(rng() * FAKE_COINS.length)], isReal: false }
+function toCoinType(t: CoinTemplate): CoinType {
+  return {
+    rim: t.palette.rim, shade: t.palette.shade, base: t.palette.base, lite: t.palette.lite, hi: t.palette.hi,
+    label: t.label, caption: t.caption,
+    frontMotif: t.frontMotif, backMotif: t.backMotif,
   }
-  return { type: REAL_COIN, isReal: true }
+}
+
+const ALL_MOTIFS: Motif[] = ['sun', 'star', 'cross', 'leaf', 'fraction', 'moon', 'gear']
+const ALL_LABELS = ['1', '2', '3', '5', '7', '½']
+const ALL_CAPTIONS = ['золотой', 'червонца', 'рубля', 'медяков', 'алтын', 'полушка', 'денга', 'грош']
+
+function pickOther<T>(arr: readonly T[], exclude: T, rng: () => number): T {
+  const others = arr.filter(x => x !== exclude)
+  return others[Math.floor(rng() * others.length)]
+}
+
+/** Готовит набор подделок исходя из «настоящей» монеты:
+ *  - 2 очевидных (другой цвет, номинал и мотив)
+ *  - 1 хитрая: тот же цвет + тот же реверс, но другая цифра/подпись на аверсе
+ *  - 1 хитрая: тот же цвет + тот же аверс, но другой реверс */
+function buildFakes(real: CoinTemplate, rng: () => number): CoinType[] {
+  const otherPalettes: CoinPalette[] = [GOLD, SILVER, COPPER, BRASS].filter(p => p.name !== real.palette.name)
+  const fakes: CoinType[] = []
+
+  // 2 очевидных — другие палитры
+  const shuffled = otherPalettes.slice()
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+  for (let i = 0; i < 2 && i < shuffled.length; i++) {
+    fakes.push({
+      rim: shuffled[i].rim, shade: shuffled[i].shade, base: shuffled[i].base, lite: shuffled[i].lite, hi: shuffled[i].hi,
+      label: pickOther(ALL_LABELS, real.label, rng),
+      caption: pickOther(ALL_CAPTIONS, real.caption, rng),
+      frontMotif: pickOther(ALL_MOTIFS, real.frontMotif, rng),
+      backMotif: pickOther(ALL_MOTIFS, real.backMotif, rng),
+    })
+  }
+
+  // Хитрая 1: реверс совпадает с настоящей, аверс другой
+  fakes.push({
+    rim: real.palette.rim, shade: real.palette.shade, base: real.palette.base, lite: real.palette.lite, hi: real.palette.hi,
+    label: pickOther(ALL_LABELS, real.label, rng),
+    caption: pickOther(ALL_CAPTIONS, real.caption, rng),
+    frontMotif: pickOther(ALL_MOTIFS, real.frontMotif, rng),
+    backMotif: real.backMotif,
+  })
+
+  // Хитрая 2: аверс совпадает с настоящей, реверс другой
+  fakes.push({
+    rim: real.palette.rim, shade: real.palette.shade, base: real.palette.base, lite: real.palette.lite, hi: real.palette.hi,
+    label: real.label,
+    caption: real.caption,
+    frontMotif: real.frontMotif,
+    backMotif: pickOther(ALL_MOTIFS, real.backMotif, rng),
+  })
+
+  return fakes
 }
 
 // ── Базовая шейдинг-подложка монеты ────────────────────────────────────────
@@ -240,6 +287,11 @@ export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
   const refApp = useRef<Application | null>(null)
   const doneRef = useRef(false)
   const rngRef = useRef(rngFromSeed(seed))
+  // Эталонная монета и набор подделок — детерминированы из seed.
+  // Каждая игра — новый эталон.
+  const realTemplateRef = useRef<CoinTemplate>(REAL_TEMPLATES[Math.floor(rngRef.current() * REAL_TEMPLATES.length)])
+  const realCoinRef = useRef<CoinType>(toCoinType(realTemplateRef.current))
+  const fakeCoinsRef = useRef<CoinType[]>(buildFakes(realTemplateRef.current, rngRef.current))
   const coinsRef = useRef<CoinSprite[]>([])
   const lastSpawnRef = useRef<number>(0)
   const scoreRef = useRef(0)
@@ -351,7 +403,10 @@ export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
   const spawnCoin = (now: number) => {
     const app = refApp.current
     if (!app) return
-    const { type, isReal } = pickCoinType(rngRef.current)
+    const isReal = rngRef.current() >= FAKE_PROBABILITY
+    const type: CoinType = isReal
+      ? realCoinRef.current
+      : fakeCoinsRef.current[Math.floor(rngRef.current() * fakeCoinsRef.current.length)]
     const margin = COIN_SIZE * 0.7
     const x = margin + rngRef.current() * (app.screen.width - margin * 2)
     const y = -COIN_SIZE
@@ -488,7 +543,7 @@ export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
         </div>
       )}
 
-      <ReferenceSample phase={phase} />
+      <ReferenceSample phase={phase} coin={realCoinRef.current} />
 
       <div
         ref={refMount}
@@ -537,21 +592,40 @@ export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
  * прямоугольник поверх результата. Теперь чисто CSS-кружки — никаких канвасов
  * вне основной игровой сцены.
  */
-function CoinFaceCss({ size, kind }: { size: number; kind: 'front' | 'back' }) {
-  // Радиальный градиент имитирует объём (рим → база → блик → спекуляр)
+// Текстовый символ для каждого мотива — для DOM-превью эталонной монеты
+const MOTIF_GLYPH: Record<Motif, string> = {
+  sun: '☀',
+  star: '★',
+  cross: '✚',
+  leaf: '☘',
+  fraction: '½',
+  moon: '☾',
+  gear: '✺',
+}
+
+function hexToCss(h: number): string {
+  return '#' + h.toString(16).padStart(6, '0').toUpperCase()
+}
+
+function CoinFaceCss({ size, kind, coin }: { size: number; kind: 'front' | 'back'; coin: CoinType }) {
+  const rimCss   = hexToCss(coin.rim)
+  const shadeCss = hexToCss(coin.shade)
+  const baseCss  = hexToCss(coin.base)
+  const liteCss  = hexToCss(coin.lite)
+  const hiCss    = hexToCss(coin.hi)
   const bgGradient = `radial-gradient(circle at 32% 32%,
     #FFFAEC 0%,
-    #FFE490 12%,
-    #FFC838 30%,
-    #E8A800 55%,
-    #B07A10 80%,
-    #6B4A00 100%)`
+    ${hiCss} 12%,
+    ${liteCss} 30%,
+    ${baseCss} 55%,
+    ${shadeCss} 80%,
+    ${rimCss} 100%)`
   return (
     <div style={{
       width: size, height: size,
       borderRadius: '50%',
       background: bgGradient,
-      boxShadow: 'inset 0 -2px 6px rgba(74,42,0,0.45), 0 2px 8px rgba(0,0,0,0.5)',
+      boxShadow: `inset 0 -2px 6px ${rimCss}80, 0 2px 8px rgba(0,0,0,0.5)`,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       position: 'relative',
       flexShrink: 0,
@@ -562,46 +636,43 @@ function CoinFaceCss({ size, kind }: { size: number; kind: 'front' | 'back' }) {
             fontFamily: 'Georgia, "Times New Roman", serif',
             fontWeight: 800,
             fontSize: size * 0.55,
-            color: '#6B4A00',
+            color: rimCss,
             lineHeight: 1,
-            textShadow: '0 1px 0 rgba(255,228,144,0.5)',
+            textShadow: `0 1px 0 ${hiCss}80`,
           }}>
-            1
+            {coin.label}
           </div>
-          {/* Малое солнце над цифрой */}
           <div style={{
             position: 'absolute',
             top: size * 0.07,
-            color: '#6B4A00',
+            color: rimCss,
             fontSize: size * 0.16,
             fontWeight: 800,
-          }}>☀</div>
-          {/* Caption */}
+          }}>{MOTIF_GLYPH[coin.frontMotif]}</div>
           <div style={{
             position: 'absolute',
             bottom: size * 0.08,
-            color: '#6B4A00',
+            color: rimCss,
             fontFamily: 'Georgia, serif',
             fontSize: size * 0.13,
             fontWeight: 700,
             letterSpacing: 0.3,
-          }}>золотой</div>
+          }}>{coin.caption}</div>
         </>
       ) : (
-        // Реверс — крупное солнце с лучами
         <div style={{
-          color: '#6B4A00',
+          color: rimCss,
           fontSize: size * 0.75,
           fontWeight: 900,
           lineHeight: 1,
-          textShadow: '0 1px 0 rgba(255,228,144,0.4)',
-        }}>☀</div>
+          textShadow: `0 1px 0 ${hiCss}66`,
+        }}>{MOTIF_GLYPH[coin.backMotif]}</div>
       )}
     </div>
   )
 }
 
-function ReferenceSample({ phase }: { phase: 'reference' | 'play' }) {
+function ReferenceSample({ phase, coin }: { phase: 'reference' | 'play'; coin: CoinType }) {
   const sizePx = phase === 'reference' ? 110 : 44
 
   if (phase === 'reference') {
@@ -612,17 +683,17 @@ function ReferenceSample({ phase }: { phase: 'reference' | 'play' }) {
       }}>
         <div style={{ display: 'flex', gap: spacing.lg, alignItems: 'center' }}>
           <div style={{ textAlign: 'center' }}>
-            <CoinFaceCss size={sizePx} kind="front" />
+            <CoinFaceCss size={sizePx} kind="front" coin={coin} />
             <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: 6 }}>Аверс</div>
           </div>
           <div style={{ color: colors.fairyGold, fontSize: 24 }}>↻</div>
           <div style={{ textAlign: 'center' }}>
-            <CoinFaceCss size={sizePx} kind="back" />
+            <CoinFaceCss size={sizePx} kind="back" coin={coin} />
             <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: 6 }}>Реверс</div>
           </div>
         </div>
         <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '14px' }}>
-          1 золотой
+          {coin.label} {coin.caption}
         </div>
       </div>
     )
@@ -633,9 +704,9 @@ function ReferenceSample({ phase }: { phase: 'reference' | 'play' }) {
       marginBottom: spacing.sm,
     }}>
       <span style={{ color: colors.textMuted, fontSize: '11px' }}>Эталон:</span>
-      <CoinFaceCss size={sizePx} kind="front" />
-      <CoinFaceCss size={sizePx} kind="back" />
-      <span style={{ color: colors.fairyGold, fontSize: '12px', fontWeight: 600 }}>1 золотой</span>
+      <CoinFaceCss size={sizePx} kind="front" coin={coin} />
+      <CoinFaceCss size={sizePx} kind="back" coin={coin} />
+      <span style={{ color: colors.fairyGold, fontSize: '12px', fontWeight: 600 }}>{coin.label} {coin.caption}</span>
     </div>
   )
 }
