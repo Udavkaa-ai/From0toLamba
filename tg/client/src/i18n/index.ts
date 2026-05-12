@@ -161,7 +161,7 @@ home: {
     'Оба получим по +100 г в казну, когда ты наберёшь 10 чуйки в мини-игре «Купеческая грамота».',
   ],
   tournamentBannerBtn: '🎉 Итоги Майской Ярмарки — победители!',
-  preResetBannerBtn: '📢 Скоро перезапуск — читай',
+  preResetBannerBtn: '📜 Второй сезон — читай!',
   tournament: {
     title: '🎉 Итоги Майской Ярмарки',
     sections: [
@@ -174,12 +174,12 @@ home: {
     ],
   },
   preReset: {
-    title: '📢 Перед стартом турнира — важное объявление!',
+    title: '📜 Второй сезон на ярмарке!',
     sections: [
-      { heading: 'Что произойдёт', body: 'Прогресс всех игроков обнуляется — злато, чины, дни, подвиги, грамоты. Все начинают с чистого листа. Это нужно, чтобы турнир был честным.' },
-      { heading: 'Реферальные связи сохраняются', body: 'Если ты уже кого-то позвал, связь останется. Бонус нужно будет заработать заново: сосватанный набирает 10 чуйки → оба получают +100 г.' },
-      { heading: 'Что изменится', body: '— Купеческие печати обновятся — старые паттерны не сработают, придётся смотреть внимательнее.\n— Открывается платная беседа с дельцом — можно разузнать у хозяина правду о его деле перед вложением (10 Telegram Stars).\n— Пропуск двухчасового ожидания между неделями становится платным (10 Telegram Stars). В бете это было бесплатно — теперь по-честному. Для тех, кто метит в «Старожилы ярмарки», это важно учитывать.' },
-      { heading: null as unknown as string, body: 'Спасибо всем, кто тестировал — вы помогли сделать игру лучше.\n\nВперёд — за грош, за чин, за сказочный турнир! 🏆' },
+      { heading: '🗝️ Свои забавы у каждого дельца', body: 'Теперь у каждого хозяина дела будет своя забава: кто ключик прячет, кто зелье варит, кто в картишки зовёт перекинуться.\n\nПока не докажешь, что ловок и глаз намётан — с тобой дела иметь не будут.' },
+      { heading: '📊 Летописец считает победы', body: 'Летописец считает твои победы с каждым дельцом — будет, чем похвастаться.' },
+      { heading: '👑 Путь к княжескому венцу', body: 'К княжескому венцу теперь ведёт не чуйка, а счёт взятых дел.' },
+      { heading: null as unknown as string, body: 'Новые игры, чтобы некогда было скучать!\n\nЗагляни на ярмарку 18 мая! 🎉' },
     ],
   },
 },
@@ -899,7 +899,7 @@ home: {
     'Both of us get +100k when you reach 10 intuition in the Merchant\'s Charter mini-game.',
   ],
   tournamentBannerBtn: '🏆 May Fair — tournament in progress!',
-  preResetBannerBtn: '📢 Reset incoming — read this',
+  preResetBannerBtn: '📜 Season 2 — read this!',
   tournament: {
     title: '🏆 May Fair — First Tournament',
     sections: [
@@ -909,12 +909,12 @@ home: {
     ],
   },
   preReset: {
-    title: '📢 Before the Tournament Start — Important Announcement!',
+    title: '📜 Season 2 at the Fair!',
     sections: [
-      { heading: 'What will happen', body: 'All player progress resets — gold, ranks, days, feats, charters. Everyone starts from a clean slate. This is needed for the tournament to be fair.' },
-      { heading: 'Referral links are preserved', body: 'If you already invited someone, the connection stays. The bonus must be earned again: the recruit earns 10 intuition → both get +100k.' },
-      { heading: 'What changes', body: '— Merchant seals will update — old patterns won\'t work, you\'ll need to look more carefully.\n— Paid AMA with a dealer unlocks — you can ask the owner about their venture before investing (10 Telegram Stars).\n— Skipping the two-hour wait between weeks becomes paid (10 Telegram Stars). In beta this was free — now it\'s fair. For those aiming for "Fair Veteran", this is important to consider.' },
-      { heading: null as unknown as string, body: 'Thanks to everyone who tested — you helped make the game better.\n\nForward — for coins, for rank, for a fairy-tale tournament! 🏆' },
+      { heading: '🗝️ Every dealer has their own game', body: 'Every venture owner now has their own trick: one hides a key, one brews a potion, one invites you to a card game.\n\nUntil you prove you\'re sharp-eyed and clever — they won\'t deal with you.' },
+      { heading: '📊 The Chronicler counts', body: 'The Chronicler tracks your wins with each dealer — you\'ll have plenty to boast about.' },
+      { heading: '👑 Path to the crown', body: 'The path to the Prince\'s crown is no longer paved with intuition — it\'s paved with deals won.' },
+      { heading: null as unknown as string, body: 'New games, so there\'s never a dull moment!\n\nVisit the fair on May 18! 🎉' },
     ],
   },
 },

@@ -1950,7 +1950,7 @@ function ProjectNewsCardContent({ project }: { project: ProjectDTO }) {
 }
 
 // Переключатель вручную: true = показывать правила турнира, false = объявление о перезапуске
-const IS_TOURNAMENT_ACTIVE = true
+const IS_TOURNAMENT_ACTIVE = false
 
 function BannerAnnouncementModal({ onClose }: { onClose: () => void }) {
   const t = useT()
