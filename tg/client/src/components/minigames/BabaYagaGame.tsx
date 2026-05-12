@@ -390,19 +390,20 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
         steam.y = cauldronCY - cauldronH * 0.4
         app.stage.addChild(steam)
 
-        // 5 падающих ингредиентов в цикле 5.5 сек, каждый со своей задержкой
+        // 5 падающих ингредиентов в цикле 5.5 сек, каждый со своей задержкой.
+        // Рисуем БЕЗ обрамляющей карточки — только сам предмет.
         const fallTargetY = cauldronCY - cauldronH * 0.05
         const fallStartY = -80
-        const cardSize = Math.min(W * 0.22, 90)
+        const ingSize = Math.min(W * 0.22, 90)
         const fallSprites: Container[] = []
         for (let i = 0; i < recipeIngredients.length; i++) {
           const c = new Container()
           c.visible = false
           c.x = W / 2
           c.y = fallStartY
-          const cardG = new Graphics()
-          drawIngredientCard(cardG, recipeIngredients[i], cardSize, cardSize, 'normal')
-          c.addChild(cardG)
+          const ingG = new Graphics()
+          DRAWERS[recipeIngredients[i]](ingG, ingSize * 0.5)
+          c.addChild(ingG)
           app.stage.addChild(c)
           fallSprites.push(c)
         }

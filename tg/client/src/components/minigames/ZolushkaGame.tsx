@@ -636,33 +636,85 @@ export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
           boxShadow: 'inset 0 0 80px rgba(0,0,0,0.5)',
         }}
       >
-        {/* SVG-декор: силуэт замка снизу + звёзды */}
+        {/* SVG-декор: сказочный замок с башнями и шпилями + звёзды */}
         <svg
           viewBox="0 0 320 420"
           preserveAspectRatio="xMidYMax slice"
           style={{
             position: 'absolute', inset: 0, width: '100%', height: '100%',
-            pointerEvents: 'none', opacity: 0.6,
+            pointerEvents: 'none', opacity: 0.65,
           }}
         >
           <defs>
             <linearGradient id="castle1" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#2A1850" />
+              <stop offset="0%" stopColor="#3A2068" />
               <stop offset="100%" stopColor="#0F0820" />
             </linearGradient>
           </defs>
-          {/* Силуэт замка по нижнему краю */}
-          <path d="M 0 420 L 0 380 L 40 380 L 40 350 L 60 350 L 60 380 L 100 380 L 100 320 L 110 320 L 110 305 L 130 305 L 130 320 L 140 320 L 140 380 L 180 380 L 180 340 L 200 340 L 200 380 L 240 380 L 240 360 L 260 360 L 260 380 L 320 380 L 320 420 Z"
-                fill="url(#castle1)" />
-          {/* Светящиеся окна */}
-          <rect x="48" y="362" width="4" height="6" fill="#FFE090" opacity="0.8">
+          {/* Сказочный замок с башнями: 5 круглых башен с конусными шпилями,
+              соединённых зубчатыми стенами. Никаких прямых высоток. */}
+          {/* Левая угловая башня — низкая */}
+          <path d="M 8 420 L 8 340 L 8 332 L 14 326 L 30 326 L 36 332 L 36 340 L 36 420 Z" fill="url(#castle1)" />
+          <polygon points="6,332 38,332 22,288" fill="url(#castle1)" />
+          {/* Маленький флажок */}
+          <line x1="22" y1="288" x2="22" y2="278" stroke="#5A3A80" strokeWidth="1.2" />
+          <polygon points="22,278 22,272 28,275" fill="#9060C0" opacity="0.7" />
+
+          {/* Зубцы стены — левая часть */}
+          <path d="M 36 360 L 36 340 L 44 340 L 44 348 L 52 348 L 52 340 L 60 340 L 60 348 L 68 348 L 68 340 L 76 340 L 76 348 L 84 348 L 84 340 L 92 340 L 92 360 Z" fill="url(#castle1)" />
+          <rect x="36" y="360" width="56" height="60" fill="url(#castle1)" />
+
+          {/* Главная центральная башня — высокая */}
+          <path d="M 92 420 L 92 320 L 92 308 L 102 296 L 138 296 L 148 308 L 148 320 L 148 420 Z" fill="url(#castle1)" />
+          <polygon points="90,308 150,308 120,238" fill="url(#castle1)" />
+          {/* Маленький балкончик-обводка вокруг базы шпиля */}
+          <rect x="98" y="304" width="44" height="4" fill="url(#castle1)" />
+          {/* Флажок на главной башне */}
+          <line x1="120" y1="238" x2="120" y2="222" stroke="#5A3A80" strokeWidth="1.2" />
+          <polygon points="120,222 120,214 130,218" fill="#C080FF" opacity="0.8" />
+
+          {/* Зубцы стены — правая часть, к правой башне */}
+          <path d="M 148 360 L 148 340 L 156 340 L 156 348 L 164 348 L 164 340 L 172 340 L 172 348 L 180 348 L 180 340 L 188 340 L 188 348 L 196 348 L 196 340 L 204 340 L 204 360 Z" fill="url(#castle1)" />
+          <rect x="148" y="360" width="56" height="60" fill="url(#castle1)" />
+
+          {/* Средняя башня справа */}
+          <path d="M 204 420 L 204 330 L 204 322 L 212 314 L 232 314 L 240 322 L 240 330 L 240 420 Z" fill="url(#castle1)" />
+          <polygon points="202,322 242,322 222,270" fill="url(#castle1)" />
+          <line x1="222" y1="270" x2="222" y2="258" stroke="#5A3A80" strokeWidth="1.2" />
+          <polygon points="222,258 222,252 230,255" fill="#9060C0" opacity="0.7" />
+
+          {/* Зубцы стены — крайняя правая часть */}
+          <path d="M 240 360 L 240 340 L 248 340 L 248 348 L 256 348 L 256 340 L 264 340 L 264 348 L 272 348 L 272 340 L 280 340 L 280 360 Z" fill="url(#castle1)" />
+          <rect x="240" y="360" width="40" height="60" fill="url(#castle1)" />
+
+          {/* Правая угловая башня — низкая */}
+          <path d="M 280 420 L 280 340 L 280 332 L 286 326 L 302 326 L 308 332 L 308 340 L 308 420 Z" fill="url(#castle1)" />
+          <polygon points="278,332 310,332 294,294" fill="url(#castle1)" />
+          <line x1="294" y1="294" x2="294" y2="282" stroke="#5A3A80" strokeWidth="1.2" />
+          <polygon points="294,282 294,276 301,279" fill="#9060C0" opacity="0.7" />
+
+          {/* Арочные окна с тёплым светом — мерцают */}
+          {/* Главная башня — арочное окно */}
+          <path d="M 116 340 Q 116 332 120 332 Q 124 332 124 340 L 124 348 L 116 348 Z" fill="#FFE090" opacity="0.85">
+            <animate attributeName="opacity" values="0.5;1;0.5" dur="2.8s" repeatCount="indefinite" />
+          </path>
+          {/* Левая башня — круглое окошко */}
+          <circle cx="22" cy="350" r="2.6" fill="#FFE090" opacity="0.7">
+            <animate attributeName="opacity" values="0.4;0.9;0.4" dur="3.5s" repeatCount="indefinite" />
+          </circle>
+          {/* Правая башня — круглое окошко */}
+          <circle cx="294" cy="350" r="2.6" fill="#FFE090" opacity="0.75">
             <animate attributeName="opacity" values="0.5;1;0.5" dur="3s" repeatCount="indefinite" />
-          </rect>
-          <rect x="115" y="312" width="4" height="6" fill="#FFE090" opacity="0.7" />
-          <rect x="185" y="350" width="4" height="6" fill="#FFE090" opacity="0.8">
-            <animate attributeName="opacity" values="0.4;1;0.4" dur="2.5s" repeatCount="indefinite" />
-          </rect>
-          <rect x="245" y="368" width="4" height="6" fill="#FFE090" opacity="0.6" />
+          </circle>
+          {/* Средняя башня справа — арочка */}
+          <path d="M 218 338 Q 218 332 222 332 Q 226 332 226 338 L 226 344 L 218 344 Z" fill="#FFE090" opacity="0.7" />
+          {/* Окошки в стенах */}
+          <path d="M 60 372 Q 60 368 62 368 Q 64 368 64 372 L 64 376 L 60 376 Z" fill="#FFE090" opacity="0.65" />
+          <path d="M 172 372 Q 172 368 174 368 Q 176 368 176 372 L 176 376 L 172 376 Z" fill="#FFE090" opacity="0.65">
+            <animate attributeName="opacity" values="0.3;0.85;0.3" dur="4s" repeatCount="indefinite" />
+          </path>
+          <path d="M 258 372 Q 258 368 260 368 Q 262 368 262 372 L 262 376 L 258 376 Z" fill="#FFE090" opacity="0.65" />
+
           {/* Звёзды по небу */}
           {[[40,40],[100,25],[160,50],[220,35],[280,55],[60,90],[200,80],[260,100],[140,15]].map(([x,y], i) => (
             <circle key={i} cx={x} cy={y} r={1 + (i % 2)} fill="#FFE9A0" opacity={0.6 + (i % 3) * 0.1}>
