@@ -108,13 +108,13 @@ export function BuratinoGame({ seed, difficulty, onComplete }: BuratinoGameProps
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase])
 
-  // Раскладка 7 ключей: ряд 1 = 4, ряд 2 = 3.
-  // Координаты подобраны под камеру z=4 fov=60° — модели крупные, помещаются.
+  // Раскладка 7 ключей: 3 + 3 + 1 (раньше 4+3, но в портрете 4 в ряд не
+  // помещались крупно). 3 ряда позволяют сделать каждую модель раза в 3 крупнее.
   const layout = useMemo(() => {
-    const rows = [4, 3]
+    const rows = [3, 3, 1]
     const positions: Array<{ x: number; y: number }> = []
-    const rowSpacing = 1.5
-    const colSpacing = 0.95
+    const rowSpacing = 1.4
+    const colSpacing = 0.9
     let idx = 0
     for (let row = 0; row < rows.length; row++) {
       const cnt = rows[row]
@@ -156,7 +156,7 @@ export function BuratinoGame({ seed, difficulty, onComplete }: BuratinoGameProps
       <div style={{ flex: 1, width: '100%', minHeight: '420px', position: 'relative' }}>
         <Canvas
           dpr={Math.min(window.devicePixelRatio, 2)}
-          camera={{ position: [0, 0, 4.0], fov: 60 }}
+          camera={{ position: [0, 0, 3.0], fov: 80 }}
           gl={{ antialias: true, alpha: true }}
           style={{ background: 'transparent', touchAction: 'manipulation' }}
         >
@@ -175,7 +175,7 @@ export function BuratinoGame({ seed, difficulty, onComplete }: BuratinoGameProps
               <SpinningModel
                 url={reference}
                 position={[0, 0, 0]}
-                scale={3.0}
+                scale={4.5}
                 rotationSpeed={0.9}
                 tiltX={Math.PI / 2}
               />
@@ -185,7 +185,7 @@ export function BuratinoGame({ seed, difficulty, onComplete }: BuratinoGameProps
                 key={i}
                 url={slot.modelUrl}
                 position={[layout[i].x, layout[i].y, 0]}
-                scale={1.25}
+                scale={2.5}
                 rotationSpeed={0.9}
                 spinPhase={i * 0.4}
                 tiltX={Math.PI / 2}

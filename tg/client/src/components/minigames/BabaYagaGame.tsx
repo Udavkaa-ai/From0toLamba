@@ -168,41 +168,42 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
   )
 
   // Раскладка: 5 шт → 2+2+1 (3 ряда). Позиции учитывают узкий портретный
-  // viewport — aspect ~0.8 на телефоне.
+  // viewport — aspect ~0.8 на телефоне. Камера z=3.5 fov=90° даёт vert 7,
+  // horiz ~5.6 — в этих пределах расставляем.
   const positions = useMemo(() => {
     const n = activeIngredients.length
     if (n === 5) {
       return [
-        { x: -1.2, y:  1.8 }, { x: 1.2, y:  1.8 },  // верх
-        { x: -1.2, y:  0   }, { x: 1.2, y:  0   },  // середина
-        { x:  0,   y: -1.8 },                       // низ
+        { x: -1.05, y:  1.7 }, { x: 1.05, y:  1.7 },
+        { x: -1.05, y:  0   }, { x: 1.05, y:  0   },
+        { x:  0,    y: -1.7 },
       ]
     }
     if (n === 4) {
       return [
-        { x: -1.3, y:  1.3 }, { x: 1.3, y:  1.3 },
-        { x: -1.3, y: -1.3 }, { x: 1.3, y: -1.3 },
+        { x: -1.2, y:  1.4 }, { x: 1.2, y:  1.4 },
+        { x: -1.2, y: -1.4 }, { x: 1.2, y: -1.4 },
       ]
     }
     if (n === 3) {
       return [
         { x: 0, y:  1.5 },
-        { x: -1.3, y: -1.0 }, { x: 1.3, y: -1.0 },
+        { x: -1.4, y: -1.0 }, { x: 1.4, y: -1.0 },
       ]
     }
-    if (n === 2) return [{ x: -1.3, y: 0 }, { x: 1.3, y: 0 }]
+    if (n === 2) return [{ x: -1.5, y: 0 }, { x: 1.5, y: 0 }]
     return [{ x: 0, y: 0 }]
   }, [activeIngredients])
 
-  // Существенно крупнее: камера придвинута к z=4 при fov=80° — модели занимают
-  // существенную часть экрана.
+  // Камера 3.5 / fov 90° даёт vert viewport ~7. Модели занимают существенную
+  // часть экрана при этих масштабах.
   const modelScale = useMemo(() => {
     const n = activeIngredients.length
-    if (n === 5) return 2.6
-    if (n === 4) return 3.0
-    if (n === 3) return 3.2
-    if (n === 2) return 3.6
-    return 4.4
+    if (n === 5) return 3.2
+    if (n === 4) return 3.6
+    if (n === 3) return 3.8
+    if (n === 2) return 4.4
+    return 5.5
   }, [activeIngredients])
 
   const refStepNum = (ingredientIdx: number) => recipe.indexOf(ingredientIdx) + 1
@@ -248,7 +249,7 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
       <div style={{ flex: 1, width: '100%', minHeight: '300px', position: 'relative' }}>
         <Canvas
           dpr={Math.min(window.devicePixelRatio, 2)}
-          camera={{ position: [0, 0, 4.0], fov: 80 }}
+          camera={{ position: [0, 0, 3.5], fov: 90 }}
           gl={{ antialias: true, alpha: true }}
           style={{ background: 'transparent', touchAction: 'manipulation' }}
         >
@@ -267,11 +268,11 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
                 падают в него. Котёл — внутри 3D-сцены через drei <Html>, так
                 ингредиенты приземляются именно ТУДА, где он нарисован. */}
             {showCauldron && (
-              <Html position={[0, -2.4, 0]} center distanceFactor={6.5} style={{ pointerEvents: 'none' }}>
+              <Html position={[0, -2.6, 0]} center distanceFactor={5.0} style={{ pointerEvents: 'none' }}>
                 <div style={{
-                  fontSize: 130,
+                  fontSize: 180,
                   lineHeight: 1,
-                  filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.85))',
+                  filter: 'drop-shadow(0 10px 18px rgba(0,0,0,0.85))',
                   userSelect: 'none',
                 }}>🍲</div>
               </Html>
@@ -283,8 +284,8 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
                 delay={i * 0.8}
                 cycle={5.5}
                 fallDur={1.3}
-                startY={3.2}
-                endY={-2.4}
+                startY={3.5}
+                endY={-2.6}
               />
             ))}
             {!showCauldron && activeIngredients.map((ingredientIdx, slotIdx) => {
@@ -408,7 +409,7 @@ function FallingIngredient({ url, delay, cycle, fallDur, startY, endY }: {
   })
   return (
     <group ref={group} visible={false}>
-      <SpinningModel url={url} scale={2.0} rotationSpeed={0} />
+      <SpinningModel url={url} scale={2.8} rotationSpeed={0} />
     </group>
   )
 }
