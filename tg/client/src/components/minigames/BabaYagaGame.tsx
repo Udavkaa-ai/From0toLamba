@@ -167,41 +167,42 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
     [slotOrder, consumed],
   )
 
-  // Раскладка: 5 шт → 2+2+1 (3 ряда по высоте, не больше 2 в ряд) — каждой
-  // модели хватает места, чтобы быть крупной и не наезжать на соседок.
+  // Раскладка: 5 шт → 2+2+1 (3 ряда). Позиции учитывают узкий портретный
+  // viewport — aspect ~0.8 на телефоне.
   const positions = useMemo(() => {
     const n = activeIngredients.length
     if (n === 5) {
       return [
-        { x: -1.4, y:  2.1 }, { x: 1.4, y:  2.1 },  // верх
-        { x: -1.4, y:  0   }, { x: 1.4, y:  0   },  // середина
-        { x:  0,   y: -2.1 },                       // низ
+        { x: -1.2, y:  1.8 }, { x: 1.2, y:  1.8 },  // верх
+        { x: -1.2, y:  0   }, { x: 1.2, y:  0   },  // середина
+        { x:  0,   y: -1.8 },                       // низ
       ]
     }
     if (n === 4) {
       return [
-        { x: -1.5, y:  1.4 }, { x: 1.5, y:  1.4 },
-        { x: -1.5, y: -1.4 }, { x: 1.5, y: -1.4 },
+        { x: -1.3, y:  1.3 }, { x: 1.3, y:  1.3 },
+        { x: -1.3, y: -1.3 }, { x: 1.3, y: -1.3 },
       ]
     }
     if (n === 3) {
       return [
-        { x: 0, y:  1.6 },
-        { x: -1.4, y: -1.0 }, { x: 1.4, y: -1.0 },
+        { x: 0, y:  1.5 },
+        { x: -1.3, y: -1.0 }, { x: 1.3, y: -1.0 },
       ]
     }
-    if (n === 2) return [{ x: -1.4, y: 0 }, { x: 1.4, y: 0 }]
+    if (n === 2) return [{ x: -1.3, y: 0 }, { x: 1.3, y: 0 }]
     return [{ x: 0, y: 0 }]
   }, [activeIngredients])
 
-  // Модели заметно крупнее — раньше казались «мелочью на чёрном экране».
+  // Существенно крупнее: камера придвинута к z=4 при fov=80° — модели занимают
+  // существенную часть экрана.
   const modelScale = useMemo(() => {
     const n = activeIngredients.length
-    if (n === 5) return 2.4
-    if (n === 4) return 2.6
-    if (n === 3) return 2.8
-    if (n === 2) return 3.4
-    return 4.2
+    if (n === 5) return 2.6
+    if (n === 4) return 3.0
+    if (n === 3) return 3.2
+    if (n === 2) return 3.6
+    return 4.4
   }, [activeIngredients])
 
   const refStepNum = (ingredientIdx: number) => recipe.indexOf(ingredientIdx) + 1
@@ -247,7 +248,7 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
       <div style={{ flex: 1, width: '100%', minHeight: '300px', position: 'relative' }}>
         <Canvas
           dpr={Math.min(window.devicePixelRatio, 2)}
-          camera={{ position: [0, 0, 5.0], fov: 70 }}
+          camera={{ position: [0, 0, 4.0], fov: 80 }}
           gl={{ antialias: true, alpha: true }}
           style={{ background: 'transparent', touchAction: 'manipulation' }}
         >
@@ -262,15 +263,28 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
             </Html>
           }>
             <Environment preset="forest" background={false} />
-            {/* Финальная сцена «котёл и падающие ингредиенты» — заменяет
-                обычные слоты после завершения игры. Зацикленная анимация. */}
+            {/* Финальная сцена: котёл по центру-низ + 5 ингредиентов поочерёдно
+                падают в него. Котёл — внутри 3D-сцены через drei <Html>, так
+                ингредиенты приземляются именно ТУДА, где он нарисован. */}
+            {showCauldron && (
+              <Html position={[0, -2.4, 0]} center distanceFactor={6.5} style={{ pointerEvents: 'none' }}>
+                <div style={{
+                  fontSize: 130,
+                  lineHeight: 1,
+                  filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.85))',
+                  userSelect: 'none',
+                }}>🍲</div>
+              </Html>
+            )}
             {showCauldron && INGREDIENT_MODELS.map((m, i) => (
               <FallingIngredient
                 key={`fall-${i}`}
                 url={m.url}
                 delay={i * 0.8}
                 cycle={5.5}
-                fallDur={1.4}
+                fallDur={1.3}
+                startY={3.2}
+                endY={-2.4}
               />
             ))}
             {!showCauldron && activeIngredients.map((ingredientIdx, slotIdx) => {
@@ -312,24 +326,8 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
           </Suspense>
         </Canvas>
 
-        {/* Большой котёл внизу — куда падают ингредиенты на финальной сцене */}
-        {showCauldron && (
-          <motion.div
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.05, duration: 0.4 }}
-            style={{
-              position: 'absolute',
-              bottom: 6, left: 0, right: 0,
-              textAlign: 'center',
-              fontSize: 100,
-              pointerEvents: 'none',
-              userSelect: 'none',
-              filter: 'drop-shadow(0 6px 14px rgba(0,0,0,0.8))',
-              lineHeight: 1,
-            }}
-          >🍲</motion.div>
-        )}
+        {/* Котёл рендерится внутри 3D-сцены через <Html> — ингредиенты падают
+            прямо в него. Старый DOM-overlay снизу удалён. */}
       </div>
 
       {/* Прогресс рецепта внизу: 5 слотов котла, заполняются правильными ингредиентами */}
@@ -381,11 +379,13 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
  * ингредиент стартует с задержкой = i * 0.8 сек, падает с y=3 до y=-2.5 за
  * 1.4 секунды, потом скрывается. Полный цикл — 5.5 сек, потом повтор.
  */
-function FallingIngredient({ url, delay, cycle, fallDur }: {
+function FallingIngredient({ url, delay, cycle, fallDur, startY, endY }: {
   url: string
   delay: number
   cycle: number
   fallDur: number
+  startY: number
+  endY: number
 }) {
   const group = useRef<THREE.Group>(null)
   useFrame((state) => {
@@ -397,16 +397,18 @@ function FallingIngredient({ url, delay, cycle, fallDur }: {
     }
     group.current.visible = true
     const progress = t / fallDur
-    // Падает с верхней части сцены в центр-низ, где «котёл»
-    group.current.position.y = 3.0 - progress * 5.5
+    // Падает сверху прямо в центр котла. Лёгкое квадратичное ускорение —
+    // в начале медленнее, ближе к котлу быстрее.
+    const eased = progress * progress
+    group.current.position.y = startY + (endY - startY) * eased
     group.current.position.x = 0
-    // Лёгкое покачивание/вращение в полёте
+    // Покачивание + вращение в полёте
     group.current.rotation.y += 0.06
-    group.current.rotation.z = Math.sin(state.clock.getElapsedTime() * 5 + delay) * 0.15
+    group.current.rotation.z = Math.sin(state.clock.getElapsedTime() * 5 + delay) * 0.18
   })
   return (
     <group ref={group} visible={false}>
-      <SpinningModel url={url} scale={1.5} rotationSpeed={0} />
+      <SpinningModel url={url} scale={2.0} rotationSpeed={0} />
     </group>
   )
 }

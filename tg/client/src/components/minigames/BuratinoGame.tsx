@@ -109,11 +109,12 @@ export function BuratinoGame({ seed, difficulty, onComplete }: BuratinoGameProps
   }, [phase])
 
   // Раскладка 7 ключей: ряд 1 = 4, ряд 2 = 3.
+  // Координаты подобраны под камеру z=4 fov=60° — модели крупные, помещаются.
   const layout = useMemo(() => {
     const rows = [4, 3]
     const positions: Array<{ x: number; y: number }> = []
-    const rowSpacing = 1.4
-    const colSpacing = 1.4
+    const rowSpacing = 1.5
+    const colSpacing = 0.95
     let idx = 0
     for (let row = 0; row < rows.length; row++) {
       const cnt = rows[row]
@@ -155,7 +156,7 @@ export function BuratinoGame({ seed, difficulty, onComplete }: BuratinoGameProps
       <div style={{ flex: 1, width: '100%', minHeight: '420px', position: 'relative' }}>
         <Canvas
           dpr={Math.min(window.devicePixelRatio, 2)}
-          camera={{ position: [0, 0, 5.5], fov: 35 }}
+          camera={{ position: [0, 0, 4.0], fov: 60 }}
           gl={{ antialias: true, alpha: true }}
           style={{ background: 'transparent', touchAction: 'manipulation' }}
         >
@@ -174,7 +175,7 @@ export function BuratinoGame({ seed, difficulty, onComplete }: BuratinoGameProps
               <SpinningModel
                 url={reference}
                 position={[0, 0, 0]}
-                scale={2.2}
+                scale={3.0}
                 rotationSpeed={0.9}
                 tiltX={Math.PI / 2}
               />
@@ -184,7 +185,7 @@ export function BuratinoGame({ seed, difficulty, onComplete }: BuratinoGameProps
                 key={i}
                 url={slot.modelUrl}
                 position={[layout[i].x, layout[i].y, 0]}
-                scale={0.95}
+                scale={1.25}
                 rotationSpeed={0.9}
                 spinPhase={i * 0.4}
                 tiltX={Math.PI / 2}
