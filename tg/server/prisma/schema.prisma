@@ -180,6 +180,9 @@ model AmaSession {
   difficulty            String?      // EASY | MEDIUM | HARD — сила мутации подделок
   forgedIndices         Int[]        @default([]) // СКРЫТО: индексы поддельных печатей
   charterSelectedIndices Int[]       @default([]) // что отметил игрок при сабмите
+  // Игрок начал саму игру (нажал «Принять испытание»). После этого
+  // F5 в браузере считается провалом — защита от перепрохождения с тем же seed.
+  gridStartedAt         DateTime?
   charterSubmittedAt    DateTime?
 
   isPaid                Boolean      @default(false)

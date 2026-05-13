@@ -352,6 +352,7 @@ export const api = {
   charter: {
     start: (projectId: string) => apiClient.post<CharterDTO>(`/charter/${projectId}/start`).then(r => r.data),
     get: (projectId: string) => apiClient.get<CharterDTO>(`/charter/${projectId}`).then(r => r.data),
+    begin: (projectId: string) => apiClient.post<{ success: boolean }>(`/charter/${projectId}/begin`).then(r => r.data),
     submit: (projectId: string, selectedIndices: number[]) =>
       apiClient.post<CharterSubmitDTO>(`/charter/${projectId}/submit`, { selectedIndices }).then(r => r.data),
     submitMiniGame: (projectId: string, errorCount: number) =>

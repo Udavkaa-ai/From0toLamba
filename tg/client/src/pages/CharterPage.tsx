@@ -55,6 +55,11 @@ export function CharterPage() {
   const [onboardingBonus, setOnboardingBonus] = useState<number | null>(null)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
   const [showTutorial, setShowTutorial] = useState(false)
+  const [beginPending, setBeginPending] = useState(false)
+  // Игра реально сыграна в текущей сессии (а не загружена с сервера после F5).
+  // Только в этом случае рендерим интерактивный канвас в фазе miniresult
+  // (для финальной сцены). Иначе игрок мог бы переиграть через F5 — баг-эксплойт.
+  const [freshlyPlayed, setFreshlyPlayed] = useState(false)
   const onboardingTriggeredRef = useRef(false)
 
   // Показываем обучалку один раз при первом посещении
@@ -148,6 +153,7 @@ export function CharterPage() {
     mutationFn: (errorCount: number) => api.charter.submitMiniGame(projectId!, errorCount),
     onSuccess: ({ errorCount, perfectInsight }) => {
       setMiniGameResult({ errorCount, perfectInsight })
+      setFreshlyPlayed(true)
       setPhase('miniresult')
       const ok = errorCount <= 1
       haptic?.notificationOccurred(errorCount === 0 ? 'success' : ok ? 'warning' : 'error')
@@ -195,6 +201,7 @@ export function CharterPage() {
       const { forgedIndices, ...rest } = res
       setResult(rest)
       setMiniGameResult({ errorCount: res.errorCount, perfectInsight: res.perfectInsight })
+      setFreshlyPlayed(true)
       setPhase('miniresult')
       const ok = res.errorCount <= 1
       haptic?.notificationOccurred(res.errorCount === 0 ? 'success' : ok ? 'warning' : 'error')
@@ -332,19 +339,35 @@ export function CharterPage() {
           >?</button>
         </div>
 
-        {/* Тело — зависит от фазы */}
-        {phase === 'intro' && project && (
+        {/* Тело — зависит от фазы.
+            Guard на isSubmitted: после F5 на miniresult-стадии React может на
+            один кадр показать intro до того, как сработает useEffect — игрок
+            успевал кликнуть «Принять испытание» и запустить игру заново.
+            Теперь intro не рендерим, если грамота уже отправлена. */}
+        {phase === 'intro' && project && !charter?.isSubmitted && (
           <MiniGameIntroScreen
             project={project}
-            onStart={() => setPhase(project.personaArchetype === 'BOYARIN' ? 'reference' : 'minigame')}
+            onStart={async () => {
+              if (beginPending) return
+              setBeginPending(true)
+              try {
+                await api.charter.begin(projectId!)
+                setPhase(project.personaArchetype === 'BOYARIN' ? 'reference' : 'minigame')
+              } catch (err) {
+                console.error('[charter.begin] failed:', err)
+              } finally {
+                setBeginPending(false)
+              }
+            }}
             onChat={() => navigate(`/ama/${projectId}`)}
           />
         )}
 
-        {/* Канвас мини-игры остаётся видимым и в 'miniresult' — за счёт этого
-            играли финальные сцены (Колобок + 4 зверя, пирамидка Кощея, котёл
-            Бабы-Яги). Если свернуть лист результата, игрок их увидит. */}
-        {(phase === 'minigame' || (phase === 'miniresult' && project?.personaArchetype !== 'BOYARIN')) && project && (
+        {/* Канвас мини-игры остаётся видимым и в 'miniresult' только если игра
+            реально была сыграна в этой сессии — для финальной сцены (Колобок +
+            4 зверя, пирамидка Кощея, котёл Бабы-Яги). После F5 (freshlyPlayed=false)
+            канвас не рендерится — иначе можно было переиграть с тем же seed. */}
+        {(phase === 'minigame' || (phase === 'miniresult' && freshlyPlayed && project?.personaArchetype !== 'BOYARIN')) && project && (
           <MiniGame
             archetype={project.personaArchetype}
             seed={charter.gridSeed}

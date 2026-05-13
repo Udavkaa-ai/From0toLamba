@@ -86,6 +86,27 @@ export async function startCharter(userId: number, projectId: string, _rank = 'N
     throw new Error('CHARTER_EXPIRED')
   }
   if (existing && existing.gridSeed) {
+    // Защита от F5-эксплойта: если игрок уже начал игру (gridStartedAt
+    // выставлен), но не отправил результат — считаем за провал. Иначе
+    // F5 в браузере позволял переигрывать ту же грамоту с тем же seed.
+    if (existing.gridStartedAt && !existing.charterSubmittedAt) {
+      await prisma.$transaction([
+        prisma.amaSession.update({
+          where: { id: existing.id },
+          data: {
+            charterSubmittedAt: new Date(),
+            isIntuitionEvaluated: true,
+            intuitionDelta: 2,  // errorCount=2 = поражение, дело раскрывается только за звёзды
+          },
+        }),
+        prisma.project.update({
+          where: { id: projectId },
+          data: { isInbox: false },
+        }),
+      ])
+      const refreshed = await prisma.amaSession.findUniqueOrThrow({ where: { id: existing.id } })
+      return toPublicView(refreshed, project)
+    }
     return toPublicView(existing, project)
   }
 
@@ -118,6 +139,20 @@ export async function startCharter(userId: number, projectId: string, _rank = 'N
   return toPublicView(session, project)
 }
 
+/** Игрок нажал «Принять испытание» — фиксируем начало игры серверной меткой.
+ *  С этого момента F5 = провал (см. защиту в startCharter). */
+export async function beginCharter(userId: number, projectId: string): Promise<void> {
+  const session = await prisma.amaSession.findUniqueOrThrow({ where: { projectId } })
+  if (session.userId !== userId) throw new Error('FORBIDDEN')
+  if (!session.gridSeed) throw new Error('NO_CHARTER')
+  if (session.charterSubmittedAt) throw new Error('ALREADY_SUBMITTED')
+  if (session.gridStartedAt) return  // уже начато, повторный вызов идемпотентен
+  await prisma.amaSession.update({
+    where: { id: session.id },
+    data: { gridStartedAt: new Date() },
+  })
+}
+
 export async function getCharter(userId: number, projectId: string, _rank = 'NEWBIE'): Promise<CharterPublicView | null> {
   const session = await prisma.amaSession.findUnique({ where: { projectId } })
   if (!session || session.userId !== userId || !session.gridSeed) return null
@@ -147,6 +182,7 @@ export async function submitCharter(
   const session = await prisma.amaSession.findUniqueOrThrow({ where: { projectId } })
   if (session.userId !== userId) throw new Error('FORBIDDEN')
   if (!session.gridSeed) throw new Error('NO_CHARTER')
+  if (!session.gridStartedAt) throw new Error('NOT_STARTED')
   if (session.charterSubmittedAt) throw new Error('ALREADY_SUBMITTED')
 
   // Санитизация: уникальные индексы в допустимом диапазоне
@@ -231,6 +267,7 @@ export async function submitMiniGame(
   const session = await prisma.amaSession.findUniqueOrThrow({ where: { projectId } })
   if (session.userId !== userId) throw new Error('FORBIDDEN')
   if (!session.gridSeed) throw new Error('NO_CHARTER')
+  if (!session.gridStartedAt) throw new Error('NOT_STARTED')
   if (session.charterSubmittedAt) throw new Error('ALREADY_SUBMITTED')
 
   const project = await prisma.project.findUniqueOrThrow({ where: { id: projectId } })
