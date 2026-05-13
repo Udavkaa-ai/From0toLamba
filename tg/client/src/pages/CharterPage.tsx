@@ -377,6 +377,14 @@ export function CharterPage() {
           />
         )}
 
+        {/* После F5 (freshlyPlayed=false) канвас не показываем, чтобы нельзя
+            было переиграть. Но и чёрного экрана не хотим — рисуем нарядный
+            «уже сыграно» с баннером дела. Только для не-BOYARIN (у BOYARIN
+            свой ScanGrid с подсветкой результата). */}
+        {phase === 'miniresult' && !freshlyPlayed && project && project.personaArchetype !== 'BOYARIN' && (
+          <AlreadyPlayedScene project={project} errorCount={miniGameResult?.errorCount ?? 2} />
+        )}
+
         {phase === 'reference' && (
           <ReferenceScreen seed={charter.gridSeed} countdown={refCountdown} />
         )}
@@ -963,6 +971,68 @@ const EMPTY_STATS: MinigameStatsRow = { played: 0, perfect: 0, won: 0, lost: 0 }
 
 function getMinigameStats(gs: GameStateDTO | null, archetype: string): MinigameStatsRow {
   return gs?.minigameStats?.[archetype] ?? EMPTY_STATS
+}
+
+/** Сцена «уже сыграно» — рисуется в фазе miniresult, когда игрок зашёл
+ *  с F5 или из другого места (без свежей игры в текущей сессии). Канвас
+ *  мини-игры здесь не рендерится (защита от перепрохождения), но и
+ *  чёрный экран был бы плохим UX. Показываем баннер дела + статус. */
+function AlreadyPlayedScene({ project, errorCount }: { project: any; errorCount: number }) {
+  const t = useT()
+  const emoji = errorCount === 0 ? '🎯' : errorCount === 1 ? '🙂' : '😅'
+  const status = errorCount === 0 ? 'Безупречно' : errorCount === 1 ? 'Почти в точку' : 'Поражение'
+  const statusColor = errorCount === 0 ? colors.success : errorCount === 1 ? colors.fairyGold : colors.danger
+  return (
+    <div style={{
+      flex: 1,
+      padding: spacing.lg,
+      maxWidth: 500, margin: '0 auto', width: '100%', boxSizing: 'border-box',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      gap: spacing.lg,
+    }}>
+      {project.bannerImageUrl && (
+        <motion.img
+          src={project.bannerImageUrl}
+          alt={project.name}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{
+            width: '100%', maxWidth: 360,
+            aspectRatio: '16 / 9', objectFit: 'cover',
+            borderRadius: 16,
+            border: `2px solid ${colors.fairyGold}66`,
+            boxShadow: `0 12px 40px rgba(0,0,0,0.6), 0 0 32px ${colors.fairyGold}33`,
+          }}
+          onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+        />
+      )}
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        style={{
+          display: 'flex', alignItems: 'center', gap: spacing.sm,
+          padding: `${spacing.sm} ${spacing.lg}`,
+          background: `${statusColor}18`,
+          border: `1px solid ${statusColor}66`,
+          borderRadius: 14,
+        }}
+      >
+        <span style={{ fontSize: 28, lineHeight: 1 }}>{emoji}</span>
+        <div>
+          <div style={{ color: statusColor, fontWeight: 800, fontSize: 16 }}>{status}</div>
+          <div style={{ color: colors.textMuted, fontSize: 11 }}>
+            Грамота уже разобрана · ошибок: {errorCount}
+          </div>
+        </div>
+      </motion.div>
+      <div style={{ color: colors.textMuted, fontSize: 12, textAlign: 'center', maxWidth: 320, lineHeight: 1.5 }}>
+        Повторно пройти испытание нельзя. Решение по делу — внизу.
+      </div>
+      {/* Кушает невидимое t — иначе TS жалуется на unused */}
+      <span style={{ display: 'none' }}>{t.common.done}</span>
+    </div>
+  )
 }
 
 function MiniGameIntroScreen({
