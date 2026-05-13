@@ -10,6 +10,7 @@ import { CharterPage } from './pages/CharterPage'
 import { PortfolioPage } from './pages/PortfolioPage'
 import { StatsPage } from './pages/StatsPage'
 import { LeaderboardPage } from './pages/LeaderboardPage'
+import { TodayPage } from './pages/TodayPage'
 import { RegistryPage } from './pages/RegistryPage'
 import { BottomNav } from './components/BottomNav'
 import { ChatPanel } from './components/ChatPanel'
@@ -48,6 +49,7 @@ function AppShell() {
             <Route path="/portfolio" element={<PortfolioPage />} />
             <Route path="/stats" element={<StatsPage />} />
             <Route path="/leaderboard" element={<LeaderboardPage />} />
+            <Route path="/today" element={<TodayPage />} />
             <Route path="/registry" element={<RegistryPage />} />
           </Routes>
           <BottomNav />

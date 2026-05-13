@@ -72,6 +72,11 @@ model GameState {
   weekStartAt          DateTime?
   timerSkipTokens      Int       @default(0)
   extraSlotsBalance    Int       @default(0)
+  // Дневные стрики (вкладка «Сегодня») — независимы от dayStreak (тот считает
+  // быстрые нажатия «Следующий день»). Сбрасываются если игрок пропустил день.
+  loginStreak          Int       @default(0)
+  lastSeenDay          String?   // YYYY-MM-DD в МСК — когда стрик последний раз обновлялся
+  lastDailyClaim       String?   // YYYY-MM-DD — день последнего получения награды
   // Внеочередное объявление о группе купцов — показывается один раз
   marketAnnouncementSeen          Boolean   @default(false)
   marketAnnouncementRewardClaimed Boolean   @default(false)

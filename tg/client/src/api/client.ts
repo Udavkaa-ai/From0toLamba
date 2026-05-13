@@ -247,6 +247,36 @@ export interface InvestResponse {
   luckShift: { from: string; to: string } | null
 }
 
+/** Запись лидерборда на вкладке «Сегодня» — рейтинг по богатству. */
+export interface TodayLeaderEntry {
+  telegramId: string
+  firstName: string
+  username: string | null
+  nickname: string | null
+  rank: string
+  wealth: number
+}
+/** Ответ /api/today — стрик + ежедневная награда + топ-10 по богатству */
+export interface TodayDTO {
+  loginStreak: number
+  todayReward: number
+  milestoneBonus: number
+  alreadyClaimed: boolean
+  nextMilestone: { day: number; bonus: number; daysLeft: number } | null
+  leaderboard: {
+    top: TodayLeaderEntry[]
+    myPosition: number | null
+    totalPlayers: number
+  }
+}
+export interface TodayClaimDTO {
+  success: boolean
+  reward: number
+  milestoneBonus: number
+  loginStreak: number
+  newBalance: number
+}
+
 export interface AmaSessionDTO {
   sessionId: string
   questionCount: number
@@ -339,6 +369,11 @@ export const api = {
 
   referrals: {
     getMy: () => apiClient.get<MyReferralsDTO>('/referrals/my').then(r => r.data),
+  },
+
+  today: {
+    get: () => apiClient.get<TodayDTO>('/today').then(r => r.data),
+    claim: () => apiClient.post<TodayClaimDTO>('/today/claim').then(r => r.data),
   },
 
   invest: {
