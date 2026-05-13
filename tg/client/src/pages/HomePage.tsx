@@ -14,6 +14,7 @@ import { FaqModal, FaqAnnouncementModal, useFaqAnnouncement } from '@/components
 import { ChannelPromoOverlay, shouldShowChannelPromo, markChannelPromoSeen } from '@/components/ChannelPromoOverlay'
 import { MarketAnnouncementOverlay } from '@/components/MarketAnnouncementOverlay'
 import { DayTransitionOverlay } from '@/components/DayTransitionOverlay'
+import { CoinShowerOverlay } from '@/components/CoinShowerOverlay'
 import { CountUp } from '@/components/CountUp'
 import { EyeIcon, LockIcon } from '@/components/icons'
 import { api, type ProjectDTO, type DailyUpdateDTO, type ClosureSummaryDTO, type MyReferralEntryDTO } from '@/api/client'
@@ -229,9 +230,48 @@ export function HomePage() {
   // данные нового дня не подтянутся (мутация в процессе + краткая буферная пауза).
   const [isDayTransition, setIsDayTransition] = useState(false)
 
+  // Дождь монет: после успешного дня летят золотые на размер изменения казны
+  // (баланс + текущая стоимость активных дел). Срабатывает между transition и DayNews.
+  const [coinShowerDelta, setCoinShowerDelta] = useState<number | null>(null)
+  // Снимок «казны до дня» + день, в который снимали. На него смотрит useEffect,
+  // ждёт пока придёт свежий gameState (currentDay инкрементнётся), считает дельту
+  // и запускает дождь.
+  const [pendingShowerSnapshot, setPendingShowerSnapshot] = useState<{ wealth: number; day: number } | null>(null)
+  const [readyForShower, setReadyForShower] = useState(false)
+
+  const computeWealth = (gs: typeof gameState): number => {
+    if (!gs) return 0
+    const active = gs.activeProjects.reduce((sum, p) => sum + p.currentValueRubles, 0)
+    return gs.balance + active
+  }
+
+  // Эффект «триггер дождя монет»: ждём (1) переход дня закончился, (2) пришли
+  // свежие данные нового дня, (3) есть снимок казны до. Сравниваем — запускаем.
+  useEffect(() => {
+    if (!readyForShower || !pendingShowerSnapshot || !freshGameState) return
+    if (freshGameState.currentDay <= pendingShowerSnapshot.day) return  // ещё старые данные
+    const delta = Math.floor(computeWealth(freshGameState) - pendingShowerSnapshot.wealth)
+    setPendingShowerSnapshot(null)
+    setReadyForShower(false)
+    if (Math.abs(delta) >= 1) {
+      setCoinShowerDelta(delta)
+      // Открываем «вести дня» через 1.7с, чтобы дождь успел отыграть
+      setTimeout(() => setShowDayNews(true), 1700)
+    } else {
+      setShowDayNews(true)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [readyForShower, freshGameState])
+
   const advanceMutation = useMutation({
     mutationFn: api.game.advanceDay,
-    onMutate: () => setIsDayTransition(true),
+    onMutate: () => {
+      setIsDayTransition(true)
+      if (gameState) {
+        setPendingShowerSnapshot({ wealth: computeWealth(gameState), day: gameState.currentDay })
+        setReadyForShower(false)
+      }
+    },
     onSuccess: (data) => {
       tgHaptic?.notificationOccurred('success')
       playSound('day')
@@ -244,12 +284,14 @@ export function HomePage() {
       // и игрок не увидел ни старых грамот, ни «инбокс пуст».
       setTimeout(() => {
         setIsDayTransition(false)
-        setShowDayNews(true)
+        setReadyForShower(true)
       }, 800)
     },
     onError: () => {
       tgHaptic?.notificationOccurred('error')
       setIsDayTransition(false)
+      setPendingShowerSnapshot(null)
+      setReadyForShower(false)
     },
   })
 
@@ -265,11 +307,15 @@ export function HomePage() {
       tgHaptic?.notificationOccurred('success')
       setTimeout(() => {
         setIsDayTransition(false)
-        setShowDayNews(true)
+        setReadyForShower(true)
       }, 800)
     }
     try {
       setIsDayTransition(true)
+      if (gameState) {
+        setPendingShowerSnapshot({ wealth: computeWealth(gameState), day: gameState.currentDay })
+        setReadyForShower(false)
+      }
       const resp = await api.payments.createInvoice('timer_skip') as any
       if (!resp.invoiceLink) {
         finishTransition(resp.closures ?? [])
@@ -458,6 +504,16 @@ export function HomePage() {
       </AnimatePresence>
       <AnimatePresence>
         {isDayTransition && <DayTransitionOverlay />}
+      </AnimatePresence>
+      <AnimatePresence>
+        {coinShowerDelta !== null && (
+          <CoinShowerOverlay
+            key="coin-shower"
+            delta={coinShowerDelta}
+            durationSec={1.6}
+            onDone={() => setCoinShowerDelta(null)}
+          />
+        )}
       </AnimatePresence>
       <AnimatePresence>
         {showMarketAnnouncement && !showTutorial && !pendingChangelog && !showFaqAnnouncement && (
