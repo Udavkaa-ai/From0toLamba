@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Application, Container, Graphics, Text } from 'pixi.js'
+import { Application, Container, Graphics } from 'pixi.js'
 import { rngFromSeed } from './seedRng'
 import { colors, spacing } from '@/theme'
 import { playSound } from '@/sounds'
@@ -9,17 +9,17 @@ import type { MiniGameDifficulty } from './BuratinoGame'
 const tg = (window as any).Telegram?.WebApp
 const haptic = tg?.HapticFeedback
 
-const REFERENCE_SECONDS = 6
-const PLAY_SECONDS = 20
-const RECIPE_LENGTH = 5
-const OPTIONS_PER_ROUND = 5
-const FEEDBACK_MS = 450
+const REFERENCE_SECONDS = 7
+const PLAY_SECONDS = 25
+const RECIPE_LENGTH = 7
+const FLY_MS = 550        // длительность падения ингредиента в котёл
+const SHAKE_MS = 420      // длительность взрыва+тряски при ошибке
 
 interface BabaYagaGameProps {
   seed: string
   difficulty: MiniGameDifficulty
   onComplete: (errorCount: number) => void
-  /** Если задано — сразу показываем котёл и ингредиенты (после F5). */
+  /** Если задано — сразу показываем котёл и финальную сцену (после F5). */
   restoredErrorCount?: number | null
 }
 
@@ -208,6 +208,45 @@ function shuffle<T>(arr: T[], rng: () => number): T[] {
   return out
 }
 
+// === Главный компонент ====================================================
+
+interface SlotAnim {
+  /** Состояние слота: idle (в покое) / flying (летит в котёл) /
+   *  shake (взрыв при ошибке) / reappearing (всплывает на новом месте) */
+  state: 'idle' | 'flying' | 'shake' | 'reappearing'
+  /** Время начала текущего состояния в performance.now() мс */
+  startedAt: number
+  /** Куда лететь (центр котла) — заполняется в момент перехода в flying */
+  targetX: number
+  targetY: number
+  /** Home-позиция в текущей раскладке */
+  homeX: number
+  homeY: number
+}
+
+interface SlotState {
+  ingredient: Ingredient
+  anim: SlotAnim
+}
+
+interface Bubble {
+  startedAt: number
+  durationMs: number
+  x0: number
+  y0: number
+  driftX: number
+  radius: number
+}
+
+interface ExplosionParticle {
+  startedAt: number
+  durationMs: number
+  x: number
+  y: number
+  vx: number
+  vy: number
+}
+
 export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaGameProps) {
   const isFrozen = restoredErrorCount !== null && restoredErrorCount !== undefined
   const refMount = useRef<HTMLDivElement>(null)
@@ -215,43 +254,44 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
   const doneRef = useRef(isFrozen)
   const rngRef = useRef(rngFromSeed(seed))
   const errorsRef = useRef(0)
+  const collectedRef = useRef(0)
+  const stepRef = useRef(0)
   const onCompleteRef = useRef(onComplete)
   useEffect(() => { onCompleteRef.current = onComplete }, [onComplete])
 
-  // Выбираем 5 ингредиентов из 8 — детерминированно из seed
-  const recipeIngredients = useMemo<Ingredient[]>(() => {
-    const shuffled = shuffle(ALL_INGREDIENTS, rngRef.current)
-    return shuffled.slice(0, RECIPE_LENGTH)
+  // Recipe — 7 уникальных ингредиентов из 8 в случайном порядке
+  const recipe = useMemo<Ingredient[]>(() => {
+    const pool = shuffle(ALL_INGREDIENTS, rngRef.current).slice(0, RECIPE_LENGTH)
+    return shuffle(pool, rngRef.current)
   }, [])
-  // Порядок выбранных 5 ингредиентов в рецепте Бабы Яги
-  const recipeOrder = useMemo<Ingredient[]>(() => {
-    return shuffle(recipeIngredients, rngRef.current)
-  }, [recipeIngredients])
 
-  const [phase, setPhase] = useState<'reference' | 'play'>('reference')
+  const [phase, setPhase] = useState<'reference' | 'play'>(isFrozen ? 'play' : 'reference')
   const [refCountdown, setRefCountdown] = useState(REFERENCE_SECONDS)
   const [playCountdown, setPlayCountdown] = useState(PLAY_SECONDS)
-  const [round, setRound] = useState(0)
-  const [consumed, setConsumed] = useState<Set<Ingredient>>(() => new Set())
-  const [recipeProgress, setRecipeProgress] = useState<(Ingredient | null)[]>(() => Array(RECIPE_LENGTH).fill(null))
-  const [stepErrors, setStepErrors] = useState(0)
-  const [feedback, setFeedback] = useState<{ ing: Ingredient; state: 'correct' | 'wrong' } | null>(null)
-  const [showCauldron, setShowCauldron] = useState(isFrozen)
-  // В frozen — стартуем cauldron-анимацию с момента маунта
-  const cauldronStartRef = useRef<number>(isFrozen ? performance.now() : 0)
-  const phaseRef = useRef(phase)
-  useEffect(() => { phaseRef.current = phase }, [phase])
-  const roundRef = useRef(0)
-  useEffect(() => { roundRef.current = round }, [round])
+  const [collected, setCollected] = useState(0)
+  const [, forceRerender] = useState(0)
 
-  const complete = (errors: number) => {
+  // Слоты — текущая раскладка 7 ингредиентов
+  const slotsRef = useRef<SlotState[]>([])
+  const bubblesRef = useRef<Bubble[]>([])
+  const explosionsRef = useRef<ExplosionParticle[]>([])
+
+  // Инициализация: первая раскладка = recipe (на reference визуально
+  // показывает порядок «слева направо, сверху вниз»)
+  if (slotsRef.current.length === 0) {
+    slotsRef.current = recipe.map(ing => ({
+      ingredient: ing,
+      anim: { state: 'idle' as const, startedAt: 0, targetX: 0, targetY: 0, homeX: 0, homeY: 0 },
+    }))
+  }
+
+  const complete = (collectedCount: number) => {
     if (doneRef.current) return
     doneRef.current = true
-    const ec = Math.max(0, errors)
+    // 7 = идеально, 5-6 = победа, <=4 = поражение
+    const ec = collectedCount >= 7 ? 0 : collectedCount >= 5 ? 1 : 2
     haptic?.notificationOccurred(ec === 0 ? 'success' : ec === 1 ? 'warning' : 'error')
     playSound(ec <= 1 ? 'win' : 'lose')
-    cauldronStartRef.current = performance.now()
-    setTimeout(() => setShowCauldron(true), 80)
     onCompleteRef.current(ec)
   }
 
@@ -266,7 +306,7 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
       })
     }, 1000)
     return () => clearInterval(id)
-  }, [phase])
+  }, [phase, isFrozen])
 
   useEffect(() => {
     if (isFrozen) return
@@ -276,8 +316,7 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
       setPlayCountdown(prev => {
         if (prev <= 1) {
           clearInterval(id)
-          const remaining = RECIPE_LENGTH - roundRef.current
-          complete(errorsRef.current + remaining)
+          complete(collectedRef.current)
           return 0
         }
         return prev - 1
@@ -285,47 +324,9 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
     }, 1000)
     return () => clearInterval(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase])
+  }, [phase, isFrozen])
 
-  const onPick = (ing: Ingredient) => {
-    if (doneRef.current) return
-    if (phaseRef.current !== 'play') return
-    if (feedback) return
-    if (consumed.has(ing)) return
-    const correctIng = recipeOrder[roundRef.current]
-    const isCorrect = ing === correctIng
-    if (isCorrect) {
-      haptic?.notificationOccurred('success')
-      playSound('seal')
-      setFeedback({ ing, state: 'correct' })
-    } else {
-      haptic?.notificationOccurred('error')
-      playSound('lose')
-      errorsRef.current += 1
-      setStepErrors(prev => prev + 1)
-      setFeedback({ ing, state: 'wrong' })
-    }
-    setTimeout(() => {
-      setFeedback(null)
-      if (isCorrect) {
-        setConsumed(prev => new Set(prev).add(ing))
-        setRecipeProgress(prev => {
-          const next = prev.slice()
-          next[roundRef.current] = ing
-          return next
-        })
-        setStepErrors(0)
-        const nextRound = roundRef.current + 1
-        if (nextRound >= RECIPE_LENGTH) {
-          complete(errorsRef.current)
-          return
-        }
-        setRound(nextRound)
-      }
-    }, FEEDBACK_MS)
-  }
-
-  // ── Pixi-инициализация ───────────────────────────────────────────────────
+  // ── Pixi init ────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!refMount.current) return
     let app: Application | null = null
@@ -345,7 +346,6 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
       }
       refMount.current.appendChild(app.canvas)
       refApp.current = app
-      // pixiReady отдельно не нужен — render-эффект сам делает rAF-цикл до появления refApp
     })()
     return () => {
       cancelled = true
@@ -356,174 +356,268 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
     }
   }, [])
 
-  // ── Рендер сцены: ингредиенты или финальная анимация ─────────────────────
+  // ── Главный рендер-цикл через rAF ────────────────────────────────────────
+  // Каждый кадр: очищаем сцену → рисуем котёл → 7 слотов с их анимациями
+  // → пузыри → искры взрывов. Никаких отдельных pixi-контейнеров «надолго»
+  // — всё пересоздаётся каждый кадр, так проще управлять анимациями.
   useEffect(() => {
+    let raf = 0
     let cancelled = false
-    let tickerCb: (() => void) | null = null
-    const render = () => {
+    const tick = () => {
       const app = refApp.current
       if (cancelled) return
       if (!app) {
-        requestAnimationFrame(render)
+        raf = requestAnimationFrame(tick)
         return
       }
-      // Очистка стейджа и старого тикера
-      app.stage.removeChildren()
-      if (tickerCb) { try { app.ticker.remove(tickerCb) } catch { /* noop */ }; tickerCb = null }
 
       const W = app.screen.width
       const H = app.screen.height
+      app.stage.removeChildren()
 
-      // ── Финальная сцена: котёл + падающие ингредиенты ────────────────
-      if (showCauldron) {
-        // Котёл по центру-низу, крупный
-        const cauldronW = Math.min(W * 0.7, 280)
-        const cauldronH = cauldronW * 0.6
-        const cauldronCY = H - cauldronH * 0.5 - 12
-        const cauldron = new Graphics()
-        drawCauldron(cauldron, cauldronW, cauldronH)
-        const cCtr = new Container()
-        cCtr.x = W / 2
-        cCtr.y = cauldronCY
-        cCtr.addChild(cauldron)
-        app.stage.addChild(cCtr)
+      // Котёл — постоянный, в нижней части экрана
+      const cauldronW = Math.min(W * 0.72, 320)
+      const cauldronH = cauldronW * 0.55
+      const cauldronCX = W / 2
+      const cauldronCY = H - cauldronH * 0.45 - 8
+      const cauldronTopY = cauldronCY - cauldronH * 0.05
+      const cauldronG = new Graphics()
+      drawCauldron(cauldronG, cauldronW, cauldronH)
+      const cCtr = new Container()
+      cCtr.x = cauldronCX
+      cCtr.y = cauldronCY
+      cCtr.addChild(cauldronG)
+      app.stage.addChild(cCtr)
 
-        // Пар над котлом — лёгкие облачка через эллипсы
-        const steam = new Graphics()
-        for (let i = 0; i < 3; i++) {
-          steam.ellipse(-30 + i * 30, -i * 14, 18, 10).fill({ color: 0xCFCFE5, alpha: 0.18 })
-        }
-        steam.x = W / 2
-        steam.y = cauldronCY - cauldronH * 0.4
-        app.stage.addChild(steam)
-
-        // 5 падающих ингредиентов в цикле 5.5 сек, каждый со своей задержкой.
-        // Рисуем БЕЗ обрамляющей карточки — только сам предмет.
-        const fallTargetY = cauldronCY - cauldronH * 0.05
-        const fallStartY = -80
-        const ingSize = Math.min(W * 0.22, 90)
-        const fallSprites: Container[] = []
-        for (let i = 0; i < recipeIngredients.length; i++) {
-          const c = new Container()
-          c.visible = false
-          c.x = W / 2
-          c.y = fallStartY
-          const ingG = new Graphics()
-          DRAWERS[recipeIngredients[i]](ingG, ingSize * 0.5)
-          c.addChild(ingG)
-          app.stage.addChild(c)
-          fallSprites.push(c)
-        }
-
-        const totalCycle = 5.5
-        const fallDur = 1.2
-        tickerCb = () => {
-          const now = performance.now() / 1000
-          const elapsed = (now - cauldronStartRef.current / 1000) % totalCycle
-          for (let i = 0; i < fallSprites.length; i++) {
-            const localT = elapsed - i * 0.8
-            const sprite = fallSprites[i]
-            if (localT < 0 || localT > fallDur) {
-              sprite.visible = false
-              continue
-            }
-            sprite.visible = true
-            const progress = localT / fallDur
-            const eased = progress * progress  // ускорение
-            sprite.y = fallStartY + (fallTargetY - fallStartY) * eased
-            // покачивание
-            sprite.rotation = Math.sin(now * 6 + i) * 0.18
-            // в конце — фейд исчезновения в котле
-            sprite.alpha = progress > 0.85 ? Math.max(0, (1 - progress) / 0.15) : 1
-          }
-        }
-        app.ticker.add(tickerCb)
-        return
-      }
-
-      // ── Обычная игровая сцена: ингредиенты + цифры рецепта ────────────
-      // Текущие активные ингредиенты (не съеденные котлом)
-      const active = recipeIngredients.filter(i => !consumed.has(i))
-      const n = active.length
-
-      // Раскладка зависит от количества:
-      //   5: 3+2, 4: 2+2, 3: 3-в-ряд, 2: 2-в-ряд, 1: центр
+      // Раскладка 7 слотов: 4 в верхнем ряду + 3 в нижнем (центрированные)
+      const slotsAreaTop = 12
+      const slotsAreaBottom = cauldronCY - cauldronH * 0.55 - 12
+      const slotsAreaH = Math.max(120, slotsAreaBottom - slotsAreaTop)
+      const rowGap = 8
+      const slotH = Math.min((slotsAreaH - rowGap) / 2, 110)
+      const slotW = slotH
+      const colGap = 8
+      const row1Y = slotsAreaTop + slotH / 2 + 4
+      const row2Y = row1Y + slotH + rowGap
+      const row1Count = 4
+      const row2Count = 3
+      const row1TotalW = row1Count * slotW + (row1Count - 1) * colGap
+      const row2TotalW = row2Count * slotW + (row2Count - 1) * colGap
+      const row1StartX = (W - row1TotalW) / 2 + slotW / 2
+      const row2StartX = (W - row2TotalW) / 2 + slotW / 2
       const positions: Array<{ x: number; y: number }> = []
-      if (n === 5) {
-        const colW = W / 3, rowH = H / 3
-        positions.push(
-          { x: W / 2 - colW, y: rowH * 0.7 },
-          { x: W / 2,         y: rowH * 0.7 },
-          { x: W / 2 + colW, y: rowH * 0.7 },
-          { x: W / 2 - colW / 2, y: rowH * 2.0 },
-          { x: W / 2 + colW / 2, y: rowH * 2.0 },
-        )
-      } else if (n === 4) {
-        positions.push(
-          { x: W * 0.28, y: H * 0.3 }, { x: W * 0.72, y: H * 0.3 },
-          { x: W * 0.28, y: H * 0.7 }, { x: W * 0.72, y: H * 0.7 },
-        )
-      } else if (n === 3) {
-        positions.push({ x: W * 0.2, y: H * 0.5 }, { x: W * 0.5, y: H * 0.5 }, { x: W * 0.8, y: H * 0.5 })
-      } else if (n === 2) {
-        positions.push({ x: W * 0.28, y: H * 0.5 }, { x: W * 0.72, y: H * 0.5 })
-      } else if (n === 1) {
-        positions.push({ x: W / 2, y: H / 2 })
+      for (let i = 0; i < row1Count; i++) {
+        positions.push({ x: row1StartX + i * (slotW + colGap), y: row1Y })
+      }
+      for (let i = 0; i < row2Count; i++) {
+        positions.push({ x: row2StartX + i * (slotW + colGap), y: row2Y })
       }
 
-      // Размер карточки — крупный
-      const cardW = n === 5 ? Math.min(W * 0.28, 130)
-                   : n === 4 ? Math.min(W * 0.34, 150)
-                   : n === 3 ? Math.min(W * 0.28, 140)
-                   : n === 2 ? Math.min(W * 0.42, 180)
-                   : Math.min(W * 0.55, 220)
-      const cardH = cardW * 1.05
+      const now = performance.now()
+      const slots = slotsRef.current
 
-      for (let i = 0; i < active.length; i++) {
-        const ing = active[i]
-        const pos = positions[i]
-        const fb = feedback?.ing === ing ? feedback.state : 'normal'
-        const c = new Container()
-        c.x = pos.x
-        c.y = pos.y
-        c.eventMode = 'static'
-        c.cursor = 'pointer'
-        const cardG = new Graphics()
-        drawIngredientCard(cardG, ing, cardW, cardH, fb)
-        c.addChild(cardG)
+      // ── Слоты ──────────────────────────────────────────────────────────
+      for (let i = 0; i < slots.length; i++) {
+        const slot = slots[i]
+        const pos = positions[i] ?? { x: W / 2, y: H / 2 }
+        slot.anim.homeX = pos.x
+        slot.anim.homeY = pos.y
 
-        // Цифра шага в reference-фазе
-        if (phase === 'reference') {
-          const stepNum = recipeOrder.indexOf(ing) + 1
-          const badge = new Graphics()
-          badge.circle(0, 0, 16).fill(0xFFB800).stroke({ width: 2, color: 0x3D2A05 })
-          const badgeCtr = new Container()
-          badgeCtr.x = 0
-          badgeCtr.y = -cardH / 2 - 6
-          badgeCtr.addChild(badge)
-          const t = new Text({
-            text: String(stepNum),
-            style: { fontFamily: 'Georgia, serif', fontSize: 18, fill: 0x0D1735, fontWeight: '800' },
-          })
-          t.anchor.set(0.5)
-          badgeCtr.addChild(t)
-          c.addChild(badgeCtr)
+        let drawX = pos.x
+        let drawY = pos.y
+        let scale = 1
+        let alpha = 1
+        let rotation = 0
+        let cardState: 'normal' | 'correct' | 'wrong' | 'consumed' = 'normal'
+        let drawCard = true
+
+        if (slot.anim.state === 'flying') {
+          const t = Math.min(1, (now - slot.anim.startedAt) / FLY_MS)
+          const eased = t * t
+          drawX = pos.x + (slot.anim.targetX - pos.x) * eased
+          drawY = pos.y + (slot.anim.targetY - pos.y) * eased
+          scale = 1 - eased * 0.6
+          alpha = 1 - Math.max(0, (t - 0.8) / 0.2)
+          rotation = eased * Math.PI * 0.6
+          cardState = 'correct'
+        } else if (slot.anim.state === 'shake') {
+          const t = Math.min(1, (now - slot.anim.startedAt) / SHAKE_MS)
+          const shake = Math.sin(t * Math.PI * 8) * (1 - t) * 6
+          drawX = pos.x + shake
+          drawY = pos.y - Math.sin(t * Math.PI) * 4
+          rotation = shake * 0.03
+          cardState = 'wrong'
+        } else if (slot.anim.state === 'reappearing') {
+          const t = Math.min(1, (now - slot.anim.startedAt) / 300)
+          scale = 0.6 + 0.4 * t + (t > 0.7 ? (1 - t) * 0.4 : 0)
+          alpha = t
         }
 
-        c.on('pointertap', () => onPick(ing))
-        app.stage.addChild(c)
+        if (drawCard) {
+          const ctr = new Container()
+          const cardG = new Graphics()
+          drawIngredientCard(cardG, slot.ingredient, slotW, slotH, cardState)
+          ctr.addChild(cardG)
+          ctr.x = drawX
+          ctr.y = drawY
+          ctr.scale.set(scale)
+          ctr.rotation = rotation
+          ctr.alpha = alpha
+
+          if (!isFrozen && phase === 'play' && slot.anim.state === 'idle') {
+            ctr.eventMode = 'static'
+            ctr.cursor = 'pointer'
+            const hit = new Graphics()
+            hit.rect(-slotW / 2, -slotH / 2, slotW, slotH).fill({ color: 0xFFFFFF, alpha: 0.0001 })
+            ctr.addChild(hit)
+            ctr.on('pointertap', () => onPickSlot(i, cauldronCX, cauldronTopY))
+          }
+          app.stage.addChild(ctr)
+        }
+
+        // Переходы между состояниями
+        if (slot.anim.state === 'flying' && now - slot.anim.startedAt >= FLY_MS) {
+          finalizeCorrectPick(cauldronCX, cauldronTopY)
+        } else if (slot.anim.state === 'shake' && now - slot.anim.startedAt >= SHAKE_MS) {
+          slot.anim.state = 'idle'
+        } else if (slot.anim.state === 'reappearing' && now - slot.anim.startedAt >= 300) {
+          slot.anim.state = 'idle'
+        }
       }
+
+      // ── Зелёные пузыри над котлом (правильный ответ) ──────────────────
+      const bubbles = bubblesRef.current
+      const bubblesGfx = new Graphics()
+      for (let i = bubbles.length - 1; i >= 0; i--) {
+        const b = bubbles[i]
+        const t = (now - b.startedAt) / b.durationMs
+        if (t < 0) continue   // ещё не стартовал (с задержкой)
+        if (t >= 1) { bubbles.splice(i, 1); continue }
+        const eased = 1 - Math.pow(1 - t, 2)
+        const cx = b.x0 + b.driftX * eased
+        const cy = b.y0 - (cauldronH * 0.85) * eased
+        const a = 1 - t
+        bubblesGfx.circle(cx, cy, b.radius * (0.7 + 0.3 * (1 - t)))
+          .fill({ color: 0x80E090, alpha: a * 0.85 })
+          .stroke({ width: 1.5, color: 0x4FD89C, alpha: a * 0.95 })
+      }
+      app.stage.addChild(bubblesGfx)
+
+      // ── Искры взрыва (неправильный ответ) ─────────────────────────────
+      const exps = explosionsRef.current
+      const expsGfx = new Graphics()
+      for (let i = exps.length - 1; i >= 0; i--) {
+        const p = exps[i]
+        const t = (now - p.startedAt) / p.durationMs
+        if (t >= 1) { exps.splice(i, 1); continue }
+        const cx = p.x + p.vx * t
+        const cy = p.y + p.vy * t + (220 * t * t)
+        const r = 5 * (1 - t * 0.5)
+        const a = 1 - t
+        expsGfx.circle(cx, cy, r)
+          .fill({ color: t < 0.4 ? 0xFFCB45 : 0xFF6020, alpha: a })
+      }
+      app.stage.addChild(expsGfx)
+
+      raf = requestAnimationFrame(tick)
     }
-    render()
+    raf = requestAnimationFrame(tick)
     return () => {
       cancelled = true
-      const app = refApp.current
-      if (app && tickerCb) {
-        try { app.ticker.remove(tickerCb) } catch { /* noop */ }
-      }
+      cancelAnimationFrame(raf)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, consumed, feedback, showCauldron, recipeIngredients, recipeOrder])
+  }, [phase])
+
+  // ── Обработчики ──────────────────────────────────────────────────────────
+
+  const onPickSlot = (slotIdx: number, cauldronCX: number, cauldronTopY: number) => {
+    if (doneRef.current || isFrozen) return
+    if (phase !== 'play') return
+    const slot = slotsRef.current[slotIdx]
+    if (!slot || slot.anim.state !== 'idle') return
+
+    const expected = recipe[stepRef.current]
+    const isCorrect = slot.ingredient === expected
+    if (isCorrect) {
+      slot.anim.state = 'flying'
+      slot.anim.startedAt = performance.now()
+      slot.anim.targetX = cauldronCX
+      slot.anim.targetY = cauldronTopY
+      haptic?.notificationOccurred('success')
+      playSound('seal')
+    } else {
+      slot.anim.state = 'shake'
+      slot.anim.startedAt = performance.now()
+      errorsRef.current += 1
+      haptic?.notificationOccurred('error')
+      playSound('lose')
+      spawnExplosion(slot.anim.homeX, slot.anim.homeY)
+      forceRerender(x => x + 1)
+    }
+  }
+
+  const spawnExplosion = (x: number, y: number) => {
+    const now = performance.now()
+    for (let i = 0; i < 14; i++) {
+      const angle = (i / 14) * Math.PI * 2 + Math.random() * 0.4
+      const speed = 80 + Math.random() * 60
+      explosionsRef.current.push({
+        startedAt: now,
+        durationMs: 600,
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 40,
+      })
+    }
+  }
+
+  const spawnBubbles = (cauldronCX: number, cauldronTopY: number) => {
+    const now = performance.now()
+    for (let i = 0; i < 8; i++) {
+      bubblesRef.current.push({
+        startedAt: now + i * 40,
+        durationMs: 900 + Math.random() * 400,
+        x0: cauldronCX + (Math.random() - 0.5) * 60,
+        y0: cauldronTopY,
+        driftX: (Math.random() - 0.5) * 50,
+        radius: 4 + Math.random() * 5,
+      })
+    }
+  }
+
+  /** Ингредиент долетел до котла. Шафлим 7 слотов и запускаем reappearing. */
+  const finalizeCorrectPick = (cauldronCX: number, cauldronTopY: number) => {
+    const slots = slotsRef.current
+    const ingredients = slots.map(s => s.ingredient)
+    // Перетасовываем — каждое правильное действие даёт новую раскладку.
+    // Math.random здесь намеренно (rngRef быстро вычерпывается за игру).
+    for (let i = ingredients.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[ingredients[i], ingredients[j]] = [ingredients[j], ingredients[i]]
+    }
+    spawnBubbles(cauldronCX, cauldronTopY)
+    const now = performance.now()
+    for (let i = 0; i < slots.length; i++) {
+      slots[i].ingredient = ingredients[i]
+      slots[i].anim = {
+        state: 'reappearing',
+        startedAt: now,
+        targetX: 0, targetY: 0,
+        homeX: slots[i].anim.homeX,
+        homeY: slots[i].anim.homeY,
+      }
+    }
+    stepRef.current += 1
+    collectedRef.current += 1
+    setCollected(collectedRef.current)
+    if (collectedRef.current >= RECIPE_LENGTH) {
+      complete(collectedRef.current)
+    }
+  }
+
+  // ── JSX ──────────────────────────────────────────────────────────────────
 
   return (
     <div style={{
@@ -533,66 +627,78 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
     }}>
       <div style={{
         textAlign: 'center',
-        color: phase === 'reference' ? colors.fairyGold : (playCountdown <= 5 ? colors.danger : colors.fairyGold),
+        color: phase === 'reference' ? colors.fairyGold : (playCountdown <= 5 && !isFrozen ? colors.danger : colors.fairyGold),
         fontWeight: 700, fontSize: '17px',
       }}>
-        {phase === 'reference'
-          ? `Запомни рецепт · ${refCountdown}`
-          : `Котёл Бабы Яги · ${playCountdown} сек`}
+        {isFrozen
+          ? 'Котёл Бабы Яги · разобрано'
+          : phase === 'reference'
+            ? `Запомни порядок · ${refCountdown}`
+            : `Котёл Бабы Яги · ${playCountdown} сек`}
       </div>
       <div style={{
         color: colors.textMuted, fontSize: '12px', textAlign: 'center',
         marginBottom: spacing.sm, lineHeight: 1.4,
       }}>
         {phase === 'reference'
-          ? 'Цифры — порядок добавления в котёл. Запомни и кидай по очереди.'
-          : `Шаг ${Math.min(round + 1, RECIPE_LENGTH)} из ${RECIPE_LENGTH}. Какой ингредиент следующий?${stepErrors > 0 ? ` Попыток: ${stepErrors + 1}` : ''}`}
+          ? 'Слева направо, сверху вниз — порядок броска ингредиентов'
+          : isFrozen
+            ? 'Уже сыграно'
+            : `Шаг ${Math.min(collected + 1, RECIPE_LENGTH)} из ${RECIPE_LENGTH}. Бросай ингредиенты в котёл по порядку`}
       </div>
 
-      {phase === 'play' && !showCauldron && (
-        <div style={{
-          display: 'flex', gap: spacing.md, justifyContent: 'center',
-          marginBottom: spacing.sm, fontSize: '13px',
-        }}>
-          <span style={{ color: colors.fairyGold, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
-            {round}/{RECIPE_LENGTH}
-          </span>
-          <span style={{ color: errorsRef.current >= 2 ? colors.danger : colors.textSecondary, fontVariantNumeric: 'tabular-nums' }}>
-            Ошибки: {errorsRef.current}
-          </span>
-        </div>
+      {/* Прогресс-точки 7 шт (только в play, не во frozen) */}
+      {phase === 'play' && !isFrozen && (
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          style={{
+            display: 'flex', gap: 6, justifyContent: 'center',
+            marginBottom: spacing.sm,
+          }}
+        >
+          {Array.from({ length: RECIPE_LENGTH }).map((_, i) => {
+            const filled = i < collected
+            const isCurrent = i === collected
+            const borderColor = filled ? colors.success : isCurrent ? colors.fairyGold : colors.cardBorder
+            const bgColor = filled ? `${colors.success}22` : isCurrent ? `${colors.fairyGold}22` : 'rgba(255,255,255,0.04)'
+            return (
+              <div key={i} style={{
+                width: 22, height: 22, borderRadius: '50%',
+                background: bgColor,
+                border: `2px solid ${borderColor}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 12, fontWeight: 800,
+                color: filled ? colors.success : isCurrent ? colors.fairyGold : colors.textMuted,
+                transition: 'all 0.25s',
+              }}>
+                {filled ? '✓' : isCurrent ? '?' : '·'}
+              </div>
+            )
+          })}
+        </motion.div>
       )}
 
+      {/* Канвас с котлом и ингредиентами */}
       <div
         ref={refMount}
         style={{
-          flex: 1,
-          width: '100%',
-          minHeight: '400px',
-          touchAction: 'manipulation',
-          position: 'relative',
-          borderRadius: 16,
-          overflow: 'hidden',
-          // Мрачный чащобный фон — гнилое болото и зеленоватый туман
+          flex: 1, width: '100%', minHeight: 460,
+          touchAction: 'manipulation', position: 'relative',
+          borderRadius: 16, overflow: 'hidden',
           background: `
             radial-gradient(ellipse at 50% 100%, rgba(40,60,40,0.6) 0%, transparent 70%),
-            linear-gradient(to bottom,
-              #0F1322 0%,
-              #1A2030 40%,
-              #1F2828 70%,
-              #18221C 100%
-            )
+            linear-gradient(to bottom, #0F1322 0%, #1A2030 40%, #1F2828 70%, #18221C 100%)
           `,
           boxShadow: 'inset 0 0 80px rgba(0,40,20,0.4)',
         }}
       >
-        {/* Декор: коряги и зеленоватые огоньки болотных огней */}
+        {/* SVG-декор: коряги по краям + болотные огоньки */}
         <svg
           viewBox="0 0 320 400"
           preserveAspectRatio="xMidYMax slice"
           style={{
             position: 'absolute', inset: 0, width: '100%', height: '100%',
-            pointerEvents: 'none', opacity: 0.7,
+            pointerEvents: 'none', opacity: 0.7, zIndex: 0,
           }}
         >
           <defs>
@@ -601,12 +707,10 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
               <stop offset="100%" stopColor="#90E060" stopOpacity="0" />
             </radialGradient>
           </defs>
-          {/* Коряги по бокам */}
           <path d="M 0 380 Q 30 360 25 340 Q 22 320 35 310 L 25 320 L 18 305 L 8 320 L 0 350 Z"
                 fill="#1A1A1A" opacity="0.8" />
           <path d="M 320 390 Q 290 370 295 348 Q 298 326 285 318 L 295 328 L 302 313 L 312 326 L 320 358 Z"
                 fill="#1A1A1A" opacity="0.8" />
-          {/* Болотные огоньки */}
           <circle cx="50" cy="280" r="14" fill="url(#bogfire1)">
             <animate attributeName="opacity" values="0.4;1;0.4" dur="3s" repeatCount="indefinite" />
           </circle>
@@ -618,49 +722,6 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
           </circle>
         </svg>
       </div>
-
-      {/* Прогресс рецепта — нижняя панель */}
-      {phase === 'play' && !showCauldron && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          style={{
-            display: 'flex', gap: 6, justifyContent: 'center',
-            marginTop: spacing.sm, padding: `${spacing.sm} 0`,
-            borderTop: `1px solid ${colors.cardBorder}`,
-          }}
-        >
-          {recipeProgress.map((filledIng, i) => {
-            const isCurrent = i === round
-            const filled = filledIng !== null
-            const borderColor = filled ? colors.success : isCurrent ? colors.fairyGold : colors.cardBorder
-            const bgColor = filled ? `${colors.success}22` : isCurrent ? `${colors.fairyGold}18` : 'rgba(255,255,255,0.03)'
-            return (
-              <div key={i} style={{
-                flex: 1, maxWidth: 64,
-                aspectRatio: '1',
-                background: bgColor,
-                border: `2px solid ${borderColor}`,
-                borderRadius: 10,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                position: 'relative',
-                transition: 'all 0.25s',
-              }}>
-                <div style={{
-                  position: 'absolute', top: 2, left: 4,
-                  color: filled ? colors.success : colors.textMuted,
-                  fontSize: 10, fontWeight: 700,
-                }}>{i + 1}</div>
-                {filled
-                  ? <div style={{ color: colors.success, fontSize: 28, fontWeight: 800 }}>✓</div>
-                  : isCurrent
-                    ? <div style={{ color: colors.fairyGold, fontSize: 20, fontWeight: 800 }}>?</div>
-                    : <div style={{ color: colors.textMuted, fontSize: 14 }}>·</div>}
-              </div>
-            )
-          })}
-        </motion.div>
-      )}
     </div>
   )
 }
