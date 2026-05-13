@@ -1362,6 +1362,7 @@ function MiniGameResultSheet({
     : errorCount === 1 ? 'Одна осечка — детали дела открыты, но без подсказок'
     : 'Дело осталось тайной — раскроется только за звёзды'
   const dealTypeLabel = (t.inbox.types as Record<string, string>)[project.type] ?? project.type
+  const smartAmount = smartDefaultInvestAmount(gameState)
 
   const handleBypass = async () => {
     if (bypassPending) return
@@ -1399,15 +1400,16 @@ function MiniGameResultSheet({
     }
   }
 
+  // Без backdrop — игрок видит финальную сцену игры за листом, поток ощущается
+  // как продолжение интро (а не «модалка поверх всего»).
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       style={{
         position: 'fixed', inset: 0, zIndex: 220,
         display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-        background: collapsed ? 'transparent' : 'rgba(0,0,0,0.55)',
-        pointerEvents: collapsed ? 'none' : 'auto',
-        transition: 'background 0.2s',
+        background: 'transparent',
+        pointerEvents: 'none',
       }}
     >
       <motion.div
@@ -1415,9 +1417,10 @@ function MiniGameResultSheet({
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
         style={{
           width: '100%', maxWidth: '500px',
-          background: colors.nightBlue,
+          background: `linear-gradient(180deg, ${colors.nightBlue}f0 0%, ${colors.nightBlue} 35%)`,
           borderRadius: '20px 20px 0 0',
-          border: `1px solid ${colors.cardBorder}`,
+          border: `1px solid ${colors.fairyGold}40`,
+          borderBottom: 'none',
           padding: collapsed
             ? `${spacing.sm} ${spacing.xl}`
             : `${spacing.xxl} ${spacing.xl} calc(${spacing.xl} + env(safe-area-inset-bottom))`,
@@ -1426,6 +1429,7 @@ function MiniGameResultSheet({
             : `calc(${spacing.xl} + env(safe-area-inset-bottom))`,
           boxShadow: '0 -8px 32px rgba(0,0,0,0.6)',
           pointerEvents: 'auto',
+          backdropFilter: 'blur(8px)',
         }}
       >
         {/* Маркер-ручка: тап по верху листа переключает свёрнутое состояние —
@@ -1547,7 +1551,8 @@ function MiniGameResultSheet({
               onClick={onInvest}
               style={{ ...primaryBtnStyle, flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
             >
-              <CoinIcon size={16} /> {t.charter.resultInvest}
+              <CoinIcon size={16} />
+              {smartAmount > 0 ? `Вложить ${smartAmount} г` : t.charter.resultInvest}
             </button>
           ) : (
             <button
@@ -1587,9 +1592,8 @@ function ResultSheet({
       style={{
         position: 'fixed', inset: 0, zIndex: 220,
         display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-        background: collapsed ? 'transparent' : 'rgba(0,0,0,0.55)',
-        pointerEvents: collapsed ? 'none' : 'auto',
-        transition: 'background 0.2s',
+        background: 'transparent',
+        pointerEvents: 'none',
       }}
     >
       <motion.div
@@ -1597,9 +1601,10 @@ function ResultSheet({
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
         style={{
           width: '100%', maxWidth: '500px',
-          background: colors.nightBlue,
+          background: `linear-gradient(180deg, ${colors.nightBlue}f0 0%, ${colors.nightBlue} 35%)`,
           borderRadius: '20px 20px 0 0',
-          border: `1px solid ${colors.cardBorder}`,
+          border: `1px solid ${colors.fairyGold}40`,
+          borderBottom: 'none',
           padding: collapsed
             ? `${spacing.sm} ${spacing.xl}`
             : `${spacing.xxl} ${spacing.xl} ${spacing.xl}`,
@@ -1608,6 +1613,7 @@ function ResultSheet({
             : `calc(${spacing.xl} + env(safe-area-inset-bottom))`,
           boxShadow: '0 -8px 32px rgba(0,0,0,0.6)',
           pointerEvents: 'auto',
+          backdropFilter: 'blur(8px)',
         }}
       >
         {/* Маркер-ручка: тап по верху листа переключает свёрнутое состояние */}
@@ -1711,12 +1717,20 @@ function ParamChip({ label, value }: { label: string; value: string }) {
 
 // ── Оверлеи ───────────────────────────────────────────────────────────────
 
-function InvestSheet({ projectId, onClose, onSuccess }: { projectId: string; onClose: () => void; onSuccess: () => void }) {
+function InvestSheet({ projectId, onClose, onSuccess, initialAmount }: {
+  projectId: string
+  onClose: () => void
+  onSuccess: () => void
+  initialAmount?: number
+}) {
   const t = useT()
-  const [amount, setAmount] = useState('')
+  const { gameState } = useGameStore()
+  // Smart-default суммы: подставляем средний прошлый чек или 10% свободных грошей,
+  // ограничив [5, 5000] и текущим балансом. Если предложили — берём его.
+  const computedDefault = initialAmount ?? smartDefaultInvestAmount(gameState)
+  const [amount, setAmount] = useState<string>(computedDefault > 0 ? String(computedDefault) : '')
   const [showExtraSlot, setShowExtraSlot] = useState(false)
   const qc = useQueryClient()
-  const { gameState } = useGameStore()
 
   const investMutation = useMutation({
     mutationFn: () => api.invest.invest(projectId, Number(amount)),
@@ -1999,6 +2013,24 @@ const footerStyle: React.CSSProperties = {
   padding: `${spacing.md} ${spacing.lg}`,
   background: 'rgba(10, 8, 24, 0.95)',
   borderTop: `1px solid ${colors.cardBorder}`,
+}
+
+/**
+ * Smart-default сумма для нового вложения. Логика:
+ *   1. Если игрок уже брал дела — берём средний чек (totalInvested / dealsCount)
+ *   2. Иначе — 10% свободных грошей
+ *   3. Зажимаем в [5; 5000] (границы InvestService) и не больше текущего баланса
+ *   4. Если на балансе меньше минимума (5) — возвращаем 0, тогда поле остаётся пустым
+ */
+function smartDefaultInvestAmount(gs: GameStateDTO | null): number {
+  if (!gs) return 0
+  const balance = Math.floor(gs.balance)
+  if (balance < 5) return 0
+  const avg = gs.dealsCount > 0 ? gs.totalInvested / gs.dealsCount : 0
+  const fallback = Math.floor(balance * 0.1)
+  const raw = Math.floor(avg > 0 ? avg : fallback)
+  const clamped = Math.max(5, Math.min(5000, raw))
+  return Math.min(clamped, balance)
 }
 
 const primaryBtnStyle: React.CSSProperties = {
