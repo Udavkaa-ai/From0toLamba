@@ -26,10 +26,12 @@ const SPAWN_INTERVAL_SEC = 0.75    // спавн пореже — соответ
 const FAKE_PROBABILITY = 0.5
 const ROTATION_PERIOD_SEC = 2.2    // полный оборот (видна обе стороны)
 
+/** Если задано — после F5: сразу показываем столбики монет, без игры */
 interface ZolushkaGameProps {
   seed: string
   difficulty: MiniGameDifficulty
   onComplete: (errorCount: number) => void
+  restoredErrorCount?: number | null
 }
 
 type Motif = 'sun' | 'star' | 'cross' | 'leaf' | 'fraction' | 'moon' | 'gear'
@@ -282,10 +284,11 @@ interface FloatLabel {
   color: string
 }
 
-export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
+export function ZolushkaGame({ seed, onComplete, restoredErrorCount }: ZolushkaGameProps) {
+  const isFrozen = restoredErrorCount !== null && restoredErrorCount !== undefined
   const refMount = useRef<HTMLDivElement>(null)
   const refApp = useRef<Application | null>(null)
-  const doneRef = useRef(false)
+  const doneRef = useRef(isFrozen)
   const rngRef = useRef(rngFromSeed(seed))
   // Эталонная монета и набор подделок — детерминированы из seed.
   // Каждая игра — новый эталон.
@@ -327,14 +330,17 @@ export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
     onCompleteRef.current(err)
   }
 
-  const [showPiles, setShowPiles] = useState(false)
+  const [showPiles, setShowPiles] = useState(isFrozen)
   // Анимация столбиков: каждая монетка стартует с задержкой col*0.25 + row*0.1
   // и падает 0.5 сек на своё место. Все столбики из настоящей монеты — победный
   // декор.
+  // pixiReady — чтобы эффект перезапустился, когда app смонтируется (в frozen-режиме)
+  const [pixiReady, setPixiReady] = useState(false)
   useEffect(() => {
     if (!showPiles) return
     const app = refApp.current
     if (!app) return
+    void pixiReady
     // Очистить активно падающие монеты
     for (const s of coinsRef.current) {
       if (!s.removed) {
@@ -391,7 +397,7 @@ export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
     return () => {
       try { app.ticker.remove(cb) } catch { /* noop */ }
     }
-  }, [showPiles])
+  }, [showPiles, pixiReady])
 
   const spawnFloat = (x: number, y: number, value: string, color: string) => {
     const id = floatIdRef.current++
@@ -400,6 +406,7 @@ export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
   }
 
   useEffect(() => {
+    if (isFrozen) return
     if (phase !== 'reference') return
     setRefCountdown(REFERENCE_SECONDS)
     const id = setInterval(() => {
@@ -416,6 +423,7 @@ export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
   }, [phase])
 
   useEffect(() => {
+    if (isFrozen) return
     if (phase !== 'play') return
     setPlayCountdown(PLAY_SECONDS)
     const id = setInterval(() => {
@@ -451,6 +459,7 @@ export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
       }
       refMount.current.appendChild(app.canvas)
       refApp.current = app
+      setPixiReady(true)
 
       const cb = () => updateScene()
       app!.ticker.add(cb)
@@ -611,7 +620,7 @@ export function ZolushkaGame({ seed, onComplete }: ZolushkaGameProps) {
         </div>
       )}
 
-      <ReferenceSample phase={phase} coin={realCoinRef.current} />
+      {!isFrozen && <ReferenceSample phase={phase} coin={realCoinRef.current} />}
 
       <div
         ref={refMount}

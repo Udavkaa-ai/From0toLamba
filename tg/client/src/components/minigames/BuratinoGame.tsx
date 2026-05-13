@@ -17,6 +17,8 @@ interface BuratinoGameProps {
   seed: string
   difficulty: MiniGameDifficulty
   onComplete: (errorCount: number) => void
+  /** Если задано — игра «заморожена», таймеры и тапы не работают (после F5). */
+  restoredErrorCount?: number | null
 }
 
 interface KeyParams {
@@ -192,10 +194,11 @@ function drawShadow(g: Graphics, width: number) {
   g.ellipse(0, 95, width * 0.6, 8).fill({ color: 0x000000, alpha: 0.35 })
 }
 
-export function BuratinoGame({ seed, difficulty, onComplete }: BuratinoGameProps) {
+export function BuratinoGame({ seed, difficulty, onComplete, restoredErrorCount }: BuratinoGameProps) {
+  const isFrozen = restoredErrorCount !== null && restoredErrorCount !== undefined
   const refMount = useRef<HTMLDivElement>(null)
   const refApp = useRef<Application | null>(null)
-  const doneRef = useRef(false)
+  const doneRef = useRef(isFrozen)
   const spinnersRef = useRef<Container[]>([])
   const tickerCbRef = useRef<(() => void) | null>(null)
   const [phase, setPhase] = useState<'reference' | 'play'>('reference')
@@ -235,8 +238,9 @@ export function BuratinoGame({ seed, difficulty, onComplete }: BuratinoGameProps
     onCompleteRef.current(won ? 0 : 2)
   }
 
-  // Таймер показа эталона
+  // Таймер показа эталона (в frozen-режиме не запускается)
   useEffect(() => {
+    if (isFrozen) return
     if (phase !== 'reference') return
     setRefCountdown(REFERENCE_SECONDS)
     const id = setInterval(() => {
@@ -252,8 +256,9 @@ export function BuratinoGame({ seed, difficulty, onComplete }: BuratinoGameProps
     return () => clearInterval(id)
   }, [phase])
 
-  // Таймер раунда
+  // Таймер раунда (в frozen-режиме не запускается)
   useEffect(() => {
+    if (isFrozen) return
     if (phase !== 'play') return
     setPlayCountdown(PLAY_SECONDS)
     const id = setInterval(() => {

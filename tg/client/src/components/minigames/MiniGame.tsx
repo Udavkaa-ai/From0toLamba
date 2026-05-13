@@ -13,6 +13,10 @@ interface MiniGameProps {
   difficulty: MiniGameDifficulty
   pending: boolean
   onComplete: (errorCount: number) => void
+  /** Если задано — игра «заморожена»: рендерит финальную сцену с этим
+   *  результатом, не принимает ввод, не вызывает onComplete. Нужно для
+   *  показа красивого финала после F5 (когда повторно играть нельзя). */
+  restoredErrorCount?: number | null
 }
 
 // Диспетчер по архетипу. Сейчас реализован BURATINO, остальные показывают заглушку
@@ -25,6 +29,7 @@ export function MiniGame(props: MiniGameProps) {
           seed={props.seed}
           difficulty={props.difficulty}
           onComplete={props.onComplete}
+          restoredErrorCount={props.restoredErrorCount}
         />
       )
     case 'KOSCHEI':
@@ -33,6 +38,7 @@ export function MiniGame(props: MiniGameProps) {
           seed={props.seed}
           difficulty={props.difficulty}
           onComplete={props.onComplete}
+          restoredErrorCount={props.restoredErrorCount}
         />
       )
     case 'KOLOBOK':
@@ -41,6 +47,7 @@ export function MiniGame(props: MiniGameProps) {
           seed={props.seed}
           difficulty={props.difficulty}
           onComplete={props.onComplete}
+          restoredErrorCount={props.restoredErrorCount}
         />
       )
     case 'ZOLUSHKA':
@@ -49,6 +56,7 @@ export function MiniGame(props: MiniGameProps) {
           seed={props.seed}
           difficulty={props.difficulty}
           onComplete={props.onComplete}
+          restoredErrorCount={props.restoredErrorCount}
         />
       )
     case 'BABA_YAGA':
@@ -57,6 +65,7 @@ export function MiniGame(props: MiniGameProps) {
           seed={props.seed}
           difficulty={props.difficulty}
           onComplete={props.onComplete}
+          restoredErrorCount={props.restoredErrorCount}
         />
       )
     case 'IVAN_DURAK':
@@ -65,6 +74,7 @@ export function MiniGame(props: MiniGameProps) {
           seed={props.seed}
           difficulty={props.difficulty}
           onComplete={props.onComplete}
+          restoredErrorCount={props.restoredErrorCount}
         />
       )
     default:

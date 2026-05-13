@@ -25,6 +25,8 @@ interface KoscheiGameProps {
   seed: string
   difficulty: MiniGameDifficulty
   onComplete: (errorCount: number) => void
+  /** Если задано — сразу показываем пирамидку, не запускаем игру (после F5). */
+  restoredErrorCount?: number | null
 }
 
 type CardState = 'closed' | 'open' | 'matched'
@@ -209,10 +211,11 @@ function drawCard(g: Graphics, state: CardState, symbolIdx: number, w: number, h
   }
 }
 
-export function KoscheiGame({ seed, onComplete }: KoscheiGameProps) {
+export function KoscheiGame({ seed, onComplete, restoredErrorCount }: KoscheiGameProps) {
+  const isFrozen = restoredErrorCount !== null && restoredErrorCount !== undefined
   const refMount = useRef<HTMLDivElement>(null)
   const refApp = useRef<Application | null>(null)
-  const doneRef = useRef(false)
+  const doneRef = useRef(isFrozen)
   const resolvingRef = useRef(false)
   const attemptsUsedRef = useRef(0)
   const [cards, setCards] = useState<Card[]>(() => dealCards(rngFromSeed(seed)))
@@ -242,7 +245,8 @@ export function KoscheiGame({ seed, onComplete }: KoscheiGameProps) {
   }
 
   // Финальная пирамидка из 6 символов
-  const [showPyramid, setShowPyramid] = useState(false)
+  const [showPyramid, setShowPyramid] = useState(isFrozen)
+  const [pixiReady, setPixiReady] = useState(false)
   useEffect(() => {
     if (!showPyramid) return
     const app = refApp.current
@@ -282,10 +286,11 @@ export function KoscheiGame({ seed, onComplete }: KoscheiGameProps) {
       c.addChild(sym)
       app.stage.addChild(c)
     }
-  }, [showPyramid])
+  }, [showPyramid, pixiReady])
 
-  // Таймер
+  // Таймер (в frozen-режиме не запускается — игра не идёт)
   useEffect(() => {
+    if (isFrozen) return
     const id = setInterval(() => {
       setPlayCountdown(prev => {
         if (prev <= 1) {
@@ -382,6 +387,7 @@ export function KoscheiGame({ seed, onComplete }: KoscheiGameProps) {
       }
       refMount.current.appendChild(app.canvas)
       refApp.current = app
+      setPixiReady(true)
     })()
     return () => {
       cancelled = true
@@ -394,6 +400,9 @@ export function KoscheiGame({ seed, onComplete }: KoscheiGameProps) {
 
   // Рендер карточек
   useEffect(() => {
+    // В frozen-режиме игровое поле не рисуем — нужна только пирамидка финала,
+    // её соберёт отдельный useEffect (зависящий от showPyramid + pixiReady)
+    if (isFrozen) return
     let cancelled = false
     const render = () => {
       const app = refApp.current

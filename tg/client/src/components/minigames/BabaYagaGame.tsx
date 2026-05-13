@@ -19,6 +19,8 @@ interface BabaYagaGameProps {
   seed: string
   difficulty: MiniGameDifficulty
   onComplete: (errorCount: number) => void
+  /** Если задано — сразу показываем котёл и ингредиенты (после F5). */
+  restoredErrorCount?: number | null
 }
 
 type Ingredient = 'frog' | 'mushroom' | 'bat' | 'skull' | 'moonstone' | 'spider' | 'fang' | 'feather'
@@ -206,10 +208,11 @@ function shuffle<T>(arr: T[], rng: () => number): T[] {
   return out
 }
 
-export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
+export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaGameProps) {
+  const isFrozen = restoredErrorCount !== null && restoredErrorCount !== undefined
   const refMount = useRef<HTMLDivElement>(null)
   const refApp = useRef<Application | null>(null)
-  const doneRef = useRef(false)
+  const doneRef = useRef(isFrozen)
   const rngRef = useRef(rngFromSeed(seed))
   const errorsRef = useRef(0)
   const onCompleteRef = useRef(onComplete)
@@ -233,8 +236,9 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
   const [recipeProgress, setRecipeProgress] = useState<(Ingredient | null)[]>(() => Array(RECIPE_LENGTH).fill(null))
   const [stepErrors, setStepErrors] = useState(0)
   const [feedback, setFeedback] = useState<{ ing: Ingredient; state: 'correct' | 'wrong' } | null>(null)
-  const [showCauldron, setShowCauldron] = useState(false)
-  const cauldronStartRef = useRef<number>(0)
+  const [showCauldron, setShowCauldron] = useState(isFrozen)
+  // В frozen — стартуем cauldron-анимацию с момента маунта
+  const cauldronStartRef = useRef<number>(isFrozen ? performance.now() : 0)
   const phaseRef = useRef(phase)
   useEffect(() => { phaseRef.current = phase }, [phase])
   const roundRef = useRef(0)
@@ -252,6 +256,7 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
   }
 
   useEffect(() => {
+    if (isFrozen) return
     if (phase !== 'reference') return
     setRefCountdown(REFERENCE_SECONDS)
     const id = setInterval(() => {
@@ -264,6 +269,7 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
   }, [phase])
 
   useEffect(() => {
+    if (isFrozen) return
     if (phase !== 'play') return
     setPlayCountdown(PLAY_SECONDS)
     const id = setInterval(() => {
@@ -339,6 +345,7 @@ export function BabaYagaGame({ seed, onComplete }: BabaYagaGameProps) {
       }
       refMount.current.appendChild(app.canvas)
       refApp.current = app
+      // pixiReady отдельно не нужен — render-эффект сам делает rAF-цикл до появления refApp
     })()
     return () => {
       cancelled = true

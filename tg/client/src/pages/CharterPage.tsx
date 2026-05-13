@@ -363,26 +363,24 @@ export function CharterPage() {
           />
         )}
 
-        {/* Канвас мини-игры остаётся видимым и в 'miniresult' только если игра
-            реально была сыграна в этой сессии — для финальной сцены (Колобок +
-            4 зверя, пирамидка Кощея, котёл Бабы-Яги). После F5 (freshlyPlayed=false)
-            канвас не рендерится — иначе можно было переиграть с тем же seed. */}
-        {(phase === 'minigame' || (phase === 'miniresult' && freshlyPlayed && project?.personaArchetype !== 'BOYARIN')) && project && (
+        {/* Канвас мини-игры:
+            - phase='minigame' → обычная игра
+            - phase='miniresult' и freshlyPlayed → финальная сцена с интерактивом
+              (как было: Колобок с зверями пульсирует, пирамидка, котёл, столбики)
+            - phase='miniresult' и !freshlyPlayed (после F5) → передаём
+              restoredErrorCount: игра запускается сразу в финальной сцене,
+              ввод заблокирован, переиграть нельзя */}
+        {(phase === 'minigame' || (phase === 'miniresult' && project?.personaArchetype !== 'BOYARIN')) && project && (
           <MiniGame
             archetype={project.personaArchetype}
             seed={charter.gridSeed}
             difficulty={charter.difficulty}
             pending={submitMiniGameMutation.isPending}
             onComplete={handleMiniGameComplete}
+            restoredErrorCount={phase === 'miniresult' && !freshlyPlayed
+              ? (miniGameResult?.errorCount ?? 2)
+              : null}
           />
-        )}
-
-        {/* После F5 (freshlyPlayed=false) канвас не показываем, чтобы нельзя
-            было переиграть. Но и чёрного экрана не хотим — рисуем нарядный
-            «уже сыграно» с баннером дела. Только для не-BOYARIN (у BOYARIN
-            свой ScanGrid с подсветкой результата). */}
-        {phase === 'miniresult' && !freshlyPlayed && project && project.personaArchetype !== 'BOYARIN' && (
-          <AlreadyPlayedScene project={project} errorCount={miniGameResult?.errorCount ?? 2} />
         )}
 
         {phase === 'reference' && (

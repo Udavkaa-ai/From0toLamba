@@ -39,6 +39,10 @@ interface KolobokGameProps {
   seed: string
   difficulty: MiniGameDifficulty
   onComplete: (errorCount: number) => void
+  /** Если задано — стартуем сразу в финальной сцене с этим errorCount, без игры.
+   *  Используется в фазе 'miniresult' после F5: красивый финал без возможности
+   *  перепройти. onComplete не вызываем. */
+  restoredErrorCount?: number | null
 }
 
 type Character = 'hare' | 'wolf' | 'bear' | 'fox' | 'kolobok'
@@ -158,20 +162,27 @@ interface FloatLabel {
   color: string
 }
 
-export function KolobokGame({ seed, onComplete }: KolobokGameProps) {
+export function KolobokGame({ seed, onComplete, restoredErrorCount }: KolobokGameProps) {
   const refMount = useRef<HTMLDivElement>(null)
   const refApp = useRef<Application | null>(null)
-  const doneRef = useRef(false)
+  const isFrozen = restoredErrorCount !== null && restoredErrorCount !== undefined
+  // doneRef=true в frozen-режиме: блокирует таймер и тапы (на всякий случай)
+  const doneRef = useRef(isFrozen)
   const rngRef = useRef(rngFromSeed(seed))
   const holesRef = useRef<HoleState[]>(Array.from({ length: COLS * ROWS }, () => ({ appearedAt: null, character: null })))
   const lastSpawnRef = useRef(performance.now())
-  const scoreRef = useRef(0)
+  // В frozen-режиме сразу подсовываем представительный счёт для отображения
+  // в финальной плашке («12», «9», «5») в зависимости от errorCount
+  const initialFrozenScore = isFrozen
+    ? (restoredErrorCount === 0 ? 12 : restoredErrorCount === 1 ? 9 : 5)
+    : 0
+  const scoreRef = useRef(initialFrozenScore)
   const tickerCbRef = useRef<((ticker: Ticker) => void) | null>(null)
   const charContainersRef = useRef<Container[]>([])
   const holePositionsRef = useRef<Array<{ x: number; y: number }>>([])
   const floatIdRef = useRef(0)
 
-  const [score, setScore] = useState(0)
+  const [score, setScore] = useState(initialFrozenScore)
   const [playCountdown, setPlayCountdown] = useState(PLAY_SECONDS)
   const [floats, setFloats] = useState<FloatLabel[]>([])
   const onCompleteRef = useRef(onComplete)
@@ -196,11 +207,15 @@ export function KolobokGame({ seed, onComplete }: KolobokGameProps) {
   }
 
   // После завершения показываем праздничную сцену: Колобок в центре + 4 зверушки.
-  const [showCelebration, setShowCelebration] = useState(false)
+  // В frozen-режиме сразу показываем финал, без игровой фазы
+  const [showCelebration, setShowCelebration] = useState(isFrozen)
+  // Триггер пересборки финальной сцены, когда Pixi инициализировался
+  const [pixiReady, setPixiReady] = useState(false)
   useEffect(() => {
     if (!showCelebration) return
     const app = refApp.current
     if (!app) return
+    void pixiReady  // зависимость, чтобы эффект перезапустился после init
     // Снимаем игровой тикер, чтобы не дёргать ушедшие контейнеры
     if (tickerCbRef.current) {
       try { app.ticker.remove(tickerCbRef.current) } catch { /* noop */ }
@@ -255,7 +270,7 @@ export function KolobokGame({ seed, onComplete }: KolobokGameProps) {
     return () => {
       try { app.ticker.remove(cb) } catch { /* noop */ }
     }
-  }, [showCelebration])
+  }, [showCelebration, pixiReady])
 
   const spawnFloat = (x: number, y: number, value: string, color: string) => {
     const id = floatIdRef.current++
@@ -266,8 +281,9 @@ export function KolobokGame({ seed, onComplete }: KolobokGameProps) {
     }, 1000)
   }
 
-  // Таймер раунда
+  // Таймер раунда (в frozen-режиме не запускается — игры нет, только финал)
   useEffect(() => {
+    if (isFrozen) return
     const id = setInterval(() => {
       setPlayCountdown(prev => {
         if (prev <= 1) {
@@ -302,6 +318,11 @@ export function KolobokGame({ seed, onComplete }: KolobokGameProps) {
       }
       refMount.current.appendChild(app.canvas)
       refApp.current = app
+      setPixiReady(true)
+
+      // В frozen-режиме игровое поле не строим — нужна только финальная сцена,
+      // которую соберёт отдельный useEffect (зависящий от pixiReady)
+      if (isFrozen) return
 
       const padX = 12
       const cellW = (app.screen.width - padX * (COLS + 1)) / COLS

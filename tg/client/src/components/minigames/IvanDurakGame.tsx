@@ -24,6 +24,7 @@ interface IvanDurakGameProps {
   seed: string
   difficulty: MiniGameDifficulty
   onComplete: (errorCount: number) => void
+  restoredErrorCount?: number | null
 }
 
 type Suit = 'spades' | 'hearts' | 'diamonds' | 'clubs'
@@ -173,10 +174,11 @@ function buildRounds(seed: string): RoundData[] {
   return rounds
 }
 
-export function IvanDurakGame({ seed, onComplete }: IvanDurakGameProps) {
+export function IvanDurakGame({ seed, onComplete, restoredErrorCount }: IvanDurakGameProps) {
+  const isFrozen = restoredErrorCount !== null && restoredErrorCount !== undefined
   const refMount = useRef<HTMLDivElement>(null)
   const refApp = useRef<Application | null>(null)
-  const doneRef = useRef(false)
+  const doneRef = useRef(isFrozen)
   const errorsRef = useRef(0)
   const rngRef = useRef(rngFromSeed(seed))
 
