@@ -1730,14 +1730,22 @@ function InvestSheet({ projectId, onClose, onSuccess, initialAmount }: {
   const computedDefault = initialAmount ?? smartDefaultInvestAmount(gameState)
   const [amount, setAmount] = useState<string>(computedDefault > 0 ? String(computedDefault) : '')
   const [showExtraSlot, setShowExtraSlot] = useState(false)
+  const [luckShift, setLuckShift] = useState<{ from: string; to: string } | null>(null)
   const qc = useQueryClient()
 
   const investMutation = useMutation({
     mutationFn: () => api.invest.invest(projectId, Number(amount)),
-    onSuccess: () => {
+    onSuccess: (data) => {
       haptic?.notificationOccurred('success')
       qc.invalidateQueries({ queryKey: ['gameState'] })
-      onSuccess()
+      // Если идеальная игра «переломила судьбу» — задержимся на 2.4с,
+      // покажем красивый баннер удачи, и только после этого закрываем лист.
+      if (data?.luckShift) {
+        setLuckShift(data.luckShift)
+        setTimeout(onSuccess, 2400)
+      } else {
+        onSuccess()
+      }
     },
     onError: (err: Error) => {
       haptic?.notificationOccurred('error')
@@ -1757,6 +1765,14 @@ function InvestSheet({ projectId, onClose, onSuccess, initialAmount }: {
           onSuccess()
         }}
       />
+    )
+  }
+
+  if (luckShift) {
+    return (
+      <Sheet onClose={() => {}}>
+        <LuckShiftBanner from={luckShift.from} to={luckShift.to} />
+      </Sheet>
     )
   }
 
@@ -1800,6 +1816,78 @@ function InvestSheet({ projectId, onClose, onSuccess, initialAmount }: {
     </Sheet>
   )
 }
+
+// ─── Баннер удачи: «идеальная игра переломила судьбу дела» ────────────────
+const FATE_LADDER_ORDER = ['INSTANT_SCAM', 'SLOW_DRAIN', 'HONEST_FAIL', 'SURVIVOR', 'UNICORN'] as const
+const FATE_LABEL_RU: Record<string, string> = {
+  INSTANT_SCAM: 'Сбежал с деньгами',
+  SLOW_DRAIN:   'Тихо угасал',
+  HONEST_FAIL:  'Честный провал',
+  SURVIVOR:     'Выжил',
+  UNICORN:      'Жар-птица за хвост',
+}
+function LuckShiftBanner({ from, to }: { from: string; to: string }) {
+  const fromLabel = FATE_LABEL_RU[from] ?? from
+  const toLabel = FATE_LABEL_RU[to] ?? to
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.92 }}
+      animate={{ opacity: 1, scale: 1 }}
+      style={{
+        textAlign: 'center',
+        padding: `${spacing.md} ${spacing.sm}`,
+      }}
+    >
+      <motion.div
+        initial={{ rotate: -6, scale: 0.8 }}
+        animate={{ rotate: [-6, 6, -3, 3, 0], scale: [0.8, 1.1, 1] }}
+        transition={{ duration: 0.7 }}
+        style={{ fontSize: 64, lineHeight: 1, marginBottom: spacing.sm }}
+      >
+        🍀
+      </motion.div>
+      <div style={{
+        color: colors.fairyGold, fontSize: 22, fontWeight: 800,
+        marginBottom: spacing.sm,
+      }}>
+        Удача склонилась к тебе!
+      </div>
+      <div style={{
+        color: colors.textPrimary, fontSize: 14, lineHeight: 1.5,
+        marginBottom: spacing.md, padding: `0 ${spacing.sm}`,
+      }}>
+        Идеальная игра переломила судьбу дела:
+      </div>
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        gap: spacing.sm, fontSize: 13, fontWeight: 700,
+      }}>
+        <span style={{ color: colors.textMuted, textDecoration: 'line-through' }}>
+          {fromLabel}
+        </span>
+        <span style={{ color: colors.fairyGold }}>→</span>
+        <motion.span
+          initial={{ scale: 0.9 }}
+          animate={{ scale: [0.9, 1.15, 1] }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+          style={{
+            color: colors.success, fontWeight: 800,
+            padding: '4px 10px',
+            background: `${colors.success}22`,
+            border: `1px solid ${colors.success}66`,
+            borderRadius: 8,
+          }}
+        >
+          {toLabel}
+        </motion.span>
+      </div>
+      <div style={{ color: colors.textMuted, fontSize: 11, marginTop: spacing.md }}>
+        Шанс выпадает раз из четырёх при идеальной игре
+      </div>
+    </motion.div>
+  )
+}
+void FATE_LADDER_ORDER  // оставлено для будущей визуализации лестницы
 
 function ExtraSlotModal({
   projectId, amount, gameState, onClose, onSuccess,

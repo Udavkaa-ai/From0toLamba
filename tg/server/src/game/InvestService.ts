@@ -1,5 +1,5 @@
 import { prisma } from '../db/prisma'
-import { ProjectType, WITHDRAWAL_RULES } from './types'
+import { ProjectType, ProjectFate, WITHDRAWAL_RULES, FATE_CONFIG } from './types'
 import { generatePostMortem } from '../ai/openRouterClient'
 import { recomputeRank } from './rankService'
 
@@ -9,19 +9,73 @@ const MAX_ACTIVE_PROJECTS = 5
 const MAX_EXTRA_SLOTS = 5
 const EXTRA_SLOT_COST_GROSHY = 1000
 
+// «Лестница судеб» от худшей к лучшей. Идеальная игра (errorCount=0) даёт шанс
+// сдвинуть судьбу на ступеньку вверх — это связь скилла и удачи.
+const FATE_LADDER: ProjectFate[] = [
+  ProjectFate.INSTANT_SCAM,
+  ProjectFate.SLOW_DRAIN,
+  ProjectFate.HONEST_FAIL,
+  ProjectFate.SURVIVOR,
+  ProjectFate.UNICORN,
+]
+const PERFECT_GAME_LUCK_CHANCE = 0.25  // 25% при errorCount=0
+
+/**
+ * Если игрок прошёл мини-игру без ошибок (errorCount = 0), то с
+ * вероятностью PERFECT_GAME_LUCK_CHANCE «переламываем» судьбу на ступеньку
+ * вверх (INSTANT_SCAM → SLOW_DRAIN → HONEST_FAIL → SURVIVOR → UNICORN).
+ * Возвращает обновлённый patch для project.update либо null, если сдвига нет.
+ */
+function maybeShiftFate(currentFate: ProjectFate): {
+  newFate: ProjectFate
+  newDailyYield: number
+  newDaysUntilCollapse: number
+} | null {
+  const idx = FATE_LADDER.indexOf(currentFate)
+  if (idx < 0 || idx === FATE_LADDER.length - 1) return null  // UNICORN — некуда расти
+  if (Math.random() >= PERFECT_GAME_LUCK_CHANCE) return null
+  const newFate = FATE_LADDER[idx + 1]
+  const cfg = FATE_CONFIG[newFate]
+  const newDailyYield = cfg.dailyYieldRange[0] + Math.random() * (cfg.dailyYieldRange[1] - cfg.dailyYieldRange[0])
+  const newDaysUntilCollapse = cfg.daysRange[0] + Math.floor(Math.random() * (cfg.daysRange[1] - cfg.daysRange[0] + 1))
+  return { newFate, newDailyYield, newDaysUntilCollapse }
+}
+
+/** Результат инвеста: была ли удача-сдвиг судьбы (для красивого баннера на клиенте) */
+export interface InvestResult {
+  luckShift: { from: ProjectFate; to: ProjectFate } | null
+}
+
 export async function invest(
   userId: number,
   projectId: string,
   amount: number,
   extraSlot?: 'groshy' | 'stars',
-): Promise<void> {
+): Promise<InvestResult> {
   if (amount < MIN_INVEST) throw new Error('AMOUNT_TOO_SMALL')
   if (amount > MAX_INVEST_PER_PROJECT) throw new Error('AMOUNT_TOO_LARGE')
 
-  const [gameState, project] = await Promise.all([
+  const [gameState, project, amaSession] = await Promise.all([
     prisma.gameState.findUniqueOrThrow({ where: { userId } }),
     prisma.project.findFirstOrThrow({ where: { id: projectId, userId } }),
+    prisma.amaSession.findUnique({ where: { projectId } }),
   ])
+
+  // Если игрок прошёл мини-игру без ошибок — шанс «переломить судьбу» дела
+  // на одну ступеньку лучше. errorCount хранится в AmaSession.intuitionDelta
+  // (legacy-имя поля, см. CharterService).
+  const errorCount = amaSession?.intuitionDelta ?? null
+  const fateShift = errorCount === 0
+    ? maybeShiftFate(project.fate as ProjectFate)
+    : null
+  const projectShiftPatch = fateShift ? {
+    fate: fateShift.newFate,
+    realDailyYieldRubles: fateShift.newDailyYield,
+    daysUntilCollapse: fateShift.newDaysUntilCollapse,
+  } : {}
+  const luckShift: InvestResult['luckShift'] = fateShift
+    ? { from: project.fate as ProjectFate, to: fateShift.newFate }
+    : null
 
   const activeCount = await prisma.project.count({ where: { userId, isActive: true } })
 
@@ -49,13 +103,14 @@ export async function invest(
             isActive: true,
             isInbox: false,
             isExtraSlot: true,
+            ...projectShiftPatch,
           },
         }),
       ])
       await prisma.transaction.create({
         data: { userId, projectId, projectName: project.name, type: 'INVEST', amount, day: gameState.currentDay },
       })
-      return
+      return { luckShift }
     }
 
     // stars path: use pre-purchased slot token
@@ -78,13 +133,14 @@ export async function invest(
           isActive: true,
           isInbox: false,
           isExtraSlot: true,
+          ...projectShiftPatch,
         },
       }),
     ])
     await prisma.transaction.create({
       data: { userId, projectId, projectName: project.name, type: 'INVEST', amount, day: gameState.currentDay },
     })
-    return
+    return { luckShift }
   }
 
   if (gameState.balance < amount) throw new Error('INSUFFICIENT_BALANCE')
@@ -104,6 +160,7 @@ export async function invest(
         currentValueRubles: { increment: amount },
         isActive: true,
         isInbox: false,
+        ...projectShiftPatch,
       },
     }),
   ])
@@ -111,6 +168,8 @@ export async function invest(
   await prisma.transaction.create({
     data: { userId, projectId, projectName: project.name, type: 'INVEST', amount, day: gameState.currentDay },
   })
+
+  return { luckShift }
 }
 
 export async function addInvestment(userId: number, projectId: string, amount: number): Promise<void> {

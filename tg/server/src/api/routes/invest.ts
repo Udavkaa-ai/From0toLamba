@@ -25,11 +25,11 @@ export async function investRoutes(app: FastifyInstance) {
     const user = await prisma.user.findUniqueOrThrow({ where: { telegramId: String(tgUser.id) } })
 
     try {
-      await invest(user.id, projectId, body.data.amount, body.data.extraSlot)
+      const result = await invest(user.id, projectId, body.data.amount, body.data.extraSlot)
       // Чин зависит от числа взятых дел — пересчитываем после инвеста
       recomputeRank(user.id).catch(console.error)
       checkAndGrantReferralBonus(user.id).catch(console.error)
-      return { success: true }
+      return { success: true, luckShift: result.luckShift }
     } catch (err: any) {
       const errMap: Record<string, [number, string]> = {
         AMOUNT_TOO_SMALL: [400, 'Минимальное вложение — 5 ₽'],

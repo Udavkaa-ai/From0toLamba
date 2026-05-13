@@ -241,6 +241,12 @@ export interface AdvanceDayResultDTO {
   closures: ClosureSummaryDTO[]
 }
 
+/** Ответ на /invest/:id — содержит сдвиг судьбы за идеальную игру (если был). */
+export interface InvestResponse {
+  success: boolean
+  luckShift: { from: string; to: string } | null
+}
+
 export interface AmaSessionDTO {
   sessionId: string
   questionCount: number
@@ -337,7 +343,7 @@ export const api = {
 
   invest: {
     invest: (projectId: string, amount: number, extraSlot?: 'groshy' | 'stars') =>
-      apiClient.post(`/invest/${projectId}`, { amount, ...(extraSlot ? { extraSlot } : {}) }).then(r => r.data),
+      apiClient.post<InvestResponse>(`/invest/${projectId}`, { amount, ...(extraSlot ? { extraSlot } : {}) }).then(r => r.data),
     addInvestment: (projectId: string, amount: number) => apiClient.post(`/invest/${projectId}/add`, { amount }).then(r => r.data),
     withdraw: (projectId: string, amount: number) => apiClient.post(`/invest/${projectId}/withdraw`, { amount }).then(r => r.data),
     exit: (projectId: string) => apiClient.post(`/invest/${projectId}/exit`).then(r => r.data),
