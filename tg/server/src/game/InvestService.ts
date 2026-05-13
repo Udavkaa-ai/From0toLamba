@@ -1,5 +1,6 @@
 import { prisma } from '../db/prisma'
 import { ProjectType, ProjectFate, WITHDRAWAL_RULES, FATE_CONFIG } from './types'
+import { computeClaimedAPY } from './GenerateProjectService'
 import { generatePostMortem } from '../ai/openRouterClient'
 import { recomputeRank } from './rankService'
 
@@ -9,36 +10,33 @@ const MAX_ACTIVE_PROJECTS = 5
 const MAX_EXTRA_SLOTS = 5
 const EXTRA_SLOT_COST_GROSHY = 1000
 
-// «Лестница судеб» от худшей к лучшей. Идеальная игра (errorCount=0) даёт шанс
-// сдвинуть судьбу на ступеньку вверх — это связь скилла и удачи.
-const FATE_LADDER: ProjectFate[] = [
-  ProjectFate.INSTANT_SCAM,
-  ProjectFate.SLOW_DRAIN,
-  ProjectFate.HONEST_FAIL,
-  ProjectFate.SURVIVOR,
-  ProjectFate.UNICORN,
-]
-const PERFECT_GAME_LUCK_CHANCE = 0.25  // 25% при errorCount=0
+// Идеальная игра (errorCount=0) даёт небольшой дополнительный шанс на UNICORN
+// (Жар-птицу). Базовая вероятность UNICORN уже встроена в FATE_CONFIG.weight (5
+// из 95 ≈ 5%); идеальная игра прибавляет ещё PERFECT_GAME_UNICORN_BONUS сверху
+// — итого ~10% при идеальной игре. Остальные судьбы остаются как есть.
+const PERFECT_GAME_UNICORN_BONUS = 0.05  // +5% к UNICORN при errorCount=0
 
 /**
- * Если игрок прошёл мини-игру без ошибок (errorCount = 0), то с
- * вероятностью PERFECT_GAME_LUCK_CHANCE «переламываем» судьбу на ступеньку
- * вверх (INSTANT_SCAM → SLOW_DRAIN → HONEST_FAIL → SURVIVOR → UNICORN).
- * Возвращает обновлённый patch для project.update либо null, если сдвига нет.
+ * Если игрок прошёл мини-игру без ошибок и судьба ещё не UNICORN, с шансом
+ * PERFECT_GAME_UNICORN_BONUS превращаем её в UNICORN. Перегенерируем
+ * realDailyYield, daysUntilCollapse и claimedAPY (посул!) под новую судьбу.
  */
 function maybeShiftFate(currentFate: ProjectFate): {
   newFate: ProjectFate
   newDailyYield: number
   newDaysUntilCollapse: number
+  newClaimedAPY: number
 } | null {
-  const idx = FATE_LADDER.indexOf(currentFate)
-  if (idx < 0 || idx === FATE_LADDER.length - 1) return null  // UNICORN — некуда расти
-  if (Math.random() >= PERFECT_GAME_LUCK_CHANCE) return null
-  const newFate = FATE_LADDER[idx + 1]
+  if (currentFate === ProjectFate.UNICORN) return null
+  if (Math.random() >= PERFECT_GAME_UNICORN_BONUS) return null
+  const newFate = ProjectFate.UNICORN
   const cfg = FATE_CONFIG[newFate]
   const newDailyYield = cfg.dailyYieldRange[0] + Math.random() * (cfg.dailyYieldRange[1] - cfg.dailyYieldRange[0])
   const newDaysUntilCollapse = cfg.daysRange[0] + Math.floor(Math.random() * (cfg.daysRange[1] - cfg.daysRange[0] + 1))
-  return { newFate, newDailyYield, newDaysUntilCollapse }
+  // Перегенерируем посул, чтобы он соответствовал новой судьбе (был баг: посул
+  // оставался от старой fate — игрок видел старый процент при новой судьбе)
+  const newClaimedAPY = computeClaimedAPY(newDailyYield, newFate)
+  return { newFate, newDailyYield, newDaysUntilCollapse, newClaimedAPY }
 }
 
 /** Результат инвеста: была ли удача-сдвиг судьбы (для красивого баннера на клиенте) */
@@ -72,6 +70,7 @@ export async function invest(
     fate: fateShift.newFate,
     realDailyYieldRubles: fateShift.newDailyYield,
     daysUntilCollapse: fateShift.newDaysUntilCollapse,
+    claimedAPY: fateShift.newClaimedAPY,
   } : {}
   const luckShift: InvestResult['luckShift'] = fateShift
     ? { from: project.fate as ProjectFate, to: fateShift.newFate }

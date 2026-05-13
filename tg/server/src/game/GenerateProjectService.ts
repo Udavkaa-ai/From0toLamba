@@ -12,7 +12,7 @@ const CLAIMED_APY_MULTIPLIER: Record<ProjectFate, [number, number]> = {
   [ProjectFate.UNICORN]:      [0.3, 0.7],
 }
 
-function computeClaimedAPY(realDailyYield: number, fate: ProjectFate): number {
+export function computeClaimedAPY(realDailyYield: number, fate: ProjectFate): number {
   const realAnnualPct = realDailyYield * 365 * 100
   const [lo, hi] = CLAIMED_APY_MULTIPLIER[fate]
   const multiplier = lo + Math.random() * (hi - lo)

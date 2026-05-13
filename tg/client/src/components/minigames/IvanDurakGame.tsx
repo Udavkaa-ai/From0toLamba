@@ -246,6 +246,10 @@ export function IvanDurakGame({ seed, onComplete }: IvanDurakGameProps) {
         return
       }
       refMount.current.appendChild(app.canvas)
+      // SVG-декор стола имеет position:absolute и иначе наезжает на карты —
+      // выставляем явный z-index на канвасе, чтобы карты всегда были сверху.
+      app.canvas.style.position = 'relative'
+      app.canvas.style.zIndex = '1'
       refApp.current = app
     })()
     return () => {
@@ -397,13 +401,14 @@ export function IvanDurakGame({ seed, onComplete }: IvanDurakGameProps) {
           boxShadow: 'inset 0 0 100px rgba(0,0,0,0.7)',
         }}
       >
-        {/* SVG-декор: контур стола + рамка лампы */}
+        {/* SVG-декор: контур стола + рамка лампы. zIndex:0 — чтобы карты
+            (на канвасе с zIndex:1) всегда рисовались поверх. */}
         <svg
           viewBox="0 0 320 460"
           preserveAspectRatio="xMidYMax slice"
           style={{
             position: 'absolute', inset: 0, width: '100%', height: '100%',
-            pointerEvents: 'none', opacity: 0.5,
+            pointerEvents: 'none', opacity: 0.5, zIndex: 0,
           }}
         >
           {/* Чёткие границы стола */}

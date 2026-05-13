@@ -1063,7 +1063,9 @@ export function HomePage() {
         )}
       </AnimatePresence>
 
-      <div style={{ padding: `calc(${spacing.xxl} + var(--tg-safe-area-inset-top, env(safe-area-inset-top, 0px))) ${spacing.lg} 80px`, maxWidth: '500px', margin: '0 auto' }}>
+      {/* Bottom-отступ закрывает FAB «Следующий день» (≈55px), сам FAB сидит на 68px+safe-area,
+          плюс зазор 12px чтобы карточки можно было докрутить выше кнопки */}
+      <div style={{ padding: `calc(${spacing.xxl} + var(--tg-safe-area-inset-top, env(safe-area-inset-top, 0px))) ${spacing.lg} calc(140px + env(safe-area-inset-bottom))`, maxWidth: '500px', margin: '0 auto' }}>
 
         {/* Логотип + кнопка настроек */}
         <motion.div
