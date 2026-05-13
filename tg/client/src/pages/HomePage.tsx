@@ -1161,20 +1161,37 @@ export function HomePage() {
           </motion.div>
         )}
 
-        {/* Входящие */}
+        {/* Входящие — компактная лента из топ-2 + ссылка на полный список */}
         {gameState.inboxProjects.length > 0 && (
           <motion.div data-tour="inbox-section" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-            <div style={{ color: colors.fairyGold, fontSize: '13px', fontWeight: 600, margin: `${spacing.lg} 0 ${spacing.sm} 4px` }}>
-              {t.home.inboxCount(gameState.inboxProjects.length)}
+            <div style={{
+              display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+              margin: `${spacing.lg} 4px ${spacing.sm}`,
+            }}>
+              <div style={{ color: colors.fairyGold, fontSize: '13px', fontWeight: 600 }}>
+                {t.home.inboxCount(gameState.inboxProjects.length)}
+              </div>
+              {gameState.inboxProjects.length > 2 && (
+                <button
+                  onClick={() => { tgHaptic?.impactOccurred('light'); navigate('/inbox') }}
+                  style={{
+                    background: 'transparent', border: 'none',
+                    color: colors.fairyGold, fontSize: 12, fontWeight: 600,
+                    cursor: 'pointer', padding: '2px 4px',
+                  }}
+                >
+                  Все ({gameState.inboxProjects.length}) →
+                </button>
+              )}
             </div>
-            <FairyCard onClick={() => navigate('/inbox')} style={{ cursor: 'pointer' }}>
-              <div style={{ color: colors.textPrimary, fontSize: '14px' }}>
-                {t.home.inboxWaiting}
-              </div>
-              <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
-                {t.home.inboxOpenHint}
-              </div>
-            </FairyCard>
+            {gameState.inboxProjects.slice(0, 2).map((p, i) => (
+              <InboxFeedCard
+                key={p.id}
+                project={p}
+                delay={0.3 + i * 0.06}
+                onPress={() => { tgHaptic?.impactOccurred('light'); navigate(`/charter/${p.id}`) }}
+              />
+            ))}
           </motion.div>
         )}
 
@@ -1801,6 +1818,54 @@ function ActiveProjectCard({ project, delay, onPress }: { project: ProjectDTO; d
           >
             {t.home.activeCardAddMore}
           </button>
+        </div>
+      </FairyCard>
+    </motion.div>
+  )
+}
+
+// Карточка входящего дела для ленты на главной — компактная, тап ведёт прямо к испытанию.
+function InboxFeedCard({ project, delay, onPress }: { project: ProjectDTO; delay: number; onPress: () => void }) {
+  const t = useT()
+  const typeLabels = t.inbox.types as Record<string, string>
+  const typeLabel = typeLabels[project.type] ?? project.type
+  return (
+    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay }}>
+      <FairyCard onClick={onPress} style={{ marginBottom: spacing.sm, cursor: 'pointer', padding: spacing.md }}>
+        <div style={{ display: 'flex', gap: spacing.md, alignItems: 'center' }}>
+          {project.bannerImageUrl && (
+            <img
+              src={project.bannerImageUrl}
+              alt={project.name}
+              style={{
+                width: 64, height: 64, objectFit: 'cover',
+                borderRadius: 10, flexShrink: 0,
+                border: `1px solid ${colors.fairyGold}40`,
+              }}
+              onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+            />
+          )}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{
+              color: colors.fairyGold, fontWeight: 700, fontSize: 14,
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>
+              {project.name}
+            </div>
+            <div style={{ color: colors.textMuted, fontSize: 11, marginTop: 2 }}>
+              {typeLabel} · {project.developerName}
+            </div>
+            <div style={{
+              marginTop: 6, display: 'inline-block',
+              padding: '3px 8px',
+              background: `${colors.fairyGold}18`,
+              border: `1px solid ${colors.fairyGold}55`,
+              borderRadius: 8,
+              color: colors.fairyGold, fontSize: 11, fontWeight: 700,
+            }}>
+              {t.inbox.studyBtn}
+            </div>
+          </div>
         </div>
       </FairyCard>
     </motion.div>
