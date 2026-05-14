@@ -283,10 +283,13 @@ function TrialsScene() {
     { emoji: '🧙‍♀️', tint: '#90E060', label: 'Яга' },
     { emoji: '🃏', tint: '#FF8060', label: 'Иван' },
   ]
+  // Размер карточки фиксированный — flex-wrap сам разнесёт 7 штук на 2 ряда
+  // (4 + 3, второй ряд центрируется через justify-content). Все одинаковые.
+  const cardSize = 76
   return (
     <div style={{
       width: '100%', maxWidth: 380, margin: '0 auto',
-      display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8,
+      display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center',
     }}>
       {archetypes.map((a, i) => (
         <motion.div
@@ -295,23 +298,23 @@ function TrialsScene() {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ delay: 0.05 * i, type: 'spring', damping: 18, stiffness: 220 }}
           style={{
-            aspectRatio: '1',
+            width: cardSize, height: cardSize,
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
             background: `linear-gradient(145deg, ${a.tint}20, ${a.tint}05)`,
             border: `1.5px solid ${a.tint}88`,
             borderRadius: 14,
             boxShadow: `0 4px 18px ${a.tint}44, inset 0 0 12px ${a.tint}22`,
-            gridColumn: i === 6 ? '2 / span 2' : 'auto',  // последний (Иван) — широкий по центру
+            flexShrink: 0,
           }}
         >
           <motion.div
             animate={{ y: [0, -3, 0], rotate: [-2, 2, -2] }}
             transition={{ duration: 3 + (i % 3) * 0.4, repeat: Infinity, ease: 'easeInOut', delay: i * 0.2 }}
-            style={{ fontSize: 36, lineHeight: 1, marginBottom: 4 }}
+            style={{ fontSize: 32, lineHeight: 1, marginBottom: 4 }}
           >
             {a.emoji}
           </motion.div>
-          <div style={{ color: a.tint, fontSize: 9, fontWeight: 700, letterSpacing: '0.04em' }}>
+          <div style={{ color: a.tint, fontSize: 10, fontWeight: 700, letterSpacing: '0.04em' }}>
             {a.label}
           </div>
         </motion.div>
