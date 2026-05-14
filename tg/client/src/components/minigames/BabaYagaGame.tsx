@@ -11,7 +11,7 @@ const haptic = tg?.HapticFeedback
 
 const REFERENCE_SECONDS = 7
 const PLAY_SECONDS = 25
-const RECIPE_LENGTH = 7
+const RECIPE_LENGTH = 5
 const FLY_MS = 550        // длительность падения ингредиента в котёл
 const SHAKE_MS = 420      // длительность взрыва+тряски при ошибке
 
@@ -227,17 +227,18 @@ function computeLayout(W: number, H: number) {
   const slotsAreaTop = 12
   const slotsAreaBottom = cauldronTopY - 12
   const slotsAreaH = Math.max(120, slotsAreaBottom - slotsAreaTop)
-  const rowGap = 8
-  const colGap = 8
-  const sideMargin = 8
+  const rowGap = 10
+  const colGap = 10
+  const sideMargin = 10
+  const row1Count = 3
+  const row2Count = 2
   const maxSlotByH = (slotsAreaH - rowGap) / 2
-  const maxSlotByW = (W - sideMargin * 2 - colGap * 3) / 4
-  const slotW = Math.max(48, Math.min(maxSlotByH, maxSlotByW, 110))
+  // Верхний ряд из 3 слотов + 2 промежутка — лимитирующий по ширине
+  const maxSlotByW = (W - sideMargin * 2 - colGap * (row1Count - 1)) / row1Count
+  const slotW = Math.max(56, Math.min(maxSlotByH, maxSlotByW, 130))
   const slotH = slotW
   const row1Y = slotsAreaTop + slotH / 2 + 4
   const row2Y = row1Y + slotH + rowGap
-  const row1Count = 4
-  const row2Count = 3
   const row1TotalW = row1Count * slotW + (row1Count - 1) * colGap
   const row2TotalW = row2Count * slotW + (row2Count - 1) * colGap
   const row1StartX = (W - row1TotalW) / 2 + slotW / 2
@@ -345,11 +346,13 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
     }))
   }
 
-  const complete = (collectedCount: number) => {
+  /** errorCount = неправильные клики + несобранные ингредиенты.
+   *  Стандартная лесенка по ошибкам: 0 = идеально, 1 = победа, ≥2 = провал. */
+  const complete = () => {
     if (doneRef.current) return
     doneRef.current = true
-    // 7 = идеально, 5-6 = победа, <=4 = поражение
-    const ec = collectedCount >= 7 ? 0 : collectedCount >= 5 ? 1 : 2
+    const missing = Math.max(0, RECIPE_LENGTH - collectedRef.current)
+    const ec = errorsRef.current + missing
     haptic?.notificationOccurred(ec === 0 ? 'success' : ec === 1 ? 'warning' : 'error')
     playSound(ec <= 1 ? 'win' : 'lose')
     onCompleteRef.current(ec)
@@ -392,7 +395,7 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
       setPlayCountdown(prev => {
         if (prev <= 1) {
           clearInterval(id)
-          complete(collectedRef.current)
+          complete()
           return 0
         }
         return prev - 1
@@ -667,7 +670,7 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
     collectedRef.current += 1
     setCollected(collectedRef.current)
     if (collectedRef.current >= RECIPE_LENGTH) {
-      complete(collectedRef.current)
+      complete()
     }
   }
 
