@@ -111,7 +111,7 @@ export interface GameStateDTO {
   /** Жетоны хозяев — мини-валюта по архетипам. earned = заработано (10 игр или
    *  5 дел = +1 жетон), spent = потрачено, balance = доступно. Пусто для
    *  архетипов, с которыми игрок ещё не сталкивался. */
-  archetypeTokens: Record<string, { earned: number; spent: number; balance: number; gamesPlayed: number; dealsTaken: number }>
+  archetypeTokens: Record<string, { earned: number; spent: number; balance: number; gamesPlayed: number; dealsTaken: number; welcomeBonus: boolean }>
   dayStreak: number
   isOnboardingComplete: boolean
   totalInvested: number

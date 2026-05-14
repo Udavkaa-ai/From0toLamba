@@ -119,9 +119,10 @@ export function RelationshipsPage() {
             🪙 Жетоны хозяев
           </div>
           <div style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 1.5 }}>
-            За каждые <b>10 сыгранных мини-игр</b> или <b>5 взятых дел</b> с одним хозяином
-            ты получаешь его жетон. Жетоном можно бесплатно открыть беседу с этим хозяином
-            или раскрыть подсказку по делу при провале мини-игры — вместо 10 ⭐.
+            🎁 За <b>первое знакомство</b> с каждым хозяином — подарок (1 жетон).<br />
+            🎯 За каждые <b>10 сыгранных мини-игр</b> или <b>5 взятых дел</b> с одним хозяином —
+            ещё по жетону. Тратится на бесплатную беседу или раскрытие подсказки по делу
+            при провале мини-игры — вместо 10 ⭐.
           </div>
         </FairyCard>
       </div>
@@ -151,6 +152,7 @@ function RelationshipDetails({ archetype, onClose }: { archetype: Archetype; onC
   const earned = tokens?.earned ?? 0
   const spent = tokens?.spent ?? 0
   const balance = tokens?.balance ?? 0
+  const welcomeBonus = tokens?.welcomeBonus ?? false
 
   const nextGameToToken = 10 - (games % 10)
   const nextDealToToken = 5 - (deals % 5)
@@ -215,6 +217,7 @@ function RelationshipDetails({ archetype, onClose }: { archetype: Archetype; onC
             </div>
             <div style={{ color: colors.textMuted, fontSize: 11, marginTop: 4 }}>
               Заработано {earned} · потрачено {spent}
+              {welcomeBonus && <span style={{ color: tint, marginLeft: 6 }}>· 🎁 подарок</span>}
             </div>
           </div>
         </div>
