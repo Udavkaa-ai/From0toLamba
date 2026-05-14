@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Application, Container, Graphics, Rectangle } from 'pixi.js'
+import { Application, Container, Graphics } from 'pixi.js'
 import { rngFromSeed } from './seedRng'
 import { colors, spacing } from '@/theme'
 import { playSound } from '@/sounds'
@@ -214,6 +214,47 @@ function drawCauldron(g: Graphics, w: number, h: number) {
   g.rect(w * 0.22, h * 0.84, w * 0.1, h * 0.13).fill(rimColor).stroke({ width: 1.5, color: bodyShade })
 }
 
+/** Раскладка котла и слотов из размера канваса. Используется и в Pixi-рендере,
+ *  и в React DOM-overlay для хит-зон. Координаты в CSS-пикселях, origin (0,0) —
+ *  верхний левый угол канваса; для слотов x,y — центр квадрата. */
+function computeLayout(W: number, H: number) {
+  const cauldronW = Math.min(W * 0.62, 280)
+  const cauldronH = cauldronW * 0.85
+  const cauldronCX = W / 2
+  const cauldronTopY = H - cauldronH - 12
+  const cauldronMouthY = cauldronTopY + cauldronH * 0.03
+
+  const slotsAreaTop = 12
+  const slotsAreaBottom = cauldronTopY - 12
+  const slotsAreaH = Math.max(120, slotsAreaBottom - slotsAreaTop)
+  const rowGap = 8
+  const colGap = 8
+  const sideMargin = 8
+  const maxSlotByH = (slotsAreaH - rowGap) / 2
+  const maxSlotByW = (W - sideMargin * 2 - colGap * 3) / 4
+  const slotW = Math.max(48, Math.min(maxSlotByH, maxSlotByW, 110))
+  const slotH = slotW
+  const row1Y = slotsAreaTop + slotH / 2 + 4
+  const row2Y = row1Y + slotH + rowGap
+  const row1Count = 4
+  const row2Count = 3
+  const row1TotalW = row1Count * slotW + (row1Count - 1) * colGap
+  const row2TotalW = row2Count * slotW + (row2Count - 1) * colGap
+  const row1StartX = (W - row1TotalW) / 2 + slotW / 2
+  const row2StartX = (W - row2TotalW) / 2 + slotW / 2
+  const positions: Array<{ x: number; y: number }> = []
+  for (let i = 0; i < row1Count; i++) {
+    positions.push({ x: row1StartX + i * (slotW + colGap), y: row1Y })
+  }
+  for (let i = 0; i < row2Count; i++) {
+    positions.push({ x: row2StartX + i * (slotW + colGap), y: row2Y })
+  }
+  return {
+    cauldronW, cauldronH, cauldronCX, cauldronTopY, cauldronMouthY,
+    slotW, slotH, positions,
+  }
+}
+
 function shuffle<T>(arr: T[], rng: () => number): T[] {
   const out = arr.slice()
   for (let i = out.length - 1; i > 0; i--) {
@@ -286,6 +327,10 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
   const [collected, setCollected] = useState(0)
   const [, forceRerender] = useState(0)
 
+  // Размеры канваса. Мониторим через ResizeObserver и используем для
+  // расчёта раскладки в DOM-overlay (хит-зоны слотов) и в Pixi-рендере.
+  const [canvasDims, setCanvasDims] = useState<{ w: number; h: number } | null>(null)
+
   // Слоты — текущая раскладка 7 ингредиентов
   const slotsRef = useRef<SlotState[]>([])
   const bubblesRef = useRef<Bubble[]>([])
@@ -309,6 +354,22 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
     playSound(ec <= 1 ? 'win' : 'lose')
     onCompleteRef.current(ec)
   }
+
+  // Мониторим размер канваса — для DOM-overlay хит-зон и совпадающей с Pixi
+  // раскладки. autoDensity:true делает app.canvas.style.width в CSS-пикселях,
+  // что совпадает с ResizeObserver.contentRect.
+  useEffect(() => {
+    if (!refMount.current) return
+    const el = refMount.current
+    const update = () => {
+      const rect = el.getBoundingClientRect()
+      setCanvasDims({ w: rect.width, h: rect.height })
+    }
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   useEffect(() => {
     if (isFrozen) return
@@ -394,52 +455,17 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
       const H = app.screen.height
       app.stage.removeChildren()
 
-      // Котёл — постоянный, в нижней части экрана. Теперь высокий, не плоский:
-      // соотношение 0.85 высоты к ширине. Координаты внутри drawCauldron: y=0
-      // — верх ободка, y=h — низ ножек. Размещаем так, чтобы низ ножек был у
-      // самого низа канваса (с небольшим отступом).
-      const cauldronW = Math.min(W * 0.62, 280)
-      const cauldronH = cauldronW * 0.85
-      const cauldronCX = W / 2
-      const cauldronTopY = H - cauldronH - 12          // верх ободка
-      const cauldronCY = cauldronTopY                  // origin контейнера = верх
-      // Точка, куда летят правильные ингредиенты (внутрь жерла, чуть ниже ободка)
-      const cauldronMouthY = cauldronTopY + cauldronH * 0.03
+      const layout = computeLayout(W, H)
+      const { cauldronW, cauldronH, cauldronCX, cauldronTopY, cauldronMouthY,
+              slotW, slotH, positions } = layout
+      void cauldronMouthY  // используется ниже в обработчиках
       const cauldronG = new Graphics()
       drawCauldron(cauldronG, cauldronW, cauldronH)
       const cCtr = new Container()
       cCtr.x = cauldronCX
-      cCtr.y = cauldronCY
+      cCtr.y = cauldronTopY
       cCtr.addChild(cauldronG)
       app.stage.addChild(cCtr)
-
-      // Раскладка 7 слотов: 4 в верхнем ряду + 3 в нижнем (центрированные).
-      // Размер слота ограничен И высотой области, И шириной канваса.
-      const slotsAreaTop = 12
-      const slotsAreaBottom = cauldronTopY - 12
-      const slotsAreaH = Math.max(120, slotsAreaBottom - slotsAreaTop)
-      const rowGap = 8
-      const colGap = 8
-      const sideMargin = 8
-      const maxSlotByH = (slotsAreaH - rowGap) / 2
-      const maxSlotByW = (W - sideMargin * 2 - colGap * 3) / 4  // 4 слота + 3 промежутка
-      const slotW = Math.max(48, Math.min(maxSlotByH, maxSlotByW, 110))
-      const slotH = slotW
-      const row1Y = slotsAreaTop + slotH / 2 + 4
-      const row2Y = row1Y + slotH + rowGap
-      const row1Count = 4
-      const row2Count = 3
-      const row1TotalW = row1Count * slotW + (row1Count - 1) * colGap
-      const row2TotalW = row2Count * slotW + (row2Count - 1) * colGap
-      const row1StartX = (W - row1TotalW) / 2 + slotW / 2
-      const row2StartX = (W - row2TotalW) / 2 + slotW / 2
-      const positions: Array<{ x: number; y: number }> = []
-      for (let i = 0; i < row1Count; i++) {
-        positions.push({ x: row1StartX + i * (slotW + colGap), y: row1Y })
-      }
-      for (let i = 0; i < row2Count; i++) {
-        positions.push({ x: row2StartX + i * (slotW + colGap), y: row2Y })
-      }
 
       const now = performance.now()
       const slots = slotsRef.current
@@ -491,21 +517,16 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
           ctr.scale.set(scale)
           ctr.rotation = rotation
           ctr.alpha = alpha
-
-          if (!isFrozen && phase === 'play' && slot.anim.state === 'idle') {
-            ctr.eventMode = 'static'
-            ctr.cursor = 'pointer'
-            // Явный hitArea — иначе Pixi v8 берёт bounds от детей-ингредиентов
-            // (которые могут быть полупрозрачными и не давать стабильной зоны)
-            ctr.hitArea = new Rectangle(-slotW / 2, -slotH / 2, slotW, slotH)
-            ctr.on('pointertap', () => onPickSlot(i, cauldronCX, cauldronMouthY))
-          }
+          // Тапы обрабатываются в DOM-overlay (см. JSX ниже), здесь Pixi
+          // только рисует. Это надёжнее, чем pointertap на перерисовываемых
+          // каждый кадр контейнерах — у них pointerdown и pointerup попадают
+          // на разные инстансы, и тап не регистрируется.
           app.stage.addChild(ctr)
         }
 
         // Переходы между состояниями
         if (slot.anim.state === 'flying' && now - slot.anim.startedAt >= FLY_MS) {
-          finalizeCorrectPick(cauldronCX, cauldronMouthY)
+          finalizeCorrectPick()
         } else if (slot.anim.state === 'shake' && now - slot.anim.startedAt >= SHAKE_MS) {
           slot.anim.state = 'idle'
         } else if (slot.anim.state === 'reappearing' && now - slot.anim.startedAt >= 300) {
@@ -559,11 +580,13 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
 
   // ── Обработчики ──────────────────────────────────────────────────────────
 
-  const onPickSlot = (slotIdx: number, cauldronCX: number, cauldronTopY: number) => {
+  const onPickSlot = (slotIdx: number) => {
     if (doneRef.current || isFrozen) return
     if (phase !== 'play') return
+    if (!canvasDims) return
     const slot = slotsRef.current[slotIdx]
     if (!slot || slot.anim.state !== 'idle') return
+    const { cauldronCX, cauldronMouthY } = computeLayout(canvasDims.w, canvasDims.h)
 
     const expected = recipe[stepRef.current]
     const isCorrect = slot.ingredient === expected
@@ -571,7 +594,7 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
       slot.anim.state = 'flying'
       slot.anim.startedAt = performance.now()
       slot.anim.targetX = cauldronCX
-      slot.anim.targetY = cauldronTopY
+      slot.anim.targetY = cauldronMouthY
       haptic?.notificationOccurred('success')
       playSound('seal')
     } else {
@@ -616,7 +639,7 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
   }
 
   /** Ингредиент долетел до котла. Шафлим 7 слотов и запускаем reappearing. */
-  const finalizeCorrectPick = (cauldronCX: number, cauldronTopY: number) => {
+  const finalizeCorrectPick = () => {
     const slots = slotsRef.current
     const ingredients = slots.map(s => s.ingredient)
     // Перетасовываем — каждое правильное действие даёт новую раскладку.
@@ -625,7 +648,10 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
       const j = Math.floor(Math.random() * (i + 1))
       ;[ingredients[i], ingredients[j]] = [ingredients[j], ingredients[i]]
     }
-    spawnBubbles(cauldronCX, cauldronTopY)
+    if (canvasDims) {
+      const { cauldronCX, cauldronMouthY } = computeLayout(canvasDims.w, canvasDims.h)
+      spawnBubbles(cauldronCX, cauldronMouthY)
+    }
     const now = performance.now()
     for (let i = 0; i < slots.length; i++) {
       slots[i].ingredient = ingredients[i]
@@ -749,6 +775,34 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
             <animate attributeName="opacity" values="0.6;1;0.6" dur="4s" repeatCount="indefinite" />
           </circle>
         </svg>
+
+        {/* DOM-overlay для тапов — Pixi-обработчики на пересоздаваемых каждый
+            кадр контейнерах не успевают сопоставить pointerdown и pointerup.
+            7 невидимых кнопок поверх канваса, тапы идут сюда. */}
+        {!isFrozen && phase === 'play' && canvasDims && computeLayout(canvasDims.w, canvasDims.h).positions.map((pos, i) => {
+          const layout = computeLayout(canvasDims.w, canvasDims.h)
+          return (
+            <button
+              key={i}
+              onClick={() => onPickSlot(i)}
+              aria-label={`Слот ${i + 1}`}
+              style={{
+                position: 'absolute',
+                left: pos.x - layout.slotW / 2,
+                top: pos.y - layout.slotH / 2,
+                width: layout.slotW,
+                height: layout.slotH,
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+                zIndex: 2,
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            />
+          )
+        })}
       </div>
     </div>
   )

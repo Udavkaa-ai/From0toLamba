@@ -73,6 +73,11 @@ if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
   window.Telegram.WebApp.expand()
   window.Telegram.WebApp.setHeaderColor('#060412')
   window.Telegram.WebApp.setBackgroundColor('#060412')
+  // Запрещаем свайп вниз для сворачивания/закрытия — в мини-играх свайп
+  // иногда случается случайно при попытке тапа, и игрок вываливается.
+  // disableVerticalSwipes есть с Bot API 7.7, на старых клиентах просто no-op.
+  const wa = window.Telegram.WebApp as any
+  try { wa.disableVerticalSwipes?.() } catch { /* noop */ }
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
