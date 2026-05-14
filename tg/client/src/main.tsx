@@ -80,6 +80,11 @@ if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
   // disableVerticalSwipes есть с Bot API 7.7, на старых клиентах просто no-op.
   const wa = window.Telegram.WebApp as any
   try { wa.disableVerticalSwipes?.() } catch { /* noop */ }
+  // Полноэкранный режим — Bot API 8.0. На старых клиентах optional-вызов
+  // просто игнорируется. Telegram сам экспортирует CSS-переменные
+  // --tg-safe-area-inset-* и --tg-content-safe-area-inset-* в этом режиме,
+  // которые используются для верхних отступов страниц.
+  try { wa.requestFullscreen?.() } catch { /* noop */ }
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

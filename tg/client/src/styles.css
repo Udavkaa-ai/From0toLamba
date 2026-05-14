@@ -39,9 +39,18 @@ input[type=number] {
   -moz-appearance: textfield;
 }
 
-/* Telegram safe areas */
+/* Telegram safe areas.
+   env(safe-area-inset-top) — статусбар устройства (notch на iOS, верхний
+     системный бар на Android). Это базовый отступ для всех страниц.
+   --tg-content-safe-area-inset-top — Telegram UI (кнопки «назад» и
+     «свернуть»). Появляется только в fullscreen-режиме (Bot API 8.0+),
+     на старых клиентах = 0px. Сдвигаем им body, чтобы кнопки не
+     перекрывали верхний контент. */
 body {
-  padding-top: env(safe-area-inset-top);
+  padding-top: calc(
+    env(safe-area-inset-top, 0px)
+    + var(--tg-content-safe-area-inset-top, 0px)
+  );
 }
 
 /* Вращение печатей в грамоте — каждая клетка получает своё --seal-delay */
