@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Application, Container, Graphics } from 'pixi.js'
+import { Application, Container, Graphics, Rectangle } from 'pixi.js'
 import { rngFromSeed } from './seedRng'
 import { colors, spacing } from '@/theme'
 import { playSound } from '@/sounds'
@@ -360,6 +360,10 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
         return
       }
       refMount.current.appendChild(app.canvas)
+      // SVG-декор с position:absolute стакается над static canvas — без явного
+      // z-index канвас оказывается под SVG, и тапы могут не доходить. Поднимаем.
+      app.canvas.style.position = 'relative'
+      app.canvas.style.zIndex = '1'
       refApp.current = app
     })()
     return () => {
@@ -491,9 +495,9 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
           if (!isFrozen && phase === 'play' && slot.anim.state === 'idle') {
             ctr.eventMode = 'static'
             ctr.cursor = 'pointer'
-            const hit = new Graphics()
-            hit.rect(-slotW / 2, -slotH / 2, slotW, slotH).fill({ color: 0xFFFFFF, alpha: 0.0001 })
-            ctr.addChild(hit)
+            // Явный hitArea — иначе Pixi v8 берёт bounds от детей-ингредиентов
+            // (которые могут быть полупрозрачными и не давать стабильной зоны)
+            ctr.hitArea = new Rectangle(-slotW / 2, -slotH / 2, slotW, slotH)
             ctr.on('pointertap', () => onPickSlot(i, cauldronCX, cauldronMouthY))
           }
           app.stage.addChild(ctr)
