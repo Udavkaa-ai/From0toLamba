@@ -163,40 +163,55 @@ const DRAWERS: Record<Ingredient, (g: Graphics, size: number) => void> = {
   feather: drawFeather,
 }
 
-function drawIngredientCard(g: Graphics, ing: Ingredient, w: number, h: number, state: 'normal' | 'correct' | 'wrong' | 'consumed') {
-  const bg = state === 'correct' ? 0x1A3D2A
-            : state === 'wrong' ? 0x3D1A1A
-            : state === 'consumed' ? 0x1A1438
-            : 0x1B1438
-  const border = state === 'correct' ? 0x4FD89C
-                : state === 'wrong' ? 0xE06060
-                : state === 'consumed' ? 0x444444
-                : 0xFFB800
-  g.roundRect(-w / 2, -h / 2, w, h, 14).fill(bg).stroke({ width: 3, color: border })
-  DRAWERS[ing](g, Math.min(w, h) * 0.36)
+/** Рисуем ингредиент без рамки и фона — только сам предмет. Состояние
+ *  (правильно/неправильно/в покое) передаётся анимациями (полёт, тряска,
+ *  взрыв, пузыри), а не цветом рамки. */
+function drawIngredientCard(g: Graphics, ing: Ingredient, w: number, h: number, _state: 'normal' | 'correct' | 'wrong' | 'consumed') {
+  DRAWERS[ing](g, Math.min(w, h) * 0.46)
 }
 
-/** Большой котёл — рисуем процедурно через Pixi.Graphics: тело + ободок + ножки + пар */
+/** Большой котёл — рисуем процедурно через Pixi.Graphics: высокий, с глубоким
+ *  телом, ободком, ручками-кольцами и ножками. Координаты в системе котла:
+ *  y=0 — верхний край отверстия, h ≈ полная высота от ободка до низа ножек. */
 function drawCauldron(g: Graphics, w: number, h: number) {
-  // Тело котла
   const bodyColor = 0x2A1A20
+  const bodyShade = 0x1A1018
   const rimColor = 0x6B4A28
-  // Основа (полуэллипс + прямоугольник снизу)
-  g.ellipse(0, h * 0.2, w * 0.5, h * 0.3).fill(bodyColor).stroke({ width: 3, color: rimColor })
-  g.rect(-w * 0.5, h * 0.0, w, h * 0.2).fill(bodyColor)
-  // Верхний ободок-эллипс (видимая верхняя овальная грань)
-  g.ellipse(0, -h * 0.0, w * 0.5, h * 0.12).fill(0x4A2A20).stroke({ width: 3, color: rimColor })
-  g.ellipse(0, -h * 0.02, w * 0.45, h * 0.10).fill(0x150810)
-  // «Бурлящая» жидкость внутри
-  g.ellipse(0, -h * 0.02, w * 0.4, h * 0.08).fill({ color: 0x6A3030, alpha: 0.7 })
-  g.ellipse(-w * 0.1, -h * 0.04, w * 0.08, h * 0.03).fill({ color: 0xC0608A, alpha: 0.8 })
-  g.ellipse(w * 0.15, -h * 0.05, w * 0.06, h * 0.025).fill({ color: 0xC0608A, alpha: 0.8 })
-  // Ручка-кольцо слева и справа
-  g.ellipse(-w * 0.52, -h * 0.05, w * 0.08, h * 0.04).fill({ color: 0, alpha: 0 }).stroke({ width: 4, color: rimColor })
-  g.ellipse(w * 0.52, -h * 0.05, w * 0.08, h * 0.04).fill({ color: 0, alpha: 0 }).stroke({ width: 4, color: rimColor })
-  // Ножки
-  g.rect(-w * 0.28, h * 0.45, w * 0.08, h * 0.18).fill(rimColor)
-  g.rect(w * 0.20, h * 0.45, w * 0.08, h * 0.18).fill(rimColor)
+  // Бочкообразное тело: используем безье, чтобы было реально объёмное.
+  // y=0 на верху ободка, y=h*0.9 у нижней округлости.
+  // Левая стенка → дно → правая стенка
+  g.moveTo(-w * 0.48, h * 0.05)
+    .bezierCurveTo(-w * 0.55, h * 0.45,  -w * 0.45, h * 0.85,  -w * 0.3, h * 0.88)
+    .lineTo(w * 0.3, h * 0.88)
+    .bezierCurveTo(w * 0.45, h * 0.85,  w * 0.55, h * 0.45,  w * 0.48, h * 0.05)
+    .closePath()
+    .fill(bodyColor)
+    .stroke({ width: 3, color: rimColor })
+  // Затенение справа
+  g.moveTo(w * 0.2, h * 0.1)
+    .bezierCurveTo(w * 0.42, h * 0.45,  w * 0.36, h * 0.78,  w * 0.18, h * 0.85)
+    .lineTo(w * 0.2, h * 0.1)
+    .closePath()
+    .fill({ color: bodyShade, alpha: 0.6 })
+  // Ободок-эллипс наверху (видимая овальная грань отверстия)
+  g.ellipse(0, h * 0.02, w * 0.48, h * 0.1).fill(0x4A2A20).stroke({ width: 3, color: rimColor })
+  // Тёмное жерло котла внутри
+  g.ellipse(0, h * 0.03, w * 0.43, h * 0.085).fill(0x150810)
+  // Бурлящая жидкость
+  g.ellipse(0, h * 0.03, w * 0.4, h * 0.07).fill({ color: 0x6A3030, alpha: 0.7 })
+  g.ellipse(-w * 0.1, h * 0.01, w * 0.08, h * 0.025).fill({ color: 0xC0608A, alpha: 0.8 })
+  g.ellipse(w * 0.15, h * 0.0, w * 0.06, h * 0.02).fill({ color: 0xC0608A, alpha: 0.8 })
+  // Кольца-ручки по бокам (на уровне ободка)
+  g.ellipse(-w * 0.5, h * 0.08, w * 0.07, h * 0.035)
+    .fill({ color: 0, alpha: 0 })
+    .stroke({ width: 4, color: rimColor })
+  g.ellipse(w * 0.5, h * 0.08, w * 0.07, h * 0.035)
+    .fill({ color: 0, alpha: 0 })
+    .stroke({ width: 4, color: rimColor })
+  // Ножки — три коротких куба, чтобы выглядели «приземистыми»
+  g.rect(-w * 0.32, h * 0.84, w * 0.1, h * 0.13).fill(rimColor).stroke({ width: 1.5, color: bodyShade })
+  g.rect(-w * 0.05, h * 0.86, w * 0.1, h * 0.12).fill(rimColor).stroke({ width: 1.5, color: bodyShade })
+  g.rect(w * 0.22, h * 0.84, w * 0.1, h * 0.13).fill(rimColor).stroke({ width: 1.5, color: bodyShade })
 }
 
 function shuffle<T>(arr: T[], rng: () => number): T[] {
@@ -375,12 +390,17 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
       const H = app.screen.height
       app.stage.removeChildren()
 
-      // Котёл — постоянный, в нижней части экрана
-      const cauldronW = Math.min(W * 0.72, 320)
-      const cauldronH = cauldronW * 0.55
+      // Котёл — постоянный, в нижней части экрана. Теперь высокий, не плоский:
+      // соотношение 0.85 высоты к ширине. Координаты внутри drawCauldron: y=0
+      // — верх ободка, y=h — низ ножек. Размещаем так, чтобы низ ножек был у
+      // самого низа канваса (с небольшим отступом).
+      const cauldronW = Math.min(W * 0.62, 280)
+      const cauldronH = cauldronW * 0.85
       const cauldronCX = W / 2
-      const cauldronCY = H - cauldronH * 0.45 - 8
-      const cauldronTopY = cauldronCY - cauldronH * 0.05
+      const cauldronTopY = H - cauldronH - 12          // верх ободка
+      const cauldronCY = cauldronTopY                  // origin контейнера = верх
+      // Точка, куда летят правильные ингредиенты (внутрь жерла, чуть ниже ободка)
+      const cauldronMouthY = cauldronTopY + cauldronH * 0.03
       const cauldronG = new Graphics()
       drawCauldron(cauldronG, cauldronW, cauldronH)
       const cCtr = new Container()
@@ -389,14 +409,18 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
       cCtr.addChild(cauldronG)
       app.stage.addChild(cCtr)
 
-      // Раскладка 7 слотов: 4 в верхнем ряду + 3 в нижнем (центрированные)
+      // Раскладка 7 слотов: 4 в верхнем ряду + 3 в нижнем (центрированные).
+      // Размер слота ограничен И высотой области, И шириной канваса.
       const slotsAreaTop = 12
-      const slotsAreaBottom = cauldronCY - cauldronH * 0.55 - 12
+      const slotsAreaBottom = cauldronTopY - 12
       const slotsAreaH = Math.max(120, slotsAreaBottom - slotsAreaTop)
       const rowGap = 8
-      const slotH = Math.min((slotsAreaH - rowGap) / 2, 110)
-      const slotW = slotH
       const colGap = 8
+      const sideMargin = 8
+      const maxSlotByH = (slotsAreaH - rowGap) / 2
+      const maxSlotByW = (W - sideMargin * 2 - colGap * 3) / 4  // 4 слота + 3 промежутка
+      const slotW = Math.max(48, Math.min(maxSlotByH, maxSlotByW, 110))
+      const slotH = slotW
       const row1Y = slotsAreaTop + slotH / 2 + 4
       const row2Y = row1Y + slotH + rowGap
       const row1Count = 4
@@ -470,14 +494,14 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
             const hit = new Graphics()
             hit.rect(-slotW / 2, -slotH / 2, slotW, slotH).fill({ color: 0xFFFFFF, alpha: 0.0001 })
             ctr.addChild(hit)
-            ctr.on('pointertap', () => onPickSlot(i, cauldronCX, cauldronTopY))
+            ctr.on('pointertap', () => onPickSlot(i, cauldronCX, cauldronMouthY))
           }
           app.stage.addChild(ctr)
         }
 
         // Переходы между состояниями
         if (slot.anim.state === 'flying' && now - slot.anim.startedAt >= FLY_MS) {
-          finalizeCorrectPick(cauldronCX, cauldronTopY)
+          finalizeCorrectPick(cauldronCX, cauldronMouthY)
         } else if (slot.anim.state === 'shake' && now - slot.anim.startedAt >= SHAKE_MS) {
           slot.anim.state = 'idle'
         } else if (slot.anim.state === 'reappearing' && now - slot.anim.startedAt >= 300) {
