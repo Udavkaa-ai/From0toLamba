@@ -7,6 +7,7 @@ import { tryAttachReferrer, countReferrals, REFERRAL_DEALS_THRESHOLD } from '../
 import { ensureWeekStartSnapshot } from '../../game/weeklyService'
 import { generateOnboardingProject } from '../../game/GenerateProjectService'
 import { toPublicDTO } from '../../game/projectUtils'
+import { computeArchetypeTokens } from '../../game/tokenService'
 
 export async function gameRoutes(app: FastifyInstance) {
 
@@ -178,6 +179,9 @@ export async function gameRoutes(app: FastifyInstance) {
       else                minigameStats[arch].lost += 1
     }
 
+    // Жетоны хозяев — внутриигровая мини-валюта по архетипам
+    const archetypeTokens = await computeArchetypeTokens(user.id)
+
     return {
       balance: gameState.balance,
       currentDay: gameState.currentDay,
@@ -189,6 +193,7 @@ export async function gameRoutes(app: FastifyInstance) {
       closedProjectsCount,
       dealsCount,              // число дел, в которые игрок вложил гроши
       minigameStats,           // статистика игр по архетипам: {BURATINO: {played, perfect, won, lost}, ...}
+      archetypeTokens,         // {BURATINO: {earned, spent, balance, gamesPlayed, dealsTaken}, ...}
       referralCount,           // число приведённых купцов
       weekStartWealth,         // снимок состояния на начало текущей недели
       userId: user.id,         // нужен для построения пригласительной ссылки

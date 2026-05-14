@@ -1047,6 +1047,8 @@ function MiniGameIntroScreen({
   const gameHint = info?.hint ?? 'Хозяин предложит испытание. Пройди его — и сможешь вложиться.'
   const gameBtn  = info?.startBtn ?? 'Принять испытание →'
   const stats = getMinigameStats(gameState, project.personaArchetype)
+  const tokenBalance = gameState?.archetypeTokens?.[project.personaArchetype]?.balance ?? 0
+  const hasToken = tokenBalance >= 1
 
   return (
     <div style={{ flex: 1, padding: spacing.lg, maxWidth: '500px', margin: '0 auto', width: '100%', boxSizing: 'border-box', overflowY: 'auto' }}>
@@ -1144,13 +1146,21 @@ function MiniGameIntroScreen({
       >
         <div style={{ fontSize: 32, lineHeight: 1 }}>💬</div>
         <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
             <span>Беседа с дельцом</span>
-            <span style={{
-              fontSize: 10, padding: '2px 6px',
-              background: colors.fairyGold, color: colors.nightBlue,
-              borderRadius: 6, fontWeight: 800, letterSpacing: '0.04em',
-            }}>10 ⭐</span>
+            {hasToken ? (
+              <span style={{
+                fontSize: 10, padding: '2px 6px',
+                background: colors.success, color: colors.nightBlue,
+                borderRadius: 6, fontWeight: 800, letterSpacing: '0.04em',
+              }}>🪙 жетон ({tokenBalance})</span>
+            ) : (
+              <span style={{
+                fontSize: 10, padding: '2px 6px',
+                background: colors.fairyGold, color: colors.nightBlue,
+                borderRadius: 6, fontWeight: 800, letterSpacing: '0.04em',
+              }}>10 ⭐</span>
+            )}
           </div>
           <div style={{ fontSize: 12, color: colors.textSecondary, fontWeight: 400, marginTop: 3, lineHeight: 1.4 }}>
             Задай до 10 вопросов лично. Опытный жулик звучит убедительно, но под давлением проговаривается — самый верный способ почуять скам.
@@ -1454,6 +1464,25 @@ function MiniGameResultSheet({
     : 'Дело осталось тайной — раскроется только за звёзды'
   const dealTypeLabel = (t.inbox.types as Record<string, string>)[project.type] ?? project.type
   const smartAmount = smartDefaultInvestAmount(gameState)
+  const tokenBalance = gameState?.archetypeTokens?.[archetype]?.balance ?? 0
+  const hasToken = tokenBalance >= 1
+
+  /** Списать жетон вместо Stars и сразу раскрыть подсказку */
+  const handleBypassWithToken = async () => {
+    if (bypassPending) return
+    setBypassError(null)
+    setBypassPending(true)
+    try {
+      const resp = await api.spendToken('minigame_bypass', project.id)
+      haptic?.notificationOccurred('success')
+      setRevealedInsight(resp.perfectInsight ?? null)
+      setBypassed(true)
+    } catch (err: any) {
+      setBypassError(err.message)
+    } finally {
+      setBypassPending(false)
+    }
+  }
 
   const handleBypass = async () => {
     if (bypassPending) return
@@ -1646,13 +1675,28 @@ function MiniGameResultSheet({
               {smartAmount > 0 ? `Вложить ${smartAmount} г` : t.charter.resultInvest}
             </button>
           ) : (
-            <button
-              onClick={handleBypass}
-              disabled={bypassPending}
-              style={{ ...primaryBtnStyle, flex: 1, opacity: bypassPending ? 0.6 : 1 }}
-            >
-              {bypassPending ? '⏳' : '10 ⭐ — раскрыть дело'}
-            </button>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <button
+                onClick={hasToken ? handleBypassWithToken : handleBypass}
+                disabled={bypassPending}
+                style={{ ...primaryBtnStyle, opacity: bypassPending ? 0.6 : 1 }}
+              >
+                {bypassPending ? '⏳' : hasToken ? `🪙 Раскрыть жетоном (${tokenBalance})` : '10 ⭐ — раскрыть дело'}
+              </button>
+              {hasToken && (
+                <button
+                  onClick={handleBypass}
+                  disabled={bypassPending}
+                  style={{
+                    background: 'transparent', border: 'none',
+                    color: colors.textMuted, fontSize: 11, cursor: 'pointer',
+                    padding: '2px 0', textDecoration: 'underline',
+                  }}
+                >
+                  Или 10 ⭐
+                </button>
+              )}
+            </div>
           )}
         </div>
       </motion.div>

@@ -108,6 +108,10 @@ export interface GameStateDTO {
   /** Статистика мини-игр по архетипам: «сколько раз играл с этим дельцом, как закончил».
    *  Ключ — personaArchetype (BURATINO, KOSCHEI и т.д.). errorCount: 0 = perfect, 1 = won, ≥2 = lost. */
   minigameStats: Record<string, { played: number; perfect: number; won: number; lost: number }>
+  /** Жетоны хозяев — мини-валюта по архетипам. earned = заработано (10 игр или
+   *  5 дел = +1 жетон), spent = потрачено, balance = доступно. Пусто для
+   *  архетипов, с которыми игрок ещё не сталкивался. */
+  archetypeTokens: Record<string, { earned: number; spent: number; balance: number; gamesPlayed: number; dealsTaken: number }>
   dayStreak: number
   isOnboardingComplete: boolean
   totalInvested: number
@@ -376,6 +380,12 @@ export const api = {
     get: () => apiClient.get<TodayDTO>('/today').then(r => r.data),
     claim: () => apiClient.post<TodayClaimDTO>('/today/claim').then(r => r.data),
   },
+
+  /** Списать жетон хозяина за фичу (вместо Stars) — для ama_unlock и minigame_bypass */
+  spendToken: (feature: 'ama_unlock' | 'minigame_bypass', projectId: string) =>
+    apiClient.post<{ success: boolean; perfectInsight?: string | null }>(
+      '/payments/spend-token', { feature, projectId },
+    ).then(r => r.data),
 
   invest: {
     invest: (projectId: string, amount: number, extraSlot?: 'groshy' | 'stars') =>

@@ -80,6 +80,22 @@ export function AmaPage() {
     staleTime: 0,
   })
 
+  // Жетон хозяина — если есть, можем открыть беседу бесплатно
+  const archetype = project?.personaArchetype ?? ''
+  const tokenBalance = gameState?.archetypeTokens?.[archetype]?.balance ?? 0
+  const hasToken = tokenBalance >= 1
+
+  const handleAmaWithToken = async () => {
+    if (!projectId) return
+    setAmaPaymentPending(true)
+    try {
+      await api.spendToken('ama_unlock', projectId)
+      await api.ama.start(projectId)
+      await refetchSession()
+    } catch { /* ignore */ }
+    setAmaPaymentPending(false)
+  }
+
   const handleAmaPayment = async () => {
     if (!projectId) return
     setAmaPaymentPending(true)
@@ -238,7 +254,7 @@ export function AmaPage() {
               {t.ama.paywallCost}
             </div>
             <button
-              onClick={handleAmaPayment}
+              onClick={hasToken ? handleAmaWithToken : handleAmaPayment}
               disabled={amaPaymentPending}
               style={{
                 width: '100%', maxWidth: '320px',
@@ -250,8 +266,25 @@ export function AmaPage() {
                 opacity: amaPaymentPending ? 0.6 : 1,
               }}
             >
-              {amaPaymentPending ? t.ama.paywallPending : t.ama.paywallBtn}
+              {amaPaymentPending
+                ? t.ama.paywallPending
+                : hasToken
+                  ? `🪙 Жетоном (${tokenBalance})`
+                  : t.ama.paywallBtn}
             </button>
+            {hasToken && (
+              <button
+                onClick={handleAmaPayment}
+                disabled={amaPaymentPending}
+                style={{
+                  background: 'transparent', border: 'none',
+                  color: colors.textMuted, fontSize: 12, cursor: 'pointer',
+                  padding: '6px 0', textDecoration: 'underline',
+                }}
+              >
+                Или {t.ama.paywallBtn}
+              </button>
+            )}
           </div>
         </div>
       </ScreenBackground>

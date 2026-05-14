@@ -7,6 +7,7 @@ import { createTimerSkipInvoice, createAmaUnlockInvoice, createExtraSlotInvoice,
 import { advanceDay } from '../../game/AdvanceDayService'
 import { buildPerfectInsight } from '../../game/CharterService'
 import { ProjectFate } from '../../game/types'
+import { spendArchetypeToken } from '../../game/tokenService'
 
 const STARS_AMOUNT = 10
 
@@ -73,6 +74,39 @@ export async function paymentsRoutes(app: FastifyInstance) {
     })
 
     return { invoiceLink }
+  })
+
+  // POST /api/payments/spend-token — оплатить фичу жетоном хозяина (вместо Stars).
+  // Бесплатно для ama_unlock и minigame_bypass, если у игрока есть жетон того
+  // архетипа, к которому относится дело.
+  app.post('/api/payments/spend-token', { preHandler: telegramAuthHook }, async (request, reply) => {
+    const tgUser = request.telegramUser
+    const bodySchema = z.object({
+      feature: z.enum(['ama_unlock', 'minigame_bypass']),
+      projectId: z.string(),
+    })
+    const body = bodySchema.safeParse(request.body)
+    if (!body.success) return reply.status(400).send({ error: 'Неверный запрос' })
+
+    const user = await prisma.user.findUniqueOrThrow({ where: { telegramId: String(tgUser.id) } })
+    const project = await prisma.project.findFirst({
+      where: { id: body.data.projectId, userId: user.id },
+      select: { personaArchetype: true },
+    })
+    if (!project) return reply.status(404).send({ error: 'Дело не найдено' })
+
+    try {
+      await spendArchetypeToken(user.id, project.personaArchetype)
+    } catch (err: any) {
+      if (err.message === 'NO_TOKENS') {
+        return reply.status(400).send({ error: 'Нет жетона этого хозяина' })
+      }
+      throw err
+    }
+
+    // После списания жетона активируем фичу как при платном пути
+    const result = await activateFeature(user.id, body.data.feature, body.data.projectId)
+    return result
   })
 
   // POST /api/payments/activate — активировать фичу после успешной оплаты

@@ -77,6 +77,12 @@ model GameState {
   loginStreak          Int       @default(0)
   lastSeenDay          String?   // YYYY-MM-DD в МСК — когда стрик последний раз обновлялся
   lastDailyClaim       String?   // YYYY-MM-DD — день последнего получения награды
+  // Жетоны-монеты по архетипам хозяев. Заработок: каждые 10 сыгранных
+  // мини-игр + каждые 5 взятых дел = 1 жетон. Тратится на бесплатную
+  // беседу с тем же хозяином или раскрытие дела при провале мини-игры.
+  // Заработок считается на лету из minigameSessions/projects, в БД
+  // храним только сколько потрачено. Map<archetype, count>.
+  archetypeTokensSpent Json      @default("{}")
   // Внеочередное объявление о группе купцов — показывается один раз
   marketAnnouncementSeen          Boolean   @default(false)
   marketAnnouncementRewardClaimed Boolean   @default(false)
