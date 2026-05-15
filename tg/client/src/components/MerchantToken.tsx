@@ -3,7 +3,7 @@ import { colors } from '@/theme'
 const ARCHETYPE_GLYPH: Record<string, string> = {
   BURATINO:   '🪆',
   BOYARIN:    '👑',
-  KOLOBOK:    '🥖',
+  KOLOBOK:    '🤗',
   KOSCHEI:    '💀',
   ZOLUSHKA:   '👠',
   BABA_YAGA:  '🧙‍♀️',

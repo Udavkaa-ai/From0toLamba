@@ -25,7 +25,7 @@ const SHORT_NAME: Record<Archetype, string> = {
 const ARCHETYPE_EMOJI: Record<Archetype, string> = {
   BURATINO: '🪆',
   BOYARIN: '👑',
-  KOLOBOK: '🥖',
+  KOLOBOK: '🤗',
   KOSCHEI: '💀',
   ZOLUSHKA: '👠',
   BABA_YAGA: '🧙‍♀️',

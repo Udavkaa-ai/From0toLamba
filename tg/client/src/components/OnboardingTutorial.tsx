@@ -273,11 +273,11 @@ function FairScene() {
 
 /** Слайд 2: 7 архетипов в виде стенда */
 function TrialsScene() {
-  // 7 архетипов: BURATINO 🪆 · BOYARIN 👑 · KOLOBOK 🥖 · KOSCHEI 💀 · ZOLUSHKA 👠 · BABA_YAGA 🧹 · IVAN_DURAK 🃏
+  // 7 архетипов: BURATINO 🪆 · BOYARIN 👑 · KOLOBOK 🤗 · KOSCHEI 💀 · ZOLUSHKA 👠 · BABA_YAGA 🧹 · IVAN_DURAK 🃏
   const archetypes: Array<{ emoji: string; tint: string; label: string }> = [
     { emoji: '🪆', tint: '#C03030', label: 'Буратино' },
     { emoji: '👑', tint: '#FFB800', label: 'Царь' },
-    { emoji: '🥖', tint: '#E9842B', label: 'Колобок' },
+    { emoji: '🤗', tint: '#E9842B', label: 'Колобок' },
     { emoji: '💀', tint: '#80C0FF', label: 'Кощей' },
     { emoji: '👠', tint: '#C080FF', label: 'Золушка' },
     { emoji: '🧙‍♀️', tint: '#90E060', label: 'Яга' },

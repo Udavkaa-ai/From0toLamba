@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Application, Container, Graphics, Ticker } from 'pixi.js'
+import { Application, Container, Graphics, Text, Ticker } from 'pixi.js'
 import { rngFromSeed } from './seedRng'
 import { colors, spacing } from '@/theme'
 import { playSound } from '@/sounds'
@@ -60,93 +60,32 @@ function pickCharacter(rng: () => number): Character {
 
 // ── Рисование персонажей ───────────────────────────────────────────────────
 
-function drawHare(g: Graphics, size: number) {
-  g.ellipse(-size * 0.32, -size * 0.85, size * 0.13, size * 0.42).fill(0xEEEEE6).stroke({ width: 2, color: 0x6F6F68 })
-  g.ellipse(size * 0.32, -size * 0.85, size * 0.13, size * 0.42).fill(0xEEEEE6).stroke({ width: 2, color: 0x6F6F68 })
-  g.ellipse(-size * 0.32, -size * 0.85, size * 0.06, size * 0.26).fill(0xF2A8B0)
-  g.ellipse(size * 0.32, -size * 0.85, size * 0.06, size * 0.26).fill(0xF2A8B0)
-  g.circle(0, 0, size * 0.55).fill(0xEEEEE6).stroke({ width: 2, color: 0x6F6F68 })
-  g.circle(-size * 0.25, size * 0.15, size * 0.13).fill({ color: 0xFFFFFF, alpha: 0.6 })
-  g.circle(size * 0.25, size * 0.15, size * 0.13).fill({ color: 0xFFFFFF, alpha: 0.6 })
-  g.circle(-size * 0.2, -size * 0.05, size * 0.08).fill(0x0D1735)
-  g.circle(size * 0.2, -size * 0.05, size * 0.08).fill(0x0D1735)
-  g.circle(-size * 0.18, -size * 0.08, size * 0.03).fill(0xFFFFFF)
-  g.circle(size * 0.22, -size * 0.08, size * 0.03).fill(0xFFFFFF)
-  g.ellipse(0, size * 0.18, size * 0.08, size * 0.05).fill(0xF06070)
-  g.rect(-size * 0.05, size * 0.22, size * 0.02, size * 0.18).fill(0x0D1735)
+
+// ── Персонажи через эмодзи ──────────────────────────────────────────────
+// Раньше каждое существо рисовалось примитивами Pixi.Graphics (≈80 строк).
+// У Telegram-клиента полированные emoji уже есть — пользуемся ими.
+// Для Колобка — 🤗 (круглое лицастое с румяными щеками), для зверушек — 🐰🐺🐻🦊.
+const CHARACTER_EMOJI: Record<Character, string> = {
+  hare:    '🐰',
+  wolf:    '🐺',
+  bear:    '🐻',
+  fox:     '🦊',
+  kolobok: '🤗',
 }
 
-function drawWolf(g: Graphics, size: number) {
-  const grey = 0x6E6E76
-  const greyD = 0x40404A
-  g.poly([-size * 0.45, -size * 0.3, -size * 0.18, -size * 0.95, -size * 0.08, -size * 0.35]).fill(grey).stroke({ width: 2, color: greyD })
-  g.poly([size * 0.45, -size * 0.3, size * 0.18, -size * 0.95, size * 0.08, -size * 0.35]).fill(grey).stroke({ width: 2, color: greyD })
-  g.poly([-size * 0.35, -size * 0.35, -size * 0.18, -size * 0.78, -size * 0.12, -size * 0.4]).fill(0x2A2A30)
-  g.poly([size * 0.35, -size * 0.35, size * 0.18, -size * 0.78, size * 0.12, -size * 0.4]).fill(0x2A2A30)
-  g.circle(0, 0, size * 0.55).fill(grey).stroke({ width: 2, color: greyD })
-  g.ellipse(0, size * 0.18, size * 0.42, size * 0.3).fill(0xC8C8D0)
-  g.circle(-size * 0.22, -size * 0.1, size * 0.09).fill(0xE9C530)
-  g.circle(size * 0.22, -size * 0.1, size * 0.09).fill(0xE9C530)
-  g.ellipse(-size * 0.22, -size * 0.1, size * 0.025, size * 0.07).fill(0x0D1735)
-  g.ellipse(size * 0.22, -size * 0.1, size * 0.025, size * 0.07).fill(0x0D1735)
-  g.ellipse(0, size * 0.3, size * 0.16, size * 0.1).fill(greyD)
-  g.ellipse(0, size * 0.22, size * 0.09, size * 0.06).fill(0x0D1735)
-}
-
-function drawBear(g: Graphics, size: number) {
-  const brown = 0x6B4423
-  const brownD = 0x3D2810
-  g.circle(-size * 0.42, -size * 0.55, size * 0.2).fill(brown).stroke({ width: 2, color: brownD })
-  g.circle(size * 0.42, -size * 0.55, size * 0.2).fill(brown).stroke({ width: 2, color: brownD })
-  g.circle(-size * 0.42, -size * 0.55, size * 0.1).fill(0xB07A50)
-  g.circle(size * 0.42, -size * 0.55, size * 0.1).fill(0xB07A50)
-  g.circle(0, 0, size * 0.6).fill(brown).stroke({ width: 2, color: brownD })
-  g.ellipse(0, size * 0.2, size * 0.35, size * 0.28).fill(0xC9956A)
-  g.circle(-size * 0.22, -size * 0.1, size * 0.08).fill(0x0D1735)
-  g.circle(size * 0.22, -size * 0.1, size * 0.08).fill(0x0D1735)
-  g.circle(-size * 0.2, -size * 0.13, size * 0.03).fill(0xFFFFFF)
-  g.circle(size * 0.24, -size * 0.13, size * 0.03).fill(0xFFFFFF)
-  g.ellipse(0, size * 0.12, size * 0.11, size * 0.08).fill(0x0D1735)
-}
-
-function drawFox(g: Graphics, size: number) {
-  const orange = 0xE9842B
-  const orangeD = 0x8C4E10
-  g.poly([-size * 0.4, -size * 0.35, -size * 0.2, -size * 0.95, -size * 0.05, -size * 0.4]).fill(orange).stroke({ width: 2, color: orangeD })
-  g.poly([size * 0.4, -size * 0.35, size * 0.2, -size * 0.95, size * 0.05, -size * 0.4]).fill(orange).stroke({ width: 2, color: orangeD })
-  g.poly([-size * 0.32, -size * 0.4, -size * 0.2, -size * 0.78, -size * 0.1, -size * 0.42]).fill(0x40282A)
-  g.poly([size * 0.32, -size * 0.4, size * 0.2, -size * 0.78, size * 0.1, -size * 0.42]).fill(0x40282A)
-  g.circle(0, 0, size * 0.55).fill(orange).stroke({ width: 2, color: orangeD })
-  g.poly([0, -size * 0.1, -size * 0.32, size * 0.45, size * 0.32, size * 0.45]).fill(0xF8E8D0)
-  g.ellipse(-size * 0.22, -size * 0.08, size * 0.08, size * 0.06).fill(0x0D1735)
-  g.ellipse(size * 0.22, -size * 0.08, size * 0.08, size * 0.06).fill(0x0D1735)
-  g.poly([0, size * 0.15, -size * 0.07, size * 0.28, size * 0.07, size * 0.28]).fill(0x0D1735)
-  g.rect(-size * 0.08, size * 0.32, size * 0.02, size * 0.18).fill(0x40282A)
-  g.rect(size * 0.06, size * 0.32, size * 0.02, size * 0.18).fill(0x40282A)
-}
-
-function drawKolobok(g: Graphics, size: number) {
-  const yellow = 0xFFCB45
-  const yellowD = 0xB07A10
-  g.circle(size * 0.07, size * 0.07, size * 0.62).fill({ color: 0x000000, alpha: 0.35 })
-  g.circle(0, 0, size * 0.6).fill(0xC9941A)
-  g.circle(-size * 0.05, -size * 0.05, size * 0.55).fill(yellow)
-  g.circle(-size * 0.15, -size * 0.15, size * 0.4).fill(0xFFE090)
-  g.circle(-size * 0.22, -size * 0.22, size * 0.18).fill(0xFFF6E0)
-  g.circle(0, 0, size * 0.6).stroke({ width: 2, color: yellowD })
-  g.circle(-size * 0.22, -size * 0.08, size * 0.07).fill(0x0D1735)
-  g.circle(size * 0.22, -size * 0.08, size * 0.07).fill(0x0D1735)
-  g.circle(-size * 0.35, size * 0.2, size * 0.08).fill({ color: 0xF06070, alpha: 0.5 })
-  g.circle(size * 0.35, size * 0.2, size * 0.08).fill({ color: 0xF06070, alpha: 0.5 })
-  g.arc(0, size * 0.1, size * 0.28, 0.15 * Math.PI, 0.85 * Math.PI).stroke({ width: 3, color: 0x0D1735 })
-}
-
-const DRAWERS: Record<Character, (g: Graphics, size: number) => void> = {
-  hare: drawHare,
-  wolf: drawWolf,
-  bear: drawBear,
-  fox: drawFox,
-  kolobok: drawKolobok,
+/** Помещаем эмодзи персонажа в Container (заменяет старый Graphics-рисунок). */
+function addCharacterEmoji(parent: Container, ch: Character, size: number): Text {
+  const t = new Text({
+    text: CHARACTER_EMOJI[ch],
+    style: {
+      fontSize: size * 1.8,
+      fontFamily: 'Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif',
+      align: 'center',
+    },
+  })
+  t.anchor.set(0.5)
+  parent.addChild(t)
+  return t
 }
 
 function drawHole(g: Graphics, w: number, h: number) {
@@ -228,9 +167,7 @@ export function KolobokGame({ seed, onComplete, restoredErrorCount }: KolobokGam
     // Колобок крупным планом по центру
     const koloC = new Container()
     koloC.x = cx; koloC.y = cy
-    const koloG = new Graphics()
-    drawKolobok(koloG, 64)
-    koloC.addChild(koloG)
+    addCharacterEmoji(koloC, 'kolobok', 64)
     app.stage.addChild(koloC)
 
     // 4 зверушки вокруг — по часовой стрелке, начиная сверху
@@ -245,9 +182,7 @@ export function KolobokGame({ seed, onComplete, restoredErrorCount }: KolobokGam
       const c = item.ctr
       c.x = cx + Math.cos(item.angle) * radius
       c.y = cy + Math.sin(item.angle) * radius
-      const g = new Graphics()
-      DRAWERS[item.ch](g, 44)
-      c.addChild(g)
+      addCharacterEmoji(c, item.ch, 44)
       app.stage.addChild(c)
     }
 
@@ -361,12 +296,9 @@ export function KolobokGame({ seed, onComplete, restoredErrorCount }: KolobokGam
           charBox.addChild(hit)
 
           // Внутренний контейнер — здесь scale.y анимируется (выскакивание).
+          // Внутри лежит emoji-Text персонажа; пересоздаётся при каждом spawn.
           const inner = new Container()
           charBox.addChild(inner)
-
-          const charGfx = new Graphics()
-          inner.addChild(charGfx)
-          ;(charBox as any).__charGfx = charGfx
           ;(charBox as any).__inner = inner
           ;(charBox as any).__cellH = cellH
 
@@ -501,10 +433,11 @@ export function KolobokGame({ seed, onComplete, restoredErrorCount }: KolobokGam
       }
 
       if (!box.visible) {
-        const g: Graphics = (box as any).__charGfx
+        const innerCtr: Container = (box as any).__inner
         const cellH: number = (box as any).__cellH
-        g.clear()
-        DRAWERS[hole.character](g, cellH * 0.32)
+        // Удаляем старого персонажа из inner-контейнера и кладём нового
+        innerCtr.removeChildren()
+        addCharacterEmoji(innerCtr, hole.character, cellH * 0.32)
         box.visible = true
         box.eventMode = 'static'
       }

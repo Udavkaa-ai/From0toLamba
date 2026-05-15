@@ -1939,7 +1939,7 @@ function TokensQuickChip({ onNavigate }: { onNavigate: () => void }) {
   const { gameState } = useGameStore()
   const tokens = gameState?.archetypeTokens ?? {}
   const archEmoji: Record<string, string> = {
-    BURATINO: '🪆', BOYARIN: '👑', KOLOBOK: '🥖', KOSCHEI: '💀',
+    BURATINO: '🪆', BOYARIN: '👑', KOLOBOK: '🤗', KOSCHEI: '💀',
     ZOLUSHKA: '👠', BABA_YAGA: '🧙‍♀️', IVAN_DURAK: '🃏',
   }
   const withBalance = Object.entries(tokens)
