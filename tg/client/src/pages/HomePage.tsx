@@ -1207,6 +1207,9 @@ export function HomePage() {
           </FairyCard>
         </motion.div>
 
+        {/* Быстрый доступ к «Отношениям» — чип с суммарным числом жетонов */}
+        <TokensQuickChip onNavigate={() => navigate('/relationships')} />
+
         {/* Активные дела */}
         {gameState.activeProjects.length > 0 && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
@@ -1927,6 +1930,73 @@ function InboxFeedCard({ project, delay, onPress }: { project: ProjectDTO; delay
         </div>
       </FairyCard>
     </motion.div>
+  )
+}
+
+// Чип-кнопка «Отношения с дельцами» — быстрый доступ на главной.
+// Показывает сумму всех жетонов + до 3-х эмодзи хозяев, по которым жетоны есть.
+function TokensQuickChip({ onNavigate }: { onNavigate: () => void }) {
+  const { gameState } = useGameStore()
+  const tokens = gameState?.archetypeTokens ?? {}
+  const archEmoji: Record<string, string> = {
+    BURATINO: '🪆', BOYARIN: '👑', KOLOBOK: '🥖', KOSCHEI: '💀',
+    ZOLUSHKA: '👠', BABA_YAGA: '🧙‍♀️', IVAN_DURAK: '🃏',
+  }
+  const withBalance = Object.entries(tokens)
+    .filter(([, v]) => (v as any)?.balance > 0)
+    .map(([k]) => k)
+  const totalBalance = Object.values(tokens).reduce((s, v) => s + ((v as any)?.balance ?? 0), 0)
+  const sampleEmojis = withBalance.slice(0, 3).map(a => archEmoji[a] ?? '🪙')
+
+  return (
+    <motion.button
+      onClick={onNavigate}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.15 }}
+      whileTap={{ scale: 0.98 }}
+      style={{
+        width: '100%',
+        display: 'flex', alignItems: 'center', gap: spacing.sm,
+        marginBottom: spacing.lg,
+        padding: `${spacing.sm} ${spacing.md}`,
+        background: `linear-gradient(135deg, ${colors.fairyGold}22, ${colors.fairyGold}0A)`,
+        border: `1px solid ${colors.fairyGold}66`,
+        borderRadius: 14,
+        color: colors.fairyGold,
+        cursor: 'pointer',
+        fontFamily: 'inherit',
+        textAlign: 'left',
+        boxShadow: totalBalance > 0 ? `0 0 16px ${colors.fairyGold}25` : 'none',
+      }}
+    >
+      <div style={{ fontSize: 22, lineHeight: 1 }}>🪙</div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span>Отношения с дельцами</span>
+          {totalBalance > 0 && (
+            <span style={{
+              padding: '2px 8px', borderRadius: 8,
+              background: colors.fairyGold, color: colors.nightBlue,
+              fontSize: 11, fontWeight: 800, fontVariantNumeric: 'tabular-nums',
+            }}>
+              {totalBalance}
+            </span>
+          )}
+        </div>
+        <div style={{ fontSize: 11, color: colors.textMuted, marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
+          {sampleEmojis.length > 0 ? (
+            <>
+              <span style={{ letterSpacing: '0.1em' }}>{sampleEmojis.join(' ')}</span>
+              <span>· жетоны хозяев в копилке</span>
+            </>
+          ) : (
+            <span>7 хозяев · жетоны и статистика</span>
+          )}
+        </div>
+      </div>
+      <span style={{ fontSize: 16, color: colors.fairyGold, opacity: 0.6 }}>→</span>
+    </motion.button>
   )
 }
 

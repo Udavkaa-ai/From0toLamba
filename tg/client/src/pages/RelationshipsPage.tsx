@@ -176,7 +176,9 @@ function RelationshipDetails({ archetype, onClose }: { archetype: Archetype; onC
           background: `linear-gradient(180deg, ${colors.enchantedPurple} 0%, ${colors.nightBlue} 100%)`,
           borderTop: `2px solid ${tint}`,
           borderRadius: '20px 20px 0 0',
-          padding: `${spacing.lg} ${spacing.lg} calc(${spacing.lg} + env(safe-area-inset-bottom))`,
+          // 80px доп.запас снизу — иначе нижняя навигация и чат-кнопка
+          // (position:fixed FAB) перекрывают последний абзац листа
+          padding: `${spacing.lg} ${spacing.lg} calc(80px + ${spacing.lg} + env(safe-area-inset-bottom))`,
           boxShadow: '0 -8px 32px rgba(0,0,0,0.6)',
         }}
       >
