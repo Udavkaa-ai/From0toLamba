@@ -46,7 +46,7 @@ export function TodayPage() {
         <div style={{ textAlign: 'center', marginBottom: spacing.xxl }}>
           <PageTitle>Сегодня</PageTitle>
           <div style={{ color: colors.textMuted, fontSize: 12, marginTop: 4 }}>
-            Дневной ритуал, награды за стрик и купеческий рейтинг
+            Дневной ритуал, награды за серию и купеческий рейтинг
           </div>
         </div>
 
@@ -118,7 +118,7 @@ function StreakBlock({ today, onClaim, pending }: {
 
       {claimed ? (
         <div style={{ color: colors.success, fontSize: 14, fontWeight: 700, padding: `${spacing.sm} 0` }}>
-          ✓ Награда получена. Заходи завтра — стрик не оборвётся.
+          ✓ Награда получена. Заходи завтра — серия не оборвётся.
         </div>
       ) : (
         <button
@@ -164,17 +164,18 @@ function StreakBlock({ today, onClaim, pending }: {
 
 function MilestonesBlock({ today }: { today: TodayDTO }) {
   const list: Array<{ day: number; bonus: number }> = [
-    { day: 3, bonus: 50 },
-    { day: 7, bonus: 150 },
-    { day: 14, bonus: 400 },
+    { day: 3,  bonus: 50 },
+    { day: 5,  bonus: 70 },
+    { day: 7,  bonus: 100 },
+    { day: 10, bonus: 150 },
+    { day: 15, bonus: 300 },
+    { day: 20, bonus: 500 },
     { day: 30, bonus: 1000 },
-    { day: 60, bonus: 2500 },
-    { day: 100, bonus: 10000 },
   ]
   return (
     <FairyCard style={{ marginBottom: spacing.lg }}>
       <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: 14, marginBottom: spacing.sm }}>
-        Лестница стрика
+        Лестница серии
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 6 }}>
         {list.map(m => {

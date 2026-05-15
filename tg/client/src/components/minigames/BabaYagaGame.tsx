@@ -589,25 +589,32 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
     triggerDrain()
   }
 
-  // Финальная сцена: после complete() ставим оставшиеся слоты на «летят
-  // в котёл» с шагом ~450мс между каждым. Drain активен → finalizeCorrectPick
-  // на flying-завершении не вызывается, слот просто исчезает в котле
-  // (state='consumed'), а сверху вылетают зелёные пузыри.
+  // Финальная сцена: циклический «дождь» ингредиентов сверху в котёл.
+  // Раз в DRAIN_INTERVAL_MS из верха канваса спавнится частица — летит
+  // 1.2 сек по дуге в жерло котла, на приземлении взлетают зелёные пузыри.
+  // Цикл повторяется бесконечно, пока компонент смонтирован (т.е. до
+  // навигации). Слоты-карты убираем — после complete их все ставим в
+  // state 'consumed' (невидимы), сцена остаётся «бабушка-варит-зелье».
   const drainModeRef = useRef(false)
+  const drainParticlesRef = useRef<Array<{
+    ingredient: Ingredient
+    startedAt: number
+    durationMs: number
+    startX: number
+    startY: number
+    targetX: number
+    targetY: number
+    spin: number
+  }>>([])
+  const drainNextSpawnRef = useRef(0)
   const triggerDrain = () => {
     drainModeRef.current = true
-    const slots = slotsRef.current
-    const idle = slots.filter(s => s.anim.state === 'idle')
-    idle.forEach((slot, idx) => {
-      setTimeout(() => {
-        if (!refApp.current || !canvasDims) return
-        const { cauldronCX, cauldronMouthY } = computeLayout(canvasDims.w, canvasDims.h)
-        slot.anim.state = 'flying'
-        slot.anim.startedAt = performance.now()
-        slot.anim.targetX = cauldronCX
-        slot.anim.targetY = cauldronMouthY
-      }, idx * 450)
-    })
+    // Прячем все слоты — финальный «дождь» приходит сверху, отдельно от них
+    for (const slot of slotsRef.current) {
+      slot.anim.state = 'consumed'
+      slot.anim.startedAt = performance.now()
+    }
+    drainNextSpawnRef.current = performance.now()  // первая частица сразу
   }
 
   // Мониторим размер канваса — для DOM-overlay хит-зон и совпадающей с Pixi
@@ -817,20 +824,57 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
 
         // Переходы между состояниями
         if (slot.anim.state === 'flying' && now - slot.anim.startedAt >= FLY_MS) {
-          if (drainModeRef.current) {
-            // Финальное падение: слот «съеден» котлом, не возвращается
-            slot.anim.state = 'consumed'
-            if (canvasDims) {
-              const { cauldronCX, cauldronMouthY } = computeLayout(canvasDims.w, canvasDims.h)
-              spawnBubbles(cauldronCX, cauldronMouthY)
-            }
-          } else {
-            finalizeCorrectPick()
-          }
+          finalizeCorrectPick()
         } else if (slot.anim.state === 'shake' && now - slot.anim.startedAt >= SHAKE_MS) {
           slot.anim.state = 'idle'
         } else if (slot.anim.state === 'reappearing' && now - slot.anim.startedAt >= 300) {
           slot.anim.state = 'idle'
+        }
+      }
+
+      // ── Циклический дождь после игры ─────────────────────────────────
+      // Раз в DRAIN_INTERVAL_MS из верха канваса вылетает новая частица —
+      // случайный ингредиент из рецепта, летит по дуге в жерло котла.
+      if (drainModeRef.current) {
+        const DRAIN_INTERVAL_MS = 650
+        const DRAIN_FALL_MS = 1300
+        if (now >= drainNextSpawnRef.current) {
+          drainNextSpawnRef.current = now + DRAIN_INTERVAL_MS
+          const ing = recipe[Math.floor(Math.random() * recipe.length)]
+          drainParticlesRef.current.push({
+            ingredient: ing,
+            startedAt: now,
+            durationMs: DRAIN_FALL_MS,
+            startX: cauldronCX + (Math.random() - 0.5) * (W * 0.5),
+            startY: -slotH * 0.5,
+            targetX: cauldronCX + (Math.random() - 0.5) * (cauldronW * 0.25),
+            targetY: cauldronMouthY,
+            spin: (Math.random() - 0.5) * Math.PI * 3,
+          })
+        }
+        const particles = drainParticlesRef.current
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i]
+          const t = (now - p.startedAt) / p.durationMs
+          if (t >= 1) {
+            particles.splice(i, 1)
+            spawnBubbles(cauldronCX, cauldronMouthY)
+            continue
+          }
+          const eased = t * t * 0.85 + t * 0.15  // ускорение к низу
+          const cx = p.startX + (p.targetX - p.startX) * eased
+          const cy = p.startY + (p.targetY - p.startY) * eased
+          const fadeAlpha = t > 0.85 ? Math.max(0, (1 - t) / 0.15) : 1
+          const c = new Container()
+          c.x = cx
+          c.y = cy
+          c.rotation = p.spin * eased
+          c.alpha = fadeAlpha
+          c.scale.set(1 - eased * 0.3)
+          const ig = new Graphics()
+          DRAWERS[p.ingredient](ig, slotH * 0.46)
+          c.addChild(ig)
+          app.stage.addChild(c)
         }
       }
 

@@ -1,7 +1,7 @@
 import { prisma } from '../db/prisma'
 
 /**
- * Дневные стрики «вкладка Сегодня».
+ * Дневные серии «вкладка Сегодня».
  *
  * Логика:
  *   - Каждый игровой день в МСК. Дата в формате YYYY-MM-DD.
@@ -40,12 +40,13 @@ export interface ClaimResult {
 }
 
 const MILESTONES: Array<{ day: number; bonus: number }> = [
-  { day: 3,   bonus: 50 },
-  { day: 7,   bonus: 150 },
-  { day: 14,  bonus: 400 },
-  { day: 30,  bonus: 1000 },
-  { day: 60,  bonus: 2500 },
-  { day: 100, bonus: 10000 },
+  { day: 3,  bonus: 50 },
+  { day: 5,  bonus: 70 },
+  { day: 7,  bonus: 100 },
+  { day: 10, bonus: 150 },
+  { day: 15, bonus: 300 },
+  { day: 20, bonus: 500 },
+  { day: 30, bonus: 1000 },
 ]
 
 /** Сегодняшняя дата в МСК (UTC+3) в формате YYYY-MM-DD */
@@ -77,7 +78,7 @@ function nextMilestoneAfter(streak: number): { day: number; bonus: number; daysL
 }
 
 /**
- * Обновить стрик при заходе на вкладку «Сегодня».
+ * Обновить серию при заходе на вкладку «Сегодня».
  * Идемпотентно: повторный вызов в тот же день ничего не меняет.
  */
 export async function touchLoginStreak(userId: number): Promise<void> {
