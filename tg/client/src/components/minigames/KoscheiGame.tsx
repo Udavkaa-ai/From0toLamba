@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Application, Container, Graphics } from 'pixi.js'
+import { Application, Container, Graphics, Text } from 'pixi.js'
 import { rngFromSeed } from './seedRng'
 import { colors, spacing } from '@/theme'
 import { playSound } from '@/sounds'
@@ -47,168 +47,57 @@ function dealCards(rng: () => number): Card[] {
   return indices.map(symbolIdx => ({ symbolIdx, state: 'closed' as const }))
 }
 
-// ── Символы (процедурно через Pixi.Graphics) ───────────────────────────────
-// Все рисуются центрированно в (0,0), параметр `size` — половина «коробки».
 
-function drawOak(g: Graphics, size: number) {
-  const trunkW = size * 0.22
-  const trunkH = size * 0.55
-  // Ствол
-  g.rect(-trunkW / 2, size * 0.05, trunkW, trunkH).fill(0x6B4423).stroke({ width: 1.5, color: 0x2A1A08 })
-  // Крона — три перекрывающихся круга
-  g.circle(-size * 0.4, -size * 0.05, size * 0.42).fill(0x3D6B2B).stroke({ width: 1.5, color: 0x1F3D14 })
-  g.circle(size * 0.4, -size * 0.05, size * 0.42).fill(0x3D6B2B).stroke({ width: 1.5, color: 0x1F3D14 })
-  g.circle(0, -size * 0.45, size * 0.5).fill(0x4A7C3A).stroke({ width: 1.5, color: 0x1F3D14 })
-  // Блик
-  g.circle(-size * 0.15, -size * 0.55, size * 0.12).fill({ color: 0x8FCB6F, alpha: 0.55 })
-}
-
-function drawChest(g: Graphics, size: number) {
-  const w = size * 1.4
-  const h = size * 0.9
-  // Основание
-  g.rect(-w / 2, 0, w, h).fill(0xB8772E).stroke({ width: 1.5, color: 0x3D2A05 })
-  // Крышка (дугообразная)
-  g.poly([
-    -w / 2,  0,
-    -w / 2, -h * 0.25,
-    -w * 0.45, -h * 0.55,
-    w * 0.45, -h * 0.55,
-    w / 2, -h * 0.25,
-    w / 2, 0,
-  ]).fill(0xCC8F00).stroke({ width: 1.5, color: 0x3D2A05 })
-  // Окантовка
-  g.rect(-w / 2, h * 0.45, w, h * 0.1).fill(0x8C6200).stroke({ width: 1, color: 0x3D2A05 })
-  g.rect(-w * 0.42, h * 0.05, w * 0.04, h * 0.4).fill(0x8C6200)
-  g.rect(w * 0.38, h * 0.05, w * 0.04, h * 0.4).fill(0x8C6200)
-  // Замок
-  g.rect(-w * 0.08, -h * 0.05, w * 0.16, h * 0.3).fill(0x3D2A05).stroke({ width: 1, color: 0x000000 })
-  g.circle(0, h * 0.05, w * 0.04).fill(0xFFB800)
-  // Блик на крышке
-  g.rect(-w * 0.3, -h * 0.42, w * 0.2, h * 0.06).fill({ color: 0xFFE082, alpha: 0.6 })
-}
-
-function drawHare(g: Graphics, size: number) {
-  const grey = 0xD0D0C8
-  const greyDark = 0x6F6F68
-  // Уши
-  g.ellipse(-size * 0.25, -size * 0.55, size * 0.12, size * 0.35).fill(grey).stroke({ width: 1.5, color: greyDark })
-  g.ellipse(size * 0.25, -size * 0.55, size * 0.12, size * 0.35).fill(grey).stroke({ width: 1.5, color: greyDark })
-  // Внутреннее ухо
-  g.ellipse(-size * 0.25, -size * 0.55, size * 0.05, size * 0.22).fill(0xE8B0B0)
-  g.ellipse(size * 0.25, -size * 0.55, size * 0.05, size * 0.22).fill(0xE8B0B0)
-  // Голова
-  g.circle(0, -size * 0.1, size * 0.4).fill(grey).stroke({ width: 1.5, color: greyDark })
-  // Глаза
-  g.circle(-size * 0.15, -size * 0.15, size * 0.05).fill(0x0D1735)
-  g.circle(size * 0.15, -size * 0.15, size * 0.05).fill(0x0D1735)
-  // Нос
-  g.circle(0, -size * 0.02, size * 0.06).fill(0x8C3F3F)
-  // Тело
-  g.ellipse(0, size * 0.45, size * 0.55, size * 0.35).fill(grey).stroke({ width: 1.5, color: greyDark })
-  // Лапы
-  g.ellipse(-size * 0.3, size * 0.75, size * 0.18, size * 0.1).fill(grey).stroke({ width: 1, color: greyDark })
-  g.ellipse(size * 0.3, size * 0.75, size * 0.18, size * 0.1).fill(grey).stroke({ width: 1, color: greyDark })
-}
-
-function drawDuck(g: Graphics, size: number) {
-  const yellow = 0xEFD08C
-  const yellowDark = 0xA37A28
-  // Тело
-  g.ellipse(0, size * 0.25, size * 0.55, size * 0.4).fill(yellow).stroke({ width: 1.5, color: yellowDark })
-  // Хвост
-  g.poly([
-    -size * 0.55, size * 0.25,
-    -size * 0.78, size * 0.05,
-    -size * 0.55, size * 0.35,
-  ]).fill(yellow).stroke({ width: 1.5, color: yellowDark })
-  // Голова
-  g.circle(size * 0.35, -size * 0.2, size * 0.3).fill(yellow).stroke({ width: 1.5, color: yellowDark })
-  // Клюв
-  g.poly([
-    size * 0.6,  -size * 0.25,
-    size * 0.85, -size * 0.18,
-    size * 0.85, -size * 0.08,
-    size * 0.6,   size * 0.0,
-  ]).fill(0xE89030).stroke({ width: 1.5, color: 0x5A3A12 })
-  // Глаз
-  g.circle(size * 0.42, -size * 0.25, size * 0.05).fill(0x0D1735)
-  // Крыло (волна)
-  g.ellipse(-size * 0.05, size * 0.2, size * 0.3, size * 0.18).fill(0xF5DCA0).stroke({ width: 1, color: yellowDark })
-}
-
-function drawEgg(g: Graphics, size: number) {
-  // Тень
-  g.ellipse(size * 0.05, size * 0.05, size * 0.55, size * 0.7).fill({ color: 0x8C6200, alpha: 0.4 })
-  // Яйцо
-  g.ellipse(0, 0, size * 0.55, size * 0.7).fill(0xF5E4C7).stroke({ width: 2, color: 0x8C6200 })
-  // Блик
-  g.ellipse(-size * 0.2, -size * 0.3, size * 0.15, size * 0.18).fill({ color: 0xFFFAEC, alpha: 0.8 })
-}
-
-function drawNeedle(g: Graphics, size: number) {
-  const silver = 0xCFCFD8
-  const silverDark = 0x7A7A85
-  // Игла под углом (диагональ от верхне-левого к нижне-правому)
-  // Тень
-  g.poly([
-    -size * 0.6 + 2, -size * 0.6 + 3,
-    size * 0.7 + 2,  size * 0.7 + 3,
-    size * 0.62 + 2, size * 0.78 + 3,
-    -size * 0.68 + 2, -size * 0.52 + 3,
-  ]).fill({ color: 0x000000, alpha: 0.35 })
-  // Тело иглы
-  g.poly([
-    -size * 0.6, -size * 0.6,
-    size * 0.7,  size * 0.7,
-    size * 0.62, size * 0.78,
-    -size * 0.68, -size * 0.52,
-  ]).fill(silver).stroke({ width: 1.5, color: silverDark })
-  // Ушко
-  g.ellipse(-size * 0.62, -size * 0.55, size * 0.13, size * 0.18).fill(silver).stroke({ width: 1.5, color: silverDark })
-  g.ellipse(-size * 0.62, -size * 0.55, size * 0.06, size * 0.1).fill(0x0D1735)
-  // Острый кончик
-  g.poly([
-    size * 0.66, size * 0.74,
-    size * 0.78, size * 0.86,
-    size * 0.62, size * 0.78,
-  ]).fill(silverDark)
-  // Блик
-  g.poly([
-    -size * 0.55, -size * 0.5,
-    size * 0.6, size * 0.65,
-    size * 0.58, size * 0.7,
-    -size * 0.6, -size * 0.45,
-  ]).fill({ color: 0xFFFFFF, alpha: 0.35 })
-}
-
-const SYMBOL_DRAWERS = [drawOak, drawChest, drawHare, drawDuck, drawEgg, drawNeedle]
+// ── Символы — эмодзи, без процедурного рисования ───────────────────────────
+// Раньше каждый символ собирался из десятков Pixi-примитивов. Сейчас рендерим
+// эмодзи текстом — Telegram-клиент даёт полированный цветной emoji-глиф.
+const SYMBOL_EMOJI = ['🌳', '🧰', '🐰', '🦆', '🥚', '🪡'] as const
 const SYMBOL_NAMES = ['Дуб', 'Сундук', 'Заяц', 'Утка', 'Яйцо', 'Игла']
+void SYMBOL_NAMES  // оставлено для будущей пасхалки/подсказки
 
-function drawCard(g: Graphics, state: CardState, symbolIdx: number, w: number, h: number) {
+function makeSymbolEmoji(idx: number, size: number): Text {
+  const t = new Text({
+    text: SYMBOL_EMOJI[idx],
+    style: {
+      fontSize: size * 1.6,
+      fontFamily: 'Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif',
+      align: 'center',
+    },
+  })
+  t.anchor.set(0.5)
+  return t
+}
+
+/** Карточка — фон (Graphics) + при необходимости emoji-символ (Text).
+ *  Раньше drawCard рисовал и фон, и символ через Pixi.Graphics. Теперь
+ *  символ — эмодзи через Text, для лучшего визуала. Возвращаем готовый
+ *  Container'ом, чтобы вызывающий просто addChild. */
+function buildCardNode(state: CardState, symbolIdx: number, w: number, h: number): Container {
+  const node = new Container()
   const cardFill = state === 'matched' ? 0x1A3D2A : 0x1B1438
   const cardBorder = state === 'matched' ? 0x4FD89C : (state === 'open' ? 0xFFB800 : 0x6B5C90)
   const r = 10
 
-  // Фон карточки
-  g.roundRect(-w / 2, -h / 2, w, h, r).fill(cardFill).stroke({ width: 2, color: cardBorder })
+  const bg = new Graphics()
+  bg.roundRect(-w / 2, -h / 2, w, h, r).fill(cardFill).stroke({ width: 2, color: cardBorder })
+  node.addChild(bg)
 
   if (state === 'closed') {
-    // Орнаментальный «рубашка» — четыре ромба и центральный знак
-    g.poly([0, -h * 0.3,  w * 0.18, -h * 0.15,  0, 0,  -w * 0.18, -h * 0.15])
+    // Орнаментальная «рубашка» — четыре ромба и центральный знак
+    const orn = new Graphics()
+    orn.poly([0, -h * 0.3,  w * 0.18, -h * 0.15,  0, 0,  -w * 0.18, -h * 0.15])
       .fill({ color: 0xFFB800, alpha: 0.18 })
       .stroke({ width: 1, color: 0xFFB800, alpha: 0.5 })
-    g.poly([0,  h * 0.3,  w * 0.18,  h * 0.15,  0, 0,  -w * 0.18,  h * 0.15])
+    orn.poly([0,  h * 0.3,  w * 0.18,  h * 0.15,  0, 0,  -w * 0.18,  h * 0.15])
       .fill({ color: 0xFFB800, alpha: 0.18 })
       .stroke({ width: 1, color: 0xFFB800, alpha: 0.5 })
-    // Центральный знак — череп Кощея намёком (крест в круге)
-    g.circle(0, 0, h * 0.08).fill(0xFFB800).stroke({ width: 1.5, color: 0x3D2A05 })
+    orn.circle(0, 0, h * 0.08).fill(0xFFB800).stroke({ width: 1.5, color: 0x3D2A05 })
+    node.addChild(orn)
   } else {
-    // Открытая или сматченная — рисуем символ
-    const drawer = SYMBOL_DRAWERS[symbolIdx]
-    const symbolSize = Math.min(w, h) * 0.36
-    drawer(g, symbolSize)
+    // Открытая или сматченная — emoji-символ
+    node.addChild(makeSymbolEmoji(symbolIdx, Math.min(w, h) * 0.36))
   }
+  return node
 }
 
 export function KoscheiGame({ seed, onComplete, restoredErrorCount }: KoscheiGameProps) {
@@ -280,10 +169,8 @@ export function KoscheiGame({ seed, onComplete, restoredErrorCount }: KoscheiGam
       const c = new Container()
       c.x = x; c.y = y
       c.addChild(card)
-      // Сам символ — рисуем процедурно из набора DRAWERS
-      const sym = new Graphics()
-      SYMBOL_DRAWERS[item.symbolIdx](sym, cellSize * 0.36)
-      c.addChild(sym)
+      // Сам символ — эмодзи через Text
+      c.addChild(makeSymbolEmoji(item.symbolIdx, cellSize * 0.36))
       app.stage.addChild(c)
     }
   }, [showPyramid, pixiReady])
@@ -429,9 +316,7 @@ export function KoscheiGame({ seed, onComplete, restoredErrorCount }: KoscheiGam
           outer.eventMode = 'static'
           outer.cursor = card.state === 'closed' ? 'pointer' : 'default'
 
-          const g = new Graphics()
-          drawCard(g, card.state, card.symbolIdx, cellW, cellH)
-          outer.addChild(g)
+          outer.addChild(buildCardNode(card.state, card.symbolIdx, cellW, cellH))
 
           if (card.state === 'closed') {
             outer.on('pointertap', () => handleCardTap(idx))
