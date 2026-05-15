@@ -11,7 +11,7 @@ const haptic = tg?.HapticFeedback
 
 const HAND_SIZE = 7
 const ROUNDS = 7
-const ROUND_SECONDS = 2.0       // 2 секунды на каждый ход
+const ROUND_SECONDS = 2.5       // 2.5 секунды на каждый ход (раньше было 2.0)
 const READY_SECONDS = 3         // обратный отсчёт перед первой картой
 const FEEDBACK_MS = 300         // длительность фидбека (зелёная/красная подсветка)
 const DECK_POOL_SIZE = HAND_SIZE + ROUNDS  // 14 уникальных карт нужно подготовить
@@ -313,21 +313,33 @@ export function IvanDurakGame({ seed, onComplete, restoredErrorCount }: IvanDura
       ivanCtr.y = ivanY
       app.stage.addChild(ivanCtr)
 
-      // Рука: HAND_SIZE карт в нижней половине
+      // Рука: HAND_SIZE карт в нижней части веером. На узком экране карты
+      // перекрываются (масть и ранг в верхнем-левом углу остаются видны),
+      // чтобы каждая была достаточно крупной для попадания пальцем.
       const order = handOrders[round]
-      const cardW = Math.min(72, (app.screen.width - 24) / order.length - 6)
+      const sideMargin = 8
+      const targetW = app.screen.width - sideMargin * 2
+      // Карта должна занимать значительную долю экрана — не меньше 70px,
+      // максимум ~95px на больших экранах
+      const cardW = Math.max(70, Math.min(95, targetW * 0.22))
       const cardH = cardW * 1.45
-      const gap = 4
-      const totalW = order.length * cardW + (order.length - 1) * gap
+      // Шаг между картами — столько, сколько надо, чтобы все order.length
+      // штук поместились в targetW; ограничен снизу (нельзя слишком плотно),
+      // максимум — без перекрытия (cardW + 6)
+      const stride = order.length > 1
+        ? Math.max(cardW * 0.42, Math.min(cardW + 6, (targetW - cardW) / (order.length - 1)))
+        : 0
+      const totalW = cardW + stride * (order.length - 1)
       const startX = (app.screen.width - totalW) / 2 + cardW / 2
-      const handY = app.screen.height - cardH / 2 - 20
+      // Снизу оставляем больший зазор, чтобы карты не упирались в край канваса
+      const handY = app.screen.height - cardH / 2 - 36
 
       for (let i = 0; i < order.length; i++) {
         const handIdx = order[i]
         const card = rd.hand[handIdx]
         const fb = feedback?.idx === i ? feedback.state : 'normal'
         const c = buildCard(card, cardW, cardH, fb)
-        c.x = startX + i * (cardW + gap)
+        c.x = startX + i * stride
         c.y = handY
         const offset = i - (order.length - 1) / 2
         c.y -= Math.abs(offset) * 2
