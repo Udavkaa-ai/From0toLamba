@@ -325,48 +325,122 @@ function drawIngredientCard(g: Graphics, ing: Ingredient, w: number, h: number, 
   DRAWERS[ing](g, Math.min(w, h) * 0.46)
 }
 
-/** Большой котёл — рисуем процедурно через Pixi.Graphics: высокий, с глубоким
- *  телом, ободком, ручками-кольцами и ножками. Координаты в системе котла:
- *  y=0 — верхний край отверстия, h ≈ полная высота от ободка до низа ножек. */
+/** Котёл с подставкой и огнём под ней — как на референсе колдуньи.
+ *  Координаты в системе котла: y=0 — верхний край отверстия, y=h —
+ *  низ подставки. Тело занимает 0-0.7h, подставка-тренога 0.6-0.85h,
+ *  огонь и поленья 0.82-1.0h. */
 function drawCauldron(g: Graphics, w: number, h: number) {
-  const bodyColor = 0x2A1A20
-  const bodyShade = 0x1A1018
-  const rimColor = 0x6B4A28
-  // Бочкообразное тело: используем безье, чтобы было реально объёмное.
-  // y=0 на верху ободка, y=h*0.9 у нижней округлости.
-  // Левая стенка → дно → правая стенка
+  const bodyColor = 0x252028
+  const bodyHi = 0x4A4248
+  const bodyShade = 0x12101A
+  const rimColor = 0x8C7A48
+  const ironColor = 0x504048
+
+  // ── Тело котла: округлая бочкообразная форма, 0 → 0.7h ─────────────────
+  // Левая стенка → дно → правая стенка через безье
   g.moveTo(-w * 0.48, h * 0.05)
-    .bezierCurveTo(-w * 0.55, h * 0.45,  -w * 0.45, h * 0.85,  -w * 0.3, h * 0.88)
-    .lineTo(w * 0.3, h * 0.88)
-    .bezierCurveTo(w * 0.45, h * 0.85,  w * 0.55, h * 0.45,  w * 0.48, h * 0.05)
+    .bezierCurveTo(-w * 0.56, h * 0.32,  -w * 0.48, h * 0.65,  -w * 0.25, h * 0.7)
+    .lineTo(w * 0.25, h * 0.7)
+    .bezierCurveTo(w * 0.48, h * 0.65,  w * 0.56, h * 0.32,  w * 0.48, h * 0.05)
     .closePath()
     .fill(bodyColor)
-    .stroke({ width: 3, color: rimColor })
-  // Затенение справа
+    .stroke({ width: 3, color: bodyShade })
+
+  // Лёгкий блик слева (источник света сверху-слева)
+  g.moveTo(-w * 0.42, h * 0.08)
+    .bezierCurveTo(-w * 0.5, h * 0.32,  -w * 0.44, h * 0.55,  -w * 0.32, h * 0.62)
+    .lineTo(-w * 0.32, h * 0.62)
+    .bezierCurveTo(-w * 0.34, h * 0.55,  -w * 0.4, h * 0.3,  -w * 0.36, h * 0.08)
+    .closePath()
+    .fill({ color: bodyHi, alpha: 0.45 })
+
+  // Тёмная тень справа
   g.moveTo(w * 0.2, h * 0.1)
-    .bezierCurveTo(w * 0.42, h * 0.45,  w * 0.36, h * 0.78,  w * 0.18, h * 0.85)
+    .bezierCurveTo(w * 0.45, h * 0.35,  w * 0.38, h * 0.6,  w * 0.2, h * 0.66)
     .lineTo(w * 0.2, h * 0.1)
     .closePath()
-    .fill({ color: bodyShade, alpha: 0.6 })
-  // Ободок-эллипс наверху (видимая овальная грань отверстия)
-  g.ellipse(0, h * 0.02, w * 0.48, h * 0.1).fill(0x4A2A20).stroke({ width: 3, color: rimColor })
-  // Тёмное жерло котла внутри
-  g.ellipse(0, h * 0.03, w * 0.43, h * 0.085).fill(0x150810)
-  // Бурлящая жидкость
-  g.ellipse(0, h * 0.03, w * 0.4, h * 0.07).fill({ color: 0x6A3030, alpha: 0.7 })
-  g.ellipse(-w * 0.1, h * 0.01, w * 0.08, h * 0.025).fill({ color: 0xC0608A, alpha: 0.8 })
-  g.ellipse(w * 0.15, h * 0.0, w * 0.06, h * 0.02).fill({ color: 0xC0608A, alpha: 0.8 })
-  // Кольца-ручки по бокам (на уровне ободка)
-  g.ellipse(-w * 0.5, h * 0.08, w * 0.07, h * 0.035)
+    .fill({ color: bodyShade, alpha: 0.55 })
+
+  // ── Ободок и отверстие ─────────────────────────────────────────────────
+  // Толстый верхний ободок (внешний край шире тела)
+  g.ellipse(0, h * 0.03, w * 0.5, h * 0.1).fill(bodyShade).stroke({ width: 3, color: rimColor })
+  // Сама дырка
+  g.ellipse(0, h * 0.04, w * 0.44, h * 0.085).fill(0x100612)
+  // Бурлящая зелёная жидкость
+  g.ellipse(0, h * 0.04, w * 0.4, h * 0.07).fill({ color: 0x4A8030, alpha: 0.85 })
+  // Пузыри-кругляши
+  g.circle(-w * 0.1, h * 0.02, w * 0.04).fill({ color: 0x8FD060, alpha: 0.9 })
+  g.circle(w * 0.13, h * 0.0, w * 0.03).fill({ color: 0x8FD060, alpha: 0.9 })
+  g.circle(w * 0.02, h * 0.06, w * 0.025).fill({ color: 0xB0E080, alpha: 0.95 })
+
+  // ── Ручки-кольца по бокам ──────────────────────────────────────────────
+  g.ellipse(-w * 0.5, h * 0.18, w * 0.08, h * 0.04)
     .fill({ color: 0, alpha: 0 })
     .stroke({ width: 4, color: rimColor })
-  g.ellipse(w * 0.5, h * 0.08, w * 0.07, h * 0.035)
+  g.ellipse(w * 0.5, h * 0.18, w * 0.08, h * 0.04)
     .fill({ color: 0, alpha: 0 })
     .stroke({ width: 4, color: rimColor })
-  // Ножки — три коротких куба, чтобы выглядели «приземистыми»
-  g.rect(-w * 0.32, h * 0.84, w * 0.1, h * 0.13).fill(rimColor).stroke({ width: 1.5, color: bodyShade })
-  g.rect(-w * 0.05, h * 0.86, w * 0.1, h * 0.12).fill(rimColor).stroke({ width: 1.5, color: bodyShade })
-  g.rect(w * 0.22, h * 0.84, w * 0.1, h * 0.13).fill(rimColor).stroke({ width: 1.5, color: bodyShade })
+
+  // ── Кованая подставка-тренога ──────────────────────────────────────────
+  // Горизонтальная перекладина под котлом
+  g.rect(-w * 0.35, h * 0.7, w * 0.7, h * 0.025).fill(ironColor).stroke({ width: 1, color: bodyShade })
+  // Левая «ножка» подставки с завитком внизу
+  g.moveTo(-w * 0.3, h * 0.72)
+    .lineTo(-w * 0.36, h * 0.88)
+    .stroke({ width: 4, color: ironColor })
+  g.circle(-w * 0.38, h * 0.9, w * 0.04)
+    .fill({ color: 0, alpha: 0 })
+    .stroke({ width: 3, color: ironColor })
+  // Правая «ножка»
+  g.moveTo(w * 0.3, h * 0.72)
+    .lineTo(w * 0.36, h * 0.88)
+    .stroke({ width: 4, color: ironColor })
+  g.circle(w * 0.38, h * 0.9, w * 0.04)
+    .fill({ color: 0, alpha: 0 })
+    .stroke({ width: 3, color: ironColor })
+  // Центральная стойка
+  g.moveTo(0, h * 0.72).lineTo(0, h * 0.9).stroke({ width: 3, color: ironColor })
+
+  // ── Огонь и поленья под котлом ─────────────────────────────────────────
+  // Поленья — два коричневых прямоугольника крест-накрест
+  g.rect(-w * 0.25, h * 0.92, w * 0.5, h * 0.05).fill(0x6A3810).stroke({ width: 1.5, color: 0x3A1F08 })
+  g.rect(-w * 0.18, h * 0.95, w * 0.36, h * 0.04).fill(0x4A2810).stroke({ width: 1, color: 0x3A1F08 })
+  // Линии волокон на полене
+  g.moveTo(-w * 0.2, h * 0.94).lineTo(w * 0.2, h * 0.94).stroke({ width: 1, color: 0x3A1F08 })
+  // Языки пламени — три красно-оранжевых треугольных формы
+  // Левый
+  g.moveTo(-w * 0.18, h * 0.92)
+    .quadraticCurveTo(-w * 0.2, h * 0.82,  -w * 0.12, h * 0.78)
+    .quadraticCurveTo(-w * 0.08, h * 0.86, -w * 0.1, h * 0.92)
+    .closePath()
+    .fill(0xFF6020)
+  g.moveTo(-w * 0.16, h * 0.92)
+    .quadraticCurveTo(-w * 0.14, h * 0.85, -w * 0.13, h * 0.83)
+    .quadraticCurveTo(-w * 0.1, h * 0.88, -w * 0.12, h * 0.92)
+    .closePath()
+    .fill(0xFFCB45)
+  // Центральный — самый высокий
+  g.moveTo(-w * 0.06, h * 0.92)
+    .quadraticCurveTo(-w * 0.05, h * 0.76,  0, h * 0.72)
+    .quadraticCurveTo(w * 0.05, h * 0.78,  w * 0.06, h * 0.92)
+    .closePath()
+    .fill(0xFF6020)
+  g.moveTo(-w * 0.03, h * 0.92)
+    .quadraticCurveTo(-w * 0.02, h * 0.82, 0, h * 0.78)
+    .quadraticCurveTo(w * 0.03, h * 0.85, w * 0.03, h * 0.92)
+    .closePath()
+    .fill(0xFFCB45)
+  // Правый
+  g.moveTo(w * 0.1, h * 0.92)
+    .quadraticCurveTo(w * 0.08, h * 0.83, w * 0.14, h * 0.8)
+    .quadraticCurveTo(w * 0.2, h * 0.86, w * 0.18, h * 0.92)
+    .closePath()
+    .fill(0xFF6020)
+  g.moveTo(w * 0.12, h * 0.92)
+    .quadraticCurveTo(w * 0.11, h * 0.86, w * 0.14, h * 0.84)
+    .quadraticCurveTo(w * 0.17, h * 0.88, w * 0.16, h * 0.92)
+    .closePath()
+    .fill(0xFFCB45)
 }
 
 /** Раскладка котла и слотов из размера канваса. Используется и в Pixi-рендере,
