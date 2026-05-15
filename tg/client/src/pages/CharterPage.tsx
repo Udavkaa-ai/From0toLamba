@@ -525,7 +525,7 @@ function TutorialGraphicalExample({ archetype }: { archetype: string }) {
           <Card label="Эталон" tone="neutral">🗝️</Card>
           <div style={{ alignSelf: 'center', color: colors.textMuted, fontSize: 18 }}>→</div>
           <Card label="Тот же" tone="good">🗝️</Card>
-          <Card label="Похож, но не он" tone="bad">🪛</Card>
+          <Card label="Похож, но не он" tone="bad">🔑</Card>
         </div>
       </div>
     )

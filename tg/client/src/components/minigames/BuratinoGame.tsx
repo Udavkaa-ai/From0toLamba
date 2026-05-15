@@ -191,7 +191,9 @@ function drawKey(g: Graphics, p: KeyParams, scale: number) {
 
 /** Тень-эллипс под ключом — не вращается. */
 function drawShadow(g: Graphics, width: number) {
-  g.ellipse(0, 95, width * 0.6, 8).fill({ color: 0x000000, alpha: 0.35 })
+  // Уменьшенная тень: меньше радиусы, ниже непрозрачность —
+  // на тёмном фоне крупная чёрная клякса смотрелась лишней.
+  g.ellipse(0, 90, width * 0.4, 5).fill({ color: 0x000000, alpha: 0.18 })
 }
 
 export function BuratinoGame({ seed, difficulty, onComplete, restoredErrorCount }: BuratinoGameProps) {
