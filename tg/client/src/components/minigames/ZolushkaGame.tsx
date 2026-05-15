@@ -141,14 +141,28 @@ function buildFakes(real: CoinTemplate, rng: () => number): CoinType[] {
 
 // ── Базовая шейдинг-подложка монеты ────────────────────────────────────────
 function drawCoinShading(g: Graphics, c: CoinType, radius: number) {
-  g.circle(0, 0, radius + 1).fill(c.rim)
-  g.circle(0, 0, radius).fill(c.shade)
-  g.circle(radius * 0.08, radius * 0.08, radius * 0.92).fill(c.base)
-  g.circle(-radius * 0.05, -radius * 0.05, radius * 0.82).fill(c.base)
-  g.circle(-radius * 0.18, -radius * 0.18, radius * 0.58).fill(c.lite)
-  g.circle(-radius * 0.32, -radius * 0.32, radius * 0.28).fill(c.hi)
-  g.circle(-radius * 0.4, -radius * 0.4, radius * 0.08).fill(0xFFFAEC)
-  g.circle(0, 0, radius * 0.82).stroke({ width: 2, color: c.rim, alpha: 0.6 })
+  // Плоская монета с краем-фаской вместо «шарика». Слои:
+  //   1. Внешний тёмный обод (имитирует боковую грань монеты)
+  //   2. Лицевая поверхность — почти плоская заливка base с лёгким
+  //      градиент-намёком через два смещённых эллипса
+  //   3. Тонкий световой блик сверху (lite), маленькая тёмная дуга снизу (shade)
+  //   4. Декоративное внутреннее кольцо как на настоящих монетах
+  // Цель: не «полушарие», а вид монеты сверху, как на царских червонцах.
+  g.circle(0, 0, radius).fill(c.rim)                  // боковая грань
+  g.circle(0, 0, radius - 2).fill(c.shade)            // фаска
+  g.circle(0, 0, radius - 4).fill(c.base)             // лицевая поверхность
+  // Лёгкий верхний блик — узкий эллипс, небольшая прозрачность
+  g.ellipse(0, -radius * 0.55, radius * 0.65, radius * 0.16)
+    .fill({ color: c.lite, alpha: 0.55 })
+  g.ellipse(-radius * 0.25, -radius * 0.55, radius * 0.25, radius * 0.08)
+    .fill({ color: c.hi, alpha: 0.7 })
+  // Нижняя тёмная дуга — намёк на лежащую тень от фаски
+  g.ellipse(0, radius * 0.55, radius * 0.7, radius * 0.12)
+    .fill({ color: c.shade, alpha: 0.45 })
+  // Декоративное внутреннее кольцо (как ободок гравировки)
+  g.circle(0, 0, radius * 0.82).stroke({ width: 1.5, color: c.rim, alpha: 0.55 })
+  // Чёткий внутренний контур фаски
+  g.circle(0, 0, radius - 4).stroke({ width: 1, color: c.shade, alpha: 0.8 })
 }
 
 function drawMotif(g: Graphics, motif: Motif, r: number, color: number, scale = 1) {
@@ -893,13 +907,17 @@ function CoinFaceCss({ size, kind, coin }: { size: number; kind: 'front' | 'back
   const baseCss  = hexToCss(coin.base)
   const liteCss  = hexToCss(coin.lite)
   const hiCss    = hexToCss(coin.hi)
-  const bgGradient = `radial-gradient(circle at 32% 32%,
-    #FFFAEC 0%,
-    ${hiCss} 12%,
-    ${liteCss} 30%,
-    ${baseCss} 55%,
-    ${shadeCss} 80%,
-    ${rimCss} 100%)`
+  // Плоская монета, не «шарик». Двухслойная структура:
+  //   1. Внешний div — тёмный обод (боковая грань монеты), padding 2px
+  //   2. Внутренний div — лицевая поверхность с почти плоским градиентом
+  //      и узким верхним бликом + нижней тенью (inset box-shadow)
+  // Цель: вид сверху как на гравюре, без полусферы.
+  const rimThickness = Math.max(2, Math.round(size * 0.05))
+  const faceBg = `radial-gradient(circle at 50% 38%,
+    ${liteCss} 0%,
+    ${baseCss} 28%,
+    ${baseCss} 78%,
+    ${shadeCss} 100%)`
 
   // Размеры мотивов соответствуют Pixi-функции drawMotif:
   //   front: r * 0.35 (35% от радиуса = 17.5% от диаметра)
@@ -909,46 +927,60 @@ function CoinFaceCss({ size, kind, coin }: { size: number; kind: 'front' | 'back
     <div style={{
       width: size, height: size,
       borderRadius: '50%',
-      background: bgGradient,
-      boxShadow: `inset 0 -2px 6px ${rimCss}80, 0 2px 8px rgba(0,0,0,0.5)`,
+      background: rimCss,
+      padding: rimThickness,
+      boxShadow: `0 3px 8px rgba(0,0,0,0.55), 0 0 0 1px ${shadeCss}80`,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      position: 'relative',
       flexShrink: 0,
+      boxSizing: 'border-box',
     }}>
-      {kind === 'front' ? (
-        <>
-          <div style={{
-            fontFamily: 'Georgia, "Times New Roman", serif',
-            fontWeight: 800,
-            fontSize: size * 0.55,
-            color: rimCss,
-            lineHeight: 1,
-            textShadow: `0 1px 0 ${hiCss}80`,
-          }}>
-            {coin.label}
-          </div>
-          <div style={{
-            position: 'absolute',
-            top: size * 0.08,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <MotifSVG motif={coin.frontMotif} size={motifSizePx} color={rimCss} />
-          </div>
-          <div style={{
-            position: 'absolute',
-            bottom: size * 0.08,
-            color: rimCss,
-            fontFamily: 'Georgia, serif',
-            fontSize: size * 0.13,
-            fontWeight: 700,
-            letterSpacing: 0.3,
-          }}>{coin.caption}</div>
-        </>
-      ) : (
-        <MotifSVG motif={coin.backMotif} size={motifSizePx} color={rimCss} />
-      )}
+      <div style={{
+        width: '100%', height: '100%',
+        borderRadius: '50%',
+        background: faceBg,
+        boxShadow: `
+          inset 0 ${rimThickness * 0.6}px 0 ${hiCss}60,
+          inset 0 -${rimThickness * 0.6}px ${rimThickness * 0.8}px ${shadeCss}88,
+          inset 0 0 0 1px ${shadeCss}60
+        `,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        position: 'relative',
+      }}>
+        {kind === 'front' ? (
+          <>
+            <div style={{
+              fontFamily: 'Georgia, "Times New Roman", serif',
+              fontWeight: 800,
+              fontSize: size * 0.55,
+              color: rimCss,
+              lineHeight: 1,
+              textShadow: `0 1px 0 ${hiCss}80, 0 -1px 0 ${shadeCss}60`,
+            }}>
+              {coin.label}
+            </div>
+            <div style={{
+              position: 'absolute',
+              top: size * 0.08,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <MotifSVG motif={coin.frontMotif} size={motifSizePx} color={rimCss} />
+            </div>
+            <div style={{
+              position: 'absolute',
+              bottom: size * 0.08,
+              color: rimCss,
+              fontFamily: 'Georgia, serif',
+              fontSize: size * 0.13,
+              fontWeight: 700,
+              letterSpacing: 0.3,
+            }}>{coin.caption}</div>
+          </>
+        ) : (
+          <MotifSVG motif={coin.backMotif} size={motifSizePx} color={rimCss} />
+        )}
+      </div>
     </div>
   )
 }
