@@ -565,16 +565,42 @@ function TutorialGraphicalExample({ archetype }: { archetype: string }) {
   }
 
   if (archetype === 'ZOLUSHKA') {
+    // Маленький превью монеты: пара цифра / символ через слэш, имитирует
+    // аверс и реверс. У подделок — отличие либо в цифре (другой номинал),
+    // либо в символе (другой герб).
+    const CoinPreview = ({ num, sym }: { num: string; sym: string }) => (
+      <div style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        gap: 2, fontFamily: 'Georgia, serif',
+      }}>
+        <div style={{
+          width: 28, height: 28, borderRadius: '50%',
+          background: 'radial-gradient(circle at 50% 38%, #FFE090, #C9941A 70%, #8C6200 100%)',
+          border: '2px solid #5A3A05',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 14, fontWeight: 800, color: '#3D2A05',
+          boxShadow: 'inset 0 -1px 2px rgba(0,0,0,0.4)',
+        }}>{num}</div>
+        <div style={{
+          width: 28, height: 28, borderRadius: '50%',
+          background: 'radial-gradient(circle at 50% 38%, #FFE090, #C9941A 70%, #8C6200 100%)',
+          border: '2px solid #5A3A05',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 14, color: '#3D2A05',
+          boxShadow: 'inset 0 -1px 2px rgba(0,0,0,0.4)',
+        }}>{sym}</div>
+      </div>
+    )
     return (
       <div style={{ marginBottom: spacing.md }}>
         <div style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 6 }}>
-          Лови монету, что совпадает с эталоном с обеих сторон. Подделка может быть похожа только аверсом ИЛИ только реверсом:
+          У каждой монеты две стороны: цифра и символ. Подделка отличается либо аверсом, либо реверсом — лови только если совпадают обе:
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <Card label="Эталон" tone="neutral">🪙</Card>
-          <Card label="Та же (лови)" tone="good">🪙</Card>
-          <Card label="Подделка" tone="bad">🥈</Card>
-          <Card label="Подделка" tone="bad">🥉</Card>
+          <Card label="Эталон" tone="neutral"><CoinPreview num="3" sym="✦" /></Card>
+          <Card label="Та же (лови)" tone="good"><CoinPreview num="3" sym="✦" /></Card>
+          <Card label="Подделка" tone="bad"><CoinPreview num="5" sym="✦" /></Card>
+          <Card label="Подделка" tone="bad"><CoinPreview num="3" sym="☼" /></Card>
         </div>
       </div>
     )

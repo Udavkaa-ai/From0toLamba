@@ -472,6 +472,10 @@ export function ZolushkaGame({ seed, onComplete, restoredErrorCount }: ZolushkaG
         return
       }
       refMount.current.appendChild(app.canvas)
+      // SVG-декор замка имеет position:absolute и без явного zIndex стакается
+      // ПОВЕРХ static canvas — башни перекрывали монеты. Поднимаем канвас.
+      app.canvas.style.position = 'relative'
+      app.canvas.style.zIndex = '1'
       refApp.current = app
       setPixiReady(true)
 
@@ -665,7 +669,7 @@ export function ZolushkaGame({ seed, onComplete, restoredErrorCount }: ZolushkaG
           preserveAspectRatio="xMidYMax slice"
           style={{
             position: 'absolute', inset: 0, width: '100%', height: '100%',
-            pointerEvents: 'none', opacity: 0.65,
+            pointerEvents: 'none', opacity: 0.65, zIndex: 0,
           }}
         >
           <defs>
