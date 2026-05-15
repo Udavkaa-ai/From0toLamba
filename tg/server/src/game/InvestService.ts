@@ -59,9 +59,14 @@ export async function invest(
     prisma.amaSession.findUnique({ where: { projectId } }),
   ])
 
-  // Если игрок прошёл мини-игру без ошибок — шанс «переломить судьбу» дела
-  // на одну ступеньку лучше. errorCount хранится в AmaSession.intuitionDelta
-  // (legacy-имя поля, см. CharterService).
+  // Шанс «переломить судьбу» (превратить дело в UNICORN) даётся ТОЛЬКО за
+  // честно сыгранную идеальную мини-игру (errorCount === 0).
+  // Bypass за 10 звёзд или жетоном НЕ влияет на этот шанс: при провале
+  // intuitionDelta остаётся = 2, и условие errorCount===0 ложно. Базовый
+  // шанс UNICORN (≈5% из FATE_CONFIG.weight) уже сидит в проекте на этапе
+  // генерации — bypass только раскрывает подсказку, но не делает дело
+  // лучше. Так что максимум +5% к UNICORN получают исключительно те, кто
+  // сыграл идеально сам.
   const errorCount = amaSession?.intuitionDelta ?? null
   const fateShift = errorCount === 0
     ? maybeShiftFate(project.fate as ProjectFate)
