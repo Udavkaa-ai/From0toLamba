@@ -23,144 +23,299 @@ interface BabaYagaGameProps {
   restoredErrorCount?: number | null
 }
 
-type Ingredient = 'frog' | 'mushroom' | 'bat' | 'skull' | 'moonstone' | 'spider' | 'fang' | 'feather'
-const ALL_INGREDIENTS: Ingredient[] = ['frog', 'mushroom', 'bat', 'skull', 'moonstone', 'spider', 'fang', 'feather']
+// 12 узнаваемых ингредиентов. Из них для каждой партии выбираются RECIPE_LENGTH
+// (=5) случайно — так подбор разный каждый раз, как и просил тестировщик.
+type Ingredient =
+  | 'frog' | 'mushroom' | 'spider' | 'skull' | 'bat'
+  | 'eye' | 'snake' | 'bone' | 'pumpkin'
+  | 'acorn' | 'bottle' | 'worm'
+const ALL_INGREDIENTS: Ingredient[] = [
+  'frog', 'mushroom', 'spider', 'skull', 'bat',
+  'eye', 'snake', 'bone', 'pumpkin',
+  'acorn', 'bottle', 'worm',
+]
 
 // ── Процедурное рисование ингредиентов (2D Pixi, без 3D) ──────────────────
 
+// Лягушка — крупная круглая голова, глаза-«шарики» сверху, рот-улыбка
 function drawFrog(g: Graphics, size: number) {
   const green = 0x4A8A3E
   const greenD = 0x2A5022
-  g.ellipse(0, size * 0.15, size * 0.55, size * 0.4).fill(green).stroke({ width: 2, color: greenD })
-  g.circle(-size * 0.35, -size * 0.15, size * 0.18).fill(green).stroke({ width: 2, color: greenD })
-  g.circle(size * 0.35, -size * 0.15, size * 0.18).fill(green).stroke({ width: 2, color: greenD })
-  g.circle(-size * 0.35, -size * 0.15, size * 0.1).fill(0xF5E4C7)
-  g.circle(size * 0.35, -size * 0.15, size * 0.1).fill(0xF5E4C7)
-  g.circle(-size * 0.35, -size * 0.13, size * 0.05).fill(0x0D1735)
-  g.circle(size * 0.35, -size * 0.13, size * 0.05).fill(0x0D1735)
-  g.moveTo(-size * 0.2, size * 0.25).lineTo(size * 0.2, size * 0.25).stroke({ width: 3, color: greenD })
-  g.ellipse(-size * 0.45, size * 0.35, size * 0.15, size * 0.08).fill(green).stroke({ width: 2, color: greenD })
-  g.ellipse(size * 0.45, size * 0.35, size * 0.15, size * 0.08).fill(green).stroke({ width: 2, color: greenD })
+  // Тело-голова
+  g.ellipse(0, size * 0.1, size * 0.55, size * 0.42).fill(green).stroke({ width: 2.5, color: greenD })
+  // Глаза-шарики
+  g.circle(-size * 0.32, -size * 0.22, size * 0.2).fill(green).stroke({ width: 2.5, color: greenD })
+  g.circle(size * 0.32, -size * 0.22, size * 0.2).fill(green).stroke({ width: 2.5, color: greenD })
+  // Белок глаз
+  g.circle(-size * 0.32, -size * 0.22, size * 0.13).fill(0xFFFFFF)
+  g.circle(size * 0.32, -size * 0.22, size * 0.13).fill(0xFFFFFF)
+  // Зрачки
+  g.circle(-size * 0.32, -size * 0.19, size * 0.07).fill(0x0D1735)
+  g.circle(size * 0.32, -size * 0.19, size * 0.07).fill(0x0D1735)
+  // Рот-улыбка
+  g.arc(0, size * 0.05, size * 0.28, 0.1 * Math.PI, 0.9 * Math.PI).stroke({ width: 3, color: greenD })
+  // Ноздри
+  g.circle(-size * 0.08, -size * 0.05, size * 0.025).fill(greenD)
+  g.circle(size * 0.08, -size * 0.05, size * 0.025).fill(greenD)
 }
 
+// Мухомор — красная шляпка с белыми точками + белая ножка с юбочкой
 function drawMushroom(g: Graphics, size: number) {
-  g.poly([
-    -size * 0.55, size * 0.05,
-    -size * 0.5, -size * 0.35,
-    size * 0.5, -size * 0.35,
-    size * 0.55, size * 0.05,
-  ]).fill(0xC03030).stroke({ width: 2, color: 0x5A0808 })
-  g.poly([-size * 0.55, size * 0.05, -size * 0.5, -size * 0.35, size * 0.5, -size * 0.35, size * 0.55, size * 0.05, 0, size * 0.18]).fill(0xC03030)
-  g.circle(-size * 0.25, -size * 0.15, size * 0.07).fill(0xFFFFFF)
-  g.circle(size * 0.15, -size * 0.2, size * 0.08).fill(0xFFFFFF)
-  g.circle(size * 0.3, size * 0.0, size * 0.06).fill(0xFFFFFF)
-  g.circle(-size * 0.05, -size * 0.05, size * 0.05).fill(0xFFFFFF)
-  g.rect(-size * 0.2, size * 0.05, size * 0.4, size * 0.5).fill(0xF5E4C7).stroke({ width: 2, color: 0x8C6200 })
-  g.ellipse(0, size * 0.2, size * 0.25, size * 0.06).fill(0xE0CC9A).stroke({ width: 1.5, color: 0x8C6200 })
+  // Ножка
+  g.roundRect(-size * 0.16, size * 0.05, size * 0.32, size * 0.5, 4).fill(0xF8F2E0).stroke({ width: 2, color: 0x8C6200 })
+  // Юбочка
+  g.ellipse(0, size * 0.15, size * 0.22, size * 0.06).fill(0xE0CC9A).stroke({ width: 1.5, color: 0x8C6200 })
+  // Шляпка (купол)
+  const cap: number[] = []
+  const segments = 20
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments
+    const angle = Math.PI * (1 - t)
+    const x = Math.cos(angle) * size * 0.55
+    const y = -size * 0.05 - Math.sin(angle) * size * 0.32
+    cap.push(x, y)
+  }
+  cap.push(size * 0.55, size * 0.02)
+  cap.push(-size * 0.55, size * 0.02)
+  g.poly(cap).fill(0xC03030).stroke({ width: 2, color: 0x5A0808 })
+  // Белые точки на шляпке
+  g.circle(-size * 0.25, -size * 0.18, size * 0.07).fill(0xFFFAEC)
+  g.circle(size * 0.15, -size * 0.22, size * 0.08).fill(0xFFFAEC)
+  g.circle(size * 0.32, -size * 0.05, size * 0.06).fill(0xFFFAEC)
+  g.circle(-size * 0.05, -size * 0.1, size * 0.05).fill(0xFFFAEC)
 }
 
-function drawBatWing(g: Graphics, size: number) {
-  const dark = 0x3A2A50
-  const darkD = 0x1A1024
-  g.poly([
-    -size * 0.6, -size * 0.2,
-    -size * 0.5, -size * 0.5,
-    -size * 0.2, -size * 0.55,
-    size * 0.0, -size * 0.4,
-    size * 0.2, -size * 0.55,
-    size * 0.45, -size * 0.4,
-    size * 0.5, -size * 0.1,
-    size * 0.35, size * 0.2,
-    size * 0.1, size * 0.35,
-    -size * 0.15, size * 0.4,
-    -size * 0.45, size * 0.2,
-  ]).fill(dark).stroke({ width: 2, color: darkD })
-  g.moveTo(-size * 0.55, -size * 0.45).lineTo(-size * 0.15, size * 0.35).stroke({ width: 2, color: darkD })
-  g.moveTo(-size * 0.15, -size * 0.55).lineTo(-size * 0.1, size * 0.35).stroke({ width: 2, color: darkD })
-  g.moveTo(size * 0.2, -size * 0.5).lineTo(size * 0.15, size * 0.3).stroke({ width: 2, color: darkD })
-  g.moveTo(size * 0.45, -size * 0.4).lineTo(size * 0.4, size * 0.15).stroke({ width: 2, color: darkD })
-}
-
+// Череп — крупный с глазницами и зубами
 function drawSkull(g: Graphics, size: number) {
-  g.circle(0, -size * 0.05, size * 0.5).fill(0xEDE3D0).stroke({ width: 2, color: 0x6F5A30 })
-  g.circle(-size * 0.18, -size * 0.1, size * 0.13).fill(0x0D0510)
-  g.circle(size * 0.18, -size * 0.1, size * 0.13).fill(0x0D0510)
-  g.poly([0, size * 0.05, -size * 0.06, size * 0.18, size * 0.06, size * 0.18]).fill(0x0D0510)
-  g.rect(-size * 0.3, size * 0.3, size * 0.6, size * 0.18).fill(0xEDE3D0).stroke({ width: 2, color: 0x6F5A30 })
-  for (let i = 0; i < 4; i++) {
-    g.rect(-size * 0.25 + i * size * 0.14, size * 0.3, size * 0.04, size * 0.12).fill(0x6F5A30)
+  // Купол
+  g.circle(0, -size * 0.05, size * 0.45).fill(0xEDE3D0).stroke({ width: 2.5, color: 0x6F5A30 })
+  // Глазницы
+  g.circle(-size * 0.17, -size * 0.1, size * 0.13).fill(0x0D0510)
+  g.circle(size * 0.17, -size * 0.1, size * 0.13).fill(0x0D0510)
+  // Огонёк в глазах (для атмосферы)
+  g.circle(-size * 0.17, -size * 0.1, size * 0.04).fill(0xFF6020)
+  g.circle(size * 0.17, -size * 0.1, size * 0.04).fill(0xFF6020)
+  // Нос
+  g.poly([0, size * 0.0, -size * 0.06, size * 0.15, 0, size * 0.12, size * 0.06, size * 0.15]).fill(0x0D0510)
+  // Челюсть
+  g.roundRect(-size * 0.28, size * 0.22, size * 0.56, size * 0.2, 3).fill(0xEDE3D0).stroke({ width: 2, color: 0x6F5A30 })
+  for (let i = 0; i < 5; i++) {
+    g.rect(-size * 0.24 + i * size * 0.1, size * 0.22, size * 0.05, size * 0.13).fill(0x6F5A30)
   }
 }
 
-function drawMoonstone(g: Graphics, size: number) {
-  g.circle(0, 0, size * 0.55).fill({ color: 0x8FB0E0, alpha: 0.3 })
-  g.ellipse(0, 0, size * 0.35, size * 0.5).fill(0xBFD4F2).stroke({ width: 2, color: 0x4A6A90 })
-  g.moveTo(0, -size * 0.45).lineTo(-size * 0.3, 0).stroke({ width: 1.5, color: 0x4A6A90 })
-  g.moveTo(0, -size * 0.45).lineTo(size * 0.3, 0).stroke({ width: 1.5, color: 0x4A6A90 })
-  g.moveTo(0, size * 0.45).lineTo(-size * 0.3, 0).stroke({ width: 1.5, color: 0x4A6A90 })
-  g.moveTo(0, size * 0.45).lineTo(size * 0.3, 0).stroke({ width: 1.5, color: 0x4A6A90 })
-  g.moveTo(0, 0).lineTo(0, -size * 0.45).stroke({ width: 1.5, color: 0x4A6A90 })
-  g.ellipse(-size * 0.1, -size * 0.2, size * 0.08, size * 0.15).fill(0xFFFFFF)
-}
-
+// Паук — круглое тело, голова поменьше, 8 ног, красные глаза
 function drawSpider(g: Graphics, size: number) {
   const dark = 0x1A1024
-  g.ellipse(0, size * 0.05, size * 0.25, size * 0.3).fill(dark).stroke({ width: 2, color: 0x000000 })
-  g.circle(0, -size * 0.25, size * 0.18).fill(dark).stroke({ width: 2, color: 0x000000 })
-  g.circle(-size * 0.08, -size * 0.28, size * 0.04).fill(0xFF4040)
-  g.circle(size * 0.08, -size * 0.28, size * 0.04).fill(0xFF4040)
+  // 8 ног, по 4 с каждой стороны
   for (let i = 0; i < 4; i++) {
-    const ly = -size * 0.1 + i * size * 0.08
-    g.moveTo(-size * 0.25, ly).lineTo(-size * 0.6, ly - size * 0.15).stroke({ width: 2, color: 0x000000 })
-    g.moveTo(size * 0.25, ly).lineTo(size * 0.6, ly - size * 0.15).stroke({ width: 2, color: 0x000000 })
+    const ly = -size * 0.12 + i * size * 0.1
+    g.moveTo(-size * 0.2, ly)
+      .quadraticCurveTo(-size * 0.45, ly - size * 0.05, -size * 0.55, ly + size * 0.18)
+      .stroke({ width: 2.5, color: dark })
+    g.moveTo(size * 0.2, ly)
+      .quadraticCurveTo(size * 0.45, ly - size * 0.05, size * 0.55, ly + size * 0.18)
+      .stroke({ width: 2.5, color: dark })
   }
-  g.moveTo(0, -size * 0.5).lineTo(0, -size * 0.85).stroke({ width: 1, color: 0xCCCCDD })
+  // Тело
+  g.ellipse(0, size * 0.1, size * 0.3, size * 0.32).fill(dark).stroke({ width: 2.5, color: 0x000000 })
+  // Голова
+  g.circle(0, -size * 0.2, size * 0.2).fill(dark).stroke({ width: 2.5, color: 0x000000 })
+  // Красные глаза
+  g.circle(-size * 0.08, -size * 0.23, size * 0.045).fill(0xFF4040)
+  g.circle(size * 0.08, -size * 0.23, size * 0.045).fill(0xFF4040)
+  g.circle(-size * 0.05, -size * 0.15, size * 0.03).fill(0xFF4040)
+  g.circle(size * 0.05, -size * 0.15, size * 0.03).fill(0xFF4040)
+  // Паутинка-нить
+  g.moveTo(0, -size * 0.4).lineTo(0, -size * 0.75).stroke({ width: 1, color: 0xCCCCDD })
 }
 
-function drawFang(g: Graphics, size: number) {
-  g.poly([
-    -size * 0.2, -size * 0.55,
-    size * 0.2, -size * 0.55,
-    size * 0.05, size * 0.55,
-    -size * 0.05, size * 0.55,
-  ]).fill(0xF8F2E0).stroke({ width: 2, color: 0x6F5A30 })
-  g.poly([
-    -size * 0.2, -size * 0.55,
-    size * 0.2, -size * 0.55,
-    size * 0.12, -size * 0.25,
-    -size * 0.12, -size * 0.25,
-  ]).fill(0x6F5A30)
-  g.rect(-size * 0.15, -size * 0.5, size * 0.06, size * 0.9).fill({ color: 0xFFFFFF, alpha: 0.4 })
-  g.circle(0, size * 0.55, size * 0.06).fill(0x8C2020)
+// Летучая мышь — силуэт с крыльями и ушками
+function drawBat(g: Graphics, size: number) {
+  const dark = 0x3A2A50
+  const darkD = 0x1A1024
+  // Уши
+  g.poly([-size * 0.16, -size * 0.25, -size * 0.22, -size * 0.55, -size * 0.08, -size * 0.32]).fill(dark).stroke({ width: 2, color: darkD })
+  g.poly([size * 0.16, -size * 0.25, size * 0.22, -size * 0.55, size * 0.08, -size * 0.32]).fill(dark).stroke({ width: 2, color: darkD })
+  // Голова
+  g.circle(0, -size * 0.2, size * 0.2).fill(dark).stroke({ width: 2, color: darkD })
+  // Глаза
+  g.circle(-size * 0.08, -size * 0.2, size * 0.04).fill(0xFFCB45)
+  g.circle(size * 0.08, -size * 0.2, size * 0.04).fill(0xFFCB45)
+  g.circle(-size * 0.08, -size * 0.2, size * 0.02).fill(0x000000)
+  g.circle(size * 0.08, -size * 0.2, size * 0.02).fill(0x000000)
+  // Клыки
+  g.poly([-size * 0.04, -size * 0.08, -size * 0.06, -size * 0.02, -size * 0.02, -size * 0.04]).fill(0xFFFAEC)
+  g.poly([size * 0.04, -size * 0.08, size * 0.06, -size * 0.02, size * 0.02, -size * 0.04]).fill(0xFFFAEC)
+  // Тело
+  g.ellipse(0, size * 0.05, size * 0.15, size * 0.18).fill(dark).stroke({ width: 2, color: darkD })
+  // Крылья — изогнутые
+  g.moveTo(-size * 0.12, -size * 0.05)
+    .quadraticCurveTo(-size * 0.45, -size * 0.15, -size * 0.6, size * 0.1)
+    .quadraticCurveTo(-size * 0.55, size * 0.2, -size * 0.4, size * 0.18)
+    .quadraticCurveTo(-size * 0.3, size * 0.05, -size * 0.12, size * 0.18)
+    .closePath().fill(dark).stroke({ width: 2, color: darkD })
+  g.moveTo(size * 0.12, -size * 0.05)
+    .quadraticCurveTo(size * 0.45, -size * 0.15, size * 0.6, size * 0.1)
+    .quadraticCurveTo(size * 0.55, size * 0.2, size * 0.4, size * 0.18)
+    .quadraticCurveTo(size * 0.3, size * 0.05, size * 0.12, size * 0.18)
+    .closePath().fill(dark).stroke({ width: 2, color: darkD })
 }
 
-function drawFeather(g: Graphics, size: number) {
-  const dark = 0x1A1024
-  g.moveTo(0, -size * 0.6).lineTo(0, size * 0.6).stroke({ width: 2.5, color: 0x4A2A05 })
-  for (let i = 0; i < 10; i++) {
-    const ty = -size * 0.5 + i * size * 0.11
-    const len = (i < 5 ? size * 0.05 + i * size * 0.06 : size * 0.35 - (i - 5) * size * 0.05)
-    g.moveTo(0, ty).lineTo(-len, ty - size * 0.04).stroke({ width: 1.5, color: dark })
-    g.moveTo(0, ty).lineTo(len, ty - size * 0.04).stroke({ width: 1.5, color: dark })
+// Глаз — огромное глазное яблоко с цветной радужкой
+function drawEye(g: Graphics, size: number) {
+  // Контур века
+  g.ellipse(0, 0, size * 0.55, size * 0.4).fill(0xF5E4C7).stroke({ width: 2.5, color: 0x6F5A30 })
+  // Сосуды (тонкие линии)
+  g.moveTo(-size * 0.45, -size * 0.1).quadraticCurveTo(-size * 0.35, size * 0.05, -size * 0.25, size * 0.1).stroke({ width: 1, color: 0xC04040, alpha: 0.55 })
+  g.moveTo(size * 0.45, size * 0.05).quadraticCurveTo(size * 0.32, size * 0.0, size * 0.25, -size * 0.05).stroke({ width: 1, color: 0xC04040, alpha: 0.55 })
+  // Радужка
+  g.circle(0, 0, size * 0.25).fill(0x2A8060).stroke({ width: 2, color: 0x103820 })
+  g.circle(0, 0, size * 0.18).fill(0x4FD89C)
+  // Зрачок
+  g.circle(0, 0, size * 0.1).fill(0x000000)
+  // Блик
+  g.circle(-size * 0.05, -size * 0.05, size * 0.04).fill(0xFFFFFF)
+}
+
+// Змея — свернувшаяся клубком, с узором и языком
+function drawSnake(g: Graphics, size: number) {
+  const dark = 0x2A5022
+  const lite = 0x6BA040
+  // Большая спираль — внешний виток
+  g.ellipse(0, size * 0.05, size * 0.5, size * 0.4).fill(lite).stroke({ width: 2.5, color: dark })
+  // Внутренний виток
+  g.ellipse(size * 0.05, size * 0.05, size * 0.25, size * 0.22).fill(dark)
+  g.ellipse(size * 0.05, size * 0.05, size * 0.2, size * 0.18).fill(lite)
+  // Полоски-узор
+  for (let i = 0; i < 4; i++) {
+    const angle = (i / 4) * Math.PI * 2
+    const cx = Math.cos(angle) * size * 0.38
+    const cy = Math.sin(angle) * size * 0.32 + size * 0.05
+    g.ellipse(cx, cy, size * 0.05, size * 0.08).fill(dark)
   }
-  g.poly([
-    0, -size * 0.6,
-    size * 0.25, -size * 0.1,
-    size * 0.1, size * 0.55,
-    -size * 0.1, size * 0.55,
-    -size * 0.25, -size * 0.1,
-  ]).stroke({ width: 1.5, color: 0x2A1A05 })
+  // Голова — справа сверху
+  g.ellipse(size * 0.35, -size * 0.3, size * 0.16, size * 0.12).fill(lite).stroke({ width: 2, color: dark })
+  // Глаза
+  g.circle(size * 0.3, -size * 0.33, size * 0.03).fill(0xFFCB45)
+  g.circle(size * 0.4, -size * 0.32, size * 0.03).fill(0xFFCB45)
+  // Раздвоенный язык
+  g.moveTo(size * 0.4, -size * 0.22).lineTo(size * 0.5, -size * 0.18).stroke({ width: 1.5, color: 0xC04040 })
+  g.moveTo(size * 0.5, -size * 0.18).lineTo(size * 0.55, -size * 0.22).stroke({ width: 1.5, color: 0xC04040 })
+  g.moveTo(size * 0.5, -size * 0.18).lineTo(size * 0.55, -size * 0.13).stroke({ width: 1.5, color: 0xC04040 })
+}
+
+// Косточка — классическая собачья кость с двумя «шариками» на концах
+function drawBone(g: Graphics, size: number) {
+  const lite = 0xF8F2E0
+  const sh = 0xC0B080
+  // Левый конец
+  g.circle(-size * 0.35, -size * 0.25, size * 0.16).fill(lite).stroke({ width: 2, color: sh })
+  g.circle(-size * 0.35, size * 0.25, size * 0.16).fill(lite).stroke({ width: 2, color: sh })
+  // Правый конец
+  g.circle(size * 0.35, -size * 0.25, size * 0.16).fill(lite).stroke({ width: 2, color: sh })
+  g.circle(size * 0.35, size * 0.25, size * 0.16).fill(lite).stroke({ width: 2, color: sh })
+  // Средняя часть (поверх соединяющая)
+  g.rect(-size * 0.35, -size * 0.08, size * 0.7, size * 0.16).fill(lite).stroke({ width: 2, color: sh })
+  // Тень — лёгкая линия посередине
+  g.moveTo(-size * 0.3, size * 0.0).lineTo(size * 0.3, size * 0.0).stroke({ width: 1, color: sh, alpha: 0.5 })
+}
+
+// Тыква — оранжевая с рёбрами и зелёным стеблем
+function drawPumpkin(g: Graphics, size: number) {
+  const orange = 0xE9842B
+  const orangeD = 0x8C4E10
+  // Стебель
+  g.rect(-size * 0.05, -size * 0.55, size * 0.1, size * 0.15).fill(0x4A7020).stroke({ width: 1.5, color: 0x2A4010 })
+  // Листик
+  g.poly([size * 0.05, -size * 0.5, size * 0.2, -size * 0.55, size * 0.1, -size * 0.42]).fill(0x6BA040).stroke({ width: 1, color: 0x2A4010 })
+  // Тыква — несколько эллипсов для эффекта рёбер
+  g.ellipse(0, size * 0.05, size * 0.52, size * 0.4).fill(orange).stroke({ width: 2, color: orangeD })
+  g.ellipse(-size * 0.28, size * 0.05, size * 0.22, size * 0.38).fill(orange).stroke({ width: 1.5, color: orangeD, alpha: 0.7 })
+  g.ellipse(size * 0.28, size * 0.05, size * 0.22, size * 0.38).fill(orange).stroke({ width: 1.5, color: orangeD, alpha: 0.7 })
+  g.ellipse(0, size * 0.05, size * 0.16, size * 0.4).fill(orange).stroke({ width: 1.5, color: orangeD, alpha: 0.7 })
+  // Вертикальные рёбра-линии
+  g.moveTo(-size * 0.22, -size * 0.25).lineTo(-size * 0.22, size * 0.32).stroke({ width: 1.5, color: orangeD })
+  g.moveTo(size * 0.22, -size * 0.25).lineTo(size * 0.22, size * 0.32).stroke({ width: 1.5, color: orangeD })
+}
+
+// Жёлудь — коричневый плод с штрихованной шляпкой
+function drawAcorn(g: Graphics, size: number) {
+  // Плод (овал)
+  g.ellipse(0, size * 0.1, size * 0.3, size * 0.4).fill(0xC9941A).stroke({ width: 2, color: 0x6A4810 })
+  // Блик на плоде
+  g.ellipse(-size * 0.1, size * 0.0, size * 0.08, size * 0.18).fill(0xE6B040)
+  // Шапка-крышечка
+  g.ellipse(0, -size * 0.2, size * 0.34, size * 0.18).fill(0x6A4810).stroke({ width: 2, color: 0x3A2810 })
+  // Узор «чешуек» на шапке
+  for (let i = 0; i < 4; i++) {
+    const x = -size * 0.18 + i * size * 0.12
+    g.circle(x, -size * 0.2, size * 0.04).fill(0x3A2810)
+  }
+  // Хвостик
+  g.rect(-size * 0.025, -size * 0.42, size * 0.05, size * 0.08).fill(0x3A2810)
+  g.circle(0, -size * 0.42, size * 0.05).fill(0x3A2810)
+}
+
+// Склянка-зелье — стеклянная бутылочка с пробкой и светящейся жидкостью
+function drawBottle(g: Graphics, size: number) {
+  // Пробка
+  g.rect(-size * 0.1, -size * 0.5, size * 0.2, size * 0.12).fill(0x6A4810).stroke({ width: 1.5, color: 0x3A2810 })
+  // Горлышко
+  g.rect(-size * 0.08, -size * 0.4, size * 0.16, size * 0.12).fill({ color: 0xCCDDEE, alpha: 0.5 }).stroke({ width: 2, color: 0x4A6A90 })
+  // Тело бутылки (шарообразное)
+  g.circle(0, size * 0.1, size * 0.32).fill({ color: 0xCCDDEE, alpha: 0.4 }).stroke({ width: 2, color: 0x4A6A90 })
+  // Жидкость внутри (зеленоватая, светится)
+  g.circle(0, size * 0.15, size * 0.25).fill({ color: 0x6BA040, alpha: 0.85 })
+  // Пузырьки в жидкости
+  g.circle(-size * 0.1, size * 0.1, size * 0.04).fill({ color: 0xFFFAEC, alpha: 0.7 })
+  g.circle(size * 0.05, size * 0.2, size * 0.03).fill({ color: 0xFFFAEC, alpha: 0.7 })
+  g.circle(-size * 0.05, size * 0.25, size * 0.025).fill({ color: 0xFFFAEC, alpha: 0.7 })
+  // Блик-полоска (стекло)
+  g.ellipse(-size * 0.15, size * 0.05, size * 0.04, size * 0.15).fill({ color: 0xFFFFFF, alpha: 0.5 })
+}
+
+// Червяк — розовый зигзагообразный, с глазками
+function drawWorm(g: Graphics, size: number) {
+  const pink = 0xE89098
+  const pinkD = 0xA04060
+  // Тело — последовательность кружочков по зигзагу
+  const segs = 7
+  const points: Array<[number, number]> = []
+  for (let i = 0; i < segs; i++) {
+    const t = i / (segs - 1)
+    const x = -size * 0.4 + t * size * 0.8
+    const y = Math.sin(t * Math.PI * 2.5) * size * 0.18
+    points.push([x, y])
+  }
+  // Соединяющая толстая линия
+  for (let i = 0; i < points.length - 1; i++) {
+    g.moveTo(points[i][0], points[i][1]).lineTo(points[i + 1][0], points[i + 1][1])
+      .stroke({ width: size * 0.22, color: pink, alignment: 0.5 })
+  }
+  for (const [x, y] of points) {
+    g.circle(x, y, size * 0.13).fill(pink).stroke({ width: 1.5, color: pinkD })
+  }
+  // Голова (последний кружок крупнее)
+  const head = points[points.length - 1]
+  g.circle(head[0], head[1], size * 0.16).fill(pink).stroke({ width: 2, color: pinkD })
+  g.circle(head[0] - size * 0.05, head[1] - size * 0.04, size * 0.025).fill(0x000000)
+  g.circle(head[0] + size * 0.04, head[1] - size * 0.04, size * 0.025).fill(0x000000)
 }
 
 const DRAWERS: Record<Ingredient, (g: Graphics, size: number) => void> = {
   frog: drawFrog,
   mushroom: drawMushroom,
-  bat: drawBatWing,
-  skull: drawSkull,
-  moonstone: drawMoonstone,
   spider: drawSpider,
-  fang: drawFang,
-  feather: drawFeather,
+  skull: drawSkull,
+  bat: drawBat,
+  eye: drawEye,
+  snake: drawSnake,
+  bone: drawBone,
+  pumpkin: drawPumpkin,
+  acorn: drawAcorn,
+  bottle: drawBottle,
+  worm: drawWorm,
 }
 
 /** Рисуем ингредиент без рамки и фона — только сам предмет. Состояние
@@ -270,7 +425,7 @@ function shuffle<T>(arr: T[], rng: () => number): T[] {
 interface SlotAnim {
   /** Состояние слота: idle (в покое) / flying (летит в котёл) /
    *  shake (взрыв при ошибке) / reappearing (всплывает на новом месте) */
-  state: 'idle' | 'flying' | 'shake' | 'reappearing'
+  state: 'idle' | 'flying' | 'shake' | 'reappearing' | 'consumed'
   /** Время начала текущего состояния в performance.now() мс */
   startedAt: number
   /** Куда лететь (центр котла) — заполняется в момент перехода в flying */
@@ -356,9 +511,42 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
     haptic?.notificationOccurred(ec === 0 ? 'success' : ec === 1 ? 'warning' : 'error')
     playSound(ec <= 1 ? 'win' : 'lose')
     onCompleteRef.current(ec)
+    // Финальная сцена: оставшиеся слоты по одному падают в котёл с задержкой
+    triggerDrain()
+  }
+
+  // Финальная сцена: после complete() ставим оставшиеся слоты на «летят
+  // в котёл» с шагом ~450мс между каждым. Drain активен → finalizeCorrectPick
+  // на flying-завершении не вызывается, слот просто исчезает в котле
+  // (state='consumed'), а сверху вылетают зелёные пузыри.
+  const drainModeRef = useRef(false)
+  const triggerDrain = () => {
+    drainModeRef.current = true
+    const slots = slotsRef.current
+    const idle = slots.filter(s => s.anim.state === 'idle')
+    idle.forEach((slot, idx) => {
+      setTimeout(() => {
+        if (!refApp.current || !canvasDims) return
+        const { cauldronCX, cauldronMouthY } = computeLayout(canvasDims.w, canvasDims.h)
+        slot.anim.state = 'flying'
+        slot.anim.startedAt = performance.now()
+        slot.anim.targetX = cauldronCX
+        slot.anim.targetY = cauldronMouthY
+      }, idx * 450)
+    })
   }
 
   // Мониторим размер канваса — для DOM-overlay хит-зон и совпадающей с Pixi
+  // В frozen-режиме (после F5) сразу запускаем drain — финальная сцена с
+  // падающими в котёл ингредиентами вместо статичной раскладки.
+  useEffect(() => {
+    if (!isFrozen) return
+    if (!canvasDims) return
+    const id = setTimeout(triggerDrain, 200)
+    return () => clearTimeout(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFrozen, canvasDims])
+
   // раскладки. autoDensity:true делает app.canvas.style.width в CSS-пикселях,
   // что совпадает с ResizeObserver.contentRect.
   useEffect(() => {
@@ -380,7 +568,31 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
     setRefCountdown(REFERENCE_SECONDS)
     const id = setInterval(() => {
       setRefCountdown(prev => {
-        if (prev <= 1) { clearInterval(id); setPhase('play'); return 0 }
+        if (prev <= 1) {
+          clearInterval(id)
+          // Перед стартом игры перетасовываем ингредиенты: в reference они
+          // лежали в порядке рецепта (для запоминания), на игру — должны
+          // оказаться на других местах, иначе первый шаг тривиален.
+          const slots = slotsRef.current
+          const ings = slots.map(s => s.ingredient)
+          for (let i = ings.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1))
+            ;[ings[i], ings[j]] = [ings[j], ings[i]]
+          }
+          const now = performance.now()
+          for (let i = 0; i < slots.length; i++) {
+            slots[i].ingredient = ings[i]
+            slots[i].anim = {
+              state: 'reappearing',
+              startedAt: now,
+              targetX: 0, targetY: 0,
+              homeX: slots[i].anim.homeX,
+              homeY: slots[i].anim.homeY,
+            }
+          }
+          setPhase('play')
+          return 0
+        }
         return prev - 1
       })
     }, 1000)
@@ -488,7 +700,9 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
         let cardState: 'normal' | 'correct' | 'wrong' | 'consumed' = 'normal'
         let drawCard = true
 
-        if (slot.anim.state === 'flying') {
+        if (slot.anim.state === 'consumed') {
+          drawCard = false  // в котле — не рисуем
+        } else if (slot.anim.state === 'flying') {
           const t = Math.min(1, (now - slot.anim.startedAt) / FLY_MS)
           const eased = t * t
           drawX = pos.x + (slot.anim.targetX - pos.x) * eased
@@ -529,7 +743,16 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
 
         // Переходы между состояниями
         if (slot.anim.state === 'flying' && now - slot.anim.startedAt >= FLY_MS) {
-          finalizeCorrectPick()
+          if (drainModeRef.current) {
+            // Финальное падение: слот «съеден» котлом, не возвращается
+            slot.anim.state = 'consumed'
+            if (canvasDims) {
+              const { cauldronCX, cauldronMouthY } = computeLayout(canvasDims.w, canvasDims.h)
+              spawnBubbles(cauldronCX, cauldronMouthY)
+            }
+          } else {
+            finalizeCorrectPick()
+          }
         } else if (slot.anim.state === 'shake' && now - slot.anim.startedAt >= SHAKE_MS) {
           slot.anim.state = 'idle'
         } else if (slot.anim.state === 'reappearing' && now - slot.anim.startedAt >= 300) {
