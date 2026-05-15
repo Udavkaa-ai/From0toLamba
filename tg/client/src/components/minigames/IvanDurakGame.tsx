@@ -12,6 +12,7 @@ const haptic = tg?.HapticFeedback
 const HAND_SIZE = 7
 const ROUNDS = 7
 const ROUND_SECONDS = 2.0       // 2 секунды на каждый ход
+const READY_SECONDS = 3         // обратный отсчёт перед первой картой
 const FEEDBACK_MS = 300         // длительность фидбека (зелёная/красная подсветка)
 const DECK_POOL_SIZE = HAND_SIZE + ROUNDS  // 14 уникальных карт нужно подготовить
 
@@ -190,10 +191,28 @@ export function IvanDurakGame({ seed, onComplete, restoredErrorCount }: IvanDura
 
   const [round, setRound] = useState(0)
   const [feedback, setFeedback] = useState<{ idx: number; state: 'correct' | 'wrong' } | null>(null)
+  // Фаза: 'ready' — обратный отсчёт перед первой картой; 'play' — игра идёт.
+  // В frozen-режиме (после F5) сразу 'play' — показываем последнюю карту статично.
+  const [phase, setPhase] = useState<'ready' | 'play'>(isFrozen ? 'play' : 'ready')
+  const [readyCountdown, setReadyCountdown] = useState(READY_SECONDS)
   const onCompleteRef = useRef(onComplete)
   useEffect(() => { onCompleteRef.current = onComplete }, [onComplete])
   const roundRef = useRef(0)
   useEffect(() => { roundRef.current = round }, [round])
+
+  // Обратный отсчёт перед стартом
+  useEffect(() => {
+    if (isFrozen) return
+    if (phase !== 'ready') return
+    setReadyCountdown(READY_SECONDS)
+    const id = setInterval(() => {
+      setReadyCountdown(prev => {
+        if (prev <= 1) { clearInterval(id); setPhase('play'); return 0 }
+        return prev - 1
+      })
+    }, 1000)
+    return () => clearInterval(id)
+  }, [phase, isFrozen])
 
   const complete = (errors: number) => {
     if (doneRef.current) return
@@ -204,9 +223,11 @@ export function IvanDurakGame({ seed, onComplete, restoredErrorCount }: IvanDura
     onCompleteRef.current(ec)
   }
 
-  // Раундовый таймер: 1 секунда. После таймаута — ошибка и переход.
+  // Раундовый таймер: 2 секунды. После таймаута — ошибка и переход.
+  // Не запускается в фазе ready (обратный отсчёт перед первой картой).
   useEffect(() => {
     if (doneRef.current) return
+    if (phase !== 'play') return
     if (feedback) return  // во время фидбека таймер на паузе
     const id = setTimeout(() => {
       if (doneRef.current) return
@@ -218,7 +239,7 @@ export function IvanDurakGame({ seed, onComplete, restoredErrorCount }: IvanDura
     }, ROUND_SECONDS * 1000)
     return () => clearTimeout(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [round, feedback])
+  }, [round, feedback, phase])
 
   const advanceRound = () => {
     const next = roundRef.current + 1
@@ -263,7 +284,8 @@ export function IvanDurakGame({ seed, onComplete, restoredErrorCount }: IvanDura
     }
   }, [])
 
-  // Рендер сцены: карта Ивана сверху + рука игрока внизу (перетасована)
+  // Рендер сцены: карта Ивана сверху + рука игрока внизу (перетасована).
+  // В фазе ready рисуем только большую цифру обратного отсчёта.
   useEffect(() => {
     let cancelled = false
     const render = () => {
@@ -274,6 +296,10 @@ export function IvanDurakGame({ seed, onComplete, restoredErrorCount }: IvanDura
         return
       }
       app.stage.removeChildren()
+
+      // Фаза «приготовиться»: пустой стол, ничего не рисуем тут — цифра
+      // отсчёта показывается через DOM-overlay (центрированный <div>).
+      if (phase === 'ready' && !isFrozen) return
 
       const rd = rounds[round]
       if (!rd) return
@@ -315,7 +341,7 @@ export function IvanDurakGame({ seed, onComplete, restoredErrorCount }: IvanDura
     render()
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [round, rounds, handOrders, feedback])
+  }, [round, rounds, handOrders, feedback, phase])
 
   const onPick = (handPosIdx: number, chosen: Card) => {
     if (doneRef.current || feedback) return
@@ -348,43 +374,50 @@ export function IvanDurakGame({ seed, onComplete, restoredErrorCount }: IvanDura
         color: colors.fairyGold,
         fontWeight: 700, fontSize: '17px',
       }}>
-        Переводной дурак · ход {Math.min(round + 1, ROUNDS)} из {ROUNDS}
+        {phase === 'ready' && !isFrozen
+          ? `Приготовься · ${readyCountdown}`
+          : `Переводной дурак · ход ${Math.min(round + 1, ROUNDS)} из ${ROUNDS}`}
       </div>
       <div style={{
         color: colors.textMuted, fontSize: '12px', textAlign: 'center',
         marginBottom: spacing.sm, lineHeight: 1.4,
       }}>
-        Иван открывает карту — у тебя в руке такая же. Тапай за секунду.<br />
-        0 ошибок — совет чуйки; 1 — пройдёшь без подсказок; ≥2 — только за звёзды.
+        {phase === 'ready' && !isFrozen
+          ? 'Иван сейчас откроет карту — у тебя в руке будет такая же. У тебя 2 секунды на тап.'
+          : (<>Иван открывает карту — у тебя в руке такая же. Тапай за секунду.<br />0 ошибок — совет чуйки; 1 — пройдёшь без подсказок; ≥2 — только за звёзды.</>)}
       </div>
 
-      {/* Полоса-таймер раунда: жёлтая полоска сжимается от 100% до 0% за 1 секунду */}
-      <div style={{
-        width: '100%', height: 5,
-        background: 'rgba(255,184,0,0.15)',
-        borderRadius: 3, overflow: 'hidden',
-        marginBottom: spacing.sm,
-      }}>
-        <motion.div
-          key={`${round}-${feedback ? 'pause' : 'go'}`}
-          initial={{ width: '100%' }}
-          animate={{ width: feedback ? '100%' : '0%' }}
-          transition={{ duration: feedback ? 0 : ROUND_SECONDS, ease: 'linear' }}
-          style={{ height: '100%', background: colors.fairyGold, borderRadius: 3 }}
-        />
-      </div>
+      {/* Полоса-таймер раунда — скрыта во время обратного отсчёта */}
+      {phase === 'play' && !isFrozen && (
+        <div style={{
+          width: '100%', height: 5,
+          background: 'rgba(255,184,0,0.15)',
+          borderRadius: 3, overflow: 'hidden',
+          marginBottom: spacing.sm,
+        }}>
+          <motion.div
+            key={`${round}-${feedback ? 'pause' : 'go'}`}
+            initial={{ width: '100%' }}
+            animate={{ width: feedback ? '100%' : '0%' }}
+            transition={{ duration: feedback ? 0 : ROUND_SECONDS, ease: 'linear' }}
+            style={{ height: '100%', background: colors.fairyGold, borderRadius: 3 }}
+          />
+        </div>
+      )}
 
-      <div style={{
-        display: 'flex', gap: spacing.md, justifyContent: 'center',
-        marginBottom: spacing.sm, fontSize: '13px',
-      }}>
-        <span style={{ color: colors.fairyGold, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
-          {round}/{ROUNDS}
-        </span>
-        <span style={{ color: errorsRef.current >= 2 ? colors.danger : colors.textSecondary, fontVariantNumeric: 'tabular-nums' }}>
-          Ошибки: {errorsRef.current}
-        </span>
-      </div>
+      {phase === 'play' && !isFrozen && (
+        <div style={{
+          display: 'flex', gap: spacing.md, justifyContent: 'center',
+          marginBottom: spacing.sm, fontSize: '13px',
+        }}>
+          <span style={{ color: colors.fairyGold, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+            {round}/{ROUNDS}
+          </span>
+          <span style={{ color: errorsRef.current >= 2 ? colors.danger : colors.textSecondary, fontVariantNumeric: 'tabular-nums' }}>
+            Ошибки: {errorsRef.current}
+          </span>
+        </div>
+      )}
       <div
         ref={refMount}
         style={{
@@ -420,6 +453,41 @@ export function IvanDurakGame({ seed, onComplete, restoredErrorCount }: IvanDura
           <ellipse cx="160" cy="20" rx="40" ry="6" fill="#3A2410" />
           <path d="M 130 24 Q 160 50 190 24 Q 175 28 160 28 Q 145 28 130 24" fill="#FFC060" opacity="0.4" />
         </svg>
+
+        {/* Обратный отсчёт перед первой картой — большая цифра по центру */}
+        {phase === 'ready' && !isFrozen && (
+          <motion.div
+            key={readyCountdown}
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1.1, opacity: 1 }}
+            exit={{ scale: 1.5, opacity: 0 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+            style={{
+              position: 'absolute', inset: 0,
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center',
+              pointerEvents: 'none', zIndex: 2,
+              fontFamily: 'Georgia, serif',
+            }}
+          >
+            <div style={{
+              fontSize: 120, fontWeight: 900,
+              color: colors.fairyGold,
+              textShadow: `0 0 32px ${colors.fairyGold}99, 0 6px 18px rgba(0,0,0,0.6)`,
+              lineHeight: 1,
+              fontVariantNumeric: 'tabular-nums',
+            }}>
+              {readyCountdown}
+            </div>
+            <div style={{
+              color: colors.textPrimary, fontSize: 16, fontWeight: 600,
+              marginTop: 16, opacity: 0.85,
+              textShadow: '0 2px 8px rgba(0,0,0,0.6)',
+            }}>
+              {readyCountdown === 1 ? 'Поехали!' : 'Сейчас Иван откроет карту'}
+            </div>
+          </motion.div>
+        )}
       </div>
     </div>
   )

@@ -46,11 +46,14 @@ input[type=number] {
      «свернуть»). Появляется только в fullscreen-режиме (Bot API 8.0+),
      на старых клиентах = 0px. Сдвигаем им body, чтобы кнопки не
      перекрывали верхний контент. */
+:root {
+  --app-top-inset: calc(env(safe-area-inset-top, 0px) + var(--tg-content-safe-area-inset-top, 0px));
+  /* Эффективная высота вьюпорта после учёта верхних отступов. Используется
+     вместо 100dvh для элементов, которые должны помещаться целиком на экран. */
+  --app-vh: calc(100dvh - var(--app-top-inset));
+}
 body {
-  padding-top: calc(
-    env(safe-area-inset-top, 0px)
-    + var(--tg-content-safe-area-inset-top, 0px)
-  );
+  padding-top: var(--app-top-inset);
 }
 
 /* Вращение печатей в грамоте — каждая клетка получает своё --seal-delay */

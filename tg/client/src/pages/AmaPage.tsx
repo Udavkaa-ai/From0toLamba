@@ -213,7 +213,7 @@ export function AmaPage() {
   if (!session) {
     return (
       <ScreenBackground showSparkles={false}>
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', height: 'var(--app-vh, 100dvh)' }}>
           <div style={{
             padding: `${spacing.md} ${spacing.lg}`,
             background: 'rgba(10, 8, 24, 0.95)',
@@ -325,7 +325,7 @@ export function AmaPage() {
         />
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', position: 'relative', zIndex: 1 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: 'var(--app-vh, 100dvh)', position: 'relative', zIndex: 1 }}>
 
         {/* Шапка */}
         <div style={{

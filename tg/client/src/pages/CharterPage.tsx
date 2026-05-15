@@ -311,7 +311,7 @@ export function CharterPage() {
 
   return (
     <ScreenBackground showSparkles={false}>
-      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: 'var(--app-vh, 100dvh)' }}>
 
         {/* Шапка */}
         <div style={headerStyle}>

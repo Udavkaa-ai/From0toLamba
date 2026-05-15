@@ -28,7 +28,7 @@ export function ScreenBackground({ children, showSparkles = true, showMist = tru
   return (
     <div
       style={{
-        minHeight: '100dvh',
+        minHeight: 'var(--app-vh, 100dvh)',
         background: `${gradients.screen}, ${colors.bgDeep}`,
         position: 'relative',
         overflow: 'hidden',
