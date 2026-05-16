@@ -103,8 +103,11 @@ export function NextWeekFab() {
     whiteSpace: 'nowrap' as const,
   }
 
+  // Подпись на pill'е. В заблокированном состоянии — две информации в одной
+  // строке: что ждать неделю (по факту: 2-часовой кулдаун пачки),
+  // и сколько стоит пропустить ⭐.
   const label = isLocked
-    ? `⏳ ${formatRemaining(remainingMs)}`
+    ? `🌟 10⭐ пропустить · ${t.home.nextWeek} ${formatRemaining(remainingMs)}`
     : t.home.nextDay
 
   // Иконка «обновить / следующая неделя» — две стрелки в петле,
@@ -129,7 +132,9 @@ export function NextWeekFab() {
       onClick={handleTap}
       whileTap={{ scale: 0.94 }}
       animate={{
-        width: expanded ? 200 : 48,
+        // В locked-режиме pill шире — нужно уместить «10⭐ пропустить · Следующая
+        // неделя 1ч 45м». В обычном — короткая «Следующий день».
+        width: expanded ? (isLocked ? 290 : 200) : 48,
         borderRadius: 24,
       }}
       transition={{ type: 'spring', damping: 22, stiffness: 280 }}
@@ -144,8 +149,9 @@ export function NextWeekFab() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18, delay: 0.08 }}
             style={{
-              fontSize: 14, padding: '0 14px',
+              fontSize: isLocked ? 12 : 14, padding: '0 14px',
               display: 'inline-flex', alignItems: 'center', gap: 8,
+              whiteSpace: 'nowrap',
             }}
           >
             <RefreshIcon size={18} />
