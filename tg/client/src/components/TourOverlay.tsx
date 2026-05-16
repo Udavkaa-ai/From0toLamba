@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { colors, spacing } from '@/theme'
+import { colors, spacing , gradients } from '@/theme'
 import { useTourStore, TOUR_TOTAL } from '@/stores/tourStore'
 import { useT } from '@/i18n'
 
@@ -101,7 +101,7 @@ function TourCard({
       style={cardStyle}
     >
       <div style={{
-        background: `linear-gradient(145deg, ${colors.enchantedPurple}, #0f1228)`,
+        background: `gradients.modal`,
         border: `1px solid ${colors.fairyGold}50`,
         borderRadius: '16px',
         padding: '16px 16px 14px',
@@ -257,7 +257,7 @@ export function TourOverlay() {
             }}
           >
             <div style={{
-              background: `linear-gradient(145deg, ${colors.enchantedPurple}, #0f1228)`,
+              background: `gradients.modal`,
               border: `1px solid ${colors.fairyGold}50`,
               borderRadius: '20px',
               padding: '24px 20px 20px',

@@ -6,7 +6,7 @@ import { ScreenBackground } from '@/components/ScreenBackground'
 import { playSound } from '@/sounds'
 import { api } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
-import { colors, spacing } from '@/theme'
+import { colors, spacing, gradients } from '@/theme'
 import { CoinIcon } from '@/components/icons'
 import { useT } from '@/i18n'
 

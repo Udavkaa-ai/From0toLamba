@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { api, type ChannelTaskDTO } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
-import { colors, spacing } from '@/theme'
+import { colors, spacing , gradients } from '@/theme'
 
 // Ключ включает Telegram user ID чтобы разные аккаунты на одном устройстве
 // не мешали друг другу (общий localStorage, но разные юзеры).
@@ -62,7 +62,7 @@ export function ChannelPromoOverlay({ onClose }: { onClose: () => void }) {
         onClick={e => e.stopPropagation()}
         style={{
           width: '100%',
-          background: `linear-gradient(180deg, ${colors.enchantedPurple} 0%, ${colors.nightBlue} 100%)`,
+          background: `gradients.modal`,
           borderTop: `1px solid ${colors.fairyGold}55`,
           borderRadius: '20px 20px 0 0',
           boxShadow: '0 -8px 32px rgba(0,0,0,0.5)',

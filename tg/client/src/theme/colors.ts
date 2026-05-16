@@ -45,6 +45,12 @@ const themes = {
     // Нав-бар низа: глубокий тёмно-фиолетовый с золотым кантом
     navBarBg:     'rgba(10, 8, 24, 0.96)',
     navBarBorder: 'rgba(255, 184, 0, 0.18)',
+    // Модалки / шторки / оверлеи: фиолет→ночной (вертикальный)
+    modalBg:       `linear-gradient(180deg, #2A1960 0%, #0D1735 100%)`,
+    modalBorder:   'rgba(255, 184, 0, 0.35)',
+    modalText:     '#FFFFFF',
+    modalTextSec:  'rgba(255,255,255,0.7)',
+    modalTextMute: 'rgba(255,255,255,0.45)',
   },
   fairy: {
     // Сказочно-русская: ярмарка в золотое полуденное время.
@@ -84,6 +90,13 @@ const themes = {
     // Нав-бар — резное тёмное дерево с золотым кантом сверху
     navBarBg:     `repeating-linear-gradient(89deg, transparent 0, transparent 3px, rgba(0,0,0,.06) 3px, rgba(0,0,0,.06) 4px), linear-gradient(180deg, #4A2E14 0%, #2D1A0A 100%)`,
     navBarBorder: 'rgba(212, 160, 60, 0.7)',
+    // Модалки — резное дерево вместо ночной палаты
+    modalBg:       `repeating-linear-gradient(89deg, transparent 0, transparent 3px, rgba(0,0,0,.05) 3px, rgba(0,0,0,.05) 4px), linear-gradient(180deg, #5A3818 0%, #2D1A0A 100%)`,
+    modalBorder:   'rgba(212, 160, 60, 0.85)',
+    // На модалках в fairy остаётся СВЕТЛЫЙ текст (тёмное дерево внутри)
+    modalText:     '#F8E4B2',  // тёплый кремовый, читается на тёмном дереве
+    modalTextSec:  'rgba(248,228,178,0.78)',
+    modalTextMute: 'rgba(248,228,178,0.55)',
   },
 } as const
 
@@ -205,6 +218,12 @@ export const colors = {
   navBarBorder: active.navBarBorder,
   // Цвет текста для CTA-кнопок (золото в fairy → тёмная сепия; фиолет в classic → светлое золото)
   ctaText:      activeName === 'fairy' ? '#3A2010' : '#FFB800',
+
+  // ── Модалки (theme-aware) ─────────────────────────────────────────────
+  modalBorder:    active.modalBorder,
+  modalText:      active.modalText,
+  modalTextSec:   active.modalTextSec,
+  modalTextMute:  active.modalTextMute,
 } as const
 
 export const gradients = {
@@ -224,6 +243,8 @@ export const gradients = {
   woodBtn: `linear-gradient(180deg, ${colors.woodHi} 0%, ${colors.woodMid} 55%, ${colors.woodDeep} 100%)`,
   // Theme-aware CTA градиент (Следующий день, чат-кнопка, активные акции)
   cta: active.ctaGradient,
+  // Theme-aware фон модалок / шторок / оверлеев
+  modal: active.modalBg,
 } as const
 
 export const shadows = {

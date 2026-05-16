@@ -445,7 +445,7 @@ export function HomePage() {
             style={{
               marginTop: '8px',
               padding: '10px 24px',
-              background: `linear-gradient(135deg, ${colors.enchantedPurple}, ${colors.nightBlue})`,
+              background: `gradients.modal`,
               border: `1px solid ${colors.fairyGold}40`,
               borderRadius: '12px',
               color: colors.fairyGold,
@@ -665,7 +665,7 @@ export function HomePage() {
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
               style={{
                 position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 101,
-                background: `linear-gradient(180deg, ${colors.enchantedPurple} 0%, ${colors.nightBlue} 100%)`,
+                background: `gradients.modal`,
                 borderTop: `1px solid ${colors.fairyGold}40`,
                 borderRadius: '20px 20px 0 0',
                 padding: `24px 20px calc(140px + env(safe-area-inset-bottom))`,
@@ -1378,7 +1378,7 @@ function InboxLeftConfirmSheet({
         onClick={e => e.stopPropagation()}
         style={{
           width: '100%', maxWidth: 380,
-          background: `linear-gradient(145deg, ${colors.enchantedPurple}, ${colors.nightBlue})`,
+          background: `gradients.modal`,
           border: `1px solid ${colors.fairyGold}80`,
           borderRadius: 16,
           padding: spacing.xl,
@@ -1455,7 +1455,7 @@ function MyReferralsSheet({ onClose }: { onClose: () => void }) {
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
         style={{
           position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 101,
-          background: `linear-gradient(180deg, ${colors.enchantedPurple} 0%, ${colors.nightBlue} 100%)`,
+          background: `gradients.modal`,
           borderTop: `1px solid ${colors.fairyGold}40`,
           borderRadius: '20px 20px 0 0',
           padding: `24px 20px calc(140px + env(safe-area-inset-bottom))`,
@@ -1691,7 +1691,7 @@ function NextDayButton({
           width: '100%',
           marginTop: spacing.xl,
           padding: `${spacing.md} ${spacing.lg}`,
-          background: `linear-gradient(135deg, ${colors.enchantedPurple}, ${colors.nightBlue})`,
+          background: `gradients.modal`,
           border: `1px solid ${isLocked ? `${colors.fairyGold}25` : `${colors.fairyGold}40`}`,
           borderRadius: '12px',
           color: isLocked ? colors.textMuted : colors.fairyGold,
@@ -2420,7 +2420,7 @@ function BannerAnnouncementModal({ onClose }: { onClose: () => void }) {
           position: 'fixed', bottom: 0, left: 0, right: 0,
           maxHeight: '90dvh',
           display: 'flex', flexDirection: 'column',
-          background: `linear-gradient(180deg, ${colors.enchantedPurple} 0%, ${colors.nightBlue} 100%)`,
+          background: `gradients.modal`,
           borderTop: `1px solid ${colors.fairyGold}55`,
           borderRadius: '20px 20px 0 0',
           boxShadow: '0 -8px 32px rgba(0,0,0,0.5)',

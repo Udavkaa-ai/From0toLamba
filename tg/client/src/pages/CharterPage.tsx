@@ -822,7 +822,7 @@ function ExitConfirmSheet({
         onClick={e => e.stopPropagation()}
         style={{
           width: '100%', maxWidth: '380px',
-          background: `linear-gradient(145deg, ${colors.enchantedPurple}, ${colors.nightBlue})`,
+          background: `gradients.modal`,
           border: `1px solid ${colors.danger}80`,
           borderRadius: '16px',
           padding: spacing.xl,
@@ -904,17 +904,17 @@ function TierLadder({ currentTier }: { currentTier?: 0 | 1 | 2 }) {
             display: 'flex', alignItems: 'center', gap: spacing.sm,
             padding: '6px 10px',
             borderRadius: 8,
-            background: isCurrent ? `${tier.color}22` : 'rgba(255,255,255,0.03)',
-            border: `1px solid ${isCurrent ? tier.color : colors.cardBorder}`,
+            background: isCurrent ? `${tier.color}22` : 'rgba(0,0,0,0.28)',
+            border: `1px solid ${isCurrent ? tier.color : 'rgba(212,160,60,0.35)'}`,
             opacity: currentTier !== undefined && !isCurrent ? 0.45 : 1,
             transition: 'all 0.2s',
           }}>
             <div style={{ fontSize: 18 }}>{tier.emoji}</div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ color: isCurrent ? tier.color : colors.textPrimary, fontWeight: 700, fontSize: 12 }}>
+              <div style={{ color: isCurrent ? tier.color : 'rgba(248,228,178,0.95)', fontWeight: 700, fontSize: 12 }}>
                 {tier.title}
               </div>
-              <div style={{ color: colors.textMuted, fontSize: 10 }}>
+              <div style={{ color: 'rgba(248,228,178,0.65)', fontSize: 10 }}>
                 {tier.subtitle}
               </div>
             </div>
@@ -1135,7 +1135,7 @@ function MiniGameIntroScreen({
         <div style={{ color: 'rgba(232,213,168,0.78)', fontSize: '12px', lineHeight: 1.5 }}>
           {gameHint}
         </div>
-        <div style={{ color: 'rgba(232,213,168,0.5)', fontSize: 11, marginTop: spacing.sm, marginBottom: 4 }}>
+        <div style={{ color: 'rgba(248,228,178,0.75)', fontSize: 11, marginTop: spacing.sm, marginBottom: 4 }}>
           За что получишь награду:
         </div>
         <TierLadder />
@@ -1195,12 +1195,12 @@ function MiniGameIntroScreen({
             ) : (
               <span style={{
                 fontSize: 10, padding: '2px 6px',
-                background: colors.fairyGold, color: colors.nightBlue,
+                background: 'rgba(0,0,0,0.5)', color: colors.fairyGoldBright,
                 borderRadius: 6, fontWeight: 800, letterSpacing: '0.04em',
               }}>10 ⭐</span>
             )}
           </div>
-          <div style={{ fontSize: 12, color: colors.textSecondary, fontWeight: 400, marginTop: 3, lineHeight: 1.4 }}>
+          <div style={{ fontSize: 12, color: colors.ctaText, opacity: 0.92, fontWeight: 500, marginTop: 3, lineHeight: 1.4 }}>
             Задай до 10 вопросов лично. Опытный жулик звучит убедительно, но под давлением проговаривается — самый верный способ почуять скам.
           </div>
         </div>

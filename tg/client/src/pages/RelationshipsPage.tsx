@@ -7,7 +7,7 @@ import { PageTitle } from '@/components/PageTitle'
 import { MerchantToken, ARCHETYPE_TINT } from '@/components/MerchantToken'
 import { useGameStore } from '@/stores/gameStore'
 import { MINIGAME_INFO } from '@/components/minigames/info'
-import { colors, spacing } from '@/theme'
+import { colors, spacing , gradients } from '@/theme'
 
 const ARCHETYPES = ['BURATINO', 'BOYARIN', 'KOLOBOK', 'KOSCHEI', 'ZOLUSHKA', 'BABA_YAGA', 'IVAN_DURAK'] as const
 type Archetype = typeof ARCHETYPES[number]
@@ -173,7 +173,7 @@ function RelationshipDetails({ archetype, onClose }: { archetype: Archetype; onC
         style={{
           position: 'fixed', bottom: 0, left: 0, right: 0,
           maxHeight: '88dvh', overflowY: 'auto',
-          background: `linear-gradient(180deg, ${colors.enchantedPurple} 0%, ${colors.nightBlue} 100%)`,
+          background: `gradients.modal`,
           borderTop: `2px solid ${tint}`,
           borderRadius: '20px 20px 0 0',
           // 80px доп.запас снизу — иначе нижняя навигация и чат-кнопка

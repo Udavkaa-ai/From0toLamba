@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { colors, spacing } from '@/theme'
+import { colors, spacing , gradients } from '@/theme'
 import { useT } from '@/i18n'
 
 // ─── Типы ─────────────────────────────────────────────────────────────────────
@@ -107,7 +107,7 @@ export function FaqModal({ onClose }: { onClose: () => void }) {
         style={{
           position: 'absolute', bottom: 0, left: 0, right: 0,
           height: '90vh',
-          background: `linear-gradient(170deg, ${colors.enchantedPurple} 0%, ${colors.nightBlue} 100%)`,
+          background: `gradients.modal`,
           borderRadius: '20px 20px 0 0',
           border: `1px solid ${colors.fairyGold}30`,
           display: 'flex', flexDirection: 'column',
@@ -234,7 +234,7 @@ export function FaqAnnouncementModal({ onClose }: { onClose: () => void }) {
         transition={{ type: 'spring', damping: 26, stiffness: 280 }}
         style={{
           width: '100%', maxWidth: '360px',
-          background: `linear-gradient(145deg, ${colors.enchantedPurple}, ${colors.nightBlue})`,
+          background: `gradients.modal`,
           border: `1px solid ${colors.fairyGold}50`,
           borderRadius: '20px',
           padding: '28px 24px 24px',

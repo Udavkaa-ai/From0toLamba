@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { evaluateAchievements, type EvaluatedAchievement } from '@/game/achievements'
 import { loreFor } from '@/game/lore'
 import { useGameStore } from '@/stores/gameStore'
-import { colors, spacing } from '@/theme'
+import { colors, spacing , gradients } from '@/theme'
 import { useT } from '@/i18n'
 
 const LS_KEY = 'seenAchievements'
@@ -126,7 +126,7 @@ function UnlockedBanner({
         onClick={e => e.stopPropagation()}
         style={{
           width: '100%', maxWidth: '420px',
-          background: `linear-gradient(145deg, ${colors.enchantedPurple}, ${colors.nightBlue})`,
+          background: `gradients.modal`,
           border: `1px solid ${colors.fairyGold}80`,
           borderRadius: '16px',
           padding: spacing.xl,

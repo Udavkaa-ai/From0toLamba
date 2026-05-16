@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { useLangStore, type Lang } from '@/stores/langStore'
-import { colors } from '@/theme'
+import { colors , gradients } from '@/theme'
 
 const OPTIONS: { lang: Lang; flag: string; label: string; sub: string }[] = [
   { lang: 'ru', flag: '🇷🇺', label: 'Русский', sub: 'Сказочная Русь в оригинале' },
@@ -64,7 +64,7 @@ export function LanguagePicker({ onPicked }: { onPicked: () => void }) {
             style={{
               display: 'flex', alignItems: 'center', gap: '16px',
               padding: '18px 20px',
-              background: `linear-gradient(135deg, ${colors.enchantedPurple}80, ${colors.nightBlue}80)`,
+              background: `gradients.modal`,
               border: `1px solid ${colors.fairyGold}40`,
               borderRadius: '16px',
               cursor: 'pointer',

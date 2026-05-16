@@ -210,7 +210,7 @@ export function ChatPanel() {
               style={{
                 position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 161,
                 height: '72dvh',
-                background: `linear-gradient(180deg, ${colors.enchantedPurple} 0%, ${colors.nightBlue} 100%)`,
+                background: `gradients.modal`,
                 borderTop: `1px solid ${colors.fairyGold}40`,
                 borderRadius: '20px 20px 0 0',
                 display: 'flex', flexDirection: 'column',
