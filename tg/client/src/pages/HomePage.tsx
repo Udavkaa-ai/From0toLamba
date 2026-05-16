@@ -386,6 +386,26 @@ export function HomePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState?.isOnboardingComplete])
 
+  // Слушатели от глобального NextWeekFab — он диспатчит CustomEvent'ы.
+  // Здесь мы решаем: показать inbox-guard или сразу advance / открыть payment.
+  useEffect(() => {
+    const advanceHandler = () => {
+      tgHaptic?.impactOccurred('medium')
+      if ((gameState?.inboxProjects.length ?? 0) > 0) {
+        setShowInboxLeftConfirm(true)
+      } else {
+        advanceMutation.mutate()
+      }
+    }
+    const skipHandler = () => setShowPaymentModal(true)
+    window.addEventListener('advance-day', advanceHandler)
+    window.addEventListener('request-skip-payment', skipHandler)
+    return () => {
+      window.removeEventListener('advance-day', advanceHandler)
+      window.removeEventListener('request-skip-payment', skipHandler)
+    }
+  }, [gameState?.inboxProjects.length, advanceMutation])
+
   const resetMutation = useMutation({
     mutationFn: api.game.resetGame,
     onSuccess: () => {
@@ -1316,25 +1336,9 @@ export function HomePage() {
         )}
       </AnimatePresence>
 
-      {/* Плавающая кнопка «Следующий день» — скрыта когда открыты настройки/модалки */}
-      {!showSettings && !showPaymentModal && (
-        <NextDayFab
-          gameState={gameState}
-          now={now}
-          isPending={advanceMutation.isPending}
-          onAdvance={() => {
-            tgHaptic?.impactOccurred('medium')
-            // Не все дела рассмотрены — предупреждаем, чтобы игрок не «уходил спать»
-            // забыв про входящие предложения
-            if (gameState.inboxProjects.length > 0) {
-              setShowInboxLeftConfirm(true)
-            } else {
-              advanceMutation.mutate()
-            }
-          }}
-          onWatchAd={() => setShowPaymentModal(true)}
-        />
-      )}
+      {/* Плавающий FAB «Следующая неделя» теперь глобальный (см. main.tsx
+         → NextWeekFab), здесь он не рендерится. HomePage слушает CustomEvent
+         'advance-day' и 'request-skip-payment' через useEffect ниже. */}
 
       <AnimatePresence>
         {showInboxLeftConfirm && (
@@ -1982,23 +1986,21 @@ function InboxFeedCard({ project, delay, onPress }: { project: ProjectDTO; delay
 }
 
 // Чип-кнопка «Отношения с дельцами» — быстрый доступ на главной.
-// Показывает сумму всех жетонов + до 3-х эмодзи хозяев, по которым жетоны есть.
+// Показывает сумму всех жетонов + ВСЕ 7 архетипов с их балансом
+// (×0 для тех, кого ещё не встретили) — симметричная сетка.
 function TokensQuickChip({ onNavigate }: { onNavigate: () => void }) {
   const { gameState } = useGameStore()
   const tokens = gameState?.archetypeTokens ?? {}
+  // Фиксированный порядок 7 архетипов — чтобы сетка не «прыгала»
+  const ARCH_ORDER = ['BURATINO', 'BOYARIN', 'KOLOBOK', 'KOSCHEI', 'ZOLUSHKA', 'BABA_YAGA', 'IVAN_DURAK']
   const archEmoji: Record<string, string> = {
     BURATINO: '🪆', BOYARIN: '👑', KOLOBOK: '🤗', KOSCHEI: '💀',
     ZOLUSHKA: '👠', BABA_YAGA: '🧙‍♀️', IVAN_DURAK: '🃏',
   }
-  const withBalance = Object.entries(tokens)
-    .filter(([, v]) => (v as any)?.balance > 0)
-    .map(([k, v]) => ({ archetype: k, balance: (v as any).balance as number }))
-    .sort((a, b) => b.balance - a.balance)
   const totalBalance = Object.values(tokens).reduce((s, v) => s + ((v as any)?.balance ?? 0), 0)
-  // Показываем до 7 «эмодзи × N» — по числу архетипов с балансом
-  const tokenPairs = withBalance.map(t => ({
-    emoji: archEmoji[t.archetype] ?? '🪙',
-    count: t.balance,
+  const tokenPairs = ARCH_ORDER.map(a => ({
+    emoji: archEmoji[a],
+    count: ((tokens as any)[a]?.balance ?? 0) as number,
   }))
 
   return (
@@ -2010,56 +2012,67 @@ function TokensQuickChip({ onNavigate }: { onNavigate: () => void }) {
       whileTap={{ scale: 0.98 }}
       style={{
         width: '100%',
-        display: 'flex', alignItems: 'center', gap: spacing.sm,
+        display: 'flex', flexDirection: 'column', gap: spacing.sm,
         marginBottom: spacing.lg,
-        padding: `${spacing.sm} ${spacing.md}`,
-        background: `linear-gradient(135deg, ${colors.fairyGold}22, ${colors.fairyGold}0A)`,
-        border: `1px solid ${colors.fairyGold}66`,
+        padding: `${spacing.md} ${spacing.md}`,
+        // Непрозрачный фон — была раньше translucent gold градиент
+        background: gradients.card,
+        border: `1.5px solid ${colors.fairyGold}88`,
         borderRadius: 14,
         color: colors.fairyGold,
         cursor: 'pointer',
         fontFamily: 'inherit',
         textAlign: 'left',
-        boxShadow: totalBalance > 0 ? `0 0 16px ${colors.fairyGold}25` : 'none',
+        boxShadow: totalBalance > 0
+          ? `0 0 18px ${colors.fairyGold}30, inset 0 1px 0 ${colors.cardHighlight}`
+          : `0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 ${colors.cardHighlight}`,
       }}
     >
-      <div style={{ fontSize: 22, lineHeight: 1 }}>🪙</div>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span>Отношения с дельцами</span>
+      {/* Шапка: иконка + название + общая сумма */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
+        <div style={{ fontSize: 22, lineHeight: 1 }}>🪙</div>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 14, fontWeight: 700 }}>Отношения с дельцами</span>
           {totalBalance > 0 && (
             <span style={{
               padding: '2px 8px', borderRadius: 8,
               background: colors.fairyGold, color: colors.nightBlue,
-              fontSize: 11, fontWeight: 800, fontVariantNumeric: 'tabular-nums',
+              fontSize: 12, fontWeight: 800, fontVariantNumeric: 'tabular-nums',
             }}>
               {totalBalance}
             </span>
           )}
         </div>
-        <div style={{ fontSize: 11, color: colors.textMuted, marginTop: 4, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-          {tokenPairs.length > 0 ? (
-            tokenPairs.map((p, i) => (
-              <span key={i} style={{
-                display: 'inline-flex', alignItems: 'center', gap: 2,
-                padding: '1px 6px',
-                background: 'rgba(255,184,0,0.12)',
-                border: `1px solid ${colors.fairyGold}55`,
-                borderRadius: 6,
-                fontVariantNumeric: 'tabular-nums',
-                color: colors.fairyGold,
-                fontWeight: 700,
-              }}>
-                <span style={{ fontSize: 13 }}>{p.emoji}</span>
-                <span>×{p.count}</span>
-              </span>
-            ))
-          ) : (
-            <span>7 хозяев · жетоны и статистика</span>
-          )}
-        </div>
+        <span style={{ fontSize: 16, color: colors.fairyGold, opacity: 0.65 }}>→</span>
       </div>
-      <span style={{ fontSize: 16, color: colors.fairyGold, opacity: 0.6 }}>→</span>
+      {/* Жетоны по архетипам — симметричная сетка 7 колонок */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4,
+        marginTop: 2,
+      }}>
+        {tokenPairs.map((p, i) => {
+          const has = p.count > 0
+          return (
+            <div key={i} style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              gap: 1, padding: '4px 0',
+              borderRadius: 8,
+              background: has ? 'rgba(255,184,0,0.18)' : 'rgba(0,0,0,0.2)',
+              border: `1px solid ${has ? colors.fairyGold + '66' : 'rgba(212,160,60,0.25)'}`,
+              opacity: has ? 1 : 0.55,
+            }}>
+              <span style={{ fontSize: 19, lineHeight: 1 }}>{p.emoji}</span>
+              <span style={{
+                fontSize: 10, fontWeight: 800,
+                color: has ? colors.fairyGold : colors.textOnDarkMuted,
+                fontVariantNumeric: 'tabular-nums', lineHeight: 1,
+              }}>
+                ×{p.count}
+              </span>
+            </div>
+          )
+        })}
+      </div>
     </motion.button>
   )
 }

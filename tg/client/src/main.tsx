@@ -15,6 +15,7 @@ import { RelationshipsPage } from './pages/RelationshipsPage'
 import { RegistryPage } from './pages/RegistryPage'
 import { BottomNav } from './components/BottomNav'
 import { ChatPanel } from './components/ChatPanel'
+import { NextWeekFab } from './components/NextWeekFab'
 import { TourOverlay } from './components/TourOverlay'
 import { LanguagePicker } from './components/LanguagePicker'
 import { useLangStore } from './stores/langStore'
@@ -56,6 +57,7 @@ function AppShell() {
           </Routes>
           <BottomNav />
           <ChatPanel />
+          <NextWeekFab />
           <TourOverlay />
         </>
       )}
