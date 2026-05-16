@@ -845,13 +845,15 @@ export function pickRandomEvent(
   type: ProjectType,
   fate: ProjectFate,
   rngFn: () => number = Math.random,
+  opts: { positiveOnly?: boolean; chance?: number } = {},
 ): RandomEvent | null {
-  const chance = EVENT_CHANCE_MIN + rngFn() * (EVENT_CHANCE_MAX - EVENT_CHANCE_MIN)
+  const chance = opts.chance ?? (EVENT_CHANCE_MIN + rngFn() * (EVENT_CHANCE_MAX - EVENT_CHANCE_MIN))
   if (rngFn() >= chance) return null
 
   const candidates = RANDOM_EVENTS.filter(e => {
     if (e.applicableTo !== 'ALL' && !e.applicableTo.includes(type)) return false
     if (fate === ProjectFate.INSTANT_SCAM && e.kind === 'NEGATIVE') return false
+    if (opts.positiveOnly && e.kind === 'NEGATIVE') return false
     return true
   })
 

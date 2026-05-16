@@ -173,6 +173,34 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
             userCountHistory: [...project.userCountHistory.slice(-29), project.currentUserCount],
           },
         })
+
+        // Новость дня для VIP-дела: только POSITIVE/NEUTRAL события.
+        // Шанс 100% — у спонсорского ярмарка должна быть «живая», каждый день
+        // что-то происходит. Эффект события на стоимость НЕ применяем —
+        // currentValue остаётся на линейной траектории к 3×. Это сделано для
+        // того чтобы хозяин канала мог спокойно гарантировать +200% без
+        // случайных корректировок.
+        const sponsorEvent = pickRandomEvent(
+          project.type as ProjectType,
+          fate,
+          undefined,
+          { positiveOnly: true, chance: 1.0 },
+        )
+        if (sponsorEvent) {
+          await prisma.dailyUpdate.create({
+            data: {
+              projectId: project.id,
+              userId,
+              day: newDaysSince,
+              title: sponsorEvent.newsTitle,
+              body: renderEventBody(sponsorEvent.newsBody, project.name, Math.round(newValue - project.currentValueRubles)),
+              redFlags: [],
+              payoutStatus: 'BOOSTED',
+              eventKind: sponsorEvent.kind,
+              userCountDelta: 0,
+            },
+          }).catch(err => console.error('[Sponsor news] insert failed:', err))
+        }
       }
       continue
     }
