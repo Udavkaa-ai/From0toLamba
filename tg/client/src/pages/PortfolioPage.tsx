@@ -61,7 +61,10 @@ export function PortfolioPage() {
         {/* Активные */}
         {data?.active && data.active.length > 0 && (
           <section>
-            <div style={{ color: colors.fairyGold, fontSize: '13px', fontWeight: 600, marginBottom: spacing.sm }}>
+            <div style={{
+              color: colors.fairyGold, fontSize: '13px', fontWeight: 700, marginBottom: spacing.sm,
+              textShadow: '0 1px 4px rgba(0,0,0,0.65), 0 0 8px rgba(0,0,0,0.4)',
+            }}>
               {t.portfolio.tabActive}
             </div>
             {data.active.map((p, i) => (
@@ -677,8 +680,14 @@ function TransactionSection({ transactions }: { transactions: TransactionDTO[] }
           marginBottom: open ? spacing.sm : 0,
         }}
       >
-        <span style={{ color: colors.textMuted, fontSize: '13px', fontWeight: 600 }}>{t.portfolio.tabFlow}</span>
-        <span style={{ color: colors.textMuted, fontSize: '18px', lineHeight: 1 }}>{open ? '−' : '+'}</span>
+        <span style={{
+          color: colors.textPrimary, fontSize: '13px', fontWeight: 700,
+          textShadow: '0 1px 4px rgba(0,0,0,0.5)',
+        }}>{t.portfolio.tabFlow}</span>
+        <span style={{
+          color: colors.textPrimary, fontSize: '18px', lineHeight: 1, fontWeight: 700,
+          textShadow: '0 1px 4px rgba(0,0,0,0.5)',
+        }}>{open ? '−' : '+'}</span>
       </button>
       <AnimatePresence>
         {open && (

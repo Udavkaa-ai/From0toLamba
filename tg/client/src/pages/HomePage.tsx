@@ -790,10 +790,10 @@ export function HomePage() {
                     }}
                     style={{
                       padding: '6px 16px',
-                      background: musicMuted ? `${colors.textOnDarkMuted}20` : `${colors.fairyGold}20`,
-                      border: `1px solid ${musicMuted ? colors.textOnDarkMuted : colors.fairyGold}55`,
+                      background: musicMuted ? 'rgba(255,255,255,0.08)' : `${colors.fairyGold}20`,
+                      border: `1px solid ${musicMuted ? 'rgba(255,255,255,0.35)' : `${colors.fairyGold}55`}`,
                       borderRadius: '10px',
-                      color: musicMuted ? colors.textOnDarkMuted : colors.fairyGold,
+                      color: musicMuted ? 'rgba(255,255,255,0.75)' : colors.fairyGold,
                       fontSize: '13px', fontWeight: 600, cursor: 'pointer',
                     }}
                   >
@@ -815,10 +815,10 @@ export function HomePage() {
                     }}
                     style={{
                       padding: '6px 16px',
-                      background: soundMuted ? `${colors.textOnDarkMuted}20` : `${colors.fairyGold}20`,
-                      border: `1px solid ${soundMuted ? colors.textOnDarkMuted : colors.fairyGold}55`,
+                      background: soundMuted ? 'rgba(255,255,255,0.08)' : `${colors.fairyGold}20`,
+                      border: `1px solid ${soundMuted ? 'rgba(255,255,255,0.35)' : `${colors.fairyGold}55`}`,
                       borderRadius: '10px',
-                      color: soundMuted ? colors.textOnDarkMuted : colors.fairyGold,
+                      color: soundMuted ? 'rgba(255,255,255,0.75)' : colors.fairyGold,
                       fontSize: '13px', fontWeight: 600, cursor: 'pointer',
                     }}
                   >
@@ -1196,12 +1196,20 @@ export function HomePage() {
             const usedC = gameState.consecutiveAdvances ?? 0
             const dayName = usedC > 0 ? t.home.weekDays[Math.min(usedC, maxC) - 1] : null
             return dayName ? (
-              <div style={{ color: `${colors.fairyGold}70`, fontSize: '11px', marginTop: '2px', letterSpacing: '0.05em' }}>
+              <div style={{
+                color: colors.fairyGold,
+                fontSize: '11px', marginTop: '2px', letterSpacing: '0.06em',
+                fontWeight: 700,
+                textShadow: '0 1px 4px rgba(0,0,0,0.7), 0 0 8px rgba(0,0,0,0.4)',
+              }}>
                 {dayName}
               </div>
             ) : null
           })()}
-          <div style={{ color: colors.textSecondary, fontSize: '12px', marginTop: '2px', fontWeight: 600 }}>
+          <div style={{
+            color: '#FFFFFF', fontSize: '12px', marginTop: '2px', fontWeight: 700,
+            textShadow: '0 1px 4px rgba(0,0,0,0.75), 0 0 6px rgba(0,0,0,0.5)',
+          }}>
             ✦ {t.home.dayLabel} {gameState.currentDay} · {(t.ranks as unknown as Record<string, string>)[gameState.investorRank] ?? gameState.investorRank} ✦
           </div>
           </div>{/* end centre block */}
@@ -1258,7 +1266,11 @@ export function HomePage() {
         {/* Активные дела */}
         {gameState.activeProjects.length > 0 && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-            <div style={{ color: colors.fairyGold, fontSize: '13px', fontWeight: 600, marginBottom: spacing.sm, marginLeft: '4px' }}>
+            <div style={{
+              color: colors.fairyGold, fontSize: '13px', fontWeight: 700,
+              marginBottom: spacing.sm, marginLeft: '4px',
+              textShadow: '0 1px 4px rgba(0,0,0,0.65), 0 0 8px rgba(0,0,0,0.4)',
+            }}>
               {t.home.activeCount(gameState.activeProjects.length)}
             </div>
             {gameState.activeProjects.map((p, i) => (
@@ -1274,7 +1286,10 @@ export function HomePage() {
               display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
               margin: `${spacing.lg} 4px ${spacing.sm}`,
             }}>
-              <div style={{ color: colors.fairyGold, fontSize: '13px', fontWeight: 600 }}>
+              <div style={{
+                color: colors.fairyGold, fontSize: '13px', fontWeight: 700,
+                textShadow: '0 1px 4px rgba(0,0,0,0.65), 0 0 8px rgba(0,0,0,0.4)',
+              }}>
                 {t.home.inboxCount(gameState.inboxProjects.length)}
               </div>
               {gameState.inboxProjects.length > 2 && (
@@ -1604,7 +1619,7 @@ function NextDayFab({
           fontSize: '13px',
           fontWeight: 600,
           cursor: isLocked || isPending ? 'not-allowed' : 'pointer',
-          backdropFilter: 'blur(12px)',
+
           boxShadow: isLocked ? 'none' : `0 4px 20px ${colors.fairyGold}30`,
           whiteSpace: 'nowrap',
           opacity: isPending ? 0.7 : 1,
@@ -1628,7 +1643,7 @@ function NextDayFab({
             fontSize: '12px',
             fontWeight: 600,
             cursor: 'pointer',
-            backdropFilter: 'blur(12px)',
+  
             whiteSpace: 'nowrap',
           }}
         >

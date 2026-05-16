@@ -11,9 +11,11 @@ export function PageTitle({ children }: { children: ReactNode }) {
       color: colors.fairyGold,
       fontFamily: typography.headingFontFamily,
       fontSize: '22px',
-      fontWeight: 600,
+      fontWeight: 700,
       letterSpacing: '0.06em',
-      textShadow: `0 0 18px ${colors.fairyGold}40`,
+      // Двойная тень: тёплое золотое сияние + тёмная тень-стенка для читаемости
+      // поверх ярких bg-картинок в Сказочной теме (Спасс на крови, ярмарка днём).
+      textShadow: `0 0 18px ${colors.fairyGold}40, 0 2px 6px rgba(0,0,0,0.6), 0 0 4px rgba(0,0,0,0.5)`,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',

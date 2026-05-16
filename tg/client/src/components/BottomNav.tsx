@@ -33,7 +33,9 @@ export function BottomNav() {
         display: 'flex',
         background: colors.navBarBg,
         borderTop: `1.5px solid ${colors.navBarBorder}`,
-        backdropFilter: 'blur(12px)',
+        // backdrop-filter намеренно убран: на Android WebView blur поверх
+        // fixed-positioned bgImage с opacity вызывал repaint-шторм и
+        // моргание контента модалок. Нав-бар достаточно непрозрачен сам.
         zIndex: 100,
         paddingBottom: 'env(safe-area-inset-bottom)',
       }}
