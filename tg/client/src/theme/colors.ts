@@ -37,28 +37,30 @@ const themes = {
     cardGradientAngle: '155deg',
   },
   fairy: {
-    // Сказочно-русская: глубокий чёрно-коричневый фон, дерево-карточки.
-    bgDeep: '#0C0604',
-    bgMid:  '#140A04',
-    // Резная дерев. плашка: верх теплее, низ почти чёрный
-    cardGradientTop:    'rgba(58, 34, 16, 0.97)',
-    cardGradientMid:    'rgba(45, 26, 10, 0.99)',
-    cardGradientBottom: 'rgba(22, 11, 4, 1.0)',
-    cardBorder:       'rgba(160, 104, 48, 0.45)',  // светлый кант резного дерева
-    cardBorderBright: 'rgba(255, 184, 0, 0.55)',
-    cardHighlight:    'rgba(255, 200, 100, 0.16)',
+    // Сказочно-русская: тёплая ярмарочная палитра — медовое дерево карточки
+    // на тёмно-каштановом фоне с золотым светом сверху. Должна читаться
+    // как «полуденная ярмарка», а не «ночь в погребе».
+    bgDeep: '#1A0E06',
+    bgMid:  '#221308',
+    // Карточка — медовый дуб: достаточно светлая чтобы быть читаемой,
+    // достаточно тёплая чтобы быть «деревянной».
+    cardGradientTop:    'rgba(140, 86, 38, 0.96)',   // медовый дуб (верх — самый светлый)
+    cardGradientMid:    'rgba(106, 64, 28, 0.97)',   // средний орех
+    cardGradientBottom: 'rgba(68, 40, 16, 0.99)',    // тёмный орех (низ)
+    cardBorder:       'rgba(212, 160, 60, 0.7)',     // золотой кант
+    cardBorderBright: 'rgba(255, 210, 90, 0.92)',
+    cardHighlight:    'rgba(255, 220, 140, 0.26)',   // тёплый кремовый блик
     cardShade:        'rgba(0, 0, 0, 0.5)',
-    overlayDark:      'rgba(12, 6, 4, 0.88)',
-    overlayLight:     'rgba(255, 184, 0, 0.10)',
+    overlayDark:      'rgba(20, 11, 5, 0.88)',
+    overlayLight:     'rgba(255, 184, 0, 0.12)',
     cardRadius: '14px',
     cardBorderWidth: '1.5px',
     // Тёплое золотое свечение сверху + мелкие вертикальные «волокна дерева»
     screenGradient:
-      `repeating-linear-gradient(89deg, transparent 0, transparent 3px, rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px), radial-gradient(ellipse at 50% 0%, rgba(255,184,0,0.08) 0%, transparent 55%), linear-gradient(180deg, rgba(38,20,8,0.97) 0%, rgba(26,12,6,0.99) 50%, rgba(18,8,4,1.0) 100%)`,
+      `repeating-linear-gradient(89deg, transparent 0, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px), radial-gradient(ellipse at 50% 0%, rgba(255,200,80,0.14) 0%, transparent 60%), linear-gradient(180deg, rgba(68,38,18,0.97) 0%, rgba(48,26,12,0.99) 50%, rgba(36,18,8,1.0) 100%)`,
     cardSurface: '',
-    // Полосатость волокон + основной градиент
     cardSurfacePrefix:
-      `repeating-linear-gradient(89deg, transparent 0, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px), `,
+      `repeating-linear-gradient(89deg, transparent 0, transparent 3px, rgba(0,0,0,0.045) 3px, rgba(0,0,0,0.045) 4px), `,
     cardGradientAngle: '180deg',
   },
 } as const
