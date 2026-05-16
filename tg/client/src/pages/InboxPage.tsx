@@ -1,9 +1,11 @@
+import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { ScreenBackground, PAGE_BG } from '@/components/ScreenBackground'
 import { FairyCard, OrnamentDivider, SkeletonCard } from '@/components/FairyCard'
 import { PageTitle } from '@/components/PageTitle'
+import { VipArrivalOverlay, getSeenVipIds, markVipSeen } from '@/components/VipArrivalOverlay'
 import { api, type ProjectDTO } from '@/api/client'
 import { colors, spacing, gradients } from '@/theme'
 import { useT } from '@/i18n'
@@ -17,6 +19,22 @@ export function InboxPage() {
     queryFn: api.projects.getInbox,
     refetchInterval: 15_000,
   })
+
+  // VIP-оверлей при первом появлении спонсорского дела (для каждого projectId
+  // один раз, дальше localStorage его помнит). Показываем самое свежее
+  // непросмотренное VIP-дело в инбоксе.
+  const [vipShow, setVipShow] = useState<ProjectDTO | null>(null)
+  useEffect(() => {
+    if (vipShow) return // уже показываем
+    const seen = getSeenVipIds()
+    const unseenVip = projects.find(p => p.isSponsor && !seen.has(p.id))
+    if (unseenVip) setVipShow(unseenVip)
+  }, [projects, vipShow])
+
+  const closeVip = () => {
+    if (vipShow) markVipSeen(vipShow.id)
+    setVipShow(null)
+  }
 
   return (
     <ScreenBackground bgImage={PAGE_BG.inbox}>
@@ -61,6 +79,21 @@ export function InboxPage() {
           </motion.div>
         ))}
       </div>
+
+      <AnimatePresence>
+        {vipShow && (
+          <VipArrivalOverlay
+            key={vipShow.id}
+            project={vipShow}
+            onClose={closeVip}
+            onOpenDeal={() => {
+              const id = vipShow.id
+              closeVip()
+              navigate(`/charter/${id}`)
+            }}
+          />
+        )}
+      </AnimatePresence>
     </ScreenBackground>
   )
 }
@@ -72,12 +105,11 @@ function InboxCard({ project, onClick, tourAttr }: { project: ProjectDTO; onClic
 
   return (
     <div style={{ position: 'relative', marginBottom: spacing.md }}>
-      {/* VIP-обводка снаружи карточки + золотое свечение */}
+      {/* VIP-обводка снаружи карточки + бесконечное золотое пульсирование */}
       {isVip && (
-        <div aria-hidden style={{
+        <div aria-hidden className="vip-glow" style={{
           position: 'absolute', inset: -3, borderRadius: 18,
           background: 'linear-gradient(135deg, #FFD24A 0%, #FFB800 50%, #B07400 100%)',
-          boxShadow: `0 0 28px rgba(255,184,0,0.55), 0 0 6px rgba(255,235,170,0.8)`,
           zIndex: 0,
         }} />
       )}
