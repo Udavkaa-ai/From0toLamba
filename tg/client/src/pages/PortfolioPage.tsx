@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { ComposedChart, AreaChart, Area, Line, ResponsiveContainer, Tooltip, YAxis } from 'recharts'
 import { ScreenBackground, PAGE_BG } from '@/components/ScreenBackground'
 import { FairyCard, OrnamentDivider, SkeletonCard } from '@/components/FairyCard'
-import { PageTitle } from '@/components/PageTitle'
+import { PageTitle, PageSubtitle } from '@/components/PageTitle'
 import { LockIcon } from '@/components/icons'
 import { api, type ProjectDTO, type PostMortemDTO, type DailyUpdateDTO, type TransactionDTO } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
@@ -51,9 +51,7 @@ export function PortfolioPage() {
       <div style={{ padding: `${spacing.xxl} ${spacing.lg} 80px`, maxWidth: '500px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: spacing.xxl }}>
           <PageTitle>{t.portfolio.title}</PageTitle>
-          <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
-            {t.portfolio.subtitle}
-          </div>
+          <PageSubtitle>{t.portfolio.subtitle}</PageSubtitle>
         </div>
 
         {isLoading && [1, 2].map(i => <SkeletonCard key={i} lines={5} />)}

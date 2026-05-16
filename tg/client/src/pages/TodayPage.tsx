@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
 import { ScreenBackground, PAGE_BG } from '@/components/ScreenBackground'
 import { FairyCard, OrnamentDivider, SkeletonCard } from '@/components/FairyCard'
-import { PageTitle } from '@/components/PageTitle'
+import { PageTitle, PageSubtitle } from '@/components/PageTitle'
 import { api, type TodayDTO } from '@/api/client'
 import { colors, spacing, typography } from '@/theme'
 import { useGameStore } from '@/stores/gameStore'
@@ -45,9 +45,7 @@ export function TodayPage() {
       <div style={{ padding: `${spacing.xxl} ${spacing.lg} 80px`, maxWidth: '500px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: spacing.xxl }}>
           <PageTitle>{t.today.title}</PageTitle>
-          <div style={{ color: colors.textMuted, fontSize: 12, marginTop: 4 }}>
-            {t.today.subtitle}
-          </div>
+          <PageSubtitle>{t.today.subtitle}</PageSubtitle>
         </div>
 
         {isLoading || !today ? (

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ScreenBackground, PAGE_BG } from '@/components/ScreenBackground'
 import { FairyCard, OrnamentDivider } from '@/components/FairyCard'
-import { PageTitle } from '@/components/PageTitle'
+import { PageTitle, PageSubtitle } from '@/components/PageTitle'
 import { MerchantToken, ARCHETYPE_TINT } from '@/components/MerchantToken'
 import { useGameStore } from '@/stores/gameStore'
 import { MINIGAME_INFO } from '@/components/minigames/info'
@@ -60,9 +60,7 @@ export function RelationshipsPage() {
 
         <div style={{ textAlign: 'center', marginBottom: spacing.xl }}>
           <PageTitle>{t.relations.title}</PageTitle>
-          <div style={{ color: colors.textMuted, fontSize: 12, marginTop: 4 }}>
-            {t.relations.subtitle}
-          </div>
+          <PageSubtitle>{t.relations.subtitle}</PageSubtitle>
         </div>
 
         <div style={{

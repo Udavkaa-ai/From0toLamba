@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { ScreenBackground, PAGE_BG } from '@/components/ScreenBackground'
 import { FairyCard, OrnamentDivider, SkeletonCard } from '@/components/FairyCard'
-import { PageTitle } from '@/components/PageTitle'
+import { PageTitle, PageSubtitle } from '@/components/PageTitle'
 import { api, type ProjectDTO, type PostMortemDTO } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing } from '@/theme'
@@ -94,9 +94,7 @@ export function RegistryPage() {
           </button>
           <div style={{ flex: 1, textAlign: 'center' }}>
             <PageTitle>{t.registry.title}</PageTitle>
-            <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '2px' }}>
-              {t.registry.subtitle}
-            </div>
+            <PageSubtitle>{t.registry.subtitle}</PageSubtitle>
           </div>
           <div style={{ width: '76px' }} />
         </div>

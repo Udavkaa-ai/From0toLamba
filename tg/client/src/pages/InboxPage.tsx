@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ScreenBackground, PAGE_BG } from '@/components/ScreenBackground'
 import { FairyCard, OrnamentDivider, SkeletonCard } from '@/components/FairyCard'
-import { PageTitle } from '@/components/PageTitle'
+import { PageTitle, PageSubtitle } from '@/components/PageTitle'
 import { VipArrivalOverlay, getSeenVipIds, markVipSeen } from '@/components/VipArrivalOverlay'
 import { api, type ProjectDTO } from '@/api/client'
 import { colors, spacing, gradients } from '@/theme'
@@ -41,9 +41,7 @@ export function InboxPage() {
       <div style={{ padding: `${spacing.xxl} ${spacing.lg} 80px`, maxWidth: '500px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: spacing.xxl }}>
           <PageTitle>{t.inbox.title}</PageTitle>
-          <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
-            {t.inbox.subtitle}
-          </div>
+          <PageSubtitle>{t.inbox.subtitle}</PageSubtitle>
         </div>
 
         {isLoading && [1, 2, 3].map(i => <SkeletonCard key={i} lines={4} />)}
