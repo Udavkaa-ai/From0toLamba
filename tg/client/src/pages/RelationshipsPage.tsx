@@ -8,6 +8,7 @@ import { MerchantToken, ARCHETYPE_TINT } from '@/components/MerchantToken'
 import { useGameStore } from '@/stores/gameStore'
 import { MINIGAME_INFO } from '@/components/minigames/info'
 import { colors, spacing , gradients } from '@/theme'
+import { useT } from '@/i18n'
 
 const ARCHETYPES = ['BURATINO', 'BOYARIN', 'KOLOBOK', 'KOSCHEI', 'ZOLUSHKA', 'BABA_YAGA', 'IVAN_DURAK'] as const
 type Archetype = typeof ARCHETYPES[number]
@@ -33,6 +34,7 @@ const ARCHETYPE_EMOJI: Record<Archetype, string> = {
 }
 
 export function RelationshipsPage() {
+  const t = useT()
   const navigate = useNavigate()
   const { gameState } = useGameStore()
   const [selected, setSelected] = useState<Archetype | null>(null)
@@ -51,15 +53,15 @@ export function RelationshipsPage() {
               cursor: 'pointer',
             }}
           >
-            ← Назад
+            {t.relations.back}
           </button>
           <div style={{ flex: 1 }} />
         </div>
 
         <div style={{ textAlign: 'center', marginBottom: spacing.xl }}>
-          <PageTitle>Отношения</PageTitle>
+          <PageTitle>{t.relations.title}</PageTitle>
           <div style={{ color: colors.textMuted, fontSize: 12, marginTop: 4 }}>
-            Семеро хозяев и твои с ними дела
+            {t.relations.subtitle}
           </div>
         </div>
 
@@ -116,13 +118,11 @@ export function RelationshipsPage() {
 
         <FairyCard style={{ marginBottom: spacing.md }}>
           <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: 13, marginBottom: 6 }}>
-            🪙 Жетоны хозяев
+            {t.relations.tokensTitle}
           </div>
           <div style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 1.5 }}>
-            🎁 За <b>первое знакомство</b> с каждым хозяином — подарок (1 жетон).<br />
-            🎯 За каждые <b>10 сыгранных мини-игр</b> или <b>5 взятых дел</b> с одним хозяином —
-            ещё по жетону. Тратится на бесплатную беседу или раскрытие подсказки по делу
-            при провале мини-игры — вместо 10 ⭐.
+            {t.relations.tokensFirstMeet}<br />
+            {t.relations.tokensRegular}
           </div>
         </FairyCard>
       </div>
@@ -141,6 +141,7 @@ export function RelationshipsPage() {
 }
 
 function RelationshipDetails({ archetype, onClose }: { archetype: Archetype; onClose: () => void }) {
+  const t = useT()
   const { gameState } = useGameStore()
   const tokens = gameState?.archetypeTokens?.[archetype]
   const stats = gameState?.minigameStats?.[archetype]
@@ -271,9 +272,7 @@ function RelationshipDetails({ archetype, onClose }: { archetype: Archetype; onC
           color: colors.textSecondary,
           fontSize: 12, lineHeight: 1.5,
         }}>
-          🪙 Жетон тратится при предложении этого хозяина: на бесплатную беседу
-          (вместо 10 ⭐) или на раскрытие подсказки по делу при проигранной
-          мини-игре. Тратится автоматически, если есть, при нажатии на «жетон» в paywall.
+          {t.relations.tokenSpendHint}
         </div>
       </motion.div>
     </motion.div>

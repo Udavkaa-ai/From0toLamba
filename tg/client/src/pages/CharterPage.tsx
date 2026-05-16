@@ -899,10 +899,11 @@ function forgeryColor(n: number): string {
 /** 3-уровневая лесенка-индикатор: 0 ошибок / 1 ошибка / ≥2 ошибок.
  *  Если передан currentTier — соответствующий уровень подсвечивается. */
 function TierLadder({ currentTier }: { currentTier?: 0 | 1 | 2 }) {
+  const t = useT()
   const tiers: Array<{ emoji: string; title: string; subtitle: string; color: string }> = [
-    { emoji: '🎯', title: '0 ошибок',  subtitle: 'совет чуйки + посул + тип', color: colors.success },
-    { emoji: '🙂', title: '1 ошибка',  subtitle: 'посул и тип, без совета',   color: colors.fairyGold },
-    { emoji: '😅', title: '≥2 ошибок', subtitle: 'только за 10⭐',             color: colors.danger },
+    { emoji: '🎯', title: t.charter.tier0Title, subtitle: t.charter.tier0Sub, color: colors.success },
+    { emoji: '🙂', title: t.charter.tier1Title, subtitle: t.charter.tier1Sub, color: colors.fairyGold },
+    { emoji: '😅', title: t.charter.tier2Title, subtitle: t.charter.tier2Sub, color: colors.danger },
   ]
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: spacing.sm }}>
@@ -928,7 +929,7 @@ function TierLadder({ currentTier }: { currentTier?: 0 | 1 | 2 }) {
               </div>
             </div>
             {isCurrent && (
-              <div style={{ color: tier.color, fontSize: 14, fontWeight: 800 }}>← ты</div>
+              <div style={{ color: tier.color, fontSize: 14, fontWeight: 800 }}>{t.charter.tierYou}</div>
             )}
           </div>
         )
@@ -950,6 +951,7 @@ function MinigameStatsBlock({
   delta?: 'perfect' | 'won' | 'lost' | null
   gameName: string
 }) {
+  const t = useT()
   if (stats.played === 0 && !delta) {
     return (
       <div style={{
@@ -989,12 +991,12 @@ function MinigameStatsBlock({
       borderRadius: 12,
     }}>
       <div style={{ color: colors.textSecondary, fontSize: 11, marginBottom: 6, textAlign: 'center' }}>
-        Твоя история с этим дельцом · сыграно <b style={{ color: colors.fairyGold }}>{stats.played}{delta ? ' +1' : ''}</b>
+        {t.charter.historyWith} <b style={{ color: colors.fairyGold }}>{stats.played}{delta ? ' +1' : ''}</b>
       </div>
       <div style={{ display: 'flex', gap: 6 }}>
-        <Cell label="🎯 идеал"  value={stats.perfect} color={colors.success}   highlight={delta === 'perfect'} />
-        <Cell label="🙂 победа" value={stats.won}     color={colors.fairyGold} highlight={delta === 'won'} />
-        <Cell label="😅 провал" value={stats.lost}    color={colors.danger}    highlight={delta === 'lost'} />
+        <Cell label={t.charter.cellPerfect} value={stats.perfect} color={colors.success}   highlight={delta === 'perfect'} />
+        <Cell label={t.charter.cellWon}     value={stats.won}     color={colors.fairyGold} highlight={delta === 'won'} />
+        <Cell label={t.charter.cellLost}    value={stats.lost}    color={colors.danger}    highlight={delta === 'lost'} />
       </div>
     </div>
   )
@@ -1693,15 +1695,15 @@ function MiniGameResultSheet({
   const gameName = info?.name ?? 'Испытание'
   const emoji = effectiveErrorCount === 0 ? '🎯' : effectiveErrorCount === 1 ? '🙂' : '😅'
   const titleText = bypassed
-    ? 'Дело раскрыто за звёзды'
-    : errorCount === 0 ? 'Безупречно!'
-    : errorCount === 1 ? 'Почти в точку'
-    : 'Чуйка промахнулась'
+    ? t.charter.resultStatusBypass
+    : errorCount === 0 ? t.charter.resultStatusFlawless
+    : errorCount === 1 ? t.charter.resultStatusAlmost
+    : t.charter.resultStatusDefeat
   const subtitleText = bypassed
-    ? 'Посмотри детали и реши — вкладываться или передумать'
-    : errorCount === 0 ? 'Хозяин не утаит от тебя ничего важного'
-    : errorCount === 1 ? 'Одна осечка — детали дела открыты, но без подсказок'
-    : 'Дело осталось тайной — раскроется только за звёзды'
+    ? t.charter.resultSubBypass
+    : errorCount === 0 ? t.charter.resultSubFlawless
+    : errorCount === 1 ? t.charter.resultSubAlmost
+    : t.charter.resultSubDefeat
   const dealTypeLabel = (t.inbox.types as Record<string, string>)[project.type] ?? project.type
   const smartAmount = smartDefaultInvestAmount(gameState)
   const tokenBalance = gameState?.archetypeTokens?.[archetype]?.balance ?? 0
@@ -1808,7 +1810,7 @@ function MiniGameResultSheet({
             width: '40px', height: '4px', borderRadius: '2px',
             background: `${colors.fairyGold}50`, margin: '0 auto 4px',
           }} />
-          {collapsed ? '▲ Развернуть' : '▼ Свернуть лист'}
+          {collapsed ? t.charter.resultExpand : t.charter.resultCollapse}
         </button>
 
         {collapsed && (
@@ -1840,7 +1842,7 @@ function MiniGameResultSheet({
         {canInvest && (
           <div style={paramsRowStyle}>
             <ParamChip label={t.charter.apy} value={`${project.claimedAPY}%`} />
-            <ParamChip label="Тип дела" value={dealTypeLabel} />
+            <ParamChip label={t.charter.dealType} value={dealTypeLabel} />
           </div>
         )}
 
@@ -1866,7 +1868,7 @@ function MiniGameResultSheet({
               color: '#7A4A0A', fontWeight: 700, fontSize: '12px', marginBottom: '4px',
               fontFamily: "'Cinzel', 'Marcellus', serif", letterSpacing: '0.04em',
             }}>
-              🔮 Совет по делу{bypassed ? ' · раскрыто за звёзды' : ' · идеальная игра'}
+              {t.charter.insightHeader}{bypassed ? t.charter.insightBypassSuffix : t.charter.insightPerfectSuffix}
             </div>
             {effectiveInsight}
           </div>
@@ -1885,7 +1887,7 @@ function MiniGameResultSheet({
             textAlign: 'center',
             boxShadow: 'inset 0 1px 0 rgba(255,200,100,0.18), inset 0 -1px 0 rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.35)',
           }}>
-            Посул, тип дела и совет чуйки не раскрыты. Заплати 10 звёзд — увидишь полную картину и сможешь вложиться, если захочешь.
+            {t.charter.notRevealedHint}
           </div>
         )}
 
@@ -2456,8 +2458,8 @@ function phaseCaption(phase: Phase, charter: CharterDTO, scanCountdown: number |
   if (phase === 'intro')      return t.charter.phaseIntro
   if (phase === 'reference')  return t.charter.phaseMemorize
   if (phase === 'scan')       return `${t.charter.phaseFind} · ${scanCountdown ?? charter.timeLimitSeconds} ${t.charter.timer}`
-  if (phase === 'minigame')   return MINIGAME_INFO[archetype]?.name ?? 'Испытание'
-  return 'Разбор испытания'
+  if (phase === 'minigame')   return MINIGAME_INFO[archetype]?.name ?? t.charter.phaseFind
+  return t.charter.resultPhaseBreakdown
 }
 
 function pageTitle(archetype: string | undefined, t: ReturnType<typeof useT>): string {

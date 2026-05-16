@@ -1,8 +1,9 @@
 import { ReactNode, useEffect } from 'react'
 import { SparklesOverlay } from './SparklesOverlay'
 import { gradients, colors } from '@/theme'
+import { getTheme } from '@/theme/colors'
 
-export const APP_VERSION = 'бета 4.1.8'
+export const APP_VERSION = 'бета 4.1.9'
 
 interface ScreenBackgroundProps {
   children: ReactNode
@@ -34,8 +35,13 @@ export function ScreenBackground({ children, showSparkles = true, showMist = tru
         overflow: 'hidden',
       }}
     >
-      {/* Фоновое изображение страницы */}
-      {bgImage && (
+      {/* Фоновое изображение страницы.
+         В Сказочной теме НЕ показываем — тёмные фотографии (нагенерены под
+         classic) при alpha 0.18 поверх медового дерева дают мутный жёлто-
+         коричневый налёт. TODO: сгенерить отдельный набор bg/HOME_*.webp
+         для fairy через tools/banners/generate_backgrounds.py — светлые
+         ярмарочные сцены. Пока чисто градиент + золотой ореол. */}
+      {bgImage && getTheme() !== 'fairy' && (
         <div
           style={{
             position: 'fixed',

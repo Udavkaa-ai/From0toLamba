@@ -44,9 +44,9 @@ export function TodayPage() {
     <ScreenBackground bgImage={PAGE_BG.leaderboard}>
       <div style={{ padding: `${spacing.xxl} ${spacing.lg} 80px`, maxWidth: '500px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: spacing.xxl }}>
-          <PageTitle>Сегодня</PageTitle>
+          <PageTitle>{t.today.title}</PageTitle>
           <div style={{ color: colors.textMuted, fontSize: 12, marginTop: 4 }}>
-            Дневной ритуал, награды за серию и купеческий рейтинг
+            {t.today.subtitle}
           </div>
         </div>
 
@@ -92,11 +92,12 @@ function StreakBlock({ today, onClaim, pending }: {
   onClaim: () => void
   pending: boolean
 }) {
+  const t = useT()
   const streak = today.loginStreak
   const claimed = today.alreadyClaimed
   return (
     <FairyCard accent style={{ marginBottom: spacing.lg, textAlign: 'center' }}>
-      <div style={{ color: colors.textSecondary, fontSize: 12 }}>Ты на ярмарке</div>
+      <div style={{ color: colors.textSecondary, fontSize: 12 }}>{t.today.youAtFair}</div>
       <motion.div
         initial={{ scale: 0.85 }} animate={{ scale: 1 }}
         style={{
@@ -111,14 +112,14 @@ function StreakBlock({ today, onClaim, pending }: {
         🔥 {streak}
       </motion.div>
       <div style={{ color: colors.textPrimary, fontSize: 14, marginTop: 4 }}>
-        {streak === 1 ? 'день подряд' : streak < 5 ? 'дня подряд' : 'дней подряд'}
+        {t.today.dayStreak(streak)}
       </div>
 
       <OrnamentDivider />
 
       {claimed ? (
         <div style={{ color: colors.success, fontSize: 14, fontWeight: 700, padding: `${spacing.sm} 0` }}>
-          ✓ Награда получена. Заходи завтра — серия не оборвётся.
+          {t.today.rewardClaimed}
         </div>
       ) : (
         <button
@@ -154,8 +155,7 @@ function StreakBlock({ today, onClaim, pending }: {
 
       {today.nextMilestone && (
         <div style={{ color: colors.textMuted, fontSize: 11, marginTop: spacing.sm }}>
-          До следующего бонуса (день {today.nextMilestone.day}, +{today.nextMilestone.bonus} г) —
-          ещё {today.nextMilestone.daysLeft} {today.nextMilestone.daysLeft === 1 ? 'день' : 'дня'}.
+          {t.today.nextBonus(today.nextMilestone.day, today.nextMilestone.bonus, today.nextMilestone.daysLeft)}
         </div>
       )}
     </FairyCard>
@@ -163,6 +163,7 @@ function StreakBlock({ today, onClaim, pending }: {
 }
 
 function MilestonesBlock({ today }: { today: TodayDTO }) {
+  const t = useT()
   const list: Array<{ day: number; bonus: number }> = [
     { day: 3,  bonus: 50 },
     { day: 5,  bonus: 70 },
@@ -175,7 +176,7 @@ function MilestonesBlock({ today }: { today: TodayDTO }) {
   return (
     <FairyCard style={{ marginBottom: spacing.lg }}>
       <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: 14, marginBottom: spacing.sm }}>
-        Лестница серии
+        {t.today.ladderTitle}
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 6 }}>
         {list.map(m => {
@@ -219,14 +220,14 @@ function LeaderboardBlock({ today, myTelegramId, t }: {
     <FairyCard>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm }}>
         <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: 14 }}>
-          👑 Купеческий рейтинг
+          {t.today.leaderboardTitle}
         </div>
         <div style={{ color: colors.textMuted, fontSize: 11 }}>
-          {lb.totalPlayers} {lb.totalPlayers === 1 ? 'игрок' : 'игроков'}
+          {t.today.leaderboardCount(lb.totalPlayers)}
         </div>
       </div>
       <div style={{ color: colors.textMuted, fontSize: 11, marginBottom: spacing.sm }}>
-        По общему состоянию (баланс + дела). Обновляется онлайн.
+        {t.today.leaderboardHint}
       </div>
       {lb.top.length === 0 ? (
         <div style={{ color: colors.textMuted, fontSize: 12, padding: `${spacing.md} 0`, textAlign: 'center' }}>

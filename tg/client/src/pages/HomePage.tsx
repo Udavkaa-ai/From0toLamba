@@ -780,7 +780,7 @@ export function HomePage() {
                 {/* Музыка */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
                   <span style={{ color: colors.textOnDark, fontSize: '14px' }}>
-                    🎵 {musicMuted ? 'Музыка выключена' : 'Музыка играет'}
+                    🎵 {musicMuted ? t.home.musicOff : t.home.musicOn}
                   </span>
                   <button
                     onClick={() => {
@@ -804,7 +804,7 @@ export function HomePage() {
                 {/* Звуковые эффекты */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                   <span style={{ color: colors.textOnDark, fontSize: '14px' }}>
-                    🔔 {soundMuted ? 'Звуки выключены' : 'Звуки включены'}
+                    🔔 {soundMuted ? t.home.soundOff : t.home.soundOn}
                   </span>
                   <button
                     onClick={() => {
@@ -850,14 +850,14 @@ export function HomePage() {
               {/* Тема оформления — переключатель Классическая / Сказочная */}
               <div style={{ marginBottom: '28px' }}>
                 <div style={{ color: colors.textOnDarkSecond, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Оформление
+                  {t.home.themeSection}
                 </div>
                 <div style={{
                   display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px',
                 }}>
                   {([
-                    { id: 'classic' as const, label: 'Классическая', hint: 'Магия в полночь · фиолет + золото' },
-                    { id: 'fairy' as const,   label: 'Сказочная',     hint: 'Резное дерево + пергамент + печать' },
+                    { id: 'classic' as const, label: t.home.themeClassic, hint: t.home.themeClassicHint },
+                    { id: 'fairy' as const,   label: t.home.themeFairy,   hint: t.home.themeFairyHint },
                   ]).map(opt => {
                     const isActive = getTheme() === opt.id
                     return (
@@ -887,7 +887,7 @@ export function HomePage() {
                   })}
                 </div>
                 <div style={{ color: colors.textOnDarkMuted, fontSize: '11px', marginTop: '8px', lineHeight: 1.4 }}>
-                  Сменив тему, игра перезагрузится.
+                  {t.home.themeReloadHint}
                 </div>
               </div>
 
