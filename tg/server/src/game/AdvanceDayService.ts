@@ -1,6 +1,6 @@
 import { prisma } from '../db/prisma'
 import { ProjectFate, FATE_CONFIG, ProjectType, InvestorRank, SPONSOR_PROFIT_MULT } from './types'
-import { computeSponsorValue, shouldCloseSponsor } from './sponsorService'
+import { computeSponsorValue, shouldCloseSponsor, createSponsorPostMortem } from './sponsorService'
 import { computeRank, isRankUp, countDeals } from './rankService'
 import { randomInRange as rng, randomIntInRange as irng } from './projectUtils'
 import { generateDailyUpdate, generatePostMortem } from '../ai/openRouterClient'
@@ -131,7 +131,7 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
       if (shouldCloseSponsor(newDaysSince, durationDays)) {
         // Срок вышел: возврат целиком, дело закрыто
         const returned = Math.floor(project.investedAmountRubles * SPONSOR_PROFIT_MULT)
-        await prisma.project.update({
+        const closedProject = await prisma.project.update({
           where: { id: project.id },
           data: {
             isActive: false, isClosed: true, isWithdrawalLocked: false,
@@ -146,6 +146,7 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
             type: 'RETURNED', amount: returned, day: gameState.currentDay + 1,
           },
         }).catch(console.error)
+        createSponsorPostMortem(closedProject, returned, newDaysSince).catch(console.error)
         balanceDelta += returned
         returnedDelta += returned
         closures.push({

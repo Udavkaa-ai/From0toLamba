@@ -135,3 +135,34 @@ export function computeSponsorValue(invested: number, daysActive: number, durati
 export function shouldCloseSponsor(daysActive: number, durationDays: number): boolean {
   return daysActive >= durationDays
 }
+
+/** PostMortem для VIP-дела — без AI. Текст analysis = project.description
+ *  (там сидит scenarioBody от админа при создании кампании). Так в Летописи
+ *  игрок видит ровно то же сказочное приветственное описание, что и при
+ *  попадании дела в инбокс — без сгенерированного «разбора скама». */
+export async function createSponsorPostMortem(
+  project: Project,
+  returnedAmount: number,
+  daysActive: number,
+): Promise<void> {
+  const totalWithdrawn = project.totalWithdrawnRubles ?? 0
+  const profitPercent = project.investedAmountRubles > 0
+    ? ((returnedAmount + totalWithdrawn - project.investedAmountRubles) / project.investedAmountRubles) * 100
+    : 0
+  await prisma.postMortem.create({
+    data: {
+      projectId: project.id,
+      userId: project.userId,
+      revealedArchetype: project.personaArchetype,
+      fate: project.fate,
+      lieTopics: [],
+      analysis: project.description,
+      investedAmount: project.investedAmountRubles,
+      returnedAmount,
+      profitPercent,
+      daysActive,
+      lieGuessCorrect: true,
+      intuitionDelta: 0,
+    },
+  }).catch(err => console.error('[Sponsor PostMortem] insert failed:', err))
+}

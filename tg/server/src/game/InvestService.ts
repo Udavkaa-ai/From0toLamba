@@ -2,6 +2,7 @@ import { prisma } from '../db/prisma'
 import { ProjectType, ProjectFate, WITHDRAWAL_RULES, FATE_CONFIG } from './types'
 import { computeClaimedAPY } from './GenerateProjectService'
 import { generatePostMortem } from '../ai/openRouterClient'
+import { createSponsorPostMortem } from './sponsorService'
 import { recomputeRank } from './rankService'
 
 const MIN_INVEST = 5
@@ -299,18 +300,24 @@ export async function exitProject(userId: number, projectId: string): Promise<nu
     ? ((received + totalWithdrawn - project.investedAmountRubles) / project.investedAmountRubles) * 100
     : 0
 
-  generatePostMortem({
-    projectId,
-    userId,
-    archetype: project.personaArchetype,
-    fate: project.fate,
-    lieTopics: project.lieTopics,
-    investedAmount: project.investedAmountRubles,
-    returnedAmount: received,
-    profitPercent,
-    daysActive: project.daysSinceJoined,
-    intuitionDelta: amaSession?.intuitionDelta ?? 0,
-  }, undefined, gameState.preferredLanguage ?? 'ru').catch(console.error)
+  // VIP-дело: PostMortem пишется без AI, analysis = project.description
+  // (сказочное описание от хозяина канала). Иначе обычный AI-разбор.
+  if (project.isSponsor) {
+    createSponsorPostMortem(project, received, project.daysSinceJoined).catch(console.error)
+  } else {
+    generatePostMortem({
+      projectId,
+      userId,
+      archetype: project.personaArchetype,
+      fate: project.fate,
+      lieTopics: project.lieTopics,
+      investedAmount: project.investedAmountRubles,
+      returnedAmount: received,
+      profitPercent,
+      daysActive: project.daysSinceJoined,
+      intuitionDelta: amaSession?.intuitionDelta ?? 0,
+    }, undefined, gameState.preferredLanguage ?? 'ru').catch(console.error)
+  }
 
   await recomputeRank(userId)
 

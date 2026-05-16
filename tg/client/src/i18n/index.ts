@@ -354,6 +354,7 @@ portfolio: {
     HONEST_FAIL: '😔 Честный провал',
     SURVIVOR: '⚓ Выжил',
     UNICORN: '🔥 Жар-птица',
+    SPONSOR_FIXED: '👑 Воеводская награда',
   },
 },
 
@@ -483,6 +484,7 @@ fates: {
   HONEST_FAIL: '😔 Честный провал',
   SURVIVOR: '⚓ Выжил',
   UNICORN: '🔥 Жар-птица',
+  SPONSOR_FIXED: '👑 Воеводская награда',
 },
 archetypes: {
   BURATINO: 'Буратино',
@@ -645,6 +647,7 @@ lore: {
     HONEST_FAIL:  { name: 'Честный провал',     title: 'Старался, но не получилось',      description: 'Хозяин реально старался, но конъюнктура подвела. Вернёт от 60% до 90% вложенного — без обмана, просто не задалось. Самая «нестрашная» из печальных судеб: деньги не украдут, но и прибыли ждать не стоит.', hints: ['Потеря 10–40% от вложенного', 'Хозяин честно признаёт неудачу'] },
     SURVIVOR:     { name: 'Выжил',              title: 'Настоящее дело-долгожитель',      description: 'Редкая удача для купца. Дело живёт 15–30 дней, стабильно даёт 1.5–7.5% в день. Закрывается по истечении срока — обычно дело перекупают столичные купцы или гильдия, и вкладчикам честно выплачивают прибыль. Такие дела — основа капитала.', hints: ['Доход 1.5–7.5% в день', 'Живёт 15–30 дней, закрывается с прибылью'] },
     UNICORN:      { name: 'Жар-птица за хвост', title: 'Поймал Жар-птицу',                description: 'Один случай из двадцати. Дело приносит 10–50% в день двадцать-тридцать дней подряд. Закроется передачей столичным купцам или самому государю — и вкладчики получают иксы. Поймать Жар-птицу за хвост — главная мечта купца; но подделок под неё в кабаках хватает: ловят перо, а в руке — куриное.', hints: ['Доход 10–50% в день', 'Живёт 20–30 дней, уходит к столичным купцам'] },
+    SPONSOR_FIXED: { name: 'Воеводская награда', title: 'Особое дело от воеводы',         description: 'Редчайшая удача — дело, обеспеченное воеводской печатью. Гарантированный возврат троекратно за две недели, без рисков и без обмана. Появляется по золотой грамоте от хозяина канала, открыть можно только заветным словом, опубликованным там же.', hints: ['Возврат 3× за 14 дней', 'Без испытания — по заветному слову с канала'] },
   } as Record<string, { name: string; title: string; description: string; hints: string[] }>,
 },
 
@@ -1090,6 +1093,7 @@ portfolio: {
     HONEST_FAIL: '😔 Honest failure',
     SURVIVOR: '⚓ Survived',
     UNICORN: '🔥 Firebird',
+    SPONSOR_FIXED: '👑 Voivode reward',
   },
 },
 stats: {
@@ -1211,6 +1215,7 @@ fates: {
   HONEST_FAIL: '😔 Honest failure',
   SURVIVOR: '⚓ Survived',
   UNICORN: '🔥 Firebird',
+  SPONSOR_FIXED: '👑 Voivode reward',
 },
 archetypes: {
   BURATINO: 'Buratino',
@@ -1356,6 +1361,7 @@ lore: {
     HONEST_FAIL:  { name: 'Honest failure',      title: 'Tried, but it didn\'t work out',        description: 'The owner genuinely tried, but circumstances got in the way. Returns 60% to 90% of what was invested — no deception, just bad luck. The least scary of the sad fates: the money won\'t be stolen, but don\'t expect a profit either.', hints: ['Loss of 10–40% of invested amount', 'The owner honestly acknowledges the failure'] },
     SURVIVOR:     { name: 'Survived',             title: 'A true long-lived venture',             description: 'Rare luck for a merchant. The venture lives 15–30 days, steadily yielding 1.5–7.5% per day. Closes at the end of its term — usually bought out by capital merchants or the guild, and investors are honestly paid their profit. These ventures are the foundation of capital.', hints: ['Return 1.5–7.5% per day', 'Lives 15–30 days, closes with profit'] },
     UNICORN:      { name: 'Caught the Firebird',  title: 'Caught the Firebird by the tail',       description: 'One in twenty chances. The venture yields 10–50% per day for twenty to thirty days running. It closes with a handover to capital merchants or the sovereign himself — and investors receive multiples. Catching the Firebird by the tail is every merchant\'s dream; but there are plenty of imitations in the taverns: they catch a feather, and find a chicken\'s in their hand.', hints: ['Return 10–50% per day', 'Lives 20–30 days, handed over to capital merchants'] },
+    SPONSOR_FIXED: { name: 'Voivode reward',        title: 'Special venture from the voivode',       description: 'The rarest stroke of luck — a venture backed by the voivode\'s seal. Guaranteed threefold return in two weeks, no risk, no deception. Appears as a Golden Charter from the owner of a channel, unlocked only by the secret word published there.', hints: ['Return 3× in 14 days', 'No charter trial — by secret word from the channel'] },
   } as Record<string, { name: string; title: string; description: string; hints: string[] }>,
 },
 
