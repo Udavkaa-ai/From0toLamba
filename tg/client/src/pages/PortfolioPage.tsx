@@ -9,7 +9,7 @@ import { PageTitle } from '@/components/PageTitle'
 import { LockIcon } from '@/components/icons'
 import { api, type ProjectDTO, type PostMortemDTO, type DailyUpdateDTO, type TransactionDTO } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
-import { colors, spacing, typography } from '@/theme'
+import { colors, spacing, typography, gradients } from '@/theme'
 import { CountUp } from '@/components/CountUp'
 import { useT } from '@/i18n'
 
@@ -103,10 +103,10 @@ export function PortfolioPage() {
               style={{
                 width: '100%', marginTop: spacing.sm,
                 padding: '12px',
-                background: `linear-gradient(135deg, ${colors.enchantedPurple} 0%, #1a0d40 100%)`,
-                border: `1px solid ${colors.fairyGold}50`,
-                borderRadius: '10px',
-                color: colors.fairyGold,
+                background: gradients.cta,
+                border: `1.5px solid ${colors.ctaBorder}`,
+                borderRadius: '12px',
+                color: colors.ctaText,
                 fontWeight: 700,
                 fontSize: '14px',
                 cursor: 'pointer',
@@ -390,9 +390,10 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
             transition={{ duration: 0.1 }}
             onClick={() => { setShowAddInvest(!showAddInvest); setShowWithdraw(false) }}
             style={{
-              flex: 1, padding: '8px', background: `${colors.fairyGold}15`,
-              border: `1px solid ${colors.fairyGold}40`, borderRadius: '8px',
-              color: colors.fairyGold, cursor: 'pointer', fontSize: '12px',
+              flex: 1, padding: '9px 8px', background: gradients.goldBtn,
+              border: `1px solid ${colors.fairyGoldDim}`, borderRadius: '10px',
+              color: colors.textOnGold, cursor: 'pointer', fontSize: '12px', fontWeight: 700,
+              boxShadow: `0 2px 6px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,235,170,0.5)`,
             }}
           >
             {t.portfolio.addBtn}
@@ -404,24 +405,29 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
             transition={{ duration: 0.1 }}
             onClick={() => { setShowWithdraw(!showWithdraw); setShowAddInvest(false) }}
             style={{
-              flex: 1, padding: '8px', background: 'transparent',
-              border: `1px solid ${colors.cardBorder}`, borderRadius: '8px',
-              color: colors.textSecondary, cursor: 'pointer', fontSize: '12px',
+              flex: 1, padding: '9px 8px',
+              background: 'rgba(255,255,255,0.5)',
+              border: `1.5px solid ${colors.cardBorder}`, borderRadius: '10px',
+              color: colors.textPrimary, cursor: 'pointer', fontSize: '12px', fontWeight: 600,
             }}
           >
             {t.portfolio.withdrawBtn}
           </motion.button>
         )}
         <motion.button
-          whileTap={{ scale: 0.96, background: `${colors.danger}35` }}
+          whileTap={{ scale: 0.96 }}
           transition={{ duration: 0.1 }}
           onClick={() => { setConfirmExit(true); setShowWithdraw(false); setShowAddInvest(false) }}
           disabled={exitMutation.isPending || project.isWithdrawalLocked}
           style={{
-            flex: 1, padding: '8px', background: `${colors.danger}20`,
-            border: `1px solid ${colors.danger}40`, borderRadius: '8px',
-            color: project.isWithdrawalLocked ? colors.textMuted : colors.danger,
-            cursor: project.isWithdrawalLocked ? 'not-allowed' : 'pointer', fontSize: '12px',
+            flex: 1, padding: '9px 8px',
+            background: `linear-gradient(180deg, #C44A3F 0%, #8A2620 100%)`,
+            border: `1px solid #6A1A14`, borderRadius: '10px',
+            color: project.isWithdrawalLocked ? colors.textMuted : '#FFFFFF',
+            cursor: project.isWithdrawalLocked ? 'not-allowed' : 'pointer',
+            fontSize: '12px', fontWeight: 700,
+            boxShadow: `0 2px 6px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,200,200,0.3)`,
+            opacity: project.isWithdrawalLocked ? 0.45 : 1,
           }}
         >
           {t.portfolio.exitBtn}
@@ -519,9 +525,10 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
                 disabled={!addAmount || addInvestMutation.isPending}
                 style={{
                   width: '100%', marginTop: spacing.sm,
-                  padding: '8px', background: `${colors.enchantedPurple}`,
-                  border: `1px solid ${colors.fairyGold}40`, borderRadius: '8px',
-                  color: colors.fairyGold, fontWeight: 600, cursor: 'pointer', fontSize: '13px',
+                  padding: '9px', background: gradients.cta,
+                  border: `1px solid ${colors.ctaBorder}`, borderRadius: '10px',
+                  color: colors.ctaText, fontWeight: 700, cursor: 'pointer', fontSize: '13px',
+                  boxShadow: `0 2px 6px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,235,170,0.4)`,
                 }}
               >
                 {addInvestMutation.isPending ? t.common.loading : t.portfolio.confirmAdd}
@@ -578,9 +585,10 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
                 disabled={!withdrawAmount || withdrawMutation.isPending}
                 style={{
                   width: '100%', marginTop: spacing.sm,
-                  padding: '8px', background: `${colors.enchantedPurple}`,
-                  border: `1px solid ${colors.fairyGold}40`, borderRadius: '8px',
-                  color: colors.fairyGold, fontWeight: 600, cursor: 'pointer', fontSize: '13px',
+                  padding: '9px', background: gradients.cta,
+                  border: `1px solid ${colors.ctaBorder}`, borderRadius: '10px',
+                  color: colors.ctaText, fontWeight: 700, cursor: 'pointer', fontSize: '13px',
+                  boxShadow: `0 2px 6px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,235,170,0.4)`,
                 }}
               >
                 {t.portfolio.confirmWithdraw}

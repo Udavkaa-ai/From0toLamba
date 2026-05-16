@@ -6,7 +6,7 @@ import { ScreenBackground } from '@/components/ScreenBackground'
 import { api } from '@/api/client'
 import type { CharterDTO, CharterResultDTO, CharterSubmitDTO, GameStateDTO } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
-import { colors, spacing } from '@/theme'
+import { colors, spacing, gradients } from '@/theme'
 import { Seal, generateReferenceSeal, sealForCell, mutateSeal, RANK_MUT_POOLS } from '@/components/Seal'
 import type { MutTarget } from '@/components/Seal'
 import { MiniGame } from '@/components/minigames/MiniGame'
@@ -1169,10 +1169,10 @@ function MiniGameIntroScreen({
           width: '100%',
           marginTop: spacing.sm,
           padding: spacing.md,
-          background: `linear-gradient(135deg, ${colors.enchantedPurple}cc, ${colors.nightBlue}cc)`,
+          background: gradients.cta,
           border: `2px solid ${colors.fairyGold}`,
           borderRadius: '14px',
-          color: colors.fairyGold,
+          color: colors.ctaText,
           fontWeight: 700,
           fontSize: '15px',
           cursor: 'pointer',

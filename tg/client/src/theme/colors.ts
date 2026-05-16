@@ -39,6 +39,12 @@ const themes = {
     textPrimary:   '#FFFFFF',
     textSecondary: 'rgba(255,255,255,0.7)',
     textMuted:     'rgba(255,255,255,0.45)',
+    // Главная CTA («Следующий день», чат-кнопка): фиолет→ночной синий
+    ctaGradient: `linear-gradient(135deg, #2A1960, #0D1735)`,
+    ctaBorder:   'rgba(255,184,0,0.55)',
+    // Нав-бар низа: глубокий тёмно-фиолетовый с золотым кантом
+    navBarBg:     'rgba(10, 8, 24, 0.96)',
+    navBarBorder: 'rgba(255, 184, 0, 0.18)',
   },
   fairy: {
     // Сказочно-русская: ярмарка в золотое полуденное время.
@@ -72,6 +78,12 @@ const themes = {
     textPrimary:   '#2D1A0A',
     textSecondary: 'rgba(45,26,10,0.78)',
     textMuted:     'rgba(45,26,10,0.55)',
+    // CTA в сказочной — золото с тёмной сепией для текста на нём
+    ctaGradient: `linear-gradient(180deg, #FFD660 0%, #FFB800 55%, #B07400 100%)`,
+    ctaBorder:   'rgba(120, 76, 36, 0.9)',
+    // Нав-бар — резное тёмное дерево с золотым кантом сверху
+    navBarBg:     `repeating-linear-gradient(89deg, transparent 0, transparent 3px, rgba(0,0,0,.06) 3px, rgba(0,0,0,.06) 4px), linear-gradient(180deg, #4A2E14 0%, #2D1A0A 100%)`,
+    navBarBorder: 'rgba(212, 160, 60, 0.7)',
   },
 } as const
 
@@ -186,6 +198,13 @@ export const colors = {
   // ── Геометрия карточки (для FairyCard, чтобы темам различался ободок) ──
   cardRadius: active.cardRadius,
   cardBorderWidth: active.cardBorderWidth,
+
+  // ── CTA + нав-бар (theme-aware) ─────────────────────────────────────────
+  ctaBorder:    active.ctaBorder,
+  navBarBg:     active.navBarBg,
+  navBarBorder: active.navBarBorder,
+  // Цвет текста для CTA-кнопок (золото в fairy → тёмная сепия; фиолет в classic → светлое золото)
+  ctaText:      activeName === 'fairy' ? '#3A2010' : '#FFB800',
 } as const
 
 export const gradients = {
@@ -203,6 +222,8 @@ export const gradients = {
   scroll: `radial-gradient(ellipse at 22% 18%, rgba(255,255,255,.22) 0%, transparent 55%), linear-gradient(155deg, ${colors.parchmentLight} 0%, ${colors.parchmentMid} 55%, ${colors.parchmentDark} 100%)`,
   goldBtn: `linear-gradient(180deg, #FFD660 0%, #FFB800 55%, #C08000 100%)`,
   woodBtn: `linear-gradient(180deg, ${colors.woodHi} 0%, ${colors.woodMid} 55%, ${colors.woodDeep} 100%)`,
+  // Theme-aware CTA градиент (Следующий день, чат-кнопка, активные акции)
+  cta: active.ctaGradient,
 } as const
 
 export const shadows = {

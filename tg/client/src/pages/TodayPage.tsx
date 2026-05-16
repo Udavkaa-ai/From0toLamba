@@ -186,19 +186,19 @@ function MilestonesBlock({ today }: { today: TodayDTO }) {
               style={{
                 flex: 1,
                 padding: '8px 0',
-                background: passed ? `${colors.success}22` : 'rgba(255,255,255,0.03)',
+                background: passed ? `${colors.success}22` : 'rgba(120,80,40,0.12)',
                 border: `1px solid ${passed ? colors.success : colors.cardBorder}`,
                 borderRadius: 10,
                 textAlign: 'center',
               }}
             >
               <div style={{
-                color: passed ? colors.success : colors.textMuted,
+                color: passed ? colors.success : colors.textPrimary,
                 fontSize: 16, fontWeight: 800, fontVariantNumeric: 'tabular-nums',
               }}>
                 {passed ? '✓' : m.day}
               </div>
-              <div style={{ color: passed ? colors.success : colors.textMuted, fontSize: 9, fontWeight: 600 }}>
+              <div style={{ color: passed ? colors.success : colors.textSecondary, fontSize: 9, fontWeight: 600 }}>
                 +{m.bonus} г
               </div>
             </div>

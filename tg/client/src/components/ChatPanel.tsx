@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useLocation } from 'react-router-dom'
 import { api, type ChatMessageDTO } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
-import { colors, spacing } from '@/theme'
+import { colors, spacing, gradients } from '@/theme'
 import { useT } from '@/i18n'
 
 // Определяет язык по доминирующему скрипту, возвращает null если русский или неизвестно
@@ -171,8 +171,8 @@ export function ChatPanel() {
               position: 'fixed', right: '16px',
               bottom: `calc(72px + env(safe-area-inset-bottom))`,
               zIndex: 150, width: '48px', height: '48px', borderRadius: '50%',
-              background: `linear-gradient(135deg, ${colors.enchantedPurple}, #1a0f4e)`,
-              border: `1.5px solid ${colors.fairyGold}60`,
+              background: gradients.cta,
+              border: `1.5px solid ${colors.ctaBorder}`,
               boxShadow: `0 4px 20px rgba(0,0,0,0.5), 0 0 16px ${colors.fairyGold}20`,
               cursor: 'pointer', display: 'flex', alignItems: 'center',
               justifyContent: 'center', fontSize: '22px',

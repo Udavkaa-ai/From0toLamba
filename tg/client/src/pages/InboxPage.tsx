@@ -5,7 +5,7 @@ import { ScreenBackground, PAGE_BG } from '@/components/ScreenBackground'
 import { FairyCard, OrnamentDivider, SkeletonCard } from '@/components/FairyCard'
 import { PageTitle } from '@/components/PageTitle'
 import { api, type ProjectDTO } from '@/api/client'
-import { colors, spacing } from '@/theme'
+import { colors, spacing, gradients } from '@/theme'
 import { useT } from '@/i18n'
 
 export function InboxPage() {
@@ -99,12 +99,14 @@ function InboxCard({ project, onClick, tourAttr }: { project: ProjectDTO; onClic
       <div style={{
         marginTop: spacing.md,
         padding: `${spacing.sm} ${spacing.md}`,
-        background: `${colors.fairyGold}10`,
-        borderRadius: '8px',
-        color: colors.fairyGold,
+        background: gradients.goldBtn,
+        border: `1px solid ${colors.fairyGoldDim}`,
+        borderRadius: '10px',
+        color: colors.textOnGold,
         fontSize: '13px',
         textAlign: 'center',
-        fontWeight: 600,
+        fontWeight: 700,
+        boxShadow: `0 3px 10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,235,170,0.55)`,
       }}
         {...(tourAttr ? { 'data-tour': 'charter-btn' } : {})}
       >

@@ -22,7 +22,7 @@ import { useGameStore } from '@/stores/gameStore'
 import { useTourStore, isTourDone } from '@/stores/tourStore'
 import { useLangStore, type Lang } from '@/stores/langStore'
 import { useT } from '@/i18n'
-import { colors, spacing, typography } from '@/theme'
+import { colors, spacing, typography, gradients } from '@/theme'
 import { getTheme, setTheme } from '@/theme/colors'
 import { playSound, isMuted, setMuted, isMusicMuted, setMusicMuted, getVolume, setVolume } from '@/sounds'
 
@@ -1201,7 +1201,7 @@ export function HomePage() {
               </div>
             ) : null
           })()}
-          <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '2px' }}>
+          <div style={{ color: colors.textSecondary, fontSize: '12px', marginTop: '2px', fontWeight: 600 }}>
             ✦ {t.home.dayLabel} {gameState.currentDay} · {(t.ranks as unknown as Record<string, string>)[gameState.investorRank] ?? gameState.investorRank} ✦
           </div>
           </div>{/* end centre block */}
@@ -1597,10 +1597,10 @@ function NextDayFab({
           padding: '10px 24px',
           background: isLocked
             ? `rgba(13, 23, 53, 0.85)`
-            : `linear-gradient(135deg, ${colors.enchantedPurple}ee, ${colors.nightBlue}ee)`,
-          border: `1px solid ${isLocked ? `${colors.fairyGold}25` : `${colors.fairyGold}60`}`,
+            : gradients.cta,
+          border: `1.5px solid ${isLocked ? `${colors.fairyGold}25` : colors.ctaBorder}`,
           borderRadius: '24px',
-          color: isLocked ? colors.textMuted : colors.fairyGold,
+          color: isLocked ? colors.textMuted : colors.ctaText,
           fontSize: '13px',
           fontWeight: 600,
           cursor: isLocked || isPending ? 'not-allowed' : 'pointer',
@@ -1917,9 +1917,11 @@ function ActiveProjectCard({ project, delay, onPress }: { project: ProjectDTO; d
           <button
             onClick={e => { e.stopPropagation(); navigate('/portfolio') }}
             style={{
-              padding: '4px 10px', background: `${colors.fairyGold}15`,
-              border: `1px solid ${colors.fairyGold}40`, borderRadius: '6px',
-              color: colors.fairyGold, cursor: 'pointer', fontSize: '11px',
+              padding: '5px 12px', background: gradients.goldBtn,
+              border: `1px solid ${colors.fairyGoldDim}`, borderRadius: '8px',
+              color: colors.textOnGold, cursor: 'pointer', fontSize: '11px',
+              fontWeight: 700,
+              boxShadow: `0 2px 6px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,235,170,0.5)`,
             }}
           >
             {t.home.activeCardAddMore}

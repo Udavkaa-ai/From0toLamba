@@ -48,7 +48,7 @@ export function GameHeader({ title, hint, urgent, scoreChip, lives, rightSlot, t
       </div>
       {hint && (
         <div style={{
-          color: 'rgba(232,213,168,0.55)', fontSize: '12px', textAlign: 'center',
+          color: 'rgba(248,228,178,0.85)', fontSize: '12px', textAlign: 'center',
           marginTop: 4, lineHeight: 1.4,
         }}>
           {hint}
