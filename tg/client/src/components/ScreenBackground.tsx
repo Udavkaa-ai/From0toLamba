@@ -2,7 +2,7 @@ import { ReactNode, useEffect } from 'react'
 import { SparklesOverlay } from './SparklesOverlay'
 import { gradients, colors } from '@/theme'
 
-export const APP_VERSION = 'бета 4.0.21'
+export const APP_VERSION = 'бета 4.0.22'
 
 interface ScreenBackgroundProps {
   children: ReactNode

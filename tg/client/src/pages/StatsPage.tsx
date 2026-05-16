@@ -257,14 +257,16 @@ function AchievementsSection() {
                     alignItems: 'center',
                     gap: spacing.md,
                     padding: `${spacing.sm} ${spacing.md}`,
-                    background: a.unlocked ? `${colors.fairyGold}35` : 'rgba(10,8,24,0.5)',
-                    border: `1px solid ${a.unlocked ? colors.fairyGold + '88' : colors.cardBorder}`,
-                    borderRadius: '10px',
-                    opacity: a.unlocked ? 1 : 0.7,
+                    background: a.unlocked ? gradients.card : 'rgba(20,12,6,0.85)',
+                    border: `1.5px solid ${a.unlocked ? colors.fairyGold : 'rgba(212,160,60,0.35)'}`,
+                    borderRadius: '12px',
                     cursor: 'pointer',
                     textAlign: 'left',
                     fontFamily: 'inherit',
                     width: '100%',
+                    boxShadow: a.unlocked
+                      ? `0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 ${colors.cardHighlight}`
+                      : `0 2px 8px rgba(0,0,0,0.3)`,
                   }}
                 >
                   <div style={{
@@ -272,18 +274,22 @@ function AchievementsSection() {
                     width: '32px',
                     textAlign: 'center',
                     filter: a.unlocked ? 'none' : 'grayscale(100%)',
+                    opacity: a.unlocked ? 1 : 0.65,
                   }}>
                     {a.unlocked ? a.emoji : '🔒'}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{
-                      color: a.unlocked ? colors.fairyGold : colors.textSecondary,
-                      fontWeight: 600,
+                      color: a.unlocked ? colors.fairyGold : 'rgba(248,228,178,0.85)',
+                      fontWeight: 700,
                       fontSize: '13px',
                     }}>
                       {(t.achievements.items[a.id]?.name ?? a.name)}
                     </div>
-                    <div style={{ color: colors.textSecondary, fontSize: '11px', marginTop: '1px', fontWeight: 500 }}>
+                    <div style={{
+                      color: a.unlocked ? colors.textSecondary : 'rgba(248,228,178,0.6)',
+                      fontSize: '11px', marginTop: '1px', fontWeight: 500,
+                    }}>
                       {(t.achievements.items[a.id]?.description ?? a.description)}
                     </div>
                     {!a.unlocked && a.progress && a.progress.target > 1 && (
