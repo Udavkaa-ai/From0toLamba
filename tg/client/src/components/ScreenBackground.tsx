@@ -3,7 +3,44 @@ import { SparklesOverlay } from './SparklesOverlay'
 import { gradients, colors } from '@/theme'
 import { getTheme } from '@/theme/colors'
 
-export const APP_VERSION = 'бета 4.2.0'
+export const APP_VERSION = 'бета 4.2.1'
+
+/**
+ * Один раз за модульную сессию: предзагрузить ВСЕ фоновые картинки активной
+ * темы (12 шт: 7 HOME + 5 BG). После этого браузер держит их в кэше и при
+ * переключении между вкладками фон отображается мгновенно вместо «секунда
+ * на загрузку из сети».
+ *
+ * Запускается лениво при первом импорте модуля (одна гонка с первым рендером
+ * первой страницы). Объекты Image живут в этом массиве и не GC-ятся, чтобы
+ * браузер точно сохранил их в кэше.
+ */
+const preloadedImages: HTMLImageElement[] = []
+function preloadAllBackgrounds(): void {
+  if (preloadedImages.length > 0) return
+  const suffix = getTheme() === 'fairy' ? '_LIGHT' : ''
+  const paths: string[] = [
+    `/backgrounds/HOME_01${suffix}.webp`,
+    `/backgrounds/HOME_02${suffix}.webp`,
+    `/backgrounds/HOME_03${suffix}.webp`,
+    `/backgrounds/HOME_04${suffix}.webp`,
+    `/backgrounds/HOME_05${suffix}.webp`,
+    `/backgrounds/HOME_06${suffix}.webp`,
+    `/backgrounds/HOME_07${suffix}.webp`,
+    `/backgrounds/BG_INBOX${suffix}.webp`,
+    `/backgrounds/BG_PORTFOLIO${suffix}.webp`,
+    `/backgrounds/BG_STATS${suffix}.webp`,
+    `/backgrounds/BG_LEADERBOARD${suffix}.webp`,
+    `/backgrounds/BG_REGISTRY${suffix}.webp`,
+  ]
+  for (const p of paths) {
+    const img = new Image()
+    img.src = p
+    preloadedImages.push(img)
+  }
+}
+// Запускаем сразу при импорте модуля — раньше первого рендера страницы.
+if (typeof window !== 'undefined') preloadAllBackgrounds()
 
 interface ScreenBackgroundProps {
   children: ReactNode
