@@ -177,7 +177,7 @@ export function MarketAnnouncementOverlay({ onClose }: { onClose: () => void }) 
           {/* Тело */}
           <div style={{ padding: `${spacing.lg} ${spacing.xl}` }}>
             <div style={{
-              color: colors.textSecondary,
+              color: colors.textOnDarkSecond,
               fontSize: '14px',
               lineHeight: 1.65,
               textAlign: 'center',
@@ -226,7 +226,7 @@ export function MarketAnnouncementOverlay({ onClose }: { onClose: () => void }) 
                 padding: spacing.sm,
                 background: 'transparent',
                 border: 'none',
-                color: colors.textMuted,
+                color: colors.textOnDarkMuted,
                 fontSize: '13px',
                 cursor: 'pointer',
                 fontFamily: 'inherit',

@@ -454,7 +454,7 @@ export function KolobokGame({ seed, onComplete, restoredErrorCount }: KolobokGam
 
   const scoreColor = score >= TARGET_PERFECT ? colors.success
     : score >= TARGET_OK ? colors.fairyGold
-    : colors.textPrimary
+    : colors.textOnDark
 
   return (
     <div style={{
@@ -548,7 +548,7 @@ export function KolobokGame({ seed, onComplete, restoredErrorCount }: KolobokGam
             }}
           >
             {score}
-            <div style={{ color: colors.textMuted, fontSize: 12, fontWeight: 600, marginTop: 2 }}>
+            <div style={{ color: colors.textOnDarkMuted, fontSize: 12, fontWeight: 600, marginTop: 2 }}>
               очков набрано
             </div>
           </motion.div>

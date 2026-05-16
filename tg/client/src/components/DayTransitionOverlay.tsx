@@ -141,7 +141,7 @@ export function DayTransitionOverlay() {
 
         {/* Подтекст */}
         <div style={{
-          color: colors.textMuted,
+          color: colors.textOnDarkMuted,
           fontSize: 13,
           textAlign: 'center',
           lineHeight: 1.5,

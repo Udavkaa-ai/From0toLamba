@@ -989,12 +989,12 @@ function ReferenceSample({ phase, coin }: { phase: 'reference' | 'play'; coin: C
         <div style={{ display: 'flex', gap: spacing.lg, alignItems: 'center' }}>
           <div style={{ textAlign: 'center' }}>
             <CoinFaceCss size={sizePx} kind="front" coin={coin} />
-            <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: 6 }}>Аверс</div>
+            <div style={{ color: colors.textOnDarkMuted, fontSize: '11px', marginTop: 6 }}>Аверс</div>
           </div>
           <div style={{ color: colors.fairyGold, fontSize: 24 }}>↻</div>
           <div style={{ textAlign: 'center' }}>
             <CoinFaceCss size={sizePx} kind="back" coin={coin} />
-            <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: 6 }}>Реверс</div>
+            <div style={{ color: colors.textOnDarkMuted, fontSize: '11px', marginTop: 6 }}>Реверс</div>
           </div>
         </div>
         <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '14px' }}>
@@ -1008,7 +1008,7 @@ function ReferenceSample({ phase, coin }: { phase: 'reference' | 'play'; coin: C
       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: spacing.sm,
       marginBottom: spacing.sm,
     }}>
-      <span style={{ color: colors.textMuted, fontSize: '11px' }}>Эталон:</span>
+      <span style={{ color: colors.textOnDarkMuted, fontSize: '11px' }}>Эталон:</span>
       <CoinFaceCss size={sizePx} kind="front" coin={coin} />
       <CoinFaceCss size={sizePx} kind="back" coin={coin} />
       <span style={{ color: colors.fairyGold, fontSize: '12px', fontWeight: 600 }}>{coin.label} {coin.caption}</span>

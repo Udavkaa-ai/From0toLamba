@@ -35,6 +35,10 @@ const themes = {
     cardSurface: '',  // карточка использует cardGradient* напрямую через gradients.card
     cardSurfacePrefix: '',  // префикс перед градиентом (для волокон дерева в fairy)
     cardGradientAngle: '155deg',
+    // Текст: классический белый поверх тёмного фиолетового фона
+    textPrimary:   '#FFFFFF',
+    textSecondary: 'rgba(255,255,255,0.7)',
+    textMuted:     'rgba(255,255,255,0.45)',
   },
   fairy: {
     // Сказочно-русская: ярмарка в золотое полуденное время.
@@ -42,16 +46,15 @@ const themes = {
     // Карточки — золотой дуб, светлее фона, чтобы «выпрыгивали».
     bgDeep: '#5A3818',   // медовое дерево внизу
     bgMid:  '#6E461E',   // золотистый дуб в середине
-    // Карточка — золотой дуб с тёплым блеском, чуть темнее фонового пятна
-    // в центре экрана но светлее границ фона. Подобрано так, чтобы белый
-    // текст оставался хорошо читаемым (контраст ~5:1).
-    cardGradientTop:    'rgba(150, 96, 46, 0.97)',   // золотой дуб (верх — самый светлый)
-    cardGradientMid:    'rgba(118, 74, 34, 0.98)',   // янтарный орех
-    cardGradientBottom: 'rgba(80, 50, 22, 0.99)',    // тёплый орех (низ)
-    cardBorder:       'rgba(212, 160, 60, 0.75)',    // явный золотой кант
-    cardBorderBright: 'rgba(255, 215, 110, 0.95)',
-    cardHighlight:    'rgba(255, 235, 170, 0.32)',   // светлый кремовый блик сверху
-    cardShade:        'rgba(40, 20, 8, 0.45)',
+    // Карточка — пергамент с золотым кантом и резной деревянной рамой.
+    // Светлая поверхность, текст — тёмная сепия (см. textPrimary ниже).
+    cardGradientTop:    'rgba(245, 230, 195, 0.99)',  // светлый пергамент сверху
+    cardGradientMid:    'rgba(232, 213, 168, 1.0)',   // основной пергамент
+    cardGradientBottom: 'rgba(217, 194, 138, 1.0)',   // плотный пергамент снизу
+    cardBorder:       'rgba(120, 76, 36, 0.85)',     // тёмная деревянная рамка
+    cardBorderBright: 'rgba(212, 160, 60, 1.0)',     // золотой кант для активных
+    cardHighlight:    'rgba(255, 250, 230, 0.7)',    // мягкий бумажный блик сверху
+    cardShade:        'rgba(120, 80, 40, 0.25)',
     overlayDark:      'rgba(48, 26, 10, 0.85)',
     overlayLight:     'rgba(255, 184, 0, 0.14)',
     cardRadius: '14px',
@@ -60,9 +63,15 @@ const themes = {
     screenGradient:
       `repeating-linear-gradient(89deg, transparent 0, transparent 3px, rgba(0,0,0,0.045) 3px, rgba(0,0,0,0.045) 4px), radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255,200,90,0.30) 0%, transparent 60%), linear-gradient(180deg, rgba(132,84,38,1.0) 0%, rgba(108,68,30,1.0) 45%, rgba(82,52,24,1.0) 100%)`,
     cardSurface: '',
+    // На пергаменте — мягкий радиальный блик («тёплая бумага под рукой»),
+    // не «волокна дерева». Текстура задаётся через prefix перед градиентом.
     cardSurfacePrefix:
-      `repeating-linear-gradient(89deg, transparent 0, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px), `,
-    cardGradientAngle: '180deg',
+      `radial-gradient(ellipse at 22% 18%, rgba(255,255,255,0.5) 0%, transparent 55%), `,
+    cardGradientAngle: '155deg',
+    // Текст: тёмная сепия на пергаменте — главный жирный, средний, выцветший
+    textPrimary:   '#2D1A0A',
+    textSecondary: 'rgba(45,26,10,0.78)',
+    textMuted:     'rgba(45,26,10,0.55)',
   },
 } as const
 
@@ -99,11 +108,17 @@ export const colors = {
   bgDeep: active.bgDeep,
   bgMid: active.bgMid,
 
-  // ── Текст ───────────────────────────────────────────────────────────────
-  textPrimary: '#FFFFFF',
-  textSecondary: 'rgba(255,255,255,0.7)',
-  textMuted: 'rgba(255,255,255,0.45)',
-  textOnGold: '#1A0F00',
+  // ── Текст (theme-aware: белый на тёмном / тёмная сепия на пергаменте) ──
+  textPrimary:   active.textPrimary,
+  textSecondary: active.textSecondary,
+  textMuted:     active.textMuted,
+  textOnGold:    '#1A0F00',  // тёмный для золотых кнопок (общий)
+
+  // Светлый текст для тёмных поверхностей (нав-бар, модалки, оверлеи,
+  // канвас мини-игр). Всегда белый/полупрозрачный белый — не зависит от темы.
+  textOnDark:        '#FFFFFF',
+  textOnDarkSecond:  'rgba(255,255,255,0.7)',
+  textOnDarkMuted:   'rgba(255,255,255,0.45)',
 
   // ── Семантические ─────────────────────────────────────────────────────
   success: '#50C878',

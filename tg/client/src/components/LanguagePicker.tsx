@@ -46,7 +46,7 @@ export function LanguagePicker({ onPicked }: { onPicked: () => void }) {
         <div style={{ color: colors.fairyGold, fontSize: '22px', fontWeight: 700, marginBottom: '6px' }}>
           Из грязи в князи
         </div>
-        <div style={{ color: colors.textMuted, fontSize: '13px' }}>
+        <div style={{ color: colors.textOnDarkMuted, fontSize: '13px' }}>
           From Rags to Riches
         </div>
       </motion.div>
@@ -75,7 +75,7 @@ export function LanguagePicker({ onPicked }: { onPicked: () => void }) {
             <span style={{ fontSize: '32px', lineHeight: 1 }}>{flag}</span>
             <div>
               <div style={{ color: colors.fairyGold, fontSize: '17px', fontWeight: 700 }}>{label}</div>
-              <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '2px' }}>{sub}</div>
+              <div style={{ color: colors.textOnDarkMuted, fontSize: '12px', marginTop: '2px' }}>{sub}</div>
             </div>
           </motion.button>
         ))}

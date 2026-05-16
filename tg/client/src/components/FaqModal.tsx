@@ -34,7 +34,7 @@ function FaqItemRow({ item }: { item: FaqItem }) {
           display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px',
         }}
       >
-        <span style={{ color: colors.textPrimary, fontSize: '14px', fontWeight: 600, lineHeight: 1.4, flex: 1 }}>
+        <span style={{ color: colors.textOnDark, fontSize: '14px', fontWeight: 600, lineHeight: 1.4, flex: 1 }}>
           {item.q}
         </span>
         <span style={{
@@ -60,7 +60,7 @@ function FaqItemRow({ item }: { item: FaqItem }) {
               {lines.map((line, i) => (
                 <p key={i} style={{
                   margin: 0,
-                  color: colors.textSecondary,
+                  color: colors.textOnDarkSecond,
                   fontSize: '13px',
                   lineHeight: 1.6,
                   paddingLeft: lines.length > 1 ? '8px' : 0,
@@ -125,7 +125,7 @@ export function FaqModal({ onClose }: { onClose: () => void }) {
             <div style={{ color: colors.fairyGold, fontSize: '18px', fontWeight: 800, letterSpacing: '0.04em' }}>
               {t.faq.title}
             </div>
-            <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '2px' }}>
+            <div style={{ color: colors.textOnDarkMuted, fontSize: '11px', marginTop: '2px' }}>
               {t.faq.subtitle}
             </div>
           </div>
@@ -135,7 +135,7 @@ export function FaqModal({ onClose }: { onClose: () => void }) {
               background: 'rgba(255,255,255,0.08)',
               border: `1px solid rgba(255,255,255,0.15)`,
               borderRadius: '50%', width: '34px', height: '34px',
-              color: colors.textSecondary, fontSize: '16px',
+              color: colors.textOnDarkSecond, fontSize: '16px',
               cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >
@@ -166,7 +166,7 @@ export function FaqModal({ onClose }: { onClose: () => void }) {
                   borderRadius: '20px',
                   border: `1px solid ${isActive ? colors.fairyGold : 'rgba(255,255,255,0.15)'}`,
                   background: isActive ? `${colors.fairyGold}22` : 'rgba(255,255,255,0.05)',
-                  color: isActive ? colors.fairyGold : colors.textSecondary,
+                  color: isActive ? colors.fairyGold : colors.textOnDarkSecond,
                   fontSize: '13px', fontWeight: isActive ? 700 : 400,
                   cursor: 'pointer',
                   transition: 'all 0.15s',
@@ -248,7 +248,7 @@ export function FaqAnnouncementModal({ onClose }: { onClose: () => void }) {
           {t.faq.announcementTitle}
         </div>
 
-        <div style={{ color: colors.textPrimary, fontSize: '14px', lineHeight: 1.6, marginBottom: '16px' }}>
+        <div style={{ color: colors.textOnDark, fontSize: '14px', lineHeight: 1.6, marginBottom: '16px' }}>
           {t.faq.announcementBody}
         </div>
 
@@ -257,7 +257,7 @@ export function FaqAnnouncementModal({ onClose }: { onClose: () => void }) {
           background: `${colors.fairyGold}12`,
           border: `1px solid ${colors.fairyGold}35`,
           borderRadius: '12px',
-          color: colors.textMuted,
+          color: colors.textOnDarkMuted,
           fontSize: '12px',
           lineHeight: 1.5,
           marginBottom: '20px',

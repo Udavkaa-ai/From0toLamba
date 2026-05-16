@@ -59,7 +59,7 @@ export function BottomNav() {
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: isActive ? colors.fairyGold : colors.textMuted,
+              color: isActive ? colors.fairyGold : colors.textOnDarkMuted,
               transition: 'color 0.2s, transform 0.15s',
               transform: isActive ? 'translateY(-1px)' : 'none',
             }}

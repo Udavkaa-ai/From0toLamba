@@ -813,7 +813,7 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
                 border: `2px solid ${borderColor}`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 12, fontWeight: 800,
-                color: filled ? colors.success : isCurrent ? colors.fairyGold : colors.textMuted,
+                color: filled ? colors.success : isCurrent ? colors.fairyGold : colors.textOnDarkMuted,
                 transition: 'all 0.25s',
               }}>
                 {filled ? '✓' : isCurrent ? '?' : '·'}

@@ -575,7 +575,7 @@ export function HomePage() {
                   background: `${colors.danger}20`, border: `2px solid ${colors.danger}`,
                   color: colors.danger, fontSize: '20px', fontWeight: 900, marginBottom: '12px',
                 }}>!</div>
-                <div style={{ color: colors.textPrimary, fontSize: '16px', fontWeight: 700 }}>
+                <div style={{ color: colors.textOnDark, fontSize: '16px', fontWeight: 700 }}>
                   {t.home.settingsResetTitle}
                 </div>
               </div>
@@ -586,14 +586,14 @@ export function HomePage() {
                 borderRadius: '10px',
                 marginBottom: '16px',
                 fontSize: '12px',
-                color: colors.textSecondary,
+                color: colors.textOnDarkSecond,
                 lineHeight: 1.6,
               }}>
                 <div style={{ fontWeight: 700, color: colors.danger, marginBottom: '6px' }}>{t.home.settingsResetDeleted}</div>
                 {t.home.settingsResetItems.map(item => (
                   <div key={item} style={{ marginTop: '3px' }}>{item}</div>
                 ))}
-                <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: `1px solid ${colors.danger}20`, color: colors.textMuted, fontSize: '11px' }}>
+                <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: `1px solid ${colors.danger}20`, color: colors.textOnDarkMuted, fontSize: '11px' }}>
                   {t.home.settingsResetSaved}
                 </div>
               </div>
@@ -605,7 +605,7 @@ export function HomePage() {
                     background: 'rgba(255,255,255,0.08)',
                     border: '1px solid rgba(255,255,255,0.15)',
                     borderRadius: '10px',
-                    color: colors.textPrimary,
+                    color: colors.textOnDark,
                     fontSize: '13px', fontWeight: 600,
                     cursor: 'pointer',
                   }}
@@ -678,7 +678,7 @@ export function HomePage() {
                 <div style={{ color: colors.fairyGold, fontSize: '18px', fontWeight: 700 }}>{t.home.settingsTitle}</div>
                 <button
                   onClick={() => { setShowSettings(false); setShowResetConfirm(false) }}
-                  style={{ background: 'none', border: 'none', color: colors.textMuted, fontSize: '20px', cursor: 'pointer', padding: '4px 8px' }}
+                  style={{ background: 'none', border: 'none', color: colors.textOnDarkMuted, fontSize: '20px', cursor: 'pointer', padding: '4px 8px' }}
                 >
                   ✕
                 </button>
@@ -686,10 +686,10 @@ export function HomePage() {
 
               {/* Nickname section */}
               <div style={{ marginBottom: '28px' }}>
-                <div style={{ color: colors.textSecondary, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <div style={{ color: colors.textOnDarkSecond, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   {t.nickname.sectionLabel}
                 </div>
-                <div style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '8px' }}>{t.nickname.hint}</div>
+                <div style={{ fontSize: '11px', color: colors.textOnDarkMuted, marginBottom: '8px' }}>{t.nickname.hint}</div>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <input
                     value={nicknameInput}
@@ -700,7 +700,7 @@ export function HomePage() {
                       flex: 1, padding: '10px 14px',
                       background: 'rgba(255,255,255,0.07)',
                       border: `1px solid ${nicknameError ? '#ff6b6b' : 'rgba(255,255,255,0.15)'}`,
-                      borderRadius: '10px', color: colors.textPrimary,
+                      borderRadius: '10px', color: colors.textOnDark,
                       fontSize: '14px', outline: 'none',
                     }}
                   />
@@ -724,7 +724,7 @@ export function HomePage() {
 
               {/* Model section */}
               <div style={{ marginBottom: '28px' }}>
-                <div style={{ color: colors.textSecondary, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <div style={{ color: colors.textOnDarkSecond, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   {t.home.settingsSectionAI}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -749,10 +749,10 @@ export function HomePage() {
                         }}
                       >
                         <div>
-                          <div style={{ color: isSelected ? colors.fairyGold : colors.textPrimary, fontSize: '14px', fontWeight: 600 }}>
+                          <div style={{ color: isSelected ? colors.fairyGold : colors.textOnDark, fontSize: '14px', fontWeight: 600 }}>
                             {option.label}
                           </div>
-                          <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '2px' }}>
+                          <div style={{ color: colors.textOnDarkMuted, fontSize: '12px', marginTop: '2px' }}>
                             {t.home.modelSubtitles[option.id] ?? option.subtitle}
                           </div>
                         </div>
@@ -773,13 +773,13 @@ export function HomePage() {
 
               {/* Звук */}
               <div style={{ marginBottom: '28px' }}>
-                <div style={{ color: colors.textSecondary, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <div style={{ color: colors.textOnDarkSecond, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   {t.home.settingsSectionSound}
                 </div>
 
                 {/* Музыка */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                  <span style={{ color: colors.textPrimary, fontSize: '14px' }}>
+                  <span style={{ color: colors.textOnDark, fontSize: '14px' }}>
                     🎵 {musicMuted ? 'Музыка выключена' : 'Музыка играет'}
                   </span>
                   <button
@@ -790,10 +790,10 @@ export function HomePage() {
                     }}
                     style={{
                       padding: '6px 16px',
-                      background: musicMuted ? `${colors.textMuted}20` : `${colors.fairyGold}20`,
-                      border: `1px solid ${musicMuted ? colors.textMuted : colors.fairyGold}55`,
+                      background: musicMuted ? `${colors.textOnDarkMuted}20` : `${colors.fairyGold}20`,
+                      border: `1px solid ${musicMuted ? colors.textOnDarkMuted : colors.fairyGold}55`,
                       borderRadius: '10px',
-                      color: musicMuted ? colors.textMuted : colors.fairyGold,
+                      color: musicMuted ? colors.textOnDarkMuted : colors.fairyGold,
                       fontSize: '13px', fontWeight: 600, cursor: 'pointer',
                     }}
                   >
@@ -803,7 +803,7 @@ export function HomePage() {
 
                 {/* Звуковые эффекты */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <span style={{ color: colors.textPrimary, fontSize: '14px' }}>
+                  <span style={{ color: colors.textOnDark, fontSize: '14px' }}>
                     🔔 {soundMuted ? 'Звуки выключены' : 'Звуки включены'}
                   </span>
                   <button
@@ -815,10 +815,10 @@ export function HomePage() {
                     }}
                     style={{
                       padding: '6px 16px',
-                      background: soundMuted ? `${colors.textMuted}20` : `${colors.fairyGold}20`,
-                      border: `1px solid ${soundMuted ? colors.textMuted : colors.fairyGold}55`,
+                      background: soundMuted ? `${colors.textOnDarkMuted}20` : `${colors.fairyGold}20`,
+                      border: `1px solid ${soundMuted ? colors.textOnDarkMuted : colors.fairyGold}55`,
                       borderRadius: '10px',
-                      color: soundMuted ? colors.textMuted : colors.fairyGold,
+                      color: soundMuted ? colors.textOnDarkMuted : colors.fairyGold,
                       fontSize: '13px', fontWeight: 600, cursor: 'pointer',
                     }}
                   >
@@ -828,7 +828,7 @@ export function HomePage() {
 
                 {(!soundMuted || !musicMuted) && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ color: colors.textMuted, fontSize: '12px', flexShrink: 0 }}>{t.home.settingsSoundLow}</span>
+                    <span style={{ color: colors.textOnDarkMuted, fontSize: '12px', flexShrink: 0 }}>{t.home.settingsSoundLow}</span>
                     <input
                       type="range"
                       min={0} max={1} step={0.05}
@@ -842,14 +842,14 @@ export function HomePage() {
                       onTouchEnd={() => !soundMuted && playSound('tap')}
                       style={{ flex: 1, accentColor: colors.fairyGold }}
                     />
-                    <span style={{ color: colors.textMuted, fontSize: '12px', flexShrink: 0 }}>{t.home.settingsSoundHigh}</span>
+                    <span style={{ color: colors.textOnDarkMuted, fontSize: '12px', flexShrink: 0 }}>{t.home.settingsSoundHigh}</span>
                   </div>
                 )}
               </div>
 
               {/* Тема оформления — переключатель Классическая / Сказочная */}
               <div style={{ marginBottom: '28px' }}>
-                <div style={{ color: colors.textSecondary, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <div style={{ color: colors.textOnDarkSecond, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   Оформление
                 </div>
                 <div style={{
@@ -869,7 +869,7 @@ export function HomePage() {
                           background: isActive ? `${colors.fairyGold}22` : 'rgba(255,255,255,0.04)',
                           border: `1.5px solid ${isActive ? colors.fairyGold : colors.cardBorder}`,
                           borderRadius: '12px',
-                          color: isActive ? colors.fairyGold : colors.textSecondary,
+                          color: isActive ? colors.fairyGold : colors.textOnDarkSecond,
                           fontSize: '13px',
                           fontWeight: 700,
                           cursor: isActive ? 'default' : 'pointer',
@@ -879,21 +879,21 @@ export function HomePage() {
                         }}
                       >
                         {opt.label}{isActive && ' ·  ✓'}
-                        <div style={{ fontSize: '10px', color: colors.textMuted, marginTop: '4px', fontWeight: 400, lineHeight: 1.4 }}>
+                        <div style={{ fontSize: '10px', color: colors.textOnDarkMuted, marginTop: '4px', fontWeight: 400, lineHeight: 1.4 }}>
                           {opt.hint}
                         </div>
                       </button>
                     )
                   })}
                 </div>
-                <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '8px', lineHeight: 1.4 }}>
+                <div style={{ color: colors.textOnDarkMuted, fontSize: '11px', marginTop: '8px', lineHeight: 1.4 }}>
                   Сменив тему, игра перезагрузится.
                 </div>
               </div>
 
               {/* Повторный просмотр вводного рассказа */}
               <div style={{ marginBottom: '28px' }}>
-                <div style={{ color: colors.textSecondary, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <div style={{ color: colors.textOnDarkSecond, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   {t.home.settingsSectionHints}
                 </div>
                 <button
@@ -912,7 +912,7 @@ export function HomePage() {
                   }}
                 >
                   {t.home.settingsHowToPlay}
-                  <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '4px', fontWeight: 400 }}>
+                  <div style={{ fontSize: '11px', color: colors.textOnDarkMuted, marginTop: '4px', fontWeight: 400 }}>
                     {t.home.settingsHowToPlayHint}
                   </div>
                 </button>
@@ -933,7 +933,7 @@ export function HomePage() {
                   }}
                 >
                   {t.home.settingsFaq}
-                  <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '4px', fontWeight: 400 }}>
+                  <div style={{ fontSize: '11px', color: colors.textOnDarkMuted, marginTop: '4px', fontWeight: 400 }}>
                     {t.home.settingsFaqHint}
                   </div>
                 </button>
@@ -954,7 +954,7 @@ export function HomePage() {
                   }}
                 >
                   {t.home.settingsTour}
-                  <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '4px', fontWeight: 400 }}>
+                  <div style={{ fontSize: '11px', color: colors.textOnDarkMuted, marginTop: '4px', fontWeight: 400 }}>
                     {t.home.settingsTourHint}
                   </div>
                 </button>
@@ -962,7 +962,7 @@ export function HomePage() {
 
               {/* Язык / Language */}
               <div style={{ marginBottom: '28px' }}>
-                <div style={{ color: colors.textSecondary, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <div style={{ color: colors.textOnDarkSecond, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   {t.home.settingsSectionLang}
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -979,7 +979,7 @@ export function HomePage() {
                         background: lang === l ? `${colors.fairyGold}18` : 'rgba(255,255,255,0.05)',
                         border: `1px solid ${lang === l ? colors.fairyGold : 'rgba(255,255,255,0.1)'}`,
                         borderRadius: '12px',
-                        color: lang === l ? colors.fairyGold : colors.textSecondary,
+                        color: lang === l ? colors.fairyGold : colors.textOnDarkSecond,
                         fontSize: '14px',
                         fontWeight: lang === l ? 700 : 400,
                         cursor: 'pointer',
@@ -993,7 +993,7 @@ export function HomePage() {
 
               {/* Пригласительная грамота */}
               <div style={{ marginBottom: '28px' }}>
-                <div style={{ color: colors.textSecondary, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <div style={{ color: colors.textOnDarkSecond, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   {t.home.settingsReferrals}
                 </div>
                 <button
@@ -1012,7 +1012,7 @@ export function HomePage() {
                   }}
                 >
                   {t.home.settingsInvite}
-                  <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '4px', fontWeight: 400 }}>
+                  <div style={{ fontSize: '11px', color: colors.textOnDarkMuted, marginTop: '4px', fontWeight: 400 }}>
                     {t.home.settingsInviteHint}
                   </div>
                 </button>
@@ -1025,7 +1025,7 @@ export function HomePage() {
                     background: 'rgba(255,255,255,0.04)',
                     border: `1px solid ${colors.cardBorder}`,
                     borderRadius: '12px',
-                    color: colors.textSecondary,
+                    color: colors.textOnDarkSecond,
                     fontSize: '13px',
                     fontWeight: 600,
                     cursor: 'pointer',
@@ -1046,14 +1046,14 @@ export function HomePage() {
                         {gameState.referralCount}
                       </span>
                     )}
-                    <span style={{ color: colors.textMuted, fontSize: '11px', fontWeight: 400 }}>→</span>
+                    <span style={{ color: colors.textOnDarkMuted, fontSize: '11px', fontWeight: 400 }}>→</span>
                   </span>
                 </button>
               </div>
 
               {/* Правила · Отказ от ответственности */}
               <div style={{ marginBottom: '24px' }}>
-                <div style={{ color: colors.textMuted, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <div style={{ color: colors.textOnDarkMuted, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   {t.home.settingsSectionLegal}
                 </div>
                 <div style={{
@@ -1061,11 +1061,11 @@ export function HomePage() {
                   background: 'rgba(255,255,255,0.04)',
                   border: `1px solid ${colors.cardBorder}`,
                   borderRadius: '12px',
-                  color: colors.textMuted,
+                  color: colors.textOnDarkMuted,
                   fontSize: '11px',
                   lineHeight: 1.7,
                 }}>
-                  <strong style={{ color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>
+                  <strong style={{ color: colors.textOnDarkSecond, display: 'block', marginBottom: '6px' }}>
                     {t.home.settingsLegalTitle}
                   </strong>
                   {t.home.settingsLegalText.split('\n\n').map((para, i) => (

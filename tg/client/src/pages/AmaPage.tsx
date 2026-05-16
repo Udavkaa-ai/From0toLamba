@@ -230,7 +230,7 @@ export function AmaPage() {
                 padding: '6px 12px', fontSize: '13px', fontWeight: 600,
               }}
             >{t.common.back}</button>
-            <div style={{ color: colors.textPrimary, fontSize: '14px', fontWeight: 600 }}>
+            <div style={{ color: colors.textOnDark, fontSize: '14px', fontWeight: 600 }}>
               {project?.developerName ?? 'Делец'}
             </div>
           </div>
@@ -239,7 +239,7 @@ export function AmaPage() {
             <div style={{ color: colors.fairyGold, fontSize: '20px', fontWeight: 700 }}>
               {t.ama.title(project?.developerName ?? 'дельцом')}
             </div>
-            <div style={{ color: colors.textSecondary, fontSize: '13px', lineHeight: 1.6, maxWidth: '320px' }}>
+            <div style={{ color: colors.textOnDarkSecond, fontSize: '13px', lineHeight: 1.6, maxWidth: '320px' }}>
               {t.ama.subtitle}
             </div>
             <div style={{
@@ -247,7 +247,7 @@ export function AmaPage() {
               border: `1px solid ${colors.fairyGold}35`,
               borderRadius: '14px',
               padding: `${spacing.md} ${spacing.lg}`,
-              color: colors.textMuted,
+              color: colors.textOnDarkMuted,
               fontSize: '12px',
               lineHeight: 1.5,
             }}>
@@ -278,7 +278,7 @@ export function AmaPage() {
                 disabled={amaPaymentPending}
                 style={{
                   background: 'transparent', border: 'none',
-                  color: colors.textMuted, fontSize: 12, cursor: 'pointer',
+                  color: colors.textOnDarkMuted, fontSize: 12, cursor: 'pointer',
                   padding: '6px 0', textDecoration: 'underline',
                 }}
               >
@@ -359,7 +359,7 @@ export function AmaPage() {
             }}>
               {session.developerName ?? project?.developerName ?? 'Беседа с Дельцом'}
             </div>
-            <div style={{ color: colors.textMuted, fontSize: '11px' }}>
+            <div style={{ color: colors.textOnDarkMuted, fontSize: '11px' }}>
               {session.isComplete ? t.ama.sessionDone : t.ama.questionCount(session.questionCount, 10)}
             </div>
           </div>
@@ -389,7 +389,7 @@ export function AmaPage() {
                     ? `${colors.enchantedPurple}dd`
                     : 'rgba(20, 12, 48, 0.85)',
                   border: `1px solid ${msg.role === 'user' ? colors.fairyGold + '30' : colors.cardBorder}`,
-                  color: colors.textPrimary,
+                  color: colors.textOnDark,
                   fontSize: '14px',
                   lineHeight: 1.5,
                   backdropFilter: 'blur(6px)',
@@ -407,7 +407,7 @@ export function AmaPage() {
                 borderRadius: '16px 16px 16px 4px',
                 background: 'rgba(20, 12, 48, 0.85)',
                 border: `1px solid ${colors.cardBorder}`,
-                color: colors.textMuted,
+                color: colors.textOnDarkMuted,
                 fontSize: '14px',
                 backdropFilter: 'blur(6px)',
               }}>
@@ -436,7 +436,7 @@ export function AmaPage() {
             <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '16px' }}>
               {t.ama.onboardingBonus.replace('{bonus}', String(onboardingBonus))}
             </div>
-            <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
+            <div style={{ color: colors.textOnDarkMuted, fontSize: '12px', marginTop: '4px' }}>
               {t.ama.onboardingBonusHint}
             </div>
           </motion.div>
@@ -554,7 +554,7 @@ export function AmaPage() {
                   border: `1px solid ${colors.cardBorder}`,
                   borderRadius: '12px',
                   padding: `${spacing.sm} ${spacing.md}`,
-                  color: colors.textPrimary,
+                  color: colors.textOnDark,
                   fontSize: '14px',
                   outline: 'none',
                 }}
@@ -639,7 +639,7 @@ function InvestSheet({ projectId, onClose, onSuccess }: { projectId: string; onC
         <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '18px', marginBottom: spacing.sm, display: 'flex', alignItems: 'center', gap: '8px' }}>
           <CoinIcon size={20} /> {t.ama.investBtn.replace('💰 ', '')}
         </div>
-        <div style={{ color: colors.textMuted, fontSize: '12px', marginBottom: spacing.sm }}>
+        <div style={{ color: colors.textOnDarkMuted, fontSize: '12px', marginBottom: spacing.sm }}>
           {t.portfolio.addBalance(gameState != null ? Math.floor(gameState.balance) : 0)}
         </div>
         <input
@@ -653,7 +653,7 @@ function InvestSheet({ projectId, onClose, onSuccess }: { projectId: string; onC
             border: `1px solid ${colors.cardBorder}`,
             borderRadius: '12px',
             padding: `${spacing.md}`,
-            color: colors.textPrimary,
+            color: colors.textOnDark,
             fontSize: '18px',
             outline: 'none',
             marginBottom: spacing.lg,

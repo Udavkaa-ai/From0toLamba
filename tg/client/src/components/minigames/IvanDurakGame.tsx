@@ -495,7 +495,7 @@ export function IvanDurakGame({ seed, onComplete, restoredErrorCount }: IvanDura
               {readyCountdown}
             </div>
             <div style={{
-              color: colors.textPrimary, fontSize: 16, fontWeight: 600,
+              color: colors.textOnDark, fontSize: 16, fontWeight: 600,
               marginTop: 16, opacity: 0.85,
               textShadow: '0 2px 8px rgba(0,0,0,0.6)',
             }}>

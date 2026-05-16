@@ -66,7 +66,7 @@ export function OnboardingTutorial({ onClose }: { onClose: () => void }) {
             />
           ))}
         </div>
-        <span style={{ color: colors.textMuted, fontSize: 12 }}>
+        <span style={{ color: colors.textOnDarkMuted, fontSize: 12 }}>
           {idx + 1} / {slides.length}
         </span>
       </div>
@@ -109,7 +109,7 @@ export function OnboardingTutorial({ onClose }: { onClose: () => void }) {
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }}
               style={{
-                color: colors.textPrimary, fontSize: 15, lineHeight: 1.65,
+                color: colors.textOnDark, fontSize: 15, lineHeight: 1.65,
                 padding: `0 ${spacing.sm}`,
                 marginBottom: slide.accent ? spacing.md : 0,
                 textShadow: '0 1px 4px rgba(0,0,0,0.5)',
@@ -150,7 +150,7 @@ export function OnboardingTutorial({ onClose }: { onClose: () => void }) {
               background: 'rgba(255,255,255,0.06)',
               border: `1px solid ${colors.cardBorder}`,
               borderRadius: 14,
-              color: colors.textSecondary,
+              color: colors.textOnDarkSecond,
               fontSize: 14, fontWeight: 600,
               cursor: 'pointer',
             }}

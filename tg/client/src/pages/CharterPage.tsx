@@ -685,7 +685,7 @@ function TutorialSheet({ rank, archetype, onClose }: { rank: string; archetype: 
           <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '17px' }}>
             {gameName}
           </div>
-          <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
+          <div style={{ color: colors.textOnDarkMuted, fontSize: '12px', marginTop: '4px' }}>
             {isBoyarin ? t.charter.tutorialBody : 'Правила испытания и лесенка наград'}
           </div>
         </div>
@@ -703,7 +703,7 @@ function TutorialSheet({ rank, archetype, onClose }: { rank: string; archetype: 
               background: `${colors.fairyGold}12`,
               border: `1px solid ${colors.fairyGold}40`,
               borderRadius: '12px',
-              color: colors.textSecondary,
+              color: colors.textOnDarkSecond,
               fontSize: '13px',
               lineHeight: 1.6,
               marginBottom: spacing.md,
@@ -735,13 +735,13 @@ function TutorialSheet({ rank, archetype, onClose }: { rank: string; archetype: 
                   <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '13px' }}>
                     {t.charter.tutorialRef}
                   </div>
-                  <div style={{ color: colors.textSecondary, fontSize: '12px', lineHeight: 1.5 }}>
+                  <div style={{ color: colors.textOnDarkSecond, fontSize: '12px', lineHeight: 1.5 }}>
                     {t.charter.tutorialRefHint}
                   </div>
                 </div>
               </div>
 
-              <div style={{ color: colors.textSecondary, fontSize: '12px', marginBottom: spacing.sm }}>
+              <div style={{ color: colors.textOnDarkSecond, fontSize: '12px', marginBottom: spacing.sm }}>
                 {t.charter.tutorialMutations}
               </div>
 
@@ -759,9 +759,9 @@ function TutorialSheet({ rank, archetype, onClose }: { rank: string; archetype: 
                     }}
                   >
                     <Seal params={TUTORIAL_REF} size={44} />
-                    <div style={{ color: colors.textMuted, fontSize: '18px', lineHeight: 1 }}>→</div>
+                    <div style={{ color: colors.textOnDarkMuted, fontSize: '18px', lineHeight: 1 }}>→</div>
                     <Seal params={TUTORIAL_EXAMPLES[target]} size={44} />
-                    <div style={{ color: colors.textSecondary, fontSize: '12px', flex: 1, lineHeight: 1.4 }}>
+                    <div style={{ color: colors.textOnDarkSecond, fontSize: '12px', flex: 1, lineHeight: 1.4 }}>
                       {label}
                     </div>
                   </div>
@@ -772,7 +772,7 @@ function TutorialSheet({ rank, archetype, onClose }: { rank: string; archetype: 
                 <div style={{
                   marginTop: spacing.sm,
                   padding: spacing.sm,
-                  color: colors.textMuted, fontSize: '11px',
+                  color: colors.textOnDarkMuted, fontSize: '11px',
                   fontStyle: 'italic',
                   textAlign: 'center',
                 }}>
@@ -833,7 +833,7 @@ function ExitConfirmSheet({
           <div style={{ color: colors.fairyGold, fontSize: '17px', fontWeight: 700 }}>
             {t.charter.exitTitle}
           </div>
-          <div style={{ color: colors.textSecondary, fontSize: '13px', marginTop: spacing.sm, lineHeight: 1.5 }}>
+          <div style={{ color: colors.textOnDarkSecond, fontSize: '13px', marginTop: spacing.sm, lineHeight: 1.5 }}>
             {t.charter.exitHint}
           </div>
         </div>
@@ -1606,7 +1606,7 @@ function MiniGameResultSheet({
             display: 'block',
             width: '100%',
             background: 'transparent', border: 'none', cursor: 'pointer',
-            color: colors.textMuted, fontSize: 11,
+            color: colors.textOnDarkMuted, fontSize: 11,
             padding: '4px 0',
             margin: `0 0 ${collapsed ? '4px' : spacing.sm}`,
           }}
@@ -1621,7 +1621,7 @@ function MiniGameResultSheet({
         {collapsed && (
           <div style={{
             display: 'flex', justifyContent: 'center', gap: spacing.md,
-            color: colors.textSecondary, fontSize: 12,
+            color: colors.textOnDarkSecond, fontSize: 12,
             paddingBottom: spacing.sm,
           }}>
             <span>{emoji}</span>
@@ -1638,7 +1638,7 @@ function MiniGameResultSheet({
           <div style={{ color: colors.fairyGold, fontSize: '20px', fontWeight: 700, marginTop: '4px' }}>
             {titleText}
           </div>
-          <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px', maxWidth: 320, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.5 }}>
+          <div style={{ color: colors.textOnDarkMuted, fontSize: '12px', marginTop: '4px', maxWidth: 320, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.5 }}>
             {subtitleText}
           </div>
         </div>
@@ -1698,7 +1698,7 @@ function MiniGameResultSheet({
 
         {/* Лесенка наград — показываем игроку, какой уровень он взял и до какого не дотянул */}
         <div style={{ marginTop: spacing.md }}>
-          <div style={{ color: colors.textMuted, fontSize: 11, marginBottom: 4, textAlign: 'center' }}>
+          <div style={{ color: colors.textOnDarkMuted, fontSize: 11, marginBottom: 4, textAlign: 'center' }}>
             Лесенка наград:
           </div>
           <TierLadder currentTier={currentTier} />
@@ -1977,7 +1977,7 @@ function InvestSheet({ projectId, onClose, onSuccess, initialAmount }: {
       <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '18px', marginBottom: spacing.sm, display: 'flex', alignItems: 'center', gap: '8px' }}>
         <CoinIcon size={20} /> {t.inbox.investBtn}
       </div>
-      <div style={{ color: colors.textMuted, fontSize: '12px', marginBottom: spacing.sm }}>
+      <div style={{ color: colors.textOnDarkMuted, fontSize: '12px', marginBottom: spacing.sm }}>
         {t.portfolio.balanceLabel}: {gameState != null ? Math.floor(gameState.balance) : '—'} {t.common.currency} · {t.portfolio.addBalance(5).split('·')[1]?.trim() ?? ''}
       </div>
       <input
@@ -1991,7 +1991,7 @@ function InvestSheet({ projectId, onClose, onSuccess, initialAmount }: {
           border: `1px solid ${colors.cardBorder}`,
           borderRadius: '12px',
           padding: `${spacing.md}`,
-          color: colors.textPrimary,
+          color: colors.textOnDark,
           fontSize: '18px',
           outline: 'none',
           marginBottom: spacing.lg,
@@ -2168,7 +2168,7 @@ function ExtraSlotModal({
         <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '17px' }}>
           {t.extraSlot.title}
         </div>
-        <div style={{ color: colors.textSecondary, fontSize: '13px', marginTop: spacing.sm, lineHeight: 1.5 }}>
+        <div style={{ color: colors.textOnDarkSecond, fontSize: '13px', marginTop: spacing.sm, lineHeight: 1.5 }}>
           {t.extraSlot.body}
         </div>
       </div>
@@ -2205,7 +2205,7 @@ function ExtraSlotModal({
           ...primaryBtnStyle,
           marginBottom: spacing.sm,
           background: canAffordGroshy ? colors.fairyGold : 'rgba(255,255,255,0.1)',
-          color: canAffordGroshy ? colors.nightBlue : colors.textMuted,
+          color: canAffordGroshy ? colors.nightBlue : colors.textOnDarkMuted,
           cursor: canAffordGroshy ? 'pointer' : 'default',
           opacity: isPending ? 0.6 : 1,
         }}

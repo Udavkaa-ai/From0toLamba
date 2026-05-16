@@ -125,7 +125,7 @@ function TourCard({
             onClick={onDismiss}
             style={{
               background: 'transparent', border: 'none',
-              color: colors.textMuted, fontSize: '16px',
+              color: colors.textOnDarkMuted, fontSize: '16px',
               cursor: 'pointer', padding: '0 2px', lineHeight: 1,
             }}
           >✕</button>
@@ -134,7 +134,7 @@ function TourCard({
         <div style={{ color: colors.fairyGold, fontSize: '15px', fontWeight: 700, marginBottom: '6px' }}>
           {stepData.title}
         </div>
-        <div style={{ color: colors.textPrimary, fontSize: '13px', lineHeight: 1.55, marginBottom: stepData.accent ? '10px' : '14px' }}>
+        <div style={{ color: colors.textOnDark, fontSize: '13px', lineHeight: 1.55, marginBottom: stepData.accent ? '10px' : '14px' }}>
           {stepData.body}
         </div>
         {stepData.accent && (
@@ -275,13 +275,13 @@ export function TourOverlay() {
                     }} />
                   ))}
                 </div>
-                <button onClick={dismiss} style={{ background: 'transparent', border: 'none', color: colors.textMuted, fontSize: '16px', cursor: 'pointer', padding: '0 2px', lineHeight: 1 }}>✕</button>
+                <button onClick={dismiss} style={{ background: 'transparent', border: 'none', color: colors.textOnDarkMuted, fontSize: '16px', cursor: 'pointer', padding: '0 2px', lineHeight: 1 }}>✕</button>
               </div>
 
               <div style={{ color: colors.fairyGold, fontSize: '17px', fontWeight: 700, marginBottom: '10px' }}>
                 {stepData.title}
               </div>
-              <div style={{ color: colors.textPrimary, fontSize: '14px', lineHeight: 1.6, marginBottom: stepData.accent ? '14px' : '18px' }}>
+              <div style={{ color: colors.textOnDark, fontSize: '14px', lineHeight: 1.6, marginBottom: stepData.accent ? '14px' : '18px' }}>
                 {stepData.body}
               </div>
               {stepData.accent && (

@@ -107,11 +107,11 @@ function PlaceholderGame({
       <div style={{ color: colors.fairyGold, fontSize: '20px', fontWeight: 700, textAlign: 'center' }}>
         Здесь будет испытание
       </div>
-      <div style={{ color: colors.textMuted, fontSize: '13px', textAlign: 'center', lineHeight: 1.5 }}>
+      <div style={{ color: colors.textOnDarkMuted, fontSize: '13px', textAlign: 'center', lineHeight: 1.5 }}>
         Архетип: {archetype}<br />
         Мини-игра для этого хозяина появится в следующих этапах.
       </div>
-      <div style={{ color: colors.textMuted, fontSize: '10px', opacity: 0.6 }}>
+      <div style={{ color: colors.textOnDarkMuted, fontSize: '10px', opacity: 0.6 }}>
         seed: {seed.slice(0, 12)}…
       </div>
       <div style={{ display: 'flex', gap: spacing.sm, width: '100%' }}>
