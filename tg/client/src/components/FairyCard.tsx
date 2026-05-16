@@ -32,17 +32,17 @@ export function FairyCard({
       onClick={onClick}
       style={{
         background: gradients.card,
-        border: `1px solid ${borderColor}`,
-        borderRadius: '18px',
+        border: `${colors.cardBorderWidth} solid ${borderColor}`,
+        borderRadius: colors.cardRadius,
         padding,
         position: 'relative',
         overflow: 'hidden',
         cursor: onClick ? 'pointer' : 'default',
         boxShadow: [
-          '0 6px 24px rgba(0, 0, 0, 0.45)',                  // глубокая тень
-          `inset 0 1px 0 ${colors.cardHighlight}`,           // стеклянный блик сверху
-          `inset 0 -1px 0 ${colors.cardShade}`,              // глубина снизу
-          highlighted ? `0 0 24px ${colors.fairyGold}25` : '', // мягкое золотое свечение для highlighted
+          '0 6px 24px rgba(0, 0, 0, 0.45)',
+          `inset 0 1px 0 ${colors.cardHighlight}`,
+          `inset 0 -1px 0 ${colors.cardShade}`,
+          highlighted ? `0 0 24px ${colors.fairyGold}30` : '',
         ].filter(Boolean).join(', '),
         transition: 'box-shadow 0.2s, transform 0.15s, border-color 0.2s',
         ...style,
@@ -76,8 +76,8 @@ export function SkeletonCard({ lines = 3 }: { lines?: number }) {
   return (
     <div style={{
       background: gradients.card,
-      border: `1px solid ${colors.cardBorder}`,
-      borderRadius: '18px',
+      border: `${colors.cardBorderWidth} solid ${colors.cardBorder}`,
+      borderRadius: colors.cardRadius,
       padding: '18px 20px',
       marginBottom: spacing.md,
       boxShadow: `0 6px 24px rgba(0,0,0,0.45), inset 0 1px 0 ${colors.cardHighlight}`,

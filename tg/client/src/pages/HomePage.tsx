@@ -23,6 +23,7 @@ import { useTourStore, isTourDone } from '@/stores/tourStore'
 import { useLangStore, type Lang } from '@/stores/langStore'
 import { useT } from '@/i18n'
 import { colors, spacing, typography } from '@/theme'
+import { getTheme, setTheme } from '@/theme/colors'
 import { playSound, isMuted, setMuted, isMusicMuted, setMusicMuted, getVolume, setVolume } from '@/sounds'
 
 const MODEL_OPTIONS = [
@@ -844,6 +845,50 @@ export function HomePage() {
                     <span style={{ color: colors.textMuted, fontSize: '12px', flexShrink: 0 }}>{t.home.settingsSoundHigh}</span>
                   </div>
                 )}
+              </div>
+
+              {/* Тема оформления — переключатель Классическая / Сказочная */}
+              <div style={{ marginBottom: '28px' }}>
+                <div style={{ color: colors.textSecondary, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Оформление
+                </div>
+                <div style={{
+                  display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px',
+                }}>
+                  {([
+                    { id: 'classic' as const, label: 'Классическая', hint: 'Магия в полночь · фиолет + золото' },
+                    { id: 'fairy' as const,   label: 'Сказочная',     hint: 'Резное дерево + пергамент + печать' },
+                  ]).map(opt => {
+                    const isActive = getTheme() === opt.id
+                    return (
+                      <button
+                        key={opt.id}
+                        onClick={() => { if (!isActive) { playSound('tap'); setTheme(opt.id) } }}
+                        style={{
+                          padding: '12px 12px',
+                          background: isActive ? `${colors.fairyGold}22` : 'rgba(255,255,255,0.04)',
+                          border: `1.5px solid ${isActive ? colors.fairyGold : colors.cardBorder}`,
+                          borderRadius: '12px',
+                          color: isActive ? colors.fairyGold : colors.textSecondary,
+                          fontSize: '13px',
+                          fontWeight: 700,
+                          cursor: isActive ? 'default' : 'pointer',
+                          textAlign: 'left',
+                          boxShadow: isActive ? `0 0 16px ${colors.fairyGold}30` : 'none',
+                          transition: '0.15s',
+                        }}
+                      >
+                        {opt.label}{isActive && ' ·  ✓'}
+                        <div style={{ fontSize: '10px', color: colors.textMuted, marginTop: '4px', fontWeight: 400, lineHeight: 1.4 }}>
+                          {opt.hint}
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+                <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '8px', lineHeight: 1.4 }}>
+                  Сменив тему, игра перезагрузится.
+                </div>
               </div>
 
               {/* Повторный просмотр вводного рассказа */}
