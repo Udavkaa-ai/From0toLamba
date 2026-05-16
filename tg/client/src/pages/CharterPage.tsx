@@ -1290,18 +1290,18 @@ function MiniGameIntroScreen({
         <ParamChip label={t.charter.guild} value={`${project.claimedTeamSize} чел.`} />
       </div>
 
-      {/* Описание дела — на пергаментном свитке */}
+      {/* Описание дела — карточка в стиле текущей темы (парчмент в fairy / фиолет в classic) */}
       <div style={{
         position: 'relative',
         marginTop: spacing.lg,
         padding: `${spacing.md} ${spacing.lg}`,
-        background: 'radial-gradient(ellipse at 22% 18%, rgba(255,255,255,0.22) 0%, transparent 55%), linear-gradient(155deg, #F2DFB4 0%, #E8D5A8 55%, #D9C28A 100%)',
-        border: `1.5px solid ${colors.parchmentEdge}`,
+        background: gradients.card,
+        border: `1.5px solid ${colors.cardBorder}`,
         borderRadius: '12px',
-        color: colors.parchmentInk,
+        color: colors.textPrimary,
         fontSize: '13px',
         lineHeight: 1.55,
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.55), 0 3px 14px rgba(0,0,0,0.3)',
+        boxShadow: `inset 0 1px 0 ${colors.cardHighlight}, 0 3px 14px rgba(0,0,0,0.3)`,
       }}>
         <span aria-hidden style={{ position: 'absolute', top: 6, left: 6, width: 10, height: 10, borderRadius: 3, transform: 'rotate(45deg)', background: `radial-gradient(circle at 35% 30%, #E06060, #7A1515)`, boxShadow: `0 0 6px ${colors.gemRuby}88` }} />
         <span aria-hidden style={{ position: 'absolute', top: 6, right: 6, width: 10, height: 10, borderRadius: 3, transform: 'rotate(45deg)', background: `radial-gradient(circle at 35% 30%, #E06060, #7A1515)`, boxShadow: `0 0 6px ${colors.gemRuby}88` }} />
@@ -1312,7 +1312,7 @@ function MiniGameIntroScreen({
       <div style={{
         marginTop: spacing.lg,
         padding: spacing.md,
-        background: 'repeating-linear-gradient(89deg, transparent 0, transparent 3px, rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px), linear-gradient(180deg, #4A2E14 0%, #2D1A0A 100%)',
+        background: gradients.modal,
         border: `1.5px solid ${colors.woodRim}`,
         borderRadius: '12px',
         boxShadow: 'inset 0 1px 0 rgba(255,200,100,0.18), inset 0 -1px 0 rgba(0,0,0,0.35), 0 3px 14px rgba(0,0,0,0.55)',
@@ -1442,13 +1442,13 @@ function IntroScreen({
         position: 'relative',
         marginTop: spacing.lg,
         padding: `${spacing.md} ${spacing.lg}`,
-        background: 'radial-gradient(ellipse at 22% 18%, rgba(255,255,255,0.22) 0%, transparent 55%), linear-gradient(155deg, #F2DFB4 0%, #E8D5A8 55%, #D9C28A 100%)',
-        border: `1.5px solid ${colors.parchmentEdge}`,
+        background: gradients.card,
+        border: `1.5px solid ${colors.cardBorder}`,
         borderRadius: '12px',
-        color: colors.parchmentInk,
+        color: colors.textPrimary,
         fontSize: '13px',
         lineHeight: 1.55,
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.55), 0 3px 14px rgba(0,0,0,0.3)',
+        boxShadow: `inset 0 1px 0 ${colors.cardHighlight}, 0 3px 14px rgba(0,0,0,0.3)`,
       }}>
         <span aria-hidden style={{ position: 'absolute', top: 6, left: 6, width: 10, height: 10, borderRadius: 3, transform: 'rotate(45deg)', background: `radial-gradient(circle at 35% 30%, #E06060, #7A1515)`, boxShadow: `0 0 6px ${colors.gemRuby}88` }} />
         <span aria-hidden style={{ position: 'absolute', top: 6, right: 6, width: 10, height: 10, borderRadius: 3, transform: 'rotate(45deg)', background: `radial-gradient(circle at 35% 30%, #E06060, #7A1515)`, boxShadow: `0 0 6px ${colors.gemRuby}88` }} />
@@ -1517,7 +1517,7 @@ function CharterStat({ label, value, valueColor }: { label: string; value: strin
   return (
     <div style={{
       padding: `${spacing.sm} ${spacing.md}`,
-      background: 'repeating-linear-gradient(89deg, transparent 0, transparent 3px, rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px), linear-gradient(180deg, #4A2E14 0%, #2D1A0A 100%)',
+      background: gradients.modal,
       border: `1.5px solid ${colors.woodRim}`,
       borderRadius: '10px',
       textAlign: 'center',
@@ -1777,9 +1777,9 @@ function MiniGameResultSheet({
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
         style={{
           width: '100%', maxWidth: '500px',
-          background: `repeating-linear-gradient(89deg, transparent 0, transparent 3px, rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px), linear-gradient(180deg, ${colors.woodMid} 0%, ${colors.woodBg} 100%)`,
+          background: gradients.modal,
           borderRadius: '20px 20px 0 0',
-          border: `1.5px solid ${colors.woodRim}`,
+          border: `1.5px solid ${colors.modalBorder}`,
           borderBottom: 'none',
           padding: collapsed
             ? `${spacing.sm} ${spacing.xl}`
@@ -1851,10 +1851,10 @@ function MiniGameResultSheet({
             position: 'relative',
             marginTop: spacing.md,
             padding: `${spacing.md} ${spacing.lg}`,
-            background: 'radial-gradient(ellipse at 22% 18%, rgba(255,255,255,0.22) 0%, transparent 55%), linear-gradient(155deg, #F2DFB4 0%, #E8D5A8 55%, #D9C28A 100%)',
-            border: `1.5px solid ${colors.parchmentEdge}`,
+            background: gradients.card,
+            border: `1.5px solid ${colors.cardBorder}`,
             borderRadius: '12px',
-            color: colors.parchmentInk,
+            color: colors.textPrimary,
             fontSize: '13px',
             lineHeight: 1.55,
             textAlign: 'center',
@@ -1876,7 +1876,7 @@ function MiniGameResultSheet({
           <div style={{
             marginTop: spacing.md,
             padding: spacing.md,
-            background: 'repeating-linear-gradient(89deg, transparent 0, transparent 3px, rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px), linear-gradient(180deg, #4A2E14 0%, #2D1A0A 100%)',
+            background: gradients.modal,
             border: `1.5px solid ${colors.woodRim}`,
             borderRadius: '12px',
             color: 'rgba(232,213,168,0.7)',
@@ -2087,7 +2087,7 @@ function ParamChip({ label, value }: { label: string; value: string }) {
     <div style={{
       flex: 1,
       padding: `${spacing.sm} ${spacing.md}`,
-      background: 'repeating-linear-gradient(89deg, transparent 0, transparent 3px, rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px), linear-gradient(180deg, #4A2E14 0%, #2D1A0A 100%)',
+      background: gradients.modal,
       border: `1.5px solid ${colors.woodRim}`,
       borderRadius: '10px',
       textAlign: 'center',
