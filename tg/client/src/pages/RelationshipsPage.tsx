@@ -173,7 +173,7 @@ function RelationshipDetails({ archetype, onClose }: { archetype: Archetype; onC
         style={{
           position: 'fixed', bottom: 0, left: 0, right: 0,
           maxHeight: '88dvh', overflowY: 'auto',
-          background: `gradients.modal`,
+          background: gradients.modal,
           borderTop: `2px solid ${tint}`,
           borderRadius: '20px 20px 0 0',
           // 80px доп.запас снизу — иначе нижняя навигация и чат-кнопка

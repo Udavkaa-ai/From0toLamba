@@ -63,7 +63,7 @@ async function main() {
   app.get('/health', async () => ({ ok: true, ts: new Date().toISOString() }))
 
   // Version endpoint — клиент сравнивает и перезагружается если устарел
-  app.get('/api/version', async () => ({ version: 'бета 4.0.17' }))
+  app.get('/api/version', async () => ({ version: 'бета 4.0.18' }))
 
   // Баннеры персонажей — предгенерированные WebP
   const bannersDir = path.join(__dirname, '..', 'assets', 'banners')

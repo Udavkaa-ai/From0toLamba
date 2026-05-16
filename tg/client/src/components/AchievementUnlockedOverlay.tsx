@@ -126,7 +126,7 @@ function UnlockedBanner({
         onClick={e => e.stopPropagation()}
         style={{
           width: '100%', maxWidth: '420px',
-          background: `gradients.modal`,
+          background: gradients.modal,
           border: `1px solid ${colors.fairyGold}80`,
           borderRadius: '16px',
           padding: spacing.xl,

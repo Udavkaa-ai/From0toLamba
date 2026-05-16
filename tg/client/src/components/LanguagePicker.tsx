@@ -64,7 +64,7 @@ export function LanguagePicker({ onPicked }: { onPicked: () => void }) {
             style={{
               display: 'flex', alignItems: 'center', gap: '16px',
               padding: '18px 20px',
-              background: `gradients.modal`,
+              background: gradients.modal,
               border: `1px solid ${colors.fairyGold}40`,
               borderRadius: '16px',
               cursor: 'pointer',

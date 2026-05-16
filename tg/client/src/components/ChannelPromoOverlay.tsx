@@ -62,7 +62,7 @@ export function ChannelPromoOverlay({ onClose }: { onClose: () => void }) {
         onClick={e => e.stopPropagation()}
         style={{
           width: '100%',
-          background: `gradients.modal`,
+          background: gradients.modal,
           borderTop: `1px solid ${colors.fairyGold}55`,
           borderRadius: '20px 20px 0 0',
           boxShadow: '0 -8px 32px rgba(0,0,0,0.5)',

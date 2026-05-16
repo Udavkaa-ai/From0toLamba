@@ -114,7 +114,7 @@ export function WhatsNewOverlay({
           width: '100%', maxWidth: '420px',
           maxHeight: '85dvh',
           display: 'flex', flexDirection: 'column',
-          background: `gradients.modal`,
+          background: gradients.modal,
           border: `1px solid ${colors.fairyGold}55`,
           borderRadius: '16px',
           boxShadow: '0 16px 48px rgba(0,0,0,0.6)',

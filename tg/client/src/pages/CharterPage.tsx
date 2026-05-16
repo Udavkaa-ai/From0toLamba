@@ -822,7 +822,7 @@ function ExitConfirmSheet({
         onClick={e => e.stopPropagation()}
         style={{
           width: '100%', maxWidth: '380px',
-          background: `gradients.modal`,
+          background: gradients.modal,
           border: `1px solid ${colors.danger}80`,
           borderRadius: '16px',
           padding: spacing.xl,

@@ -101,7 +101,7 @@ function TourCard({
       style={cardStyle}
     >
       <div style={{
-        background: `gradients.modal`,
+        background: gradients.modal,
         border: `1px solid ${colors.fairyGold}50`,
         borderRadius: '16px',
         padding: '16px 16px 14px',
@@ -257,7 +257,7 @@ export function TourOverlay() {
             }}
           >
             <div style={{
-              background: `gradients.modal`,
+              background: gradients.modal,
               border: `1px solid ${colors.fairyGold}50`,
               borderRadius: '20px',
               padding: '24px 20px 20px',
