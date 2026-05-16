@@ -1779,9 +1779,9 @@ function StarsPaymentOverlay({
         onClick={e => e.stopPropagation()}
         style={{
           width: '100%', maxWidth: '500px',
-          background: colors.nightBlue,
+          background: gradients.modal,
           borderRadius: '20px 20px 0 0',
-          border: `1px solid ${colors.cardBorder}`,
+          border: `1.5px solid ${colors.modalBorder}`,
           padding: `${spacing.xxl} ${spacing.xxl} calc(${spacing.xxl} + 80px + env(safe-area-inset-bottom))`,
         }}
       >
@@ -1789,7 +1789,7 @@ function StarsPaymentOverlay({
         <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '17px', textAlign: 'center', marginBottom: spacing.sm }}>
           {t.home.starsSkipTitle}
         </div>
-        <div style={{ color: colors.textSecondary, fontSize: '13px', textAlign: 'center', lineHeight: 1.5, marginBottom: spacing.lg }}>
+        <div style={{ color: colors.modalTextSec, fontSize: '13px', textAlign: 'center', lineHeight: 1.5, marginBottom: spacing.lg, fontWeight: 500 }}>
           {t.home.starsSkipBody}
         </div>
         <button
@@ -1797,16 +1797,21 @@ function StarsPaymentOverlay({
           disabled={isPending}
           style={{
             width: '100%',
-            padding: spacing.md,
-            background: `linear-gradient(135deg, #FFB800, #FF8C00)`,
+            padding: '14px',
+            background: `linear-gradient(180deg, #FFD660 0%, #FFB800 55%, #B07400 100%)`,
             border: 'none',
+            borderTop: '1.5px solid rgba(255,255,255,0.45)',
+            borderBottom: '3px solid #5A3800',
             borderRadius: '12px',
-            color: '#1a0a00',
-            fontWeight: 700,
+            color: '#2A1A08',
+            fontWeight: 800,
             fontSize: '15px',
             cursor: 'pointer',
             opacity: isPending ? 0.6 : 1,
             marginBottom: spacing.sm,
+            boxShadow: '0 4px 14px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,235,170,0.6)',
+            textShadow: '0 1px 0 rgba(255,235,170,0.45)',
+            letterSpacing: '0.02em',
           }}
         >
           {isPending ? t.home.starsSkipPending : t.home.starsSkipBtn}
@@ -1816,11 +1821,11 @@ function StarsPaymentOverlay({
           style={{
             width: '100%',
             padding: spacing.md,
-            background: 'transparent',
-            border: `1px solid ${colors.cardBorder}`,
+            background: 'rgba(0,0,0,0.32)',
+            border: `1.5px solid rgba(212,160,60,0.5)`,
             borderRadius: '12px',
-            color: colors.textMuted,
-            fontWeight: 500,
+            color: colors.modalText,
+            fontWeight: 600,
             fontSize: '14px',
             cursor: 'pointer',
           }}
