@@ -37,30 +37,31 @@ const themes = {
     cardGradientAngle: '155deg',
   },
   fairy: {
-    // Сказочно-русская: тёплая ярмарочная палитра — медовое дерево карточки
-    // на тёмно-каштановом фоне с золотым светом сверху. Должна читаться
-    // как «полуденная ярмарка», а не «ночь в погребе».
-    bgDeep: '#1A0E06',
-    bgMid:  '#221308',
-    // Карточка — медовый дуб: достаточно светлая чтобы быть читаемой,
-    // достаточно тёплая чтобы быть «деревянной».
-    cardGradientTop:    'rgba(140, 86, 38, 0.96)',   // медовый дуб (верх — самый светлый)
-    cardGradientMid:    'rgba(106, 64, 28, 0.97)',   // средний орех
-    cardGradientBottom: 'rgba(68, 40, 16, 0.99)',    // тёмный орех (низ)
-    cardBorder:       'rgba(212, 160, 60, 0.7)',     // золотой кант
-    cardBorderBright: 'rgba(255, 210, 90, 0.92)',
-    cardHighlight:    'rgba(255, 220, 140, 0.26)',   // тёплый кремовый блик
-    cardShade:        'rgba(0, 0, 0, 0.5)',
-    overlayDark:      'rgba(20, 11, 5, 0.88)',
-    overlayLight:     'rgba(255, 184, 0, 0.12)',
+    // Сказочно-русская: ярмарка в золотое полуденное время.
+    // Фон — тёплое медовое дерево с золотым ореолом сверху.
+    // Карточки — золотой дуб, светлее фона, чтобы «выпрыгивали».
+    bgDeep: '#5A3818',   // медовое дерево внизу
+    bgMid:  '#6E461E',   // золотистый дуб в середине
+    // Карточка — золотой дуб с тёплым блеском, чуть темнее фонового пятна
+    // в центре экрана но светлее границ фона. Подобрано так, чтобы белый
+    // текст оставался хорошо читаемым (контраст ~5:1).
+    cardGradientTop:    'rgba(150, 96, 46, 0.97)',   // золотой дуб (верх — самый светлый)
+    cardGradientMid:    'rgba(118, 74, 34, 0.98)',   // янтарный орех
+    cardGradientBottom: 'rgba(80, 50, 22, 0.99)',    // тёплый орех (низ)
+    cardBorder:       'rgba(212, 160, 60, 0.75)',    // явный золотой кант
+    cardBorderBright: 'rgba(255, 215, 110, 0.95)',
+    cardHighlight:    'rgba(255, 235, 170, 0.32)',   // светлый кремовый блик сверху
+    cardShade:        'rgba(40, 20, 8, 0.45)',
+    overlayDark:      'rgba(48, 26, 10, 0.85)',
+    overlayLight:     'rgba(255, 184, 0, 0.14)',
     cardRadius: '14px',
     cardBorderWidth: '1.5px',
-    // Тёплое золотое свечение сверху + мелкие вертикальные «волокна дерева»
+    // Светлый медовый фон с большим золотым ореолом сверху + тонкие волокна
     screenGradient:
-      `repeating-linear-gradient(89deg, transparent 0, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px), radial-gradient(ellipse at 50% 0%, rgba(255,200,80,0.14) 0%, transparent 60%), linear-gradient(180deg, rgba(68,38,18,0.97) 0%, rgba(48,26,12,0.99) 50%, rgba(36,18,8,1.0) 100%)`,
+      `repeating-linear-gradient(89deg, transparent 0, transparent 3px, rgba(0,0,0,0.045) 3px, rgba(0,0,0,0.045) 4px), radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255,200,90,0.30) 0%, transparent 60%), linear-gradient(180deg, rgba(132,84,38,1.0) 0%, rgba(108,68,30,1.0) 45%, rgba(82,52,24,1.0) 100%)`,
     cardSurface: '',
     cardSurfacePrefix:
-      `repeating-linear-gradient(89deg, transparent 0, transparent 3px, rgba(0,0,0,0.045) 3px, rgba(0,0,0,0.045) 4px), `,
+      `repeating-linear-gradient(89deg, transparent 0, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px), `,
     cardGradientAngle: '180deg',
   },
 } as const
