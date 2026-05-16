@@ -2101,11 +2101,12 @@ function DayNewsOverlay({
           position: 'absolute',
           width: 'min(360px, calc(100vw - 48px))',
           height: '200px',
-          background: `linear-gradient(145deg, #1a1040, #0D1735)`,
-          border: `1px solid rgba(255,184,0,0.2)`,
+          background: gradients.modal,
+          border: `1px solid ${colors.modalBorder}`,
           borderRadius: '16px',
           transform: 'translateY(12px) scale(0.95)',
           zIndex: 201,
+          opacity: 0.65,
         }} />
       )}
 
@@ -2137,10 +2138,10 @@ function DayNewsOverlay({
           style={{
             position: 'relative', zIndex: 202,
             width: 'min(360px, calc(100vw - 48px))',
-            background: `linear-gradient(145deg, #2A1960, #0D1735)`,
+            background: gradients.modal,
             border: isClosure
               ? `2px solid ${currentClosure!.profitPercent >= 0 && !currentClosure!.forcedByMafia ? colors.success : colors.danger}`
-              : `1px solid rgba(255,184,0,0.35)`,
+              : `1.5px solid ${colors.modalBorder}`,
             borderRadius: '16px',
             padding: '20px',
             cursor: 'grab',
@@ -2153,7 +2154,7 @@ function DayNewsOverlay({
             </div>
             <button
               onClick={onClose}
-              style={{ background: 'none', border: 'none', color: colors.textMuted, fontSize: '18px', cursor: 'pointer', padding: '0 4px', lineHeight: 1 }}
+              style={{ background: 'none', border: 'none', color: colors.textOnDarkMuted, fontSize: '18px', cursor: 'pointer', padding: '0 4px', lineHeight: 1 }}
             >
               ✕
             </button>
@@ -2169,13 +2170,13 @@ function DayNewsOverlay({
               onClick={e => { e.stopPropagation(); dismiss() }}
               style={{
                 flex: 1,
-                padding: '10px 12px',
-                background: 'rgba(255,255,255,0.06)',
-                border: `1px solid ${colors.textMuted}40`,
+                padding: '11px 12px',
+                background: 'rgba(0,0,0,0.32)',
+                border: `1.5px solid rgba(212,160,60,0.45)`,
                 borderRadius: '10px',
-                color: colors.textSecondary,
+                color: colors.modalTextSec,
                 fontSize: '12px',
-                fontWeight: 600,
+                fontWeight: 700,
                 cursor: 'pointer',
               }}
             >
@@ -2185,20 +2186,21 @@ function DayNewsOverlay({
               onClick={e => { e.stopPropagation(); goPrimary() }}
               style={{
                 flex: 1,
-                padding: '10px 12px',
-                background: `${colors.fairyGold}20`,
-                border: `1px solid ${colors.fairyGold}70`,
+                padding: '11px 12px',
+                background: gradients.cta,
+                border: `1.5px solid ${colors.ctaBorder}`,
                 borderRadius: '10px',
-                color: colors.fairyGold,
+                color: colors.ctaText,
                 fontSize: '12px',
                 fontWeight: 700,
                 cursor: 'pointer',
+                boxShadow: `0 2px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,235,170,0.4)`,
               }}
             >
               {isClosure ? t.home.dayNewsToRegistry : t.home.dayNewsToDeal}
             </button>
           </div>
-          <div style={{ color: colors.textMuted, fontSize: '10px', textAlign: 'center', marginTop: '8px', opacity: 0.7 }}>
+          <div style={{ color: colors.textOnDarkMuted, fontSize: '10px', textAlign: 'center', marginTop: '8px', opacity: 0.7 }}>
             {t.home.dayNewsSwipe}
           </div>
         </motion.div>
@@ -2265,8 +2267,8 @@ function ClosureCardContent({ closure }: { closure: ClosureSummaryDTO }) {
       {/* Заголовок: имя + delta */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
         <div>
-          <div style={{ color: colors.textPrimary, fontWeight: 700, fontSize: '15px' }}>{closure.name}</div>
-          <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '2px' }}>
+          <div style={{ color: colors.textOnDark, fontWeight: 700, fontSize: '15px' }}>{closure.name}</div>
+          <div style={{ color: colors.textOnDarkMuted, fontSize: '11px', marginTop: '2px' }}>
             {closure.developerName} · {closure.daysActive} {t.common.days}
           </div>
         </div>
@@ -2274,7 +2276,7 @@ function ClosureCardContent({ closure }: { closure: ClosureSummaryDTO }) {
           <div style={{ color: accent, fontFamily: typography.headingFontFamily, fontSize: '22px', fontWeight: 700, lineHeight: 1.1 }}>
             {profitable ? '+' : ''}{closure.profitPercent.toFixed(1)}%
           </div>
-          <div style={{ color: colors.textMuted, fontSize: '10px', marginTop: '2px' }}>{fateLabel}</div>
+          <div style={{ color: colors.textOnDarkMuted, fontSize: '10px', marginTop: '2px' }}>{fateLabel}</div>
         </div>
       </div>
 
@@ -2284,7 +2286,7 @@ function ClosureCardContent({ closure }: { closure: ClosureSummaryDTO }) {
         background: `${accent}15`,
         border: `1px solid ${accent}50`,
         borderRadius: '10px',
-        color: colors.textSecondary,
+        color: colors.textOnDarkSecond,
         fontSize: '12px',
         lineHeight: 1.5,
         marginBottom: '12px',
@@ -2301,14 +2303,14 @@ function ClosureCardContent({ closure }: { closure: ClosureSummaryDTO }) {
       {/* Числа: Вложено → Получено */}
       <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '8px 0' }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ color: colors.textMuted, fontSize: '10px' }}>{t.home.balanceInvested}</div>
-          <div style={{ color: colors.textSecondary, fontWeight: 600, fontSize: '14px', fontVariantNumeric: 'tabular-nums' }}>
+          <div style={{ color: colors.textOnDarkMuted, fontSize: '10px' }}>{t.home.balanceInvested}</div>
+          <div style={{ color: colors.textOnDarkSecond, fontWeight: 600, fontSize: '14px', fontVariantNumeric: 'tabular-nums' }}>
             {Math.floor(closure.investedAmount)} {t.common.currency}
           </div>
         </div>
-        <div style={{ color: colors.textMuted, fontSize: '14px' }}>→</div>
+        <div style={{ color: colors.textOnDarkMuted, fontSize: '14px' }}>→</div>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ color: colors.textMuted, fontSize: '10px' }}>{t.home.balanceReturned}</div>
+          <div style={{ color: colors.textOnDarkMuted, fontSize: '10px' }}>{t.home.balanceReturned}</div>
           <div style={{
             color: accent,
             fontFamily: typography.headingFontFamily,
@@ -2335,7 +2337,7 @@ function ProjectNewsCardContent({ project }: { project: ProjectDTO }) {
   const latest = updates?.[0]
   // Случайное событие имеет приоритет в подаче — заметный цветной ромб
   let signal = '⚪'
-  let signalColor: string = colors.textMuted
+  let signalColor: string = colors.textOnDarkMuted
   if (latest?.eventKind === 'NEGATIVE') { signal = '◆'; signalColor = colors.danger }
   else if (latest?.eventKind === 'POSITIVE') { signal = '◆'; signalColor = colors.success }
   else if (latest?.eventKind === 'NEUTRAL') { signal = '◇'; signalColor = colors.fairyGold }
@@ -2352,8 +2354,8 @@ function ProjectNewsCardContent({ project }: { project: ProjectDTO }) {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
         <div>
-          <div style={{ color: colors.textPrimary, fontWeight: 700, fontSize: '15px' }}>{project.name}</div>
-          <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '2px' }}>{project.developerName}</div>
+          <div style={{ color: colors.textOnDark, fontWeight: 700, fontSize: '15px' }}>{project.name}</div>
+          <div style={{ color: colors.textOnDarkMuted, fontSize: '11px', marginTop: '2px' }}>{project.developerName}</div>
         </div>
         <div style={{ textAlign: 'right' }}>
           <div style={{ color: colors.fairyGold, fontWeight: 700 }}>{Math.floor(project.currentValueRubles)} {t.common.currency}</div>
@@ -2372,9 +2374,9 @@ function ProjectNewsCardContent({ project }: { project: ProjectDTO }) {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
             <span style={{ fontSize: '13px' }}>{signal}</span>
-            <span style={{ color: colors.textSecondary, fontSize: '12px', fontWeight: 600 }}>{latest.title}</span>
+            <span style={{ color: colors.textOnDarkSecond, fontSize: '12px', fontWeight: 600 }}>{latest.title}</span>
           </div>
-          <div style={{ color: colors.textMuted, fontSize: '11px', lineHeight: 1.5, whiteSpace: 'pre-line' }}>
+          <div style={{ color: colors.textOnDarkMuted, fontSize: '11px', lineHeight: 1.5, whiteSpace: 'pre-line' }}>
             {latest.body.slice(0, 220)}{latest.body.length > 220 ? '…' : ''}
           </div>
           {latest.redFlags.length > 0 && (
@@ -2386,7 +2388,7 @@ function ProjectNewsCardContent({ project }: { project: ProjectDTO }) {
           )}
         </div>
       ) : (
-        <div style={{ color: colors.textMuted, fontSize: '12px', textAlign: 'center', padding: '12px' }}>
+        <div style={{ color: colors.textOnDarkMuted, fontSize: '12px', textAlign: 'center', padding: '12px' }}>
           {t.common.loading}
         </div>
       )}
