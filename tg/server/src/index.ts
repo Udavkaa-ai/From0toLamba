@@ -15,6 +15,7 @@ import { paymentsRoutes } from './api/routes/payments'
 import { chatRoutes } from './api/routes/chat'
 import { publicRoutes } from './api/routes/public'
 import { todayRoutes } from './api/routes/today'
+import { sponsorRoutes } from './api/routes/sponsor'
 import { createWebhookHandler, getBot, cancelBroadcast } from './bot/bot'
 import { startDailyScheduler } from './scheduler/dailyJob'
 import { prisma } from './db/prisma'
@@ -50,6 +51,7 @@ async function main() {
   await app.register(chatRoutes)
   await app.register(publicRoutes)
   await app.register(todayRoutes)
+  await app.register(sponsorRoutes)
 
   // Telegram webhook
   const webhookSecret = process.env.TELEGRAM_BOT_TOKEN?.split(':')[0]
@@ -63,7 +65,7 @@ async function main() {
   app.get('/health', async () => ({ ok: true, ts: new Date().toISOString() }))
 
   // Version endpoint — клиент сравнивает и перезагружается если устарел
-  app.get('/api/version', async () => ({ version: 'бета 4.0.23' }))
+  app.get('/api/version', async () => ({ version: 'бета 4.1.0' }))
 
   // Баннеры персонажей — предгенерированные WebP
   const bannersDir = path.join(__dirname, '..', 'assets', 'banners')

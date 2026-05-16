@@ -333,6 +333,119 @@ function setupHandlers(bot: Bot) {
     await ctx.reply('🛑 Останавливаю рассылку...')
   })
 
+  // /sponsor — управление VIP-кампаниями (только для админа).
+  // Поддерживает: add, list, remove <id>, toggle <id>.
+  //
+  // /sponsor add — мастер в JSON: ответом ожидается одно сообщение с
+  //   валидным JSON-объектом со всеми полями кампании. Пример:
+  //     {"channelName":"@MyChan","channelUrl":"https://t.me/MyChan",
+  //      "promocode":"ZOLOTO","scenarioTitle":"Воеводская награда",
+  //      "scenarioBody":"...","developerName":"Воевода Михайло",
+  //      "archetype":"BOYARIN","type":"HONEST_TRADE","durationDays":14,
+  //      "bannerImageUrl":null,"weight":10}
+  bot.command('sponsor', async (ctx) => {
+    if (ctx.from?.id !== ADMIN_TELEGRAM_ID) return
+    const text = (ctx.message?.text ?? '').replace(/^\/sponsor(@\w+)?\s*/, '').trim()
+    const [sub, ...rest] = text.split(/\s+/)
+
+    if (!sub || sub === 'help') {
+      await ctx.reply(
+        'Управление VIP-кампаниями:\n' +
+        '/sponsor list — список всех\n' +
+        '/sponsor add <JSON> — создать (см. /sponsor template)\n' +
+        '/sponsor remove <id> — удалить\n' +
+        '/sponsor toggle <id> — вкл/выкл\n' +
+        '/sponsor template — пример JSON',
+      )
+      return
+    }
+
+    if (sub === 'template') {
+      await ctx.reply(
+        '/sponsor add ' + JSON.stringify({
+          channelName: '@MyChannel',
+          channelUrl: 'https://t.me/MyChannel',
+          promocode: 'ZOLOTO',
+          scenarioTitle: 'Воеводская награда',
+          scenarioBody: 'Воевода Михайло собирает гроши на снаряжение войска. Доход тройной — отблагодарит без обмана.',
+          developerName: 'Воевода Михайло',
+          archetype: 'BOYARIN',
+          type: 'HONEST_TRADE',
+          durationDays: 14,
+          bannerImageUrl: null,
+          weight: 10,
+        }),
+      )
+      return
+    }
+
+    if (sub === 'list') {
+      const all = await prisma.sponsorCampaign.findMany({ orderBy: { createdAt: 'desc' } })
+      if (all.length === 0) { await ctx.reply('Пусто.'); return }
+      const lines = all.map(c =>
+        `${c.active ? '🟢' : '⚫️'} <code>${c.id.slice(0, 8)}</code> · ${c.channelName} · «${c.scenarioTitle}» · код <b>${c.promocode}</b> · ${c.durationDays}д · вес ${c.weight}`,
+      )
+      await ctx.reply(lines.join('\n'), { parse_mode: 'HTML' })
+      return
+    }
+
+    if (sub === 'remove') {
+      const idPrefix = rest[0]
+      if (!idPrefix) { await ctx.reply('Использование: /sponsor remove <id>'); return }
+      const c = await prisma.sponsorCampaign.findFirst({ where: { id: { startsWith: idPrefix } } })
+      if (!c) { await ctx.reply('Не найдено.'); return }
+      await prisma.sponsorCampaign.delete({ where: { id: c.id } })
+      await ctx.reply(`Удалено: ${c.scenarioTitle} (${c.channelName}).`)
+      return
+    }
+
+    if (sub === 'toggle') {
+      const idPrefix = rest[0]
+      if (!idPrefix) { await ctx.reply('Использование: /sponsor toggle <id>'); return }
+      const c = await prisma.sponsorCampaign.findFirst({ where: { id: { startsWith: idPrefix } } })
+      if (!c) { await ctx.reply('Не найдено.'); return }
+      const updated = await prisma.sponsorCampaign.update({
+        where: { id: c.id }, data: { active: !c.active },
+      })
+      await ctx.reply(`${updated.active ? '🟢 Активна' : '⚫️ Выключена'}: ${c.scenarioTitle}.`)
+      return
+    }
+
+    if (sub === 'add') {
+      const jsonStr = text.replace(/^add\s+/, '').trim()
+      if (!jsonStr) { await ctx.reply('Использование: /sponsor add <JSON>. Шаблон: /sponsor template'); return }
+      try {
+        const data = JSON.parse(jsonStr)
+        const required = ['channelName', 'channelUrl', 'promocode', 'scenarioTitle', 'scenarioBody', 'developerName', 'archetype', 'type']
+        for (const f of required) {
+          if (!data[f]) { await ctx.reply(`Не хватает поля: ${f}`); return }
+        }
+        const created = await prisma.sponsorCampaign.create({
+          data: {
+            channelName: String(data.channelName),
+            channelUrl: String(data.channelUrl),
+            promocode: String(data.promocode),
+            scenarioTitle: String(data.scenarioTitle),
+            scenarioBody: String(data.scenarioBody),
+            developerName: String(data.developerName),
+            archetype: String(data.archetype),
+            type: String(data.type),
+            durationDays: Number(data.durationDays ?? 14),
+            bannerImageUrl: data.bannerImageUrl ?? null,
+            weight: Number(data.weight ?? 10),
+            active: true,
+          },
+        })
+        await ctx.reply(`🟢 Создано: ${created.scenarioTitle}\nID: <code>${created.id}</code>\nКод: <b>${created.promocode}</b>`, { parse_mode: 'HTML' })
+      } catch (e: any) {
+        await ctx.reply(`Ошибка: ${e?.message ?? 'parse error'}`)
+      }
+      return
+    }
+
+    await ctx.reply('Неизвестная команда. /sponsor help')
+  })
+
   // /stats — статистика активности и языков (только для админа)
   bot.command('stats', async (ctx) => {
     if (ctx.from?.id !== ADMIN_TELEGRAM_ID) return

@@ -169,11 +169,12 @@ const PERSONA_LABEL_EN: Record<PersonaArchetype, string> = {
 }
 
 const FATE_LABEL_EN: Record<ProjectFate, string> = {
-  [ProjectFate.INSTANT_SCAM]: 'Ran off with the money',
-  [ProjectFate.SLOW_DRAIN]:   'Quietly collapsed',
-  [ProjectFate.HONEST_FAIL]:  'Honest failure',
-  [ProjectFate.SURVIVOR]:     'Survived',
-  [ProjectFate.UNICORN]:      'Firebird by the tail',
+  [ProjectFate.INSTANT_SCAM]:  'Ran off with the money',
+  [ProjectFate.SLOW_DRAIN]:    'Quietly collapsed',
+  [ProjectFate.HONEST_FAIL]:   'Honest failure',
+  [ProjectFate.SURVIVOR]:      'Survived',
+  [ProjectFate.UNICORN]:       'Firebird by the tail',
+  [ProjectFate.SPONSOR_FIXED]: 'Voivode reward',
 }
 
 export async function generateProjectData(input: GenerateProjectInput, model = DEFAULT_MODEL, lang = 'ru'): Promise<GeneratedProjectData> {

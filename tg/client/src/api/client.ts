@@ -59,6 +59,11 @@ export interface ProjectDTO {
   userCountHistory: number[]
   apyHistory: number[]
   valueHistory: number[]
+  // VIP-дело от спонсорского канала. promocode НЕ отдаётся клиенту —
+  // проверяется только на сервере через POST /api/sponsor/:id/verify.
+  isSponsor: boolean
+  sponsorChannelUrl: string | null
+  sponsorPromoVerified: boolean
 }
 
 export interface DailyUpdateDTO {
@@ -432,6 +437,14 @@ export const api = {
   user: {
     setNickname: (nickname: string | null) =>
       apiClient.patch<{ nickname: string | null }>('/user/nickname', { nickname }).then(r => r.data),
+  },
+
+  sponsor: {
+    // Проверка промокода. Возвращает { ok: true } если совпало (case-insensitive,
+    // обрезка пробелов), { ok: false } иначе. При успехе сервер ставит
+    // sponsorPromoVerified=true — после этого можно инвестировать.
+    verify: (projectId: string, promocode: string) =>
+      apiClient.post<{ ok: boolean }>(`/sponsor/${projectId}/verify`, { promocode }).then(r => r.data),
   },
 }
 

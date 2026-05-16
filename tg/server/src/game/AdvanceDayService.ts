@@ -1,5 +1,6 @@
 import { prisma } from '../db/prisma'
-import { ProjectFate, FATE_CONFIG, ProjectType, InvestorRank } from './types'
+import { ProjectFate, FATE_CONFIG, ProjectType, InvestorRank, SPONSOR_PROFIT_MULT } from './types'
+import { computeSponsorValue, shouldCloseSponsor } from './sponsorService'
 import { computeRank, isRankUp, countDeals } from './rankService'
 import { randomInRange as rng, randomIntInRange as irng } from './projectUtils'
 import { generateDailyUpdate, generatePostMortem } from '../ai/openRouterClient'
@@ -119,6 +120,63 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
 
   for (const project of activeProjects) {
     const fate = project.fate as ProjectFate
+
+    // СПОНСОРСКОЕ дело — отдельная ветка: линейный рост к 3× за durationDays.
+    // Никаких случайных событий, мафии или скам-механик.
+    if (project.isSponsor) {
+      const newDaysSince = project.daysSinceJoined + 1
+      const durationDays = project.daysUntilCollapse ?? 14
+      const newValue = computeSponsorValue(project.investedAmountRubles, newDaysSince, durationDays)
+
+      if (shouldCloseSponsor(newDaysSince, durationDays)) {
+        // Срок вышел: возврат целиком, дело закрыто
+        const returned = Math.floor(project.investedAmountRubles * SPONSOR_PROFIT_MULT)
+        await prisma.project.update({
+          where: { id: project.id },
+          data: {
+            isActive: false, isClosed: true, isWithdrawalLocked: false,
+            currentValueRubles: returned,
+            daysSinceJoined: newDaysSince,
+            closureReason: 'Воеводская награда исполнена',
+          },
+        })
+        await prisma.transaction.create({
+          data: {
+            userId, projectId: project.id, projectName: project.name,
+            type: 'RETURNED', amount: returned, day: gameState.currentDay + 1,
+          },
+        }).catch(console.error)
+        balanceDelta += returned
+        returnedDelta += returned
+        closures.push({
+          id: project.id,
+          name: project.name,
+          developerName: project.developerName,
+          fate: project.fate,
+          personaArchetype: project.personaArchetype,
+          investedAmount: project.investedAmountRubles,
+          returnedAmount: returned,
+          profitPercent: (SPONSOR_PROFIT_MULT - 1) * 100,
+          daysActive: newDaysSince,
+          closureReason: 'Воеводская награда исполнена',
+          bannerImageUrl: project.bannerImageUrl ? `/api/banner/${project.id}` : null,
+          forcedByMafia: false,
+        })
+      } else {
+        await prisma.project.update({
+          where: { id: project.id },
+          data: {
+            currentValueRubles: newValue,
+            daysSinceJoined: newDaysSince,
+            valueHistory: [...project.valueHistory.slice(-29), newValue],
+            apyHistory: [...project.apyHistory.slice(-29), project.claimedAPY],
+            userCountHistory: [...project.userCountHistory.slice(-29), project.currentUserCount],
+          },
+        })
+      }
+      continue
+    }
+
     const fateCfg = FATE_CONFIG[fate]
 
     let updatedValue = project.currentValueRubles

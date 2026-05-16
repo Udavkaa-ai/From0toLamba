@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ScreenBackground } from '@/components/ScreenBackground'
 import { api } from '@/api/client'
-import type { CharterDTO, CharterResultDTO, CharterSubmitDTO, GameStateDTO } from '@/api/client'
+import type { CharterDTO, CharterResultDTO, CharterSubmitDTO, GameStateDTO, ProjectDTO } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing, gradients } from '@/theme'
 import { Seal, generateReferenceSeal, sealForCell, mutateSeal, RANK_MUT_POOLS } from '@/components/Seal'
@@ -339,12 +339,21 @@ export function CharterPage() {
           >?</button>
         </div>
 
+        {/* VIP-дело: вместо мини-игры — ввод промокода с канала.
+            После успешной верификации сразу открывается InvestSheet. */}
+        {phase === 'intro' && project?.isSponsor && (
+          <SponsorPromocodeScreen
+            project={project}
+            onVerified={() => setShowInvest(true)}
+          />
+        )}
+
         {/* Тело — зависит от фазы.
             Guard на isSubmitted: после F5 на miniresult-стадии React может на
             один кадр показать intro до того, как сработает useEffect — игрок
             успевал кликнуть «Принять испытание» и запустить игру заново.
             Теперь intro не рендерим, если грамота уже отправлена. */}
-        {phase === 'intro' && project && !charter?.isSubmitted && (
+        {phase === 'intro' && project && !project.isSponsor && !charter?.isSubmitted && (
           <MiniGameIntroScreen
             project={project}
             onStart={async () => {
@@ -1055,6 +1064,190 @@ function AlreadyPlayedScene({ project, errorCount }: { project: any; errorCount:
       </div>
       {/* Кушает невидимое t — иначе TS жалуется на unused */}
       <span style={{ display: 'none' }}>{t.common.done}</span>
+    </div>
+  )
+}
+
+// ─── VIP-экран: ввод промокода для спонсорского дела ────────────────────────
+function SponsorPromocodeScreen({
+  project, onVerified,
+}: {
+  project: ProjectDTO
+  onVerified: () => void
+}) {
+  const [input, setInput] = useState('')
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [verified, setVerified] = useState(project.sponsorPromoVerified)
+
+  const handleSubmit = async () => {
+    if (!input.trim() || pending) return
+    setPending(true)
+    setError(null)
+    try {
+      const res = await api.sponsor.verify(project.id, input)
+      if (res.ok) {
+        haptic?.notificationOccurred('success')
+        playSound('win')
+        setVerified(true)
+        // Небольшая пауза чтобы успела отыграть анимация
+        setTimeout(onVerified, 700)
+      } else {
+        haptic?.notificationOccurred('error')
+        playSound('lose')
+        setError('Не то слово. Загляни на канал ещё раз.')
+      }
+    } catch (e: any) {
+      setError(e?.response?.data?.error ?? 'Не удалось проверить')
+    } finally {
+      setPending(false)
+    }
+  }
+
+  return (
+    <div style={{ flex: 1, padding: spacing.lg, display: 'flex', flexDirection: 'column', gap: spacing.md, maxWidth: 500, margin: '0 auto', width: '100%' }}>
+      {/* Баннер */}
+      {project.bannerImageUrl && (
+        <div style={{ position: 'relative' }}>
+          {/* VIP-обводка */}
+          <div aria-hidden style={{
+            position: 'absolute', inset: -3, borderRadius: 14,
+            background: 'linear-gradient(135deg, #FFD24A 0%, #FFB800 50%, #B07400 100%)',
+            boxShadow: '0 0 28px rgba(255,184,0,0.5)',
+          }} />
+          <img src={project.bannerImageUrl} alt={project.name}
+            style={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', objectFit: 'cover', borderRadius: 12, display: 'block' }}
+            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+        </div>
+      )}
+
+      {/* Шапка */}
+      <div style={{ textAlign: 'center' }}>
+        <div style={{
+          display: 'inline-block', padding: '3px 14px',
+          background: 'linear-gradient(135deg, #FFD24A, #FFB800)',
+          color: '#3A2010', fontWeight: 800, fontSize: '11px',
+          letterSpacing: '0.18em', borderRadius: 8,
+          fontFamily: "'Cinzel', 'Marcellus', serif",
+          boxShadow: '0 3px 10px rgba(0,0,0,0.45)',
+          marginBottom: spacing.sm,
+        }}>
+          ✦ VIP · ВОТ ЭТО УДАЧА ✦
+        </div>
+        <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: 22, fontFamily: "'Cinzel', 'Marcellus', serif", letterSpacing: '0.02em' }}>
+          {project.name}
+        </div>
+        <div style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>
+          {project.developerName}
+        </div>
+      </div>
+
+      {/* Условия */}
+      <div style={{
+        padding: spacing.md,
+        background: gradients.card,
+        border: `1.5px solid ${colors.fairyGold}`,
+        borderRadius: 12,
+        boxShadow: `0 0 18px ${colors.fairyGold}30, inset 0 1px 0 ${colors.cardHighlight}`,
+      }}>
+        <div style={{ color: colors.textPrimary, fontSize: 14, lineHeight: 1.55, marginBottom: spacing.sm }}>
+          {project.description}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: spacing.sm, borderTop: `1px solid ${colors.cardBorder}` }}>
+          <div>
+            <div style={{ color: colors.textMuted, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Возврат</div>
+            <div style={{ color: colors.success, fontWeight: 800, fontSize: 18, fontVariantNumeric: 'tabular-nums' }}>+200%</div>
+          </div>
+          <div>
+            <div style={{ color: colors.textMuted, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Срок</div>
+            <div style={{ color: colors.textPrimary, fontWeight: 800, fontSize: 18, fontVariantNumeric: 'tabular-nums' }}>14 дней</div>
+          </div>
+          <div>
+            <div style={{ color: colors.textMuted, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Риск</div>
+            <div style={{ color: colors.success, fontWeight: 800, fontSize: 18 }}>нет</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Промокод */}
+      <div style={{
+        padding: spacing.md,
+        background: 'rgba(0,0,0,0.32)',
+        border: `1.5px solid rgba(212,160,60,0.55)`,
+        borderRadius: 12,
+      }}>
+        <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: 13, marginBottom: 4 }}>
+          🔑 Скажи кодовое слово
+        </div>
+        <div style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 1.5, marginBottom: spacing.sm }}>
+          Хозяин дела {project.developerName} опубликовал кодовое слово на своём канале. Найди его и введи сюда — тогда можно будет вложиться без испытания.
+        </div>
+        {project.sponsorChannelUrl && (
+          <a href={project.sponsorChannelUrl} target="_blank" rel="noopener noreferrer"
+            style={{
+              display: 'inline-block', marginBottom: spacing.sm,
+              padding: '6px 12px',
+              background: gradients.cta,
+              border: `1.5px solid ${colors.ctaBorder}`,
+              borderRadius: 8,
+              color: colors.ctaText,
+              fontWeight: 700, fontSize: 12,
+              textDecoration: 'none',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+            }}>
+            📢 Открыть канал →
+          </a>
+        )}
+
+        <input
+          type="text"
+          value={input}
+          onChange={e => { setInput(e.target.value); setError(null) }}
+          onKeyDown={e => { if (e.key === 'Enter') handleSubmit() }}
+          placeholder="кодовое слово"
+          disabled={verified || pending}
+          autoComplete="off"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
+          style={{
+            width: '100%', padding: '12px 14px',
+            background: verified ? `${colors.success}22` : 'rgba(248,228,178,0.95)',
+            border: `2px solid ${verified ? colors.success : (error ? colors.danger : colors.fairyGold)}`,
+            borderRadius: 10,
+            color: verified ? colors.success : '#2D1A0A',
+            fontSize: 16, fontWeight: 700,
+            fontFamily: "'Cinzel', 'Marcellus', serif",
+            letterSpacing: '0.04em',
+            textAlign: 'center',
+            outline: 'none',
+            boxSizing: 'border-box',
+          }}
+        />
+        {error && (
+          <div style={{ color: colors.danger, fontSize: 12, marginTop: 6, fontWeight: 600 }}>
+            ❌ {error}
+          </div>
+        )}
+        {verified && (
+          <div style={{ color: colors.success, fontSize: 13, marginTop: 8, fontWeight: 700, textAlign: 'center' }}>
+            ✅ Слово верное — открываю казну…
+          </div>
+        )}
+      </div>
+
+      {/* CTA */}
+      <button
+        onClick={handleSubmit}
+        disabled={!input.trim() || pending || verified}
+        style={{
+          ...primaryBtnStyle,
+          opacity: (!input.trim() || pending || verified) ? 0.5 : 1,
+          cursor: (!input.trim() || pending || verified) ? 'not-allowed' : 'pointer',
+        }}
+      >
+        {verified ? '✓ Готово' : pending ? 'Проверяю…' : 'Проверить →'}
+      </button>
     </div>
   )
 }

@@ -40,14 +40,22 @@ export function InboxPage() {
           </FairyCard>
         )}
 
-        {projects.map((p, i) => (
+        {/* VIP-дела всегда сверху — отдельный порядок (sponsorship), потом обычные */}
+        {[...projects].sort((a, b) => {
+          if (a.isSponsor !== b.isSponsor) return a.isSponsor ? -1 : 1
+          return 0
+        }).map((p, i) => (
           <motion.div
             key={p.id}
             {...(i === 0 ? { 'data-tour': 'first-project' } : {})}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={p.isSponsor
+              ? { opacity: 0, scale: 0.8, y: -20 }
+              : { opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
             whileTap={{ scale: 0.97 }}
-            transition={{ delay: i * 0.07, duration: 0.1 }}
+            transition={p.isSponsor
+              ? { type: 'spring', damping: 14, stiffness: 200, delay: i * 0.07 }
+              : { delay: i * 0.07, duration: 0.1 }}
           >
             <InboxCard project={p} onClick={() => navigate(`/charter/${p.id}`)} tourAttr={i === 0} />
           </motion.div>
@@ -60,58 +68,104 @@ export function InboxPage() {
 function InboxCard({ project, onClick, tourAttr }: { project: ProjectDTO; onClick: () => void; tourAttr?: boolean }) {
   const t = useT()
   const typeLabel = t.inbox.types
+  const isVip = project.isSponsor
 
   return (
-    <FairyCard onClick={onClick} style={{ marginBottom: spacing.md, cursor: 'pointer' }}>
-      {project.bannerImageUrl && (
-        <img
-          src={project.bannerImageUrl}
-          alt={project.name}
-          style={{ width: '100%', aspectRatio: '16 / 9', objectFit: 'cover', borderRadius: '8px', marginBottom: spacing.md, display: 'block' }}
-          onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-        />
+    <div style={{ position: 'relative', marginBottom: spacing.md }}>
+      {/* VIP-обводка снаружи карточки + золотое свечение */}
+      {isVip && (
+        <div aria-hidden style={{
+          position: 'absolute', inset: -3, borderRadius: 18,
+          background: 'linear-gradient(135deg, #FFD24A 0%, #FFB800 50%, #B07400 100%)',
+          boxShadow: `0 0 28px rgba(255,184,0,0.55), 0 0 6px rgba(255,235,170,0.8)`,
+          zIndex: 0,
+        }} />
       )}
+      <FairyCard onClick={onClick} style={{
+        cursor: 'pointer',
+        position: 'relative', zIndex: 1,
+        ...(isVip ? { border: `2px solid #FFE090` } : {}),
+      }}>
+        {isVip && (
+          <div style={{
+            position: 'absolute', top: -10, left: '50%', transform: 'translateX(-50%)',
+            padding: '2px 14px',
+            background: 'linear-gradient(135deg, #FFD24A, #FFB800)',
+            color: '#3A2010', fontWeight: 800, fontSize: '11px',
+            letterSpacing: '0.15em',
+            borderRadius: 8,
+            boxShadow: '0 3px 10px rgba(0,0,0,0.45)',
+            zIndex: 2,
+            fontFamily: "'Cinzel', 'Marcellus', serif",
+            whiteSpace: 'nowrap',
+          }}>
+            ✦ VIP · ВОТ ЭТО УДАЧА ✦
+          </div>
+        )}
+        {project.bannerImageUrl && (
+          <img
+            src={project.bannerImageUrl}
+            alt={project.name}
+            style={{ width: '100%', aspectRatio: '16 / 9', objectFit: 'cover', borderRadius: '8px', marginBottom: spacing.md, display: 'block', marginTop: isVip ? 8 : 0 }}
+            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+          />
+        )}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '15px' }}>{project.name}</div>
-          <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '2px' }}>
-            {(typeLabel as Record<string, string>)[project.type] ?? project.type}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '15px' }}>{project.name}</div>
+            <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '2px' }}>
+              {(typeLabel as Record<string, string>)[project.type] ?? project.type}
+            </div>
+          </div>
+          {isVip && (
+            <div style={{
+              padding: '4px 8px',
+              background: 'rgba(80,200,120,0.18)',
+              border: `1px solid ${colors.success}`,
+              borderRadius: 6,
+              color: colors.success,
+              fontWeight: 800, fontSize: '11px',
+              fontVariantNumeric: 'tabular-nums',
+              whiteSpace: 'nowrap',
+            }}>
+              +200% за 14 дн
+            </div>
+          )}
+        </div>
+
+        <OrnamentDivider />
+
+        <div style={{ color: colors.textSecondary, fontSize: '12px', lineHeight: 1.5 }}>
+          {project.description.slice(0, 120)}...
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: spacing.md }}>
+          <div style={{ color: colors.textMuted, fontSize: '11px' }}>
+            {t.inbox.developer} {project.developerName}
+          </div>
+          <div style={{ color: colors.textMuted, fontSize: '11px' }}>
+            {t.inbox.investors} {project.currentUserCount.toLocaleString('ru')} {t.inbox.investorsSuffix}
           </div>
         </div>
-      </div>
 
-      <OrnamentDivider />
-
-      <div style={{ color: colors.textSecondary, fontSize: '12px', lineHeight: 1.5 }}>
-        {project.description.slice(0, 120)}...
-      </div>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: spacing.md }}>
-        <div style={{ color: colors.textMuted, fontSize: '11px' }}>
-          {t.inbox.developer} {project.developerName}
+        <div style={{
+          marginTop: spacing.md,
+          padding: `${spacing.sm} ${spacing.md}`,
+          background: gradients.goldBtn,
+          border: `1px solid ${colors.fairyGoldDim}`,
+          borderRadius: '10px',
+          color: colors.textOnGold,
+          fontSize: '13px',
+          textAlign: 'center',
+          fontWeight: 700,
+          boxShadow: `0 3px 10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,235,170,0.55)`,
+        }}
+          {...(tourAttr ? { 'data-tour': 'charter-btn' } : {})}
+        >
+          {isVip ? '🔑 Ввести промокод с канала' : t.inbox.studyBtn}
         </div>
-        <div style={{ color: colors.textMuted, fontSize: '11px' }}>
-          {t.inbox.investors} {project.currentUserCount.toLocaleString('ru')} {t.inbox.investorsSuffix}
-        </div>
-      </div>
-
-      <div style={{
-        marginTop: spacing.md,
-        padding: `${spacing.sm} ${spacing.md}`,
-        background: gradients.goldBtn,
-        border: `1px solid ${colors.fairyGoldDim}`,
-        borderRadius: '10px',
-        color: colors.textOnGold,
-        fontSize: '13px',
-        textAlign: 'center',
-        fontWeight: 700,
-        boxShadow: `0 3px 10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,235,170,0.55)`,
-      }}
-        {...(tourAttr ? { 'data-tour': 'charter-btn' } : {})}
-      >
-        {t.inbox.studyBtn}
-      </div>
-    </FairyCard>
+      </FairyCard>
+    </div>
   )
 }

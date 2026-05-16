@@ -14,7 +14,20 @@ export enum ProjectFate {
   HONEST_FAIL = 'HONEST_FAIL',     // 15% — честно старался, не взлетело
   SURVIVOR = 'SURVIVOR',           // 30% — долгожитель, стабильный доход
   UNICORN = 'UNICORN',             // 5% — взлетел: «Жар-птица за хвост»
+  // VIP-судьба для спонсорских дел: гарантированный фиксированный возврат
+  // SPONSOR_PROFIT_MULT× за durationDays. Никогда не выпадает случайно —
+  // только при материализации SponsorCampaign.
+  SPONSOR_FIXED = 'SPONSOR_FIXED',
 }
+
+/** Шанс что новое дело окажется VIP-спонсорским (вместо обычной генерации).
+ *  Применяется только если в БД есть хотя бы одна active SponsorCampaign.
+ *  TODO: вернуть на 0.01 после окончания тестирования. */
+export const SPONSOR_CHANCE = 0.10
+
+/** Множитель возврата спонсорского дела при достижении срока (durationDays):
+ *  инвестировал 1000 г → к финалу currentValueRubles = 3000 г. */
+export const SPONSOR_PROFIT_MULT = 3
 
 export enum PersonaArchetype {
   BURATINO = 'BURATINO',     // Наивный лжец, верит своим выдумкам
@@ -83,11 +96,12 @@ export const PERSONA_LABEL: Record<PersonaArchetype, string> = {
 }
 
 export const FATE_LABEL: Record<ProjectFate, string> = {
-  [ProjectFate.INSTANT_SCAM]: 'Сбежал с деньгами',
-  [ProjectFate.SLOW_DRAIN]:   'Тихо угас',
-  [ProjectFate.HONEST_FAIL]:  'Честный провал',
-  [ProjectFate.SURVIVOR]:     'Выжил',
-  [ProjectFate.UNICORN]:      'Жар-птица за хвост',
+  [ProjectFate.INSTANT_SCAM]:  'Сбежал с деньгами',
+  [ProjectFate.SLOW_DRAIN]:    'Тихо угас',
+  [ProjectFate.HONEST_FAIL]:   'Честный провал',
+  [ProjectFate.SURVIVOR]:      'Выжил',
+  [ProjectFate.UNICORN]:       'Жар-птица за хвост',
+  [ProjectFate.SPONSOR_FIXED]: 'Воеводская награда',
 }
 
 /** Правила вывода по типу дела */
@@ -136,6 +150,15 @@ export const FATE_CONFIG: Record<ProjectFate, {
     lossRange: [0, 0],
     weight: 5,
   },
+  // SPONSOR_FIXED — фиксированный, не участвует в случайном выборе fate.
+  // Линейный прирост: финальная стоимость = SPONSOR_PROFIT_MULT × вложенное
+  // за durationDays. Параметры здесь — заглушки, не используются.
+  [ProjectFate.SPONSOR_FIXED]: {
+    daysRange: [14, 14],
+    dailyYieldRange: [0, 0],
+    lossRange: [0, 0],
+    weight: 0,
+  },
 }
 
 /** Публичное DTO проекта — СКРЫТЫЕ поля удалены */
@@ -165,5 +188,10 @@ export interface ProjectPublicDTO {
   userCountHistory: number[]
   apyHistory: number[]
   valueHistory: number[]
+  // Спонсорские поля — публичны (игрок видит «VIP», ссылку на канал и т.д.).
+  // promocode на клиент НЕ отправляется — проверка только на сервере.
+  isSponsor: boolean
+  sponsorChannelUrl: string | null
+  sponsorPromoVerified: boolean
 }
 

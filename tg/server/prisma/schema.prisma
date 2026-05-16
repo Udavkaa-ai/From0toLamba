@@ -152,6 +152,19 @@ model Project {
   bannerImageUrl       String?
   bannerPromptUsed     String?
 
+  // VIP-дело от спонсорского канала. Если isSponsor=true, поля ниже:
+  //   - promocode: секретное слово, которое игрок должен ввести вместо
+  //     прохождения мини-игры. Сравнение case-insensitive.
+  //   - sponsorChannelUrl: ссылка на канал, где промокод опубликован.
+  //   - sponsorCampaignId: ссылка на исходную кампанию (для аналитики).
+  //   - sponsorPromoVerified: true когда игрок ввёл правильный промокод.
+  // Финал такого дела: фиксированный возврат 3× за durationDays.
+  isSponsor             Boolean   @default(false)
+  promocode             String?
+  sponsorChannelUrl     String?
+  sponsorCampaignId     String?
+  sponsorPromoVerified  Boolean   @default(false)
+
   // История для графиков (хранить компактно — последние 30 дней)
   currentUserCount     Int       @default(0)
   userCountHistory     Int[]     @default([])
@@ -307,6 +320,30 @@ model AdRevenue {
   currency  String   @default("RUB")
   meta      String?  // JSON: доп. данные от рекламной сети
   recordedAt DateTime @default(now())
+}
+
+// VIP-дела от спонсорских каналов. Появляются в инбоксе вместо обычных дел
+// с шансом SPONSOR_CHANCE (см. types.ts). Если активных кампаний несколько —
+// выбирается случайная (по весам weight). Дело имеет фиксированный возврат
+// SPONSOR_PROFIT_MULT (3×) за durationDays дней без судьбы скама.
+//
+// Управляется через бот: /sponsor add | list | remove (только ADMIN_TELEGRAM_ID).
+model SponsorCampaign {
+  id              String   @id @default(uuid())
+  channelName     String                                       // «@MyChannel»
+  channelUrl      String                                       // https://t.me/MyChannel
+  promocode       String                                       // секретное слово
+  scenarioTitle   String                                       // «Воеводская награда» (название дела)
+  scenarioBody    String   @db.Text                            // текст описания дела (сказочный)
+  developerName   String                                       // «Воевода Михайло»
+  archetype       String                                       // PersonaArchetype (для баннера)
+  type            String                                       // ProjectType
+  durationDays    Int      @default(14)
+  bannerImageUrl  String?                                      // null = заглушка SPONSOR_VIP_01.webp
+  active          Boolean  @default(true)                      // false = больше не выпадает
+  weight          Int      @default(10)                        // вес в случайном выборе
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model ChatMessage {

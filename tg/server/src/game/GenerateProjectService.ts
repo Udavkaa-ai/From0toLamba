@@ -1,15 +1,19 @@
 import { prisma } from '../db/prisma'
 import { generateProjectData, generateProjectBanner } from '../ai/openRouterClient'
-import { ProjectType, ProjectFate, PersonaArchetype, FATE_CONFIG } from './types'
+import { ProjectType, ProjectFate, PersonaArchetype, FATE_CONFIG, SPONSOR_CHANCE } from './types'
 import { randomInRange as rng, randomIntInRange as irng, weightedRandom as wr, selectLieAndTruthTopics as slt, generateNpcTruthParams } from './projectUtils'
+import { pickRandomActiveCampaign, materializeSponsorProject } from './sponsorService'
 
-/** Диапазоны множителя по судьбе: мошенники врут вверх, UNICORN занижает */
+/** Диапазоны множителя по судьбе: мошенники врут вверх, UNICORN занижает.
+ *  SPONSOR_FIXED здесь — заглушка, реальный claimedAPY ставится напрямую
+ *  в sponsorService.materializeSponsorProject(). */
 const CLAIMED_APY_MULTIPLIER: Record<ProjectFate, [number, number]> = {
   [ProjectFate.INSTANT_SCAM]: [0.9, 1.5],
   [ProjectFate.SLOW_DRAIN]:   [0.7, 1.4],
   [ProjectFate.HONEST_FAIL]:  [0.5, 1.0],
   [ProjectFate.SURVIVOR]:     [0.7, 1.3],
   [ProjectFate.UNICORN]:      [0.3, 0.7],
+  [ProjectFate.SPONSOR_FIXED]: [1.0, 1.0],
 }
 
 export function computeClaimedAPY(realDailyYield: number, fate: ProjectFate): number {
@@ -37,9 +41,21 @@ export async function generateProject(
   options: { preloaded?: boolean } = {},
   lang = 'ru',
 ): Promise<string> {
+  // VIP-перехват: с шансом SPONSOR_CHANCE генерируем спонсорское дело
+  // вместо обычного, если в БД есть активная кампания. Не применяется
+  // для preloaded (фоновых) — спонсорское всегда сразу в инбоксе.
+  if (!options.preloaded && !overrideFate && Math.random() < SPONSOR_CHANCE) {
+    const campaign = await pickRandomActiveCampaign()
+    if (campaign) {
+      const sponsored = await materializeSponsorProject(userId, campaign)
+      return sponsored.id
+    }
+  }
+
   // Случайные базовые параметры
   const type = ALL_TYPES[Math.floor(Math.random() * ALL_TYPES.length)]
-  const fate = overrideFate ?? wr(ALL_FATES)
+  // Спонсорские судьбы НЕ участвуют в случайном выборе обычных дел
+  const fate = overrideFate ?? wr(ALL_FATES.filter(f => f.value !== ProjectFate.SPONSOR_FIXED))
   const archetype = ALL_ARCHETYPES[Math.floor(Math.random() * ALL_ARCHETYPES.length)]
 
   const fateCfg = FATE_CONFIG[fate]

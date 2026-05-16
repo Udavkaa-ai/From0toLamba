@@ -59,6 +59,12 @@ export async function invest(
     prisma.amaSession.findUnique({ where: { projectId } }),
   ])
 
+  // VIP-дело: разрешено только после верификации промокода. Мини-игра
+  // тут не требуется — её попросту нет в инбоксе для isSponsor.
+  if (project.isSponsor && !project.sponsorPromoVerified) {
+    throw new Error('PROMO_REQUIRED')
+  }
+
   // Шанс «переломить судьбу» (превратить дело в UNICORN) даётся ТОЛЬКО за
   // честно сыгранную идеальную мини-игру (errorCount === 0).
   // Bypass за 10 звёзд или жетоном НЕ влияет на этот шанс: при провале
