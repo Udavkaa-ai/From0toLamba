@@ -131,7 +131,7 @@ function InboxCard({ project, onClick, tourAttr }: { project: ProjectDTO; onClic
             fontFamily: "'Cinzel', 'Marcellus', serif",
             whiteSpace: 'nowrap',
           }}>
-            ✦ VIP · ВОТ ЭТО УДАЧА ✦
+            ✦ ЗОЛОТАЯ ГРАМОТА ✦
           </div>
         )}
         {project.bannerImageUrl && (
@@ -195,7 +195,7 @@ function InboxCard({ project, onClick, tourAttr }: { project: ProjectDTO; onClic
         }}
           {...(tourAttr ? { 'data-tour': 'charter-btn' } : {})}
         >
-          {isVip ? '🔑 Ввести промокод с канала' : t.inbox.studyBtn}
+          {isVip ? '🔑 Сказать заветное слово' : t.inbox.studyBtn}
         </div>
       </FairyCard>
     </div>

@@ -130,12 +130,13 @@ export function VipArrivalOverlay({
           background: 'linear-gradient(135deg, #FFD24A, #FFB800, #B07400)',
           color: '#3A2010',
           fontFamily: "'Cinzel', 'Marcellus', serif",
-          fontWeight: 800, fontSize: 14,
-          letterSpacing: '0.22em',
+          fontWeight: 800, fontSize: 13,
+          letterSpacing: '0.2em',
           borderRadius: 10,
           boxShadow: '0 5px 16px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.4)',
+          whiteSpace: 'nowrap',
         }}>
-          ✦ VIP ✦
+          ✦ ЗОЛОТАЯ ГРАМОТА ✦
         </div>
       </motion.div>
 
@@ -180,7 +181,7 @@ export function VipArrivalOverlay({
           textShadow: '0 2px 8px rgba(0,0,0,0.85)',
         }}
       >
-        В грамоты пришло редкое <b style={{ color: '#FFD660' }}>VIP-предложение</b> — без испытания, по кодовому слову с канала
+        Пришла <b style={{ color: '#FFD660' }}>золотая грамота</b> — без испытания, по заветному слову с канала хозяина
       </motion.div>
 
       {/* ПРЕВЬЮ ДЕЛА */}

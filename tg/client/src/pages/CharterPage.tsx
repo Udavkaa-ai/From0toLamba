@@ -1132,7 +1132,7 @@ function SponsorPromocodeScreen({
           boxShadow: '0 3px 10px rgba(0,0,0,0.45)',
           marginBottom: spacing.sm,
         }}>
-          ✦ VIP · ВОТ ЭТО УДАЧА ✦
+          ✦ ЗОЛОТАЯ ГРАМОТА ✦
         </div>
         <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: 22, fontFamily: "'Cinzel', 'Marcellus', serif", letterSpacing: '0.02em' }}>
           {project.name}
@@ -1177,10 +1177,10 @@ function SponsorPromocodeScreen({
         borderRadius: 12,
       }}>
         <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: 13, marginBottom: 4 }}>
-          🔑 Скажи кодовое слово
+          🔑 Скажи заветное слово
         </div>
         <div style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 1.5, marginBottom: spacing.sm }}>
-          Хозяин дела {project.developerName} опубликовал кодовое слово на своём канале. Найди его и введи сюда — тогда можно будет вложиться без испытания.
+          Хозяин дела {project.developerName} объявил заветное слово на своём канале. Найди его и впиши сюда — тогда можно будет вложиться без испытания.
         </div>
         {project.sponsorChannelUrl && (
           <a href={project.sponsorChannelUrl} target="_blank" rel="noopener noreferrer"
@@ -1204,7 +1204,7 @@ function SponsorPromocodeScreen({
           value={input}
           onChange={e => { setInput(e.target.value); setError(null) }}
           onKeyDown={e => { if (e.key === 'Enter') handleSubmit() }}
-          placeholder="кодовое слово"
+          placeholder="заветное слово"
           disabled={verified || pending}
           autoComplete="off"
           autoCapitalize="off"
