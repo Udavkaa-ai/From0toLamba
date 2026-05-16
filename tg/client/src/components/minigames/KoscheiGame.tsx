@@ -136,7 +136,10 @@ export function KoscheiGame({ seed, onComplete, restoredErrorCount }: KoscheiGam
     onCompleteRef.current(errorCount)
   }
 
-  // Финальная пирамидка из 6 символов
+  // Финальная анимация-пирамидка: «дуб → сундук → заяц → утка → яйцо → игла».
+  // Вложенность из сказки показывается во времени: каждый следующий предмет
+  // «достаётся» из предыдущего снизу вверх, с pop-эффектом и лёгкой качкой.
+  // Цикл повторяется, чтобы игрок успел рассмотреть всю последовательность.
   const [showPyramid, setShowPyramid] = useState(isFrozen)
   const [pixiReady, setPixiReady] = useState(false)
   useEffect(() => {
@@ -146,35 +149,107 @@ export function KoscheiGame({ seed, onComplete, restoredErrorCount }: KoscheiGam
     app.stage.removeChildren()
     const W = app.screen.width
     const H = app.screen.height
-    // Пирамидка 1+2+3: верх — дуб, потом сундук+заяц, потом утка+яйцо+игла.
-    // Так читается «по сказке»: дуб содержит сундук, в нём заяц с уткой,
-    // в утке — яйцо, а в яйце — игла со смертью Кощея.
-    const layout: Array<{ row: number; col: number; symbolIdx: number; cols: number }> = [
-      { row: 0, col: 0, symbolIdx: 0, cols: 1 },                                     // Дуб
-      { row: 1, col: 0, symbolIdx: 1, cols: 2 }, { row: 1, col: 1, symbolIdx: 2, cols: 2 }, // Сундук, Заяц
-      { row: 2, col: 0, symbolIdx: 3, cols: 3 }, { row: 2, col: 1, symbolIdx: 4, cols: 3 }, { row: 2, col: 2, symbolIdx: 5, cols: 3 }, // Утка, Яйцо, Игла
-    ]
-    const cellSize = Math.min(W / 4, H / 4.5)
-    const rowGap = cellSize * 0.15
-    const colGap = cellSize * 0.1
-    const startY = H * 0.18
-    for (const item of layout) {
-      const rowWidth = item.cols * cellSize + (item.cols - 1) * colGap
-      const startX = (W - rowWidth) / 2
-      const x = startX + item.col * (cellSize + colGap) + cellSize / 2
-      const y = startY + item.row * (cellSize + rowGap) + cellSize / 2
 
-      // Карточка-фон
-      const card = new Graphics()
-      card.roundRect(-cellSize / 2, -cellSize / 2, cellSize, cellSize, 12)
-        .fill(0x1B1438)
-        .stroke({ width: 2, color: 0xFFB800 })
+    // Шаги: индекс символа, размер emoji, момент появления (сек).
+    const STEPS: Array<{ symbolIdx: number; size: number; spawnAt: number }> = [
+      { symbolIdx: 0, size: 110, spawnAt: 0.0 },   // Дуб — основание
+      { symbolIdx: 1, size: 92,  spawnAt: 0.7 },   // Сундук на дубе
+      { symbolIdx: 2, size: 78,  spawnAt: 1.5 },   // Заяц из сундука
+      { symbolIdx: 3, size: 66,  spawnAt: 2.3 },   // Утка из зайца
+      { symbolIdx: 4, size: 54,  spawnAt: 3.1 },   // Яйцо из утки
+      { symbolIdx: 5, size: 46,  spawnAt: 3.9 },   // Игла из яйца
+    ]
+    const HOLD_AFTER_NEEDLE = 3.0
+    const TOTAL_CYCLE = STEPS[STEPS.length - 1].spawnAt + HOLD_AFTER_NEEDLE
+
+    const cx = W / 2
+    const baseY = H * 0.82
+    const stepGap = Math.min(H / 7.5, 70)
+
+    // Создаём по контейнеру на каждый шаг — стартово невидимы и схлопнуты в точку
+    const nodes: Container[] = STEPS.map((s, i) => {
       const c = new Container()
-      c.x = x; c.y = y
-      c.addChild(card)
-      // Сам символ — эмодзи через Text
-      c.addChild(makeSymbolEmoji(item.symbolIdx, cellSize * 0.36))
+      c.x = cx
+      c.y = baseY - i * stepGap
+      c.alpha = 0
+      c.scale.set(0)
+      c.addChild(makeSymbolEmoji(s.symbolIdx, s.size))
       app.stage.addChild(c)
+      return c
+    })
+
+    // Искорки вокруг иглы — символ магии Кощеевой смерти
+    const sparkles: Graphics[] = []
+    for (let i = 0; i < 14; i++) {
+      const g = new Graphics()
+      g.circle(0, 0, 2.5).fill({ color: 0xFFD24A, alpha: 0.95 })
+      g.alpha = 0
+      sparkles.push(g)
+      app.stage.addChild(g)
+    }
+
+    // easeOutBack — небольшая «отскок-перепрыжка» при появлении
+    const easeOutBack = (t: number) => {
+      const c1 = 1.70158
+      const c3 = c1 + 1
+      return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2)
+    }
+
+    let raf = 0
+    const start = performance.now()
+    const tick = () => {
+      const now = performance.now()
+      const cycle = ((now - start) / 1000) % TOTAL_CYCLE
+
+      STEPS.forEach((s, i) => {
+        const node = nodes[i]
+        const local = cycle - s.spawnAt
+        const homeY = baseY - i * stepGap
+        if (local < 0) {
+          node.alpha = 0
+          node.scale.set(0)
+          node.y = homeY
+          return
+        }
+        const appearDur = 0.55
+        if (local < appearDur) {
+          const t = local / appearDur
+          const e = easeOutBack(t)
+          node.alpha = Math.min(1, t * 1.6)
+          node.scale.set(Math.max(0, e))
+          // «Выпрыгивает» вверх: стартует чуть ниже своего места
+          node.y = homeY + (1 - t) * 18
+        } else {
+          node.alpha = 1
+          const breath = 1 + Math.sin((cycle + i * 0.5) * 1.8) * 0.045
+          node.scale.set(breath)
+          node.y = homeY + Math.sin((cycle + i * 0.4) * 1.6) * 2
+        }
+      })
+
+      // Искорки появляются вместе с иглой и кружат вокруг неё
+      const needleAt = STEPS[STEPS.length - 1].spawnAt
+      const needleLocal = cycle - needleAt
+      const needleY = baseY - (STEPS.length - 1) * stepGap
+      if (needleLocal >= 0) {
+        const fadeIn = Math.min(1, needleLocal * 2)
+        sparkles.forEach((g, i) => {
+          const ang = (i / sparkles.length) * Math.PI * 2 + cycle * 0.7
+          const radius = 30 + Math.sin(cycle * 2 + i) * 5
+          g.x = cx + Math.cos(ang) * radius
+          g.y = needleY + Math.sin(ang) * radius * 0.6
+          g.alpha = fadeIn * (0.55 + 0.45 * Math.sin(cycle * 4 + i))
+        })
+      } else {
+        sparkles.forEach(g => { g.alpha = 0 })
+      }
+
+      raf = requestAnimationFrame(tick)
+    }
+    tick()
+
+    return () => {
+      cancelAnimationFrame(raf)
     }
   }, [showPyramid, pixiReady])
 
