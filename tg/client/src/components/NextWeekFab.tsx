@@ -86,8 +86,13 @@ export function NextWeekFab() {
     bottom: 'calc(72px + env(safe-area-inset-bottom))',
     zIndex: 150,
     height: 48,
-    background: isLocked ? 'rgba(13,23,53,0.92)' : gradients.cta,
-    border: `2px solid ${isLocked ? `${colors.fairyGold}40` : '#5A3818'}`,
+    // В locked-режиме был ночной синий — на тёплом fairy-фоне торчал
+    // чужим элементом. Теперь тёмное дерево с золотой обводкой, что и
+    // в classic тоже норм (тёмный коричневый поверх тёмного фиолета).
+    background: isLocked
+      ? 'linear-gradient(180deg, #4A2E14 0%, #2D1A0A 100%)'
+      : gradients.cta,
+    border: `2px solid ${isLocked ? colors.fairyGold : '#5A3818'}`,
     color: isLocked ? colors.fairyGold : colors.ctaText,
     fontWeight: 700,
     cursor: 'pointer',
