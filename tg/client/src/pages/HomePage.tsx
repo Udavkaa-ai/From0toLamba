@@ -1188,7 +1188,16 @@ export function HomePage() {
               fontWeight: 700,
               color: colors.fairyGold,
               letterSpacing: '0.06em',
-              textShadow: `0 0 24px ${colors.fairyGold}40`,
+              // Толстая многослойная тёмная обводка чтобы золото читалось на
+              // ярких осенних bg-картинках (золотое-на-золотом тонуло).
+              textShadow: [
+                `0 0 24px ${colors.fairyGold}40`,
+                '0 3px 8px rgba(0,0,0,0.85)',
+                '1.5px 0 0 rgba(0,0,0,0.7)',
+                '-1.5px 0 0 rgba(0,0,0,0.7)',
+                '0 1.5px 0 rgba(0,0,0,0.7)',
+                '0 -1.5px 0 rgba(0,0,0,0.7)',
+              ].join(', '),
             }}>
               {t.home.gameTitle}
             </div>

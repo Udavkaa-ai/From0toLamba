@@ -3,7 +3,7 @@ import { SparklesOverlay } from './SparklesOverlay'
 import { gradients, colors } from '@/theme'
 import { getTheme } from '@/theme/colors'
 
-export const APP_VERSION = 'бета 4.2.2'
+export const APP_VERSION = 'бета 4.2.3'
 
 /**
  * Один раз за модульную сессию: предзагрузить ВСЕ фоновые картинки активной
@@ -75,8 +75,9 @@ export function ScreenBackground({ children, showSparkles = true, showMist = tru
       {/* Фоновое изображение страницы. Путь подбирается homeBackground()/
          PAGE_BG автоматически с суффиксом _LIGHT для Сказочной темы.
          Прозрачность тоже theme-aware: в classic картинки — атмосферный
-         намёк (0.18) поверх тёмного градиента; в fairy картинки — главное
-         блюдо (0.7), градиент над ними почти прозрачный. */}
+         намёк (0.18) поверх тёмного градиента; в fairy картинки видны,
+         но не доминируют (0.5) — иначе золотые сцены с жёлтыми листьями
+         перебивают парчмент-карточки и золотой текст. */}
       {bgImage && (
         <div
           style={{
@@ -86,7 +87,7 @@ export function ScreenBackground({ children, showSparkles = true, showMist = tru
             backgroundSize: 'cover',
             backgroundPosition: 'center top',
             backgroundRepeat: 'no-repeat',
-            opacity: getTheme() === 'fairy' ? 0.7 : 0.18,
+            opacity: getTheme() === 'fairy' ? 0.5 : 0.18,
             zIndex: 0,
           }}
           aria-hidden

@@ -87,13 +87,15 @@ export function NextWeekFab() {
     zIndex: 150,
     height: 48,
     background: isLocked ? 'rgba(13,23,53,0.92)' : gradients.cta,
-    border: `1.5px solid ${isLocked ? `${colors.fairyGold}40` : colors.ctaBorder}`,
+    border: `2px solid ${isLocked ? `${colors.fairyGold}40` : '#5A3818'}`,
     color: isLocked ? colors.fairyGold : colors.ctaText,
     fontWeight: 700,
     cursor: 'pointer',
+    // Внешнее тёмное «кольцо» делает золотую кнопку видимой на ярком
+    // осеннем фоне (иначе золото-на-золотом тонет).
     boxShadow: isLocked
       ? '0 4px 14px rgba(0,0,0,0.45)'
-      : `0 4px 18px ${colors.fairyGold}40, 0 0 0 1px rgba(0,0,0,0.15)`,
+      : `0 4px 18px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,0,0,0.3), 0 0 14px ${colors.fairyGold}55`,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',

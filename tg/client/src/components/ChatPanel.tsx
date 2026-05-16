@@ -172,8 +172,8 @@ export function ChatPanel() {
               bottom: `calc(72px + env(safe-area-inset-bottom))`,
               zIndex: 150, width: '44px', height: '44px', borderRadius: '50%',
               background: gradients.cta,
-              border: `1.5px solid ${colors.ctaBorder}`,
-              boxShadow: `0 4px 16px rgba(0,0,0,0.5), 0 0 12px ${colors.fairyGold}20`,
+              border: `2px solid #5A3818`,
+              boxShadow: `0 4px 16px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,0,0,0.3), 0 0 12px ${colors.fairyGold}55`,
               cursor: 'pointer', display: 'flex', alignItems: 'center',
               justifyContent: 'center', fontSize: '20px',
             }}

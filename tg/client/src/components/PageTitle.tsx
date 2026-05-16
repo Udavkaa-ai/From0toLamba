@@ -13,9 +13,16 @@ export function PageTitle({ children }: { children: ReactNode }) {
       fontSize: '22px',
       fontWeight: 700,
       letterSpacing: '0.06em',
-      // Двойная тень: тёплое золотое сияние + тёмная тень-стенка для читаемости
-      // поверх ярких bg-картинок в Сказочной теме (Спасс на крови, ярмарка днём).
-      textShadow: `0 0 18px ${colors.fairyGold}40, 0 2px 6px rgba(0,0,0,0.6), 0 0 4px rgba(0,0,0,0.5)`,
+      // Многослойная тень: тёплое золотое сияние снаружи + тёмная stroke-обводка
+      // в 4-х направлениях для читаемости на жёлтых/осенних bg-картинках.
+      textShadow: [
+        `0 0 18px ${colors.fairyGold}40`,
+        '0 2px 6px rgba(0,0,0,0.7)',
+        '1px 0 0 rgba(0,0,0,0.5)',
+        '-1px 0 0 rgba(0,0,0,0.5)',
+        '0 1px 0 rgba(0,0,0,0.5)',
+        '0 -1px 0 rgba(0,0,0,0.5)',
+      ].join(', '),
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
