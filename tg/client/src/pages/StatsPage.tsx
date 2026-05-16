@@ -257,8 +257,8 @@ function AchievementsSection() {
                     alignItems: 'center',
                     gap: spacing.md,
                     padding: `${spacing.sm} ${spacing.md}`,
-                    background: a.unlocked ? `${colors.fairyGold}15` : 'rgba(10,8,24,0.5)',
-                    border: `1px solid ${a.unlocked ? colors.fairyGold + '55' : colors.cardBorder}`,
+                    background: a.unlocked ? `${colors.fairyGold}35` : 'rgba(10,8,24,0.5)',
+                    border: `1px solid ${a.unlocked ? colors.fairyGold + '88' : colors.cardBorder}`,
                     borderRadius: '10px',
                     opacity: a.unlocked ? 1 : 0.7,
                     cursor: 'pointer',
@@ -283,7 +283,7 @@ function AchievementsSection() {
                     }}>
                       {(t.achievements.items[a.id]?.name ?? a.name)}
                     </div>
-                    <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '1px' }}>
+                    <div style={{ color: colors.textSecondary, fontSize: '11px', marginTop: '1px', fontWeight: 500 }}>
                       {(t.achievements.items[a.id]?.description ?? a.description)}
                     </div>
                     {!a.unlocked && a.progress && a.progress.target > 1 && (
