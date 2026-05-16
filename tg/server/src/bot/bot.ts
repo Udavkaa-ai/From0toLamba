@@ -355,7 +355,100 @@ function setupHandlers(bot: Bot) {
         '/sponsor add <JSON> — создать (см. /sponsor template)\n' +
         '/sponsor remove <id> — удалить\n' +
         '/sponsor toggle <id> — вкл/выкл\n' +
-        '/sponsor template — пример JSON',
+        '/sponsor template — пример JSON\n' +
+        '/sponsor seedall — засеять все 7 партнёрских кампаний разом',
+      )
+      return
+    }
+
+    // /sponsor seedall — одной командой завести 7 партнёрских кампаний,
+    // соответствующих channelTasksConfig.ts. Идемпотентно: пропускает
+    // уже существующие (по promocode), добавляет недостающие. Промокоды
+    // — заглушки, владелец канала может их перебить через /sponsor list +
+    // /sponsor remove + /sponsor add со своим кодом.
+    if (sub === 'seedall') {
+      const seeds = [
+        {
+          channelName: '@vknyazi_izgryazi', channelUrl: 'https://t.me/vknyazi_izgryazi',
+          promocode: 'VKNYAZI', scenarioTitle: 'Княжеская грамота палаты',
+          scenarioBody: 'Государев казначей Дормидонт собирает гроши на снаряжение торгового обоза. Дело княжеской руки — золото вернётся утроенным к Покрову, печать государя порукой.',
+          developerName: 'Казначей Дормидонт', archetype: 'BOYARIN', type: 'HONEST_TRADE',
+          bannerImageUrl: '/banners/SPONSOR_VKNYAZI_IZGRYAZI.webp',
+        },
+        {
+          channelName: '@ssignet_ring', channelUrl: 'https://t.me/ssignet_ring',
+          promocode: 'PERSTEN', scenarioTitle: 'Драгоценная печатка боярского рода',
+          scenarioBody: 'Мастер Игнат скупает редкие перстни-печатки старинных боярских родов. Кто положит гроши — получит долю с перепродажи столичным коллекционерам, втрое к малой Пасхе.',
+          developerName: 'Ювелир Игнат', archetype: 'BOYARIN', type: 'TREASURE_HUNT',
+          bannerImageUrl: '/banners/SPONSOR_SSIGNET_RING.webp',
+        },
+        {
+          channelName: '@clicermania', channelUrl: 'https://t.me/clicermania',
+          promocode: 'KLIK', scenarioTitle: 'Заморская карта удачи',
+          scenarioBody: 'Девица Кликерманка завезла из дальних земель невиданную игру — за две недели общая казна играет втрое. Кто гроши положит — войдёт в гильдию и получит свою долю.',
+          developerName: 'Девица Кликерманка', archetype: 'ZOLUSHKA', type: 'CARD_GAME',
+          bannerImageUrl: '/banners/SPONSOR_CLICERMANIA.webp',
+        },
+        {
+          channelName: '@cryptomaxbablo', channelUrl: 'https://t.me/cryptomaxbablo',
+          promocode: 'LEV', scenarioTitle: 'Львиная доля из боярской палаты',
+          scenarioBody: 'Боярин Лев Златогривый собирает гроши под княжескую гильдию. Через две недели — три к одному, поручительство палаты Государевой. Печать боярская — клятва купеческая.',
+          developerName: 'Боярин Лев Златогривый', archetype: 'BOYARIN', type: 'GUILD_SCHEME',
+          bannerImageUrl: '/banners/SPONSOR_CRYPTOMAXBABLO.webp',
+        },
+        {
+          channelName: '@Game_Gain', channelUrl: 'https://t.me/Game_Gain',
+          promocode: 'MECH', scenarioTitle: 'Меч-кладенец из закромов',
+          scenarioBody: 'Кузнец Богдан Молотов отыскал в старых закромах меч-кладенец с письменами. Гильдия столичных собирателей сулит за две недели тройной выкуп. Печать кузнечного цеха порукой.',
+          developerName: 'Кузнец Богдан Молотов', archetype: 'KOSCHEI', type: 'TREASURE_HUNT',
+          bannerImageUrl: '/banners/SPONSOR_GAME_GAIN.webp',
+        },
+        {
+          channelName: '@o_my_gift', channelUrl: 'https://t.me/o_my_gift',
+          promocode: 'PODAROK', scenarioTitle: 'Щедрая ярмарка подарков',
+          scenarioBody: 'Купец-щедрилов Тимофей открыл лавку подарков и шкатулок. Через две недели — троекратный выкуп всей лавки заморскими гостями. Кто гроши положит — войдёт в долю.',
+          developerName: 'Купец Тимофей Щедрилов', archetype: 'KOLOBOK', type: 'HONEST_TRADE',
+          bannerImageUrl: '/banners/SPONSOR_O_MY_GIFT.webp',
+        },
+        {
+          channelName: '@krypto_mechta', channelUrl: 'https://t.me/krypto_mechta',
+          promocode: 'MONETA', scenarioTitle: 'Котёл волшебных монет',
+          scenarioBody: 'Бабка-чародейка Ясна варит зелье на золотых монетах. Через две недели — троекратный приплод. Печать ведунская порукой, обмана в варе нет.',
+          developerName: 'Бабка-чародейка Ясна', archetype: 'BABA_YAGA', type: 'POTION_BREW',
+          bannerImageUrl: '/banners/SPONSOR_KRYPTO_MECHTA.webp',
+        },
+      ]
+
+      let created = 0
+      let skipped = 0
+      const lines: string[] = []
+      for (const s of seeds) {
+        const exists = await prisma.sponsorCampaign.findFirst({
+          where: { promocode: s.promocode },
+        })
+        if (exists) { skipped++; lines.push(`⚪ ${s.channelName} (уже есть)`); continue }
+        const c = await prisma.sponsorCampaign.create({
+          data: {
+            channelName: s.channelName,
+            channelUrl: s.channelUrl,
+            promocode: s.promocode,
+            scenarioTitle: s.scenarioTitle,
+            scenarioBody: s.scenarioBody,
+            developerName: s.developerName,
+            archetype: s.archetype,
+            type: s.type,
+            durationDays: 14,
+            bannerImageUrl: s.bannerImageUrl,
+            weight: 10,
+            active: true,
+          },
+        })
+        created++
+        lines.push(`🟢 ${s.channelName} → код <b>${c.promocode}</b>`)
+      }
+      await ctx.reply(
+        `Засеяно: ${created}, пропущено: ${skipped} (из ${seeds.length})\n\n` + lines.join('\n'),
+        { parse_mode: 'HTML' },
       )
       return
     }
