@@ -5,6 +5,7 @@ import { rngFromSeed, pickInt } from './seedRng'
 import { colors, spacing } from '@/theme'
 import { playSound } from '@/sounds'
 import type { MiniGameDifficulty } from './BuratinoGame'
+import { GameHeader, ScoreChip } from './GameChrome'
 
 const tg = (window as any).Telegram?.WebApp
 const haptic = tg?.HapticFeedback
@@ -381,29 +382,40 @@ export function IvanDurakGame({ seed, onComplete, restoredErrorCount }: IvanDura
       maxWidth: '500px', margin: '0 auto', width: '100%', boxSizing: 'border-box',
       padding: spacing.md,
     }}>
-      <div style={{
-        textAlign: 'center',
-        color: colors.fairyGold,
-        fontWeight: 700, fontSize: '17px',
-      }}>
-        {phase === 'ready' && !isFrozen
+      <GameHeader
+        title={phase === 'ready' && !isFrozen
           ? `Приготовься · ${readyCountdown}`
           : `Переводной дурак · ход ${Math.min(round + 1, ROUNDS)} из ${ROUNDS}`}
-      </div>
-      <div style={{
-        color: colors.textMuted, fontSize: '12px', textAlign: 'center',
-        marginBottom: spacing.sm, lineHeight: 1.4,
-      }}>
-        {phase === 'ready' && !isFrozen
+        hint={phase === 'ready' && !isFrozen
           ? 'Иван сейчас откроет карту — у тебя в руке будет такая же. У тебя 2 секунды на тап.'
-          : (<>Иван открывает карту — у тебя в руке такая же. Тапай за секунду.<br />0 ошибок — совет чуйки; 1 — пройдёшь без подсказок; ≥2 — только за звёзды.</>)}
-      </div>
+          : 'Иван открывает карту — у тебя в руке такая же. Тапай за секунду.'}
+        scoreChip={phase === 'play' && !isFrozen
+          ? (
+            <ScoreChip tone="gold">
+              {round}/{ROUNDS}
+            </ScoreChip>
+          )
+          : undefined}
+        rightSlot={phase === 'play' && !isFrozen
+          ? (
+            <span style={{
+              color: errorsRef.current >= 2 ? colors.danger : 'rgba(232,213,168,0.55)',
+              fontSize: 12, fontVariantNumeric: 'tabular-nums',
+            }}>
+              Ошибки: {errorsRef.current}
+            </span>
+          )
+          : undefined}
+      />
 
-      {/* Полоса-таймер раунда — скрыта во время обратного отсчёта */}
+      {/* Полоса-таймер раунда — скрыта во время обратного отсчёта.
+          Отдельная от шапки, потому что сбрасывается на каждом ходе. */}
       {phase === 'play' && !isFrozen && (
         <div style={{
-          width: '100%', height: 5,
-          background: 'rgba(255,184,0,0.15)',
+          width: '100%', height: 6,
+          background: 'rgba(0,0,0,0.45)',
+          border: '1px solid rgba(0,0,0,0.35)',
+          boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.45)',
           borderRadius: 3, overflow: 'hidden',
           marginBottom: spacing.sm,
         }}>
@@ -412,22 +424,13 @@ export function IvanDurakGame({ seed, onComplete, restoredErrorCount }: IvanDura
             initial={{ width: '100%' }}
             animate={{ width: feedback ? '100%' : '0%' }}
             transition={{ duration: feedback ? 0 : ROUND_SECONDS, ease: 'linear' }}
-            style={{ height: '100%', background: colors.fairyGold, borderRadius: 3 }}
+            style={{
+              height: '100%',
+              background: `linear-gradient(90deg, ${colors.fairyGoldDim}, ${colors.fairyGold}, ${colors.fairyGoldBright})`,
+              borderRadius: 3,
+              boxShadow: `0 0 8px ${colors.fairyGold}55`,
+            }}
           />
-        </div>
-      )}
-
-      {phase === 'play' && !isFrozen && (
-        <div style={{
-          display: 'flex', gap: spacing.md, justifyContent: 'center',
-          marginBottom: spacing.sm, fontSize: '13px',
-        }}>
-          <span style={{ color: colors.fairyGold, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
-            {round}/{ROUNDS}
-          </span>
-          <span style={{ color: errorsRef.current >= 2 ? colors.danger : colors.textSecondary, fontVariantNumeric: 'tabular-nums' }}>
-            Ошибки: {errorsRef.current}
-          </span>
         </div>
       )}
       <div

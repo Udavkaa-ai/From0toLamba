@@ -5,6 +5,7 @@ import { rngFromSeed } from './seedRng'
 import { colors, spacing } from '@/theme'
 import { playSound } from '@/sounds'
 import type { MiniGameDifficulty } from './BuratinoGame'
+import { GameHeader, ScoreChip } from './GameChrome'
 
 const tg = (window as any).Telegram?.WebApp
 const haptic = tg?.HapticFeedback
@@ -416,31 +417,22 @@ export function KoscheiGame({ seed, onComplete, restoredErrorCount }: KoscheiGam
       maxWidth: '500px', margin: '0 auto', width: '100%', boxSizing: 'border-box',
       padding: spacing.md,
     }}>
-      <div style={{
-        textAlign: 'center',
-        color: playCountdown <= 5 ? colors.danger : colors.fairyGold,
-        fontWeight: 700, fontSize: '17px',
-      }}>
-        Память Кощея · {playCountdown} сек
-      </div>
-      <div style={{
-        color: colors.textMuted, fontSize: '12px', textAlign: 'center',
-        marginBottom: spacing.sm, lineHeight: 1.4,
-      }}>
-        Найди {SYMBOL_COUNT} пар: дуб, сундук, заяц, утка, яйцо, игла. <br />
-        Соберёшь все пары вовремя — раскроется совет чуйки
-      </div>
-      <div style={{
-        display: 'flex', gap: spacing.md, justifyContent: 'center',
-        marginBottom: spacing.sm, fontSize: '13px',
-      }}>
-        <span style={{ color: matchedCount === SYMBOL_COUNT ? colors.success : colors.fairyGold, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
-          Пары: {matchedCount}/{SYMBOL_COUNT}
-        </span>
-        <span style={{ color: colors.textSecondary, fontVariantNumeric: 'tabular-nums' }}>
-          Открытий: {attemptsUsed}
-        </span>
-      </div>
+      <GameHeader
+        title={<>Память Кощея · {playCountdown} сек</>}
+        urgent={playCountdown <= 5}
+        hint={<>Найди {SYMBOL_COUNT} пар: дуб, сундук, заяц, утка, яйцо, игла. Соберёшь все вовремя — раскроется совет чуйки</>}
+        scoreChip={
+          <ScoreChip tone={matchedCount === SYMBOL_COUNT ? 'success' : 'gold'}>
+            Пар: {matchedCount}/{SYMBOL_COUNT}
+          </ScoreChip>
+        }
+        rightSlot={
+          <span style={{ color: 'rgba(232,213,168,0.55)', fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>
+            Открытий: {attemptsUsed}
+          </span>
+        }
+        timerProgress={playCountdown / PLAY_SECONDS}
+      />
       <div
         ref={refMount}
         style={{

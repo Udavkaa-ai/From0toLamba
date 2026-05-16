@@ -5,6 +5,7 @@ import { rngFromSeed } from './seedRng'
 import { colors, spacing } from '@/theme'
 import { playSound } from '@/sounds'
 import type { MiniGameDifficulty } from './BuratinoGame'
+import { GameHeader } from './GameChrome'
 
 const tg = (window as any).Telegram?.WebApp
 const haptic = tg?.HapticFeedback
@@ -772,27 +773,24 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
       maxWidth: '500px', margin: '0 auto', width: '100%', boxSizing: 'border-box',
       padding: spacing.md,
     }}>
-      <div style={{
-        textAlign: 'center',
-        color: phase === 'reference' ? colors.fairyGold : (playCountdown <= 5 && !isFrozen ? colors.danger : colors.fairyGold),
-        fontWeight: 700, fontSize: '17px',
-      }}>
-        {isFrozen
+      <GameHeader
+        title={isFrozen
           ? 'Котёл Бабы Яги · разобрано'
           : phase === 'reference'
             ? `Запомни порядок · ${refCountdown}`
             : `Котёл Бабы Яги · ${playCountdown} сек`}
-      </div>
-      <div style={{
-        color: colors.textMuted, fontSize: '12px', textAlign: 'center',
-        marginBottom: spacing.sm, lineHeight: 1.4,
-      }}>
-        {phase === 'reference'
+        urgent={!isFrozen && phase !== 'reference' && playCountdown <= 5}
+        hint={phase === 'reference'
           ? 'Слева направо, сверху вниз — порядок броска ингредиентов'
           : isFrozen
             ? 'Уже сыграно'
             : `Шаг ${Math.min(collected + 1, RECIPE_LENGTH)} из ${RECIPE_LENGTH}. Бросай ингредиенты в котёл по порядку`}
-      </div>
+        timerProgress={isFrozen
+          ? null
+          : phase === 'reference'
+            ? refCountdown / REFERENCE_SECONDS
+            : playCountdown / PLAY_SECONDS}
+      />
 
       {/* Прогресс-точки 7 шт (только в play, не во frozen) */}
       {phase === 'play' && !isFrozen && (

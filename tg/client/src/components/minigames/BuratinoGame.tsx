@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Application, Container, Graphics } from 'pixi.js'
 import { rngFromSeed, pickInt, pickOne } from './seedRng'
 import { colors, spacing } from '@/theme'
+import { GameHeader } from './GameChrome'
 import { playSound } from '@/sounds'
 
 const tg = (window as any).Telegram?.WebApp
@@ -409,24 +410,18 @@ export function BuratinoGame({ seed, difficulty, onComplete, restoredErrorCount 
       maxWidth: '500px', margin: '0 auto', width: '100%', boxSizing: 'border-box',
       padding: spacing.md,
     }}>
-      <div style={{
-        textAlign: 'center',
-        color: phase === 'reference' ? colors.fairyGold : (playCountdown <= 5 ? colors.danger : colors.fairyGold),
-        fontWeight: 700, fontSize: '17px',
-        marginBottom: spacing.sm,
-      }}>
-        {phase === 'reference'
+      <GameHeader
+        title={phase === 'reference'
           ? `Запомни ключ · ${refCountdown}`
           : `Найди такой же · ${playCountdown} сек`}
-      </div>
-      <div style={{
-        color: colors.textMuted, fontSize: '12px', textAlign: 'center',
-        marginBottom: spacing.sm,
-      }}>
-        {phase === 'reference'
+        urgent={phase !== 'reference' && playCountdown <= 5}
+        hint={phase === 'reference'
           ? 'Через мгновение Буратино перемешает ключи'
           : 'Тапни ключ, что в точности повторяет образец'}
-      </div>
+        timerProgress={phase === 'reference'
+          ? refCountdown / REFERENCE_SECONDS
+          : playCountdown / PLAY_SECONDS}
+      />
       <div
         ref={refMount}
         style={{

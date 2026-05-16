@@ -55,6 +55,34 @@ export const colors = {
   // ── Оверлеи ─────────────────────────────────────────────────────────────
   overlayDark: 'rgba(6, 4, 18, 0.85)',
   overlayLight: 'rgba(255, 184, 0, 0.08)',
+
+  // ── Сказочно-русская палитра (Mini Games, Charter, Inbox) ───────────────
+  // Пергамент — для свитков-карточек
+  parchmentLight: '#F2DFB4',
+  parchmentMid:   '#E8D5A8',
+  parchmentDark:  '#D9C28A',
+  parchmentEdge:  '#C8B07A',
+  parchmentInk:   '#2D1A0A',    // тёмная сепия — текст по пергаменту
+
+  // Резное дерево — для рамок, кнопок, нав-бара
+  woodRim:   '#A06830',   // светлый кант рамки
+  woodHi:    '#8B5A2B',   // bronze highlight
+  woodMid:   '#4A2E14',
+  woodDeep:  '#2D1A0A',
+  woodDark:  '#1E1008',
+  woodBg:    '#100804',   // глубокий чёрно-коричневый фон
+
+  // Восковая печать — для важных индикаторов, danger-кнопок
+  sealRed:       '#8B2D2D',
+  sealRedBright: '#B0353D',
+  sealCrimson:   '#D94040',  // блик на печати
+
+  // Самоцветы — углы свитков, маркеры архетипов
+  gemEmerald:  '#2E8B57',
+  gemRuby:     '#9B2030',
+  gemSapphire: '#1F4E8C',
+  gemAmethyst: '#5C2E8A',
+  gemGold:     '#D4A017',
 } as const
 
 export const gradients = {
@@ -66,6 +94,14 @@ export const gradients = {
   emerald: `linear-gradient(135deg, ${colors.successDim}, ${colors.success})`,
   ruby: `linear-gradient(135deg, ${colors.dangerDim}, ${colors.rankRuby})`,
   parchment: `linear-gradient(180deg, ${colors.parchment}, ${colors.parchmentDim})`,
+  // Резное дерево — фон для шапки мини-игр, нав-баров
+  wood: `repeating-linear-gradient(89deg, transparent 0, transparent 3px, rgba(0,0,0,.05) 3px, rgba(0,0,0,.05) 4px), linear-gradient(180deg, ${colors.woodMid} 0%, ${colors.woodDeep} 100%)`,
+  // Свиток-пергамент с тёплым бликом
+  scroll: `radial-gradient(ellipse at 22% 18%, rgba(255,255,255,.22) 0%, transparent 55%), linear-gradient(155deg, ${colors.parchmentLight} 0%, ${colors.parchmentMid} 55%, ${colors.parchmentDark} 100%)`,
+  // Золото — для кнопок «Принять испытание»
+  goldBtn: `linear-gradient(180deg, #FFD660 0%, #FFB800 55%, #C08000 100%)`,
+  // Дерево — для вторичных кнопок
+  woodBtn: `linear-gradient(180deg, ${colors.woodHi} 0%, ${colors.woodMid} 55%, ${colors.woodDeep} 100%)`,
 } as const
 
 export const shadows = {

@@ -1097,33 +1097,45 @@ function MiniGameIntroScreen({
         <ParamChip label={t.charter.guild} value={`${project.claimedTeamSize} чел.`} />
       </div>
 
+      {/* Описание дела — на пергаментном свитке */}
       <div style={{
+        position: 'relative',
         marginTop: spacing.lg,
-        padding: spacing.md,
-        background: 'rgba(42, 25, 96, 0.35)',
-        border: `1px solid ${colors.cardBorder}`,
+        padding: `${spacing.md} ${spacing.lg}`,
+        background: 'radial-gradient(ellipse at 22% 18%, rgba(255,255,255,0.22) 0%, transparent 55%), linear-gradient(155deg, #F2DFB4 0%, #E8D5A8 55%, #D9C28A 100%)',
+        border: `1.5px solid ${colors.parchmentEdge}`,
         borderRadius: '12px',
-        color: colors.textSecondary,
+        color: colors.parchmentInk,
         fontSize: '13px',
-        lineHeight: 1.5,
+        lineHeight: 1.55,
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.55), 0 3px 14px rgba(0,0,0,0.3)',
       }}>
+        <span aria-hidden style={{ position: 'absolute', top: 6, left: 6, width: 10, height: 10, borderRadius: 3, transform: 'rotate(45deg)', background: `radial-gradient(circle at 35% 30%, #E06060, #7A1515)`, boxShadow: `0 0 6px ${colors.gemRuby}88` }} />
+        <span aria-hidden style={{ position: 'absolute', top: 6, right: 6, width: 10, height: 10, borderRadius: 3, transform: 'rotate(45deg)', background: `radial-gradient(circle at 35% 30%, #E06060, #7A1515)`, boxShadow: `0 0 6px ${colors.gemRuby}88` }} />
         {project.description}
       </div>
 
+      {/* Карточка испытания — резная деревянная плашка с золотой обводкой */}
       <div style={{
         marginTop: spacing.lg,
         padding: spacing.md,
-        background: `${colors.fairyGold}12`,
-        border: `1px solid ${colors.fairyGold}50`,
+        background: 'repeating-linear-gradient(89deg, transparent 0, transparent 3px, rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px), linear-gradient(180deg, #4A2E14 0%, #2D1A0A 100%)',
+        border: `1.5px solid ${colors.woodRim}`,
         borderRadius: '12px',
+        boxShadow: 'inset 0 1px 0 rgba(255,200,100,0.18), inset 0 -1px 0 rgba(0,0,0,0.35), 0 3px 14px rgba(0,0,0,0.55)',
       }}>
-        <div style={{ color: colors.fairyGold, fontSize: '14px', fontWeight: 700, marginBottom: spacing.sm }}>
+        <div style={{
+          color: colors.fairyGoldBright, fontSize: '14px', fontWeight: 700,
+          marginBottom: spacing.sm, fontFamily: "'Cinzel', 'Marcellus', serif",
+          letterSpacing: '0.02em',
+          textShadow: `0 0 12px ${colors.fairyGold}55`,
+        }}>
           🎯 {gameName}
         </div>
-        <div style={{ color: colors.textSecondary, fontSize: '12px', lineHeight: 1.5 }}>
+        <div style={{ color: 'rgba(232,213,168,0.78)', fontSize: '12px', lineHeight: 1.5 }}>
           {gameHint}
         </div>
-        <div style={{ color: colors.textMuted, fontSize: 11, marginTop: spacing.sm, marginBottom: 4 }}>
+        <div style={{ color: 'rgba(232,213,168,0.5)', fontSize: 11, marginTop: spacing.sm, marginBottom: 4 }}>
           За что получишь награду:
         </div>
         <TierLadder />
@@ -1234,15 +1246,19 @@ function IntroScreen({
       </div>
 
       <div style={{
+        position: 'relative',
         marginTop: spacing.lg,
-        padding: spacing.md,
-        background: 'rgba(42, 25, 96, 0.35)',
-        border: `1px solid ${colors.cardBorder}`,
+        padding: `${spacing.md} ${spacing.lg}`,
+        background: 'radial-gradient(ellipse at 22% 18%, rgba(255,255,255,0.22) 0%, transparent 55%), linear-gradient(155deg, #F2DFB4 0%, #E8D5A8 55%, #D9C28A 100%)',
+        border: `1.5px solid ${colors.parchmentEdge}`,
         borderRadius: '12px',
-        color: colors.textSecondary,
+        color: colors.parchmentInk,
         fontSize: '13px',
-        lineHeight: 1.5,
+        lineHeight: 1.55,
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.55), 0 3px 14px rgba(0,0,0,0.3)',
       }}>
+        <span aria-hidden style={{ position: 'absolute', top: 6, left: 6, width: 10, height: 10, borderRadius: 3, transform: 'rotate(45deg)', background: `radial-gradient(circle at 35% 30%, #E06060, #7A1515)`, boxShadow: `0 0 6px ${colors.gemRuby}88` }} />
+        <span aria-hidden style={{ position: 'absolute', top: 6, right: 6, width: 10, height: 10, borderRadius: 3, transform: 'rotate(45deg)', background: `radial-gradient(circle at 35% 30%, #E06060, #7A1515)`, boxShadow: `0 0 6px ${colors.gemRuby}88` }} />
         {project.description}
       </div>
 
@@ -1308,13 +1324,18 @@ function CharterStat({ label, value, valueColor }: { label: string; value: strin
   return (
     <div style={{
       padding: `${spacing.sm} ${spacing.md}`,
-      background: 'rgba(42, 25, 96, 0.4)',
-      border: `1px solid ${colors.cardBorder}`,
+      background: 'repeating-linear-gradient(89deg, transparent 0, transparent 3px, rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px), linear-gradient(180deg, #4A2E14 0%, #2D1A0A 100%)',
+      border: `1.5px solid ${colors.woodRim}`,
       borderRadius: '10px',
       textAlign: 'center',
+      boxShadow: 'inset 0 1px 0 rgba(255,200,100,0.18), inset 0 -1px 0 rgba(0,0,0,0.35), 0 2px 10px rgba(0,0,0,0.4)',
     }}>
-      <div style={{ color: valueColor, fontWeight: 700, fontSize: '15px' }}>{value}</div>
-      <div style={{ color: colors.textMuted, fontSize: '10px', marginTop: '2px' }}>{label}</div>
+      <div style={{
+        color: valueColor, fontWeight: 700, fontSize: '15px',
+        fontFamily: "'Cinzel', 'Marcellus', serif",
+        fontVariantNumeric: 'tabular-nums',
+      }}>{value}</div>
+      <div style={{ color: 'rgba(232,213,168,0.5)', fontSize: '10px', marginTop: '2px', letterSpacing: '0.06em' }}>{label}</div>
     </div>
   )
 }
@@ -1563,9 +1584,9 @@ function MiniGameResultSheet({
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
         style={{
           width: '100%', maxWidth: '500px',
-          background: `linear-gradient(180deg, ${colors.nightBlue}f0 0%, ${colors.nightBlue} 35%)`,
+          background: `repeating-linear-gradient(89deg, transparent 0, transparent 3px, rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px), linear-gradient(180deg, ${colors.woodMid} 0%, ${colors.woodBg} 100%)`,
           borderRadius: '20px 20px 0 0',
-          border: `1px solid ${colors.fairyGold}40`,
+          border: `1.5px solid ${colors.woodRim}`,
           borderBottom: 'none',
           padding: collapsed
             ? `${spacing.sm} ${spacing.xl}`
@@ -1573,9 +1594,8 @@ function MiniGameResultSheet({
           paddingBottom: collapsed
             ? `calc(${spacing.sm} + env(safe-area-inset-bottom))`
             : `calc(${spacing.xl} + env(safe-area-inset-bottom))`,
-          boxShadow: '0 -8px 32px rgba(0,0,0,0.6)',
+          boxShadow: 'inset 0 1px 0 rgba(255,200,100,0.18), 0 -8px 32px rgba(0,0,0,0.6)',
           pointerEvents: 'auto',
-          backdropFilter: 'blur(8px)',
         }}
       >
         {/* Маркер-ручка: тап по верху листа переключает свёрнутое состояние —
@@ -1631,20 +1651,28 @@ function MiniGameResultSheet({
           </div>
         )}
 
-        {/* Совет по типу дела — при идеальной игре или после выкупа. */}
+        {/* Совет по типу дела — при идеальной игре или после выкупа.
+            Подсказка на пергаментном свитке с золотыми углами. */}
         {effectiveErrorCount === 0 && effectiveInsight && (
           <div style={{
+            position: 'relative',
             marginTop: spacing.md,
-            padding: spacing.md,
-            background: `${colors.fairyGold}15`,
-            border: `1px solid ${colors.fairyGold}60`,
+            padding: `${spacing.md} ${spacing.lg}`,
+            background: 'radial-gradient(ellipse at 22% 18%, rgba(255,255,255,0.22) 0%, transparent 55%), linear-gradient(155deg, #F2DFB4 0%, #E8D5A8 55%, #D9C28A 100%)',
+            border: `1.5px solid ${colors.parchmentEdge}`,
             borderRadius: '12px',
-            color: colors.textPrimary,
+            color: colors.parchmentInk,
             fontSize: '13px',
-            lineHeight: 1.5,
+            lineHeight: 1.55,
             textAlign: 'center',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.55), 0 3px 14px rgba(0,0,0,0.3)',
           }}>
-            <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '12px', marginBottom: '4px' }}>
+            <span aria-hidden style={{ position: 'absolute', top: 6, left: 6, width: 10, height: 10, borderRadius: 3, transform: 'rotate(45deg)', background: `radial-gradient(circle at 35% 30%, #FFD870, #8B6914)`, boxShadow: `0 0 6px ${colors.gemGold}88` }} />
+            <span aria-hidden style={{ position: 'absolute', top: 6, right: 6, width: 10, height: 10, borderRadius: 3, transform: 'rotate(45deg)', background: `radial-gradient(circle at 35% 30%, #FFD870, #8B6914)`, boxShadow: `0 0 6px ${colors.gemGold}88` }} />
+            <div style={{
+              color: '#7A4A0A', fontWeight: 700, fontSize: '12px', marginBottom: '4px',
+              fontFamily: "'Cinzel', 'Marcellus', serif", letterSpacing: '0.04em',
+            }}>
               🔮 Совет по делу{bypassed ? ' · раскрыто за звёзды' : ' · идеальная игра'}
             </div>
             {effectiveInsight}
@@ -1655,13 +1683,14 @@ function MiniGameResultSheet({
           <div style={{
             marginTop: spacing.md,
             padding: spacing.md,
-            background: 'rgba(42, 25, 96, 0.4)',
-            border: `1px solid ${colors.cardBorder}`,
+            background: 'repeating-linear-gradient(89deg, transparent 0, transparent 3px, rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px), linear-gradient(180deg, #4A2E14 0%, #2D1A0A 100%)',
+            border: `1.5px solid ${colors.woodRim}`,
             borderRadius: '12px',
-            color: colors.textSecondary,
+            color: 'rgba(232,213,168,0.7)',
             fontSize: '12px',
             lineHeight: 1.5,
             textAlign: 'center',
+            boxShadow: 'inset 0 1px 0 rgba(255,200,100,0.18), inset 0 -1px 0 rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.35)',
           }}>
             Посул, тип дела и совет чуйки не раскрыты. Заплати 10 звёзд — увидишь полную картину и сможешь вложиться, если захочешь.
           </div>
@@ -1865,13 +1894,19 @@ function ParamChip({ label, value }: { label: string; value: string }) {
     <div style={{
       flex: 1,
       padding: `${spacing.sm} ${spacing.md}`,
-      background: 'rgba(42, 25, 96, 0.4)',
-      border: `1px solid ${colors.cardBorder}`,
+      background: 'repeating-linear-gradient(89deg, transparent 0, transparent 3px, rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px), linear-gradient(180deg, #4A2E14 0%, #2D1A0A 100%)',
+      border: `1.5px solid ${colors.woodRim}`,
       borderRadius: '10px',
       textAlign: 'center',
+      boxShadow: 'inset 0 1px 0 rgba(255,200,100,0.18), inset 0 -1px 0 rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.35)',
     }}>
-      <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '14px' }}>{value}</div>
-      <div style={{ color: colors.textMuted, fontSize: '10px', marginTop: '2px' }}>{label}</div>
+      <div style={{
+        color: colors.fairyGoldBright, fontWeight: 700, fontSize: '14px',
+        fontFamily: "'Cinzel', 'Marcellus', serif",
+        fontVariantNumeric: 'tabular-nums',
+        textShadow: `0 0 10px ${colors.fairyGold}55`,
+      }}>{value}</div>
+      <div style={{ color: 'rgba(232,213,168,0.5)', fontSize: '10px', marginTop: '2px', letterSpacing: '0.06em' }}>{label}</div>
     </div>
   )
 }
@@ -2282,29 +2317,43 @@ function smartDefaultInvestAmount(gs: GameStateDTO | null): number {
   return Math.min(clamped, balance)
 }
 
+// Золотая 3D-кнопка — главное CTA в потоке грамоты (Принять / Вложить / Раскрыть).
 const primaryBtnStyle: React.CSSProperties = {
   width: '100%',
-  padding: spacing.md,
-  background: colors.fairyGold,
+  padding: `${spacing.md} ${spacing.lg}`,
+  background: 'linear-gradient(180deg, #FFD660 0%, #FFB800 55%, #C08000 100%)',
   border: 'none',
-  borderRadius: '12px',
-  color: colors.nightBlue,
+  borderTop: '1px solid rgba(255,255,255,0.4)',
+  borderBottom: '3px solid #7A5000',
+  borderRadius: '10px',
+  color: '#2A1A08',
+  fontFamily: "'Cinzel', 'Marcellus', serif",
   fontWeight: 700,
   fontSize: '15px',
+  letterSpacing: '0.04em',
   cursor: 'pointer',
+  boxShadow: '0 5px 0 #5A3800, 0 8px 22px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.35)',
+  textShadow: '0 1px 0 rgba(255,255,255,0.25)',
 }
 
+// Деревянная 3D-кнопка — вторичная (Передумать / Свернуть / Ещё раз).
 const secondaryBtnStyle: React.CSSProperties = {
   width: '100%',
   marginTop: spacing.sm,
-  padding: spacing.md,
-  background: 'rgba(42, 25, 96, 0.5)',
-  border: `1px solid ${colors.fairyGold}40`,
-  borderRadius: '12px',
-  color: colors.fairyGold,
-  fontWeight: 600,
+  padding: `${spacing.md} ${spacing.lg}`,
+  background: `linear-gradient(180deg, ${colors.woodHi} 0%, ${colors.woodMid} 55%, ${colors.woodDeep} 100%)`,
+  border: 'none',
+  borderTop: `1px solid ${colors.fairyGold}30`,
+  borderBottom: `3px solid ${colors.woodBg}`,
+  borderRadius: '10px',
+  color: colors.fairyGoldBright,
+  fontFamily: "'Cinzel', 'Marcellus', serif",
+  fontWeight: 700,
   fontSize: '14px',
+  letterSpacing: '0.04em',
   cursor: 'pointer',
+  boxShadow: `0 4px 0 ${colors.woodBg}, 0 7px 18px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,200,100,0.14)`,
+  textShadow: '0 1px 2px rgba(0,0,0,0.5)',
 }
 
 const paramsRowStyle: React.CSSProperties = {

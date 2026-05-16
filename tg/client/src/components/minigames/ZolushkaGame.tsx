@@ -5,6 +5,7 @@ import { rngFromSeed } from './seedRng'
 import { colors, spacing } from '@/theme'
 import { playSound } from '@/sounds'
 import type { MiniGameDifficulty } from './BuratinoGame'
+import { GameHeader, ScoreChip } from './GameChrome'
 
 const tg = (window as any).Telegram?.WebApp
 const haptic = tg?.HapticFeedback
@@ -599,44 +600,31 @@ export function ZolushkaGame({ seed, onComplete, restoredErrorCount }: ZolushkaG
     coinsRef.current = remaining
   }
 
-  const scoreColor = score >= TARGET_PERFECT ? colors.success
-    : score >= TARGET_OK ? colors.fairyGold
-    : colors.textPrimary
-
   return (
     <div style={{
       flex: 1, display: 'flex', flexDirection: 'column',
       maxWidth: '500px', margin: '0 auto', width: '100%', boxSizing: 'border-box',
       padding: spacing.md,
     }}>
-      <div style={{
-        textAlign: 'center',
-        color: phase === 'reference' ? colors.fairyGold : (playCountdown <= 5 ? colors.danger : colors.fairyGold),
-        fontWeight: 700, fontSize: '17px',
-      }}>
-        {phase === 'reference'
+      <GameHeader
+        title={phase === 'reference'
           ? `Запомни монету · ${refCountdown}`
           : `Лови золотые · ${playCountdown} сек`}
-      </div>
-      <div style={{
-        color: colors.textMuted, fontSize: '12px', textAlign: 'center',
-        marginBottom: spacing.sm, lineHeight: 1.4,
-      }}>
-        {phase === 'reference'
+        urgent={phase !== 'reference' && playCountdown <= 5}
+        hint={phase === 'reference'
           ? 'Запомни обе стороны: аверс с цифрой и реверс с солнцем'
           : 'Тапай настоящую (+1), не тапай подделки (−2). 6 — пройти, 10 — раскрыть совет'}
-      </div>
-
-      {phase === 'play' && (
-        <div style={{
-          display: 'flex', gap: spacing.md, justifyContent: 'center',
-          marginBottom: spacing.sm, fontSize: '13px',
-        }}>
-          <span style={{ color: scoreColor, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
-            Поймано: {score}
-          </span>
-        </div>
-      )}
+        scoreChip={phase === 'play'
+          ? (
+            <ScoreChip tone={score >= TARGET_PERFECT ? 'success' : score >= TARGET_OK ? 'gold' : 'danger'}>
+              Поймано: {score}
+            </ScoreChip>
+          )
+          : undefined}
+        timerProgress={phase === 'reference'
+          ? refCountdown / REFERENCE_SECONDS
+          : playCountdown / PLAY_SECONDS}
+      />
 
       {!isFrozen && <ReferenceSample phase={phase} coin={realCoinRef.current} />}
 

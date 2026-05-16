@@ -5,6 +5,7 @@ import { rngFromSeed } from './seedRng'
 import { colors, spacing } from '@/theme'
 import { playSound } from '@/sounds'
 import type { MiniGameDifficulty } from './BuratinoGame'
+import { GameHeader, ScoreChip } from './GameChrome'
 
 const tg = (window as any).Telegram?.WebApp
 const haptic = tg?.HapticFeedback
@@ -461,28 +462,17 @@ export function KolobokGame({ seed, onComplete, restoredErrorCount }: KolobokGam
       maxWidth: '500px', margin: '0 auto', width: '100%', boxSizing: 'border-box',
       padding: spacing.md,
     }}>
-      <div style={{
-        textAlign: 'center',
-        color: playCountdown <= 5 ? colors.danger : colors.fairyGold,
-        fontWeight: 700, fontSize: '17px',
-      }}>
-        Нора-нора-нора · {playCountdown} сек
-      </div>
-      <div style={{
-        color: colors.textMuted, fontSize: '12px', textAlign: 'center',
-        marginBottom: spacing.sm, lineHeight: 1.4,
-      }}>
-        Тапай зверушек (+1), не задень Колобка (−3). <br />
-        7 — пройти, 12 — раскрыть совет чуйки
-      </div>
-      <div style={{
-        display: 'flex', gap: spacing.md, justifyContent: 'center',
-        marginBottom: spacing.sm, fontSize: '13px',
-      }}>
-        <span style={{ color: scoreColor, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
-          Счёт: {score}
-        </span>
-      </div>
+      <GameHeader
+        title={<>Нора-нора-нора · {playCountdown} сек</>}
+        urgent={playCountdown <= 5}
+        hint={<>Тапай зверушек (+1), не задень Колобка (−3). 7 — пройти, 12 — раскрыть совет чуйки</>}
+        scoreChip={
+          <ScoreChip tone={score >= TARGET_PERFECT ? 'success' : score >= TARGET_OK ? 'gold' : 'danger'}>
+            Счёт: {score}
+          </ScoreChip>
+        }
+        timerProgress={playCountdown / PLAY_SECONDS}
+      />
       <div
         ref={refMount}
         style={{
