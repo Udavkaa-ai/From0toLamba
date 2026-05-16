@@ -38,13 +38,16 @@ export function SparklesOverlay({ count = 22 }: { count?: number }) {
       phase: Math.random() * Math.PI * 2,
     }))
 
-    let frame = 0
+    // Время старта — анимация привязана к реальным секундам, а не к фреймам.
+    // На 90/120Hz-телефонах frame-based счёт ускорял пульсацию в 1.5–2 раза.
+    const t0 = performance.now()
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
-      frame++
+      const t = (performance.now() - t0) / 1000  // секунды с момента старта
 
       for (const s of sparklesRef.current) {
-        const pulse = Math.sin(frame * s.speed * 0.03 + s.phase)
+        // Период пульса: 2π / (s.speed × 0.9) ≈ 7–22 сек на разные искры
+        const pulse = Math.sin(t * s.speed * 0.9 + s.phase)
         const alpha = s.opacity * (0.4 + 0.6 * Math.abs(pulse))
         const scale = s.size * (0.8 + 0.4 * Math.abs(pulse))
 

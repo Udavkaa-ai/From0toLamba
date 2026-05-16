@@ -71,9 +71,12 @@ const themes = {
     overlayLight:     'rgba(255, 184, 0, 0.14)',
     cardRadius: '14px',
     cardBorderWidth: '1.5px',
-    // Светлый медовый фон с большим золотым ореолом сверху + тонкие волокна
+    // Светлый медовый фон с большим золотым ореолом сверху.
+    // Без волокон-стрипов: они были repeating-linear-gradient(3px), на телефонах
+    // вызывали лишние repaint'ы при любых scroll/overlay над фоном — содержимое
+    // модалок и тур-оверлеи моргали.
     screenGradient:
-      `repeating-linear-gradient(89deg, transparent 0, transparent 3px, rgba(0,0,0,0.045) 3px, rgba(0,0,0,0.045) 4px), radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255,200,90,0.30) 0%, transparent 60%), linear-gradient(180deg, rgba(132,84,38,1.0) 0%, rgba(108,68,30,1.0) 45%, rgba(82,52,24,1.0) 100%)`,
+      `radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255,200,90,0.30) 0%, transparent 60%), linear-gradient(180deg, rgba(132,84,38,1.0) 0%, rgba(108,68,30,1.0) 45%, rgba(82,52,24,1.0) 100%)`,
     cardSurface: '',
     // На пергаменте — мягкий радиальный блик («тёплая бумага под рукой»),
     // не «волокна дерева». Текстура задаётся через prefix перед градиентом.
@@ -87,11 +90,16 @@ const themes = {
     // CTA в сказочной — золото с тёмной сепией для текста на нём
     ctaGradient: `linear-gradient(180deg, #FFD660 0%, #FFB800 55%, #B07400 100%)`,
     ctaBorder:   'rgba(120, 76, 36, 0.9)',
-    // Нав-бар — резное тёмное дерево с золотым кантом сверху
-    navBarBg:     `repeating-linear-gradient(89deg, transparent 0, transparent 3px, rgba(0,0,0,.06) 3px, rgba(0,0,0,.06) 4px), linear-gradient(180deg, #4A2E14 0%, #2D1A0A 100%)`,
+    // Нав-бар — резное тёмное дерево с золотым кантом сверху.
+    // Без repeating-linear-gradient: нав-бар фиксирован поверх скроллящегося
+    // содержимого, стрипы 3px вызывали лишние repaint'ы при скролле.
+    navBarBg:     `linear-gradient(180deg, #4A2E14 0%, #2D1A0A 100%)`,
     navBarBorder: 'rgba(212, 160, 60, 0.7)',
-    // Модалки — резное дерево вместо ночной палаты
-    modalBg:       `repeating-linear-gradient(89deg, transparent 0, transparent 3px, rgba(0,0,0,.05) 3px, rgba(0,0,0,.05) 4px), linear-gradient(180deg, #5A3818 0%, #2D1A0A 100%)`,
+    // Модалки — резное дерево вместо ночной палаты.
+    // ВАЖНО: без repeating-linear-gradient (стрипы 3px) — они в overflow:auto
+    // контейнерах (как settings-sheet) вызывали repaint-шторм на Android WebView
+    // и контент моргал. Только базовый linear-gradient.
+    modalBg:       `linear-gradient(180deg, #5A3818 0%, #3A1F0A 50%, #2D1A0A 100%)`,
     modalBorder:   'rgba(212, 160, 60, 0.85)',
     // На модалках в fairy остаётся СВЕТЛЫЙ текст (тёмное дерево внутри)
     modalText:     '#F8E4B2',  // тёплый кремовый, читается на тёмном дереве
