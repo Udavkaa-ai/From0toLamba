@@ -168,14 +168,14 @@ export function ChatPanel() {
             exit={{ scale: 0, opacity: 0 }}
             onClick={handleOpen}
             style={{
-              position: 'fixed', right: '16px',
+              position: 'fixed', left: '16px',
               bottom: `calc(72px + env(safe-area-inset-bottom))`,
-              zIndex: 150, width: '48px', height: '48px', borderRadius: '50%',
+              zIndex: 150, width: '44px', height: '44px', borderRadius: '50%',
               background: gradients.cta,
               border: `1.5px solid ${colors.ctaBorder}`,
-              boxShadow: `0 4px 20px rgba(0,0,0,0.5), 0 0 16px ${colors.fairyGold}20`,
+              boxShadow: `0 4px 16px rgba(0,0,0,0.5), 0 0 12px ${colors.fairyGold}20`,
               cursor: 'pointer', display: 'flex', alignItems: 'center',
-              justifyContent: 'center', fontSize: '22px',
+              justifyContent: 'center', fontSize: '20px',
             }}
           >
             💬

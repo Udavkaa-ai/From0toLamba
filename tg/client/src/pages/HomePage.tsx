@@ -1263,21 +1263,8 @@ export function HomePage() {
         {/* Быстрый доступ к «Отношениям» — чип с суммарным числом жетонов */}
         <TokensQuickChip onNavigate={() => navigate('/relationships')} />
 
-        {/* Активные дела */}
-        {gameState.activeProjects.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-            <div style={{
-              color: colors.fairyGold, fontSize: '13px', fontWeight: 700,
-              marginBottom: spacing.sm, marginLeft: '4px',
-              textShadow: '0 1px 4px rgba(0,0,0,0.65), 0 0 8px rgba(0,0,0,0.4)',
-            }}>
-              {t.home.activeCount(gameState.activeProjects.length)}
-            </div>
-            {gameState.activeProjects.map((p, i) => (
-              <ActiveProjectCard key={p.id} project={p} delay={0.2 + i * 0.05} onPress={() => navigate(`/portfolio`)} />
-            ))}
-          </motion.div>
-        )}
+        {/* «Активные дела» с главной убраны — они теперь только в Казне.
+            Главная — про новые предложения, статус казны и отношения с дельцами. */}
 
         {/* Входящие — компактная лента из топ-2 + ссылка на полный список */}
         {gameState.inboxProjects.length > 0 && (
@@ -1585,13 +1572,12 @@ function NextDayFab({
   return (
     <div data-tour="next-day-fab" style={{
       position: 'fixed',
-      left: '50%',
-      transform: 'translateX(-50%)',
-      bottom: 'calc(68px + env(safe-area-inset-bottom))',
+      right: '14px',
+      bottom: 'calc(72px + env(safe-area-inset-bottom))',
       zIndex: 110,
       display: 'flex',
       flexDirection: 'column',
-      alignItems: 'center',
+      alignItems: 'flex-end',
       gap: '4px',
     }}>
       {currentDayName && (
@@ -2006,9 +1992,14 @@ function TokensQuickChip({ onNavigate }: { onNavigate: () => void }) {
   }
   const withBalance = Object.entries(tokens)
     .filter(([, v]) => (v as any)?.balance > 0)
-    .map(([k]) => k)
+    .map(([k, v]) => ({ archetype: k, balance: (v as any).balance as number }))
+    .sort((a, b) => b.balance - a.balance)
   const totalBalance = Object.values(tokens).reduce((s, v) => s + ((v as any)?.balance ?? 0), 0)
-  const sampleEmojis = withBalance.slice(0, 3).map(a => archEmoji[a] ?? '🪙')
+  // Показываем до 7 «эмодзи × N» — по числу архетипов с балансом
+  const tokenPairs = withBalance.map(t => ({
+    emoji: archEmoji[t.archetype] ?? '🪙',
+    count: t.balance,
+  }))
 
   return (
     <motion.button
@@ -2046,12 +2037,23 @@ function TokensQuickChip({ onNavigate }: { onNavigate: () => void }) {
             </span>
           )}
         </div>
-        <div style={{ fontSize: 11, color: colors.textMuted, marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
-          {sampleEmojis.length > 0 ? (
-            <>
-              <span style={{ letterSpacing: '0.1em' }}>{sampleEmojis.join(' ')}</span>
-              <span>· жетоны хозяев в копилке</span>
-            </>
+        <div style={{ fontSize: 11, color: colors.textMuted, marginTop: 4, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          {tokenPairs.length > 0 ? (
+            tokenPairs.map((p, i) => (
+              <span key={i} style={{
+                display: 'inline-flex', alignItems: 'center', gap: 2,
+                padding: '1px 6px',
+                background: 'rgba(255,184,0,0.12)',
+                border: `1px solid ${colors.fairyGold}55`,
+                borderRadius: 6,
+                fontVariantNumeric: 'tabular-nums',
+                color: colors.fairyGold,
+                fontWeight: 700,
+              }}>
+                <span style={{ fontSize: 13 }}>{p.emoji}</span>
+                <span>×{p.count}</span>
+              </span>
+            ))
           ) : (
             <span>7 хозяев · жетоны и статистика</span>
           )}
