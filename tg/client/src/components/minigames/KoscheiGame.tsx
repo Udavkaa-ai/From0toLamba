@@ -108,26 +108,29 @@ export function KoscheiGame({ seed, onComplete, restoredErrorCount }: KoscheiGam
   const resolvingRef = useRef(false)
   const attemptsUsedRef = useRef(0)
   const [cards, setCards] = useState<Card[]>(() => dealCards(rngFromSeed(seed)))
+  // Сколько пар собрано на данный момент — обновляется в useEffect ниже,
+  // нужно чтобы complete() мог посчитать errorCount = SYMBOL_COUNT - matched.
+  const matchedPairsRef = useRef(0)
   const [selectedA, setSelectedA] = useState<number | null>(null)
   const [selectedB, setSelectedB] = useState<number | null>(null)
   const [attemptsUsed, setAttemptsUsed] = useState(0)
   const [playCountdown, setPlayCountdown] = useState(PLAY_SECONDS)
   useEffect(() => { attemptsUsedRef.current = attemptsUsed }, [attemptsUsed])
+  // Обновляем счётчик собранных пар каждый раз, когда меняется состояние карт
+  useEffect(() => {
+    matchedPairsRef.current = cards.filter(c => c.state === 'matched').length / 2
+  }, [cards])
   const onCompleteRef = useRef(onComplete)
   useEffect(() => { onCompleteRef.current = onComplete }, [onComplete])
 
-  // Число ошибок = лишние попытки сверх минимума (SYMBOL_COUNT). На таймауте/исчерпании
-  // попыток без полного набора пар — ставим заведомо ≥2 (категория «только звёзды»).
+  /** errorCount = число НЕСОБРАННЫХ пар. 1 пара = 1 ошибка.
+   *  6 пар собрано → 0 ошибок (идеал), 5 → 1 (победа), ≤4 → ≥2 (провал). */
   const complete = (won: boolean, _attemptsAtFinish: number) => {
     if (doneRef.current) return
     doneRef.current = true
     haptic?.notificationOccurred(won ? 'success' : 'error')
     playSound(won ? 'win' : 'lose')
-    // В memory match понятие «ошибки» неприменимо — есть только «собрал все пары»
-    // или «не успел». Поэтому бинарная шкала:
-    //   собрал все 6 пар в отведённое время → 0 ошибок (победа, совет чуйки)
-    //   не собрал                            → 2 ошибки (поражение, только за звёзды)
-    const errorCount = won ? 0 : 2
+    const errorCount = Math.max(0, SYMBOL_COUNT - matchedPairsRef.current)
     // Показываем «пирамидку Кощея» — отсылка к сказке «дуб → сундук → заяц → утка → яйцо → игла»
     setTimeout(() => setShowPyramid(true), 80)
     onCompleteRef.current(errorCount)

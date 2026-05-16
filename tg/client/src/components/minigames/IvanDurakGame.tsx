@@ -11,7 +11,7 @@ const haptic = tg?.HapticFeedback
 
 const HAND_SIZE = 7
 const ROUNDS = 7
-const ROUND_SECONDS = 2.5       // 2.5 секунды на каждый ход (раньше было 2.0)
+const ROUND_SECONDS = 2.0       // 2 секунды на каждый ход
 const READY_SECONDS = 3         // обратный отсчёт перед первой картой
 const FEEDBACK_MS = 300         // длительность фидбека (зелёная/красная подсветка)
 const DECK_POOL_SIZE = HAND_SIZE + ROUNDS  // 14 уникальных карт нужно подготовить
