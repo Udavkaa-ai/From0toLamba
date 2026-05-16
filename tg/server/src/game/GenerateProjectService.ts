@@ -47,7 +47,7 @@ export async function generateProject(
   // (isInbox=true, isPreloaded=false внутри materializeSponsorProject),
   // даже если этот вызов был фоновым из advance-day preload-цикла.
   if (!overrideFate && Math.random() < SPONSOR_CHANCE) {
-    const campaign = await pickRandomActiveCampaign()
+    const campaign = await pickRandomActiveCampaign(userId)
     if (campaign) {
       const sponsored = await materializeSponsorProject(userId, campaign)
       return sponsored.id

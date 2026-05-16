@@ -13,9 +13,26 @@ import type { SponsorCampaign, Project } from '@prisma/client'
 import { SPONSOR_PROFIT_MULT, ProjectFate, PersonaArchetype, ProjectType } from './types'
 import { generateNpcTruthParams } from './projectUtils'
 
-/** Случайная активная кампания (по весам) или null. */
-export async function pickRandomActiveCampaign(): Promise<SponsorCampaign | null> {
-  const active = await prisma.sponsorCampaign.findMany({ where: { active: true } })
+/** Случайная активная кампания (по весам), которую этот игрок ещё не видел.
+ *  Исключает все кампании, по которым у него уже был Project любого статуса
+ *  (inbox / active / closed). Возвращает null если все активные уже виделись
+ *  или их вообще нет. */
+export async function pickRandomActiveCampaign(userId: number): Promise<SponsorCampaign | null> {
+  // 1. Какие кампании этот игрок уже видел (любой статус Project, включая закрытые)
+  const seen = await prisma.project.findMany({
+    where: { userId, sponsorCampaignId: { not: null } },
+    select: { sponsorCampaignId: true },
+    distinct: ['sponsorCampaignId'],
+  })
+  const seenIds = seen.map(p => p.sponsorCampaignId).filter((id): id is string => !!id)
+
+  // 2. Активные кампании, которых игрок ещё не видел
+  const active = await prisma.sponsorCampaign.findMany({
+    where: {
+      active: true,
+      ...(seenIds.length ? { id: { notIn: seenIds } } : {}),
+    },
+  })
   if (active.length === 0) return null
 
   const totalWeight = active.reduce((s, c) => s + Math.max(1, c.weight), 0)

@@ -27,20 +27,21 @@ export function VipArrivalOverlay({
   onClose: () => void
   onOpenDeal: () => void
 }) {
-  // Конфетти-частицы: набор детерминированных позиций по seed projectId
+  // Конфетти-частицы: компактный разлёт, оптимизация GPU.
+  // Раньше было 32 — на средних телефонах overlay тормозил после открытия.
+  // 10 эмодзи + ровно 1 анимация на каждое = плавно даже на старых.
   const sparkles = useMemo(() => {
-    const out: Array<{ x: number; y: number; delay: number; emoji: string; size: number; rot: number }> = []
-    const emojis = ['✨', '⭐', '💫', '🌟', '✦', '🪙', '👑', '💰']
-    for (let i = 0; i < 32; i++) {
-      const angle = (i / 32) * Math.PI * 2 + Math.random() * 0.3
-      const dist = 35 + Math.random() * 60   // vmin от центра
+    const out: Array<{ x: number; y: number; delay: number; emoji: string; size: number }> = []
+    const emojis = ['✨', '⭐', '🪙', '👑', '💰', '✦']
+    for (let i = 0; i < 10; i++) {
+      const angle = (i / 10) * Math.PI * 2 + Math.random() * 0.2
+      const dist = 36 + Math.random() * 28   // vmin от центра, ближе чем раньше
       out.push({
         x: 50 + Math.cos(angle) * dist,
         y: 50 + Math.sin(angle) * dist,
-        delay: Math.random() * 0.6,
-        emoji: emojis[Math.floor(Math.random() * emojis.length)],
-        size: 16 + Math.random() * 20,
-        rot: (Math.random() - 0.5) * 720,
+        delay: Math.random() * 0.3,
+        emoji: emojis[i % emojis.length],
+        size: 22 + Math.random() * 12,
       })
     }
     return out
@@ -73,43 +74,37 @@ export function VipArrivalOverlay({
         cursor: 'pointer',
       }}
     >
-      {/* Вращающиеся лучи из центра (conic-gradient секторами) */}
+      {/* Статичное золотое сияние из центра — без вращения и mix-blend,
+          основной GPU-tax (conic-gradient + mix-blend-screen) убран,
+          получаем тот же визуальный эффект «лучей» за счёт радиального
+          градиента, без 60fps работы на старых телефонах. */}
       <div
         aria-hidden
         style={{
-          position: 'absolute',
-          left: '50%', top: '50%',
-          width: '180vmax', height: '180vmax',
+          position: 'absolute', inset: 0,
           background:
-            'conic-gradient(from 0deg, rgba(255,200,80,0.2) 0deg, transparent 14deg, rgba(255,200,80,0.2) 28deg, transparent 42deg, rgba(255,200,80,0.2) 56deg, transparent 70deg, rgba(255,200,80,0.2) 84deg, transparent 98deg, rgba(255,200,80,0.2) 112deg, transparent 126deg, rgba(255,200,80,0.2) 140deg, transparent 154deg, rgba(255,200,80,0.2) 168deg, transparent 182deg, rgba(255,200,80,0.2) 196deg, transparent 210deg, rgba(255,200,80,0.2) 224deg, transparent 238deg, rgba(255,200,80,0.2) 252deg, transparent 266deg, rgba(255,200,80,0.2) 280deg, transparent 294deg, rgba(255,200,80,0.2) 308deg, transparent 322deg, rgba(255,200,80,0.2) 336deg, transparent 350deg, rgba(255,200,80,0.2) 360deg)',
-          animation: 'vipRayspin 24s linear infinite',
-          transformOrigin: 'center',
-          transform: 'translate(-50%, -50%)',
+            'radial-gradient(circle at center, rgba(255,200,80,0.28) 0%, rgba(255,184,0,0.10) 25%, transparent 55%)',
           pointerEvents: 'none',
-          opacity: 0.7,
-          mixBlendMode: 'screen',
         }}
       />
 
-      {/* Конфетти-эмодзи (разлет из центра наружу) */}
+      {/* Конфетти-эмодзи: 10 шт, разлёт-затухание без rotate */}
       {sparkles.map((s, i) => (
         <motion.div
           key={i}
           aria-hidden
-          initial={{ left: '50vw', top: '50vh', opacity: 0, scale: 0, rotate: 0 }}
+          initial={{ left: '50vw', top: '50vh', opacity: 0, scale: 0 }}
           animate={{
             left: `${s.x}vw`, top: `${s.y}vh`,
-            opacity: [0, 1, 1, 0],
-            scale: [0, 1.2, 1, 0.6],
-            rotate: s.rot,
+            opacity: [0, 1, 0],
+            scale: [0, 1, 0.7],
           }}
-          transition={{ duration: 2.6, delay: s.delay, ease: 'easeOut' }}
+          transition={{ duration: 1.8, delay: s.delay, ease: 'easeOut' }}
           style={{
             position: 'absolute',
             fontSize: s.size, lineHeight: 1,
             pointerEvents: 'none',
             transform: 'translate(-50%, -50%)',
-            filter: 'drop-shadow(0 0 8px rgba(255,200,80,0.6))',
           }}
         >
           {s.emoji}
@@ -140,12 +135,10 @@ export function VipArrivalOverlay({
         </div>
       </motion.div>
 
-      {/* ГЛАВНЫЙ ТЕКСТ */}
+      {/* ГЛАВНЫЙ ТЕКСТ — без бесконечной пульсации, только spring-выпрыгивание */}
       <motion.div
         initial={{ y: -30, opacity: 0, scale: 0.8 }}
-        animate={{
-          y: 0, opacity: 1, scale: 1,
-        }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
         transition={{ type: 'spring', damping: 12, stiffness: 180, delay: 0.3 }}
         style={{
           color: '#FFD660',
@@ -159,13 +152,7 @@ export function VipArrivalOverlay({
           textTransform: 'uppercase',
         }}
       >
-        <motion.span
-          animate={{ scale: [1, 1.05, 1, 1.05, 1] }}
-          transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
-          style={{ display: 'inline-block' }}
-        >
-          Вот это удача!
-        </motion.span>
+        Вот это удача!
       </motion.div>
 
       {/* ПОДЗАГОЛОВОК */}
