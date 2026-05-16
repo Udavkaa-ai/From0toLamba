@@ -2066,15 +2066,18 @@ function TokensQuickChip({ onNavigate }: { onNavigate: () => void }) {
               display: 'flex', flexDirection: 'column', alignItems: 'center',
               gap: 1, padding: '4px 0',
               borderRadius: 8,
-              background: has ? 'rgba(255,184,0,0.18)' : 'rgba(0,0,0,0.2)',
-              border: `1px solid ${has ? colors.fairyGold + '66' : 'rgba(212,160,60,0.25)'}`,
-              opacity: has ? 1 : 0.55,
+              // Контрастный фон + тёмный текст: парчментный чип внутри
+              // парчментной карточки тонул, золото-на-золоте сливалось.
+              background: has ? 'rgba(120,76,36,0.85)' : 'rgba(120,76,36,0.45)',
+              border: `1px solid ${has ? colors.fairyGold : 'rgba(120,76,36,0.6)'}`,
+              opacity: has ? 1 : 0.7,
             }}>
               <span style={{ fontSize: 19, lineHeight: 1 }}>{p.emoji}</span>
               <span style={{
-                fontSize: 10, fontWeight: 800,
-                color: has ? colors.fairyGold : colors.textOnDarkMuted,
+                fontSize: 11, fontWeight: 800,
+                color: has ? '#FFE090' : 'rgba(248,228,178,0.85)',
                 fontVariantNumeric: 'tabular-nums', lineHeight: 1,
+                textShadow: '0 1px 2px rgba(0,0,0,0.6)',
               }}>
                 ×{p.count}
               </span>

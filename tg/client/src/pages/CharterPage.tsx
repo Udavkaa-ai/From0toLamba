@@ -320,8 +320,14 @@ export function CharterPage() {
             {t.common.back}
           </button>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '15px' }}>{pageTitle(project?.personaArchetype, t)}</div>
-            <div style={{ color: colors.textMuted, fontSize: '11px' }}>
+            <div style={{
+              color: colors.fairyGold, fontWeight: 700, fontSize: '15px',
+              textShadow: '0 1px 4px rgba(0,0,0,0.7), 0 0 6px rgba(0,0,0,0.4)',
+            }}>{pageTitle(project?.personaArchetype, t)}</div>
+            <div style={{
+              color: 'rgba(248,228,178,0.92)', fontSize: '11px', fontWeight: 600,
+              textShadow: '0 1px 3px rgba(0,0,0,0.7)',
+            }}>
               {phaseCaption(phase, charter, scanCountdown, t)}
             </div>
           </div>
@@ -971,8 +977,8 @@ function MinigameStatsBlock({
     <div style={{
       flex: 1,
       padding: '6px 4px',
-      background: highlight ? `${color}33` : 'rgba(255,255,255,0.03)',
-      border: `1px solid ${highlight ? color : colors.cardBorder}`,
+      background: highlight ? `${color}33` : 'rgba(0,0,0,0.32)',
+      border: `1px solid ${highlight ? color : 'rgba(212,160,60,0.4)'}`,
       borderRadius: 8,
       textAlign: 'center',
       transition: 'all 0.2s',
@@ -980,18 +986,18 @@ function MinigameStatsBlock({
       <div style={{ color, fontWeight: 800, fontSize: 16, fontVariantNumeric: 'tabular-nums' }}>
         {value}{highlight ? ' +1' : ''}
       </div>
-      <div style={{ color: colors.textMuted, fontSize: 9, marginTop: 2 }}>{label}</div>
+      <div style={{ color: 'rgba(248,228,178,0.85)', fontSize: 9, marginTop: 2, fontWeight: 600 }}>{label}</div>
     </div>
   )
   return (
     <div style={{
       padding: spacing.md,
-      background: 'rgba(42, 25, 96, 0.3)',
-      border: `1px solid ${colors.cardBorder}`,
+      background: 'rgba(20,12,6,0.65)',
+      border: `1px solid rgba(212,160,60,0.5)`,
       borderRadius: 12,
     }}>
-      <div style={{ color: colors.textSecondary, fontSize: 11, marginBottom: 6, textAlign: 'center' }}>
-        {t.charter.historyWith} <b style={{ color: colors.fairyGold }}>{stats.played}{delta ? ' +1' : ''}</b>
+      <div style={{ color: 'rgba(248,228,178,0.9)', fontSize: 11, marginBottom: 6, textAlign: 'center', fontWeight: 600 }}>
+        {t.charter.historyWith} <b style={{ color: colors.fairyGold, fontWeight: 800 }}>{stats.played}{delta ? ' +1' : ''}</b>
       </div>
       <div style={{ display: 'flex', gap: 6 }}>
         <Cell label={t.charter.cellPerfect} value={stats.perfect} color={colors.success}   highlight={delta === 'perfect'} />
@@ -1530,7 +1536,7 @@ function CharterStat({ label, value, valueColor }: { label: string; value: strin
         fontFamily: "'Cinzel', 'Marcellus', serif",
         fontVariantNumeric: 'tabular-nums',
       }}>{value}</div>
-      <div style={{ color: 'rgba(232,213,168,0.5)', fontSize: '10px', marginTop: '2px', letterSpacing: '0.06em' }}>{label}</div>
+      <div style={{ color: 'rgba(248,228,178,0.85)', fontSize: '10px', marginTop: '2px', letterSpacing: '0.06em', fontWeight: 600 }}>{label}</div>
     </div>
   )
 }
@@ -1801,7 +1807,7 @@ function MiniGameResultSheet({
             display: 'block',
             width: '100%',
             background: 'transparent', border: 'none', cursor: 'pointer',
-            color: colors.textOnDarkMuted, fontSize: 11,
+            color: 'rgba(248,228,178,0.9)', fontSize: 11, fontWeight: 600,
             padding: '4px 0',
             margin: `0 0 ${collapsed ? '4px' : spacing.sm}`,
           }}
@@ -1833,7 +1839,7 @@ function MiniGameResultSheet({
           <div style={{ color: colors.fairyGold, fontSize: '20px', fontWeight: 700, marginTop: '4px' }}>
             {titleText}
           </div>
-          <div style={{ color: colors.textOnDarkMuted, fontSize: '12px', marginTop: '4px', maxWidth: 320, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.5 }}>
+          <div style={{ color: 'rgba(248,228,178,0.92)', fontSize: '12px', marginTop: '4px', maxWidth: 320, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.5, fontWeight: 500 }}>
             {subtitleText}
           </div>
         </div>
@@ -2101,7 +2107,7 @@ function ParamChip({ label, value }: { label: string; value: string }) {
         fontVariantNumeric: 'tabular-nums',
         textShadow: `0 0 10px ${colors.fairyGold}55`,
       }}>{value}</div>
-      <div style={{ color: 'rgba(232,213,168,0.5)', fontSize: '10px', marginTop: '2px', letterSpacing: '0.06em' }}>{label}</div>
+      <div style={{ color: 'rgba(248,228,178,0.85)', fontSize: '10px', marginTop: '2px', letterSpacing: '0.06em', fontWeight: 600 }}>{label}</div>
     </div>
   )
 }
