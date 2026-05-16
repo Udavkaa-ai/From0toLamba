@@ -83,10 +83,13 @@ export function RelationshipsPage() {
                   alignItems: 'center', justifyContent: 'center',
                   gap: 4,
                   padding: spacing.sm,
-                  background: `linear-gradient(145deg, ${ARCHETYPE_TINT[arch]}25, ${ARCHETYPE_TINT[arch]}08)`,
-                  border: `1.5px solid ${ARCHETYPE_TINT[arch]}88`,
+                  // Непрозрачная плашка из theme-aware карточки + цветной кант
+                  // и свечение по архетипу. Раньше bg был полупрозрачный tint
+                  // → плитки сливались с фоном.
+                  background: gradients.card,
+                  border: `1.5px solid ${ARCHETYPE_TINT[arch]}`,
                   borderRadius: 14,
-                  boxShadow: `0 4px 16px ${ARCHETYPE_TINT[arch]}44`,
+                  boxShadow: `0 4px 14px ${ARCHETYPE_TINT[arch]}55, inset 0 1px 0 ${colors.cardHighlight}`,
                   cursor: 'pointer',
                   flexShrink: 0,
                   position: 'relative',
@@ -208,10 +211,11 @@ function RelationshipDetails({ archetype, onClose }: { archetype: Archetype; onC
         <div style={{
           display: 'flex', alignItems: 'center', gap: spacing.md,
           padding: spacing.md,
-          background: `linear-gradient(135deg, ${tint}22, ${tint}08)`,
-          border: `1.5px solid ${tint}66`,
+          background: gradients.card,
+          border: `1.5px solid ${tint}`,
           borderRadius: 14,
           marginBottom: spacing.md,
+          boxShadow: `inset 0 1px 0 ${colors.cardHighlight}, 0 2px 10px rgba(0,0,0,0.35)`,
         }}>
           <MerchantToken archetype={archetype} size={56} />
           <div style={{ flex: 1 }}>
@@ -242,10 +246,11 @@ function RelationshipDetails({ archetype, onClose }: { archetype: Archetype; onC
         {/* Прогресс до следующего жетона */}
         <div style={{
           padding: spacing.md,
-          background: 'rgba(255,255,255,0.04)',
+          background: gradients.card,
           border: `1px solid ${colors.cardBorder}`,
           borderRadius: 12,
           marginBottom: spacing.md,
+          boxShadow: `inset 0 1px 0 ${colors.cardHighlight}`,
         }}>
           <div style={{ color: colors.fairyGold, fontSize: 12, fontWeight: 700, marginBottom: spacing.xs }}>
             До следующего жетона
@@ -266,11 +271,12 @@ function RelationshipDetails({ archetype, onClose }: { archetype: Archetype; onC
 
         <div style={{
           padding: spacing.md,
-          background: 'rgba(255,255,255,0.03)',
-          border: `1px dashed ${colors.fairyGold}55`,
+          background: gradients.card,
+          border: `1px dashed ${colors.fairyGold}88`,
           borderRadius: 12,
           color: colors.textSecondary,
           fontSize: 12, lineHeight: 1.5,
+          boxShadow: `inset 0 1px 0 ${colors.cardHighlight}`,
         }}>
           {t.relations.tokenSpendHint}
         </div>
@@ -283,15 +289,16 @@ function StatTile({ label, value, accent }: { label: string; value: number; acce
   return (
     <div style={{
       padding: '10px 12px',
-      background: 'rgba(255,255,255,0.04)',
-      border: `1px solid ${accent}55`,
+      background: gradients.card,
+      border: `1.5px solid ${accent}`,
       borderRadius: 10,
       textAlign: 'center',
+      boxShadow: `inset 0 1px 0 ${colors.cardHighlight}, 0 2px 6px rgba(0,0,0,0.25)`,
     }}>
       <div style={{ color: accent, fontSize: 22, fontWeight: 800, lineHeight: 1.1, fontVariantNumeric: 'tabular-nums' }}>
         {value}
       </div>
-      <div style={{ color: colors.textMuted, fontSize: 10, marginTop: 2 }}>
+      <div style={{ color: colors.textSecondary, fontSize: 10, marginTop: 2, fontWeight: 600 }}>
         {label}
       </div>
     </div>
@@ -302,13 +309,14 @@ function ProgressBar({ label, progress, accent }: { label: string; progress: num
   const p = Math.max(0, Math.min(1, progress))
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: colors.textMuted, marginBottom: 3 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: colors.textSecondary, marginBottom: 3, fontWeight: 600 }}>
         <span>{label}</span>
         <span>{Math.round(p * 100)}%</span>
       </div>
       <div style={{
-        height: 6, background: 'rgba(255,255,255,0.08)',
+        height: 7, background: 'rgba(0,0,0,0.4)',
         borderRadius: 3, overflow: 'hidden',
+        border: `1px solid ${colors.cardBorder}`,
       }}>
         <div style={{
           width: `${p * 100}%`, height: '100%',
