@@ -263,7 +263,7 @@ function LeaderboardRow({ entry }: { entry: LeaderboardEntryDTO }) {
     <BaseRow
       entry={entry}
       rightTop={`${Math.round(entry.totalWealth).toLocaleString('ru')} г`}
-      rightBottom={entry.intuitionScore > 0 ? `👁 ${entry.intuitionScore}` : null}
+      rightBottom={null}
     />
   )
 }
@@ -284,7 +284,7 @@ function DaysRow({ entry }: { entry: LeaderboardEntryDTO }) {
     <BaseRow
       entry={entry}
       rightTop={t.leaderboard.days(entry.currentDay)}
-      rightBottom={`👁 ${entry.intuitionScore}`}
+      rightBottom={null}
       hideDayInSub
     />
   )

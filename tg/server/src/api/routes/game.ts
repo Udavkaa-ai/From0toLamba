@@ -693,18 +693,30 @@ export async function gameRoutes(app: FastifyInstance) {
         firstName: true,
         username: true,
         referralBonusGranted: true,
-        gameState: { select: { intuitionScore: true, currentDay: true } },
+        gameState: { select: { currentDay: true } },
       },
       orderBy: { createdAt: 'asc' },
     })
 
+    // В версии 4.0 бонус начисляется по числу ВЗЯТЫХ дел (Project с
+    // investedAmountRubles > 0), а не по «чуйке». Считаем для каждого реферала.
+    const dealsCounts = await Promise.all(
+      referred.map(r =>
+        prisma.project.count({
+          where: { userId: r.id, investedAmountRubles: { gt: 0 } },
+        })
+      )
+    )
+
     return reply.send({
-      referrals: referred.map(r => ({
+      referrals: referred.map((r, idx) => ({
         userId: r.id,
         firstName: r.firstName,
         username: r.username ?? null,
         bonusGranted: r.referralBonusGranted,
-        intuitionScore: r.gameState?.intuitionScore ?? 0,
+        // Поле оставлено intuitionScore для совместимости со старым клиентом —
+        // фактически тут число взятых дел.
+        intuitionScore: dealsCounts[idx],
         currentDay: r.gameState?.currentDay ?? 0,
       })),
       threshold: REFERRAL_DEALS_THRESHOLD,
