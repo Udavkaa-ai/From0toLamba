@@ -105,7 +105,24 @@ export function NextWeekFab() {
 
   const label = isLocked
     ? `⏳ ${formatRemaining(remainingMs)}`
-    : `🔁 ${t.home.nextDay}`
+    : t.home.nextDay
+
+  // Иконка «обновить / следующая неделя» — две стрелки в петле,
+  // нарисованные SVG (а не эмодзи 🔁, который рендерится по-разному
+  // на iOS / Android / Telegram WebView).
+  const RefreshIcon = ({ size = 22 }: { size?: number }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2.2"
+      strokeLinecap="round" strokeLinejoin="round"
+      aria-hidden>
+      {/* Верхняя стрелка вправо: дуга + наконечник */}
+      <path d="M3 13a9 9 0 0 1 15-6.7" />
+      <polyline points="18 3 18 7 14 7" />
+      {/* Нижняя стрелка влево */}
+      <path d="M21 11a9 9 0 0 1-15 6.7" />
+      <polyline points="6 21 6 17 10 17" />
+    </svg>
+  )
 
   return (
     <motion.button
@@ -126,9 +143,13 @@ export function NextWeekFab() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18, delay: 0.08 }}
-            style={{ fontSize: 14, padding: '0 18px' }}
+            style={{
+              fontSize: 14, padding: '0 14px',
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+            }}
           >
-            {label}
+            <RefreshIcon size={18} />
+            <span>{label}</span>
           </motion.span>
         ) : (
           <motion.span
@@ -137,9 +158,9 @@ export function NextWeekFab() {
             animate={{ opacity: 1, rotate: 0 }}
             exit={{ opacity: 0, rotate: 90 }}
             transition={{ duration: 0.2 }}
-            style={{ fontSize: 22, lineHeight: 1 }}
+            style={{ display: 'inline-flex', lineHeight: 0 }}
           >
-            🔁
+            <RefreshIcon size={22} />
           </motion.span>
         )}
       </AnimatePresence>
