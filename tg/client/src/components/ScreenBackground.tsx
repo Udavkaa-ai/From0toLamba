@@ -3,7 +3,7 @@ import { SparklesOverlay } from './SparklesOverlay'
 import { gradients, colors } from '@/theme'
 import { getTheme } from '@/theme/colors'
 
-export const APP_VERSION = 'бета 4.1.9'
+export const APP_VERSION = 'бета 4.1.10'
 
 interface ScreenBackgroundProps {
   children: ReactNode
@@ -35,13 +35,12 @@ export function ScreenBackground({ children, showSparkles = true, showMist = tru
         overflow: 'hidden',
       }}
     >
-      {/* Фоновое изображение страницы.
-         В Сказочной теме НЕ показываем — тёмные фотографии (нагенерены под
-         classic) при alpha 0.18 поверх медового дерева дают мутный жёлто-
-         коричневый налёт. TODO: сгенерить отдельный набор bg/HOME_*.webp
-         для fairy через tools/banners/generate_backgrounds.py — светлые
-         ярмарочные сцены. Пока чисто градиент + золотой ореол. */}
-      {bgImage && getTheme() !== 'fairy' && (
+      {/* Фоновое изображение страницы. Путь подбирается homeBackground()/
+         PAGE_BG автоматически с суффиксом _LIGHT для Сказочной темы
+         (солнечные ярмарочные сцены из backgrounds_light.json). Если файла
+         нет на сервере — браузер просто не покажет картинку, видимым
+         останется тёплый градиент. */}
+      {bgImage && (
         <div
           style={{
             position: 'fixed',
@@ -77,17 +76,27 @@ export function ScreenBackground({ children, showSparkles = true, showMist = tru
   )
 }
 
-/** Фон главной страницы — меняется каждые 7 дней игры (7 вариантов). */
+/** Фон главной страницы — меняется каждые 7 дней игры (7 вариантов).
+ *  В Сказочной теме используется параллельный набор файлов с суффиксом
+ *  `_LIGHT` (солнечные ярмарочные сцены, см. tools/banners/backgrounds_light.json
+ *  и generate_backgrounds_light.py). Если файла нет — ScreenBackground
+ *  в fairy-теме сейчас вообще пропускает bgImage; светлые сгенерятся позже. */
 export function homeBackground(currentDay: number): string {
   const variant = (Math.floor(currentDay / 7) % 7) + 1
-  return `/backgrounds/HOME_0${variant}.webp`
+  const suffix = getTheme() === 'fairy' ? '_LIGHT' : ''
+  return `/backgrounds/HOME_0${variant}${suffix}.webp`
 }
 
-/** Статичные фоны для остальных страниц. */
+/** Статичные фоны для остальных страниц. В Сказочной теме — `_LIGHT`-вариант. */
+function bgPath(name: string): string {
+  const suffix = getTheme() === 'fairy' ? '_LIGHT' : ''
+  return `/backgrounds/${name}${suffix}.webp`
+}
+
 export const PAGE_BG = {
-  inbox:       '/backgrounds/BG_INBOX.webp',
-  portfolio:   '/backgrounds/BG_PORTFOLIO.webp',
-  stats:       '/backgrounds/BG_STATS.webp',
-  leaderboard: '/backgrounds/BG_LEADERBOARD.webp',
-  registry:    '/backgrounds/BG_REGISTRY.webp',
+  get inbox()       { return bgPath('BG_INBOX') },
+  get portfolio()   { return bgPath('BG_PORTFOLIO') },
+  get stats()       { return bgPath('BG_STATS') },
+  get leaderboard() { return bgPath('BG_LEADERBOARD') },
+  get registry()    { return bgPath('BG_REGISTRY') },
 } as const
