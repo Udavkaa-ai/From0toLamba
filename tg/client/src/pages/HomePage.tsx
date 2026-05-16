@@ -1979,11 +1979,13 @@ function InboxFeedCard({ project, delay, onPress }: { project: ProjectDTO; delay
             </div>
             <div style={{
               marginTop: 6, display: 'inline-block',
-              padding: '3px 8px',
-              background: `${colors.fairyGold}18`,
-              border: `1px solid ${colors.fairyGold}55`,
+              padding: '5px 12px',
+              background: gradients.goldBtn,
+              border: `1.5px solid #6A3D10`,
+              borderBottom: `2px solid #5A2E08`,
               borderRadius: 8,
-              color: colors.fairyGold, fontSize: 11, fontWeight: 700,
+              color: '#2A1A08', fontSize: 11, fontWeight: 800,
+              boxShadow: '0 2px 6px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,235,170,0.55)',
             }}>
               {t.inbox.studyBtn}
             </div>
