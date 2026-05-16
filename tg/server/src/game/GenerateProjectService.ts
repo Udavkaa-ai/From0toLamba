@@ -42,9 +42,11 @@ export async function generateProject(
   lang = 'ru',
 ): Promise<string> {
   // VIP-перехват: с шансом SPONSOR_CHANCE генерируем спонсорское дело
-  // вместо обычного, если в БД есть активная кампания. Не применяется
-  // для preloaded (фоновых) — спонсорское всегда сразу в инбоксе.
-  if (!options.preloaded && !overrideFate && Math.random() < SPONSOR_CHANCE) {
+  // вместо обычного, если в БД есть активная кампания. Не зависит от
+  // preloaded — материализация спонсора всегда сразу в инбоксе
+  // (isInbox=true, isPreloaded=false внутри materializeSponsorProject),
+  // даже если этот вызов был фоновым из advance-day preload-цикла.
+  if (!overrideFate && Math.random() < SPONSOR_CHANCE) {
     const campaign = await pickRandomActiveCampaign()
     if (campaign) {
       const sponsored = await materializeSponsorProject(userId, campaign)

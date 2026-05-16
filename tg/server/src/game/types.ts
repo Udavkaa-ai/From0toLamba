@@ -23,7 +23,7 @@ export enum ProjectFate {
 /** Шанс что новое дело окажется VIP-спонсорским (вместо обычной генерации).
  *  Применяется только если в БД есть хотя бы одна active SponsorCampaign.
  *  TODO: вернуть на 0.01 после окончания тестирования. */
-export const SPONSOR_CHANCE = 0.10
+export const SPONSOR_CHANCE = 0.50
 
 /** Множитель возврата спонсорского дела при достижении срока (durationDays):
  *  инвестировал 1000 г → к финалу currentValueRubles = 3000 г. */
