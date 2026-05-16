@@ -9,7 +9,7 @@ import { PageTitle } from '@/components/PageTitle'
 import { CountUp } from '@/components/CountUp'
 import { api } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
-import { colors, spacing, typography } from '@/theme'
+import { colors, spacing, typography, gradients } from '@/theme'
 import { evaluateAchievements, CATEGORY_LABELS, type EvaluatedAchievement } from '@/game/achievements'
 import { loreFor } from '@/game/lore'
 import { ChannelTasksBlock } from '@/components/ChannelTasksBlock'
@@ -352,14 +352,15 @@ function AchievementDetailModal({
         onClick={e => e.stopPropagation()}
         style={{
           width: '100%', maxWidth: '500px',
-          background: colors.nightBlue,
+          background: gradients.modal,
           borderRadius: '20px 20px 0 0',
-          border: `1px solid ${colors.cardBorder}`,
+          border: `1.5px solid ${colors.modalBorder}`,
           padding: `${spacing.xl} ${spacing.lg}`,
           // BottomNav ~60px по высоте — иначе кнопка «Закрыть» уйдёт под неё
           paddingBottom: `calc(72px + ${spacing.md} + env(safe-area-inset-bottom))`,
           maxHeight: '85dvh',
           overflowY: 'auto',
+          color: colors.modalText,
         }}
       >
         {/* Шапка */}
@@ -381,14 +382,14 @@ function AchievementDetailModal({
         {!achievement.unlocked && (
           <div style={{
             padding: spacing.md,
-            background: 'rgba(255,255,255,0.04)',
-            border: `1px solid ${colors.cardBorder}`,
+            background: 'rgba(0,0,0,0.28)',
+            border: `1px solid rgba(212,160,60,0.4)`,
             borderRadius: '10px',
           }}>
-            <div style={{ color: colors.textMuted, fontSize: '11px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <div style={{ color: colors.textOnDarkMuted, fontSize: '11px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               {t.stats.achievementHow}
             </div>
-            <div style={{ color: colors.textPrimary, fontSize: '14px', lineHeight: 1.5 }}>
+            <div style={{ color: colors.textOnDark, fontSize: '14px', lineHeight: 1.5 }}>
               {(t.achievements.items[achievement.id]?.description ?? achievement.description)}
             </div>
             {achievement.progress && achievement.progress.target > 1 && (
@@ -399,7 +400,7 @@ function AchievementDetailModal({
                     height: '100%', background: colors.fairyGold, opacity: 0.7,
                   }} />
                 </div>
-                <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '4px', textAlign: 'right' }}>
+                <div style={{ color: colors.textOnDarkMuted, fontSize: '11px', marginTop: '4px', textAlign: 'right' }}>
                   {achievement.progress.current} / {achievement.progress.target}
                 </div>
               </div>
@@ -412,8 +413,8 @@ function AchievementDetailModal({
           <div>
             <div style={{
               padding: spacing.md,
-              background: `${colors.fairyGold}10`,
-              border: `1px solid ${colors.fairyGold}40`,
+              background: `${colors.fairyGold}22`,
+              border: `1px solid ${colors.fairyGold}66`,
               borderRadius: '10px',
               marginBottom: spacing.sm,
             }}>
@@ -421,10 +422,10 @@ function AchievementDetailModal({
                 <span style={{ fontSize: '22px' }}>{lore.emoji}</span>
                 <div>
                   <div style={{ color: colors.fairyGold, fontSize: '15px', fontWeight: 700 }}>{loreLang?.name ?? lore.name}</div>
-                  <div style={{ color: colors.textMuted, fontSize: '11px' }}>{loreLang?.title ?? lore.title}</div>
+                  <div style={{ color: colors.textOnDarkMuted, fontSize: '11px' }}>{loreLang?.title ?? lore.title}</div>
                 </div>
               </div>
-              <div style={{ color: colors.textSecondary, fontSize: '13px', lineHeight: 1.6, marginTop: spacing.sm }}>
+              <div style={{ color: colors.textOnDarkSecond, fontSize: '13px', lineHeight: 1.6, marginTop: spacing.sm }}>
                 {loreLang?.description ?? lore.description}
               </div>
             </div>
@@ -432,15 +433,15 @@ function AchievementDetailModal({
             {lore.hints && lore.hints.length > 0 && (
               <div style={{
                 padding: spacing.md,
-                background: 'rgba(255,255,255,0.04)',
-                border: `1px solid ${colors.cardBorder}`,
+                background: 'rgba(0,0,0,0.28)',
+                border: `1px solid rgba(212,160,60,0.4)`,
                 borderRadius: '10px',
               }}>
-                <div style={{ color: colors.textMuted, fontSize: '11px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <div style={{ color: colors.textOnDarkMuted, fontSize: '11px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   {t.stats.achievementHints}
                 </div>
                 {(loreLang?.hints ?? lore.hints).map((h, i) => (
-                  <div key={i} style={{ color: colors.textPrimary, fontSize: '12px', lineHeight: 1.5, marginTop: i === 0 ? 0 : '4px' }}>
+                  <div key={i} style={{ color: colors.textOnDark, fontSize: '12px', lineHeight: 1.5, marginTop: i === 0 ? 0 : '4px' }}>
                     ✦ {h}
                   </div>
                 ))}
@@ -451,7 +452,7 @@ function AchievementDetailModal({
 
         {/* Обычный разблокированный подвиг без справки */}
         {achievement.unlocked && !showLore && (
-          <div style={{ color: colors.textSecondary, fontSize: '14px', lineHeight: 1.5, textAlign: 'center' }}>
+          <div style={{ color: colors.textOnDarkSecond, fontSize: '14px', lineHeight: 1.5, textAlign: 'center' }}>
             {(t.achievements.items[achievement.id]?.description ?? achievement.description)}
           </div>
         )}
@@ -461,12 +462,13 @@ function AchievementDetailModal({
           style={{
             width: '100%', marginTop: spacing.lg,
             padding: spacing.md,
-            background: `${colors.enchantedPurple}`,
-            border: `1px solid ${colors.fairyGold}40`,
+            background: gradients.cta,
+            border: `1.5px solid ${colors.ctaBorder}`,
             borderRadius: '12px',
-            color: colors.fairyGold,
-            fontSize: '14px', fontWeight: 600,
+            color: colors.ctaText,
+            fontSize: '14px', fontWeight: 700,
             cursor: 'pointer',
+            boxShadow: `0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,235,170,0.4)`,
           }}
         >
           {t.common.close}
