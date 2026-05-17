@@ -158,12 +158,12 @@ export function KoscheiGame({ seed, onComplete, restoredErrorCount }: KoscheiGam
 
     // Шаги: индекс символа, размер emoji, момент появления (сек).
     const STEPS: Array<{ symbolIdx: number; size: number; spawnAt: number }> = [
-      { symbolIdx: 0, size: 110, spawnAt: 0.0 },   // Дуб — основание
-      { symbolIdx: 1, size: 92,  spawnAt: 0.7 },   // Сундук на дубе
-      { symbolIdx: 2, size: 78,  spawnAt: 1.5 },   // Заяц из сундука
-      { symbolIdx: 3, size: 66,  spawnAt: 2.3 },   // Утка из зайца
-      { symbolIdx: 4, size: 54,  spawnAt: 3.1 },   // Яйцо из утки
-      { symbolIdx: 5, size: 46,  spawnAt: 3.9 },   // Игла из яйца
+      { symbolIdx: 0, size: 76, spawnAt: 0.0 },   // Дуб — основание
+      { symbolIdx: 1, size: 68, spawnAt: 0.7 },   // Сундук на дубе
+      { symbolIdx: 2, size: 60, spawnAt: 1.5 },   // Заяц из сундука
+      { symbolIdx: 3, size: 54, spawnAt: 2.3 },   // Утка из зайца
+      { symbolIdx: 4, size: 48, spawnAt: 3.1 },   // Яйцо из утки
+      { symbolIdx: 5, size: 42, spawnAt: 3.9 },   // Игла из яйца
     ]
     // Цикл анимации: build → hold → dissolve → restart.
     // 1) build:    каждый эмодзи поэтапно «выпрыгивает» (spawnAt + appearDur)
@@ -281,18 +281,19 @@ export function KoscheiGame({ seed, onComplete, restoredErrorCount }: KoscheiGam
         }
       })
 
-      // Искорки появляются вместе с иглой и кружат вокруг неё
-      const needleAt = STEPS[STEPS.length - 1].spawnAt
-      const needleLocal = cycle - needleAt
+      // Искорки появляются вместе с иглой и кружат вокруг неё.
+      // ВАЖНО: alpha привязан к alpha иглы, а не к фазе цикла —
+      // иначе при dissolve иголка гасла, а искры продолжали висеть.
+      const needleNode = nodes[STEPS.length - 1]
       const needleY = baseY - (STEPS.length - 1) * stepGap
-      if (needleLocal >= 0) {
-        const fadeIn = Math.min(1, needleLocal * 2)
+      const needleAlpha = needleNode.alpha
+      if (needleAlpha > 0.05) {
         sparkles.forEach((g, i) => {
           const ang = (i / sparkles.length) * Math.PI * 2 + cycle * 0.7
           const radius = 30 + Math.sin(cycle * 2 + i) * 5
           g.x = cx + Math.cos(ang) * radius
           g.y = needleY + Math.sin(ang) * radius * 0.6
-          g.alpha = fadeIn * (0.55 + 0.45 * Math.sin(cycle * 4 + i))
+          g.alpha = needleAlpha * (0.55 + 0.45 * Math.sin(cycle * 4 + i))
         })
       } else {
         sparkles.forEach(g => { g.alpha = 0 })
