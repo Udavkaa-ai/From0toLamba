@@ -1,5 +1,5 @@
 import { CSSProperties, ReactNode } from 'react'
-import { colors, gradients, spacing } from '@/theme'
+import { colors, gradients, spacing, ctaButton } from '@/theme'
 
 /** Шапка мини-игры — резная деревянная плашка с таймером, счётчиком, жизнями.
  *  Заменяет 3 дивиатура «title / hint / score row» во всех 6 играх.
@@ -138,22 +138,15 @@ function Lives({ values }: { values: boolean[] }) {
   )
 }
 
-/** Золотая 3D-кнопка «Принять испытание» — главное CTA в интро и результате. */
+/** Золотая 3D-кнопка «Принять испытание» — главное CTA в интро и результате.
+ *  Использует унифицированный ctaButton.lg + лёгкое расширение под полный
+ *  width и небольшой text-shadow для серьёзности. */
 export const goldBtnStyle: CSSProperties = {
+  ...ctaButton.lg,
   width: '100%',
   padding: `${spacing.md} ${spacing.lg}`,
-  background: gradients.goldBtn,
-  border: 'none',
-  borderTop: '1px solid rgba(255,255,255,0.4)',
-  borderBottom: '3px solid #7A5000',
-  borderRadius: 8,
-  color: '#2A1A08',
-  fontFamily: "'Cinzel', 'Marcellus', serif",
-  fontWeight: 700,
   fontSize: '15px',
   letterSpacing: '0.04em',
-  cursor: 'pointer',
-  boxShadow: '0 5px 0 #5A3800, 0 8px 22px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.35)',
   textShadow: '0 1px 0 rgba(255,255,255,0.25)',
 }
 

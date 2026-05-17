@@ -22,7 +22,7 @@ import { useGameStore } from '@/stores/gameStore'
 import { useTourStore, isTourDone } from '@/stores/tourStore'
 import { useLangStore, type Lang } from '@/stores/langStore'
 import { useT } from '@/i18n'
-import { colors, spacing, typography, gradients } from '@/theme'
+import { colors, spacing, typography, gradients, ctaButton, bigNumber } from '@/theme'
 import { getTheme, setTheme } from '@/theme/colors'
 import { playSound, isMuted, setMuted, isMusicMuted, setMusicMuted, getVolume, setVolume } from '@/sounds'
 
@@ -1282,24 +1282,7 @@ export function HomePage() {
         <motion.div data-tour="balance" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <FairyCard accent style={{ marginBottom: spacing.lg, textAlign: 'center' }}>
             <div style={{ color: colors.textPrimary, fontSize: '12px', marginBottom: '4px', fontWeight: 600 }}>{t.home.freeBalance}</div>
-            <div style={{
-              color: colors.fairyGold,
-              fontFamily: typography.headingFontFamily,
-              fontSize: '40px',
-              fontWeight: 700,
-              letterSpacing: '0.02em',
-              // Темная обводка нужна потому что цифра золотая, а пергамент
-              // карточки тоже желтоватый — без неё цифра «плавает».
-              textShadow: [
-                `0 0 28px ${colors.fairyGold}50`,
-                '0 2px 4px rgba(0,0,0,0.7)',
-                '1px 0 0 rgba(0,0,0,0.55)',
-                '-1px 0 0 rgba(0,0,0,0.55)',
-                '0 1px 0 rgba(0,0,0,0.55)',
-                '0 -1px 0 rgba(0,0,0,0.55)',
-              ].join(', '),
-              fontVariantNumeric: 'tabular-nums',
-            }}>
+            <div style={bigNumber(40)}>
               <CountUp value={gameState.balance} />
               <span style={{ fontSize: '26px', marginLeft: '6px', opacity: 0.85 }}>{t.common.currency}</span>
             </div>
@@ -1348,23 +1331,13 @@ export function HomePage() {
           whileTap={{ scale: 0.97 }}
           onClick={() => { tgHaptic?.impactOccurred('light'); navigate('/registry') }}
           style={{
+            ...ctaButton.lg,
             width: '100%',
             marginTop: spacing.md,
-            padding: '12px 16px',
-            background: gradients.cta,
-            border: `1.5px solid ${colors.ctaBorder}`,
-            borderRadius: '12px',
-            color: colors.ctaText,
-            fontWeight: 700,
-            fontSize: '14px',
-            cursor: 'pointer',
-            letterSpacing: '0.02em',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '8px',
-            fontFamily: 'inherit',
-            boxShadow: '0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,235,170,0.4)',
           }}
         >
           <span style={{ fontSize: 18 }}>📜</span>
@@ -2016,13 +1989,7 @@ function ActiveProjectCard({ project, delay, onPress }: { project: ProjectDTO; d
         <div style={{ marginTop: spacing.sm, display: 'flex', justifyContent: 'flex-end' }}>
           <button
             onClick={e => { e.stopPropagation(); navigate('/portfolio') }}
-            style={{
-              padding: '5px 12px', background: gradients.goldBtn,
-              border: `1px solid ${colors.fairyGoldDim}`, borderRadius: '8px',
-              color: colors.textOnGold, cursor: 'pointer', fontSize: '11px',
-              fontWeight: 700,
-              boxShadow: `0 2px 6px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,235,170,0.5)`,
-            }}
+            style={ctaButton.sm}
           >
             {t.home.activeCardAddMore}
           </button>
@@ -2072,14 +2039,9 @@ function InboxFeedCard({ project, delay, onPress }: { project: ProjectDTO; delay
               {typeLabel} · {project.developerName}
             </div>
             <div style={{
-              marginTop: 6, display: 'inline-block',
-              padding: '5px 12px',
-              background: gradients.goldBtn,
-              border: `1.5px solid #6A3D10`,
-              borderBottom: `2px solid #5A2E08`,
-              borderRadius: 8,
-              color: '#2A1A08', fontSize: 11, fontWeight: 800,
-              boxShadow: '0 2px 6px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,235,170,0.55)',
+              ...ctaButton.md,
+              marginTop: 6,
+              display: 'inline-block',
             }}>
               {t.inbox.studyBtn}
             </div>

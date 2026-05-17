@@ -266,6 +266,43 @@ export const shadows = {
   candleGlow: `0 0 16px ${colors.candleLight}80, 0 0 32px ${colors.candleLight}40`,
 } as const
 
+/**
+ * Унифицированные стили CTA-кнопок (золотая основа, тёмная сепия).
+ * Используются ВЕЗДЕ где нужна «активная» кнопка-действие:
+ * Летопись, Принять испытание, Добавить вложение, Пропустить и т.д.
+ *
+ * Размеры:
+ *   • lg — главные CTA на всю ширину (Летопись, Принять испытание на интро)
+ *   • md — среднее: кнопки внутри карточек дел (Принять испытание в инбоксе)
+ *   • sm — компактное: иконочные / inline (Добавить вложение в листе)
+ */
+function makeCtaButton(size: 'sm' | 'md' | 'lg') {
+  const dims = size === 'lg'
+    ? { padding: '12px 16px', borderRadius: '12px', fontSize: 14, borderBottom: 2 }
+    : size === 'md'
+      ? { padding: '8px 14px', borderRadius: '10px', fontSize: 12, borderBottom: 2 }
+      : { padding: '5px 10px', borderRadius: '8px',  fontSize: 11, borderBottom: 1 }
+  return {
+    background: gradients.cta,
+    border: `1.5px solid ${colors.ctaBorder}`,
+    borderBottom: `${dims.borderBottom}px solid ${colors.ctaBorder}`,
+    borderRadius: dims.borderRadius,
+    color: colors.ctaText,
+    padding: dims.padding,
+    fontSize: dims.fontSize,
+    fontWeight: 800,
+    letterSpacing: '0.02em',
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+    boxShadow: '0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,235,170,0.45)',
+  } as const
+}
+export const ctaButton = {
+  lg: makeCtaButton('lg'),
+  md: makeCtaButton('md'),
+  sm: makeCtaButton('sm'),
+} as const
+
 /** Цвет редкости по InvestorRank */
 export const RANK_COLOR: Record<string, string> = {
   NEWBIE: colors.rankBronze,

@@ -9,7 +9,7 @@ import { PageTitle, PageSubtitle } from '@/components/PageTitle'
 import { LockIcon } from '@/components/icons'
 import { api, type ProjectDTO, type PostMortemDTO, type DailyUpdateDTO, type TransactionDTO } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
-import { colors, spacing, typography, gradients } from '@/theme'
+import { colors, spacing, typography, gradients, ctaButton, bigNumber } from '@/theme'
 import { CountUp } from '@/components/CountUp'
 import { useT } from '@/i18n'
 
@@ -102,16 +102,8 @@ export function PortfolioPage() {
               whileTap={{ scale: 0.96 }}
               onClick={() => navigate('/registry')}
               style={{
+                ...ctaButton.lg,
                 width: '100%', marginTop: spacing.sm,
-                padding: '12px',
-                background: gradients.cta,
-                border: `1.5px solid ${colors.ctaBorder}`,
-                borderRadius: '12px',
-                color: colors.ctaText,
-                fontWeight: 700,
-                fontSize: '14px',
-                cursor: 'pointer',
-                letterSpacing: '0.02em',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -335,17 +327,7 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
           <div style={{ color: colors.textMuted, fontSize: '10px', letterSpacing: '0.02em' }}>
             {t.portfolio.investedIn} {Math.floor(project.investedAmountRubles)} {t.common.currency}
           </div>
-          <div style={{
-            color: colors.fairyGold,
-            fontFamily: typography.headingFontFamily,
-            fontSize: '22px',
-            fontWeight: 700,
-            lineHeight: 1.1,
-            letterSpacing: '0.02em',
-            fontVariantNumeric: 'tabular-nums',
-            textShadow: `0 0 16px ${colors.fairyGold}30`,
-            marginTop: '2px',
-          }}>
+          <div style={{ ...bigNumber(22), marginTop: '2px' }}>
             <CountUp value={project.currentValueRubles} /> {t.common.currency}
           </div>
           <div style={{ color: profit >= 0 ? colors.success : colors.danger, fontSize: '12px', fontWeight: 600 }}>
@@ -390,12 +372,7 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
             whileTap={{ scale: 0.94 }}
             transition={{ duration: 0.1 }}
             onClick={() => { setShowAddInvest(!showAddInvest); setShowWithdraw(false) }}
-            style={{
-              flex: 1, padding: '9px 8px', background: gradients.goldBtn,
-              border: `1px solid ${colors.fairyGoldDim}`, borderRadius: '10px',
-              color: colors.textOnGold, cursor: 'pointer', fontSize: '12px', fontWeight: 700,
-              boxShadow: `0 2px 6px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,235,170,0.5)`,
-            }}
+            style={{ ...ctaButton.md, flex: 1 }}
           >
             {t.portfolio.addBtn}
           </motion.button>
@@ -670,28 +647,17 @@ function TransactionSection({ transactions }: { transactions: TransactionDTO[] }
   if (transactions.length === 0) return null
   return (
     <section style={{ marginTop: spacing.xl }}>
-      {/* CTA-стиль как у кнопки Летописи — чтобы не выглядело как
-          невзрачный текст-аккордеон. Раньше был plain <button> без фона. */}
+      {/* CTA-стиль как у кнопки Летописи — единый паттерн через ctaButton.lg */}
       <motion.button
         whileTap={{ scale: 0.97 }}
         onClick={() => setOpen(v => !v)}
         style={{
+          ...ctaButton.lg,
           width: '100%',
-          padding: '12px 16px',
-          background: gradients.cta,
-          border: `1.5px solid ${colors.ctaBorder}`,
-          borderRadius: '12px',
-          color: colors.ctaText,
-          fontWeight: 700,
-          fontSize: '14px',
-          cursor: 'pointer',
-          letterSpacing: '0.02em',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           gap: '8px',
-          fontFamily: 'inherit',
-          boxShadow: '0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,235,170,0.4)',
           marginBottom: open ? spacing.sm : 0,
         }}
       >

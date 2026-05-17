@@ -1,7 +1,34 @@
 export * from './colors'
+import type { CSSProperties } from 'react'
+import { colors } from './colors'
 
 const headingFamily = "'Cinzel', 'Marcellus', 'Times New Roman', serif"
 const bodyFamily = "'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif"
+
+/** Единый стиль больших золотых цифр (балансы, суммы наград, главные значения).
+ *  Тёмная многослойная обводка + золотое свечение → цифра читается на любом
+ *  фоне (тёмный градиент classic / медовый пергамент fairy / яркие bg-картинки).
+ *  Размер задаётся параметром, тени масштабируются автоматически. */
+export function bigNumber(size: number): CSSProperties {
+  const glow = Math.round(size * 0.65)
+  return {
+    color: colors.fairyGold,
+    fontFamily: headingFamily,
+    fontSize: `${size}px`,
+    fontWeight: 700,
+    letterSpacing: '0.02em',
+    lineHeight: 1.05,
+    fontVariantNumeric: 'tabular-nums' as const,
+    textShadow: [
+      `0 0 ${glow}px ${colors.fairyGold}50`,
+      '0 2px 4px rgba(0,0,0,0.7)',
+      '1px 0 0 rgba(0,0,0,0.55)',
+      '-1px 0 0 rgba(0,0,0,0.55)',
+      '0 1px 0 rgba(0,0,0,0.55)',
+      '0 -1px 0 rgba(0,0,0,0.55)',
+    ].join(', '),
+  }
+}
 
 export const typography = {
   fontFamily: bodyFamily,

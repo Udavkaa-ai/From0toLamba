@@ -7,7 +7,7 @@ import { FairyCard, OrnamentDivider, SkeletonCard } from '@/components/FairyCard
 import { PageTitle, PageSubtitle } from '@/components/PageTitle'
 import { VipArrivalOverlay, getSeenVipIds, markVipSeen } from '@/components/VipArrivalOverlay'
 import { api, type ProjectDTO } from '@/api/client'
-import { colors, spacing, gradients } from '@/theme'
+import { colors, spacing, gradients, ctaButton } from '@/theme'
 import { useT } from '@/i18n'
 
 export function InboxPage() {
@@ -180,28 +180,9 @@ function InboxCard({ project, onClick, tourAttr }: { project: ProjectDTO; onClic
         </div>
 
         <div style={{
+          ...ctaButton.lg,
           marginTop: spacing.md,
-          padding: '11px 16px',
-          background: gradients.goldBtn,
-          // Толстая тёмная обводка + 3D-fake (top highlight + bottom shade)
-          // делает кнопку чётко выпуклой на пергаментной карточке. Раньше
-          // была почти заподлицо с парчментом.
-          border: `1.5px solid #6A3D10`,
-          borderTop: `1.5px solid #8B5A2B`,
-          borderBottom: `3px solid #5A2E08`,
-          borderRadius: '12px',
-          color: '#2A1A08',
-          fontSize: '14px',
           textAlign: 'center',
-          fontWeight: 800,
-          letterSpacing: '0.02em',
-          boxShadow: `
-            0 4px 12px rgba(0,0,0,0.45),
-            0 0 0 1px rgba(0,0,0,0.2),
-            inset 0 1px 0 rgba(255,235,170,0.65),
-            inset 0 -2px 4px rgba(120,76,30,0.35)
-          `,
-          textShadow: '0 1px 0 rgba(255,235,170,0.55)',
         }}
           {...(tourAttr ? { 'data-tour': 'charter-btn' } : {})}
         >

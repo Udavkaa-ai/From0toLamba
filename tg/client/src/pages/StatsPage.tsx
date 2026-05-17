@@ -8,7 +8,7 @@ import { PageTitle } from '@/components/PageTitle'
 import { CountUp } from '@/components/CountUp'
 import { api } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
-import { colors, spacing, typography, gradients } from '@/theme'
+import { colors, spacing, typography, gradients, ctaButton } from '@/theme'
 import { evaluateAchievements, CATEGORY_LABELS, type EvaluatedAchievement } from '@/game/achievements'
 import { loreFor } from '@/game/lore'
 import { ChannelTasksBlock } from '@/components/ChannelTasksBlock'
@@ -441,15 +441,8 @@ function AchievementDetailModal({
         <button
           onClick={onClose}
           style={{
+            ...ctaButton.lg,
             width: '100%', marginTop: spacing.lg,
-            padding: spacing.md,
-            background: gradients.cta,
-            border: `1.5px solid ${colors.ctaBorder}`,
-            borderRadius: '12px',
-            color: colors.ctaText,
-            fontSize: '14px', fontWeight: 700,
-            cursor: 'pointer',
-            boxShadow: `0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,235,170,0.4)`,
           }}
         >
           {t.common.close}

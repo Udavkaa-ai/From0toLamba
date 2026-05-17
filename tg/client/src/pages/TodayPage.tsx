@@ -5,7 +5,7 @@ import { ScreenBackground, PAGE_BG } from '@/components/ScreenBackground'
 import { FairyCard, OrnamentDivider, SkeletonCard } from '@/components/FairyCard'
 import { PageTitle, PageSubtitle } from '@/components/PageTitle'
 import { api, type TodayDTO } from '@/api/client'
-import { colors, spacing, typography } from '@/theme'
+import { colors, spacing, typography, bigNumber } from '@/theme'
 import { useGameStore } from '@/stores/gameStore'
 import { useT } from '@/i18n'
 import { playSound } from '@/sounds'
@@ -68,13 +68,11 @@ export function TodayPage() {
             exit={{ opacity: 0 }}
             transition={{ duration: 2, times: [0, 0.18, 0.78, 1] }}
             style={{
+              ...bigNumber(64),
+              fontWeight: 900,
               position: 'fixed', inset: 0, zIndex: 250,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               pointerEvents: 'none',
-              fontFamily: typography.headingFontFamily,
-              fontSize: 64, fontWeight: 900,
-              color: colors.fairyGold,
-              textShadow: `0 6px 24px ${colors.fairyGold}99`,
             }}
           >
             +{claimedAnim} г
@@ -98,14 +96,7 @@ function StreakBlock({ today, onClaim, pending }: {
       <div style={{ color: colors.textSecondary, fontSize: 12 }}>{t.today.youAtFair}</div>
       <motion.div
         initial={{ scale: 0.85 }} animate={{ scale: 1 }}
-        style={{
-          color: colors.fairyGold,
-          fontFamily: typography.headingFontFamily,
-          fontSize: 64, fontWeight: 800, lineHeight: 1.1,
-          marginTop: 4,
-          textShadow: `0 0 24px ${colors.fairyGold}55`,
-          fontVariantNumeric: 'tabular-nums',
-        }}
+        style={{ ...bigNumber(64), fontWeight: 800, marginTop: 4 }}
       >
         🔥 {streak}
       </motion.div>
