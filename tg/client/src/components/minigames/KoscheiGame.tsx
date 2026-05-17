@@ -165,17 +165,19 @@ export function KoscheiGame({ seed, onComplete, restoredErrorCount }: KoscheiGam
       { symbolIdx: 4, size: 54,  spawnAt: 3.1 },   // Яйцо из утки
       { symbolIdx: 5, size: 46,  spawnAt: 3.9 },   // Игла из яйца
     ]
-    // После того как пирамида построилась — каждый эмодзи независимо
-    // запускает цикл «увеличивается + растворяется» (bloom-fade).
-    // Период одного цикла одного эмодзи + сдвиг фазы между ними = волна.
-    //
-    // SCALE_TO небольшой (1.12) — эмодзи разных уровней пирамиды стоят
-    // в ~70px друг от друга, при крупном bloom (1.5+) фигуры физически
-    // налезали друг на друга визуально. 1.12 — едва заметное «дыхание»,
-    // которого хватает чтобы эффект чувствовался, но без перекрытий.
-    const BLOOM_DUR = 2.4
-    const BLOOM_PHASE_OFFSET = 0.4
-    const BLOOM_SCALE_TO   = 1.12
+    // Цикл анимации: build → hold → dissolve → restart.
+    // 1) build:    каждый эмодзи поэтапно «выпрыгивает» (spawnAt + appearDur)
+    // 2) hold:     пирамида целиком стоит ~1.2 сек (полюбоваться)
+    // 3) dissolve: каждый эмодзи плавно растёт + растворяется. Начинается
+    //              с иглы (верх пирамиды) и спускается к дубу.
+    // 4) restart:  модуло вокруг TOTAL_CYCLE → пирамида собирается заново.
+    const APPEAR_DUR = 0.55
+    const BUILD_END  = STEPS[STEPS.length - 1].spawnAt + APPEAR_DUR
+    const HOLD_DUR   = 1.2
+    const DISSOLVE_DUR_PER_STEP = 0.55
+    const DISSOLVE_STAGGER = 0.18
+    const DISSOLVE_DUR  = DISSOLVE_DUR_PER_STEP + DISSOLVE_STAGGER * (STEPS.length - 1)
+    const TOTAL_CYCLE   = BUILD_END + HOLD_DUR + DISSOLVE_DUR + 0.4
 
     const cx = W / 2
     const baseY = H * 0.82
@@ -214,38 +216,67 @@ export function KoscheiGame({ seed, onComplete, restoredErrorCount }: KoscheiGam
     const start = performance.now()
     const tick = () => {
       const now = performance.now()
-      // Время от старта без модуло — пирамида строится один раз, дальше
-      // живёт за счёт bloom-fade каждого эмодзи (а не за счёт пересборки).
-      const cycle = (now - start) / 1000
+      // Модуло вокруг полного цикла → build → hold → dissolve → restart.
+      const cycle = ((now - start) / 1000) % TOTAL_CYCLE
 
       STEPS.forEach((s, i) => {
         const node = nodes[i]
-        const local = cycle - s.spawnAt
         const homeY = baseY - i * stepGap
-        if (local < 0) {
-          node.alpha = 0
-          node.scale.set(0)
+
+        // Фаза 1: build (каждый эмодзи поэтапно прилетает)
+        if (cycle < BUILD_END) {
+          const local = cycle - s.spawnAt
+          if (local < 0) {
+            node.alpha = 0
+            node.scale.set(0)
+            node.y = homeY
+            return
+          }
+          if (local < APPEAR_DUR) {
+            const t = local / APPEAR_DUR
+            const e = easeOutBack(t)
+            node.alpha = Math.min(1, t * 1.6)
+            node.scale.set(Math.max(0, e))
+            node.y = homeY + (1 - t) * 18
+          } else {
+            node.alpha = 1
+            node.scale.set(1)
+            node.y = homeY
+          }
+          return
+        }
+
+        // Фаза 2: hold — пирамида стоит, лёгкое дыхание
+        if (cycle < BUILD_END + HOLD_DUR) {
+          const breath = 1 + Math.sin((cycle + i * 0.4) * 1.8) * 0.04
+          node.alpha = 1
+          node.scale.set(breath)
           node.y = homeY
           return
         }
-        const appearDur = 0.55
-        if (local < appearDur) {
-          const t = local / appearDur
-          const e = easeOutBack(t)
-          node.alpha = Math.min(1, t * 1.6)
-          node.scale.set(Math.max(0, e))
-          // «Выпрыгивает» вверх: стартует чуть ниже своего места
-          node.y = homeY + (1 - t) * 18
-        } else {
-          // Цикл bloom-fade: scale 1.0 → BLOOM_SCALE_TO + alpha 1.0 → 0.0
-          // за BLOOM_DUR секунд, фаза смещена по высоте пирамиды.
-          const phase = ((local - appearDur) + i * BLOOM_PHASE_OFFSET) % BLOOM_DUR
-          const t = phase / BLOOM_DUR
-          // smoothstep — симметричная S-кривая: плавный старт, плавное
-          // окончание. Эмодзи мягко вырастает и так же мягко растворяется.
+
+        // Фаза 3: dissolve — растворяется по очереди сверху вниз
+        // (i=5 / игла гаснет первой; i=0 / дуб — последним).
+        const dissolveStart = BUILD_END + HOLD_DUR + (STEPS.length - 1 - i) * DISSOLVE_STAGGER
+        const dissolveLocal = cycle - dissolveStart
+        if (dissolveLocal < 0) {
+          // Этот эмодзи ещё не начал гаснуть — стоит на месте
+          node.alpha = 1
+          node.scale.set(1)
+          node.y = homeY
+          return
+        }
+        if (dissolveLocal < DISSOLVE_DUR_PER_STEP) {
+          const t = dissolveLocal / DISSOLVE_DUR_PER_STEP
+          // smoothstep: плавный «надувается + растворяется»
           const eased = t * t * (3 - 2 * t)
-          node.scale.set(1.0 + (BLOOM_SCALE_TO - 1.0) * eased)
-          node.alpha = 1.0 - eased
+          node.alpha = 1 - eased
+          node.scale.set(1 + 0.25 * eased)
+          node.y = homeY - eased * 12
+        } else {
+          // Уже погас — ждём конца цикла
+          node.alpha = 0
+          node.scale.set(0)
           node.y = homeY
         }
       })
