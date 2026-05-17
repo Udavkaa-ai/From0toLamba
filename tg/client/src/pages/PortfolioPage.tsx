@@ -638,7 +638,7 @@ function ClosedProjectCard({ project, postMortem }: { project: ProjectDTO; postM
 }
 
 const TX_TYPE_ICON: Record<string, string> = {
-  INVEST: '⬇️', ADD: '⬇️', WITHDRAW: '⬆️', EXIT: '🚪', RETURNED: '📬', REFERRAL_BONUS: '🤝',
+  INVEST: '⬇️', ADD: '⬇️', WITHDRAW: '⬆️', EXIT: '🚪', RETURNED: '📬', REFERRAL_BONUS: '🤝', GIFT: '🎁',
 }
 
 function TransactionSection({ transactions }: { transactions: TransactionDTO[] }) {

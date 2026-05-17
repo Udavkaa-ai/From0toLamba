@@ -16,7 +16,12 @@ export async function gameRoutes(app: FastifyInstance) {
   app.get('/api/game', { preHandler: telegramAuthHook }, async (request, reply) => {
     const tgUser = request.telegramUser
 
-    // Upsert пользователя
+    // Upsert пользователя. Новые игроки получают сразу 50 грошей —
+    // «Подарок от Хозяина Ярмарки». Раньше было 10 на старте + ещё 50 при
+    // complete-onboarding (двойная отдача и без явной причины); теперь
+    // приветственная сумма выдаётся одной транзакцией сразу при создании
+    // GameState (см. ниже после upsert'а).
+    const STARTING_GIFT = 50
     const user = await prisma.user.upsert({
       where: { telegramId: String(tgUser.id) },
       create: {
@@ -25,7 +30,7 @@ export async function gameRoutes(app: FastifyInstance) {
         lastName: tgUser.last_name,
         username: tgUser.username,
         gameState: {
-          create: { balance: 10 },
+          create: { balance: STARTING_GIFT },
         },
       },
       update: {
@@ -37,6 +42,22 @@ export async function gameRoutes(app: FastifyInstance) {
     })
 
     let gameState = user.gameState!
+
+    // Транзакция-«подарок» — создаём один раз для каждого нового игрока.
+    // Признак новизны: ещё ни одной транзакции в БД у этого юзера.
+    const txCount = await prisma.transaction.count({ where: { userId: user.id } })
+    if (txCount === 0) {
+      await prisma.transaction.create({
+        data: {
+          userId: user.id,
+          projectId: null,
+          projectName: 'Подарок от Хозяина Ярмарки',
+          type: 'GIFT',
+          amount: STARTING_GIFT,
+          day: gameState.currentDay,
+        },
+      }).catch(err => console.error('[starting-gift] tx insert failed:', err))
+    }
 
     // Сохраняем UTM-источник при первом входе через партнёрскую ссылку
     if (!user.utmSource && request.telegramStartParam?.startsWith('utm_')) {
@@ -340,16 +361,16 @@ export async function gameRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: 'Онбординг уже завершён' })
     }
 
-    const ONBOARDING_BONUS = 50
+    // Старт-бонус 50 г теперь начисляется СРАЗУ при создании GameState
+    // («Подарок от Хозяина Ярмарки» — см. /api/game upsert-блок). Здесь
+    // только переключаем флаг — без повторного начисления, чтобы не
+    // отдавать игроку 100 г за один онбординг.
     await prisma.gameState.update({
       where: { userId: user.id },
-      data: {
-        isOnboardingComplete: true,
-        balance: { increment: ONBOARDING_BONUS },
-      },
+      data: { isOnboardingComplete: true },
     })
 
-    return { success: true, bonusAwarded: ONBOARDING_BONUS }
+    return { success: true, bonusAwarded: 0 }
   })
 
   // GET /api/game/settings

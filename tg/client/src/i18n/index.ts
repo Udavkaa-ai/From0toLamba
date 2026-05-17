@@ -431,6 +431,7 @@ portfolio: {
     EXIT: 'Выход',
     RETURNED: 'Возврат',
     REFERRAL_BONUS: 'Сватовство',
+    GIFT: 'Подарок',
   },
   fates: {
     INSTANT_SCAM: '💀 Сбежал с деньгами',
@@ -1286,6 +1287,7 @@ portfolio: {
     EXIT: 'Exited',
     RETURNED: 'Returned',
     REFERRAL_BONUS: 'Referral',
+    GIFT: 'Gift',
   },
   fates: {
     INSTANT_SCAM: '💀 Ran off with coins',
