@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Суть проекта
 
-«Из грязи в князи» — Telegram Mini App, симулятор купца-инвестора в сказочной Руси. Игрок вкладывает гроши (г) в «дела», большинство из которых обман. Перед каждым вложением — испытание (мини-игра по архетипу хозяина). Текущая версия: **бета 4.0.1**.
+«Из грязи в князи» — Telegram Mini App, симулятор купца-инвестора в сказочной Руси. Игрок вкладывает гроши (г) в «дела», большинство из которых обман. Перед каждым вложением — испытание (мини-игра по архетипу хозяина). Текущая версия: **бета 4.4.3**.
 
 - **Активная версия:** `tg/`. `app/` (Android) — заморожен (`CODEMAP.md` описывает Android-архитектуру, к `tg/` не относится).
 - **Валюта:** гроши (г) в UI; DB-поля (`currentValueRubles`, `investedAmountRubles` и т.д.) не переименованы — только отображение. Всегда `Math.floor(n)`, **не** `.toFixed(0)` — `.toFixed` округляет вверх и вызывает «Недостаточно средств».
@@ -22,6 +22,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - Боярин → Князь: 100 дел
   - `recomputeRank` пересчитывает после каждого `invest` и в `advance-day`.
 - **Единый поток интро + результата** для всех 7 архетипов (включая BOYARIN) через `MiniGameIntroScreen` + `MiniGameResultSheet`. Старый ResultSheet и старый IntroScreen удалены, фаза `'result'` тоже.
+
+### Завязки (введены в 4.4.0)
+
+Уровни отношений с дельцами по архетипам. Каждый ПОЛУЧЕННЫЙ за всю игру жетон у архетипа = +1 уровень. Уровни 0..10, на каждом +1%/день к доходности дел этого архетипа (максимум +10%/день).
+
+- Серверный модуль: `tg/server/src/game/tiesService.ts` — `computeTieLevels`, `tieBonusFromLevel`, `totalTies`, константы `MAX_TIE_LEVEL=10`, `TIE_BONUS_PER_LEVEL=0.01`.
+- Применяется в `AdvanceDayService` для активных дел (НЕ для VIP `SPONSOR_FIXED` — у них своя линейная 3× траектория).
+- В `GameStateDTO`: `tieLevels` (Record<arch,number>), `tiesTotal`, `tiesMaxLevel`, `tiesBonusPerLevel`.
+- Эндпоинт `/api/leaderboard/ties` — рейтинг по сумме уровней.
+- UI: бейдж `Lv N` на плитке каждого хозяина в `RelationshipsPage`, карточка «Завязки» в детальной плашке, чип `⚡ +N%/день связи` на карточке дела в инбоксе.
 
 ---
 
@@ -97,6 +107,7 @@ tg/
 - `/banners/*` → `assets/banners/` — предгенерированные WebP-баннеры персонажей
 - `/backgrounds/*` → `assets/backgrounds/` — фоновые изображения страниц
 - Оба регистрируются с `decorateReply: false` из-за множественных `@fastify/static`
+- `/personas/*.webp` и `/avatars/*.webp` живут в `tg/client/public/` → Vite копирует в билд (`tg/server/public/`, gitignored). Используются на `AmaPage` (фон беседы 9:16) и `RelationshipsPage` (плитки хозяев 1:1). Theme-aware: суффикс `_LIGHT` для Сказочной темы. Преgenerated через `tools/banners/generate_personas.py` и `generate_avatars.py` (Vertex AI Imagen 4). Описания — `tools/banners/personas.json` (dark + light варианты у каждой персоны + avatar-варианты).
 
 ---
 
@@ -334,13 +345,56 @@ PAGE_BG.portfolio           // '/backgrounds/BG_PORTFOLIO.webp'
 - `recomputeRank(userId)` вызывать после: сабмита грамоты, выхода из дела, advance-day. **Не** при вложениях/выводах
 - `generatePostMortem` при `exitProject` — асинхронно (`.catch(console.error)`)
 - `tg/server/public/` — в `.gitignore`, не коммитить
-- Тёмная тема. UI на русском. UI-словарь: вложить / купеческий чин / покинуть дело / посул (APY) / летопись / ярмарочный рейтинг
+- **Две темы:** classic (тёмный фиолет) и fairy (медово-золотой пергамент). Переключатель в Настройках. UI на русском (+ EN перевод в `i18n/index.ts`). UI-словарь: вложить / купеческий чин / покинуть дело / посул (APY) / летопись / ярмарочный рейтинг
 - Все денежные значения в UI: `Math.floor(n)` — никогда `.toFixed(0)`
 - `claimedAPY` генерируется сервером в `GenerateProjectService.ts` (`computeClaimedAPY()`), а не AI. В промпт не включать и от AI не ждать
 - `referrerId` и `referralBonusGranted` на `User` — **не сбрасывать** при сбросе игры (это связь аккаунта, а не игровая прогрессия). Сбрасывать только `pendingReferralParam: null`
 - `seenTypes` / `seenArchetypes` / `seenFates` в `GameStateDTO` — вычисляются из `PostMortem` на лету в `/api/game` (GET), в БД не хранятся
 - Поле чина в `GameStateDTO` называется **`investorRank`** (не `rank`) — частая ошибка при обращении к `gameState`
-- **localStorage-ключи онбординга:** `onboarding_v3_seen` — тур показан после v3.0 (сбрасывать при мажорных обновлениях, меняя ключ); `charter_tutorial_seen` — обучалка грамоты показана
+- **localStorage-ключи онбординга:** `onboarding_v3_seen` — тур показан (сбрасывать при мажорных обновлениях, меняя ключ); `charter_tutorial_seen` — обучалка грамоты показана; `ui-tour-v2` — состояние Zustand-store тура (см. `tourStore.ts`)
+
+---
+
+## Дизайн-система (theme/)
+
+Единые токены вместо инлайн-стилей по сайту:
+
+- `gradients.cta` — тема-aware золотой градиент CTA-кнопок (главный паттерн для всех «активных» кнопок: Летопись, Принять испытание, Добавить вложение, Закрыть и т.д.)
+- `colors.ctaBorder` / `colors.ctaText` — тема-aware кант + текст для CTA
+- `ctaButton.{sm,md,lg}` (в `theme/colors.ts`) — готовый объект стилей для CTA-кнопок трёх размеров. Используется через `style={ctaButton.lg}` или `style={{ ...ctaButton.md, ...extra }}`
+- `bigNumber(size)` (в `theme/index.ts`) — единый стиль для золотых цифр (баланс, награда дня, стоимость дела): gold + headingFontFamily + многослойная тёмная обводка + тёплое свечение. Размер задаётся параметром, тени масштабируются
+- `gradients.card` — тема-aware фон карточек (тёмный фиолет / пергамент)
+- `colors.textPrimary / textSecondary / textMuted` — тема-aware текст. На карточках в fairy — почти-чёрная сепия; в classic — белый
+- `colors.textOnDark / textOnDarkSecond / textOnDarkMuted` — для тёмных поверхностей (нав-бар, модалки, оверлеи мини-игр), всегда белый
+- `gradients.modal` / `colors.modalText / modalTextSec / modalTextMute` — тема-aware фон + текст модальных листов
+- `gradients.goldBtn` — legacy, не использовать в новом коде; всё новое через `ctaButton.*`
+
+---
+
+## Подводные камни (lessons learned)
+
+**Pixi мини-игры — утечки WebGL-памяти:**
+- `app.stage.removeChildren()` НЕ освобождает WebGL-ресурсы (буферы геометрии Graphics, glyph-атласы Text). Без явного destroy() через 5-10 секунд работы в render-цикле WebView Telegram крашится по памяти.
+- Паттерн: `const removed = container.removeChildren(); for (const o of removed) o.destroy({children: true})`.
+- Любая «бесконечная» анимация (rAF-loop после complete) должна иметь временной лимит — иначе CPU/GPU работают пока не уйдёшь со страницы. См. BabaYagaGame drain (5s), KoscheiGame пирамида (3 цикла).
+
+**Render-шторм в HomePage:**
+- НЕ держать `useState<number>(now)` + `setInterval(setNow(Date.now()), 1000)` в HomePage — это перерисовывает всё дерево каждую секунду и вызывает мерцание framer-motion анимаций. Если нужен тикер для дочернего таймера — поднимать ровно в тот компонент, который реально показывает время.
+- TourOverlay: при опросе `setTargetRect(el.getBoundingClientRect())` каждый тик новый объект DOMRect → React видит изменение → перерисовка через portal. Кэшировать предыдущий rect в `useRef` и звать `setTargetRect` только если значения реально изменились.
+
+**Фоновая музыка (`main_theme.mp3`):**
+- Audio-элемент — модульный синглтон (`let audioElement` в `HomePage.tsx`).
+- Обработчики `visibilitychange` / `blur` / `viewportChanged` ставятся на МОДУЛЬНОМ уровне (`attachGlobalAudioListeners`) **один раз** при создании audioElement и **никогда не снимаются**. Иначе при навигации с главной на другую страницу cleanup useEffect удалит обработчики и сворачивание Telegram оставит музыку играть в фоне.
+- НЕ ставить `audio.pause()` в cleanup useEffect HomePage — иначе при возврате на главную (`mainThemePlayed=true` → ранний return) музыку никто не возобновит.
+
+**Eager-preload изображений:**
+- Все 12 backgrounds + 7 avatars текущей темы предзагружаются при первом импорте `ScreenBackground.tsx` (см. `preloadAllBackgrounds`). Раньше эти картинки качались по требованию и страницы мерцали.
+- Баннеры инбокс-дел предзагружаются в HomePage через `useEffect` на `gameState?.inboxProjects` — иначе после advance-day карточки рендерятся с пустыми 64×64 квадратами пока качают `/banners/<...>.webp`.
+
+**VIP-дела (sponsor):**
+- `SPONSOR_CHANCE` (в `types.ts`) — текущее значение `0.10` (тест). Применяется к каждому отдельному `generateProject()` в advance-day (1-3 в сутки).
+- В `generateProject` перед роллом VIP проверяется что у игрока **уже нет** sponsor-проекта в `isInbox || isActive` — иначе при параллельных вызовах все попадали в одну `pickRandomActiveCampaign()` и материализовали ту же кампанию дважды.
+- `VipArrivalOverlay` в `InboxPage` показывается **один раз за визит** на страницу — даже если непросмотренных VIP несколько (раньше открывался цепочкой по 4.2с каждый, инбокс мелькал между ними).
 
 ---
 
@@ -485,6 +539,5 @@ python compress.py --inplace output_backgrounds/
 | Экран «Вести с ярмарки» (News feed) | новая страница клиента |
 | Admin-панель | отдельный роут/сервис |
 | 3D-апгрейд мини-игр | см. секцию выше |
-| `LeaderboardPage.IntuitionTab` — мёртвый код, удалить в v4.1 | `LeaderboardPage.tsx` |
-| FAQ / туториал — упоминания «чуйки» в текстах | `i18n/index.ts`, `FaqModal.tsx`, `OnboardingTutorial.tsx` |
-| Реферальный прогресс-бар на главной — крутится по нулю `intuitionScore` | `HomePage.tsx`, `MyReferralEntryDTO` |
+| `SPONSOR_CHANCE` вернуть на `0.01` после теста | `types.ts` |
+| Pre-existing TS errors в server (AmaSessionInput, ProjectPublicDTO, NpcTruthParams) — не блокируют tsx-runtime но висят | `tsc --noEmit` |
