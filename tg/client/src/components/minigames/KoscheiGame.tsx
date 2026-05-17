@@ -159,7 +159,7 @@ export function KoscheiGame({ seed, onComplete, restoredErrorCount }: KoscheiGam
     // Шаги: индекс символа, размер emoji, момент появления (сек).
     const STEPS: Array<{ symbolIdx: number; size: number; spawnAt: number }> = [
       { symbolIdx: 0, size: 76, spawnAt: 0.0 },   // Дуб — основание
-      { symbolIdx: 1, size: 68, spawnAt: 0.7 },   // Сундук на дубе
+      { symbolIdx: 1, size: 58, spawnAt: 0.7 },   // Сундук на дубе
       { symbolIdx: 2, size: 60, spawnAt: 1.5 },   // Заяц из сундука
       { symbolIdx: 3, size: 54, spawnAt: 2.3 },   // Утка из зайца
       { symbolIdx: 4, size: 48, spawnAt: 3.1 },   // Яйцо из утки
