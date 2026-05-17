@@ -234,65 +234,73 @@ function setupHandlers(bot: Bot) {
     resetallInProgress = true
     await ctx.reply(`🔄 Запускаю глобальный сброс (старт сезона ${newSeasonNumber})...`)
 
-    try {
-      const users = await prisma.user.findMany({ include: { gameState: true } })
-      let count = 0
+    // Heavy work — в фоне. Handler выходит МОМЕНТАЛЬНО → webhook
+    // отвечает Telegram'у 200 → ретраи не приходят. Иначе при 3000+
+    // юзерах цикл занимает >20 сек, Telegram не дожидается ответа и
+    // ретраит каждые ~30 сек — одна команда даёт 5-10 параллельных
+    // запусков. Атомарный marker всё равно отбивает дубли на уровне
+    // БД, но лучше не нагружать.
+    void (async () => {
+      try {
+        const users = await prisma.user.findMany({ include: { gameState: true } })
+        let count = 0
 
-      for (const user of users) {
-        if (!user.gameState) continue
-        if (user.telegramId.startsWith('system:')) continue
+        for (const user of users) {
+          if (!user.gameState) continue
+          if (user.telegramId.startsWith('system:')) continue
 
-        const preferredModel = user.gameState.preferredModel ?? 'deepseek/deepseek-v4-flash'
-        const preferredLanguage = user.gameState.preferredLanguage ?? 'ru'
+          const preferredModel = user.gameState.preferredModel ?? 'deepseek/deepseek-v4-flash'
+          const preferredLanguage = user.gameState.preferredLanguage ?? 'ru'
 
-        await prisma.project.deleteMany({ where: { userId: user.id } })
-        await prisma.transaction.deleteMany({ where: { userId: user.id } })
+          await prisma.project.deleteMany({ where: { userId: user.id } })
+          await prisma.transaction.deleteMany({ where: { userId: user.id } })
 
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { pendingReferralParam: null, referralBonusGranted: false },
-        })
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { pendingReferralParam: null, referralBonusGranted: false },
+          })
 
-        await prisma.gameState.update({
-          where: { userId: user.id },
-          data: {
-            balance: 50, // STARTING_GIFT — иначе после /resetall стартовый подарок не начисляется (см. /api/game/reset)
-            currentDay: 0,
-            investorRank: 'NEWBIE',
-            intuitionScore: 0,
-            dayStreak: 0,
-            isOnboardingComplete: false,
-            totalInvested: 0,
-            totalReturned: 0,
-            balanceHistory: [],
-            investedHistory: [],
-            pendingRankUp: null,
-            lastAdvancedAt: null,
-            nextDayNotified: true,
-            consecutiveAdvances: 0,
-            weekStartWealth: 0,
-            weekStartAt: null,
-            preferredModel,
-          },
-        })
+          await prisma.gameState.update({
+            where: { userId: user.id },
+            data: {
+              balance: 50, // STARTING_GIFT
+              currentDay: 0,
+              investorRank: 'NEWBIE',
+              intuitionScore: 0,
+              dayStreak: 0,
+              isOnboardingComplete: false,
+              totalInvested: 0,
+              totalReturned: 0,
+              balanceHistory: [],
+              investedHistory: [],
+              pendingRankUp: null,
+              lastAdvancedAt: null,
+              nextDayNotified: true,
+              consecutiveAdvances: 0,
+              weekStartWealth: 0,
+              weekStartAt: null,
+              preferredModel,
+            },
+          })
 
-        generateOnboardingProject(user.id, preferredModel, preferredLanguage).catch(e =>
-          console.error(`[resetall] userId=${user.id} onboarding error:`, e),
-        )
+          generateOnboardingProject(user.id, preferredModel, preferredLanguage).catch(e =>
+            console.error(`[resetall] userId=${user.id} onboarding error:`, e),
+          )
 
-        count++
+          count++
+        }
+
+        await ctx.reply(`✅ Сброс завершён. Обработано игроков: ${count}.`)
+      } catch (err) {
+        console.error('[resetall] Error:', err)
+        // Marker уже создан, но что-то пошло не так. Удалим, чтобы можно
+        // было перезапустить (иначе залочено навсегда).
+        await prisma.user.delete({ where: { telegramId: RESET_MARKER_TELEGRAM_ID } }).catch(() => {})
+        await ctx.reply('❌ Ошибка при сбросе. Маркер снят, можно запустить заново. Проверь логи.').catch(() => {})
+      } finally {
+        resetallInProgress = false
       }
-
-      await ctx.reply(`✅ Сброс завершён. Обработано игроков: ${count}.`)
-    } catch (err) {
-      console.error('[resetall] Error:', err)
-      // Marker уже создан — но что-то пошло не так. Удалим его, чтобы можно
-      // было перезапустить (иначе остаётся залочено на этот сезон навсегда).
-      await prisma.user.delete({ where: { telegramId: RESET_MARKER_TELEGRAM_ID } }).catch(() => {})
-      await ctx.reply('❌ Ошибка при сбросе. Маркер снят, можно запустить заново. Проверь логи.')
-    } finally {
-      resetallInProgress = false
-    }
+    })()
   })
 
   // /snapshot_season <N> — снять финальный топ-100 каждого рейтинга в
@@ -738,5 +746,14 @@ function setupHandlers(bot: Bot) {
 
 export function createWebhookHandler() {
   const bot = getBot()
-  return webhookCallback(bot, 'fastify')
+  // ВАЖНО: timeoutMilliseconds=10s + onTimeout='return' заставляет grammy
+  // отвечать Telegram'у 200 МГНОВЕННО, даже если handler ещё крутится.
+  // Без этого длинные команды (/resetall на 3000+ юзеров — 20+ сек)
+  // не успевают ответить, Telegram ретраит webhook каждые ~30 сек, и
+  // одна команда превращается в 5-10 параллельных запусков. См. кейс
+  // когда /resetall выдал 8 «запускаю» и 3 «Сброс завершён».
+  return webhookCallback(bot, 'fastify', {
+    timeoutMilliseconds: 10_000,
+    onTimeout: 'return',
+  })
 }
