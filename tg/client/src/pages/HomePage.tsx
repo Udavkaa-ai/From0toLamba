@@ -42,6 +42,45 @@ const MODEL_OPTIONS = [
 // Модульные синглтоны — сохраняются между навигациями (один экземпляр Audio на сессию).
 let mainThemePlayed = false
 let audioElement: HTMLAudioElement | null = null
+let userPausedMusic = false   // игрок сам выключил → не возобновляем автоматом
+
+/** Глобальные слушатели visibility/blur для паузы музыки при сворачивании.
+ *  Ставятся ОДИН раз при создании audioElement и НЕ удаляются никогда —
+ *  иначе при переходе с HomePage на /portfolio cleanup-функция useEffect
+ *  снимала их и Telegram-сворачивание оставалось без реакции. */
+let pauseListenersAttached = false
+function attachGlobalAudioListeners() {
+  if (pauseListenersAttached) return
+  pauseListenersAttached = true
+
+  const pause = () => {
+    const a = audioElement
+    if (a && !a.paused) a.pause()
+  }
+  const resume = () => {
+    const a = audioElement
+    if (!a || userPausedMusic) return
+    if (isMusicMuted()) return
+    if (a.paused && !a.ended) {
+      a.volume = getVolume() * 0.4
+      a.play().catch(() => {})
+    }
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) pause()
+    else resume()
+  })
+  window.addEventListener('pagehide', pause)
+  window.addEventListener('pageshow', resume)
+  window.addEventListener('blur', pause)
+  window.addEventListener('focus', resume)
+
+  const tgApp = (window as any).Telegram?.WebApp
+  tgApp?.onEvent?.('viewportChanged', () => {
+    if (!tgApp?.isExpanded) pause()
+    else resume()
+  })
+}
 
 export function HomePage() {
   const navigate = useNavigate()
@@ -85,7 +124,10 @@ export function HomePage() {
 
   useEffect(() => {
     if (mainThemePlayed) {
-      // Повторный маунт (навигация туда-обратно) — переподключаем ref к живому элементу
+      // Повторный маунт (навигация туда-обратно) — переподключаем ref к живому
+      // элементу. Музыка продолжает играть как была — ничего не паузим/не
+      // возобновляем (за паузу/возобновление при сворачивании отвечают
+      // глобальные слушатели, см. attachGlobalAudioListeners).
       audioRef.current = audioElement
       return () => { audioRef.current = null }
     }
@@ -96,6 +138,12 @@ export function HomePage() {
     audio.volume = musicVol()
     audioElement = audio
     audioRef.current = audio
+
+    // Глобальные слушатели visibility/blur/viewportChanged — ставятся ОДИН
+    // раз и больше не снимаются. Иначе при навигации с главной на /portfolio
+    // обработчики удалялись cleanup-функцией и сворачивание Telegram оставалось
+    // без реакции — музыка продолжала играть в фоне.
+    attachGlobalAudioListeners()
 
     // touchHandler нужен чтобы убрать слушатели при размонтировании (иначе
     // старый Audio-элемент снова запускается при касании уже без ref-управления)
@@ -115,65 +163,14 @@ export function HomePage() {
       })
     }
 
-    // Пауза/восстановление при сворачивании приложения (в т.ч. Telegram Mini App
-    // на iOS/Android). visibilitychange один не справляется: при сворачивании
-    // Telegram на Android он часто не приходит. Слушаем сразу несколько событий:
-    //   visibilitychange   — стандарт (большинство браузеров)
-    //   pagehide/pageshow  — iOS Safari, надёжнее всего для бэкграунда
-    //   blur/focus         — Telegram WebApp на Android при сворачивании к чату
-    //   viewportChanged    — событие Telegram WebApp при коллапсе мини-аппа
-    let userPaused = false  // не возобновляем, если игрок сам выключил звук
-    const pause = () => {
-      if (!audio.paused) {
-        userPaused = false
-        audio.pause()
-      }
-    }
-    const resume = () => {
-      if (isMusicMuted() || userPaused) return
-      if (audio.paused && !audio.ended) {
-        audio.volume = musicVol()
-        audio.play().catch(() => {})
-      }
-    }
-    const onVisibilityChange = () => {
-      if (document.hidden) pause()
-      else resume()
-    }
-    const onPageHide = () => pause()
-    const onPageShow = () => resume()
-    const onBlur = () => pause()
-    const onFocus = () => resume()
-    document.addEventListener('visibilitychange', onVisibilityChange)
-    window.addEventListener('pagehide', onPageHide)
-    window.addEventListener('pageshow', onPageShow)
-    window.addEventListener('blur', onBlur)
-    window.addEventListener('focus', onFocus)
-
-    // Telegram WebApp: при сворачивании мини-аппа viewport меняет состояние.
-    // Если isExpanded=false и стабильно — мини-апп свёрнут, ставим на паузу.
-    const tgApp = (window as any).Telegram?.WebApp
-    const onTgViewportChange = () => {
-      if (!tgApp?.isExpanded) pause()
-      else resume()
-    }
-    tgApp?.onEvent?.('viewportChanged', onTgViewportChange)
-
     tryPlay()
 
     return () => {
-      document.removeEventListener('visibilitychange', onVisibilityChange)
-      window.removeEventListener('pagehide', onPageHide)
-      window.removeEventListener('pageshow', onPageShow)
-      window.removeEventListener('blur', onBlur)
-      window.removeEventListener('focus', onFocus)
-      tgApp?.offEvent?.('viewportChanged', onTgViewportChange)
       if (touchHandler) {
         document.removeEventListener('touchstart', touchHandler)
         document.removeEventListener('click', touchHandler)
         touchHandler = null
       }
-      audio.pause()
       audioRef.current = null
     }
   }, [])
