@@ -174,18 +174,40 @@ function RelationshipDetails({ archetype, onClose }: { archetype: Archetype; onC
         onClick={e => e.stopPropagation()}
         style={{
           position: 'fixed', bottom: 0, left: 0, right: 0,
-          maxHeight: '88dvh', overflowY: 'auto',
+          maxHeight: '88dvh',
+          // overflow убран с внешней плашки — теперь скроллится только
+          // внутренний контейнер, X-кнопка остаётся прибитой к шапке.
           background: gradients.modal,
           borderTop: `2px solid ${tint}`,
           borderRadius: '20px 20px 0 0',
+          boxShadow: '0 -8px 32px rgba(0,0,0,0.6)',
+          display: 'flex', flexDirection: 'column',
+        }}
+      >
+        {/* Закрепляющийся X в правом-верхнем углу плашки */}
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute', top: 12, right: 14, zIndex: 5,
+            width: 36, height: 36, borderRadius: '50%',
+            background: 'rgba(0,0,0,0.45)',
+            border: `1px solid ${tint}88`,
+            color: colors.modalText,
+            fontSize: 18, fontWeight: 700,
+            cursor: 'pointer', padding: 0, lineHeight: 1,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >✕</button>
+
+        <div style={{
+          overflowY: 'auto',
           // 80px доп.запас снизу — иначе нижняя навигация и чат-кнопка
           // (position:fixed FAB) перекрывают последний абзац листа
           padding: `${spacing.lg} ${spacing.lg} calc(80px + ${spacing.lg} + env(safe-area-inset-bottom))`,
-          boxShadow: '0 -8px 32px rgba(0,0,0,0.6)',
-        }}
-      >
+        }}>
         <div style={{
           display: 'flex', alignItems: 'center', gap: spacing.md, marginBottom: spacing.md,
+          paddingRight: 44,  // не наезжать на X-кнопку
         }}>
           <div style={{ fontSize: 56, lineHeight: 1 }}>{ARCHETYPE_EMOJI[archetype]}</div>
           <div style={{ flex: 1 }}>
@@ -196,13 +218,6 @@ function RelationshipDetails({ archetype, onClose }: { archetype: Archetype; onC
               {info?.name ?? 'Испытание хозяина'}
             </div>
           </div>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'none', border: 'none', color: colors.textMuted,
-              fontSize: 22, cursor: 'pointer', padding: 4,
-            }}
-          >✕</button>
         </div>
 
         {/* Жетоны — крупно */}
@@ -277,6 +292,7 @@ function RelationshipDetails({ archetype, onClose }: { archetype: Archetype; onC
           boxShadow: `inset 0 1px 0 ${colors.cardHighlight}`,
         }}>
           {t.relations.tokenSpendHint}
+        </div>
         </div>
       </motion.div>
     </motion.div>

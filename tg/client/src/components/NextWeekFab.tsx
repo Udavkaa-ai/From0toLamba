@@ -137,9 +137,9 @@ export function NextWeekFab() {
       onClick={handleTap}
       whileTap={{ scale: 0.94 }}
       animate={{
-        // В locked-режиме pill шире — нужно уместить «10⭐ пропустить · Следующая
-        // неделя 1ч 45м». В обычном — короткая «Следующий день».
-        width: expanded ? (isLocked ? 290 : 200) : 48,
+        // В locked-режиме pill сильно шире — нужно уместить «10⭐ пропустить ·
+        // Следующая неделя 1ч 45м». В обычном — короткая «Следующий день».
+        width: expanded ? (isLocked ? 330 : 200) : 48,
         borderRadius: 24,
       }}
       transition={{ type: 'spring', damping: 22, stiffness: 280 }}
@@ -154,9 +154,10 @@ export function NextWeekFab() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18, delay: 0.08 }}
             style={{
-              fontSize: isLocked ? 12 : 14, padding: '0 14px',
-              display: 'inline-flex', alignItems: 'center', gap: 8,
+              fontSize: isLocked ? 11 : 14, padding: isLocked ? '0 10px' : '0 14px',
+              display: 'inline-flex', alignItems: 'center', gap: 6,
               whiteSpace: 'nowrap',
+              overflow: 'hidden',
             }}
           >
             <RefreshIcon size={18} />

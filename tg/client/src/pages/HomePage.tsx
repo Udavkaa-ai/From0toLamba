@@ -1404,8 +1404,8 @@ function InboxLeftConfirmSheet({
           <div style={{ color: colors.fairyGold, fontSize: 17, fontWeight: 700 }}>
             Не все дела ещё рассмотрены
           </div>
-          <div style={{ color: colors.textSecondary, fontSize: 13, marginTop: spacing.sm, lineHeight: 1.5 }}>
-            В инбоксе осталось <b style={{ color: colors.fairyGold }}>{leftCount}</b>{' '}
+          <div style={{ color: colors.modalTextSec, fontSize: 13, marginTop: spacing.sm, lineHeight: 1.5, fontWeight: 500 }}>
+            В инбоксе осталось <b style={{ color: colors.fairyGold, fontWeight: 800 }}>{leftCount}</b>{' '}
             {leftCount === 1 ? 'предложение' : leftCount < 5 ? 'предложения' : 'предложений'}.
             Уйдёшь до утра — пропустишь шанс вложиться.
           </div>
