@@ -11,7 +11,6 @@ import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing, typography, gradients, ctaButton } from '@/theme'
 import { evaluateAchievements, CATEGORY_LABELS, type EvaluatedAchievement } from '@/game/achievements'
 import { loreFor } from '@/game/lore'
-import { ChannelTasksBlock } from '@/components/ChannelTasksBlock'
 import { useT } from '@/i18n'
 
 type ChartScale = 30 | 90 | 999
@@ -172,8 +171,8 @@ export function StatsPage() {
             есть на главной как чип под балансом, плюс в нижней нав-кнопке
             нет необходимости вести их сюда повторно. */}
 
-        {/* Награды за подписку */}
-        <ChannelTasksBlock />
+        {/* Блок «Награды за подписку» убран — игроки заходят на каналы
+            спонсоров прямо из VIP-дел в инбоксе по мере их появления. */}
 
         {/* Подвиги */}
         <AchievementsSection />

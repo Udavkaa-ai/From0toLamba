@@ -153,18 +153,19 @@ export function RelationshipsPage() {
                 }}>
                   {SHORT_NAME[arch]}
                 </div>
-                {/* Бейдж уровня Завязок (lv1..lv10) + балансовый счётчик жетонов */}
+                {/* Бейдж уровня Завязок (1..10) + балансовый счётчик жетонов */}
                 {tieLevel > 0 && (
                   <div style={{
                     position: 'absolute', top: -6, right: -6,
-                    display: 'flex', alignItems: 'center', gap: 2,
-                    padding: '2px 7px',
+                    minWidth: 22, height: 22,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    padding: '0 6px',
                     background: tieLevel >= 10 ? colors.success : colors.fairyGold,
                     color: colors.nightBlue,
-                    borderRadius: 12, fontSize: 10, fontWeight: 800, letterSpacing: '0.04em',
+                    borderRadius: 11, fontSize: 12, fontWeight: 900,
                     boxShadow: `0 0 0 2px ${colors.nightBlue}, 0 2px 8px ${colors.fairyGold}66`,
                   }}>
-                    Lv {tieLevel}
+                    {tieLevel}
                   </div>
                 )}
                 {balance > 0 && (
@@ -400,7 +401,7 @@ function TiesLevelCard({ archetype, tint, earned }: { archetype: Archetype; tint
           color: isMaxed ? colors.success : colors.fairyGold,
           fontSize: 18, fontWeight: 900, fontVariantNumeric: 'tabular-nums',
         }}>
-          Lv {level}<span style={{ fontSize: 11, opacity: 0.65, marginLeft: 4 }}>/ {maxLevel}</span>
+          {level}<span style={{ fontSize: 11, opacity: 0.65, marginLeft: 4 }}>/ {maxLevel}</span>
         </div>
       </div>
       <div style={{ color: colors.textPrimary, fontSize: 13, fontWeight: 600 }}>
