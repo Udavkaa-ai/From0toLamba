@@ -199,30 +199,45 @@ export function TourOverlay() {
     }
   }, [stepIdx])
 
-  // Поиск целевого элемента — опрашиваем каждые 200мс (элемент может появиться
-  // после загрузки данных)
+  // Поиск целевого элемента — опрашиваем каждые 300мс (элемент может появиться
+  // после загрузки данных). КРИТИЧЕСКОЕ: setTargetRect вызываем ТОЛЬКО если
+  // позиция реально изменилась — иначе каждый тик React видел новый объект
+  // DOMRect, перерисовывал TourOverlay и через каскад родительскую страницу.
+  // Это и был источник «мерцания» интерфейса при активном туре.
   useEffect(() => {
     if (!meta?.target) { setTargetRect(null); return }
 
     let scrolled = false
+    let lastRect: { x: number; y: number; w: number; h: number } | null = null
+    const update = (el: HTMLElement) => {
+      const r = el.getBoundingClientRect()
+      const next = { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) }
+      if (lastRect &&
+          lastRect.x === next.x && lastRect.y === next.y &&
+          lastRect.w === next.w && lastRect.h === next.h) {
+        return  // позиция не изменилась — не дёргаем state
+      }
+      lastRect = next
+      setTargetRect(r)
+    }
     const tick = () => {
       const el = document.querySelector(meta.target!) as HTMLElement | null
       if (el) {
         if (!scrolled) {
           scrolled = true
           el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-          // Берём rect после небольшой паузы — scrollIntoView ещё не завершился
           rafRef.current = window.setTimeout(() => {
-            setTargetRect(el.getBoundingClientRect())
-            rafRef.current = window.setTimeout(tick, 300)
+            update(el)
+            rafRef.current = window.setTimeout(tick, 500)
           }, 400)
           return
         }
-        setTargetRect(el.getBoundingClientRect())
-      } else {
+        update(el)
+      } else if (lastRect !== null) {
+        lastRect = null
         setTargetRect(null)
       }
-      rafRef.current = window.setTimeout(tick, 300)
+      rafRef.current = window.setTimeout(tick, 500)
     }
     tick()
     return () => { if (rafRef.current) clearTimeout(rafRef.current) }
