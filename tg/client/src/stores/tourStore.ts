@@ -1,8 +1,11 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-export const TOUR_TOTAL = 13
-const LS_KEY = 'ui-tour-v1'
+export const TOUR_TOTAL = 11
+// Bump → v2: тур переписан в 4.3.0 (11 шагов вместо 13, новый состав
+// и порядок). Старые игроки, у которых был сохранён mid-state, получают
+// чистое состояние; повторный просмотр доступен из Настроек.
+const LS_KEY = 'ui-tour-v2'
 
 interface TourStore {
   step: number | null  // null = тур не активен

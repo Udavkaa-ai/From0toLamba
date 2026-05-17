@@ -578,28 +578,38 @@ archetypes: {
 // ─── Тур по интерфейсу ────────────────────────────────────────────────────────
 tour: {
   steps: [
-    { title: 'Быстрый тур по игре', body: 'Покажем основные элементы интерфейса. Займёт пару минут — потом легче разобраться.', action: 'Начать' },
-    { title: 'Твой баланс', body: 'Здесь свободные гроши — внутриигровая валюта. Сейчас ноль, первые деньги появятся после первой завершённой беседы с дельцом.', action: 'Понял' },
-    { title: 'Входящие грамоты', body: 'Сюда приходят предложения от хозяев дел. Открой, чтобы изучить предложение перед вложением.', action: 'Открыть входящие' },
-    { title: 'Предложение от хозяина', body: 'Каждая карточка — отдельное дело. Видишь имя хозяина, тип дела и число вкладчиков. Нажми «Принять испытание» чтобы пройти проверку и решить, вкладываться ли.', action: 'К испытанию' },
-    { title: 'Испытание от хозяина', body: 'У каждого хозяина свой нрав и своё испытание — 7 разных мини-игр. Царь Горох даёт грамоту с печатями, Буратино просит угадать ключ, Кощей — собрать пары, Колобок — поймать зверушек, Золушка — настоящие монеты, Баба Яга — порядок ингредиентов, Иван Дурак — карты на память.', accent: 'Правила и подсказка по «?» — на экране перед каждой мини-игрой', action: 'Понял' },
-    { title: 'Вложи гроши', body: 'Прошёл испытание без ошибок — увидишь подсказку о типе дела и совет. Одна ошибка — только тип и посул. Две и больше — вложение закрыто, открыть подсказку можно за звёзды.', accent: 'Минимум — 5 г, активных дел сразу — до 5 + ещё 5 за звёзды', action: 'Понял' },
-    { title: 'Следующий день', body: 'Нажимай эту кнопку каждый день — дела развиваются, приходят новые вести, появляются события. Без этого время не идёт.', action: 'Понял' },
-    { title: 'Казна — твои вложения', body: 'Здесь все активные дела. Нажми на дело чтобы открыть летопись: ежедневные вести от хозяина, доходность и число вкладчиков.', action: 'Открыть казну' },
-    { title: 'Довложить или вывести', body: 'Видишь что дело идёт хорошо? Вложи ещё. Замечаешь тревожные знаки — выводи деньги. Не жди пока сбегут.', action: 'Понял' },
-    { title: 'Беседа с дельцом', body: 'У каждого предложения есть кнопка «Беседа» — можно задать хозяину до 10 вопросов. Слушай внимательно: опытный жулик говорит убедительно, но под давлением проговаривается.', action: 'Понял' },
-    { title: 'Подвиги и статистика', body: 'После первых закрытых дел здесь появятся карточки подвигов — в том числе по каждой мини-игре. И статистика: сколько раз сыграл, сколько раз идеально.', action: 'Понял' },
-    { title: 'Чины растут от взятых дел', body: 'Продвижение по чинам зависит только от числа дел, в которые ты вложился: 5 дел → Купец, 20 → Мудрец, 50 → Боярин, 100 → Князь.', accent: 'Бери дела с умом — не каждое стоит грошей', action: 'Понял' },
-    { title: 'Что-то непонятно? Есть ЧАВО', body: 'Все правила, типы дел, судьбы проектов и особенности вывода — в разделе «ЧАВО».',  accent: '⚙️ Настройки → ЧАВО', action: 'Завершить тур' },
+    { title: 'Тур по ярмарке', body: 'Покажу где что в игре. Займёт пару минут — дальше будет проще.', action: 'Начать' },
+    { title: 'Свободные гроши', body: 'Главная валюта. Стартовый бонус ~50 г придёт после первой беседы с дельцом — после этого можно начинать вкладываться.', action: 'Понял' },
+    { title: 'Отношения с дельцами', body: 'У игры 7 хозяев — у каждого свой архетип и своя мини-игра. Цифры «×N» под эмодзи — жетоны: накопил за победы и взятые дела, тратишь на бесплатные беседы и подсказки вместо 10⭐.', action: 'Понял' },
+    { title: 'Входящие грамоты', body: 'Превью свежих предложений на главной. «Все →» — полный список во вкладке Грамоты.', action: 'К грамотам' },
+    { title: 'Карточка дела', body: 'Имя хозяина, тип дела, число вкладчиков. Нажми «Принять испытание» — пройдёшь мини-игру и решишь, вкладываться или нет.', action: 'Дальше' },
+    { title: 'Испытание хозяина', body: '7 мини-игр — по одной на архетип: печати, ключ, память, нора-нора, монеты, котёл, карты. Лестница наград:\n\n🎯 0 ошибок — раскроется тип дела + совет чуйки\n🙂 1 ошибка — только тип и посул\n😅 ≥2 ошибок — закрыто, можно открыть за 10⭐', accent: 'Минимум вложения — 5 г · Активных дел до 5 (+5 доп. слотов)', action: 'Понял' },
+    { title: 'Казна — твои дела', body: 'Все активные дела с графиками. Тут довложишь, выведешь часть или покинешь дело руками. Дела на главной не показываются — только тут.', action: 'Понял' },
+    { title: 'Следующий день — главная кнопка', body: 'Жми «Следующий день» (золотой кружок справа-внизу) — время сдвигается, дела развиваются, приходят вести. Без этого ничего не происходит. 7 нажатий подряд — двухчасовой кулдаун (или 10⭐ пропустить).', action: 'Понял' },
+    { title: 'Чины и подвиги', body: 'Чин растёт по числу взятых дел: 5 → Купец, 20 → Мудрец, 50 → Боярин, 100 → Князь. В Успехах — журнал подвигов: первые скамы, первая Жар-птица, мастерство в мини-играх.', action: 'Понял' },
+    { title: '⭐ Золотая грамота', body: 'Редкое VIP-дело от партнёрских каналов. Появляется с золотой обводкой и эффектом «Вот это удача!». Гарантированный возврат 3× за 14 дней — без испытания, по заветному слову с канала хозяина.', action: 'Понял' },
+    { title: 'Тема, язык, всё прочее — в Настройках', body: 'В настройках можно сменить тему (Классическая / Сказочная), язык, перечитать как играть. ЧАВО — все правила механики, типы дел, судьбы. Открою его прямо сейчас, посмотришь где лежит.', accent: '⚙️ Настройки → ЧАВО', action: 'Открыть ЧАВО' },
   ],
 },
 
 // ─── Вводный тур (онбординг) ──────────────────────────────────────────────────
+// Цель: не вываливать всё подряд на нового игрока. Только премиса и подсказка
+// что игра начинается с кнопки «Следующий день» — а после онбординга
+// автоматически запустится полноценный тур по интерфейсу.
 onboarding: {
   slides: [
-    { emoji: '🏪', title: 'Ярмарка «Из грязи в князи»', body: 'Ты купец. Приходят предложения вложить гроши в дела — большинство хозяев жулики. Вкладывай, расти в чинах, не теряй казну.', accent: 'Детали — в туре по интерфейсу и ЧАВО в настройках' },
-    { emoji: '🎭', title: '7 хозяев — 7 испытаний', body: 'Перед каждым вложением — мини-игра в стиле хозяина: печати, ключи, пары, монеты, ингредиенты или карты. Без ошибок — увидишь подсказку по делу.', accent: 'Правила игры всегда есть на «?» перед стартом' },
-    { emoji: '⚖️', title: 'Правила', body: 'Симуляционная игра. Проекты и персонажи вымышлены. Игровые гроши без реальной стоимости. Платежи через Telegram Stars. Возраст 18+.', accent: null },
+    {
+      emoji: '🏪',
+      title: 'Ярмарка «Из грязи в князи»',
+      body: 'Ты купец на сказочной ярмарке. К тебе ходят хозяева дел с предложениями вложить гроши — большинство жулики. Разоблачай скам, вкладывай с умом, расти в чинах от Скомороха до Князя.',
+      accent: 'Все деньги — игровые. Все хозяева — сказочные персонажи.',
+    },
+    {
+      emoji: '🌅',
+      title: 'Жми «Следующий день» — поехали',
+      body: 'На главной справа-внизу — золотая кнопка-кружок с двумя стрелками 🔁. Это кнопка начала дня. Жми её — придут вести, появятся новые грамоты, время сдвинется.',
+      accent: 'Закроешь окно — запущу короткий тур по интерфейсу.',
+    },
   ],
   startBtn: 'Начать игру',
   nextBtn: 'Далее',
@@ -697,6 +707,33 @@ faq: {
         { q: 'За что нужны Telegram Stars?', a: 'Стоят по 10 ⭐:\n• Раскрыть дело после провала испытания (≥2 ошибок) — увидишь посул, тип и совет чуйки\n• Пропустить 2-часовой кулдаун «Следующий день» (сразу 7 свежих нажатий)\n• Купить дополнительный слот сверх 5 базовых дел\n• Беседа с дельцом (если первая бесплатная уже была и нет жетона хозяина)' },
         { q: 'Где взять звёзды?', a: 'Звёзды покупаются прямо в Telegram. При попытке потратить — откроется встроенный экран Telegram «Купить Stars» с выбором пакетов. Никаких внешних сайтов или карт через игру — всё через Telegram.' },
         { q: 'Можно ли играть совсем без звёзд?', a: 'Да. Все базовые механики бесплатны: можно проходить испытания, вкладываться, расти в чинах, выводить прибыль. Звёзды нужны только если хочется ускорить (skip cooldown) или подстраховаться (раскрыть провал).' },
+      ],
+    },
+    {
+      id: 'goldcharter', label: '👑 Золотая грамота',
+      items: [
+        { q: 'Что такое Золотая грамота?', a: 'Редкое VIP-дело от партнёрского канала. Появляется в инбоксе с золотой обводкой, бейджем «✦ ЗОЛОТАЯ ГРАМОТА ✦» и эффектом «Вот это удача!» при появлении.' },
+        { q: 'Чем отличается от обычного дела?', a: 'Три ключевых отличия:\n• Гарантированный возврат 3× за 14 дней (без рисков скама)\n• Без мини-игры — вместо испытания вводишь заветное слово с канала хозяина\n• Каждая такая кампания приходит игроку только один раз' },
+        { q: 'Откуда брать заветное слово?', a: 'На карточке золотой грамоты есть кнопка «📢 Открыть канал →» — она ведёт на Telegram-канал хозяина. Слово опубликовано там в рекламном посте. Регистр и пробелы в слове игнорируются.' },
+        { q: 'Что если ввёл неверное слово?', a: 'Дело остаётся в инбоксе, попыток сколько угодно. Не сгорает.' },
+        { q: 'Часто появляются?', a: 'Очень редко (1% шанс на новое дело при наличии активных кампаний). В период тестирования может быть выше — следи за новостями.' },
+      ],
+    },
+    {
+      id: 'themes', label: '🎨 Оформление',
+      items: [
+        { q: 'Можно ли сменить тему?', a: 'Да, в Настройках → раздел «Оформление» две темы:\n• Классическая — фиолет + золото, тёмная палитра, технологичный стиль (как было изначально)\n• Сказочная — резное дерево, пергаментные карточки, восковые печати, тёплая ярмарочная палитра\n\nСмена темы перезагрузит игру, ничего из прогресса не теряется.' },
+        { q: 'Можно ли сменить язык?', a: 'Да, в Настройках → «Язык / Language». Поддерживаются русский и английский. ИИ-беседы тоже идут на выбранном языке.' },
+        { q: 'Можно ли отключить звуки и музыку?', a: 'Да, в Настройках → раздел «Звук». Отдельно музыка (фоновая мелодия) и SFX (тапы, монетки, фанфары рангов). Громкость регулируется ползунком.' },
+      ],
+    },
+    {
+      id: 'screens', label: '🗺 Где что лежит',
+      items: [
+        { q: 'Из чего состоит главная страница?', a: 'Сверху вниз:\n• Баланс (свободные гроши + общая статистика)\n• Чип «Отношения с дельцами» (быстрый переход + жетоны)\n• Превью входящих грамот (топ-2 + ссылка «Все →»)\n• Кнопка-кружок «Следующий день» (правый-нижний угол)\n• Кнопка чата «💬» (левый-нижний угол)' },
+        { q: 'Где смотреть активные дела?', a: 'Во вкладке «Казна» (нижний нав-бар). Все активные дела с графиками доходности, кнопками «Довложить / Вывести часть / Покинуть дело». Также там есть «Движение средств» — журнал всех транзакций.' },
+        { q: 'Где смотреть закрытые дела?', a: 'В Подвиги → раздел «Летопись» (или иногда через Казну). Каждое закрытое дело становится PostMortem-записью с разбором исхода и архетипа.' },
+        { q: 'Зачем вкладка «Отношения»?', a: 'Полный экран с 7 хозяевами, статистикой по каждому (сыграно мини-игр, взято дел, идеалов/побед/провалов) и прогрессом до следующего жетона. Полезно перед беседой с дельцом — оценить «свою историю» с ним.' },
       ],
     },
   ],
@@ -1376,26 +1413,33 @@ archetypes: {
 },
 tour: {
   steps: [
-    { title: 'Quick interface tour', body: "We'll show you the main elements. Takes a couple of minutes — much easier to play after.", action: 'Start' },
-    { title: 'Your balance', body: 'These are your free kopecks — the in-game currency. Zero now; the first coins arrive after your first completed audience with a dealer.', action: 'Got it' },
-    { title: 'Incoming Charters', body: 'This is where venture offers arrive. Open one to study a proposal before investing.', action: 'Open charters' },
-    { title: 'Offer from an owner', body: "Each card is a separate venture. You see the owner's name, venture type and number of investors. Tap \"Accept trial\" to pass the test and decide whether to invest.", action: 'To trial' },
-    { title: "Owner's trial", body: 'Each owner has their own temper and their own trial — 7 different mini-games. Tsar Gorokh gives a seal charter, Buratino asks you to spot the key, Koschei — collect pairs, Kolobok — catch animals, Cinderella — real coins, Baba Yaga — ingredient order, Ivan the Fool — cards from memory.', accent: 'Rules and a "?" hint appear before each mini-game', action: 'Got it' },
-    { title: 'Invest kopecks', body: 'Pass the trial flawlessly — see a hint about the venture type and advice. One mistake — only the type and promised yield. Two or more — investing is locked, but you can unlock the hint with Stars.', accent: 'Minimum — 5k, up to 5 active ventures + 5 more via Stars', action: 'Got it' },
-    { title: 'Next Day', body: 'Press this button every day — ventures develop, news arrives, events unfold. Without it, time stands still.', action: 'Got it' },
-    { title: 'Treasury — your investments', body: 'All active ventures live here. Tap a venture to open its chronicle: daily dispatches, yield and investor count.', action: 'Open treasury' },
-    { title: 'Add more or withdraw', body: 'See a venture doing well? Invest more. Spot warning signs — withdraw. Don\'t wait until the dealer runs.', action: 'Got it' },
-    { title: 'Audience with a dealer', body: 'Every offer has an "Audience" button — ask the owner up to 10 questions. Listen carefully: an experienced swindler sounds convincing, but slips under pressure.', action: 'Got it' },
-    { title: 'Feats and stats', body: 'After your first closed ventures, feat cards appear here — including one per mini-game. Plus stats: how many times you played, how many perfect runs.', action: 'Got it' },
-    { title: 'Ranks grow by ventures taken', body: 'No more "intuition" — rank progression is purely about how many ventures you invested in: 5 → Merchant, 20 → Sage, 50 → Boyar, 100 → Prince.', accent: 'Pick ventures wisely — not every one is worth your kopecks', action: 'Got it' },
-    { title: 'Questions? There\'s an FAQ', body: "All rules, venture types, fates and withdrawal quirks are in the FAQ.", accent: '⚙️ Settings → FAQ', action: 'Finish tour' },
+    { title: 'Tour of the fair', body: "Quick walkthrough of where everything lives. Two minutes — and you're ready.", action: 'Start' },
+    { title: 'Free kopecks', body: 'Main currency. The ~50 g starter bonus arrives after your first audience with a dealer — then you can start investing.', action: 'Got it' },
+    { title: 'Relations with dealers', body: "The game has 7 owners — each with their own archetype and mini-game. The \"×N\" numbers under each emoji are tokens: earned through wins and ventures taken, spent on free audiences or insights instead of 10⭐.", action: 'Got it' },
+    { title: 'Incoming Charters', body: 'Preview of fresh offers on the home page. "All →" — full list in the Charters tab.', action: 'To Charters' },
+    { title: 'Venture card', body: "Owner's name, venture type, number of investors. Tap \"Accept trial\" — pass the mini-game and decide whether to invest.", action: 'Next' },
+    { title: "Owner's trial", body: '7 mini-games — one per archetype: seals, keys, memory, whack-a-mole, coins, cauldron, cards. Reward ladder:\n\n🎯 0 errors — venture type + insight revealed\n🙂 1 error — only type and promised yield\n😅 ≥2 errors — locked, can unlock for 10⭐', accent: 'Min investment — 5 g · Up to 5 active ventures (+5 extra slots)', action: 'Got it' },
+    { title: 'Treasury — your ventures', body: "All active ventures with charts. Add more, withdraw partially, or exit manually. Active ventures no longer appear on the home page — only here.", action: 'Got it' },
+    { title: 'Next Day — the main button', body: 'Tap "Next Day" (gold circle bottom-right) — time advances, ventures develop, dispatches arrive. Nothing happens without it. 7 taps in a row → 2-hour cooldown (or 10⭐ to skip).', action: 'Got it' },
+    { title: 'Ranks & feats', body: 'Rank progression by ventures taken: 5 → Merchant, 20 → Sage, 50 → Boyar, 100 → Prince. In Feats — chronicle of breakthroughs: first scam, first Firebird, mini-game mastery.', action: 'Got it' },
+    { title: '⭐ Golden Charter', body: 'Rare VIP venture from partner channels. Appears with a gold ring and a "What a stroke of luck!" effect. Guaranteed 3× return in 14 days — no trial, by secret word from the owner\'s channel.', action: 'Got it' },
+    { title: 'Theme, language, everything else — in Settings', body: "Settings let you switch theme (Classic / Fairy), language, replay how-to-play. FAQ covers all rules, venture types, fates. Opening it right now so you see where it lives.", accent: '⚙️ Settings → FAQ', action: 'Open FAQ' },
   ],
 },
 onboarding: {
   slides: [
-    { emoji: '🏪', title: 'From Rags to Riches Fair', body: "You're a merchant. Venture proposals arrive — most owners are swindlers. Invest wisely, grow your rank, protect your treasury.", accent: 'Details in the UI tour and FAQ in Settings' },
-    { emoji: '🎭', title: '7 owners — 7 trials', body: 'Before every investment — a mini-game in the owner\'s style: seals, keys, pairs, coins, ingredients or cards. No mistakes — and you get a hint about the venture.', accent: 'Rules are always available via "?" before the start' },
-    { emoji: '⚖️', title: 'Rules & Disclaimer', body: 'This is a simulation game. All ventures and characters are fictional. Game coins have no real-world value. Payments via Telegram Stars. Age 18+ required.', accent: null },
+    {
+      emoji: '🏪',
+      title: 'From Rags to Riches Fair',
+      body: "You're a merchant on a fairy-tale fair. Venture owners pitch you deals — most are swindlers. Spot the scams, invest wisely, climb the ranks from Jester to Prince.",
+      accent: 'All money is in-game. All owners are fairy-tale characters.',
+    },
+    {
+      emoji: '🌅',
+      title: 'Tap "Next Day" to begin',
+      body: 'Bottom-right of the home screen — gold circle with two arrows 🔁. That\'s the Day button. Tap it: dispatches arrive, new charters appear, time moves on.',
+      accent: 'Close this and a short interface tour will start.',
+    },
   ],
   startBtn: 'Start game',
   nextBtn: 'Next',
@@ -1480,6 +1524,41 @@ faq: {
         { q: 'What are "Feats"?', a: 'The "Feats" section is a discovery journal. Cards appear after key events: first scam, first Firebird, first Koschei. Each card is a reference with rules and signs to watch.' },
         { q: 'What are "personas"?', a: 'Every venture owner belongs to an archetype (Buratino, Tsar Gorokh, Kolobok, etc.). After your first venture with that archetype, their card unlocks — showing their lying style and typical phrases.' },
         { q: 'How do I use the reference from Feats?', a: 'Unlocked cards are your cheat sheet. See a new offer from Koschei — open his card and recall: what are his typical hooks, how does he hide the truth.' },
+      ],
+    },
+    {
+      id: 'stars', label: '⭐ Stars',
+      items: [
+        { q: 'What are Telegram Stars used for?', a: '10⭐ each:\n• Reveal a venture after failing the trial (≥2 errors) — see the promised yield, type and insight\n• Skip the 2-hour cooldown of "Next Day" (immediately get 7 fresh presses)\n• Buy an extra slot beyond the 5 base ventures\n• Audience with a dealer (if first free one already used and no owner token)' },
+        { q: 'Where to get stars?', a: 'Stars are purchased directly in Telegram. When you tap to spend, the built-in Telegram "Buy Stars" screen opens with package options. No external sites or cards through the game — everything via Telegram.' },
+        { q: 'Can I play without stars at all?', a: 'Yes. All core mechanics are free: trials, investing, climbing ranks, withdrawing profit. Stars are only needed if you want to speed up (skip cooldown) or hedge (reveal a failed trial).' },
+      ],
+    },
+    {
+      id: 'goldcharter', label: '👑 Golden Charter',
+      items: [
+        { q: 'What is a Golden Charter?', a: 'A rare VIP venture from a partner channel. Appears in the inbox with a gold ring, "✦ GOLDEN CHARTER ✦" badge, and a "What a stroke of luck!" effect on arrival.' },
+        { q: 'How is it different from a regular venture?', a: 'Three key differences:\n• Guaranteed 3× return in 14 days (no scam risk)\n• No mini-game — instead of a trial, you enter the secret word from the owner\'s channel\n• Each such campaign reaches a single player only once' },
+        { q: 'Where to find the secret word?', a: 'The Golden Charter card has a "📢 Open channel →" button that leads to the owner\'s Telegram channel. The word is published there in a promo post. Case and spaces are ignored.' },
+        { q: 'What if I enter the wrong word?', a: 'The venture stays in the inbox, unlimited attempts. Nothing burns out.' },
+        { q: 'How often do they appear?', a: 'Very rarely (1% chance on a new venture when active campaigns exist). During testing this may be higher — watch for news.' },
+      ],
+    },
+    {
+      id: 'themes', label: '🎨 Appearance',
+      items: [
+        { q: 'Can I change the theme?', a: 'Yes — Settings → "Theme" section, two themes:\n• Classic — purple + gold, dark palette, modern technological style (the original)\n• Fairy — carved wood, parchment cards, wax seals, warm fair-tale palette\n\nChanging theme reloads the game; no progress is lost.' },
+        { q: 'Can I change the language?', a: 'Yes, Settings → "Language". Russian and English are supported. AI audiences also run in the selected language.' },
+        { q: 'Can I disable sound and music?', a: 'Yes, Settings → "Sound" section. Music (background tune) and SFX (taps, coins, rank fanfare) are separately toggled. Volume is a slider.' },
+      ],
+    },
+    {
+      id: 'screens', label: '🗺 Where is what',
+      items: [
+        { q: 'What\'s on the home page?', a: 'Top to bottom:\n• Balance (free kopecks + total stats)\n• "Relations with dealers" chip (quick jump + tokens)\n• Incoming Charters preview (top 2 + "All →" link)\n• "Next Day" button (gold circle, bottom-right)\n• Chat button "💬" (bottom-left)' },
+        { q: 'Where do I see active ventures?', a: 'In the "Treasury" tab (bottom nav). All active ventures with profit charts and buttons "Add more / Withdraw partially / Exit venture". Also "Cash flow" — the journal of all transactions.' },
+        { q: 'Where do I see closed ventures?', a: 'In Feats → "Chronicle" section (or sometimes via Treasury). Each closed venture becomes a PostMortem entry with an analysis of the outcome and the archetype.' },
+        { q: 'What is the "Relations" tab for?', a: 'A full screen with all 7 owners, statistics for each (mini-games played, ventures taken, perfects/wins/losses), and progress to the next token. Useful before an audience with a dealer — to evaluate your "history" with them.' },
       ],
     },
   ],

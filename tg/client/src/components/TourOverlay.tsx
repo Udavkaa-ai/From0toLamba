@@ -12,20 +12,31 @@ interface StepMeta {
   target: string | null // data-tour selector для подсветки
 }
 
+// 11 шагов — синхронизировано с t.tour.steps и TOUR_TOTAL.
+// На каждом шаге: на какую страницу перейти + что подсветить.
+//   0  Tour intro              (центральная модалка)
+//   1  Свободные гроши         (главная, balance)
+//   2  Отношения с дельцами    (главная, tokens-chip)
+//   3  Входящие грамоты        (главная, inbox-section)
+//   4  Карточка дела           (Грамоты, first-project)
+//   5  Испытание хозяина       (модалка — про мини-игры)
+//   6  Казна                   (Казна, центральная модалка)
+//   7  Следующий день — FAB    (главная, next-day-fab)
+//   8  Чины и Подвиги          (Успехи)
+//   9  Золотая грамота         (модалка)
+//   10 Открыть ЧАВО → Настройки + подсветка ЧАВО
 const STEP_META: StepMeta[] = [
   { page: null,        target: null },
   { page: '/',         target: '[data-tour="balance"]' },
+  { page: '/',         target: '[data-tour="tokens-chip"]' },
   { page: '/',         target: '[data-tour="inbox-section"]' },
   { page: '/inbox',    target: '[data-tour="first-project"]' },
-  { page: '/inbox',    target: '[data-tour="charter-btn"]' },
   { page: null,        target: null },
+  { page: '/portfolio',target: null },
   { page: '/',         target: '[data-tour="next-day-fab"]' },
-  { page: '/portfolio',target: '[data-tour="portfolio-project"]' },
-  { page: '/portfolio',target: '[data-tour="portfolio-actions"]' },
+  { page: '/stats',    target: null },
   { page: null,        target: null },
-  { page: '/stats',    target: '[data-tour="achievements-section"]' },
-  { page: null,        target: null },
-  { page: null,        target: null },
+  { page: '/',         target: null },
 ]
 
 // ─── Spotlight — подсветка элемента через 4 тёмных прямоугольника ─────────────
@@ -218,6 +229,11 @@ export function TourOverlay() {
   }, [stepIdx, location.pathname])
 
   const handleNext = () => {
+    // Последний шаг — «Открыть ЧАВО»: тур завершается + диспатчим
+    // событие, на которое HomePage откроет Настройки и подсветит FAQ-кнопку.
+    if (stepIdx === TOUR_TOTAL - 1) {
+      window.dispatchEvent(new CustomEvent('open-settings-faq'))
+    }
     next()
   }
 

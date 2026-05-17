@@ -67,6 +67,9 @@ export function HomePage() {
   const [showMarketAnnouncement, setShowMarketAnnouncement] = useState(false)
   // Подтверждение перехода на следующий день, если в инбоксе остались дела
   const [showInboxLeftConfirm, setShowInboxLeftConfirm] = useState(false)
+  // Пульсация ЧАВО-кнопки в Настройках после завершения тура — чтобы новый
+  // игрок увидел где она лежит.
+  const [faqPulse, setFaqPulse] = useState(false)
   const [nicknameInput, setNicknameInput] = useState<string>('')
   const [nicknameError, setNicknameError] = useState<string | null>(null)
   const [nicknameSaving, setNicknameSaving] = useState(false)
@@ -398,11 +401,19 @@ export function HomePage() {
       }
     }
     const skipHandler = () => setShowPaymentModal(true)
+    // Финал тура → открываем Настройки и пульсируем ЧАВО-кнопку 3 сек.
+    const openFaqHandler = () => {
+      setShowSettings(true)
+      setFaqPulse(true)
+      setTimeout(() => setFaqPulse(false), 3000)
+    }
     window.addEventListener('advance-day', advanceHandler)
     window.addEventListener('request-skip-payment', skipHandler)
+    window.addEventListener('open-settings-faq', openFaqHandler)
     return () => {
       window.removeEventListener('advance-day', advanceHandler)
       window.removeEventListener('request-skip-payment', skipHandler)
+      window.removeEventListener('open-settings-faq', openFaqHandler)
     }
   }, [gameState?.inboxProjects.length, advanceMutation])
 
@@ -938,18 +949,20 @@ export function HomePage() {
                 </button>
                 <button
                   onClick={() => { playSound('tap'); setShowSettings(false); setShowFaq(true) }}
+                  className={faqPulse ? 'vip-glow' : undefined}
                   style={{
                     width: '100%',
                     marginTop: '8px',
                     padding: '12px 16px',
-                    background: `${colors.fairyGold}18`,
-                    border: `1px solid ${colors.fairyGold}55`,
+                    background: faqPulse ? `${colors.fairyGold}55` : `${colors.fairyGold}18`,
+                    border: `${faqPulse ? '2.5px' : '1px'} solid ${colors.fairyGold}${faqPulse ? '' : '55'}`,
                     borderRadius: '12px',
                     color: colors.fairyGold,
                     fontSize: '14px',
                     fontWeight: 600,
                     cursor: 'pointer',
                     textAlign: 'left',
+                    transition: 'background 0.3s, border 0.3s',
                   }}
                 >
                   {t.home.settingsFaq}
@@ -2021,6 +2034,7 @@ function TokensQuickChip({ onNavigate }: { onNavigate: () => void }) {
 
   return (
     <motion.button
+      data-tour="tokens-chip"
       onClick={onNavigate}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
