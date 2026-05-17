@@ -469,11 +469,23 @@ export function HomePage() {
   const resetMutation = useMutation({
     mutationFn: api.game.resetGame,
     onSuccess: () => {
+      // Сбрасываем все клиентские флаги «уже видел», чтобы игрок после
+      // сброса прошёл полную дорогу как новый: интро-тур → UI-тур →
+      // подсказку в купеческой грамоте → ачивки заново. Иначе бот видит
+      // gameState.isOnboardingComplete=false, но localStorage держит
+      // ui-tour-v1-done=1, и автостарт тура в HomePage.useEffect молчит.
       window.localStorage.removeItem('seenAchievements')
-      setShowResetConfirm(false)
-      setShowSettings(false)
-      qc.invalidateQueries({ queryKey: ['gameState'] })
-      navigate('/')
+      window.localStorage.removeItem('onboarding_v3_seen')
+      window.localStorage.removeItem('charter_tutorial_seen')
+      window.localStorage.removeItem('ui-tour-v1-done')
+      window.localStorage.removeItem('ui-tour-v2')
+      // Zustand-persist хранит step=null, но кэш-объект сам по себе
+      // существует — обнуляем in-memory тоже, чтобы повторный старт сработал.
+      useTourStore.setState({ step: null })
+      // Чтобы tutorialChecked-ref в этом же компоненте перечитал состояние
+      // (он флипается на true после первой проверки) — простой релоад
+      // страницы: меньше кода и гарантия что НИГДЕ не осталось stale state.
+      window.location.reload()
     },
   })
 
