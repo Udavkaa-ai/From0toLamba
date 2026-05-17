@@ -127,13 +127,15 @@ function CategoryList({ category, archive }: {
   const valueOf = (e: any): { display: string; suffix: string } => {
     switch (category) {
       case 'WEALTH':
-        return { display: (e.totalWealth ?? 0).toLocaleString('ru'), suffix: 'г' }
+        // Math.floor — totalWealth в архиве может прийти с дробной частью
+        // (старые снимки писали balance + Σ currentValueRubles без округления).
+        return { display: Math.floor(e.totalWealth ?? 0).toLocaleString('ru'), suffix: 'г' }
       case 'TIES':
-        return { display: String(e.tiesTotal ?? 0), suffix: '' }
+        return { display: String(Math.floor(e.tiesTotal ?? 0)), suffix: '' }
       case 'ACHIEVEMENTS':
-        return { display: String(e.achievementScore ?? 0), suffix: 'оч' }
+        return { display: String(Math.floor(e.achievementScore ?? 0)), suffix: 'оч' }
       case 'REFERRALS':
-        return { display: String(e.referralCount ?? 0), suffix: 'чел' }
+        return { display: String(Math.floor(e.referralCount ?? 0)), suffix: 'чел' }
     }
   }
 

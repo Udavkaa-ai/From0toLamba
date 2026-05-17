@@ -115,7 +115,10 @@ export async function captureSeasonSnapshot(seasonNumber: number): Promise<Recor
   const closedByUserId = new Map(closedCounts.map(c => [c.userId, c._count._all]))
   const chartersByUserId = new Map(charterCounts.map(c => [c.userId, c._count._all]))
 
-  // ── 1. WEALTH (топ по общему состоянию) — для /api/leaderboard
+  // ── 1. WEALTH (топ по общему состоянию) — для /api/leaderboard.
+  //    Math.floor на сохранении: UI всё равно показывает целое (см. CLAUDE.md
+  //    про .toFixed vs Math.floor). Сортировка по дробному и затем floor
+  //    стабильнее, чем floor-then-sort: разница в 0.x не должна менять место.
   const wealthRanked = gameStates
     .map(gs => ({
       userId: gs.userId,
@@ -124,7 +127,7 @@ export async function captureSeasonSnapshot(seasonNumber: number): Promise<Recor
       investorRank: gs.investorRank,
       currentDay: gs.currentDay,
       intuitionScore: gs.intuitionScore,
-      totalWealth: gs.balance + (sumByUserId.get(gs.userId) ?? 0),
+      totalWealth: Math.floor(gs.balance + (sumByUserId.get(gs.userId) ?? 0)),
     }))
     .sort((a, b) => b.totalWealth - a.totalWealth)
 
@@ -191,7 +194,7 @@ export async function captureSeasonSnapshot(seasonNumber: number): Promise<Recor
         investorRank: gs.investorRank,
         currentDay: gs.currentDay,
         intuitionScore: gs.intuitionScore,
-        totalWealth: gs.balance + (sumByUserId.get(gs.userId) ?? 0),
+        totalWealth: Math.floor(gs.balance + (sumByUserId.get(gs.userId) ?? 0)),
         achievementScore: closed * 3 + charters,
         closedProjectsCount: closed,
         chartersSubmitted: charters,
