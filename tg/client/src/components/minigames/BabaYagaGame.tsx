@@ -342,10 +342,13 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
   // Финальная сцена: циклический «дождь» ингредиентов сверху в котёл.
   // Раз в DRAIN_INTERVAL_MS из верха канваса спавнится частица — летит
   // 1.2 сек по дуге в жерло котла, на приземлении взлетают зелёные пузыри.
-  // Цикл повторяется бесконечно, пока компонент смонтирован (т.е. до
-  // навигации). Слоты-карты убираем — после complete их все ставим в
-  // state 'consumed' (невидимы), сцена остаётся «бабушка-варит-зелье».
+  // Длится DRAIN_DURATION_MS — потом сцена остаётся статичной (бабушка
+  // варит зелье), без бесконечного создания Pixi-объектов. Иначе на
+  // некоторых WebView Telegram через ~10 сек крашится по памяти, потому
+  // что removeChildren() не освобождает WebGL-ресурсы.
+  const DRAIN_DURATION_MS = 5000
   const drainModeRef = useRef(false)
+  const drainStoppedAtRef = useRef<number | null>(null)
   const drainParticlesRef = useRef<Array<{
     ingredient: Ingredient
     startedAt: number
@@ -359,6 +362,7 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
   const drainNextSpawnRef = useRef(0)
   const triggerDrain = () => {
     drainModeRef.current = true
+    drainStoppedAtRef.current = performance.now() + DRAIN_DURATION_MS
     // Прячем все слоты — финальный «дождь» приходит сверху, отдельно от них
     for (const slot of slotsRef.current) {
       slot.anim.state = 'consumed'
@@ -499,7 +503,15 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
 
       const W = app.screen.width
       const H = app.screen.height
-      app.stage.removeChildren()
+      // КРИТИЧЕСКОЕ для drain-фазы (бесконечный rAF после complete):
+      // removeChildren() убирает их из stage, но WebGL-ресурсы (текстуры,
+      // буферы геометрии для Graphics, glyph-атласы для Text) НЕ освобождаются.
+      // На WebView Telegram через ~5-10 сек память переполняется и приложение
+      // крашится. destroy(true) с children:true рекурсивно сносит всё.
+      const removed = app.stage.removeChildren()
+      for (const obj of removed) {
+        try { obj.destroy({ children: true, texture: false }) } catch { /* noop */ }
+      }
 
       const layout = computeLayout(W, H)
       const { cauldronW, cauldronH, cauldronCX, cauldronTopY, cauldronMouthY,
@@ -587,10 +599,14 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
       // ── Циклический дождь после игры ─────────────────────────────────
       // Раз в DRAIN_INTERVAL_MS из верха канваса вылетает новая частица —
       // случайный ингредиент из рецепта, летит по дуге в жерло котла.
+      // Спавним только в течение DRAIN_DURATION_MS — потом существующие
+      // частицы доигрывают, новых нет. Сцена становится статичной (только
+      // котёл + лёгкие пузыри), Pixi практически не работает.
       if (drainModeRef.current) {
         const DRAIN_INTERVAL_MS = 650
         const DRAIN_FALL_MS = 1300
-        if (now >= drainNextSpawnRef.current) {
+        const canSpawn = drainStoppedAtRef.current === null || now < drainStoppedAtRef.current
+        if (canSpawn && now >= drainNextSpawnRef.current) {
           drainNextSpawnRef.current = now + DRAIN_INTERVAL_MS
           const ing = recipe[Math.floor(Math.random() * recipe.length)]
           drainParticlesRef.current.push({
