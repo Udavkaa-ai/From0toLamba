@@ -3,6 +3,8 @@ import { z } from 'zod'
 import { prisma } from '../../db/prisma'
 import { telegramAuthHook } from '../../middleware/telegramAuth'
 import { invest, addInvestment, partialWithdraw, exitProject } from '../../game/InvestService'
+import { checkAndGrantReferralBonus } from '../../game/referralService'
+import { recomputeRank } from '../../game/rankService'
 
 export async function investRoutes(app: FastifyInstance) {
 
@@ -23,8 +25,11 @@ export async function investRoutes(app: FastifyInstance) {
     const user = await prisma.user.findUniqueOrThrow({ where: { telegramId: String(tgUser.id) } })
 
     try {
-      await invest(user.id, projectId, body.data.amount, body.data.extraSlot)
-      return { success: true }
+      const result = await invest(user.id, projectId, body.data.amount, body.data.extraSlot)
+      // Чин зависит от числа взятых дел — пересчитываем после инвеста
+      recomputeRank(user.id).catch(console.error)
+      checkAndGrantReferralBonus(user.id).catch(console.error)
+      return { success: true, luckShift: result.luckShift }
     } catch (err: any) {
       const errMap: Record<string, [number, string]> = {
         AMOUNT_TOO_SMALL: [400, 'Минимальное вложение — 5 ₽'],

@@ -39,9 +39,21 @@ input[type=number] {
   -moz-appearance: textfield;
 }
 
-/* Telegram safe areas */
+/* Telegram safe areas.
+   env(safe-area-inset-top) — статусбар устройства (notch на iOS, верхний
+     системный бар на Android). Это базовый отступ для всех страниц.
+   --tg-content-safe-area-inset-top — Telegram UI (кнопки «назад» и
+     «свернуть»). Появляется только в fullscreen-режиме (Bot API 8.0+),
+     на старых клиентах = 0px. Сдвигаем им body, чтобы кнопки не
+     перекрывали верхний контент. */
+:root {
+  --app-top-inset: calc(env(safe-area-inset-top, 0px) + var(--tg-content-safe-area-inset-top, 0px));
+  /* Эффективная высота вьюпорта после учёта верхних отступов. Используется
+     вместо 100dvh для элементов, которые должны помещаться целиком на экран. */
+  --app-vh: calc(100dvh - var(--app-top-inset));
+}
 body {
-  padding-top: env(safe-area-inset-top);
+  padding-top: var(--app-top-inset);
 }
 
 /* Вращение печатей в грамоте — каждая клетка получает своё --seal-delay */
@@ -75,6 +87,30 @@ body {
     radial-gradient(ellipse 80% 30% at 50% 50%, rgba(160,180,210,0.06), transparent 70%);
   animation: mistDrift 28s ease-in-out infinite;
   will-change: transform, opacity;
+}
+
+/* VIP-дело: бесконечная пульсация золотой обводки + вращение лучей.
+   Используется на карточке в инбоксе и на оверлее «Вот это удача!». */
+@keyframes vipGlowPulse {
+  0%, 100% {
+    box-shadow:
+      0 0 22px rgba(255,184,0,0.5),
+      0 0 6px rgba(255,235,170,0.7),
+      0 4px 14px rgba(0,0,0,0.4);
+  }
+  50% {
+    box-shadow:
+      0 0 38px rgba(255,184,0,0.85),
+      0 0 12px rgba(255,235,170,1),
+      0 6px 18px rgba(0,0,0,0.5);
+  }
+}
+.vip-glow {
+  animation: vipGlowPulse 2.2s ease-in-out infinite;
+}
+@keyframes vipRayspin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to   { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
 /* Мерцание света свечи — для кнопок и оверлеев в важные моменты */

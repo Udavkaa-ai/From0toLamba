@@ -1,23 +1,14 @@
 import { prisma } from '../db/prisma'
 import { ProjectFate, LieTopic, ProjectPublicDTO } from './types'
 import { toPublicDTO } from './projectUtils'
-import { recomputeRank } from './rankService'
 
 const GRID_SIZE = 24
 const MAX_FORGERIES = GRID_SIZE - 1
 
-// Чем выше чин — тем меньше времени на рассматривание грамоты
-const RANK_TIME_LIMIT: Record<string, number> = {
-  NEWBIE:       25,
-  AMBASSADOR:   20,
-  ANALYST:      15,
-  SHARK:        10,
-  LAMBO_SENSEI:  5,
-}
-
-function timeLimitForRank(rank: string): number {
-  return RANK_TIME_LIMIT[rank] ?? 15
-}
+// С версии 3.3 таймер Купеческой грамоты (BOYARIN) фиксирован — 15 секунд для всех
+// чинов. Прочие архетипы запускают свои мини-игры (тоже на 15 сек), сервер этот
+// таймер для них не использует, но шлёт согласованное значение в DTO.
+const CHARTER_TIME_LIMIT_SECONDS = 15
 
 /** Сила мутации подделок — чем честнее дело, тем тоньше мутации */
 export type CharterDifficulty = 'EASY' | 'MEDIUM' | 'HARD'
@@ -78,11 +69,14 @@ export interface CharterPublicView {
     falsePositives: number[]
     falseNegatives: number[]
     delta: number
+    errorCount: number          // FP + FN (BOYARIN) или сохранённое число ошибок мини-игры
+    perfectInsight: string | null  // на reload не выдаём (одноразовое раскрытие)
   }
 }
 
-/** Создать или вернуть существующую сессию-грамоту */
-export async function startCharter(userId: number, projectId: string, rank = 'NEWBIE'): Promise<CharterPublicView> {
+/** Создать или вернуть существующую сессию-грамоту.
+ *  `rank` оставлен для обратной совместимости вызовов, но больше не влияет на таймер. */
+export async function startCharter(userId: number, projectId: string, _rank = 'NEWBIE'): Promise<CharterPublicView> {
   const project = await prisma.project.findFirstOrThrow({ where: { id: projectId, userId } })
 
   // Грамота закрыта (истекла или дело завершилось) — новую сессию не создаём,
@@ -92,7 +86,28 @@ export async function startCharter(userId: number, projectId: string, rank = 'NE
     throw new Error('CHARTER_EXPIRED')
   }
   if (existing && existing.gridSeed) {
-    return toPublicView(existing, project, rank)
+    // Защита от F5-эксплойта: если игрок уже начал игру (gridStartedAt
+    // выставлен), но не отправил результат — считаем за провал. Иначе
+    // F5 в браузере позволял переигрывать ту же грамоту с тем же seed.
+    if (existing.gridStartedAt && !existing.charterSubmittedAt) {
+      await prisma.$transaction([
+        prisma.amaSession.update({
+          where: { id: existing.id },
+          data: {
+            charterSubmittedAt: new Date(),
+            isIntuitionEvaluated: true,
+            intuitionDelta: 2,  // errorCount=2 = поражение, дело раскрывается только за звёзды
+          },
+        }),
+        prisma.project.update({
+          where: { id: projectId },
+          data: { isInbox: false },
+        }),
+      ])
+      const refreshed = await prisma.amaSession.findUniqueOrThrow({ where: { id: existing.id } })
+      return toPublicView(refreshed, project)
+    }
+    return toPublicView(existing, project)
   }
 
   const fate = project.fate as ProjectFate
@@ -121,17 +136,31 @@ export async function startCharter(userId: number, projectId: string, rank = 'NE
         },
       })
 
-  return toPublicView(session, project, rank)
+  return toPublicView(session, project)
 }
 
-export async function getCharter(userId: number, projectId: string, rank = 'NEWBIE'): Promise<CharterPublicView | null> {
+/** Игрок нажал «Принять испытание» — фиксируем начало игры серверной меткой.
+ *  С этого момента F5 = провал (см. защиту в startCharter). */
+export async function beginCharter(userId: number, projectId: string): Promise<void> {
+  const session = await prisma.amaSession.findUniqueOrThrow({ where: { projectId } })
+  if (session.userId !== userId) throw new Error('FORBIDDEN')
+  if (!session.gridSeed) throw new Error('NO_CHARTER')
+  if (session.charterSubmittedAt) throw new Error('ALREADY_SUBMITTED')
+  if (session.gridStartedAt) return  // уже начато, повторный вызов идемпотентен
+  await prisma.amaSession.update({
+    where: { id: session.id },
+    data: { gridStartedAt: new Date() },
+  })
+}
+
+export async function getCharter(userId: number, projectId: string, _rank = 'NEWBIE'): Promise<CharterPublicView | null> {
   const session = await prisma.amaSession.findUnique({ where: { projectId } })
   if (!session || session.userId !== userId || !session.gridSeed) return null
   const project = await prisma.project.findUnique({ where: { id: projectId } })
   if (!project) return null
   // Дело уже закрылось (advance-day откатил грамоту) — сигнализируем клиенту отдельным кодом
   if (project.isClosed) throw new Error('CHARTER_EXPIRED')
-  return toPublicView(session, project, rank)
+  return toPublicView(session, project)
 }
 
 export interface SubmitCharterResult {
@@ -140,7 +169,9 @@ export interface SubmitCharterResult {
   truePositives: number[]
   falsePositives: number[]
   falseNegatives: number[]
-  delta: number
+  delta: number          // оставлено для обратной совместимости, всегда 0 с версии 4
+  errorCount: number     // FP + FN; ключевое поле для рендера результата
+  perfectInsight: string | null
 }
 
 export async function submitCharter(
@@ -151,6 +182,7 @@ export async function submitCharter(
   const session = await prisma.amaSession.findUniqueOrThrow({ where: { projectId } })
   if (session.userId !== userId) throw new Error('FORBIDDEN')
   if (!session.gridSeed) throw new Error('NO_CHARTER')
+  if (!session.gridStartedAt) throw new Error('NOT_STARTED')
   if (session.charterSubmittedAt) throw new Error('ALREADY_SUBMITTED')
 
   // Санитизация: уникальные индексы в допустимом диапазоне
@@ -165,12 +197,13 @@ export async function submitCharter(
   const falsePositives = [...selectedSet].filter(i => !forgedSet.has(i)).sort((a, b) => a - b)
   const falseNegatives = [...forgedSet].filter(i => !selectedSet.has(i)).sort((a, b) => a - b)
 
-  // Формула: +1 за каждую найденную подделку, −1 за каждую ложную, −2 за каждую пропущенную
-  let delta = truePositives.length - falsePositives.length - 2 * falseNegatives.length
-  // Бонус за «чистую грамоту»: подделок не было и игрок никого не обвинил
-  if (forgedSet.size === 0 && falsePositives.length === 0) {
-    delta = 2
-  }
+  // С версии 4 «чуйка» из игры убрана: delta больше не используется для прокачки.
+  // В поле intuitionDelta храним errorCount (число ошибок) — единый формат для
+  // BOYARIN и мини-игр, корректно отображается при reload.
+  const errorCount = falsePositives.length + falseNegatives.length
+
+  const project = await prisma.project.findUniqueOrThrow({ where: { id: projectId } })
+  const perfectInsight = errorCount === 0 ? buildPerfectInsight(project.fate as ProjectFate) : null
 
   await prisma.$transaction([
     prisma.amaSession.update({
@@ -179,12 +212,8 @@ export async function submitCharter(
         charterSelectedIndices: clean,
         charterSubmittedAt: new Date(),
         isIntuitionEvaluated: true,
-        intuitionDelta: delta,
+        intuitionDelta: errorCount,
       },
-    }),
-    prisma.gameState.update({
-      where: { userId },
-      data: { intuitionScore: { increment: delta } },
     }),
     // Только сейчас — когда игрок действительно разобрал грамоту — убираем её из инбокса
     prisma.project.update({
@@ -193,17 +222,77 @@ export async function submitCharter(
     }),
   ])
 
-  // Чуйка изменилась — пересчитать ранг, чтобы он не «прилипал» до advance-day
-  await recomputeRank(userId)
-
   return {
     forgedIndices: [...forgedSet].sort((a, b) => a - b),
     selectedIndices: clean,
     truePositives,
     falsePositives,
     falseNegatives,
-    delta,
+    delta: 0,             // legacy-поле, всегда 0 — UI смотрит на errorCount
+    errorCount,
+    perfectInsight,
   }
+}
+
+/** При идеальной игре (или после выкупа за звёзды/жетон) раскрываем игроку
+ *  «совет чуйки» — намёк об УРОВНЕ РИСКА, а не о конкретной судьбе.
+ *  Скам (INSTANT_SCAM) и жар-птица (UNICORN) специально дают одинаковый
+ *  текст «высокий риск», чтобы игрок не мог отсеять заранее — иначе
+ *  пропадает азарт: знал бы что скам — не вложил, знал бы что птичка —
+ *  вложил без сомнений. */
+export function buildPerfectInsight(fate: ProjectFate): string {
+  switch (fate) {
+    case ProjectFate.INSTANT_SCAM:
+    case ProjectFate.UNICORN:
+      // Намеренно одинаковый текст — экстремум либо в минус, либо в плюс
+      return 'Высокий риск: дело либо сгорит дотла, либо взлетит до небес. Гадай.'
+    case ProjectFate.SLOW_DRAIN:
+      return 'Средний риск: дело будет потихоньку подъедать казну со временем.'
+    case ProjectFate.HONEST_FAIL:
+      return 'Низкая отдача: хозяин честен, но затея слабая — большой прибыли не жди.'
+    case ProjectFate.SURVIVOR:
+      return 'Низкий риск: дело стабильное, продержится дольше большинства.'
+    default:
+      return ''
+  }
+}
+
+/** Сабмит результата мини-игры (не-BOYARIN архетипы). Клиент сам считает число ошибок:
+ *  0 — идеальная игра (раскрываем «шёпот чуйки»),
+ *  1 — выиграл с одной ошибкой (показываем тип+посул, разрешаем вложить),
+ *  ≥2 — слишком много ошибок (вложиться можно только за 10⭐).
+ *  Поле intuitionDelta в БД сохраняем как errorCount — для аналитики, на UI не влияет. */
+export async function submitMiniGame(
+  userId: number,
+  projectId: string,
+  errorCount: number,
+): Promise<{ errorCount: number; perfectInsight: string | null }> {
+  const session = await prisma.amaSession.findUniqueOrThrow({ where: { projectId } })
+  if (session.userId !== userId) throw new Error('FORBIDDEN')
+  if (!session.gridSeed) throw new Error('NO_CHARTER')
+  if (!session.gridStartedAt) throw new Error('NOT_STARTED')
+  if (session.charterSubmittedAt) throw new Error('ALREADY_SUBMITTED')
+
+  const project = await prisma.project.findUniqueOrThrow({ where: { id: projectId } })
+  const safeErrorCount = Math.max(0, Math.floor(errorCount))
+  const perfectInsight = safeErrorCount === 0 ? buildPerfectInsight(project.fate as ProjectFate) : null
+
+  await prisma.$transaction([
+    prisma.amaSession.update({
+      where: { id: session.id },
+      data: {
+        charterSubmittedAt: new Date(),
+        isIntuitionEvaluated: true,
+        intuitionDelta: safeErrorCount,
+      },
+    }),
+    prisma.project.update({
+      where: { id: projectId },
+      data: { isInbox: false },
+    }),
+  ])
+
+  return { errorCount: safeErrorCount, perfectInsight: perfectInsight || null }
 }
 
 function toPublicView(
@@ -218,7 +307,6 @@ function toPublicView(
     intuitionDelta: number
   },
   project: Parameters<typeof toPublicDTO>[0],
-  rank = 'NEWBIE',
 ): CharterPublicView {
   const isSubmitted = !!session.charterSubmittedAt
   const base: CharterPublicView = {
@@ -226,7 +314,7 @@ function toPublicView(
     gridSeed: session.gridSeed ?? '',
     gridSize: session.gridSize,
     difficulty: (session.difficulty as CharterDifficulty) ?? 'MEDIUM',
-    timeLimitSeconds: timeLimitForRank(rank),
+    timeLimitSeconds: CHARTER_TIME_LIMIT_SECONDS,
     forgedIndices: session.forgedIndices,
     isSubmitted,
     project: toPublicDTO(project),
@@ -240,6 +328,10 @@ function toPublicView(
   const falsePositives = [...selectedSet].filter(i => !forgedSet.has(i)).sort((a, b) => a - b)
   const falseNegatives = [...forgedSet].filter(i => !selectedSet.has(i)).sort((a, b) => a - b)
 
+  // На reload (после сабмита) показываем сохранённый результат, но без раскрытия
+  // «шёпота чуйки» — он одноразовый. errorCount берём из intuitionDelta — это единый
+  // источник правды и для BOYARIN'a, и для мини-игр (вычисление FP+FN на лету
+  // неверно для мини-игр, где charterSelectedIndices всегда пуст).
   return {
     ...base,
     result: {
@@ -247,7 +339,9 @@ function toPublicView(
       truePositives,
       falsePositives,
       falseNegatives,
-      delta: session.intuitionDelta,
+      delta: 0,
+      errorCount: Math.max(0, session.intuitionDelta),
+      perfectInsight: null,
     },
   }
 }

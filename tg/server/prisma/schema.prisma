@@ -57,6 +57,10 @@ model GameState {
   pendingRankUp        String?
   preferredModel       String    @default("deepseek/deepseek-v4-flash")
   preferredLanguage    String    @default("ru")
+  // Игрок выключил ежедневные AI-новости — экономит токены OpenRouter и
+  // время игрока. Значения дел (доходность, число вкладчиков) при этом
+  // меняются как обычно, просто без сопроводительного текста.
+  newsEnabled          Boolean   @default(true)
   lastAdvancedAt       DateTime?
   // Флаг: отправлено ли уведомление о доступности следующего дня для текущего lastAdvancedAt.
   // Сбрасывается в false при advance-day, ставится в true в cron'е, когда уведомление отправлено.
@@ -72,6 +76,17 @@ model GameState {
   weekStartAt          DateTime?
   timerSkipTokens      Int       @default(0)
   extraSlotsBalance    Int       @default(0)
+  // Дневные стрики (вкладка «Сегодня») — независимы от dayStreak (тот считает
+  // быстрые нажатия «Следующий день»). Сбрасываются если игрок пропустил день.
+  loginStreak          Int       @default(0)
+  lastSeenDay          String?   // YYYY-MM-DD в МСК — когда стрик последний раз обновлялся
+  lastDailyClaim       String?   // YYYY-MM-DD — день последнего получения награды
+  // Жетоны-монеты по архетипам хозяев. Заработок: каждые 10 сыгранных
+  // мини-игр + каждые 5 взятых дел = 1 жетон. Тратится на бесплатную
+  // беседу с тем же хозяином или раскрытие дела при провале мини-игры.
+  // Заработок считается на лету из minigameSessions/projects, в БД
+  // храним только сколько потрачено. Map<archetype, count>.
+  archetypeTokensSpent Json      @default("{}")
   // Внеочередное объявление о группе купцов — показывается один раз
   marketAnnouncementSeen          Boolean   @default(false)
   marketAnnouncementRewardClaimed Boolean   @default(false)
@@ -141,6 +156,19 @@ model Project {
   bannerImageUrl       String?
   bannerPromptUsed     String?
 
+  // VIP-дело от спонсорского канала. Если isSponsor=true, поля ниже:
+  //   - promocode: секретное слово, которое игрок должен ввести вместо
+  //     прохождения мини-игры. Сравнение case-insensitive.
+  //   - sponsorChannelUrl: ссылка на канал, где промокод опубликован.
+  //   - sponsorCampaignId: ссылка на исходную кампанию (для аналитики).
+  //   - sponsorPromoVerified: true когда игрок ввёл правильный промокод.
+  // Финал такого дела: фиксированный возврат 3× за durationDays.
+  isSponsor             Boolean   @default(false)
+  promocode             String?
+  sponsorChannelUrl     String?
+  sponsorCampaignId     String?
+  sponsorPromoVerified  Boolean   @default(false)
+
   // История для графиков (хранить компактно — последние 30 дней)
   currentUserCount     Int       @default(0)
   userCountHistory     Int[]     @default([])
@@ -175,6 +203,9 @@ model AmaSession {
   difficulty            String?      // EASY | MEDIUM | HARD — сила мутации подделок
   forgedIndices         Int[]        @default([]) // СКРЫТО: индексы поддельных печатей
   charterSelectedIndices Int[]       @default([]) // что отметил игрок при сабмите
+  // Игрок начал саму игру (нажал «Принять испытание»). После этого
+  // F5 в браузере считается провалом — защита от перепрохождения с тем же seed.
+  gridStartedAt         DateTime?
   charterSubmittedAt    DateTime?
 
   isPaid                Boolean      @default(false)
@@ -293,6 +324,30 @@ model AdRevenue {
   currency  String   @default("RUB")
   meta      String?  // JSON: доп. данные от рекламной сети
   recordedAt DateTime @default(now())
+}
+
+// VIP-дела от спонсорских каналов. Появляются в инбоксе вместо обычных дел
+// с шансом SPONSOR_CHANCE (см. types.ts). Если активных кампаний несколько —
+// выбирается случайная (по весам weight). Дело имеет фиксированный возврат
+// SPONSOR_PROFIT_MULT (3×) за durationDays дней без судьбы скама.
+//
+// Управляется через бот: /sponsor add | list | remove (только ADMIN_TELEGRAM_ID).
+model SponsorCampaign {
+  id              String   @id @default(uuid())
+  channelName     String                                       // «@MyChannel»
+  channelUrl      String                                       // https://t.me/MyChannel
+  promocode       String                                       // секретное слово
+  scenarioTitle   String                                       // «Воеводская награда» (название дела)
+  scenarioBody    String   @db.Text                            // текст описания дела (сказочный)
+  developerName   String                                       // «Воевода Михайло»
+  archetype       String                                       // PersonaArchetype (для баннера)
+  type            String                                       // ProjectType
+  durationDays    Int      @default(14)
+  bannerImageUrl  String?                                      // null = заглушка SPONSOR_VIP_01.webp
+  active          Boolean  @default(true)                      // false = больше не выпадает
+  weight          Int      @default(10)                        // вес в случайном выборе
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model ChatMessage {

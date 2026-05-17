@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { colors, spacing } from '@/theme'
+import { colors, spacing , gradients } from '@/theme'
 import { useT } from '@/i18n'
 
 // Заметки по версиям — что поменялось. Показываются один раз: клиент
@@ -114,7 +114,7 @@ export function WhatsNewOverlay({
           width: '100%', maxWidth: '420px',
           maxHeight: '85dvh',
           display: 'flex', flexDirection: 'column',
-          background: `linear-gradient(145deg, ${colors.enchantedPurple}, ${colors.nightBlue})`,
+          background: gradients.modal,
           border: `1px solid ${colors.fairyGold}55`,
           borderRadius: '16px',
           boxShadow: '0 16px 48px rgba(0,0,0,0.6)',
@@ -127,7 +127,7 @@ export function WhatsNewOverlay({
             <div style={{ color: colors.fairyGold, fontSize: '18px', fontWeight: 800 }}>
               {t.whatsNew.header}
             </div>
-            <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
+            <div style={{ color: colors.textOnDarkMuted, fontSize: '12px', marginTop: '4px' }}>
               {t.whatsNew.versionLabel(entry.version)}
             </div>
           </div>
@@ -154,7 +154,7 @@ export function WhatsNewOverlay({
                 background: 'rgba(255,255,255,0.04)',
                 border: `1px solid ${colors.cardBorder}`,
                 borderRadius: '10px',
-                color: colors.textPrimary,
+                color: colors.textOnDark,
                 fontSize: '13px',
                 lineHeight: 1.5,
               }}

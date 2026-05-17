@@ -5,6 +5,7 @@ import { generateOnboardingProject } from '../game/GenerateProjectService'
 const STARS_TIMER_SKIP = 10
 const STARS_AMA_UNLOCK = 10
 const STARS_EXTRA_SLOT = 10
+const STARS_MINIGAME_BYPASS = 10
 
 let _bot: Bot | null = null
 let broadcastActive = false
@@ -60,6 +61,17 @@ export async function createExtraSlotInvoice(userId: number, payload: string): P
     '',
     'XTR',
     [{ label: 'Доп. слот', amount: STARS_EXTRA_SLOT }],
+  )
+}
+
+export async function createMinigameBypassInvoice(userId: number, payload: string): Promise<string> {
+  return getBot().api.createInvoiceLink(
+    'Вложить, минуя испытание',
+    'Пропустить проверку чуйки и вложиться в дело несмотря на проигрыш в мини-игре',
+    payload,
+    '',
+    'XTR',
+    [{ label: 'Пропуск проверки', amount: STARS_MINIGAME_BYPASS }],
   )
 }
 
@@ -172,7 +184,12 @@ function setupHandlers(bot: Bot) {
 
       // Фича активируется клиентом через /api/payments/activate после callback "paid".
       // Здесь только обновляем telegramChargeId для учёта и возможных возвратов.
-      console.log(`[Payment] logged userId=${user.id} feature=${payload.startsWith('ts:') ? 'timer_skip' : 'ama_unlock'}`)
+      const featureFromPayload =
+        payload.startsWith('ts:') ? 'timer_skip' :
+        payload.startsWith('au:') ? 'ama_unlock' :
+        payload.startsWith('es:') ? 'extra_slot' :
+        payload.startsWith('mb:') ? 'minigame_bypass' : 'unknown'
+      console.log(`[Payment] logged userId=${user.id} feature=${featureFromPayload}`)
     } catch (err) {
       console.error('[Payment] Error processing successful_payment:', err)
     }
@@ -314,6 +331,212 @@ function setupHandlers(bot: Bot) {
     }
     broadcastCancelled = true
     await ctx.reply('🛑 Останавливаю рассылку...')
+  })
+
+  // /sponsor — управление VIP-кампаниями (только для админа).
+  // Поддерживает: add, list, remove <id>, toggle <id>.
+  //
+  // /sponsor add — мастер в JSON: ответом ожидается одно сообщение с
+  //   валидным JSON-объектом со всеми полями кампании. Пример:
+  //     {"channelName":"@MyChan","channelUrl":"https://t.me/MyChan",
+  //      "promocode":"ZOLOTO","scenarioTitle":"Воеводская награда",
+  //      "scenarioBody":"...","developerName":"Воевода Михайло",
+  //      "archetype":"BOYARIN","type":"HONEST_TRADE","durationDays":14,
+  //      "bannerImageUrl":null,"weight":10}
+  bot.command('sponsor', async (ctx) => {
+    if (ctx.from?.id !== ADMIN_TELEGRAM_ID) return
+    const text = (ctx.message?.text ?? '').replace(/^\/sponsor(@\w+)?\s*/, '').trim()
+    const [sub, ...rest] = text.split(/\s+/)
+
+    if (!sub || sub === 'help') {
+      await ctx.reply(
+        'Управление VIP-кампаниями:\n' +
+        '/sponsor list — список всех\n' +
+        '/sponsor add <JSON> — создать (см. /sponsor template)\n' +
+        '/sponsor remove <id> — удалить\n' +
+        '/sponsor toggle <id> — вкл/выкл\n' +
+        '/sponsor template — пример JSON\n' +
+        '/sponsor seedall — засеять все 7 партнёрских кампаний разом',
+      )
+      return
+    }
+
+    // /sponsor seedall — одной командой завести 7 партнёрских кампаний,
+    // соответствующих channelTasksConfig.ts. Идемпотентно: пропускает
+    // уже существующие (по promocode), добавляет недостающие. Промокоды
+    // — заглушки, владелец канала может их перебить через /sponsor list +
+    // /sponsor remove + /sponsor add со своим кодом.
+    if (sub === 'seedall') {
+      const seeds = [
+        {
+          channelName: '@vknyazi_izgryazi', channelUrl: 'https://t.me/vknyazi_izgryazi',
+          promocode: 'VKNYAZI', scenarioTitle: 'Княжеская грамота палаты',
+          scenarioBody: 'Государев казначей Дормидонт собирает гроши на снаряжение торгового обоза. Дело княжеской руки — золото вернётся утроенным к Покрову, печать государя порукой.',
+          developerName: 'Казначей Дормидонт', archetype: 'BOYARIN', type: 'HONEST_TRADE',
+          bannerImageUrl: '/banners/SPONSOR_VKNYAZI_IZGRYAZI.webp',
+        },
+        {
+          channelName: '@ssignet_ring', channelUrl: 'https://t.me/ssignet_ring',
+          promocode: 'PERSTEN', scenarioTitle: 'Драгоценная печатка боярского рода',
+          scenarioBody: 'Мастер Игнат скупает редкие перстни-печатки старинных боярских родов. Кто положит гроши — получит долю с перепродажи столичным коллекционерам, втрое к малой Пасхе.',
+          developerName: 'Ювелир Игнат', archetype: 'BOYARIN', type: 'TREASURE_HUNT',
+          bannerImageUrl: '/banners/SPONSOR_SSIGNET_RING.webp',
+        },
+        {
+          channelName: '@clicermania', channelUrl: 'https://t.me/clicermania',
+          promocode: 'KLIK', scenarioTitle: 'Заморская карта удачи',
+          scenarioBody: 'Девица Кликерманка завезла из дальних земель невиданную игру — за две недели общая казна играет втрое. Кто гроши положит — войдёт в гильдию и получит свою долю.',
+          developerName: 'Девица Кликерманка', archetype: 'ZOLUSHKA', type: 'CARD_GAME',
+          bannerImageUrl: '/banners/SPONSOR_CLICERMANIA.webp',
+        },
+        {
+          channelName: '@cryptomaxbablo', channelUrl: 'https://t.me/cryptomaxbablo',
+          promocode: 'LEV', scenarioTitle: 'Львиная доля из боярской палаты',
+          scenarioBody: 'Боярин Лев Златогривый собирает гроши под княжескую гильдию. Через две недели — три к одному, поручительство палаты Государевой. Печать боярская — клятва купеческая.',
+          developerName: 'Боярин Лев Златогривый', archetype: 'BOYARIN', type: 'GUILD_SCHEME',
+          bannerImageUrl: '/banners/SPONSOR_CRYPTOMAXBABLO.webp',
+        },
+        {
+          channelName: '@Game_Gain', channelUrl: 'https://t.me/Game_Gain',
+          promocode: 'MECH', scenarioTitle: 'Меч-кладенец из закромов',
+          scenarioBody: 'Кузнец Богдан Молотов отыскал в старых закромах меч-кладенец с письменами. Гильдия столичных собирателей сулит за две недели тройной выкуп. Печать кузнечного цеха порукой.',
+          developerName: 'Кузнец Богдан Молотов', archetype: 'KOSCHEI', type: 'TREASURE_HUNT',
+          bannerImageUrl: '/banners/SPONSOR_GAME_GAIN.webp',
+        },
+        {
+          channelName: '@o_my_gift', channelUrl: 'https://t.me/o_my_gift',
+          promocode: 'PODAROK', scenarioTitle: 'Щедрая ярмарка подарков',
+          scenarioBody: 'Купец-щедрилов Тимофей открыл лавку подарков и шкатулок. Через две недели — троекратный выкуп всей лавки заморскими гостями. Кто гроши положит — войдёт в долю.',
+          developerName: 'Купец Тимофей Щедрилов', archetype: 'KOLOBOK', type: 'HONEST_TRADE',
+          bannerImageUrl: '/banners/SPONSOR_O_MY_GIFT.webp',
+        },
+        {
+          channelName: '@krypto_mechta', channelUrl: 'https://t.me/krypto_mechta',
+          promocode: 'MONETA', scenarioTitle: 'Котёл волшебных монет',
+          scenarioBody: 'Бабка-чародейка Ясна варит зелье на золотых монетах. Через две недели — троекратный приплод. Печать ведунская порукой, обмана в варе нет.',
+          developerName: 'Бабка-чародейка Ясна', archetype: 'BABA_YAGA', type: 'POTION_BREW',
+          bannerImageUrl: '/banners/SPONSOR_KRYPTO_MECHTA.webp',
+        },
+      ]
+
+      let created = 0
+      let skipped = 0
+      const lines: string[] = []
+      for (const s of seeds) {
+        const exists = await prisma.sponsorCampaign.findFirst({
+          where: { promocode: s.promocode },
+        })
+        if (exists) { skipped++; lines.push(`⚪ ${s.channelName} (уже есть)`); continue }
+        const c = await prisma.sponsorCampaign.create({
+          data: {
+            channelName: s.channelName,
+            channelUrl: s.channelUrl,
+            promocode: s.promocode,
+            scenarioTitle: s.scenarioTitle,
+            scenarioBody: s.scenarioBody,
+            developerName: s.developerName,
+            archetype: s.archetype,
+            type: s.type,
+            durationDays: 14,
+            bannerImageUrl: s.bannerImageUrl,
+            weight: 10,
+            active: true,
+          },
+        })
+        created++
+        lines.push(`🟢 ${s.channelName} → код <b>${c.promocode}</b>`)
+      }
+      await ctx.reply(
+        `Засеяно: ${created}, пропущено: ${skipped} (из ${seeds.length})\n\n` + lines.join('\n'),
+        { parse_mode: 'HTML' },
+      )
+      return
+    }
+
+    if (sub === 'template') {
+      await ctx.reply(
+        '/sponsor add ' + JSON.stringify({
+          channelName: '@MyChannel',
+          channelUrl: 'https://t.me/MyChannel',
+          promocode: 'ZOLOTO',
+          scenarioTitle: 'Воеводская награда',
+          scenarioBody: 'Воевода Михайло собирает гроши на снаряжение войска. Доход тройной — отблагодарит без обмана.',
+          developerName: 'Воевода Михайло',
+          archetype: 'BOYARIN',
+          type: 'HONEST_TRADE',
+          durationDays: 14,
+          bannerImageUrl: null,
+          weight: 10,
+        }),
+      )
+      return
+    }
+
+    if (sub === 'list') {
+      const all = await prisma.sponsorCampaign.findMany({ orderBy: { createdAt: 'desc' } })
+      if (all.length === 0) { await ctx.reply('Пусто.'); return }
+      const lines = all.map(c =>
+        `${c.active ? '🟢' : '⚫️'} <code>${c.id.slice(0, 8)}</code> · ${c.channelName} · «${c.scenarioTitle}» · код <b>${c.promocode}</b> · ${c.durationDays}д · вес ${c.weight}`,
+      )
+      await ctx.reply(lines.join('\n'), { parse_mode: 'HTML' })
+      return
+    }
+
+    if (sub === 'remove') {
+      const idPrefix = rest[0]
+      if (!idPrefix) { await ctx.reply('Использование: /sponsor remove <id>'); return }
+      const c = await prisma.sponsorCampaign.findFirst({ where: { id: { startsWith: idPrefix } } })
+      if (!c) { await ctx.reply('Не найдено.'); return }
+      await prisma.sponsorCampaign.delete({ where: { id: c.id } })
+      await ctx.reply(`Удалено: ${c.scenarioTitle} (${c.channelName}).`)
+      return
+    }
+
+    if (sub === 'toggle') {
+      const idPrefix = rest[0]
+      if (!idPrefix) { await ctx.reply('Использование: /sponsor toggle <id>'); return }
+      const c = await prisma.sponsorCampaign.findFirst({ where: { id: { startsWith: idPrefix } } })
+      if (!c) { await ctx.reply('Не найдено.'); return }
+      const updated = await prisma.sponsorCampaign.update({
+        where: { id: c.id }, data: { active: !c.active },
+      })
+      await ctx.reply(`${updated.active ? '🟢 Активна' : '⚫️ Выключена'}: ${c.scenarioTitle}.`)
+      return
+    }
+
+    if (sub === 'add') {
+      const jsonStr = text.replace(/^add\s+/, '').trim()
+      if (!jsonStr) { await ctx.reply('Использование: /sponsor add <JSON>. Шаблон: /sponsor template'); return }
+      try {
+        const data = JSON.parse(jsonStr)
+        const required = ['channelName', 'channelUrl', 'promocode', 'scenarioTitle', 'scenarioBody', 'developerName', 'archetype', 'type']
+        for (const f of required) {
+          if (!data[f]) { await ctx.reply(`Не хватает поля: ${f}`); return }
+        }
+        const created = await prisma.sponsorCampaign.create({
+          data: {
+            channelName: String(data.channelName),
+            channelUrl: String(data.channelUrl),
+            promocode: String(data.promocode),
+            scenarioTitle: String(data.scenarioTitle),
+            scenarioBody: String(data.scenarioBody),
+            developerName: String(data.developerName),
+            archetype: String(data.archetype),
+            type: String(data.type),
+            durationDays: Number(data.durationDays ?? 14),
+            bannerImageUrl: data.bannerImageUrl ?? null,
+            weight: Number(data.weight ?? 10),
+            active: true,
+          },
+        })
+        await ctx.reply(`🟢 Создано: ${created.scenarioTitle}\nID: <code>${created.id}</code>\nКод: <b>${created.promocode}</b>`, { parse_mode: 'HTML' })
+      } catch (e: any) {
+        await ctx.reply(`Ошибка: ${e?.message ?? 'parse error'}`)
+      }
+      return
+    }
+
+    await ctx.reply('Неизвестная команда. /sponsor help')
   })
 
   // /stats — статистика активности и языков (только для админа)

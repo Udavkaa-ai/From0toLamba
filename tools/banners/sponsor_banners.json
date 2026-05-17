@@ -1,0 +1,48 @@
+{
+  "_comment": "VIP / spons banners. One image per partner channel from channelTasksConfig.ts. Format 16:9 — same as regular deal banners. Filenames: SPONSOR_<CHANNEL_KEY>.webp. After generation + compress, admin sets bannerImageUrl=\"/banners/SPONSOR_<KEY>.webp\" in /sponsor add JSON.",
+
+  "channels": [
+    {
+      "key": "SPONSOR_VKNYAZI_IZGRYAZI",
+      "channel": "@vknyazi_izgryazi",
+      "title": "Из грязи в князи — официальный",
+      "desc": "wealthy Russian fairy tale merchant in a richly embroidered red caftan and fur-trimmed hat handing a wax-sealed scroll of accreditation to a younger merchant in a tsar's golden audience chamber, ornate carved throne in background with crimson banners, scattered gold coins and a heavy oak chest on the floor, warm candlelight, mood of an officially sanctioned grand venture"
+    },
+    {
+      "key": "SPONSOR_SSIGNET_RING",
+      "channel": "@ssignet_ring",
+      "title": "Драгоценная печатка — редкости и коллекционирование",
+      "desc": "Russian fairy tale jeweller's workshop, master craftsman's wide oak table covered with a velvet cloth displaying dozens of ornate signet rings and royal seal stamps, brass scales, gold filigree boxes, polished gems in carved trays, warm focused lamp light, dark wood walls with tooling, mood of a treasure of rare collectible heirlooms"
+    },
+    {
+      "key": "SPONSOR_CLICERMANIA",
+      "channel": "@clicermania",
+      "title": "Летопись девицы Кликерманки — игры заморские",
+      "desc": "Russian fairy tale inn parlour at evening, two foreign merchants in exotic embroidered robes seated at a heavy oak table strewn with brightly painted playing cards, ivory dice, ornate gold tokens and a board carved with mysterious symbols, warm candlelight on the table, intricate Persian rug on the floor, mood of a curious overseas game of chance"
+    },
+    {
+      "key": "SPONSOR_CRYPTOMAXBABLO",
+      "channel": "@cryptomaxbablo",
+      "title": "Лев среди Князей — заработок",
+      "desc": "Russian fairy tale boyar's grand hall, a majestic golden lion with a jeweled crown seated proudly on a carved oak throne draped in crimson velvet, scattered piles of gold coins and ornate strongboxes around the throne, banners with Slavic lion heraldry on the walls, warm afternoon light through arched windows, mood of regal earning power"
+    },
+    {
+      "key": "SPONSOR_GAME_GAIN",
+      "channel": "@Game_Gain",
+      "title": "Играй и зарабатывай — меч в цифровой империи",
+      "desc": "Russian fairy tale blacksmith's forge interior, a glowing magical sword embedded in an anvil at the centre, scrolls of strange code-like runes pinned to wooden walls, scattered gold coins around the anvil's base, glowing forge fire casting warm orange light, hammer and tongs on a workbench, mood of crafting wealth through skill"
+    },
+    {
+      "key": "SPONSOR_O_MY_GIFT",
+      "channel": "@o_my_gift",
+      "title": "Ох, вы ж мои подарочки! — дары для друзей",
+      "desc": "Russian fairy tale merchant's gift hall, towering wooden cabinet filled with elaborately wrapped gift boxes tied with red and gold ribbons, ornate jewellery cases, festive painted matryoshka dolls, golden silk-tied pouches, a friendly carved wooden countertop with fresh wildflowers, warm honey-gold lighting, mood of joyful generosity"
+    },
+    {
+      "key": "SPONSOR_KRYPTO_MECHTA",
+      "channel": "@krypto_mechta",
+      "title": "Мечтания о волшебных монетах",
+      "desc": "Russian fairy tale Baba Yaga's mystic chamber, a great bubbling cauldron in the centre with gold coins floating up and swirling in the steam, magical runic books opened on a wooden table beside it, glowing crystal phials of luminous coins, dim warm magical light, dried herbs hanging from rafters, mood of dreaming of magical riches"
+    }
+  ]
+}

@@ -2,25 +2,28 @@ import { InvestorRank } from './types'
 import { prisma } from '../db/prisma'
 
 /**
- * Ранги зависят от достатка (totalWealth = balance + активные вложения) и чуйки.
+ * С версии 4 «чуйка» из игры убрана. Чины зависят только от количества дел,
+ * в которых игрок принял участие (investedAmountRubles > 0):
  *
- *   Скоморох (NEWBIE)       — старт
- *   Купец    (AMBASSADOR)   — 100 г    + чуйка 20
- *   Мудрец   (ANALYST)      — 1 000 г  + чуйка 100
- *   Боярин   (SHARK)        — 10 000 г + чуйка 300
- *   Князь    (LAMBO_SENSEI) — 50 000 г + чуйка 500
+ *   Скоморох (NEWBIE)        — 0..4 дел
+ *   Купец    (AMBASSADOR)    — 5..19 дел
+ *   Мудрец   (ANALYST)       — 20..49 дел
+ *   Боярин   (SHARK)         — 50..99 дел
+ *   Князь    (LAMBO_SENSEI)  — 100+ дел
  */
-export function computeRank(params: {
-  currentDay: number
-  totalWealth: number
-  intuitionScore: number
-}): InvestorRank {
-  const { totalWealth, intuitionScore } = params
+export const RANK_DEAL_THRESHOLDS = {
+  AMBASSADOR: 5,
+  ANALYST: 20,
+  SHARK: 50,
+  LAMBO_SENSEI: 100,
+}
 
-  if (totalWealth >= 50000 && intuitionScore >= 500) return InvestorRank.LAMBO_SENSEI
-  if (totalWealth >= 10000 && intuitionScore >= 300) return InvestorRank.SHARK
-  if (totalWealth >= 1000  && intuitionScore >= 100) return InvestorRank.ANALYST
-  if (totalWealth >= 100   && intuitionScore >= 20)  return InvestorRank.AMBASSADOR
+export function computeRank(params: { dealsCount: number }): InvestorRank {
+  const { dealsCount } = params
+  if (dealsCount >= RANK_DEAL_THRESHOLDS.LAMBO_SENSEI) return InvestorRank.LAMBO_SENSEI
+  if (dealsCount >= RANK_DEAL_THRESHOLDS.SHARK)        return InvestorRank.SHARK
+  if (dealsCount >= RANK_DEAL_THRESHOLDS.ANALYST)      return InvestorRank.ANALYST
+  if (dealsCount >= RANK_DEAL_THRESHOLDS.AMBASSADOR)   return InvestorRank.AMBASSADOR
   return InvestorRank.NEWBIE
 }
 
@@ -37,27 +40,25 @@ export function isRankUp(oldRank: InvestorRank, newRank: InvestorRank): boolean 
   return RANK_ORDER[newRank] > RANK_ORDER[oldRank]
 }
 
+/** Сколько дел игрок «взял» (вложил гроши) — активных + закрытых, без inbox и
+ *  пропущенных. */
+export async function countDeals(userId: number): Promise<number> {
+  return prisma.project.count({
+    where: { userId, investedAmountRubles: { gt: 0 } },
+  })
+}
+
 /**
- * Пересчитать ранг по актуальным данным и сохранить, если изменился.
+ * Пересчитать ранг по актуальному числу взятых дел и сохранить, если изменился.
  * При повышении ставит pendingRankUp — на главной покажется поздравление.
- * Вызывать после событий, которые меняют чуйку или достаток вне advance-day
- * (сабмит грамоты, выход из дела) — иначе ранг «прилипает» к значению
- * последнего перехода дня.
+ * Вызывать после событий, которые меняют число дел (вход в дело, выход).
  */
 export async function recomputeRank(userId: number): Promise<InvestorRank> {
-  const [gs, actives] = await Promise.all([
-    prisma.gameState.findUniqueOrThrow({ where: { userId } }),
-    prisma.project.findMany({
-      where: { userId, isActive: true },
-      select: { currentValueRubles: true },
-    }),
+  const [gs, dealsCount] = await Promise.all([
+    prisma.gameState.findUniqueOrThrow({ where: { userId }, select: { investorRank: true } }),
+    countDeals(userId),
   ])
-  const totalWealth = gs.balance + actives.reduce((s, p) => s + p.currentValueRubles, 0)
-  const newRank = computeRank({
-    currentDay: gs.currentDay,
-    totalWealth,
-    intuitionScore: gs.intuitionScore,
-  })
+  const newRank = computeRank({ dealsCount })
   const oldRank = gs.investorRank as InvestorRank
   if (newRank === oldRank) return newRank
 

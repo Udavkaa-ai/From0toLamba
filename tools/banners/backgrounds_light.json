@@ -1,0 +1,57 @@
+{
+  "_comment": "Light / fairy-theme background images. Daylight, warm honey-gold palette, sunlit Russian fairy-tale environments. Same 12 slots as backgrounds.json but with _LIGHT suffix. Keys must match what client expects when getTheme()==='fairy'.",
+
+  "home": [
+    {
+      "key": "HOME_01_LIGHT",
+      "desc": "sunlit Russian fairy tale market square at midday, vibrant red and azure painted wooden merchant stalls with onion-domed roofs, sacks of golden grain and barrels of honey on display, fluttering crimson pennants against a clear blue sky, warm honey-gold sunlight casting soft shadows on the cobblestones, distant kremlin towers with green and gold cupolas, no people"
+    },
+    {
+      "key": "HOME_02_LIGHT",
+      "desc": "wooden bridge over a sun-sparkled river in a Russian fairy tale countryside, ornate carved railings, autumn-gold birch trees lining both banks, three painted barrels and wooden crates on the bridge as if left by merchants, brilliant midday sun reflecting off the rippling water as molten gold, rolling green hills with a distant village in the background, no people"
+    },
+    {
+      "key": "HOME_03_LIGHT",
+      "desc": "golden wheat field under a Russian fairy tale summer sky, tall wooden windmill with weathered red sails on a rise in the distance, scattered red poppies and blue cornflowers among the wheat, dirt road winding through, soft cumulus clouds, warm amber afternoon light gilding the wheat tips, no people"
+    },
+    {
+      "key": "HOME_04_LIGHT",
+      "desc": "Russian fairy tale village rooftops at golden hour, log izba cottages with carved wooden trim painted in red and blue, snowy mountain peaks softly glowing on the horizon, smoke curling from clay chimneys, blooming wild flowers in window boxes, warm honey-gold light bathing everything, blue sky with thin clouds, no people"
+    },
+    {
+      "key": "HOME_05_LIGHT",
+      "desc": "sunlit birch grove in a Russian fairy tale autumn, slender white birch trunks with golden leaves overhead, soft beams of warm sunlight piercing the canopy and scattering on the moss-covered ground, fallen amber and red leaves on the forest floor, a winding path receding into the warm misty distance, no people"
+    },
+    {
+      "key": "HOME_06_LIGHT",
+      "desc": "Russian fairy tale wildflower meadow at midday, ancient carved stone well with a wooden shingled roof in the centre, vibrant lupines and daisies in rolling waves, warm orange and pink wildflower petals drifting on the breeze, brilliant blue sky with playful white clouds, distant forested hills, no people"
+    },
+    {
+      "key": "HOME_07_LIGHT",
+      "desc": "Russian fairy tale hilltop monastery at midday, white stone walls with gold-domed bell towers gleaming under summer sunlight, terraced gardens of red roses and herbs in front, wooden gates ajar, rolling sun-warmed wheat fields stretching out below, clear cerulean sky with hawks circling, no people"
+    }
+  ],
+
+  "pages": [
+    {
+      "key": "BG_INBOX_LIGHT",
+      "desc": "sunlit Russian fairy tale merchant's writing room at midday, heavy oak desk piled with curled parchment scrolls and a row of wax-sealed letters, a goose-quill pen in a polished brass inkwell, dust motes drifting through warm honey-gold sunbeams from a tall arched window, log walls with ornate carved trim, brass scales on a side shelf, no people"
+    },
+    {
+      "key": "BG_PORTFOLIO_LIGHT",
+      "desc": "sunlit Russian fairy tale treasury chamber, open oak chests overflowing with gold coins, pearls, and pearl strings on a stone-tiled floor, scattered silver ingots and amber jewellery, warm midday sunbeams through tall narrow windows hitting the gold piles, decorated wooden columns, no dark corners, no people"
+    },
+    {
+      "key": "BG_STATS_LIGHT",
+      "desc": "grand sunlit ceremonial hall of a Russian fairy tale palace, vaulted carved wooden ceiling, tall arched windows with brilliant midday sunbeams illuminating crimson-and-gold Slavic banners, polished honey-coloured stone floor reflecting the light, a carved oak throne on a dais covered in red cloth, dust motes in the sunbeams, no people"
+    },
+    {
+      "key": "BG_LEADERBOARD_LIGHT",
+      "desc": "aerial view of a vibrant Russian fairy tale market fair at high noon, colourful red and blue striped merchant tents arranged in a spiral around a circular wooden square, golden pennants and ribbons fluttering, baskets of fruit and honey jars on display, warm sunlight casting short shadows, distant kremlin walls, festive but no people visible"
+    },
+    {
+      "key": "BG_REGISTRY_LIGHT",
+      "desc": "sunlit Russian fairy tale library interior, towering oak bookshelves with leather-bound tomes and rolled scrolls, brilliant golden sunbeams through stained-glass arched windows casting coloured patches on the parquet floor, an open illuminated manuscript on a carved reading lectern, dust motes drifting in the light, ornate Slavic woodcarving, no people"
+    }
+  ]
+}

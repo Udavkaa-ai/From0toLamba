@@ -1,11 +1,14 @@
+import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { ScreenBackground, PAGE_BG } from '@/components/ScreenBackground'
 import { FairyCard, OrnamentDivider, SkeletonCard } from '@/components/FairyCard'
-import { PageTitle } from '@/components/PageTitle'
+import { PageTitle, PageSubtitle } from '@/components/PageTitle'
+import { VipArrivalOverlay, getSeenVipIds, markVipSeen } from '@/components/VipArrivalOverlay'
 import { api, type ProjectDTO } from '@/api/client'
-import { colors, spacing } from '@/theme'
+import { useGameStore } from '@/stores/gameStore'
+import { colors, spacing, gradients, ctaButton } from '@/theme'
 import { useT } from '@/i18n'
 
 export function InboxPage() {
@@ -18,14 +21,39 @@ export function InboxPage() {
     refetchInterval: 15_000,
   })
 
+  // VIP-оверлей при первом появлении спонсорского дела. Показываем макс
+  // ОДИН раз за визит на страницу — даже если в инбоксе несколько
+  // непросмотренных VIP (старая версия открывала оверлей цепочкой по
+  // 4.2с каждый, инбокс мелькал между ними).
+  const [vipShow, setVipShow] = useState<ProjectDTO | null>(null)
+  const [vipShownThisVisit, setVipShownThisVisit] = useState(false)
+  useEffect(() => {
+    if (vipShow || vipShownThisVisit) return
+    const seen = getSeenVipIds()
+    const unseenVip = projects.find(p => p.isSponsor && !seen.has(p.id))
+    if (unseenVip) {
+      setVipShow(unseenVip)
+      setVipShownThisVisit(true)
+    }
+  }, [projects, vipShow, vipShownThisVisit])
+
+  const closeVip = () => {
+    if (vipShow) {
+      // Помечаем ВСЕ текущие VIP в инбоксе как seen — чтоб оверлей не
+      // перезапускался для второго VIP в той же пачке.
+      for (const p of projects) {
+        if (p.isSponsor) markVipSeen(p.id)
+      }
+    }
+    setVipShow(null)
+  }
+
   return (
     <ScreenBackground bgImage={PAGE_BG.inbox}>
       <div style={{ padding: `${spacing.xxl} ${spacing.lg} 80px`, maxWidth: '500px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: spacing.xxl }}>
           <PageTitle>{t.inbox.title}</PageTitle>
-          <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
-            {t.inbox.subtitle}
-          </div>
+          <PageSubtitle>{t.inbox.subtitle}</PageSubtitle>
         </div>
 
         {isLoading && [1, 2, 3].map(i => <SkeletonCard key={i} lines={4} />)}
@@ -40,121 +68,158 @@ export function InboxPage() {
           </FairyCard>
         )}
 
-        {projects.map((p, i) => (
+        {/* VIP-дела всегда сверху — отдельный порядок (sponsorship), потом обычные */}
+        {[...projects].sort((a, b) => {
+          if (a.isSponsor !== b.isSponsor) return a.isSponsor ? -1 : 1
+          return 0
+        }).map((p, i) => (
           <motion.div
             key={p.id}
             {...(i === 0 ? { 'data-tour': 'first-project' } : {})}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={p.isSponsor
+              ? { opacity: 0, scale: 0.8, y: -20 }
+              : { opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
             whileTap={{ scale: 0.97 }}
-            transition={{ delay: i * 0.07, duration: 0.1 }}
+            transition={p.isSponsor
+              ? { type: 'spring', damping: 14, stiffness: 200, delay: i * 0.07 }
+              : { delay: i * 0.07, duration: 0.1 }}
           >
             <InboxCard project={p} onClick={() => navigate(`/charter/${p.id}`)} tourAttr={i === 0} />
           </motion.div>
         ))}
       </div>
+
+      <AnimatePresence>
+        {vipShow && (
+          <VipArrivalOverlay
+            key={vipShow.id}
+            project={vipShow}
+            onClose={closeVip}
+            onOpenDeal={() => {
+              const id = vipShow.id
+              closeVip()
+              navigate(`/charter/${id}`)
+            }}
+          />
+        )}
+      </AnimatePresence>
     </ScreenBackground>
   )
 }
 
 function InboxCard({ project, onClick, tourAttr }: { project: ProjectDTO; onClick: () => void; tourAttr?: boolean }) {
+  const { gameState } = useGameStore()
+  const tieLevel = gameState?.tieLevels?.[project.personaArchetype] ?? 0
+  const bonusPct = Math.round(tieLevel * (gameState?.tiesBonusPerLevel ?? 0.01) * 100)
   const t = useT()
   const typeLabel = t.inbox.types
+  const isVip = project.isSponsor
 
   return (
-    <FairyCard onClick={onClick} style={{ marginBottom: spacing.md, cursor: 'pointer' }}>
-      {project.bannerImageUrl && (
-        <img
-          src={project.bannerImageUrl}
-          alt={project.name}
-          style={{ width: '100%', aspectRatio: '16 / 9', objectFit: 'cover', borderRadius: '8px', marginBottom: spacing.md, display: 'block' }}
-          onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-        />
+    <div style={{ position: 'relative', marginBottom: spacing.md }}>
+      {/* VIP-обводка снаружи карточки + бесконечное золотое пульсирование */}
+      {isVip && (
+        <div aria-hidden className="vip-glow" style={{
+          position: 'absolute', inset: -3, borderRadius: 18,
+          background: 'linear-gradient(135deg, #FFD24A 0%, #FFB800 50%, #B07400 100%)',
+          zIndex: 0,
+        }} />
       )}
+      <FairyCard onClick={onClick} style={{
+        cursor: 'pointer',
+        position: 'relative', zIndex: 1,
+        ...(isVip ? { border: `2px solid #FFE090` } : {}),
+      }}>
+        {isVip && (
+          <div style={{
+            position: 'absolute', top: -10, left: '50%', transform: 'translateX(-50%)',
+            padding: '2px 14px',
+            background: 'linear-gradient(135deg, #FFD24A, #FFB800)',
+            color: '#3A2010', fontWeight: 800, fontSize: '11px',
+            letterSpacing: '0.15em',
+            borderRadius: 8,
+            boxShadow: '0 3px 10px rgba(0,0,0,0.45)',
+            zIndex: 2,
+            fontFamily: "'Cinzel', 'Marcellus', serif",
+            whiteSpace: 'nowrap',
+          }}>
+            ✦ ЗОЛОТАЯ ГРАМОТА ✦
+          </div>
+        )}
+        {project.bannerImageUrl && (
+          <img
+            src={project.bannerImageUrl}
+            alt={project.name}
+            style={{ width: '100%', aspectRatio: '16 / 9', objectFit: 'cover', borderRadius: '8px', marginBottom: spacing.md, display: 'block', marginTop: isVip ? 8 : 0 }}
+            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+          />
+        )}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '15px' }}>{project.name}</div>
-          <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '2px' }}>
-            {(typeLabel as Record<string, string>)[project.type] ?? project.type}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '15px' }}>{project.name}</div>
+            <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '2px' }}>
+              {(typeLabel as Record<string, string>)[project.type] ?? project.type}
+            </div>
+          </div>
+          {/* Бонус «Связи» — показывается только если игрок уже прокачал
+              отношения с этим архетипом и дело не VIP (у VIP свой фикс +200%) */}
+          {!isVip && bonusPct > 0 && (
+            <div style={{
+              padding: '4px 8px',
+              background: `${colors.success}26`,
+              border: `1px solid ${colors.success}`,
+              borderRadius: 6,
+              color: colors.success,
+              fontWeight: 800, fontSize: '11px',
+              fontVariantNumeric: 'tabular-nums',
+              whiteSpace: 'nowrap',
+            }}>
+              ⚡ +{bonusPct}%/день связи
+            </div>
+          )}
+          {isVip && (
+            <div style={{
+              padding: '4px 8px',
+              background: 'rgba(80,200,120,0.18)',
+              border: `1px solid ${colors.success}`,
+              borderRadius: 6,
+              color: colors.success,
+              fontWeight: 800, fontSize: '11px',
+              fontVariantNumeric: 'tabular-nums',
+              whiteSpace: 'nowrap',
+            }}>
+              +200% за 14 дн
+            </div>
+          )}
+        </div>
+
+        <OrnamentDivider />
+
+        <div style={{ color: colors.textSecondary, fontSize: '12px', lineHeight: 1.5 }}>
+          {project.description.slice(0, 120)}...
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: spacing.md }}>
+          <div style={{ color: colors.textMuted, fontSize: '11px' }}>
+            {t.inbox.developer} {project.developerName}
+          </div>
+          <div style={{ color: colors.textMuted, fontSize: '11px' }}>
+            {t.inbox.investors} {project.currentUserCount.toLocaleString('ru')} {t.inbox.investorsSuffix}
           </div>
         </div>
+
         <div style={{
-          background: `${colors.fairyGold}20`,
-          border: `1px solid ${colors.fairyGold}40`,
-          borderRadius: '8px',
-          padding: '4px 8px',
-          color: colors.fairyGold,
-          fontSize: '12px',
-          fontWeight: 700,
-        }}>
-          {project.claimedAPY}{t.inbox.apySuffix}
-        </div>
-      </div>
-
-      <OrnamentDivider />
-
-      <div style={{ color: colors.textSecondary, fontSize: '12px', lineHeight: 1.5 }}>
-        {project.description.slice(0, 120)}...
-      </div>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: spacing.md }}>
-        <div style={{ color: colors.textMuted, fontSize: '11px' }}>
-          {t.inbox.developer} {project.developerName}
-        </div>
-        <div style={{ color: colors.textMuted, fontSize: '11px' }}>
-          {t.inbox.investors} {project.currentUserCount.toLocaleString('ru')} {t.inbox.investorsSuffix}
-        </div>
-      </div>
-
-      <div style={{
-        marginTop: spacing.md,
-        padding: `${spacing.sm} ${spacing.md}`,
-        background: `${colors.fairyGold}10`,
-        borderRadius: '8px',
-        color: colors.fairyGold,
-        fontSize: '13px',
-        textAlign: 'center',
-        fontWeight: 600,
-      }}
-        {...(tourAttr ? { 'data-tour': 'charter-btn' } : {})}
-      >
-        {t.inbox.studyBtn}
-      </div>
-
-      {tourAttr && (
-        <div
-          data-tour="invest-btn"
-          style={{
-            marginTop: spacing.sm,
-            padding: `${spacing.sm} ${spacing.md}`,
-            background: 'rgba(255,255,255,0.04)',
-            borderRadius: '8px',
-            color: colors.textMuted,
-            fontSize: '12px',
-            textAlign: 'center',
-          }}
+          ...ctaButton.lg,
+          marginTop: spacing.md,
+          textAlign: 'center',
+        }}
+          {...(tourAttr ? { 'data-tour': 'charter-btn' } : {})}
         >
-          {t.inbox.investBtn}
+          {isVip ? '🔑 Сказать заветное слово' : t.inbox.studyBtn}
         </div>
-      )}
-
-      {tourAttr && (
-        <div
-          data-tour="ama-btn"
-          style={{
-            marginTop: spacing.sm,
-            padding: `${spacing.sm} ${spacing.md}`,
-            background: 'rgba(255,255,255,0.04)',
-            borderRadius: '8px',
-            color: colors.textMuted,
-            fontSize: '12px',
-            textAlign: 'center',
-          }}
-        >
-          {t.inbox.amaBtn}
-        </div>
-      )}
-    </FairyCard>
+      </FairyCard>
+    </div>
   )
 }

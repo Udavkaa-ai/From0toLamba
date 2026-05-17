@@ -169,61 +169,70 @@ const PERSONA_LABEL_EN: Record<PersonaArchetype, string> = {
 }
 
 const FATE_LABEL_EN: Record<ProjectFate, string> = {
-  [ProjectFate.INSTANT_SCAM]: 'Ran off with the money',
-  [ProjectFate.SLOW_DRAIN]:   'Quietly collapsed',
-  [ProjectFate.HONEST_FAIL]:  'Honest failure',
-  [ProjectFate.SURVIVOR]:     'Survived',
-  [ProjectFate.UNICORN]:      'Firebird by the tail',
+  [ProjectFate.INSTANT_SCAM]:  'Ran off with the money',
+  [ProjectFate.SLOW_DRAIN]:    'Quietly collapsed',
+  [ProjectFate.HONEST_FAIL]:   'Honest failure',
+  [ProjectFate.SURVIVOR]:      'Survived',
+  [ProjectFate.UNICORN]:       'Firebird by the tail',
+  [ProjectFate.SPONSOR_FIXED]: 'Voivode reward',
 }
 
 export async function generateProjectData(input: GenerateProjectInput, model = DEFAULT_MODEL, lang = 'ru'): Promise<GeneratedProjectData> {
   const { type, archetype, lieTopics } = input
 
-  let prompt: string
+  // Сильный system-промт чтобы модель не вписывала метаобъяснения в поля JSON.
+  // Раньше промт был user-only и просил «придумай description: 3-4 предложения»,
+  // и DeepSeek регулярно вписывал в это поле текст вида «Конечно, вот JSON для
+  // нового дела в игре...» (свою собственную подводку). System-роль + явный
+  // contract + пример с реальными значениями убирают эту ошибку.
+  let systemPrompt: string
+  let userPrompt: string
   if (lang === 'en') {
     const typeName = PROJECT_TYPE_EN[type]
     const liesStr = lieTopics.map(t => `${LIE_TOPIC_EMOJI[t]} ${LIE_TOPIC_LABEL_EN[t]}`).join(', ')
-    prompt = `You are creating a new venture for "From Rags to Riches" — a merchant-investor simulator set in a magical fairy-tale Rus'.
+    systemPrompt = `You generate game content as STRICT JSON. Never include preamble, explanations, or meta-comments about the task. Each JSON field contains ONLY the requested in-world content (a venture description goes inside "description", not a description of what you are about to produce). No markdown, no code fences.
 
-Venture type: ${typeName}
+Example of a CORRECT output for an unrelated venture:
+{"name":"Goldtooth Bridge","developerName":"Stefan Quick-Ruble","description":"Greetings, kind investor! I'm raising kopecks for a new bridge across the Mokraya river — three years of building, then toll for every cart. Already have a charter from the voivode and two carpenter artels signed on. Joining now means a share for the next twenty years.","roadmap":["Forge the iron arches","Lay the oak planks","Open the toll booth"]}`
+    userPrompt = `Venture type: ${typeName}
 Owner archetype: ${PERSONA_LABEL_EN[archetype] ?? archetype}
-Topics the owner LIES about (the player must spot them): ${liesStr}
+Topics the owner LIES about (player will spot them): ${liesStr}
 
-Create:
-1. name — venture name (2–4 words, fairy-tale merchant style, in English)
-2. developerName — owner's name with a colourful nickname or epithet in folk style (MUST be 2–3 words). Examples: "Emelya the Fool", "Fyodor Goldtooth", "Nikita Sly-Ruble", "Gavril the Cunning", "Ivan Crooked-Smile", "Stefan Quick-Ruble". Should be vivid and memorable.
-3. description — venture description (3–4 sentences, first person from the owner, no blockchain/crypto, currency is kopecks or "k")
-4. roadmap — plan (exactly 3 items, array of strings)
+Generate JSON with these fields:
+- name: venture name, 2-4 words, fairy-tale merchant style, in English
+- developerName: owner's name + colorful nickname/epithet, 2-3 words total
+- description: venture pitch from the owner in first person, 3-4 sentences, no blockchain/crypto, currency is kopecks or "k". Must read like the OWNER speaking, not a description ABOUT the venture.
+- roadmap: array of exactly 3 short strings (plan items)
 
-Reply ONLY with valid JSON, no explanation:
-{"name":"...","developerName":"...","description":"...","roadmap":["...","...","..."]}`
+Output ONLY the JSON object. Nothing else.`
   } else {
     const typeName = PROJECT_TYPE_RU[type]
     const liesStr = lieTopics.map(t => `${LIE_TOPIC_EMOJI[t]} ${LIE_TOPIC_LABEL[t]}`).join(', ')
-    prompt = `Ты придумываешь новое дело для игры «Из грязи в князи» — симулятора купца-инвестора в сказочной Руси.
+    systemPrompt = `Ты генерируешь игровой контент СТРОГО как JSON. Никогда не добавляй преамбулу, объяснения или мета-комментарии о задании. Каждое поле содержит ТОЛЬКО запрошенный игровой контент: в поле "description" идёт описание самого дела (речь хозяина), а НЕ описание того, что ты сейчас сгенерируешь. Без markdown, без code fences.
 
-Тип дела: ${typeName}
+Пример КОРРЕКТНОГО ответа для другого дела:
+{"name":"Мост через Мокрую","developerName":"Стефан Ловкач-Рублёв","description":"Здравствуй, добрый вкладчик! Собираю гроши на новый мост через Мокрую реку — три года строить, потом мзду брать с каждой телеги. Воеводская грамота уже на руках, две артели плотников подрядились. Войдёшь сейчас — двадцать лет доли получать будешь.","roadmap":["Сковать железные арки","Положить дубовые мостовины","Открыть мостовую заставу"]}`
+    userPrompt = `Тип дела: ${typeName}
 Архетип хозяина: ${PERSONA_LABEL[archetype] ?? archetype}
 Темы, по которым хозяин ВРЁТ (игрок должен их угадать): ${liesStr}
 
-Придумай:
-1. name — название дела (2–4 слова, сказочный стиль, на русском)
-2. developerName — имя хозяина с прозвищем или фамилией в народном стиле (ОБЯЗАТЕЛЬНО 2–3 слова: имя + прозвище или фамилия-прилагательное). Примеры: "Емеля Дурило", "Фёдор Казна-Цела", "Никита Золотозуб", "Вахромей Трепетило", "Гаврила Хитрован", "Пётр Кривошей", "Аника-воин", "Степан Ловкач-Рублёв". Имя должно быть колоритным и запоминающимся.
-3. description — описание дела (3–4 предложения, от первого лица хозяина, без блокчейна/крипты, валюта — гроши или «г»)
-4. roadmap — план дел (ровно 3 пункта, массив строк)
+Сгенерируй JSON с полями:
+- name: название дела, 2-4 слова, сказочный купеческий стиль
+- developerName: имя хозяина + прозвище/фамилия, 2-3 слова. Колоритное, запоминающееся (типа «Емеля Дурило», «Фёдор Казна-Цела», «Никита Золотозуб»).
+- description: ПИТЧ от первого лица ХОЗЯИНА, 3-4 предложения. Хозяин обращается к вкладчику, расхваливает дело. Никакой крипты/блокчейна, валюта — гроши или «г». ВНИМАНИЕ: это речь хозяина, а не описание ОТ ТЕБЯ о деле.
+- roadmap: массив ровно из 3 коротких строк (пункты плана)
 
-Отвечай ТОЛЬКО валидным JSON без пояснений:
-{"name":"...","developerName":"...","description":"...","roadmap":["...","...","..."]}`
+Выведи ТОЛЬКО JSON-объект. Больше ничего.`
   }
 
   try {
     console.log(`[AI:project] model=${model}`)
-    // reasoning: { enabled: false } — DeepSeek V4 MoE по умолчанию много думает,
-    // и при max_tokens=300 output обрезался прямо посреди JSON
-    // (finish_reason=length). Для коротких JSON-задач рассуждения не нужны.
     const response = await client.chat.completions.create({
       model: model,
-      messages: [{ role: 'user', content: prompt }],
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
       max_tokens: 600,
       response_format: { type: 'json_object' },
       reasoning: { enabled: false },
@@ -238,17 +247,43 @@ Reply ONLY with valid JSON, no explanation:
       throw parseErr
     }
 
+    // Защита от регрессии: иногда модель всё равно вписывает в description свою
+    // подводку («Конечно, вот JSON для нового дела...», «Вот результат в строгом
+    // JSON формате...»). Детектим маркеры и подменяем на fallback — лучше пустое,
+    // чем нечитаемый бред в карточке.
+    const looksLikeMetaPreamble = (s: string): boolean => {
+      if (!s || typeof s !== 'string') return true
+      const lo = s.toLowerCase()
+      return (
+        lo.includes('вот json') ||
+        lo.includes('here is the json') ||
+        lo.includes('here\'s the json') ||
+        lo.includes('строгом json') ||
+        lo.includes('strict json') ||
+        lo.includes('без пояснений') ||
+        lo.includes('как вы просили') ||
+        lo.includes('as requested')
+      )
+    }
+
     const fallbackName = lang === 'en' ? 'Secret Venture' : 'Тайное дело'
     const fallbackDev = lang === 'en' ? 'Emelya the Sly' : 'Ефим Лукавый'
     const fallbackDesc = lang === 'en' ? 'A profitable venture for bold investors.' : 'Прибыльное дело для смелых вкладчиков.'
     const fallbackRoadmap = lang === 'en'
       ? ['Open the venture', 'Collect kopecks', 'Distribute profits']
       : ['Открыть дело', 'Собрать гроши', 'Распределить прибыль']
+
+    let description = parsed.description
+    if (!description || looksLikeMetaPreamble(description)) {
+      console.warn('[AI:project] description looks like meta-preamble, using fallback. raw=', String(description).slice(0, 200))
+      description = fallbackDesc
+    }
+
     return {
       name: parsed.name ?? fallbackName,
       developerName: parsed.developerName ?? fallbackDev,
       claimedName: parsed.name ?? fallbackName,
-      description: parsed.description ?? fallbackDesc,
+      description,
       roadmap: parsed.roadmap ?? fallbackRoadmap,
     }
   } catch (err) {

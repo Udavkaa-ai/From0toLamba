@@ -22,13 +22,20 @@ export interface AchievementContext {
 const totalWealthFrom = (gs: GameStateDTO) =>
   gs.balance + gs.activeProjects.reduce((s, p) => s + p.currentValueRubles, 0)
 
-/** 17 подвигов в сказочно-купеческом стиле, по возрастанию сложности в каждой категории */
+// ── Помощник: статистика игры с конкретным архетипом ──────────────────────
+const mg = (gs: GameStateDTO, archetype: string) =>
+  gs.minigameStats?.[archetype] ?? { played: 0, perfect: 0, won: 0, lost: 0 }
+const mgPerfectAll = (gs: GameStateDTO, archetypes: string[]) =>
+  archetypes.every(a => mg(gs, a).perfect >= 1)
+const mgWonOrPerfect = (s: { perfect: number; won: number }) => s.perfect + s.won
+
+/** Подвиги в сказочно-купеческом стиле, по возрастанию сложности в каждой категории */
 export const ACHIEVEMENTS: Achievement[] = [
-  // ─── Грамоты / чуйка ─────────────────────────────────────────────────────
+  // ─── Испытания: общая прогрессия ────────────────────────────────────────
   {
     id: 'first_scroll',
-    name: 'Первая грамота',
-    description: 'Разобрал свою первую купеческую грамоту',
+    name: 'Первое испытание',
+    description: 'Прошёл первое испытание у любого хозяина',
     emoji: '📜',
     category: 'charter',
     check: ({ gameState }) => gameState.chartersSubmitted >= 1,
@@ -36,8 +43,8 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'ten_scrolls',
-    name: 'Бывалый грамотей',
-    description: 'Разобрал 10 грамот',
+    name: 'Бывалый игрок',
+    description: 'Прошёл 10 испытаний',
     emoji: '📚',
     category: 'charter',
     check: ({ gameState }) => gameState.chartersSubmitted >= 10,
@@ -45,30 +52,164 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'fifty_scrolls',
-    name: 'Книжник-летописец',
-    description: 'Разобрал 50 грамот',
+    name: 'Знаток испытаний',
+    description: 'Прошёл 50 испытаний',
     emoji: '📖',
     category: 'charter',
     check: ({ gameState }) => gameState.chartersSubmitted >= 50,
     progress: ({ gameState }) => ({ current: Math.min(gameState.chartersSubmitted, 50), target: 50 }),
   },
+
+  // ─── Семь архетипов: «Магистр» (3 идеала) и «Знаток» (5 побед) ──────────
+  // Боярин — Купеческая грамота
   {
-    id: 'sharp_eye',
-    name: 'Купеческий глаз',
-    description: 'Точность чуйки 80% после 10+ грамот',
-    emoji: '👁',
+    id: 'master_boyarin',
+    name: 'Магистр печатей',
+    description: '3 идеальных разбора Купеческой грамоты Царя Гороха',
+    emoji: '🟡',
     category: 'charter',
-    check: ({ gameState }) =>
-      gameState.chartersSubmitted >= 10 && (gameState.intuitionAccuracy ?? 0) >= 0.8,
+    check: ({ gameState }) => mg(gameState, 'BOYARIN').perfect >= 3,
+    progress: ({ gameState }) => ({ current: Math.min(mg(gameState, 'BOYARIN').perfect, 3), target: 3 }),
   },
   {
-    id: 'hawk_eye',
-    name: 'Ястребиный взор',
-    description: 'Точность чуйки 95% после 20+ грамот',
-    emoji: '🦅',
+    id: 'expert_boyarin',
+    name: 'Знаток печатей',
+    description: '5 успешных проходов Купеческой грамоты (с идеалом или с ошибкой)',
+    emoji: '📜',
+    category: 'charter',
+    check: ({ gameState }) => mgWonOrPerfect(mg(gameState, 'BOYARIN')) >= 5,
+    progress: ({ gameState }) => ({ current: Math.min(mgWonOrPerfect(mg(gameState, 'BOYARIN')), 5), target: 5 }),
+  },
+
+  // Буратино — Золотой ключик
+  {
+    id: 'master_buratino',
+    name: 'Магистр ключика',
+    description: '3 идеальных Золотых ключика у Буратино',
+    emoji: '🗝️',
+    category: 'charter',
+    check: ({ gameState }) => mg(gameState, 'BURATINO').perfect >= 3,
+    progress: ({ gameState }) => ({ current: Math.min(mg(gameState, 'BURATINO').perfect, 3), target: 3 }),
+  },
+  {
+    id: 'expert_buratino',
+    name: 'Знаток ключика',
+    description: '5 успешных проходов Золотого ключика',
+    emoji: '🔑',
+    category: 'charter',
+    check: ({ gameState }) => mgWonOrPerfect(mg(gameState, 'BURATINO')) >= 5,
+    progress: ({ gameState }) => ({ current: Math.min(mgWonOrPerfect(mg(gameState, 'BURATINO')), 5), target: 5 }),
+  },
+
+  // Кощей — Память
+  {
+    id: 'master_koschei',
+    name: 'Магистр памяти',
+    description: '3 идеальных прохождения Памяти Кощея',
+    emoji: '🧠',
+    category: 'charter',
+    check: ({ gameState }) => mg(gameState, 'KOSCHEI').perfect >= 3,
+    progress: ({ gameState }) => ({ current: Math.min(mg(gameState, 'KOSCHEI').perfect, 3), target: 3 }),
+  },
+  {
+    id: 'expert_koschei',
+    name: 'Знаток памяти',
+    description: '5 успешных проходов Памяти Кощея',
+    emoji: '💀',
+    category: 'charter',
+    check: ({ gameState }) => mgWonOrPerfect(mg(gameState, 'KOSCHEI')) >= 5,
+    progress: ({ gameState }) => ({ current: Math.min(mgWonOrPerfect(mg(gameState, 'KOSCHEI')), 5), target: 5 }),
+  },
+
+  // Колобок — Норы
+  {
+    id: 'master_kolobok',
+    name: 'Магистр нор',
+    description: '3 идеальных раунда «Нора-нора-нора» у Колобка',
+    emoji: '🎯',
+    category: 'charter',
+    check: ({ gameState }) => mg(gameState, 'KOLOBOK').perfect >= 3,
+    progress: ({ gameState }) => ({ current: Math.min(mg(gameState, 'KOLOBOK').perfect, 3), target: 3 }),
+  },
+  {
+    id: 'expert_kolobok',
+    name: 'Знаток нор',
+    description: '5 успешных проходов «Нора-нора-нора»',
+    emoji: '🥮',
+    category: 'charter',
+    check: ({ gameState }) => mgWonOrPerfect(mg(gameState, 'KOLOBOK')) >= 5,
+    progress: ({ gameState }) => ({ current: Math.min(mgWonOrPerfect(mg(gameState, 'KOLOBOK')), 5), target: 5 }),
+  },
+
+  // Золушка — Монеты
+  {
+    id: 'master_zolushka',
+    name: 'Магистр монет',
+    description: '3 идеальных «Золушкиных счастья»',
+    emoji: '✨',
+    category: 'charter',
+    check: ({ gameState }) => mg(gameState, 'ZOLUSHKA').perfect >= 3,
+    progress: ({ gameState }) => ({ current: Math.min(mg(gameState, 'ZOLUSHKA').perfect, 3), target: 3 }),
+  },
+  {
+    id: 'expert_zolushka',
+    name: 'Знаток монет',
+    description: '5 успешных проходов Золушкиного счастья',
+    emoji: '👠',
+    category: 'charter',
+    check: ({ gameState }) => mgWonOrPerfect(mg(gameState, 'ZOLUSHKA')) >= 5,
+    progress: ({ gameState }) => ({ current: Math.min(mgWonOrPerfect(mg(gameState, 'ZOLUSHKA')), 5), target: 5 }),
+  },
+
+  // Баба Яга — Котёл
+  {
+    id: 'master_baba_yaga',
+    name: 'Магистр котла',
+    description: '3 идеальных прохождения Котла Бабы Яги',
+    emoji: '🧪',
+    category: 'charter',
+    check: ({ gameState }) => mg(gameState, 'BABA_YAGA').perfect >= 3,
+    progress: ({ gameState }) => ({ current: Math.min(mg(gameState, 'BABA_YAGA').perfect, 3), target: 3 }),
+  },
+  {
+    id: 'expert_baba_yaga',
+    name: 'Знаток котла',
+    description: '5 успешных проходов Котла Бабы Яги',
+    emoji: '🏚️',
+    category: 'charter',
+    check: ({ gameState }) => mgWonOrPerfect(mg(gameState, 'BABA_YAGA')) >= 5,
+    progress: ({ gameState }) => ({ current: Math.min(mgWonOrPerfect(mg(gameState, 'BABA_YAGA')), 5), target: 5 }),
+  },
+
+  // Иван-Дурак — Карты
+  {
+    id: 'master_ivan_durak',
+    name: 'Магистр карт',
+    description: '3 идеальных прохождения Переводного дурака',
+    emoji: '🃏',
+    category: 'charter',
+    check: ({ gameState }) => mg(gameState, 'IVAN_DURAK').perfect >= 3,
+    progress: ({ gameState }) => ({ current: Math.min(mg(gameState, 'IVAN_DURAK').perfect, 3), target: 3 }),
+  },
+  {
+    id: 'expert_ivan_durak',
+    name: 'Знаток карт',
+    description: '5 успешных проходов Переводного дурака',
+    emoji: '🙃',
+    category: 'charter',
+    check: ({ gameState }) => mgWonOrPerfect(mg(gameState, 'IVAN_DURAK')) >= 5,
+    progress: ({ gameState }) => ({ current: Math.min(mgWonOrPerfect(mg(gameState, 'IVAN_DURAK')), 5), target: 5 }),
+  },
+
+  // Кросс-игровой подвиг
+  {
+    id: 'seven_skills',
+    name: 'Семь умений',
+    description: 'Прошёл идеально хотя бы по одной игре каждого из 7 хозяев',
+    emoji: '🌟',
     category: 'charter',
     check: ({ gameState }) =>
-      gameState.chartersSubmitted >= 20 && (gameState.intuitionAccuracy ?? 0) >= 0.95,
+      mgPerfectAll(gameState, ['BOYARIN', 'BURATINO', 'KOSCHEI', 'KOLOBOK', 'ZOLUSHKA', 'BABA_YAGA', 'IVAN_DURAK']),
   },
 
   // ─── Дела ───────────────────────────────────────────────────────────────

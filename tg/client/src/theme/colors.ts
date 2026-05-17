@@ -1,71 +1,261 @@
-// Палитра «Из грязи в князи» — расширенная семантическая система.
-// Базовая тройка (fairyGold / enchantedPurple / nightBlue) — наследие Android-темы.
-// Дополнения: редкости рангов, сказочные семантические, атмосферные оттенки.
+// Палитра «Из грязи в князи» — две темы.
+//
+//   classic — наследие Android: глубокий фиолет (EnchantedPurple) + золото.
+//             Технологичный, премиальный, «магия в полночь».
+//   fairy   — резное дерево + пергамент + восковая печать.
+//             Русско-сказочный: «Билибин + Союзмультфильм».
+//
+// Тема выбирается ОДИН РАЗ при загрузке страницы (localStorage). При смене
+// темы — перезагрузка, чтобы все компоненты подхватили новые токены.
+//
+// Что отличается между темами: ТОЛЬКО фон экрана, фон карточки, обводки,
+// inset-блики. Золото, типы рангов, чины, успех/опасность, мини-игровые
+// токены (пергамент/дерево/печать/самоцветы) — общие.
+
+const THEME_KEY = 'ui_theme_v1'
+export type ThemeName = 'classic' | 'fairy'
+
+const themes = {
+  classic: {
+    bgDeep: '#060412',
+    bgMid:  '#0A0818',
+    cardGradientTop:    'rgba(58, 32, 110, 0.88)',
+    cardGradientMid:    'rgba(34, 16, 70, 0.92)',
+    cardGradientBottom: 'rgba(15, 18, 42, 0.96)',
+    cardBorder:       'rgba(255, 184, 0, 0.12)',
+    cardBorderBright: 'rgba(255, 184, 0, 0.35)',
+    cardHighlight:    'rgba(255, 255, 255, 0.06)',
+    cardShade:        'rgba(0, 0, 0, 0.35)',
+    overlayDark:      'rgba(6, 4, 18, 0.85)',
+    overlayLight:     'rgba(255, 184, 0, 0.08)',
+    cardRadius: '18px',
+    cardBorderWidth: '1px',
+    screenGradient:
+      `linear-gradient(180deg, rgba(6,4,18,0.85) 0%, rgba(10,8,24,0.75) 50%, rgba(6,4,18,0.94) 100%)`,
+    cardSurface: '',  // карточка использует cardGradient* напрямую через gradients.card
+    cardSurfacePrefix: '',  // префикс перед градиентом (для волокон дерева в fairy)
+    cardGradientAngle: '155deg',
+    // Текст: классический белый поверх тёмного фиолетового фона
+    textPrimary:   '#FFFFFF',
+    textSecondary: 'rgba(255,255,255,0.7)',
+    textMuted:     'rgba(255,255,255,0.45)',
+    // Главная CTA («Следующий день», чат-кнопка): фиолет→ночной синий
+    ctaGradient: `linear-gradient(135deg, #2A1960, #0D1735)`,
+    ctaBorder:   'rgba(255,184,0,0.55)',
+    // Нав-бар низа: глубокий тёмно-фиолетовый с золотым кантом
+    navBarBg:     'rgba(10, 8, 24, 0.96)',
+    navBarBorder: 'rgba(255, 184, 0, 0.18)',
+    // Модалки / шторки / оверлеи: фиолет→ночной (вертикальный)
+    modalBg:       `linear-gradient(180deg, #2A1960 0%, #0D1735 100%)`,
+    modalBorder:   'rgba(255, 184, 0, 0.35)',
+    modalText:     '#FFFFFF',
+    modalTextSec:  'rgba(255,255,255,0.7)',
+    modalTextMute: 'rgba(255,255,255,0.45)',
+  },
+  fairy: {
+    // Сказочно-русская: ярмарка в золотое полуденное время.
+    // Фон — тёплое медовое дерево с золотым ореолом сверху.
+    // Карточки — золотой дуб, светлее фона, чтобы «выпрыгивали».
+    bgDeep: '#5A3818',   // медовое дерево внизу
+    bgMid:  '#6E461E',   // золотистый дуб в середине
+    // Карточка — пергамент с золотым кантом и резной деревянной рамой.
+    // Светлая поверхность, текст — тёмная сепия (см. textPrimary ниже).
+    cardGradientTop:    'rgba(245, 230, 195, 0.99)',  // светлый пергамент сверху
+    cardGradientMid:    'rgba(232, 213, 168, 1.0)',   // основной пергамент
+    cardGradientBottom: 'rgba(217, 194, 138, 1.0)',   // плотный пергамент снизу
+    cardBorder:       'rgba(120, 76, 36, 0.85)',     // тёмная деревянная рамка
+    cardBorderBright: 'rgba(212, 160, 60, 1.0)',     // золотой кант для активных
+    cardHighlight:    'rgba(255, 250, 230, 0.7)',    // мягкий бумажный блик сверху
+    cardShade:        'rgba(120, 80, 40, 0.25)',
+    overlayDark:      'rgba(48, 26, 10, 0.85)',
+    overlayLight:     'rgba(255, 184, 0, 0.14)',
+    cardRadius: '14px',
+    cardBorderWidth: '1.5px',
+    // Светлый медовый фон с золотым ореолом сверху.
+    // ВАЖНО: тело градиента почти прозрачное — это просто мягкая
+    // золотая вуаль сверху и виньетка по краям, чтобы НЕ забивать
+    // bgImage из output_backgrounds/HOME_0N_LIGHT.webp. Раньше градиент
+    // был на 100% непрозрачным и картинки выглядели как «осенняя желчь».
+    screenGradient:
+      `radial-gradient(ellipse 85% 45% at 50% 0%, rgba(255,200,90,0.22) 0%, transparent 55%), radial-gradient(ellipse 100% 100% at 50% 100%, rgba(82,52,24,0.35) 0%, transparent 60%)`,
+    cardSurface: '',
+    // На пергаменте — мягкий радиальный блик («тёплая бумага под рукой»),
+    // не «волокна дерева». Текстура задаётся через prefix перед градиентом.
+    cardSurfacePrefix:
+      `radial-gradient(ellipse at 22% 18%, rgba(255,255,255,0.5) 0%, transparent 55%), `,
+    cardGradientAngle: '155deg',
+    // Текст: тёмная сепия на пергаменте — главный жирный, средний, выцветший.
+    // Подняты непрозрачности (0.78→0.92, 0.55→0.78) — на ярких bg-картинках
+    // сквозь полупрозрачный пергамент текст бледнел и становился нечитаемым.
+    textPrimary:   '#1A0E04',  // ещё насыщеннее → почти чёрный
+    textSecondary: 'rgba(26,14,4,0.92)',
+    textMuted:     'rgba(26,14,4,0.78)',
+    // CTA в сказочной — золото с тёмной сепией для текста на нём
+    ctaGradient: `linear-gradient(180deg, #FFD660 0%, #FFB800 55%, #B07400 100%)`,
+    ctaBorder:   'rgba(120, 76, 36, 0.9)',
+    // Нав-бар — резное тёмное дерево с золотым кантом сверху.
+    // Без repeating-linear-gradient: нав-бар фиксирован поверх скроллящегося
+    // содержимого, стрипы 3px вызывали лишние repaint'ы при скролле.
+    navBarBg:     `linear-gradient(180deg, #4A2E14 0%, #2D1A0A 100%)`,
+    navBarBorder: 'rgba(212, 160, 60, 0.7)',
+    // Модалки — резное дерево вместо ночной палаты.
+    // ВАЖНО: без repeating-linear-gradient (стрипы 3px) — они в overflow:auto
+    // контейнерах (как settings-sheet) вызывали repaint-шторм на Android WebView
+    // и контент моргал. Только базовый linear-gradient.
+    modalBg:       `linear-gradient(180deg, #5A3818 0%, #3A1F0A 50%, #2D1A0A 100%)`,
+    modalBorder:   'rgba(212, 160, 60, 0.85)',
+    // На модалках в fairy остаётся СВЕТЛЫЙ текст (тёмное дерево внутри)
+    modalText:     '#F8E4B2',  // тёплый кремовый, читается на тёмном дереве
+    modalTextSec:  'rgba(248,228,178,0.78)',
+    modalTextMute: 'rgba(248,228,178,0.55)',
+  },
+} as const
+
+function readActiveTheme(): ThemeName {
+  if (typeof window === 'undefined') return 'classic'
+  const v = window.localStorage?.getItem(THEME_KEY)
+  return v === 'fairy' ? 'fairy' : 'classic'
+}
+
+const activeName: ThemeName = readActiveTheme()
+const active = themes[activeName]
+
+export function getTheme(): ThemeName { return activeName }
+
+/** Сменить тему. Перезагружает страницу, чтобы все импорты подхватили новую палитру. */
+export function setTheme(name: ThemeName): void {
+  try {
+    window.localStorage?.setItem(THEME_KEY, name)
+  } catch { /* noop */ }
+  window.location.reload()
+}
+
 export const colors = {
   // ── Основные ────────────────────────────────────────────────────────────
   fairyGold: '#FFB800',
-  fairyGoldBright: '#FFD24A',  // ярче — для glow, hover, важных акцентов
-  fairyGoldDim: '#B88200',     // тусклее — для disabled и фоновых обводок
+  fairyGoldBright: '#FFD24A',
+  fairyGoldDim: '#B88200',
   enchantedPurple: '#2A1960',
   enchantedPurpleBright: '#4A2BA0',
   enchantedPurpleDim: '#1E0E48',
   nightBlue: '#0D1735',
 
-  // ── Фон ─────────────────────────────────────────────────────────────────
-  bgDeep: '#060412',
-  bgMid: '#0A0818',
+  // ── Фон (зависит от темы) ──────────────────────────────────────────────
+  bgDeep: active.bgDeep,
+  bgMid: active.bgMid,
 
-  // ── Текст ───────────────────────────────────────────────────────────────
-  textPrimary: '#FFFFFF',
-  textSecondary: 'rgba(255,255,255,0.7)',
-  textMuted: 'rgba(255,255,255,0.45)',
-  textOnGold: '#1A0F00',  // тёмный для контраста на золотых кнопках
+  // ── Текст (theme-aware: белый на тёмном / тёмная сепия на пергаменте) ──
+  textPrimary:   active.textPrimary,
+  textSecondary: active.textSecondary,
+  textMuted:     active.textMuted,
+  textOnGold:    '#1A0F00',  // тёмный для золотых кнопок (общий)
 
-  // ── Семантические (переоттенены в сказочную сторону) ─────────────────────
-  success: '#50C878',   // изумруд — прибыль, успешный сабмит, верный ответ
+  // Светлый текст для тёмных поверхностей (нав-бар, модалки, оверлеи,
+  // канвас мини-игр). Всегда белый/полупрозрачный белый — не зависит от темы.
+  textOnDark:        '#FFFFFF',
+  textOnDarkSecond:  'rgba(255,255,255,0.7)',
+  textOnDarkMuted:   'rgba(255,255,255,0.45)',
+
+  // ── Семантические ─────────────────────────────────────────────────────
+  success: '#50C878',
   successDim: '#2F7A4A',
-  danger: '#E34234',    // киноварь — потеря, скам-разоблачение, ошибка
+  danger: '#E34234',
   dangerDim: '#8A2620',
-  warning: '#FFA72E',   // янтарь — кулдаун, предупреждение
-  info: '#7A8DFF',      // индиго — нейтральная инфа
+  warning: '#FFA72E',
+  info: '#7A8DFF',
 
   // ── Редкости купеческих чинов ────────────────────────────────────────────
-  rankBronze: '#CD7F32',     // Скоморох (NEWBIE)
-  rankSilver: '#C8D0DA',     // Купец (AMBASSADOR)
-  rankGold: '#FFB800',       // Мудрец (ANALYST) — = fairyGold
-  rankPlatinum: '#E5E4E2',   // Боярин (SHARK)
-  rankRuby: '#E0115F',       // Князь (LAMBO_SENSEI)
+  rankBronze: '#CD7F32',
+  rankSilver: '#C8D0DA',
+  rankGold: '#FFB800',
+  rankPlatinum: '#E5E4E2',
+  rankRuby: '#E0115F',
 
   // ── Атмосферные акценты ──────────────────────────────────────────────────
-  parchment: '#F4E4BC',         // пергамент — фон свитков
+  parchment: '#F4E4BC',
   parchmentDim: '#C9B988',
-  ember: '#FF6B35',             // тлеющий уголь — низ AmaPage
-  candleLight: '#FFC857',       // свет свечи — мерцание на CharterPage
-  mist: 'rgba(180,200,220,0.12)', // туман — поверх HomePage
+  ember: '#FF6B35',
+  candleLight: '#FFC857',
+  mist: 'rgba(180,200,220,0.12)',
 
-  // ── Карточки (премиальный многослойный стиль) ────────────────────────────
-  cardGradientTop: 'rgba(58, 32, 110, 0.88)',     // тёплый фиолет, верх
-  cardGradientMid: 'rgba(34, 16, 70, 0.92)',      // глубокий plum, середина
-  cardGradientBottom: 'rgba(15, 18, 42, 0.96)',   // dark navy, низ
-  cardBorder: 'rgba(255, 184, 0, 0.12)',          // hairline gold — еле заметна
-  cardBorderBright: 'rgba(255, 184, 0, 0.35)',    // для активных/hover
-  cardHighlight: 'rgba(255, 255, 255, 0.06)',     // inset top — стеклянный блик
-  cardShade: 'rgba(0, 0, 0, 0.35)',               // inset bottom — глубина
+  // ── Карточки (зависят от темы) ──────────────────────────────────────────
+  cardGradientTop:    active.cardGradientTop,
+  cardGradientMid:    active.cardGradientMid,
+  cardGradientBottom: active.cardGradientBottom,
+  cardBorder:         active.cardBorder,
+  cardBorderBright:   active.cardBorderBright,
+  cardHighlight:      active.cardHighlight,
+  cardShade:          active.cardShade,
 
-  // ── Оверлеи ─────────────────────────────────────────────────────────────
-  overlayDark: 'rgba(6, 4, 18, 0.85)',
-  overlayLight: 'rgba(255, 184, 0, 0.08)',
+  // ── Оверлеи (зависят от темы) ───────────────────────────────────────────
+  overlayDark:  active.overlayDark,
+  overlayLight: active.overlayLight,
+
+  // ── Сказочно-русская палитра (общая для обеих тем) ─────────────────────
+  // Пергамент — для свитков-карточек
+  parchmentLight: '#F2DFB4',
+  parchmentMid:   '#E8D5A8',
+  parchmentDark:  '#D9C28A',
+  parchmentEdge:  '#C8B07A',
+  parchmentInk:   '#2D1A0A',
+
+  // Резное дерево — для рамок, кнопок, нав-бара
+  woodRim:   '#A06830',
+  woodHi:    '#8B5A2B',
+  woodMid:   '#4A2E14',
+  woodDeep:  '#2D1A0A',
+  woodDark:  '#1E1008',
+  woodBg:    '#100804',
+
+  // Восковая печать
+  sealRed:       '#8B2D2D',
+  sealRedBright: '#B0353D',
+  sealCrimson:   '#D94040',
+
+  // Самоцветы
+  gemEmerald:  '#2E8B57',
+  gemRuby:     '#9B2030',
+  gemSapphire: '#1F4E8C',
+  gemAmethyst: '#5C2E8A',
+  gemGold:     '#D4A017',
+
+  // ── Геометрия карточки (для FairyCard, чтобы темам различался ободок) ──
+  cardRadius: active.cardRadius,
+  cardBorderWidth: active.cardBorderWidth,
+
+  // ── CTA + нав-бар (theme-aware) ─────────────────────────────────────────
+  ctaBorder:    active.ctaBorder,
+  navBarBg:     active.navBarBg,
+  navBarBorder: active.navBarBorder,
+  // Цвет текста для CTA-кнопок (золото в fairy → тёмная сепия; фиолет в classic → светлое золото)
+  ctaText:      activeName === 'fairy' ? '#3A2010' : '#FFB800',
+
+  // ── Модалки (theme-aware) ─────────────────────────────────────────────
+  modalBorder:    active.modalBorder,
+  modalText:      active.modalText,
+  modalTextSec:   active.modalTextSec,
+  modalTextMute:  active.modalTextMute,
 } as const
 
 export const gradients = {
-  screen: `linear-gradient(180deg, rgba(6,4,18,0.85) 0%, rgba(10,8,24,0.75) 50%, rgba(6,4,18,0.94) 100%)`,
-  card: `linear-gradient(155deg, ${colors.cardGradientTop} 0%, ${colors.cardGradientMid} 50%, ${colors.cardGradientBottom} 100%)`,
+  screen: active.screenGradient,
+  card: `${active.cardSurfacePrefix}linear-gradient(${active.cardGradientAngle}, ${active.cardGradientTop} 0%, ${active.cardGradientMid} ${activeName === 'fairy' ? '55%' : '50%'}, ${active.cardGradientBottom} 100%)`,
   goldAccent: `linear-gradient(90deg, transparent, ${colors.fairyGold}40, transparent)`,
   goldShine: `linear-gradient(135deg, ${colors.fairyGoldDim}, ${colors.fairyGoldBright}, ${colors.fairyGoldDim})`,
   rankUp: `linear-gradient(135deg, ${colors.enchantedPurple}, ${colors.nightBlue})`,
   emerald: `linear-gradient(135deg, ${colors.successDim}, ${colors.success})`,
   ruby: `linear-gradient(135deg, ${colors.dangerDim}, ${colors.rankRuby})`,
   parchment: `linear-gradient(180deg, ${colors.parchment}, ${colors.parchmentDim})`,
+  // Резное дерево — фон для шапки мини-игр, нав-баров (общий для обеих тем)
+  wood: `repeating-linear-gradient(89deg, transparent 0, transparent 3px, rgba(0,0,0,.05) 3px, rgba(0,0,0,.05) 4px), linear-gradient(180deg, ${colors.woodMid} 0%, ${colors.woodDeep} 100%)`,
+  // Свиток-пергамент с тёплым бликом (общий)
+  scroll: `radial-gradient(ellipse at 22% 18%, rgba(255,255,255,.22) 0%, transparent 55%), linear-gradient(155deg, ${colors.parchmentLight} 0%, ${colors.parchmentMid} 55%, ${colors.parchmentDark} 100%)`,
+  goldBtn: `linear-gradient(180deg, #FFD660 0%, #FFB800 55%, #C08000 100%)`,
+  woodBtn: `linear-gradient(180deg, ${colors.woodHi} 0%, ${colors.woodMid} 55%, ${colors.woodDeep} 100%)`,
+  // Theme-aware CTA градиент (Следующий день, чат-кнопка, активные акции)
+  cta: active.ctaGradient,
+  // Theme-aware фон модалок / шторок / оверлеев
+  modal: active.modalBg,
 } as const
 
 export const shadows = {
@@ -74,6 +264,43 @@ export const shadows = {
   goldGlowStrong: `0 0 30px ${colors.fairyGoldBright}80, 0 0 60px ${colors.fairyGold}40`,
   emberGlow: `0 0 20px ${colors.ember}60, 0 0 40px ${colors.ember}30`,
   candleGlow: `0 0 16px ${colors.candleLight}80, 0 0 32px ${colors.candleLight}40`,
+} as const
+
+/**
+ * Унифицированные стили CTA-кнопок (золотая основа, тёмная сепия).
+ * Используются ВЕЗДЕ где нужна «активная» кнопка-действие:
+ * Летопись, Принять испытание, Добавить вложение, Пропустить и т.д.
+ *
+ * Размеры:
+ *   • lg — главные CTA на всю ширину (Летопись, Принять испытание на интро)
+ *   • md — среднее: кнопки внутри карточек дел (Принять испытание в инбоксе)
+ *   • sm — компактное: иконочные / inline (Добавить вложение в листе)
+ */
+function makeCtaButton(size: 'sm' | 'md' | 'lg') {
+  const dims = size === 'lg'
+    ? { padding: '12px 16px', borderRadius: '12px', fontSize: 14, borderBottom: 2 }
+    : size === 'md'
+      ? { padding: '8px 14px', borderRadius: '10px', fontSize: 12, borderBottom: 2 }
+      : { padding: '5px 10px', borderRadius: '8px',  fontSize: 11, borderBottom: 1 }
+  return {
+    background: gradients.cta,
+    border: `1.5px solid ${colors.ctaBorder}`,
+    borderBottom: `${dims.borderBottom}px solid ${colors.ctaBorder}`,
+    borderRadius: dims.borderRadius,
+    color: colors.ctaText,
+    padding: dims.padding,
+    fontSize: dims.fontSize,
+    fontWeight: 800,
+    letterSpacing: '0.02em',
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+    boxShadow: '0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,235,170,0.45)',
+  } as const
+}
+export const ctaButton = {
+  lg: makeCtaButton('lg'),
+  md: makeCtaButton('md'),
+  sm: makeCtaButton('sm'),
 } as const
 
 /** Цвет редкости по InvestorRank */

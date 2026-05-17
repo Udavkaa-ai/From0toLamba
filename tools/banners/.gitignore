@@ -1,4 +1,5 @@
 output/
+output_avatars/
 __pycache__/
 *.pyc
 .venv/

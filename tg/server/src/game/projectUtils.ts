@@ -99,11 +99,20 @@ export function toPublicDTO(project: Project): ProjectPublicDTO {
     closureReason: project.closureReason,
     // Все баннеры идут через наш прокси /api/banner/:id — он сам ходит в Pollinations
     // с приватным ключом. Старые прямые Pollinations-URL в БД игнорируются.
-    bannerImageUrl: project.bannerImageUrl ? `/api/banner/${project.id}` : null,
+    // VIP-дела: bannerImageUrl уже прямая ссылка на /banners/SPONSOR_*.webp,
+    // прокси не нужен (он считает filename по архетипу — для спонсорских не годится).
+    bannerImageUrl: project.isSponsor
+      ? project.bannerImageUrl
+      : (project.bannerImageUrl ? `/api/banner/${project.id}` : null),
     currentUserCount: project.currentUserCount,
     userCountHistory: project.userCountHistory,
     apyHistory: project.apyHistory,
     valueHistory: project.valueHistory,
+    // СПОНСОРСКИЕ поля: promocode СПЕЦИАЛЬНО НЕ отдаём — проверяется только
+    // на сервере. Канал и факт верификации — публичны.
+    isSponsor: project.isSponsor,
+    sponsorChannelUrl: project.sponsorChannelUrl,
+    sponsorPromoVerified: project.sponsorPromoVerified,
   }
 }
 

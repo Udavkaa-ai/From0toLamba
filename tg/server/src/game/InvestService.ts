@@ -1,6 +1,8 @@
 import { prisma } from '../db/prisma'
-import { ProjectType, WITHDRAWAL_RULES } from './types'
+import { ProjectType, ProjectFate, WITHDRAWAL_RULES, FATE_CONFIG } from './types'
+import { computeClaimedAPY } from './GenerateProjectService'
 import { generatePostMortem } from '../ai/openRouterClient'
+import { createSponsorPostMortem } from './sponsorService'
 import { recomputeRank } from './rankService'
 
 const MIN_INVEST = 5
@@ -9,19 +11,82 @@ const MAX_ACTIVE_PROJECTS = 5
 const MAX_EXTRA_SLOTS = 5
 const EXTRA_SLOT_COST_GROSHY = 1000
 
+// Идеальная игра (errorCount=0) даёт небольшой дополнительный шанс на UNICORN
+// (Жар-птицу). Базовая вероятность UNICORN уже встроена в FATE_CONFIG.weight (5
+// из 95 ≈ 5%); идеальная игра прибавляет ещё PERFECT_GAME_UNICORN_BONUS сверху
+// — итого ~10% при идеальной игре. Остальные судьбы остаются как есть.
+const PERFECT_GAME_UNICORN_BONUS = 0.05  // +5% к UNICORN при errorCount=0
+
+/**
+ * Если игрок прошёл мини-игру без ошибок и судьба ещё не UNICORN, с шансом
+ * PERFECT_GAME_UNICORN_BONUS превращаем её в UNICORN. Перегенерируем
+ * realDailyYield, daysUntilCollapse и claimedAPY (посул!) под новую судьбу.
+ */
+function maybeShiftFate(currentFate: ProjectFate): {
+  newFate: ProjectFate
+  newDailyYield: number
+  newDaysUntilCollapse: number
+  newClaimedAPY: number
+} | null {
+  if (currentFate === ProjectFate.UNICORN) return null
+  if (Math.random() >= PERFECT_GAME_UNICORN_BONUS) return null
+  const newFate = ProjectFate.UNICORN
+  const cfg = FATE_CONFIG[newFate]
+  const newDailyYield = cfg.dailyYieldRange[0] + Math.random() * (cfg.dailyYieldRange[1] - cfg.dailyYieldRange[0])
+  const newDaysUntilCollapse = cfg.daysRange[0] + Math.floor(Math.random() * (cfg.daysRange[1] - cfg.daysRange[0] + 1))
+  // Перегенерируем посул, чтобы он соответствовал новой судьбе (был баг: посул
+  // оставался от старой fate — игрок видел старый процент при новой судьбе)
+  const newClaimedAPY = computeClaimedAPY(newDailyYield, newFate)
+  return { newFate, newDailyYield, newDaysUntilCollapse, newClaimedAPY }
+}
+
+/** Результат инвеста: была ли удача-сдвиг судьбы (для красивого баннера на клиенте) */
+export interface InvestResult {
+  luckShift: { from: ProjectFate; to: ProjectFate } | null
+}
+
 export async function invest(
   userId: number,
   projectId: string,
   amount: number,
   extraSlot?: 'groshy' | 'stars',
-): Promise<void> {
+): Promise<InvestResult> {
   if (amount < MIN_INVEST) throw new Error('AMOUNT_TOO_SMALL')
   if (amount > MAX_INVEST_PER_PROJECT) throw new Error('AMOUNT_TOO_LARGE')
 
-  const [gameState, project] = await Promise.all([
+  const [gameState, project, amaSession] = await Promise.all([
     prisma.gameState.findUniqueOrThrow({ where: { userId } }),
     prisma.project.findFirstOrThrow({ where: { id: projectId, userId } }),
+    prisma.amaSession.findUnique({ where: { projectId } }),
   ])
+
+  // VIP-дело: разрешено только после верификации промокода. Мини-игра
+  // тут не требуется — её попросту нет в инбоксе для isSponsor.
+  if (project.isSponsor && !project.sponsorPromoVerified) {
+    throw new Error('PROMO_REQUIRED')
+  }
+
+  // Шанс «переломить судьбу» (превратить дело в UNICORN) даётся ТОЛЬКО за
+  // честно сыгранную идеальную мини-игру (errorCount === 0).
+  // Bypass за 10 звёзд или жетоном НЕ влияет на этот шанс: при провале
+  // intuitionDelta остаётся = 2, и условие errorCount===0 ложно. Базовый
+  // шанс UNICORN (≈5% из FATE_CONFIG.weight) уже сидит в проекте на этапе
+  // генерации — bypass только раскрывает подсказку, но не делает дело
+  // лучше. Так что максимум +5% к UNICORN получают исключительно те, кто
+  // сыграл идеально сам.
+  const errorCount = amaSession?.intuitionDelta ?? null
+  const fateShift = errorCount === 0
+    ? maybeShiftFate(project.fate as ProjectFate)
+    : null
+  const projectShiftPatch = fateShift ? {
+    fate: fateShift.newFate,
+    realDailyYieldRubles: fateShift.newDailyYield,
+    daysUntilCollapse: fateShift.newDaysUntilCollapse,
+    claimedAPY: fateShift.newClaimedAPY,
+  } : {}
+  const luckShift: InvestResult['luckShift'] = fateShift
+    ? { from: project.fate as ProjectFate, to: fateShift.newFate }
+    : null
 
   const activeCount = await prisma.project.count({ where: { userId, isActive: true } })
 
@@ -49,13 +114,14 @@ export async function invest(
             isActive: true,
             isInbox: false,
             isExtraSlot: true,
+            ...projectShiftPatch,
           },
         }),
       ])
       await prisma.transaction.create({
         data: { userId, projectId, projectName: project.name, type: 'INVEST', amount, day: gameState.currentDay },
       })
-      return
+      return { luckShift }
     }
 
     // stars path: use pre-purchased slot token
@@ -78,13 +144,14 @@ export async function invest(
           isActive: true,
           isInbox: false,
           isExtraSlot: true,
+          ...projectShiftPatch,
         },
       }),
     ])
     await prisma.transaction.create({
       data: { userId, projectId, projectName: project.name, type: 'INVEST', amount, day: gameState.currentDay },
     })
-    return
+    return { luckShift }
   }
 
   if (gameState.balance < amount) throw new Error('INSUFFICIENT_BALANCE')
@@ -104,6 +171,7 @@ export async function invest(
         currentValueRubles: { increment: amount },
         isActive: true,
         isInbox: false,
+        ...projectShiftPatch,
       },
     }),
   ])
@@ -111,6 +179,8 @@ export async function invest(
   await prisma.transaction.create({
     data: { userId, projectId, projectName: project.name, type: 'INVEST', amount, day: gameState.currentDay },
   })
+
+  return { luckShift }
 }
 
 export async function addInvestment(userId: number, projectId: string, amount: number): Promise<void> {
@@ -230,18 +300,24 @@ export async function exitProject(userId: number, projectId: string): Promise<nu
     ? ((received + totalWithdrawn - project.investedAmountRubles) / project.investedAmountRubles) * 100
     : 0
 
-  generatePostMortem({
-    projectId,
-    userId,
-    archetype: project.personaArchetype,
-    fate: project.fate,
-    lieTopics: project.lieTopics,
-    investedAmount: project.investedAmountRubles,
-    returnedAmount: received,
-    profitPercent,
-    daysActive: project.daysSinceJoined,
-    intuitionDelta: amaSession?.intuitionDelta ?? 0,
-  }, undefined, gameState.preferredLanguage ?? 'ru').catch(console.error)
+  // VIP-дело: PostMortem пишется без AI, analysis = project.description
+  // (сказочное описание от хозяина канала). Иначе обычный AI-разбор.
+  if (project.isSponsor) {
+    createSponsorPostMortem(project, received, project.daysSinceJoined).catch(console.error)
+  } else {
+    generatePostMortem({
+      projectId,
+      userId,
+      archetype: project.personaArchetype,
+      fate: project.fate,
+      lieTopics: project.lieTopics,
+      investedAmount: project.investedAmountRubles,
+      returnedAmount: received,
+      profitPercent,
+      daysActive: project.daysSinceJoined,
+      intuitionDelta: amaSession?.intuitionDelta ?? 0,
+    }, undefined, gameState.preferredLanguage ?? 'ru').catch(console.error)
+  }
 
   await recomputeRank(userId)
 

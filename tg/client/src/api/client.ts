@@ -59,6 +59,11 @@ export interface ProjectDTO {
   userCountHistory: number[]
   apyHistory: number[]
   valueHistory: number[]
+  // VIP-дело от спонсорского канала. promocode НЕ отдаётся клиенту —
+  // проверяется только на сервере через POST /api/sponsor/:id/verify.
+  isSponsor: boolean
+  sponsorChannelUrl: string | null
+  sponsorPromoVerified: boolean
 }
 
 export interface DailyUpdateDTO {
@@ -100,10 +105,25 @@ export interface GameStateDTO {
   currentDay: number
   investorRank: string
   nickname: string | null
-  intuitionScore: number
-  intuitionAccuracy: number | null  // 0..1 или null если грамот не было
+  intuitionScore: number              // legacy: с версии 4 не растёт
+  intuitionAccuracy: number | null    // legacy: с версии 4 не используется в UI
   chartersSubmitted: number
   closedProjectsCount: number
+  dealsCount: number                  // число взятых дел — основа ранга
+  /** Статистика мини-игр по архетипам: «сколько раз играл с этим дельцом, как закончил».
+   *  Ключ — personaArchetype (BURATINO, KOSCHEI и т.д.). errorCount: 0 = perfect, 1 = won, ≥2 = lost. */
+  minigameStats: Record<string, { played: number; perfect: number; won: number; lost: number }>
+  /** Жетоны хозяев — мини-валюта по архетипам. earned = заработано (10 игр или
+   *  5 дел = +1 жетон), spent = потрачено, balance = доступно. Пусто для
+   *  архетипов, с которыми игрок ещё не сталкивался. */
+  archetypeTokens: Record<string, { earned: number; spent: number; balance: number; gamesPlayed: number; dealsTaken: number; welcomeBonus: boolean }>
+  /** Завязки — уровни отношений (0..tiesMaxLevel) по каждому архетипу.
+   *  Каждый уровень даёт +tiesBonusPerLevel/день к доходности дел с этим
+   *  типом дельцов. На уровне tiesMaxLevel прокачка останавливается. */
+  tieLevels: Record<string, number>
+  tiesTotal: number
+  tiesMaxLevel: number
+  tiesBonusPerLevel: number
   dayStreak: number
   isOnboardingComplete: boolean
   totalInvested: number
@@ -113,6 +133,8 @@ export interface GameStateDTO {
   pendingRankUp: string | null
   preferredModel: string
   preferredLanguage: string
+  /** Игрок выключил ежедневные AI-новости (карточки «Вести 1/N» при advance-day). */
+  newsEnabled: boolean
   lastAdvancedAt: string | null
   advanceCooldownMs: number
   consecutiveAdvances: number
@@ -190,6 +212,22 @@ export interface ReferralLeaderboardDTO {
   totalPlayers: number
 }
 
+export interface TiesLeaderboardEntryDTO {
+  userId: number
+  firstName: string
+  username: string | null
+  investorRank: string
+  tiesTotal: number
+  isMe: boolean
+  position: number
+}
+
+export interface TiesLeaderboardDTO {
+  entries: TiesLeaderboardEntryDTO[]
+  myPosition: number | null
+  totalPlayers: number
+}
+
 export interface AchievementLeaderboardEntryDTO extends LeaderboardEntryDTO {
   achievementScore: number
   closedProjectsCount: number
@@ -237,6 +275,42 @@ export interface AdvanceDayResultDTO {
   closures: ClosureSummaryDTO[]
 }
 
+/** Ответ на /invest/:id — содержит сдвиг судьбы за идеальную игру (если был). */
+export interface InvestResponse {
+  success: boolean
+  luckShift: { from: string; to: string } | null
+}
+
+/** Запись лидерборда на вкладке «Сегодня» — рейтинг по богатству. */
+export interface TodayLeaderEntry {
+  telegramId: string
+  firstName: string
+  username: string | null
+  nickname: string | null
+  rank: string
+  wealth: number
+}
+/** Ответ /api/today — стрик + ежедневная награда + топ-10 по богатству */
+export interface TodayDTO {
+  loginStreak: number
+  todayReward: number
+  milestoneBonus: number
+  alreadyClaimed: boolean
+  nextMilestone: { day: number; bonus: number; daysLeft: number } | null
+  leaderboard: {
+    top: TodayLeaderEntry[]
+    myPosition: number | null
+    totalPlayers: number
+  }
+}
+export interface TodayClaimDTO {
+  success: boolean
+  reward: number
+  milestoneBonus: number
+  loginStreak: number
+  newBalance: number
+}
+
 export interface AmaSessionDTO {
   sessionId: string
   questionCount: number
@@ -255,7 +329,9 @@ export interface CharterResultDTO {
   truePositives: number[]
   falsePositives: number[]
   falseNegatives: number[]
-  delta: number
+  delta: number                       // legacy, всегда 0 с версии 4
+  errorCount: number                  // FP + FN — ключ для рендера результата
+  perfectInsight: string | null       // только при сабмите (0 ошибок); на reload — null
 }
 
 export interface CharterSubmitDTO extends CharterResultDTO {
@@ -288,7 +364,7 @@ export const api = {
     clearRankUp: () => apiClient.post('/game/clear-rank-up').then(r => r.data),
     completeOnboarding: () => apiClient.post('/game/complete-onboarding').then(r => r.data),
     getSettings: () => apiClient.get<{ preferredModel: string }>('/game/settings').then(r => r.data),
-    updateSettings: (data: { preferredModel?: string; preferredLanguage?: string }) => apiClient.post<{ success: boolean }>('/game/settings', data).then(r => r.data),
+    updateSettings: (data: { preferredModel?: string; preferredLanguage?: string; newsEnabled?: boolean }) => apiClient.post<{ success: boolean }>('/game/settings', data).then(r => r.data),
     resetGame: () => apiClient.post('/game/reset').then(r => r.data),
   },
 
@@ -310,14 +386,18 @@ export const api = {
   charter: {
     start: (projectId: string) => apiClient.post<CharterDTO>(`/charter/${projectId}/start`).then(r => r.data),
     get: (projectId: string) => apiClient.get<CharterDTO>(`/charter/${projectId}`).then(r => r.data),
+    begin: (projectId: string) => apiClient.post<{ success: boolean }>(`/charter/${projectId}/begin`).then(r => r.data),
     submit: (projectId: string, selectedIndices: number[]) =>
       apiClient.post<CharterSubmitDTO>(`/charter/${projectId}/submit`, { selectedIndices }).then(r => r.data),
+    submitMiniGame: (projectId: string, errorCount: number) =>
+      apiClient.post<{ errorCount: number; perfectInsight: string | null }>(`/charter/${projectId}/submit-minigame`, { errorCount }).then(r => r.data),
   },
 
   leaderboard: {
     get: () => apiClient.get<LeaderboardDTO>('/leaderboard').then(r => r.data),
     getWeek: () => apiClient.get<WeeklyLeaderboardDTO>('/leaderboard/week').then(r => r.data),
     getReferrals: () => apiClient.get<ReferralLeaderboardDTO>('/leaderboard/referrals').then(r => r.data),
+    getTies: () => apiClient.get<TiesLeaderboardDTO>('/leaderboard/ties').then(r => r.data),
     getByIntuition: () => apiClient.get<LeaderboardDTO>('/leaderboard/intuition').then(r => r.data),
     getByDays: () => apiClient.get<LeaderboardDTO>('/leaderboard/days').then(r => r.data),
     getByAchievements: () => apiClient.get<AchievementLeaderboardDTO>('/leaderboard/achievements').then(r => r.data),
@@ -327,9 +407,20 @@ export const api = {
     getMy: () => apiClient.get<MyReferralsDTO>('/referrals/my').then(r => r.data),
   },
 
+  today: {
+    get: () => apiClient.get<TodayDTO>('/today').then(r => r.data),
+    claim: () => apiClient.post<TodayClaimDTO>('/today/claim').then(r => r.data),
+  },
+
+  /** Списать жетон хозяина за фичу (вместо Stars) — для ama_unlock и minigame_bypass */
+  spendToken: (feature: 'ama_unlock' | 'minigame_bypass', projectId: string) =>
+    apiClient.post<{ success: boolean; perfectInsight?: string | null }>(
+      '/payments/spend-token', { feature, projectId },
+    ).then(r => r.data),
+
   invest: {
     invest: (projectId: string, amount: number, extraSlot?: 'groshy' | 'stars') =>
-      apiClient.post(`/invest/${projectId}`, { amount, ...(extraSlot ? { extraSlot } : {}) }).then(r => r.data),
+      apiClient.post<InvestResponse>(`/invest/${projectId}`, { amount, ...(extraSlot ? { extraSlot } : {}) }).then(r => r.data),
     addInvestment: (projectId: string, amount: number) => apiClient.post(`/invest/${projectId}/add`, { amount }).then(r => r.data),
     withdraw: (projectId: string, amount: number) => apiClient.post(`/invest/${projectId}/withdraw`, { amount }).then(r => r.data),
     exit: (projectId: string) => apiClient.post(`/invest/${projectId}/exit`).then(r => r.data),
@@ -342,7 +433,11 @@ export const api = {
   },
 
   payments: {
-    createInvoice: (feature: 'timer_skip' | 'ama_unlock' | 'extra_slot', projectId?: string, merchantName?: string) =>
+    createInvoice: (
+      feature: 'timer_skip' | 'ama_unlock' | 'extra_slot' | 'minigame_bypass',
+      projectId?: string,
+      merchantName?: string,
+    ) =>
       apiClient.post<{ invoiceLink: string | null }>('/payments/invoice', { feature, projectId, merchantName }).then(r => r.data),
     activateTimerSkip: () =>
       apiClient.post<AdvanceDayResultDTO>('/payments/activate', { feature: 'timer_skip' }).then(r => r.data),
@@ -350,6 +445,8 @@ export const api = {
       apiClient.post<{ success: boolean }>('/payments/activate', { feature: 'ama_unlock', projectId }).then(r => r.data),
     activateExtraSlot: () =>
       apiClient.post<{ success: boolean }>('/payments/activate', { feature: 'extra_slot' }).then(r => r.data),
+    activateMinigameBypass: (projectId: string) =>
+      apiClient.post<{ success: boolean; perfectInsight: string | null }>('/payments/activate', { feature: 'minigame_bypass', projectId }).then(r => r.data),
   },
 
   chat: {
@@ -366,6 +463,14 @@ export const api = {
   user: {
     setNickname: (nickname: string | null) =>
       apiClient.patch<{ nickname: string | null }>('/user/nickname', { nickname }).then(r => r.data),
+  },
+
+  sponsor: {
+    // Проверка промокода. Возвращает { ok: true } если совпало (case-insensitive,
+    // обрезка пробелов), { ok: false } иначе. При успехе сервер ставит
+    // sponsorPromoVerified=true — после этого можно инвестировать.
+    verify: (projectId: string, promocode: string) =>
+      apiClient.post<{ ok: boolean }>(`/sponsor/${projectId}/verify`, { promocode }).then(r => r.data),
   },
 }
 

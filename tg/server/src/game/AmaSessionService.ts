@@ -160,6 +160,8 @@ export async function evaluateIntuition(userId: number, projectId: string, selec
   const falseTopics = selectedTopics.filter(t => truthTopics.includes(t))
   const delta = correctTopics.length - falseTopics.length
 
+  // С версии 4 «чуйка» из игры убрана — intuitionScore больше не растёт.
+  // Сохраняем intuitionDelta в БД ради аналитики и старых PostMortem.
   await prisma.amaSession.update({
     where: { id: session.id },
     data: {
@@ -167,11 +169,6 @@ export async function evaluateIntuition(userId: number, projectId: string, selec
       selectedLieTopics: selectedTopics,
       intuitionDelta: delta,
     },
-  })
-
-  await prisma.gameState.update({
-    where: { userId },
-    data: { intuitionScore: { increment: delta } },
   })
 
   return { delta, correctTopics, falseTopics }

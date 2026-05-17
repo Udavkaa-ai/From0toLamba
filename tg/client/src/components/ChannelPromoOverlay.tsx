@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { api, type ChannelTaskDTO } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
-import { colors, spacing } from '@/theme'
+import { colors, spacing , gradients } from '@/theme'
 
 // Ключ включает Telegram user ID чтобы разные аккаунты на одном устройстве
 // не мешали друг другу (общий localStorage, но разные юзеры).
@@ -64,7 +64,7 @@ export function ChannelPromoOverlay({ onClose }: { onClose: () => void }) {
           width: '100%',
           maxHeight: '90dvh',
           display: 'flex', flexDirection: 'column',
-          background: `linear-gradient(180deg, ${colors.enchantedPurple} 0%, ${colors.nightBlue} 100%)`,
+          background: gradients.modal,
           borderTop: `1px solid ${colors.fairyGold}55`,
           borderRadius: '20px 20px 0 0',
           boxShadow: '0 -8px 32px rgba(0,0,0,0.5)',
@@ -83,14 +83,14 @@ export function ChannelPromoOverlay({ onClose }: { onClose: () => void }) {
               🎁 Задания ярмарки
             </div>
             {totalReward > 0 && (
-              <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '2px' }}>
+              <div style={{ color: colors.textOnDarkMuted, fontSize: '12px', marginTop: '2px' }}>
                 Можно получить ещё +{totalReward} г за подписку
               </div>
             )}
           </div>
           <button
             onClick={onClose}
-            style={{ background: 'none', border: 'none', color: colors.textMuted, fontSize: '20px', cursor: 'pointer', padding: '4px 8px' }}
+            style={{ background: 'none', border: 'none', color: colors.textOnDarkMuted, fontSize: '20px', cursor: 'pointer', padding: '4px 8px' }}
           >
             ✕
           </button>
@@ -174,23 +174,23 @@ function ChannelPromoRow({
       </div>
 
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ color: task.claimed ? colors.textMuted : colors.textPrimary, fontWeight: 600, fontSize: '13px' }}>
+        <div style={{ color: task.claimed ? colors.textOnDarkMuted : colors.textOnDark, fontWeight: 600, fontSize: '13px' }}>
           {task.channelTitle}
         </div>
-        <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '1px' }}>{task.description}</div>
+        <div style={{ color: colors.textOnDarkMuted, fontSize: '11px', marginTop: '1px' }}>{task.description}</div>
         {errorMsg && <div style={{ color: '#f87171', fontSize: '11px', marginTop: '2px' }}>{errorMsg}</div>}
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '5px', flexShrink: 0 }}>
         <div style={{
-          color: task.claimed ? colors.textMuted : colors.fairyGold,
+          color: task.claimed ? colors.textOnDarkMuted : colors.fairyGold,
           fontWeight: 700, fontSize: '13px',
           textDecoration: task.claimed ? 'line-through' : 'none',
         }}>
           +{task.rewardRubles} г
         </div>
         {task.claimed ? (
-          <div style={{ color: colors.textMuted, fontSize: '10px' }}>Получено ✓</div>
+          <div style={{ color: colors.textOnDarkMuted, fontSize: '10px' }}>Получено ✓</div>
         ) : (
           <div style={{ display: 'flex', gap: '5px' }}>
             <button onClick={onOpen} style={btnStyle('secondary')}>Подписаться</button>
@@ -210,7 +210,7 @@ function btnStyle(variant: 'primary' | 'secondary', disabled = false) {
     background: variant === 'primary' ? `${colors.fairyGold}22` : 'rgba(255,255,255,0.08)',
     border: `1px solid ${variant === 'primary' ? colors.fairyGold + '66' : colors.cardBorder}`,
     borderRadius: '7px',
-    color: variant === 'primary' ? colors.fairyGold : colors.textSecondary,
+    color: variant === 'primary' ? colors.fairyGold : colors.textOnDarkSecond,
     fontSize: '10px', fontWeight: variant === 'primary' ? 700 : 400,
     cursor: disabled ? 'default' : 'pointer',
     opacity: disabled ? 0.6 : 1,

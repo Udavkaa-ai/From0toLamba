@@ -10,9 +10,12 @@ import { CharterPage } from './pages/CharterPage'
 import { PortfolioPage } from './pages/PortfolioPage'
 import { StatsPage } from './pages/StatsPage'
 import { LeaderboardPage } from './pages/LeaderboardPage'
+import { TodayPage } from './pages/TodayPage'
+import { RelationshipsPage } from './pages/RelationshipsPage'
 import { RegistryPage } from './pages/RegistryPage'
 import { BottomNav } from './components/BottomNav'
 import { ChatPanel } from './components/ChatPanel'
+import { NextWeekFab } from './components/NextWeekFab'
 import { TourOverlay } from './components/TourOverlay'
 import { LanguagePicker } from './components/LanguagePicker'
 import { useLangStore } from './stores/langStore'
@@ -48,10 +51,13 @@ function AppShell() {
             <Route path="/portfolio" element={<PortfolioPage />} />
             <Route path="/stats" element={<StatsPage />} />
             <Route path="/leaderboard" element={<LeaderboardPage />} />
+            <Route path="/today" element={<TodayPage />} />
+            <Route path="/relationships" element={<RelationshipsPage />} />
             <Route path="/registry" element={<RegistryPage />} />
           </Routes>
           <BottomNav />
           <ChatPanel />
+          <NextWeekFab />
           <TourOverlay />
         </>
       )}
@@ -71,6 +77,15 @@ if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
   window.Telegram.WebApp.expand()
   window.Telegram.WebApp.setHeaderColor('#060412')
   window.Telegram.WebApp.setBackgroundColor('#060412')
+  // Запрещаем свайп вниз для сворачивания/закрытия — в мини-играх свайп
+  // иногда случается случайно при попытке тапа, и игрок вываливается.
+  // disableVerticalSwipes есть с Bot API 7.7, на старых клиентах просто no-op.
+  const wa = window.Telegram.WebApp as any
+  try { wa.disableVerticalSwipes?.() } catch { /* noop */ }
+  // requestFullscreen() намеренно НЕ вызываем — режим запуска (Compact /
+  // Fullsize / Fullscreen) задаётся в BotFather. В Fullscreen-режиме на
+  // некоторых Android-устройствах нижнее меню накладывалось на системные
+  // кнопки навигации. Сейчас оставляем выбор пользователю/BotFather.
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

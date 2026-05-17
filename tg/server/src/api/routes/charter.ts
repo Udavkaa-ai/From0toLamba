@@ -2,8 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { prisma } from '../../db/prisma'
 import { telegramAuthHook } from '../../middleware/telegramAuth'
-import { startCharter, getCharter, submitCharter } from '../../game/CharterService'
-import { checkAndGrantReferralBonus } from '../../game/referralService'
+import { startCharter, getCharter, submitCharter, submitMiniGame, beginCharter } from '../../game/CharterService'
 
 export async function charterRoutes(app: FastifyInstance) {
 
@@ -50,6 +49,56 @@ export async function charterRoutes(app: FastifyInstance) {
     }
   })
 
+  // POST /api/charter/:projectId/begin — игрок жмёт «Принять испытание».
+  // Фиксируем gridStartedAt: с этой секунды F5 в браузере = автопроигрыш.
+  app.post('/api/charter/:projectId/begin', { preHandler: telegramAuthHook }, async (request, reply) => {
+    const { projectId } = request.params as { projectId: string }
+    const tgUser = request.telegramUser
+    const user = await prisma.user.findUniqueOrThrow({ where: { telegramId: String(tgUser.id) } })
+    try {
+      await beginCharter(user.id, projectId)
+      return { success: true }
+    } catch (err: any) {
+      if (err.message === 'ALREADY_SUBMITTED') return reply.status(400).send({ error: 'Грамота уже проверена' })
+      if (err.message === 'NO_CHARTER') return reply.status(400).send({ error: 'Грамота не открыта' })
+      if (err.message === 'FORBIDDEN') return reply.status(403).send({ error: 'Нет доступа' })
+      throw err
+    }
+  })
+
+  // POST /api/charter/:projectId/submit-minigame — сабмит результата мини-игры (не-BOYARIN)
+  app.post('/api/charter/:projectId/submit-minigame', { preHandler: telegramAuthHook }, async (request, reply) => {
+    const { projectId } = request.params as { projectId: string }
+    const tgUser = request.telegramUser
+
+    const bodySchema = z.object({ errorCount: z.number().int().nonnegative() })
+    const body = bodySchema.safeParse(request.body)
+    if (!body.success) {
+      return reply.status(400).send({ error: 'Неверный формат запроса' })
+    }
+
+    const user = await prisma.user.findUniqueOrThrow({ where: { telegramId: String(tgUser.id) } })
+
+    try {
+      const result = await submitMiniGame(user.id, projectId, body.data.errorCount)
+      return result
+    } catch (err: any) {
+      if (err.message === 'ALREADY_SUBMITTED') {
+        return reply.status(400).send({ error: 'Грамота уже проверена' })
+      }
+      if (err.message === 'NO_CHARTER') {
+        return reply.status(400).send({ error: 'Грамота не открыта' })
+      }
+      if (err.message === 'NOT_STARTED') {
+        return reply.status(400).send({ error: 'Игра не начата' })
+      }
+      if (err.message === 'FORBIDDEN') {
+        return reply.status(403).send({ error: 'Нет доступа' })
+      }
+      throw err
+    }
+  })
+
   // POST /api/charter/:projectId/submit — сабмит выбранных подделок, оценка чуйки
   app.post('/api/charter/:projectId/submit', { preHandler: telegramAuthHook }, async (request, reply) => {
     const { projectId } = request.params as { projectId: string }
@@ -67,8 +116,6 @@ export async function charterRoutes(app: FastifyInstance) {
 
     try {
       const result = await submitCharter(user.id, projectId, body.data.selectedIndices)
-      // Проверяем реферальный бонус — мог дозреть после этой грамоты
-      checkAndGrantReferralBonus(user.id).catch(console.error)
       return result
     } catch (err: any) {
       if (err.message === 'ALREADY_SUBMITTED') {
@@ -76,6 +123,9 @@ export async function charterRoutes(app: FastifyInstance) {
       }
       if (err.message === 'NO_CHARTER') {
         return reply.status(400).send({ error: 'Грамота не открыта' })
+      }
+      if (err.message === 'NOT_STARTED') {
+        return reply.status(400).send({ error: 'Игра не начата' })
       }
       if (err.message === 'FORBIDDEN') {
         return reply.status(403).send({ error: 'Нет доступа' })

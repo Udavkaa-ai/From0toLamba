@@ -7,8 +7,10 @@ PNG → WebP quality=85 даёт ~3-4x уменьшение без заметн�
 Usage:
     python compress.py                          # output_realistic/ → output_webp/
     python compress.py --input output_realistic --output output_webp
-    python compress.py --quality 80             # чуть меньше размер
+    python compress.py output_realistic         # позиционный аргумент = --input
     python compress.py --inplace                # заменить PNG на WebP на месте
+    python compress.py --inplace output_backgrounds   # то же, для конкретной папки
+    python compress.py --quality 80             # чуть меньше размер
     python compress.py --dry                    # показать статистику без записи
 """
 
@@ -86,6 +88,8 @@ def main() -> int:
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
+    parser.add_argument("path", nargs="?", default=None,
+                        help="папка с PNG (позиционный — синоним --input)")
     parser.add_argument("--input", "-i", default="output_realistic",
                         help="папка с PNG (default: output_realistic)")
     parser.add_argument("--output", "-o", default="output_webp",
@@ -98,7 +102,10 @@ def main() -> int:
                         help="показать оценку без записи файлов")
     args = parser.parse_args()
 
-    src = ROOT / args.input
+    # Позиционный аргумент имеет приоритет над --input для удобства:
+    # «python compress.py --inplace output_backgrounds» работает интуитивно.
+    input_dir = args.path or args.input
+    src = ROOT / input_dir
     dst = ROOT / args.output
 
     if not src.exists():

@@ -14,6 +14,8 @@ import { tasksRoutes } from './api/routes/tasks'
 import { paymentsRoutes } from './api/routes/payments'
 import { chatRoutes } from './api/routes/chat'
 import { publicRoutes } from './api/routes/public'
+import { todayRoutes } from './api/routes/today'
+import { sponsorRoutes } from './api/routes/sponsor'
 import { createWebhookHandler, getBot, cancelBroadcast } from './bot/bot'
 import { startDailyScheduler } from './scheduler/dailyJob'
 import { prisma } from './db/prisma'
@@ -48,6 +50,8 @@ async function main() {
   await app.register(paymentsRoutes)
   await app.register(chatRoutes)
   await app.register(publicRoutes)
+  await app.register(todayRoutes)
+  await app.register(sponsorRoutes)
 
   // Telegram webhook
   const webhookSecret = process.env.TELEGRAM_BOT_TOKEN?.split(':')[0]
@@ -61,22 +65,32 @@ async function main() {
   app.get('/health', async () => ({ ok: true, ts: new Date().toISOString() }))
 
   // Version endpoint — клиент сравнивает и перезагружается если устарел
-  app.get('/api/version', async () => ({ version: '3.2.0' }))
+  app.get('/api/version', async () => ({ version: 'бета 4.4.7' }))
 
-  // Баннеры персонажей — предгенерированные WebP
+  // Баннеры персонажей — предгенерированные WebP. Тоже immutable (имя файла
+  // включает архетип+тип+вариант, новые версии получают другое имя).
   const bannersDir = path.join(__dirname, '..', 'assets', 'banners')
   await app.register(staticFiles, {
     root: bannersDir,
     prefix: '/banners/',
     decorateReply: false,
+    setHeaders: (res: any) => {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+    },
   })
 
-  // Фоновые изображения страниц
+  // Фоновые изображения страниц.
+  // Кэш на 1 год (immutable) — файлы не меняют содержимое, при обновлении
+  // имя файла другое (HOME_01.webp → HOME_01_LIGHT.webp и т.д.).
+  // Без этого браузер ходил за фоном при каждом переключении вкладки.
   const backgroundsDir = path.join(__dirname, '..', 'assets', 'backgrounds')
   await app.register(staticFiles, {
     root: backgroundsDir,
     prefix: '/backgrounds/',
     decorateReply: false,
+    setHeaders: (res: any) => {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+    },
   })
 
   // Статика клиента (SPA)

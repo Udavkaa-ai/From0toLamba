@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import type { ComponentType } from 'react'
 import { colors, spacing } from '@/theme'
-import { HomeIcon, ScrollIcon, ChestIcon, ChartIcon, CrownIcon } from './icons'
+import { HomeIcon, ScrollIcon, ChestIcon, ChartIcon, FlameIcon } from './icons'
 import { useT } from '@/i18n'
 
 interface IconProps {
@@ -9,15 +9,17 @@ interface IconProps {
   style?: React.CSSProperties
 }
 
-const TAB_PATHS = ['/', '/inbox', '/portfolio', '/stats', '/leaderboard'] as const
-const TAB_ICONS: ComponentType<IconProps>[] = [HomeIcon, ScrollIcon, ChestIcon, ChartIcon, CrownIcon]
+// Последняя вкладка — «Сегодня» (стрики + ежедневная награда + рейтинг по
+// богатству внизу). Заменила собой бывшую вкладку «Рейтинг».
+const TAB_PATHS = ['/', '/inbox', '/portfolio', '/stats', '/today'] as const
+const TAB_ICONS: ComponentType<IconProps>[] = [HomeIcon, ScrollIcon, ChestIcon, ChartIcon, FlameIcon]
 
 export function BottomNav() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const t = useT()
 
-  const tabLabels = [t.nav.home, t.nav.inbox, t.nav.portfolio, t.nav.stats, t.nav.leaderboard]
+  const tabLabels = [t.nav.home, t.nav.inbox, t.nav.portfolio, t.nav.stats, 'Сегодня']
 
   if (pathname.startsWith('/ama/') || pathname.startsWith('/charter/') || pathname === '/registry') return null
 
@@ -29,9 +31,11 @@ export function BottomNav() {
         left: 0,
         right: 0,
         display: 'flex',
-        background: `rgba(10, 8, 24, 0.96)`,
-        borderTop: `1px solid ${colors.cardBorder}`,
-        backdropFilter: 'blur(12px)',
+        background: colors.navBarBg,
+        borderTop: `1.5px solid ${colors.navBarBorder}`,
+        // backdrop-filter намеренно убран: на Android WebView blur поверх
+        // fixed-positioned bgImage с opacity вызывал repaint-шторм и
+        // моргание контента модалок. Нав-бар достаточно непрозрачен сам.
         zIndex: 100,
         paddingBottom: 'env(safe-area-inset-bottom)',
       }}
@@ -57,7 +61,7 @@ export function BottomNav() {
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: isActive ? colors.fairyGold : colors.textMuted,
+              color: isActive ? colors.fairyGold : colors.textOnDarkMuted,
               transition: 'color 0.2s, transform 0.15s',
               transform: isActive ? 'translateY(-1px)' : 'none',
             }}

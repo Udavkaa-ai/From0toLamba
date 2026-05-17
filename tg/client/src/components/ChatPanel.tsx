@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useLocation } from 'react-router-dom'
 import { api, type ChatMessageDTO } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
-import { colors, spacing } from '@/theme'
+import { colors, spacing, gradients } from '@/theme'
 import { useT } from '@/i18n'
 
 // Определяет язык по доминирующему скрипту, возвращает null если русский или неизвестно
@@ -168,14 +168,14 @@ export function ChatPanel() {
             exit={{ scale: 0, opacity: 0 }}
             onClick={handleOpen}
             style={{
-              position: 'fixed', right: '16px',
+              position: 'fixed', left: '16px',
               bottom: `calc(72px + env(safe-area-inset-bottom))`,
-              zIndex: 150, width: '48px', height: '48px', borderRadius: '50%',
-              background: `linear-gradient(135deg, ${colors.enchantedPurple}, #1a0f4e)`,
-              border: `1.5px solid ${colors.fairyGold}60`,
-              boxShadow: `0 4px 20px rgba(0,0,0,0.5), 0 0 16px ${colors.fairyGold}20`,
+              zIndex: 150, width: '44px', height: '44px', borderRadius: '50%',
+              background: gradients.cta,
+              border: `2px solid #5A3818`,
+              boxShadow: `0 4px 16px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,0,0,0.3), 0 0 12px ${colors.fairyGold}55`,
               cursor: 'pointer', display: 'flex', alignItems: 'center',
-              justifyContent: 'center', fontSize: '22px',
+              justifyContent: 'center', fontSize: '20px',
             }}
           >
             💬
@@ -210,7 +210,7 @@ export function ChatPanel() {
               style={{
                 position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 161,
                 height: '72dvh',
-                background: `linear-gradient(180deg, ${colors.enchantedPurple} 0%, ${colors.nightBlue} 100%)`,
+                background: gradients.modal,
                 borderTop: `1px solid ${colors.fairyGold}40`,
                 borderRadius: '20px 20px 0 0',
                 display: 'flex', flexDirection: 'column',
@@ -227,7 +227,7 @@ export function ChatPanel() {
                 </div>
                 <button
                   onClick={() => setOpen(false)}
-                  style={{ background: 'none', border: 'none', color: colors.textMuted, fontSize: '20px', cursor: 'pointer', padding: '4px 8px' }}
+                  style={{ background: 'none', border: 'none', color: colors.textOnDarkMuted, fontSize: '20px', cursor: 'pointer', padding: '4px 8px' }}
                 >✕</button>
               </div>
 
@@ -242,7 +242,7 @@ export function ChatPanel() {
                 }}
               >
                 {messages.length === 0 && (
-                  <div style={{ color: colors.textMuted, fontSize: '13px', textAlign: 'center', marginTop: '32px' }}>
+                  <div style={{ color: colors.textOnDarkMuted, fontSize: '13px', textAlign: 'center', marginTop: '32px' }}>
                     {t.chat.empty}
                   </div>
                 )}
@@ -265,7 +265,7 @@ export function ChatPanel() {
                           <span>{RANK_EMOJI[msg.investorRank] ?? '🪙'}</span>
                           <span style={{ fontWeight: 600 }}>{msg.displayName}</span>
                           {foreignLang && (
-                            <span style={{ color: colors.textMuted, fontWeight: 400 }}>
+                            <span style={{ color: colors.textOnDarkMuted, fontWeight: 400 }}>
                               · {LANG_LABEL[foreignLang] ?? foreignLang}
                             </span>
                           )}
@@ -276,7 +276,7 @@ export function ChatPanel() {
                         background: isMe ? `${colors.fairyGold}22` : 'rgba(255,255,255,0.07)',
                         border: `1px solid ${isSelected ? colors.fairyGold + '80' : isMe ? colors.fairyGold + '40' : 'rgba(255,255,255,0.1)'}`,
                         borderRadius: isMe ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
-                        color: colors.textPrimary, fontSize: '13px', lineHeight: 1.45,
+                        color: colors.textOnDark, fontSize: '13px', lineHeight: 1.45,
                         wordBreak: 'break-word', transition: 'border-color 0.15s',
                       }}>
                         {/* Quoted reply */}
@@ -284,7 +284,7 @@ export function ChatPanel() {
                           <div style={{
                             borderLeft: `2px solid ${colors.fairyGold}70`,
                             paddingLeft: '8px', marginBottom: '6px',
-                            color: colors.textMuted, fontSize: '11px', lineHeight: 1.4,
+                            color: colors.textOnDarkMuted, fontSize: '11px', lineHeight: 1.4,
                           }}>
                             <span style={{ color: colors.fairyGold, fontWeight: 600 }}>{msg.replyToDisplayName}</span>
                             <div style={{ marginTop: '1px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', maxWidth: '200px' }}>
@@ -295,13 +295,13 @@ export function ChatPanel() {
                         {msg.text}
                         {/* Перевод */}
                         {isTranslating && (
-                          <div style={{ marginTop: '6px', color: colors.textMuted, fontSize: '11px' }}>⏳ Перевожу...</div>
+                          <div style={{ marginTop: '6px', color: colors.textOnDarkMuted, fontSize: '11px' }}>⏳ Перевожу...</div>
                         )}
                         {translation && (
                           <div style={{
                             marginTop: '6px', paddingTop: '6px',
                             borderTop: `1px solid rgba(255,255,255,0.1)`,
-                            color: colors.textMuted, fontSize: '12px', fontStyle: 'italic',
+                            color: colors.textOnDarkMuted, fontSize: '12px', fontStyle: 'italic',
                           }}>
                             🌐 {translation}
                           </div>
@@ -342,7 +342,7 @@ export function ChatPanel() {
                                   padding: '4px 10px', fontSize: '11px', fontWeight: 600,
                                   background: 'rgba(255,255,255,0.08)',
                                   border: '1px solid rgba(255,255,255,0.2)',
-                                  borderRadius: '8px', color: colors.textMuted, cursor: 'pointer',
+                                  borderRadius: '8px', color: colors.textOnDarkMuted, cursor: 'pointer',
                                 }}
                               >
                                 🌐 Перевести
@@ -365,7 +365,7 @@ export function ChatPanel() {
                         )}
                       </AnimatePresence>
 
-                      <div style={{ fontSize: '10px', color: colors.textMuted, marginTop: '2px', textAlign: isMe ? 'right' : 'left' }}>
+                      <div style={{ fontSize: '10px', color: colors.textOnDarkMuted, marginTop: '2px', textAlign: isMe ? 'right' : 'left' }}>
                         {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </div>
                     </div>
@@ -396,13 +396,13 @@ export function ChatPanel() {
                     >
                       <div style={{ flex: 1, overflow: 'hidden' }}>
                         <div style={{ color: colors.fairyGold, fontSize: '10px', fontWeight: 600 }}>{replyTo.displayName}</div>
-                        <div style={{ color: colors.textMuted, fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <div style={{ color: colors.textOnDarkMuted, fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {replyTo.text}
                         </div>
                       </div>
                       <button
                         onClick={() => setReplyTo(null)}
-                        style={{ background: 'none', border: 'none', color: colors.textMuted, cursor: 'pointer', fontSize: '14px', padding: '2px 4px', flexShrink: 0 }}
+                        style={{ background: 'none', border: 'none', color: colors.textOnDarkMuted, cursor: 'pointer', fontSize: '14px', padding: '2px 4px', flexShrink: 0 }}
                       >✕</button>
                     </motion.div>
                   )}
@@ -423,7 +423,7 @@ export function ChatPanel() {
                       flex: 1, padding: '10px 14px',
                       background: 'rgba(255,255,255,0.07)',
                       border: '1px solid rgba(255,255,255,0.15)',
-                      borderRadius: '12px', color: colors.textPrimary,
+                      borderRadius: '12px', color: colors.textOnDark,
                       fontSize: '14px', outline: 'none',
                     }}
                   />
@@ -434,7 +434,7 @@ export function ChatPanel() {
                       padding: '10px 16px',
                       background: text.trim() ? colors.fairyGold : 'rgba(255,255,255,0.1)',
                       border: 'none', borderRadius: '12px',
-                      color: text.trim() ? colors.nightBlue : colors.textMuted,
+                      color: text.trim() ? colors.nightBlue : colors.textOnDarkMuted,
                       fontSize: '13px', fontWeight: 700,
                       cursor: text.trim() ? 'pointer' : 'default',
                       transition: 'all 0.2s',

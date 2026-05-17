@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { colors, spacing } from '@/theme'
+import { colors, spacing , gradients } from '@/theme'
 import { useTourStore, TOUR_TOTAL } from '@/stores/tourStore'
 import { useT } from '@/i18n'
 
@@ -12,20 +12,31 @@ interface StepMeta {
   target: string | null // data-tour selector для подсветки
 }
 
+// 11 шагов — синхронизировано с t.tour.steps и TOUR_TOTAL.
+// На каждом шаге: на какую страницу перейти + что подсветить.
+//   0  Tour intro              (центральная модалка)
+//   1  Свободные гроши         (главная, balance)
+//   2  Отношения с дельцами    (главная, tokens-chip)
+//   3  Входящие грамоты        (главная, inbox-section)
+//   4  Карточка дела           (Грамоты, first-project)
+//   5  Испытание хозяина       (модалка — про мини-игры)
+//   6  Казна                   (Казна, центральная модалка)
+//   7  Следующий день — FAB    (главная, next-day-fab)
+//   8  Чины и Подвиги          (Успехи)
+//   9  Золотая грамота         (модалка)
+//   10 Открыть ЧАВО → Настройки + подсветка ЧАВО
 const STEP_META: StepMeta[] = [
   { page: null,        target: null },
   { page: '/',         target: '[data-tour="balance"]' },
+  { page: '/',         target: '[data-tour="tokens-chip"]' },
   { page: '/',         target: '[data-tour="inbox-section"]' },
   { page: '/inbox',    target: '[data-tour="first-project"]' },
-  { page: '/inbox',    target: '[data-tour="charter-btn"]' },
-  { page: '/inbox',    target: '[data-tour="invest-btn"]' },
+  { page: null,        target: null },
+  { page: '/portfolio',target: null },
   { page: '/',         target: '[data-tour="next-day-fab"]' },
-  { page: '/portfolio',target: '[data-tour="portfolio-project"]' },
-  { page: '/portfolio',target: '[data-tour="portfolio-actions"]' },
-  { page: '/inbox',    target: '[data-tour="ama-btn"]' },
-  { page: '/stats',    target: '[data-tour="achievements-section"]' },
+  { page: '/stats',    target: null },
   { page: null,        target: null },
-  { page: null,        target: null },
+  { page: '/',         target: null },
 ]
 
 // ─── Spotlight — подсветка элемента через 4 тёмных прямоугольника ─────────────
@@ -101,7 +112,7 @@ function TourCard({
       style={cardStyle}
     >
       <div style={{
-        background: `linear-gradient(145deg, ${colors.enchantedPurple}, #0f1228)`,
+        background: gradients.modal,
         border: `1px solid ${colors.fairyGold}50`,
         borderRadius: '16px',
         padding: '16px 16px 14px',
@@ -125,7 +136,7 @@ function TourCard({
             onClick={onDismiss}
             style={{
               background: 'transparent', border: 'none',
-              color: colors.textMuted, fontSize: '16px',
+              color: colors.textOnDarkMuted, fontSize: '16px',
               cursor: 'pointer', padding: '0 2px', lineHeight: 1,
             }}
           >✕</button>
@@ -134,7 +145,7 @@ function TourCard({
         <div style={{ color: colors.fairyGold, fontSize: '15px', fontWeight: 700, marginBottom: '6px' }}>
           {stepData.title}
         </div>
-        <div style={{ color: colors.textPrimary, fontSize: '13px', lineHeight: 1.55, marginBottom: stepData.accent ? '10px' : '14px' }}>
+        <div style={{ color: colors.textOnDark, fontSize: '13px', lineHeight: 1.55, marginBottom: stepData.accent ? '10px' : '14px' }}>
           {stepData.body}
         </div>
         {stepData.accent && (
@@ -188,36 +199,56 @@ export function TourOverlay() {
     }
   }, [stepIdx])
 
-  // Поиск целевого элемента — опрашиваем каждые 200мс (элемент может появиться
-  // после загрузки данных)
+  // Поиск целевого элемента — опрашиваем каждые 300мс (элемент может появиться
+  // после загрузки данных). КРИТИЧЕСКОЕ: setTargetRect вызываем ТОЛЬКО если
+  // позиция реально изменилась — иначе каждый тик React видел новый объект
+  // DOMRect, перерисовывал TourOverlay и через каскад родительскую страницу.
+  // Это и был источник «мерцания» интерфейса при активном туре.
   useEffect(() => {
     if (!meta?.target) { setTargetRect(null); return }
 
     let scrolled = false
+    let lastRect: { x: number; y: number; w: number; h: number } | null = null
+    const update = (el: HTMLElement) => {
+      const r = el.getBoundingClientRect()
+      const next = { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) }
+      if (lastRect &&
+          lastRect.x === next.x && lastRect.y === next.y &&
+          lastRect.w === next.w && lastRect.h === next.h) {
+        return  // позиция не изменилась — не дёргаем state
+      }
+      lastRect = next
+      setTargetRect(r)
+    }
     const tick = () => {
       const el = document.querySelector(meta.target!) as HTMLElement | null
       if (el) {
         if (!scrolled) {
           scrolled = true
           el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-          // Берём rect после небольшой паузы — scrollIntoView ещё не завершился
           rafRef.current = window.setTimeout(() => {
-            setTargetRect(el.getBoundingClientRect())
-            rafRef.current = window.setTimeout(tick, 300)
+            update(el)
+            rafRef.current = window.setTimeout(tick, 500)
           }, 400)
           return
         }
-        setTargetRect(el.getBoundingClientRect())
-      } else {
+        update(el)
+      } else if (lastRect !== null) {
+        lastRect = null
         setTargetRect(null)
       }
-      rafRef.current = window.setTimeout(tick, 300)
+      rafRef.current = window.setTimeout(tick, 500)
     }
     tick()
     return () => { if (rafRef.current) clearTimeout(rafRef.current) }
   }, [stepIdx, location.pathname])
 
   const handleNext = () => {
+    // Последний шаг — «Открыть ЧАВО»: тур завершается + диспатчим
+    // событие, на которое HomePage откроет Настройки и подсветит FAQ-кнопку.
+    if (stepIdx === TOUR_TOTAL - 1) {
+      window.dispatchEvent(new CustomEvent('open-settings-faq'))
+    }
     next()
   }
 
@@ -257,7 +288,7 @@ export function TourOverlay() {
             }}
           >
             <div style={{
-              background: `linear-gradient(145deg, ${colors.enchantedPurple}, #0f1228)`,
+              background: gradients.modal,
               border: `1px solid ${colors.fairyGold}50`,
               borderRadius: '20px',
               padding: '24px 20px 20px',
@@ -275,13 +306,13 @@ export function TourOverlay() {
                     }} />
                   ))}
                 </div>
-                <button onClick={dismiss} style={{ background: 'transparent', border: 'none', color: colors.textMuted, fontSize: '16px', cursor: 'pointer', padding: '0 2px', lineHeight: 1 }}>✕</button>
+                <button onClick={dismiss} style={{ background: 'transparent', border: 'none', color: colors.textOnDarkMuted, fontSize: '16px', cursor: 'pointer', padding: '0 2px', lineHeight: 1 }}>✕</button>
               </div>
 
               <div style={{ color: colors.fairyGold, fontSize: '17px', fontWeight: 700, marginBottom: '10px' }}>
                 {stepData.title}
               </div>
-              <div style={{ color: colors.textPrimary, fontSize: '14px', lineHeight: 1.6, marginBottom: stepData.accent ? '14px' : '18px' }}>
+              <div style={{ color: colors.textOnDark, fontSize: '14px', lineHeight: 1.6, marginBottom: stepData.accent ? '14px' : '18px' }}>
                 {stepData.body}
               </div>
               {stepData.accent && (

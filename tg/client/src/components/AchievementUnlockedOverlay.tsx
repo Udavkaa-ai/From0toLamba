@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { evaluateAchievements, type EvaluatedAchievement } from '@/game/achievements'
 import { loreFor } from '@/game/lore'
 import { useGameStore } from '@/stores/gameStore'
-import { colors, spacing } from '@/theme'
+import { colors, spacing , gradients } from '@/theme'
 import { useT } from '@/i18n'
 
 const LS_KEY = 'seenAchievements'
@@ -126,7 +126,7 @@ function UnlockedBanner({
         onClick={e => e.stopPropagation()}
         style={{
           width: '100%', maxWidth: '420px',
-          background: `linear-gradient(145deg, ${colors.enchantedPurple}, ${colors.nightBlue})`,
+          background: gradients.modal,
           border: `1px solid ${colors.fairyGold}80`,
           borderRadius: '16px',
           padding: spacing.xl,
@@ -150,7 +150,7 @@ function UnlockedBanner({
           <div style={{ color: colors.fairyGold, fontSize: '22px', fontWeight: 800 }}>
             {(t.achievements.items[achievement.id]?.name ?? achievement.name)}
           </div>
-          <div style={{ color: colors.textSecondary, fontSize: '13px', marginTop: '4px' }}>
+          <div style={{ color: colors.textOnDarkSecond, fontSize: '13px', marginTop: '4px' }}>
             {(t.achievements.items[achievement.id]?.description ?? achievement.description)}
           </div>
         </div>
@@ -167,16 +167,16 @@ function UnlockedBanner({
               <span style={{ fontSize: '22px' }}>{lore.emoji}</span>
               <div>
                 <div style={{ color: colors.fairyGold, fontSize: '14px', fontWeight: 700 }}>{loreLang?.name ?? lore.name}</div>
-                <div style={{ color: colors.textMuted, fontSize: '11px' }}>{loreLang?.title ?? lore.title}</div>
+                <div style={{ color: colors.textOnDarkMuted, fontSize: '11px' }}>{loreLang?.title ?? lore.title}</div>
               </div>
             </div>
-            <div style={{ color: colors.textSecondary, fontSize: '12px', lineHeight: 1.55 }}>
+            <div style={{ color: colors.textOnDarkSecond, fontSize: '12px', lineHeight: 1.55 }}>
               {loreLang?.description ?? lore.description}
             </div>
             {lore.hints && lore.hints.length > 0 && (
               <div style={{ marginTop: spacing.sm, paddingTop: spacing.sm, borderTop: `1px solid ${colors.fairyGold}20` }}>
                 {(loreLang?.hints ?? lore.hints).map((h, i) => (
-                  <div key={i} style={{ color: colors.textPrimary, fontSize: '11px', lineHeight: 1.5, marginTop: i === 0 ? 0 : '3px' }}>
+                  <div key={i} style={{ color: colors.textOnDark, fontSize: '11px', lineHeight: 1.5, marginTop: i === 0 ? 0 : '3px' }}>
                     ✦ {h}
                   </div>
                 ))}

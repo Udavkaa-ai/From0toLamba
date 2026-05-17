@@ -5,11 +5,11 @@ import { useNavigate } from 'react-router-dom'
 import { ComposedChart, AreaChart, Area, Line, ResponsiveContainer, Tooltip, YAxis } from 'recharts'
 import { ScreenBackground, PAGE_BG } from '@/components/ScreenBackground'
 import { FairyCard, OrnamentDivider, SkeletonCard } from '@/components/FairyCard'
-import { PageTitle } from '@/components/PageTitle'
+import { PageTitle, PageSubtitle } from '@/components/PageTitle'
 import { LockIcon } from '@/components/icons'
 import { api, type ProjectDTO, type PostMortemDTO, type DailyUpdateDTO, type TransactionDTO } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
-import { colors, spacing, typography } from '@/theme'
+import { colors, spacing, typography, gradients, ctaButton, bigNumber } from '@/theme'
 import { CountUp } from '@/components/CountUp'
 import { useT } from '@/i18n'
 
@@ -51,9 +51,7 @@ export function PortfolioPage() {
       <div style={{ padding: `${spacing.xxl} ${spacing.lg} 80px`, maxWidth: '500px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: spacing.xxl }}>
           <PageTitle>{t.portfolio.title}</PageTitle>
-          <div style={{ color: colors.textMuted, fontSize: '12px', marginTop: '4px' }}>
-            {t.portfolio.subtitle}
-          </div>
+          <PageSubtitle>{t.portfolio.subtitle}</PageSubtitle>
         </div>
 
         {isLoading && [1, 2].map(i => <SkeletonCard key={i} lines={5} />)}
@@ -61,7 +59,10 @@ export function PortfolioPage() {
         {/* Активные */}
         {data?.active && data.active.length > 0 && (
           <section>
-            <div style={{ color: colors.fairyGold, fontSize: '13px', fontWeight: 600, marginBottom: spacing.sm }}>
+            <div style={{
+              color: colors.fairyGold, fontSize: '13px', fontWeight: 700, marginBottom: spacing.sm,
+              textShadow: '0 1px 4px rgba(0,0,0,0.65), 0 0 8px rgba(0,0,0,0.4)',
+            }}>
               {t.portfolio.tabActive}
             </div>
             {data.active.map((p, i) => (
@@ -101,16 +102,8 @@ export function PortfolioPage() {
               whileTap={{ scale: 0.96 }}
               onClick={() => navigate('/registry')}
               style={{
+                ...ctaButton.lg,
                 width: '100%', marginTop: spacing.sm,
-                padding: '12px',
-                background: `linear-gradient(135deg, ${colors.enchantedPurple} 0%, #1a0d40 100%)`,
-                border: `1px solid ${colors.fairyGold}50`,
-                borderRadius: '10px',
-                color: colors.fairyGold,
-                fontWeight: 700,
-                fontSize: '14px',
-                cursor: 'pointer',
-                letterSpacing: '0.02em',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -334,17 +327,7 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
           <div style={{ color: colors.textMuted, fontSize: '10px', letterSpacing: '0.02em' }}>
             {t.portfolio.investedIn} {Math.floor(project.investedAmountRubles)} {t.common.currency}
           </div>
-          <div style={{
-            color: colors.fairyGold,
-            fontFamily: typography.headingFontFamily,
-            fontSize: '22px',
-            fontWeight: 700,
-            lineHeight: 1.1,
-            letterSpacing: '0.02em',
-            fontVariantNumeric: 'tabular-nums',
-            textShadow: `0 0 16px ${colors.fairyGold}30`,
-            marginTop: '2px',
-          }}>
+          <div style={{ ...bigNumber(22), marginTop: '2px' }}>
             <CountUp value={project.currentValueRubles} /> {t.common.currency}
           </div>
           <div style={{ color: profit >= 0 ? colors.success : colors.danger, fontSize: '12px', fontWeight: 600 }}>
@@ -389,11 +372,7 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
             whileTap={{ scale: 0.94 }}
             transition={{ duration: 0.1 }}
             onClick={() => { setShowAddInvest(!showAddInvest); setShowWithdraw(false) }}
-            style={{
-              flex: 1, padding: '8px', background: `${colors.fairyGold}15`,
-              border: `1px solid ${colors.fairyGold}40`, borderRadius: '8px',
-              color: colors.fairyGold, cursor: 'pointer', fontSize: '12px',
-            }}
+            style={{ ...ctaButton.md, flex: 1 }}
           >
             {t.portfolio.addBtn}
           </motion.button>
@@ -404,24 +383,29 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
             transition={{ duration: 0.1 }}
             onClick={() => { setShowWithdraw(!showWithdraw); setShowAddInvest(false) }}
             style={{
-              flex: 1, padding: '8px', background: 'transparent',
-              border: `1px solid ${colors.cardBorder}`, borderRadius: '8px',
-              color: colors.textSecondary, cursor: 'pointer', fontSize: '12px',
+              flex: 1, padding: '9px 8px',
+              background: 'rgba(255,255,255,0.5)',
+              border: `1.5px solid ${colors.cardBorder}`, borderRadius: '10px',
+              color: colors.textPrimary, cursor: 'pointer', fontSize: '12px', fontWeight: 600,
             }}
           >
             {t.portfolio.withdrawBtn}
           </motion.button>
         )}
         <motion.button
-          whileTap={{ scale: 0.96, background: `${colors.danger}35` }}
+          whileTap={{ scale: 0.96 }}
           transition={{ duration: 0.1 }}
           onClick={() => { setConfirmExit(true); setShowWithdraw(false); setShowAddInvest(false) }}
           disabled={exitMutation.isPending || project.isWithdrawalLocked}
           style={{
-            flex: 1, padding: '8px', background: `${colors.danger}20`,
-            border: `1px solid ${colors.danger}40`, borderRadius: '8px',
-            color: project.isWithdrawalLocked ? colors.textMuted : colors.danger,
-            cursor: project.isWithdrawalLocked ? 'not-allowed' : 'pointer', fontSize: '12px',
+            flex: 1, padding: '9px 8px',
+            background: `linear-gradient(180deg, #C44A3F 0%, #8A2620 100%)`,
+            border: `1px solid #6A1A14`, borderRadius: '10px',
+            color: project.isWithdrawalLocked ? colors.textMuted : '#FFFFFF',
+            cursor: project.isWithdrawalLocked ? 'not-allowed' : 'pointer',
+            fontSize: '12px', fontWeight: 700,
+            boxShadow: `0 2px 6px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,200,200,0.3)`,
+            opacity: project.isWithdrawalLocked ? 0.45 : 1,
           }}
         >
           {t.portfolio.exitBtn}
@@ -519,9 +503,10 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
                 disabled={!addAmount || addInvestMutation.isPending}
                 style={{
                   width: '100%', marginTop: spacing.sm,
-                  padding: '8px', background: `${colors.enchantedPurple}`,
-                  border: `1px solid ${colors.fairyGold}40`, borderRadius: '8px',
-                  color: colors.fairyGold, fontWeight: 600, cursor: 'pointer', fontSize: '13px',
+                  padding: '9px', background: gradients.cta,
+                  border: `1px solid ${colors.ctaBorder}`, borderRadius: '10px',
+                  color: colors.ctaText, fontWeight: 700, cursor: 'pointer', fontSize: '13px',
+                  boxShadow: `0 2px 6px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,235,170,0.4)`,
                 }}
               >
                 {addInvestMutation.isPending ? t.common.loading : t.portfolio.confirmAdd}
@@ -578,9 +563,10 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
                 disabled={!withdrawAmount || withdrawMutation.isPending}
                 style={{
                   width: '100%', marginTop: spacing.sm,
-                  padding: '8px', background: `${colors.enchantedPurple}`,
-                  border: `1px solid ${colors.fairyGold}40`, borderRadius: '8px',
-                  color: colors.fairyGold, fontWeight: 600, cursor: 'pointer', fontSize: '13px',
+                  padding: '9px', background: gradients.cta,
+                  border: `1px solid ${colors.ctaBorder}`, borderRadius: '10px',
+                  color: colors.ctaText, fontWeight: 700, cursor: 'pointer', fontSize: '13px',
+                  boxShadow: `0 2px 6px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,235,170,0.4)`,
                 }}
               >
                 {t.portfolio.confirmWithdraw}
@@ -642,14 +628,7 @@ function ClosedProjectCard({ project, postMortem }: { project: ProjectDTO; postM
                 <div style={{ color: colors.textMuted, fontSize: '10px' }}>{t.common.days}</div>
                 <div style={{ color: colors.textSecondary, fontSize: '12px' }}>{postMortem.daysActive}</div>
               </div>
-              {postMortem.intuitionDelta !== 0 && (
-                <div>
-                  <div style={{ color: colors.textMuted, fontSize: '10px' }}>{t.common.intuition}</div>
-                  <div style={{ color: postMortem.intuitionDelta > 0 ? colors.success : colors.danger, fontSize: '12px' }}>
-                    {postMortem.intuitionDelta > 0 ? '+' : ''}{postMortem.intuitionDelta}
-                  </div>
-                </div>
-              )}
+              {/* «Чуйка» с версии 4 убрана из игры — поле intuitionDelta не показываем */}
             </div>
           </motion.div>
         )}
@@ -659,7 +638,7 @@ function ClosedProjectCard({ project, postMortem }: { project: ProjectDTO; postM
 }
 
 const TX_TYPE_ICON: Record<string, string> = {
-  INVEST: '⬇️', ADD: '⬇️', WITHDRAW: '⬆️', EXIT: '🚪', RETURNED: '📬', REFERRAL_BONUS: '🤝',
+  INVEST: '⬇️', ADD: '⬇️', WITHDRAW: '⬆️', EXIT: '🚪', RETURNED: '📬', REFERRAL_BONUS: '🤝', GIFT: '🎁',
 }
 
 function TransactionSection({ transactions }: { transactions: TransactionDTO[] }) {
@@ -668,17 +647,27 @@ function TransactionSection({ transactions }: { transactions: TransactionDTO[] }
   if (transactions.length === 0) return null
   return (
     <section style={{ marginTop: spacing.xl }}>
-      <button
+      {/* CTA-стиль как у кнопки Летописи — единый паттерн через ctaButton.lg */}
+      <motion.button
+        whileTap={{ scale: 0.97 }}
         onClick={() => setOpen(v => !v)}
         style={{
-          width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0',
+          ...ctaButton.lg,
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
           marginBottom: open ? spacing.sm : 0,
         }}
       >
-        <span style={{ color: colors.textMuted, fontSize: '13px', fontWeight: 600 }}>{t.portfolio.tabFlow}</span>
-        <span style={{ color: colors.textMuted, fontSize: '18px', lineHeight: 1 }}>{open ? '−' : '+'}</span>
-      </button>
+        <span style={{ fontSize: 18 }}>💰</span>
+        <span>{t.portfolio.tabFlow}</span>
+        <span style={{ fontSize: 11, opacity: 0.75, fontWeight: 600 }}>
+          ({transactions.length})
+        </span>
+        <span style={{ marginLeft: 4, fontSize: 16, lineHeight: 1 }}>{open ? '−' : '+'}</span>
+      </motion.button>
       <AnimatePresence>
         {open && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
@@ -695,7 +684,7 @@ function TransactionSection({ transactions }: { transactions: TransactionDTO[] }
 function TransactionRow({ tx }: { tx: TransactionDTO }) {
   const t = useT()
   const isOut = tx.type === 'INVEST' || tx.type === 'ADD'
-  const color = isOut ? '#E86060' : '#60C878'
+  const color = isOut ? '#E34234' : '#2E8B57'
   const sign = isOut ? '−' : '+'
   const label = t.portfolio.txTypes[tx.type as keyof typeof t.portfolio.txTypes] ?? tx.type
 
@@ -704,22 +693,25 @@ function TransactionRow({ tx }: { tx: TransactionDTO }) {
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      padding: '7px 10px',
+      padding: '8px 10px',
       marginBottom: '4px',
-      background: 'rgba(42, 25, 96, 0.25)',
+      // Раньше: rgba(42,25,96,0.25) — полупрозрачное → на ярких bg-картинках
+      // строки сливались с фоном. Теперь — непрозрачный пергамент карточки.
+      background: gradients.card,
       border: `1px solid ${colors.cardBorder}`,
       borderRadius: '8px',
+      boxShadow: `inset 0 1px 0 ${colors.cardHighlight}`,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <span style={{ fontSize: '14px' }}>{TX_TYPE_ICON[tx.type] ?? '•'}</span>
         <div>
-          <div style={{ color: colors.textSecondary, fontSize: '12px' }}>
+          <div style={{ color: colors.textPrimary, fontSize: '12px', fontWeight: 600 }}>
             {label}: {tx.projectName}
           </div>
-          <div style={{ color: colors.textMuted, fontSize: '10px' }}>{t.common.day} {tx.day}</div>
+          <div style={{ color: colors.textSecondary, fontSize: '10px' }}>{t.common.day} {tx.day}</div>
         </div>
       </div>
-      <div style={{ color, fontWeight: 700, fontSize: '13px', flexShrink: 0 }}>
+      <div style={{ color, fontWeight: 800, fontSize: '13px', flexShrink: 0 }}>
         {sign}{Math.floor(tx.amount)} {t.common.currency}
       </div>
     </div>

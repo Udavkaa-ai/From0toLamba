@@ -3,8 +3,11 @@ import { z } from 'zod'
 import { randomUUID } from 'crypto'
 import { prisma } from '../../db/prisma'
 import { telegramAuthHook } from '../../middleware/telegramAuth'
-import { createTimerSkipInvoice, createAmaUnlockInvoice, createExtraSlotInvoice } from '../../bot/bot'
+import { createTimerSkipInvoice, createAmaUnlockInvoice, createExtraSlotInvoice, createMinigameBypassInvoice } from '../../bot/bot'
 import { advanceDay } from '../../game/AdvanceDayService'
+import { buildPerfectInsight } from '../../game/CharterService'
+import { ProjectFate } from '../../game/types'
+import { spendArchetypeToken } from '../../game/tokenService'
 
 const STARS_AMOUNT = 10
 
@@ -19,7 +22,7 @@ export async function paymentsRoutes(app: FastifyInstance) {
   app.post('/api/payments/invoice', { preHandler: telegramAuthHook }, async (request, reply) => {
     const tgUser = request.telegramUser
     const bodySchema = z.object({
-      feature: z.enum(['timer_skip', 'ama_unlock', 'extra_slot']),
+      feature: z.enum(['timer_skip', 'ama_unlock', 'extra_slot', 'minigame_bypass']),
       projectId: z.string().optional(),
       merchantName: z.string().optional(),
     })
@@ -44,6 +47,9 @@ export async function paymentsRoutes(app: FastifyInstance) {
     } else if (body.data.feature === 'extra_slot') {
       payload = `es:${uuid}`
       invoiceLink = await createExtraSlotInvoice(user.id, payload)
+    } else if (body.data.feature === 'minigame_bypass') {
+      payload = `mb:${uuid}`
+      invoiceLink = await createMinigameBypassInvoice(user.id, payload)
     } else {
       const projectId = body.data.projectId
       if (!projectId) return reply.status(400).send({ error: 'projectId обязателен для ama_unlock' })
@@ -53,11 +59,15 @@ export async function paymentsRoutes(app: FastifyInstance) {
     }
 
     // Сохраняем запись для аудита и возможных возвратов
+    const purchaseProjectId =
+      body.data.feature === 'extra_slot' || body.data.feature === 'minigame_bypass'
+        ? null
+        : (body.data.projectId ?? null)
     await prisma.starPurchase.create({
       data: {
         userId: user.id,
         feature: body.data.feature,
-        projectId: body.data.feature !== 'extra_slot' ? (body.data.projectId ?? null) : null,
+        projectId: purchaseProjectId,
         starsAmount: STARS_AMOUNT,
         payload,
       },
@@ -66,12 +76,45 @@ export async function paymentsRoutes(app: FastifyInstance) {
     return { invoiceLink }
   })
 
+  // POST /api/payments/spend-token — оплатить фичу жетоном хозяина (вместо Stars).
+  // Бесплатно для ama_unlock и minigame_bypass, если у игрока есть жетон того
+  // архетипа, к которому относится дело.
+  app.post('/api/payments/spend-token', { preHandler: telegramAuthHook }, async (request, reply) => {
+    const tgUser = request.telegramUser
+    const bodySchema = z.object({
+      feature: z.enum(['ama_unlock', 'minigame_bypass']),
+      projectId: z.string(),
+    })
+    const body = bodySchema.safeParse(request.body)
+    if (!body.success) return reply.status(400).send({ error: 'Неверный запрос' })
+
+    const user = await prisma.user.findUniqueOrThrow({ where: { telegramId: String(tgUser.id) } })
+    const project = await prisma.project.findFirst({
+      where: { id: body.data.projectId, userId: user.id },
+      select: { personaArchetype: true },
+    })
+    if (!project) return reply.status(404).send({ error: 'Дело не найдено' })
+
+    try {
+      await spendArchetypeToken(user.id, project.personaArchetype)
+    } catch (err: any) {
+      if (err.message === 'NO_TOKENS') {
+        return reply.status(400).send({ error: 'Нет жетона этого хозяина' })
+      }
+      throw err
+    }
+
+    // После списания жетона активируем фичу как при платном пути
+    const result = await activateFeature(user.id, body.data.feature, body.data.projectId)
+    return result
+  })
+
   // POST /api/payments/activate — активировать фичу после успешной оплаты
   // Вызывается клиентом сразу после callback "paid" от Telegram.WebApp.openInvoice
   app.post('/api/payments/activate', { preHandler: telegramAuthHook }, async (request, reply) => {
     const tgUser = request.telegramUser
     const bodySchema = z.object({
-      feature: z.enum(['timer_skip', 'ama_unlock', 'extra_slot']),
+      feature: z.enum(['timer_skip', 'ama_unlock', 'extra_slot', 'minigame_bypass']),
       projectId: z.string().optional(),
     })
     const body = bodySchema.safeParse(request.body)
@@ -105,6 +148,20 @@ async function activateFeature(userId: number, feature: string, projectId?: stri
   if (feature === 'extra_slot') {
     await prisma.gameState.update({ where: { userId }, data: { extraSlotsBalance: { increment: 1 } } })
     return { success: true }
+  }
+
+  if (feature === 'minigame_bypass') {
+    // Одноразовый пропуск — БД не трогаем. После оплаты раскрываем игроку
+    // perfectInsight по делу — он должен увидеть полную картину, как при
+    // идеальной игре, и уже сам решить, вкладываться или нет.
+    if (!projectId) return { success: true, perfectInsight: null as string | null }
+    const project = await prisma.project.findFirst({
+      where: { id: projectId, userId },
+      select: { fate: true },
+    })
+    if (!project) return { success: true, perfectInsight: null as string | null }
+    const insight = buildPerfectInsight(project.fate as ProjectFate)
+    return { success: true, perfectInsight: insight || null }
   }
 
   throw new Error('Неизвестная фича')

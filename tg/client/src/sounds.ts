@@ -3,7 +3,8 @@
 
 export type SoundName = 'tap' | 'invest' | 'day' | 'win' | 'lose' | 'rankup' | 'seal'
 
-const MUTED_KEY = 'sound_muted'
+const MUTED_KEY = 'sound_muted'           // все звуковые эффекты (sfx)
+const MUSIC_MUTED_KEY = 'music_muted'      // фоновая музыка отдельно
 const VOLUME_KEY = 'sound_volume'
 
 let _ctx: AudioContext | null = null
@@ -20,6 +21,16 @@ export function isMuted(): boolean {
 
 export function setMuted(v: boolean): void {
   localStorage.setItem(MUTED_KEY, String(v))
+}
+
+export function isMusicMuted(): boolean {
+  return localStorage.getItem(MUSIC_MUTED_KEY) === 'true'
+}
+
+export function setMusicMuted(v: boolean): void {
+  localStorage.setItem(MUSIC_MUTED_KEY, String(v))
+  // Уведомляем слушателей внутри одного таба (storage event летит только между табами)
+  window.dispatchEvent(new CustomEvent('music-muted-change'))
 }
 
 export function getVolume(): number {

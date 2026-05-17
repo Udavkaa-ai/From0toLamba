@@ -8,7 +8,7 @@ import { PageTitle } from '@/components/PageTitle'
 import { CountUp } from '@/components/CountUp'
 import { api } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
-import { colors, spacing, typography } from '@/theme'
+import { colors, spacing, typography, gradients, ctaButton } from '@/theme'
 import { evaluateAchievements, CATEGORY_LABELS, type EvaluatedAchievement } from '@/game/achievements'
 import { loreFor } from '@/game/lore'
 import { ChannelTasksBlock } from '@/components/ChannelTasksBlock'
@@ -96,14 +96,9 @@ export function StatsPage() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing.sm, marginBottom: spacing.lg }}>
           {[
             { label: t.stats.daysPlayed, value: String(gameState.currentDay) },
+            { label: 'Взято дел', value: String(gameState.dealsCount) },
             { label: t.stats.dealsCompleted, value: String(gameState.closedProjectsCount) },
-            { label: t.stats.intuitionScore, value: String(gameState.intuitionScore) },
-            {
-              label: t.stats.intuitionAccuracy,
-              value: gameState.intuitionAccuracy === null
-                ? '—'
-                : Math.round(gameState.intuitionAccuracy * 100) + '%',
-            },
+            { label: 'Активных дел', value: String(gameState.activeProjects.length) },
           ].map(({ label, value }) => (
             <FairyCard key={label} padding={spacing.md} style={{ textAlign: 'center' }}>
               <div style={{ color: colors.textMuted, fontSize: '11px', marginBottom: '4px' }}>{label}</div>
@@ -173,6 +168,10 @@ export function StatsPage() {
           </FairyCard>
         )}
 
+        {/* «Отношения с дельцами» больше не дублируются здесь — они
+            есть на главной как чип под балансом, плюс в нижней нав-кнопке
+            нет необходимости вести их сюда повторно. */}
+
         {/* Награды за подписку */}
         <ChannelTasksBlock />
 
@@ -233,14 +232,16 @@ function AchievementsSection() {
                     alignItems: 'center',
                     gap: spacing.md,
                     padding: `${spacing.sm} ${spacing.md}`,
-                    background: a.unlocked ? `${colors.fairyGold}15` : 'rgba(10,8,24,0.5)',
-                    border: `1px solid ${a.unlocked ? colors.fairyGold + '55' : colors.cardBorder}`,
-                    borderRadius: '10px',
-                    opacity: a.unlocked ? 1 : 0.7,
+                    background: a.unlocked ? gradients.card : 'rgba(20,12,6,0.85)',
+                    border: `1.5px solid ${a.unlocked ? colors.fairyGold : 'rgba(212,160,60,0.35)'}`,
+                    borderRadius: '12px',
                     cursor: 'pointer',
                     textAlign: 'left',
                     fontFamily: 'inherit',
                     width: '100%',
+                    boxShadow: a.unlocked
+                      ? `0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 ${colors.cardHighlight}`
+                      : `0 2px 8px rgba(0,0,0,0.3)`,
                   }}
                 >
                   <div style={{
@@ -248,18 +249,22 @@ function AchievementsSection() {
                     width: '32px',
                     textAlign: 'center',
                     filter: a.unlocked ? 'none' : 'grayscale(100%)',
+                    opacity: a.unlocked ? 1 : 0.65,
                   }}>
                     {a.unlocked ? a.emoji : '🔒'}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{
-                      color: a.unlocked ? colors.fairyGold : colors.textSecondary,
-                      fontWeight: 600,
+                      color: a.unlocked ? colors.fairyGold : 'rgba(248,228,178,0.85)',
+                      fontWeight: 700,
                       fontSize: '13px',
                     }}>
                       {(t.achievements.items[a.id]?.name ?? a.name)}
                     </div>
-                    <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '1px' }}>
+                    <div style={{
+                      color: a.unlocked ? colors.textSecondary : 'rgba(248,228,178,0.6)',
+                      fontSize: '11px', marginTop: '1px', fontWeight: 500,
+                    }}>
                       {(t.achievements.items[a.id]?.description ?? a.description)}
                     </div>
                     {!a.unlocked && a.progress && a.progress.target > 1 && (
@@ -328,14 +333,15 @@ function AchievementDetailModal({
         onClick={e => e.stopPropagation()}
         style={{
           width: '100%', maxWidth: '500px',
-          background: colors.nightBlue,
+          background: gradients.modal,
           borderRadius: '20px 20px 0 0',
-          border: `1px solid ${colors.cardBorder}`,
+          border: `1.5px solid ${colors.modalBorder}`,
           padding: `${spacing.xl} ${spacing.lg}`,
           // BottomNav ~60px по высоте — иначе кнопка «Закрыть» уйдёт под неё
           paddingBottom: `calc(72px + ${spacing.md} + env(safe-area-inset-bottom))`,
           maxHeight: '85dvh',
           overflowY: 'auto',
+          color: colors.modalText,
         }}
       >
         {/* Шапка */}
@@ -357,14 +363,14 @@ function AchievementDetailModal({
         {!achievement.unlocked && (
           <div style={{
             padding: spacing.md,
-            background: 'rgba(255,255,255,0.04)',
-            border: `1px solid ${colors.cardBorder}`,
+            background: 'rgba(0,0,0,0.28)',
+            border: `1px solid rgba(212,160,60,0.4)`,
             borderRadius: '10px',
           }}>
-            <div style={{ color: colors.textMuted, fontSize: '11px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <div style={{ color: colors.textOnDarkMuted, fontSize: '11px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               {t.stats.achievementHow}
             </div>
-            <div style={{ color: colors.textPrimary, fontSize: '14px', lineHeight: 1.5 }}>
+            <div style={{ color: colors.textOnDark, fontSize: '14px', lineHeight: 1.5 }}>
               {(t.achievements.items[achievement.id]?.description ?? achievement.description)}
             </div>
             {achievement.progress && achievement.progress.target > 1 && (
@@ -375,7 +381,7 @@ function AchievementDetailModal({
                     height: '100%', background: colors.fairyGold, opacity: 0.7,
                   }} />
                 </div>
-                <div style={{ color: colors.textMuted, fontSize: '11px', marginTop: '4px', textAlign: 'right' }}>
+                <div style={{ color: colors.textOnDarkMuted, fontSize: '11px', marginTop: '4px', textAlign: 'right' }}>
                   {achievement.progress.current} / {achievement.progress.target}
                 </div>
               </div>
@@ -388,8 +394,8 @@ function AchievementDetailModal({
           <div>
             <div style={{
               padding: spacing.md,
-              background: `${colors.fairyGold}10`,
-              border: `1px solid ${colors.fairyGold}40`,
+              background: `${colors.fairyGold}22`,
+              border: `1px solid ${colors.fairyGold}66`,
               borderRadius: '10px',
               marginBottom: spacing.sm,
             }}>
@@ -397,10 +403,10 @@ function AchievementDetailModal({
                 <span style={{ fontSize: '22px' }}>{lore.emoji}</span>
                 <div>
                   <div style={{ color: colors.fairyGold, fontSize: '15px', fontWeight: 700 }}>{loreLang?.name ?? lore.name}</div>
-                  <div style={{ color: colors.textMuted, fontSize: '11px' }}>{loreLang?.title ?? lore.title}</div>
+                  <div style={{ color: colors.textOnDarkMuted, fontSize: '11px' }}>{loreLang?.title ?? lore.title}</div>
                 </div>
               </div>
-              <div style={{ color: colors.textSecondary, fontSize: '13px', lineHeight: 1.6, marginTop: spacing.sm }}>
+              <div style={{ color: colors.textOnDarkSecond, fontSize: '13px', lineHeight: 1.6, marginTop: spacing.sm }}>
                 {loreLang?.description ?? lore.description}
               </div>
             </div>
@@ -408,15 +414,15 @@ function AchievementDetailModal({
             {lore.hints && lore.hints.length > 0 && (
               <div style={{
                 padding: spacing.md,
-                background: 'rgba(255,255,255,0.04)',
-                border: `1px solid ${colors.cardBorder}`,
+                background: 'rgba(0,0,0,0.28)',
+                border: `1px solid rgba(212,160,60,0.4)`,
                 borderRadius: '10px',
               }}>
-                <div style={{ color: colors.textMuted, fontSize: '11px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <div style={{ color: colors.textOnDarkMuted, fontSize: '11px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   {t.stats.achievementHints}
                 </div>
                 {(loreLang?.hints ?? lore.hints).map((h, i) => (
-                  <div key={i} style={{ color: colors.textPrimary, fontSize: '12px', lineHeight: 1.5, marginTop: i === 0 ? 0 : '4px' }}>
+                  <div key={i} style={{ color: colors.textOnDark, fontSize: '12px', lineHeight: 1.5, marginTop: i === 0 ? 0 : '4px' }}>
                     ✦ {h}
                   </div>
                 ))}
@@ -427,7 +433,7 @@ function AchievementDetailModal({
 
         {/* Обычный разблокированный подвиг без справки */}
         {achievement.unlocked && !showLore && (
-          <div style={{ color: colors.textSecondary, fontSize: '14px', lineHeight: 1.5, textAlign: 'center' }}>
+          <div style={{ color: colors.textOnDarkSecond, fontSize: '14px', lineHeight: 1.5, textAlign: 'center' }}>
             {(t.achievements.items[achievement.id]?.description ?? achievement.description)}
           </div>
         )}
@@ -435,14 +441,8 @@ function AchievementDetailModal({
         <button
           onClick={onClose}
           style={{
+            ...ctaButton.lg,
             width: '100%', marginTop: spacing.lg,
-            padding: spacing.md,
-            background: `${colors.enchantedPurple}`,
-            border: `1px solid ${colors.fairyGold}40`,
-            borderRadius: '12px',
-            color: colors.fairyGold,
-            fontSize: '14px', fontWeight: 600,
-            cursor: 'pointer',
           }}
         >
           {t.common.close}

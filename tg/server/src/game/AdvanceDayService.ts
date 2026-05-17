@@ -1,6 +1,7 @@
 import { prisma } from '../db/prisma'
-import { ProjectFate, FATE_CONFIG, ProjectType, InvestorRank } from './types'
-import { computeRank, isRankUp } from './rankService'
+import { ProjectFate, FATE_CONFIG, ProjectType, InvestorRank, SPONSOR_PROFIT_MULT } from './types'
+import { computeSponsorValue, shouldCloseSponsor, createSponsorPostMortem } from './sponsorService'
+import { computeRank, isRankUp, countDeals } from './rankService'
 import { randomInRange as rng, randomIntInRange as irng } from './projectUtils'
 import { generateDailyUpdate, generatePostMortem } from '../ai/openRouterClient'
 import { generateProject } from './GenerateProjectService'
@@ -9,6 +10,7 @@ import {
   pickMafiaOffer, renderMafiaText,
   MAFIA_OFFER_DAYS_BEFORE, MAFIA_OFFER_CHANCE, MAFIA_FORCED_CLOSURE_RETURN_PERCENT,
 } from './mafiaOffers'
+import { computeTieLevels, tieBonusFromLevel } from './tiesService'
 
 /** Правильный % прибыли с учётом выводов: (выведено + возврат − вложено) / вложено */
 async function computeProfitPercent(projectId: string, investedAmount: number, returned: number): Promise<number> {
@@ -33,6 +35,30 @@ const HANDOVER_REASONS_UNICORN = [
   'Столичные купцы выкупили дело — Жар-птица оставила в перьях золото, расчёт честный',
   'Сам государь приметил дело и выкупил с надбавкой — вкладчики получили иксы',
   'Великая артель забрала дело — вкладчикам досталась их доля чистым золотом',
+]
+
+/** Гарантированный пул вестей для VIP-дел (спонсорские).
+ *  Если pickRandomEvent почему-то не нашёл подходящего POSITIVE/NEUTRAL — берётся
+ *  отсюда. Тон — «всё идёт по плану, ярмарка живая, грош крепнет». Без
+ *  негатива и без обещаний выше реального линейного прироста к 3×.
+ *  {name} → название дела, {amount} → дневной прирост в грошах. */
+const SPONSOR_FALLBACK_NEWS: { title: string; body: string }[] = [
+  { title: 'Воеводская грамота подтверждена',
+    body: 'Дело «{name}» получило подтверждение от воеводы — на ярмарке прибавка {amount} г к казне.' },
+  { title: 'Артель работает споро',
+    body: 'У дела «{name}» артель не сидит сложа руки — за день в казне прибавилось {amount} г.' },
+  { title: 'Покупатели в очередь',
+    body: 'У лавки «{name}» с утра шумно — народ толпится, золото в сундук прибыло на {amount} г.' },
+  { title: 'Княжеский указ в помощь',
+    body: 'Сам князь покровительствует делу «{name}» — за день добавилось {amount} г.' },
+  { title: 'Слово купеческое держится',
+    body: 'Дело «{name}» идёт ровно: что обещали, то и платят — сегодня прибыло {amount} г.' },
+  { title: 'Караван прибыл с барышом',
+    body: 'Караван дела «{name}» вернулся с ярмарки — добыча в общий котёл {amount} г.' },
+  { title: 'Кузнецы славят заказ',
+    body: 'Дело «{name}» расплатилось с кузнецами сполна — те молвят добрые слова, ещё {amount} г к делу.' },
+  { title: 'Молва добрая идёт',
+    body: 'Про «{name}» добрая молва пошла — новые вкладчики, ещё {amount} г в казну.' },
 ]
 
 const NEW_PROJECTS_PER_DAY_MIN = 1
@@ -113,12 +139,119 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
     where: { userId, isActive: true },
   })
 
+  // Уровни «Завязок» по архетипам — берутся ОДИН раз перед циклом advance.
+  // На каждый уровень даём +1%/день к доходности дел этого архетипа,
+  // максимум +10% на уровне 10 (см. tiesService.MAX_TIE_LEVEL).
+  // Не применяется к VIP/SPONSOR_FIXED — у них своя линейная траектория.
+  const tieLevels = await computeTieLevels(userId)
+
   let balanceDelta = 0
   let returnedDelta = 0  // сумма всех автозакрытий за этот день — для totalReturned
   const closures: ClosureSummary[] = []
 
   for (const project of activeProjects) {
     const fate = project.fate as ProjectFate
+
+    // СПОНСОРСКОЕ дело — отдельная ветка: линейный рост к 3× за durationDays.
+    // Никаких случайных событий, мафии или скам-механик.
+    if (project.isSponsor) {
+      const newDaysSince = project.daysSinceJoined + 1
+      const durationDays = project.daysUntilCollapse ?? 14
+      const newValue = computeSponsorValue(project.investedAmountRubles, newDaysSince, durationDays)
+
+      if (shouldCloseSponsor(newDaysSince, durationDays)) {
+        // Срок вышел: возврат целиком, дело закрыто
+        const returned = Math.floor(project.investedAmountRubles * SPONSOR_PROFIT_MULT)
+        const closedProject = await prisma.project.update({
+          where: { id: project.id },
+          data: {
+            isActive: false, isClosed: true, isWithdrawalLocked: false,
+            currentValueRubles: returned,
+            daysSinceJoined: newDaysSince,
+            closureReason: 'Воеводская награда исполнена',
+          },
+        })
+        await prisma.transaction.create({
+          data: {
+            userId, projectId: project.id, projectName: project.name,
+            type: 'RETURNED', amount: returned, day: gameState.currentDay + 1,
+          },
+        }).catch(console.error)
+        createSponsorPostMortem(closedProject, returned, newDaysSince).catch(console.error)
+        balanceDelta += returned
+        returnedDelta += returned
+        closures.push({
+          id: project.id,
+          name: project.name,
+          developerName: project.developerName,
+          fate: project.fate,
+          personaArchetype: project.personaArchetype,
+          investedAmount: project.investedAmountRubles,
+          returnedAmount: returned,
+          profitPercent: (SPONSOR_PROFIT_MULT - 1) * 100,
+          daysActive: newDaysSince,
+          closureReason: 'Воеводская награда исполнена',
+          bannerImageUrl: project.bannerImageUrl ? `/api/banner/${project.id}` : null,
+          forcedByMafia: false,
+        })
+      } else {
+        await prisma.project.update({
+          where: { id: project.id },
+          data: {
+            currentValueRubles: newValue,
+            daysSinceJoined: newDaysSince,
+            valueHistory: [...project.valueHistory.slice(-29), newValue],
+            apyHistory: [...project.apyHistory.slice(-29), project.claimedAPY],
+            userCountHistory: [...project.userCountHistory.slice(-29), project.currentUserCount],
+          },
+        })
+
+        // Новость дня для VIP-дела: только POSITIVE/NEUTRAL события.
+        // Шанс 100% — у спонсорского ярмарка должна быть «живая», каждый день
+        // что-то происходит. Эффект события на стоимость НЕ применяем —
+        // currentValue остаётся на линейной траектории к 3×. Это сделано для
+        // того чтобы хозяин канала мог спокойно гарантировать +200% без
+        // случайных корректировок.
+        // Если игрок выключил новости — пропускаем вставку DailyUpdate.
+        if (!gameState.newsEnabled) {
+          continue
+        }
+        const deltaRubles = Math.round(newValue - project.currentValueRubles)
+        const sponsorEvent = pickRandomEvent(
+          project.type as ProjectType,
+          fate,
+          undefined,
+          { positiveOnly: true, chance: 1.0 },
+        )
+        // Если pickRandomEvent почему-то ничего не вернул (например, у этого
+        // ProjectType нет совпадающих событий) — берём гарантированный
+        // VIP-fallback. Главное чтобы VIP-карточка не оставалась без вестей —
+        // иначе игроку кажется, что дело «мёртвое».
+        const fallback = SPONSOR_FALLBACK_NEWS[Math.floor(Math.random() * SPONSOR_FALLBACK_NEWS.length)]
+        const newsTitle = sponsorEvent?.title ?? fallback.title
+        const newsBody = renderEventBody(
+          sponsorEvent?.body ?? fallback.body,
+          project.name,
+          deltaRubles,
+        )
+        const newsKind: 'POSITIVE' | 'NEUTRAL' = (sponsorEvent?.kind === 'NEUTRAL' ? 'NEUTRAL' : 'POSITIVE')
+        await prisma.dailyUpdate.create({
+          data: {
+            projectId: project.id,
+            userId,
+            day: newDaysSince,
+            title: newsTitle,
+            body: newsBody,
+            redFlags: [],
+            payoutStatus: 'BOOSTED',
+            eventKind: newsKind,
+            userCountDelta: 0,
+          },
+        }).catch(err => console.error('[Sponsor news] insert failed:', err))
+      }
+      continue
+    }
+
     const fateCfg = FATE_CONFIG[fate]
 
     let updatedValue = project.currentValueRubles
@@ -223,9 +356,13 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
       continue
     }
 
-    // Начисляем доходность: investedAmount × realDailyYield
+    // Начисляем доходность: investedAmount × (realDailyYield + tie-бонус).
+    // tie-бонус = level(archetype) × 1%/день, max +10%/день на 10 уровне.
+    // На «честных» делах это превращает SURVIVOR в почти-юникорн при
+    // максимальной прокачке отношений; на скаме всё равно сгорит до закрытия.
     if (project.investedAmountRubles > 0) {
-      const dailyYield = project.investedAmountRubles * project.realDailyYieldRubles
+      const tieBonus = tieBonusFromLevel(tieLevels[project.personaArchetype] ?? 0)
+      const dailyYield = project.investedAmountRubles * (project.realDailyYieldRubles + tieBonus)
       updatedValue += dailyYield
     }
 
@@ -389,7 +526,10 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
     // Генерируем весть для проекта (кроме INSTANT_SCAM — он молчит до самого исчезновения).
     // Если выпало случайное событие — кладём его текст мгновенно как DailyUpdate
     // и НЕ зовём AI. Иначе — обычный плейсхолдер + AI-генерация поверх.
-    if (fate !== ProjectFate.INSTANT_SCAM || eventApplied) {
+    // Игрок мог выключить новости (gameState.newsEnabled=false) — тогда
+    // показатели меняются как обычно (см. updatedValue/newUserCount выше),
+    // но текст новости НЕ создаётся и AI НЕ зовётся.
+    if (gameState.newsEnabled && (fate !== ProjectFate.INSTANT_SCAM || eventApplied)) {
       if (eventApplied) {
         await prisma.dailyUpdate.create({
           data: {
@@ -415,18 +555,14 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
   const newDay = gameState.currentDay + 1
   const newStreak = gameState.dayStreak + 1
 
-  // Считаем totalWealth для ранга
+  // Считаем totalWealth для истории графика и ранг — по числу взятых дел
   const updatedActiveProjects = await prisma.project.findMany({
     where: { userId, isActive: true },
     select: { currentValueRubles: true },
   })
   const totalWealth = newBalance + updatedActiveProjects.reduce((s, p) => s + p.currentValueRubles, 0)
-
-  const newRank = computeRank({
-    currentDay: newDay,
-    totalWealth,
-    intuitionScore: gameState.intuitionScore,
-  })
+  const dealsCount = await countDeals(userId)
+  const newRank = computeRank({ dealsCount })
 
   const oldRank = gameState.investorRank as InvestorRank
   const rankChanged = newRank !== oldRank

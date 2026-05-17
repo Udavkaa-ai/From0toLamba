@@ -9,6 +9,7 @@ import {
   type LeaderboardEntryDTO,
   type AchievementLeaderboardEntryDTO,
   type ReferralLeaderboardEntryDTO,
+  type TiesLeaderboardEntryDTO,
 } from '@/api/client'
 import { colors, spacing } from '@/theme'
 import { useT } from '@/i18n'
@@ -36,12 +37,15 @@ function positionBadge(pos: number) {
   return `#${pos}`
 }
 
-type Tab = 'wealth' | 'intuition' | 'days' | 'deals' | 'referrals'
+// С версии 4 «чуйка» убрана из игры — вкладка intuition больше не используется,
+// в т.ч. строка переключателя её не показывает.
+type Tab = 'wealth' | 'days' | 'deals' | 'referrals' | 'ties'
 
 export function LeaderboardPage() {
   const t = useT()
   const [tab, setTab] = useState<Tab>('wealth')
-  const tabKeys = Object.keys(t.leaderboard.tabs) as Tab[]
+  // Фильтруем — intuition больше не существует
+  const tabKeys = (Object.keys(t.leaderboard.tabs) as Tab[]).filter(k => k !== ('intuition' as any))
 
   return (
     <ScreenBackground bgImage={PAGE_BG.leaderboard}>
@@ -82,10 +86,10 @@ export function LeaderboardPage() {
         </div>
 
         {tab === 'wealth' && <MoneyTab />}
-        {tab === 'intuition' && <IntuitionTab />}
         {tab === 'days' && <DaysTab />}
         {tab === 'deals' && <AchievementsTab />}
         {tab === 'referrals' && <ReferralsTab />}
+        {tab === 'ties' && <TiesTab />}
       </div>
     </ScreenBackground>
   )
@@ -254,6 +258,34 @@ function ReferralsTab() {
   )
 }
 
+function TiesTab() {
+  const t = useT()
+  const [showAll, setShowAll] = useState(false)
+  const { data, isLoading } = useQuery({
+    queryKey: ['leaderboard', 'ties'],
+    queryFn: api.leaderboard.getTies,
+    refetchInterval: 60_000,
+  })
+  const entries = showAll ? data?.entries : data?.entries.slice(0, 5)
+
+  return (
+    <>
+      <Caption description={t.leaderboard.captions.ties} totalPlayers={data?.totalPlayers} />
+      {isLoading && [1, 2, 3, 4, 5].map(i => <SkeletonCard key={i} lines={2} />)}
+      {entries?.length === 0 && !isLoading && <EmptyState icon="⚡" text={t.leaderboard.empty.ties} />}
+      {entries?.map((entry, i) => (
+        <motion.div key={entry.userId} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: Math.min(i * 0.03, 0.3) }}>
+          <TiesRow entry={entry} />
+        </motion.div>
+      ))}
+      {data && data.myPosition && data.myPosition > (showAll ? data.entries.length : 5) && (
+        <MyOutsidePos myPosition={data.myPosition} total={data.totalPlayers} hint={t.leaderboard.hints.ties} />
+      )}
+      {!showAll && data && data.entries.length > 5 && <ShowAllButton onClick={() => setShowAll(true)} />}
+    </>
+  )
+}
+
 // ─── Row variants ──────────────────────────────────────────────────────────
 
 function LeaderboardRow({ entry }: { entry: LeaderboardEntryDTO }) {
@@ -261,7 +293,7 @@ function LeaderboardRow({ entry }: { entry: LeaderboardEntryDTO }) {
     <BaseRow
       entry={entry}
       rightTop={`${Math.round(entry.totalWealth).toLocaleString('ru')} г`}
-      rightBottom={entry.intuitionScore > 0 ? `👁 ${entry.intuitionScore}` : null}
+      rightBottom={null}
     />
   )
 }
@@ -282,7 +314,7 @@ function DaysRow({ entry }: { entry: LeaderboardEntryDTO }) {
     <BaseRow
       entry={entry}
       rightTop={t.leaderboard.days(entry.currentDay)}
-      rightBottom={`👁 ${entry.intuitionScore}`}
+      rightBottom={null}
       hideDayInSub
     />
   )
@@ -329,6 +361,42 @@ function ReferralRow({ entry }: { entry: ReferralLeaderboardEntryDTO }) {
       <div style={{ textAlign: 'right', flexShrink: 0 }}>
         <div style={{ color: isTop3 ? colors.fairyGold : colors.textPrimary, fontWeight: 700, fontSize: '13px' }}>
           {t.leaderboard.refs(entry.referralCount)}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TiesRow({ entry }: { entry: TiesLeaderboardEntryDTO }) {
+  const t = useT()
+  const displayName = entry.username ? `@${entry.username}` : entry.firstName
+  const rankLabel = RANK_LABEL[entry.investorRank] ?? entry.investorRank
+  const rankEmoji = RANK_EMOJI[entry.investorRank] ?? '🎭'
+  const pos = entry.position
+  const isTop3 = pos <= 3
+
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: '12px',
+      padding: `${spacing.sm} ${spacing.md}`, marginBottom: '6px',
+      borderRadius: '10px',
+      background: entry.isMe ? `${colors.fairyGold}15` : isTop3 ? 'rgba(42,25,96,0.7)' : 'rgba(13,23,53,0.5)',
+      border: `1px solid ${entry.isMe ? colors.fairyGold + '55' : isTop3 ? colors.fairyGold + '30' : colors.cardBorder}`,
+    }}>
+      <div style={{ width: '32px', textAlign: 'center', fontSize: isTop3 ? '22px' : '12px', fontWeight: 700, color: isTop3 ? colors.fairyGold : colors.textMuted, flexShrink: 0, lineHeight: 1 }}>
+        {positionBadge(pos)}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ color: entry.isMe ? colors.fairyGold : isTop3 ? colors.textPrimary : colors.textSecondary, fontWeight: entry.isMe || isTop3 ? 700 : 500, fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {displayName}{entry.isMe ? ' (вы)' : ''}
+        </div>
+        <div style={{ color: colors.textMuted, fontSize: '10px', marginTop: '2px' }}>
+          {rankEmoji} {rankLabel}
+        </div>
+      </div>
+      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+        <div style={{ color: isTop3 ? colors.fairyGold : colors.textPrimary, fontWeight: 700, fontSize: '13px' }}>
+          {t.leaderboard.ties(entry.tiesTotal)}
         </div>
       </div>
     </div>

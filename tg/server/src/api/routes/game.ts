@@ -3,10 +3,12 @@ import { z } from 'zod'
 import { prisma } from '../../db/prisma'
 import { telegramAuthHook } from '../../middleware/telegramAuth'
 import { advanceDay, ADVANCE_COOLDOWN_MS, MAX_CONSECUTIVE_ADVANCES } from '../../game/AdvanceDayService'
-import { tryAttachReferrer, countReferrals, REFERRAL_INTUITION_THRESHOLD } from '../../game/referralService'
+import { tryAttachReferrer, countReferrals, REFERRAL_DEALS_THRESHOLD } from '../../game/referralService'
 import { ensureWeekStartSnapshot } from '../../game/weeklyService'
 import { generateOnboardingProject } from '../../game/GenerateProjectService'
 import { toPublicDTO } from '../../game/projectUtils'
+import { computeArchetypeTokens } from '../../game/tokenService'
+import { computeTieLevels, totalTies, MAX_TIE_LEVEL, TIE_BONUS_PER_LEVEL, tieLevelFromEarned } from '../../game/tiesService'
 
 export async function gameRoutes(app: FastifyInstance) {
 
@@ -14,7 +16,12 @@ export async function gameRoutes(app: FastifyInstance) {
   app.get('/api/game', { preHandler: telegramAuthHook }, async (request, reply) => {
     const tgUser = request.telegramUser
 
-    // Upsert пользователя
+    // Upsert пользователя. Новые игроки получают сразу 50 грошей —
+    // «Подарок от Хозяина Ярмарки». Раньше было 10 на старте + ещё 50 при
+    // complete-onboarding (двойная отдача и без явной причины); теперь
+    // приветственная сумма выдаётся одной транзакцией сразу при создании
+    // GameState (см. ниже после upsert'а).
+    const STARTING_GIFT = 50
     const user = await prisma.user.upsert({
       where: { telegramId: String(tgUser.id) },
       create: {
@@ -23,7 +30,7 @@ export async function gameRoutes(app: FastifyInstance) {
         lastName: tgUser.last_name,
         username: tgUser.username,
         gameState: {
-          create: { balance: 10 },
+          create: { balance: STARTING_GIFT },
         },
       },
       update: {
@@ -35,6 +42,22 @@ export async function gameRoutes(app: FastifyInstance) {
     })
 
     let gameState = user.gameState!
+
+    // Транзакция-«подарок» — создаём один раз для каждого нового игрока.
+    // Признак новизны: ещё ни одной транзакции в БД у этого юзера.
+    const txCount = await prisma.transaction.count({ where: { userId: user.id } })
+    if (txCount === 0) {
+      await prisma.transaction.create({
+        data: {
+          userId: user.id,
+          projectId: null,
+          projectName: 'Подарок от Хозяина Ярмарки',
+          type: 'GIFT',
+          amount: STARTING_GIFT,
+          day: gameState.currentDay,
+        },
+      }).catch(err => console.error('[starting-gift] tx insert failed:', err))
+    }
 
     // Сохраняем UTM-источник при первом входе через партнёрскую ссылку
     if (!user.utmSource && request.telegramStartParam?.startsWith('utm_')) {
@@ -106,7 +129,7 @@ export async function gameRoutes(app: FastifyInstance) {
       console.log(`[Referral] NOT attached (already attached or self-ref) user=${user.id}`)
     }
 
-    const [activeProjects, inboxProjects, closedProjectsCount, charterSessions, referralCount, amaSessionsStarted, amaSessionsCompleted] = await Promise.all([
+    const [activeProjects, inboxProjects, closedProjectsCount, charterSessions, referralCount, amaSessionsStarted, amaSessionsCompleted, minigameSessions] = await Promise.all([
       prisma.project.findMany({ where: { userId: user.id, isActive: true }, orderBy: { createdAt: 'desc' } }),
       prisma.project.findMany({ where: { userId: user.id, isInbox: true }, orderBy: { createdAt: 'desc' }, take: 10 }),
       prisma.project.count({ where: { userId: user.id, isClosed: true, investedAmountRubles: { gt: 0 } } }),
@@ -119,6 +142,11 @@ export async function gameRoutes(app: FastifyInstance) {
       prisma.amaSession.count({ where: { userId: user.id, messages: { some: { role: 'user' } } } }),
       // В скольких беседах дошёл до конца (10 вопросов задано)
       prisma.amaSession.count({ where: { userId: user.id, isComplete: true } }),
+      // Все сабмиченные мини-игры с архетипом — для статистики «сыграно с дельцом»
+      prisma.amaSession.findMany({
+        where: { userId: user.id, charterSubmittedAt: { not: null } },
+        select: { intuitionDelta: true, project: { select: { personaArchetype: true } } },
+      }),
     ])
 
     // Догенерим имена для дел, которые застряли с плейсхолдером
@@ -154,6 +182,37 @@ export async function gameRoutes(app: FastifyInstance) {
     const seenArchetypes = Array.from(new Set(postMortems.map(p => p.revealedArchetype)))
     const seenFates = Array.from(new Set(postMortems.map(p => p.fate)))
 
+    // Число «взятых дел» — основа для ранга с версии 4
+    const dealsCount = await prisma.project.count({
+      where: { userId: user.id, investedAmountRubles: { gt: 0 } },
+    })
+
+    // Статистика по мини-играм: сгруппирована по архетипу хозяина.
+    //   intuitionDelta хранит errorCount: 0 = идеал, 1 = победа, ≥2 = поражение.
+    //   На BOYARIN intuitionDelta — это FP+FN (по той же шкале).
+    const minigameStats: Record<string, { played: number; perfect: number; won: number; lost: number }> = {}
+    for (const s of minigameSessions as Array<{ intuitionDelta: number; project: { personaArchetype: string } }>) {
+      const arch = s.project.personaArchetype
+      if (!minigameStats[arch]) minigameStats[arch] = { played: 0, perfect: 0, won: 0, lost: 0 }
+      minigameStats[arch].played += 1
+      const err = s.intuitionDelta
+      if (err === 0)      minigameStats[arch].perfect += 1
+      else if (err === 1) minigameStats[arch].won += 1
+      else                minigameStats[arch].lost += 1
+    }
+
+    // Жетоны хозяев — внутриигровая мини-валюта по архетипам
+    const archetypeTokens = await computeArchetypeTokens(user.id)
+
+    // «Завязки» — уровни отношений (0..10) производные от lifetime earned-жетонов.
+    // Каждый уровень даёт +TIE_BONUS_PER_LEVEL/день к доходности дел этого
+    // архетипа. См. tiesService.ts.
+    const tieLevels: Record<string, number> = {}
+    for (const [arch, info] of Object.entries(archetypeTokens)) {
+      tieLevels[arch] = tieLevelFromEarned(info.earned)
+    }
+    const tiesTotal = totalTies(tieLevels)
+
     return {
       balance: gameState.balance,
       currentDay: gameState.currentDay,
@@ -163,6 +222,13 @@ export async function gameRoutes(app: FastifyInstance) {
       intuitionAccuracy,       // 0..1 или null, если грамот не было
       chartersSubmitted: charterSessions.length,
       closedProjectsCount,
+      dealsCount,              // число дел, в которые игрок вложил гроши
+      minigameStats,           // статистика игр по архетипам: {BURATINO: {played, perfect, won, lost}, ...}
+      archetypeTokens,         // {BURATINO: {earned, spent, balance, gamesPlayed, dealsTaken}, ...}
+      tieLevels,               // {BURATINO: 3, BOYARIN: 7, ...} — уровни Завязок (0..10)
+      tiesTotal,               // сумма всех уровней — для рейтинга «Связи»
+      tiesMaxLevel: MAX_TIE_LEVEL,
+      tiesBonusPerLevel: TIE_BONUS_PER_LEVEL,
       referralCount,           // число приведённых купцов
       weekStartWealth,         // снимок состояния на начало текущей недели
       userId: user.id,         // нужен для построения пригласительной ссылки
@@ -175,6 +241,7 @@ export async function gameRoutes(app: FastifyInstance) {
       pendingRankUp: gameState.pendingRankUp,
       preferredModel: gameState.preferredModel,
       preferredLanguage: gameState.preferredLanguage ?? 'ru',
+      newsEnabled: gameState.newsEnabled,
       lastAdvancedAt: gameState.lastAdvancedAt ? gameState.lastAdvancedAt.toISOString() : null,
       advanceCooldownMs: ADVANCE_COOLDOWN_MS,
       consecutiveAdvances: gameState.consecutiveAdvances,
@@ -294,16 +361,16 @@ export async function gameRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: 'Онбординг уже завершён' })
     }
 
-    const ONBOARDING_BONUS = 50
+    // Старт-бонус 50 г теперь начисляется СРАЗУ при создании GameState
+    // («Подарок от Хозяина Ярмарки» — см. /api/game upsert-блок). Здесь
+    // только переключаем флаг — без повторного начисления, чтобы не
+    // отдавать игроку 100 г за один онбординг.
     await prisma.gameState.update({
       where: { userId: user.id },
-      data: {
-        isOnboardingComplete: true,
-        balance: { increment: ONBOARDING_BONUS },
-      },
+      data: { isOnboardingComplete: true },
     })
 
-    return { success: true, bonusAwarded: ONBOARDING_BONUS }
+    return { success: true, bonusAwarded: 0 }
   })
 
   // GET /api/game/settings
@@ -327,20 +394,22 @@ export async function gameRoutes(app: FastifyInstance) {
         'google/gemini-3.1-flash-lite-preview',
       ]).optional(),
       preferredLanguage: z.enum(['ru', 'en']).optional(),
+      newsEnabled: z.boolean().optional(),
     }).safeParse(request.body)
     if (!body.success) return reply.status(400).send({ error: 'Invalid settings' })
 
     const user = await prisma.user.findUniqueOrThrow({
       where: { telegramId: String(tgUser.id) },
     })
-    const updateData: Record<string, string> = {}
+    const updateData: Record<string, string | boolean> = {}
     if (body.data.preferredModel) updateData.preferredModel = body.data.preferredModel
     if (body.data.preferredLanguage) updateData.preferredLanguage = body.data.preferredLanguage
+    if (typeof body.data.newsEnabled === 'boolean') updateData.newsEnabled = body.data.newsEnabled
     await prisma.gameState.update({
       where: { userId: user.id },
       data: updateData,
     })
-    return { success: true, preferredModel: body.data.preferredModel, preferredLanguage: body.data.preferredLanguage }
+    return { success: true, ...body.data }
   })
 
   // GET /api/leaderboard — топ-100 по общему состоянию
@@ -490,6 +559,85 @@ export async function gameRoutes(app: FastifyInstance) {
       })
       .filter((e): e is NonNullable<typeof e> => e !== null)
       .sort((a, b) => b.referralCount - a.referralCount)
+
+    const totalPlayers = ranked.length
+    const top100 = ranked.slice(0, 100).map((e, i) => ({ ...e, position: i + 1 }))
+
+    let myPosition: number | null = null
+    if (currentUser) {
+      const myIdx = ranked.findIndex(e => e.userId === currentUser.id)
+      if (myIdx >= 0) myPosition = myIdx + 1
+    }
+
+    return reply.send({ entries: top100, myPosition, totalPlayers })
+  })
+
+  // GET /api/leaderboard/ties — «связи»: суммарный уровень Завязок со всеми дельцами
+  app.get('/api/leaderboard/ties', { preHandler: telegramAuthHook }, async (request, reply) => {
+    const tgUser = request.telegramUser
+    const currentUser = await prisma.user.findUnique({
+      where: { telegramId: String(tgUser.id) },
+      select: { id: true },
+    })
+
+    // Считаем уровни сразу для всех игроков одним блоком (без 1000 запросов
+    // computeTieLevels). Источники: AmaSession (для подсчёта сыгранных мини-игр),
+    // Project (для подсчёта взятых дел и знакомств) → дальше группируем по
+    // userId × archetype и применяем ту же формулу что в tokenService.
+    const TOKENS_PER_GAMES = 10
+    const TOKENS_PER_DEALS = 5
+
+    const [allUsers, allSessions, allInvestedProjects, allProjects] = await Promise.all([
+      prisma.gameState.findMany({
+        where: { isOnboardingComplete: true },
+        include: { user: { select: { id: true, firstName: true, username: true } } },
+      }),
+      prisma.amaSession.findMany({
+        where: { charterSubmittedAt: { not: null } },
+        select: { userId: true, project: { select: { personaArchetype: true } } },
+      }),
+      prisma.project.findMany({
+        where: { investedAmountRubles: { gt: 0 } },
+        select: { userId: true, personaArchetype: true },
+      }),
+      prisma.project.findMany({ select: { userId: true, personaArchetype: true } }),
+    ])
+
+    // userId → archetype → counters
+    const stats = new Map<number, Record<string, { games: number; deals: number; met: boolean }>>()
+    const touch = (uid: number, arch: string) => {
+      let m = stats.get(uid)
+      if (!m) { m = {}; stats.set(uid, m) }
+      let r = m[arch]
+      if (!r) { r = { games: 0, deals: 0, met: false }; m[arch] = r }
+      return r
+    }
+    for (const s of allSessions) touch(s.userId, s.project.personaArchetype).games += 1
+    for (const p of allInvestedProjects) touch(p.userId, p.personaArchetype).deals += 1
+    for (const p of allProjects) touch(p.userId, p.personaArchetype).met = true
+
+    // Свернуть в суммарный уровень Завязок по игроку
+    const ranked = allUsers
+      .map(gs => {
+        const m = stats.get(gs.userId) ?? {}
+        let totalLvl = 0
+        for (const r of Object.values(m)) {
+          const earned = (r.met ? 1 : 0)
+            + Math.floor(r.games / TOKENS_PER_GAMES)
+            + Math.floor(r.deals / TOKENS_PER_DEALS)
+          totalLvl += Math.min(MAX_TIE_LEVEL, earned)
+        }
+        return {
+          userId: gs.userId,
+          firstName: gs.user.firstName,
+          username: gs.user.username ?? null,
+          investorRank: gs.investorRank,
+          tiesTotal: totalLvl,
+          isMe: currentUser ? gs.userId === currentUser.id : false,
+        }
+      })
+      .filter(e => e.tiesTotal > 0)
+      .sort((a, b) => b.tiesTotal - a.tiesTotal)
 
     const totalPlayers = ranked.length
     const top100 = ranked.slice(0, 100).map((e, i) => ({ ...e, position: i + 1 }))
@@ -662,21 +810,33 @@ export async function gameRoutes(app: FastifyInstance) {
         firstName: true,
         username: true,
         referralBonusGranted: true,
-        gameState: { select: { intuitionScore: true, currentDay: true } },
+        gameState: { select: { currentDay: true } },
       },
       orderBy: { createdAt: 'asc' },
     })
 
+    // В версии 4.0 бонус начисляется по числу ВЗЯТЫХ дел (Project с
+    // investedAmountRubles > 0), а не по «чуйке». Считаем для каждого реферала.
+    const dealsCounts = await Promise.all(
+      referred.map(r =>
+        prisma.project.count({
+          where: { userId: r.id, investedAmountRubles: { gt: 0 } },
+        })
+      )
+    )
+
     return reply.send({
-      referrals: referred.map(r => ({
+      referrals: referred.map((r, idx) => ({
         userId: r.id,
         firstName: r.firstName,
         username: r.username ?? null,
         bonusGranted: r.referralBonusGranted,
-        intuitionScore: r.gameState?.intuitionScore ?? 0,
+        // Поле оставлено intuitionScore для совместимости со старым клиентом —
+        // фактически тут число взятых дел.
+        intuitionScore: dealsCounts[idx],
         currentDay: r.gameState?.currentDay ?? 0,
       })),
-      threshold: REFERRAL_INTUITION_THRESHOLD,
+      threshold: REFERRAL_DEALS_THRESHOLD,
     })
   })
 
