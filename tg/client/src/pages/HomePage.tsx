@@ -191,6 +191,20 @@ export function HomePage() {
     }
   }, [musicMuted, soundVolume])
 
+  // Предзагрузка баннеров инбокса. После advance-day или возврата на главную
+  // карточки рендерятся мгновенно, но <img src=banner.webp> ещё качается
+  // 200-500мс — видно «пустую» парчмент-карточку без баннера и текста.
+  // Получаем все URL'ы из gameState.inboxProjects и просим браузер положить
+  // их в кэш. К моменту рендера InboxFeedCard картинки уже там.
+  useEffect(() => {
+    const urls = gameState?.inboxProjects?.map(p => p.bannerImageUrl).filter(Boolean) as string[] | undefined
+    if (!urls || urls.length === 0) return
+    for (const url of urls) {
+      const img = new Image()
+      img.src = url
+    }
+  }, [gameState?.inboxProjects])
+
   useEffect(() => {
     if (gameState?.pendingRankUp) playSound('rankup')
   }, [gameState?.pendingRankUp])
@@ -1391,7 +1405,7 @@ export function HomePage() {
               <InboxFeedCard
                 key={p.id}
                 project={p}
-                delay={0.3 + i * 0.06}
+                delay={i * 0.04}
                 onPress={() => { tgHaptic?.impactOccurred('light'); navigate(`/charter/${p.id}`) }}
               />
             ))}
@@ -2023,13 +2037,21 @@ function InboxFeedCard({ project, delay, onPress }: { project: ProjectDTO; delay
   const typeLabels = t.inbox.types as Record<string, string>
   const typeLabel = typeLabels[project.type] ?? project.type
   return (
-    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay }}>
+    // initial.opacity=0.001 (а не 0) — карточка остаётся «видимой» с самой
+    // первой кадровой выкладки: рендерится её пергаментный фон и текст.
+    // Без этого при возврате с другой вкладки/после advance-day полсекунды
+    // показывался только cream-фон без содержимого (см. видео-баг).
+    // Анимация по-прежнему даёт лёгкий fade-in за 0.18с — но контент уже
+    // прочитываем с момента появления.
+    <motion.div initial={{ opacity: 0.001, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay, duration: 0.18 }}>
       <FairyCard onClick={onPress} style={{ marginBottom: spacing.sm, cursor: 'pointer', padding: spacing.md }}>
         <div style={{ display: 'flex', gap: spacing.md, alignItems: 'center' }}>
           {project.bannerImageUrl && (
             <img
               src={project.bannerImageUrl}
               alt={project.name}
+              loading="eager"
+              decoding="async"
               style={{
                 width: 64, height: 64, objectFit: 'cover',
                 borderRadius: 10, flexShrink: 0,
