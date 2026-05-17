@@ -382,16 +382,22 @@ export function HomePage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['gameState'] }),
   })
 
-  // Показываем тур при первом входе (новый игрок) или при обновлении до v3.0 (старый игрок).
-  // Ключ 'onboarding_v3_seen' сбрасывает флаг для всех при мажорном обновлении.
+  // Показываем тур при первом входе. Один раз за модульную сессию —
+  // флаг tutorialChecked гарантирует, что повторные refetch gameState
+  // не дёрнут эффект и не вызовут мерцание (был баг: setShowTutorial(true)
+  // вызывался каждый раз когда gameState.isOnboardingComplete менял
+  // значение, при том что в localStorage уже стоит onboarding_v3_seen).
+  const tutorialChecked = useRef(false)
   useEffect(() => {
     if (!gameState) return
+    if (tutorialChecked.current) return
     const seenV3 = !!localStorage.getItem('onboarding_v3_seen')
-    if ((!gameState.isOnboardingComplete || !seenV3) && !showTutorial) {
+    if (!gameState.isOnboardingComplete || !seenV3) {
       setShowTutorial(true)
     }
+    tutorialChecked.current = true
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameState?.isOnboardingComplete])
+  }, [gameState])
 
   // Запускаем пошаговый UI-тур после завершения онбординга (один раз)
   useEffect(() => {

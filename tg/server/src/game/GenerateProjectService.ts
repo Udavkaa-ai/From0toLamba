@@ -47,10 +47,20 @@ export async function generateProject(
   // (isInbox=true, isPreloaded=false внутри materializeSponsorProject),
   // даже если этот вызов был фоновым из advance-day preload-цикла.
   if (!overrideFate && Math.random() < SPONSOR_CHANCE) {
-    const campaign = await pickRandomActiveCampaign(userId)
-    if (campaign) {
-      const sponsored = await materializeSponsorProject(userId, campaign)
-      return sponsored.id
+    // Защита от дублей: если у игрока уже есть какой-то VIP в инбоксе или
+    // в активных, новый VIP не материализуется. Иначе один advance-day
+    // мог накидать 2-3 одинаковых сразу — параллельные generateProject()
+    // все попадали в один pickRandomActiveCampaign() и брали ту же
+    // кампанию (она ещё не была seen, потому что Project не создан).
+    const existingSponsor = await prisma.project.count({
+      where: { userId, isSponsor: true, OR: [{ isInbox: true }, { isActive: true }] },
+    })
+    if (existingSponsor === 0) {
+      const campaign = await pickRandomActiveCampaign(userId)
+      if (campaign) {
+        const sponsored = await materializeSponsorProject(userId, campaign)
+        return sponsored.id
+      }
     }
   }
 

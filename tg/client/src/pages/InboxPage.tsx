@@ -21,19 +21,30 @@ export function InboxPage() {
     refetchInterval: 15_000,
   })
 
-  // VIP-оверлей при первом появлении спонсорского дела (для каждого projectId
-  // один раз, дальше localStorage его помнит). Показываем самое свежее
-  // непросмотренное VIP-дело в инбоксе.
+  // VIP-оверлей при первом появлении спонсорского дела. Показываем макс
+  // ОДИН раз за визит на страницу — даже если в инбоксе несколько
+  // непросмотренных VIP (старая версия открывала оверлей цепочкой по
+  // 4.2с каждый, инбокс мелькал между ними).
   const [vipShow, setVipShow] = useState<ProjectDTO | null>(null)
+  const [vipShownThisVisit, setVipShownThisVisit] = useState(false)
   useEffect(() => {
-    if (vipShow) return // уже показываем
+    if (vipShow || vipShownThisVisit) return
     const seen = getSeenVipIds()
     const unseenVip = projects.find(p => p.isSponsor && !seen.has(p.id))
-    if (unseenVip) setVipShow(unseenVip)
-  }, [projects, vipShow])
+    if (unseenVip) {
+      setVipShow(unseenVip)
+      setVipShownThisVisit(true)
+    }
+  }, [projects, vipShow, vipShownThisVisit])
 
   const closeVip = () => {
-    if (vipShow) markVipSeen(vipShow.id)
+    if (vipShow) {
+      // Помечаем ВСЕ текущие VIP в инбоксе как seen — чтоб оверлей не
+      // перезапускался для второго VIP в той же пачке.
+      for (const p of projects) {
+        if (p.isSponsor) markVipSeen(p.id)
+      }
+    }
     setVipShow(null)
   }
 
