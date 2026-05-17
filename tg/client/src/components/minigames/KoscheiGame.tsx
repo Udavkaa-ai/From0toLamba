@@ -168,9 +168,14 @@ export function KoscheiGame({ seed, onComplete, restoredErrorCount }: KoscheiGam
     // После того как пирамида построилась — каждый эмодзи независимо
     // запускает цикл «увеличивается + растворяется» (bloom-fade).
     // Период одного цикла одного эмодзи + сдвиг фазы между ними = волна.
-    const BLOOM_DUR = 1.8
-    const BLOOM_PHASE_OFFSET = 0.28
-    const BLOOM_SCALE_TO   = 1.55
+    //
+    // SCALE_TO небольшой (1.12) — эмодзи разных уровней пирамиды стоят
+    // в ~70px друг от друга, при крупном bloom (1.5+) фигуры физически
+    // налезали друг на друга визуально. 1.12 — едва заметное «дыхание»,
+    // которого хватает чтобы эффект чувствовался, но без перекрытий.
+    const BLOOM_DUR = 2.4
+    const BLOOM_PHASE_OFFSET = 0.4
+    const BLOOM_SCALE_TO   = 1.12
 
     const cx = W / 2
     const baseY = H * 0.82
