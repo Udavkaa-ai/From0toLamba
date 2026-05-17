@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ScreenBackground, PAGE_BG } from '@/components/ScreenBackground'
 import { FairyCard, OrnamentDivider, SkeletonCard } from '@/components/FairyCard'
 import { PageTitle, PageSubtitle } from '@/components/PageTitle'
@@ -205,6 +206,7 @@ function LeaderboardBlock({ today, myTelegramId, t }: {
   t: ReturnType<typeof useT>
 }) {
   const [tab, setTab] = useState<'wealth' | 'ties'>('wealth')
+  const navigate = useNavigate()
   const lb = today.leaderboard
   const { data: tiesData } = useQuery({
     queryKey: ['leaderboard', 'ties'],
@@ -387,6 +389,25 @@ function LeaderboardBlock({ today, myTelegramId, t }: {
           Ты на {tiesData.myPosition} месте из {tiesData.totalPlayers}
         </div>
       )}
+
+      {/* Зал славы — постоянный архив прошлых сезонов */}
+      <button
+        onClick={() => navigate('/hall-of-fame/1')}
+        style={{
+          marginTop: spacing.md,
+          width: '100%', padding: '10px 12px',
+          background: 'rgba(20,10,2,0.55)',
+          border: `1px solid ${colors.fairyGold}66`,
+          borderRadius: 10,
+          color: colors.fairyGold,
+          fontSize: 13, fontWeight: 700,
+          cursor: 'pointer',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8,
+        }}
+      >
+        <span>🏛 Зал славы · сезон 1</span>
+        <span style={{ fontSize: 16 }}>→</span>
+      </button>
     </FairyCard>
   )
 }

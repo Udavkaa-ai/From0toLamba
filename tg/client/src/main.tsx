@@ -10,6 +10,7 @@ import { CharterPage } from './pages/CharterPage'
 import { PortfolioPage } from './pages/PortfolioPage'
 import { StatsPage } from './pages/StatsPage'
 import { LeaderboardPage } from './pages/LeaderboardPage'
+import { HallOfFamePage } from './pages/HallOfFamePage'
 import { TodayPage } from './pages/TodayPage'
 import { RelationshipsPage } from './pages/RelationshipsPage'
 import { RegistryPage } from './pages/RegistryPage'
@@ -51,6 +52,8 @@ function AppShell() {
             <Route path="/portfolio" element={<PortfolioPage />} />
             <Route path="/stats" element={<StatsPage />} />
             <Route path="/leaderboard" element={<LeaderboardPage />} />
+            <Route path="/hall-of-fame" element={<HallOfFamePage />} />
+            <Route path="/hall-of-fame/:seasonNumber" element={<HallOfFamePage />} />
             <Route path="/today" element={<TodayPage />} />
             <Route path="/relationships" element={<RelationshipsPage />} />
             <Route path="/registry" element={<RegistryPage />} />

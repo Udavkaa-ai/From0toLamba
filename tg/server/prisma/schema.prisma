@@ -367,3 +367,19 @@ model ChatMessage {
   @@index([createdAt])
   @@index([userId])
 }
+
+// Архив сезонов: финальный топ-100 каждого рейтинга на момент закрытия
+// сезона. Хранится JSON-блобом в той же форме, что отдают эндпоинты
+// `/api/leaderboard/*`, чтобы при включении ARCHIVE_SEASON_VIEW env-var
+// серверу не нужно было пересчитывать ничего — просто отдать сохранённое.
+// Заполняется бот-командой /snapshot_season <N> ДО /resetall.
+model SeasonArchive {
+  id            Int      @id @default(autoincrement())
+  seasonNumber  Int
+  category      String   // 'WEALTH' | 'TIES' | 'ACHIEVEMENTS' | 'REFERRALS' | 'WEALTH_TODAY'
+  totalPlayers  Int
+  entries       Json
+  capturedAt    DateTime @default(now())
+
+  @@unique([seasonNumber, category])
+}

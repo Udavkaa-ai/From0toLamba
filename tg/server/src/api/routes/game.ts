@@ -9,6 +9,7 @@ import { generateOnboardingProject } from '../../game/GenerateProjectService'
 import { toPublicDTO } from '../../game/projectUtils'
 import { computeArchetypeTokens } from '../../game/tokenService'
 import { computeTieLevels, totalTies, MAX_TIE_LEVEL, TIE_BONUS_PER_LEVEL, tieLevelFromEarned } from '../../game/tiesService'
+import { getArchivedLeaderboard, findMyPositionInArchive } from '../../game/seasonArchive'
 
 export async function gameRoutes(app: FastifyInstance) {
 
@@ -421,6 +422,23 @@ export async function gameRoutes(app: FastifyInstance) {
       select: { id: true },
     })
 
+    // Архивный режим (ARCHIVE_SEASON_VIEW в env) — отдаём заморозку
+    // финального топа сезона. Живые цифры не считаются.
+    const archived = await getArchivedLeaderboard('WEALTH')
+    if (archived) {
+      const myPosition = findMyPositionInArchive(archived.entries, currentUser?.id ?? null, String(tgUser.id))
+      const entriesWithMe = archived.entries.map(e => ({
+        ...e,
+        isMe: currentUser ? e.userId === currentUser.id : false,
+      }))
+      return reply.send({
+        entries: entriesWithMe,
+        myPosition,
+        totalPlayers: archived.totalPlayers,
+        totalAllPlayers: archived.totalPlayers,
+      })
+    }
+
     const [gameStates, projectSums, totalAllPlayers] = await Promise.all([
       prisma.gameState.findMany({
         where: { isOnboardingComplete: true },
@@ -530,6 +548,16 @@ export async function gameRoutes(app: FastifyInstance) {
       select: { id: true },
     })
 
+    const archived = await getArchivedLeaderboard('REFERRALS')
+    if (archived) {
+      const myPosition = findMyPositionInArchive(archived.entries, currentUser?.id ?? null, String(tgUser.id))
+      const entriesWithMe = archived.entries.map(e => ({
+        ...e,
+        isMe: currentUser ? e.userId === currentUser.id : false,
+      }))
+      return reply.send({ entries: entriesWithMe, myPosition, totalPlayers: archived.totalPlayers })
+    }
+
     // Группируем рефералов по referrerId
     const groups = await prisma.user.groupBy({
       by: ['referrerId'],
@@ -579,6 +607,16 @@ export async function gameRoutes(app: FastifyInstance) {
       where: { telegramId: String(tgUser.id) },
       select: { id: true },
     })
+
+    const archived = await getArchivedLeaderboard('TIES')
+    if (archived) {
+      const myPosition = findMyPositionInArchive(archived.entries, currentUser?.id ?? null, String(tgUser.id))
+      const entriesWithMe = archived.entries.map(e => ({
+        ...e,
+        isMe: currentUser ? e.userId === currentUser.id : false,
+      }))
+      return reply.send({ entries: entriesWithMe, myPosition, totalPlayers: archived.totalPlayers })
+    }
 
     // Считаем уровни сразу для всех игроков одним блоком (без 1000 запросов
     // computeTieLevels). Источники: AmaSession (для подсчёта сыгранных мини-игр),
@@ -741,6 +779,16 @@ export async function gameRoutes(app: FastifyInstance) {
       select: { id: true },
     })
 
+    const archived = await getArchivedLeaderboard('ACHIEVEMENTS')
+    if (archived) {
+      const myPosition = findMyPositionInArchive(archived.entries, currentUser?.id ?? null, String(tgUser.id))
+      const entriesWithMe = archived.entries.map(e => ({
+        ...e,
+        isMe: currentUser ? e.userId === currentUser.id : false,
+      }))
+      return reply.send({ entries: entriesWithMe, myPosition, totalPlayers: archived.totalPlayers })
+    }
+
     const [gameStates, projectSums, closedCounts, charterCounts] = await Promise.all([
       prisma.gameState.findMany({
         where: { isOnboardingComplete: true },
@@ -884,5 +932,35 @@ export async function gameRoutes(app: FastifyInstance) {
     const { generateOnboardingProject: genOnboarding } = await import('../../game/GenerateProjectService')
     genOnboarding(user.id, preferredModel).catch(console.error)
     return { success: true }
+  })
+
+  // GET /api/season-archive/:seasonNumber — «Зал славы» сезона.
+  // Отдаёт сразу все 4 категории (Злато / Связи / Достижения / Сваты)
+  // из SeasonArchive — клиент рисует страницу с табами. Если архива
+  // на этот сезон нет — 404. Эндпоинт работает независимо от
+  // ARCHIVE_SEASON_VIEW env-var (зал славы — постоянная история).
+  app.get('/api/season-archive/:seasonNumber', { preHandler: telegramAuthHook }, async (request, reply) => {
+    const params = request.params as { seasonNumber: string }
+    const n = parseInt(params.seasonNumber, 10)
+    if (!Number.isFinite(n) || n <= 0) {
+      return reply.status(400).send({ error: 'BAD_SEASON' })
+    }
+    const rows = await prisma.seasonArchive.findMany({
+      where: { seasonNumber: n, category: { in: ['WEALTH', 'TIES', 'ACHIEVEMENTS', 'REFERRALS'] } },
+    })
+    if (rows.length === 0) {
+      return reply.status(404).send({ error: 'NOT_ARCHIVED' })
+    }
+
+    const byCategory: Record<string, { entries: any[]; totalPlayers: number; capturedAt: string }> = {}
+    for (const r of rows) {
+      byCategory[r.category] = {
+        entries: r.entries as any[],
+        totalPlayers: r.totalPlayers,
+        capturedAt: r.capturedAt.toISOString(),
+      }
+    }
+
+    return reply.send({ seasonNumber: n, categories: byCategory })
   })
 }

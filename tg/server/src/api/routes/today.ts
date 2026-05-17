@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import { prisma } from '../../db/prisma'
 import { telegramAuthHook } from '../../middleware/telegramAuth'
 import { touchLoginStreak, getTodayState, claimDaily } from '../../game/todayService'
+import { getArchivedLeaderboard } from '../../game/seasonArchive'
 
 export async function todayRoutes(app: FastifyInstance) {
   // GET /api/today — обновляет стрик (если новый день) + возвращает состояние +
@@ -11,6 +12,22 @@ export async function todayRoutes(app: FastifyInstance) {
     const user = await prisma.user.findUniqueOrThrow({ where: { telegramId: String(tgUser.id) } })
     await touchLoginStreak(user.id)
     const state = await getTodayState(user.id)
+
+    // Если включён архивный режим (ARCHIVE_SEASON_VIEW в env) — отдаём
+    // замороженный финальный топ сезона вместо живых вычислений.
+    const archived = await getArchivedLeaderboard('WEALTH_TODAY')
+    if (archived) {
+      const topTen = archived.entries.slice(0, 10)
+      const myIndexInArchive = archived.entries.findIndex((r: any) => r.telegramId === String(tgUser.id))
+      return {
+        ...state,
+        leaderboard: {
+          top: topTen,
+          myPosition: myIndexInArchive >= 0 ? myIndexInArchive + 1 : null,
+          totalPlayers: archived.totalPlayers,
+        },
+      }
+    }
 
     // Топ-10 по общему состоянию (баланс + стоимость активных дел).
     const all = await prisma.user.findMany({

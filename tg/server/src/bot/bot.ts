@@ -196,18 +196,22 @@ function setupHandlers(bot: Bot) {
   })
 
   const ADMIN_TELEGRAM_ID = 424553547
-  const RESET_MARKER_TELEGRAM_ID = 'system:reset_v1_may2025'
+  // Маркер сброса — ключ к запуску. Каждый новый сезон = новый маркер,
+  // чтобы /resetall можно было повторить при смене сезона. Меняем
+  // NEW_SEASON_NUMBER env-var на 2/3/... перед каждым сезонным сбросом.
+  const newSeasonNumber = parseInt(process.env.NEW_SEASON_NUMBER ?? '2', 10)
+  const RESET_MARKER_TELEGRAM_ID = `system:reset_marker_s${newSeasonNumber}`
 
   bot.command('resetall', async (ctx) => {
     if (ctx.from?.id !== ADMIN_TELEGRAM_ID) return
 
     const marker = await prisma.user.findFirst({ where: { telegramId: RESET_MARKER_TELEGRAM_ID } })
     if (marker) {
-      await ctx.reply('⚠️ Сброс уже был выполнён ранее. Повторный запуск заблокирован.')
+      await ctx.reply(`⚠️ Сброс для сезона ${newSeasonNumber} уже был выполнен. Повторный запуск заблокирован. (Чтобы запустить ещё раз для нового сезона — задай новый NEW_SEASON_NUMBER в Railway env.)`)
       return
     }
 
-    await ctx.reply('🔄 Запускаю глобальный сброс...')
+    await ctx.reply(`🔄 Запускаю глобальный сброс (старт сезона ${newSeasonNumber})...`)
 
     try {
       const users = await prisma.user.findMany({ include: { gameState: true } })
@@ -267,6 +271,30 @@ function setupHandlers(bot: Bot) {
     } catch (err) {
       console.error('[resetall] Error:', err)
       await ctx.reply('❌ Ошибка при сбросе. Проверьте логи.')
+    }
+  })
+
+  // /snapshot_season <N> — снять финальный топ-100 каждого рейтинга в
+  // SeasonArchive для последующего «Зала славы». Команда идемпотентна:
+  // повторный вызов перезапишет архив того же сезона. Использовать
+  // ДО /resetall (иначе данные уже стёрты).
+  bot.command('snapshot_season', async (ctx) => {
+    if (ctx.from?.id !== ADMIN_TELEGRAM_ID) return
+    const arg = (ctx.message?.text ?? '').replace(/^\/snapshot_season(@\w+)?\s*/, '').trim()
+    const seasonNumber = parseInt(arg, 10)
+    if (!Number.isFinite(seasonNumber) || seasonNumber <= 0) {
+      await ctx.reply('Использование: /snapshot_season <N>, например /snapshot_season 1')
+      return
+    }
+    await ctx.reply(`📸 Снимаю топ-100 для сезона ${seasonNumber}...`)
+    try {
+      const { captureSeasonSnapshot } = await import('../game/seasonArchive')
+      const counts = await captureSeasonSnapshot(seasonNumber)
+      const lines = Object.entries(counts).map(([k, v]) => `${k}: ${v}`)
+      await ctx.reply(`✅ Сезон ${seasonNumber} заархивирован.\n\n${lines.join('\n')}`)
+    } catch (err: any) {
+      console.error('[snapshot_season] Error:', err)
+      await ctx.reply(`❌ Ошибка: ${err?.message ?? 'unknown'}`)
     }
   })
 

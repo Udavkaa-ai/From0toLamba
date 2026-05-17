@@ -240,6 +240,19 @@ export interface AchievementLeaderboardDTO {
   totalPlayers: number
 }
 
+// Зал славы. Сервер отдаёт сразу все 4 категории (Злато / Связи /
+// Достижения / Сваты) в одном ответе. Каждая категория — массив
+// entries в форме соответствующего leaderboard DTO + totalPlayers.
+export interface SeasonArchiveDTO {
+  seasonNumber: number
+  categories: {
+    WEALTH?:       { entries: (LeaderboardEntryDTO & { position: number })[];          totalPlayers: number; capturedAt: string }
+    TIES?:         { entries: (TiesLeaderboardEntryDTO)[];                              totalPlayers: number; capturedAt: string }
+    ACHIEVEMENTS?: { entries: (AchievementLeaderboardEntryDTO & { position: number })[]; totalPlayers: number; capturedAt: string }
+    REFERRALS?:    { entries: (ReferralLeaderboardEntryDTO)[];                          totalPlayers: number; capturedAt: string }
+  }
+}
+
 export interface MyReferralEntryDTO {
   userId: number
   firstName: string
@@ -401,6 +414,11 @@ export const api = {
     getByIntuition: () => apiClient.get<LeaderboardDTO>('/leaderboard/intuition').then(r => r.data),
     getByDays: () => apiClient.get<LeaderboardDTO>('/leaderboard/days').then(r => r.data),
     getByAchievements: () => apiClient.get<AchievementLeaderboardDTO>('/leaderboard/achievements').then(r => r.data),
+  },
+
+  seasonArchive: {
+    get: (seasonNumber: number) =>
+      apiClient.get<SeasonArchiveDTO>(`/season-archive/${seasonNumber}`).then(r => r.data),
   },
 
   referrals: {
