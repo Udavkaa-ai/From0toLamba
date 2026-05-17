@@ -1338,42 +1338,43 @@ export function HomePage() {
             Главная — про новые предложения, статус казны и отношения с дельцами. */}
 
         {/* Летопись закрытых дел — раньше была глубоко в Казне, перенесли на
-            главную чтобы PostMortem'ы были на виду. CTA-стиль как у "Принять
-            испытание" — золотой градиент, тёмная сепия. */}
-        {gameState.closedProjectsCount > 0 && (
-          <motion.button
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => { tgHaptic?.impactOccurred('light'); navigate('/registry') }}
-            style={{
-              width: '100%',
-              marginTop: spacing.md,
-              padding: '12px 16px',
-              background: gradients.cta,
-              border: `1.5px solid ${colors.ctaBorder}`,
-              borderRadius: '12px',
-              color: colors.ctaText,
-              fontWeight: 700,
-              fontSize: '14px',
-              cursor: 'pointer',
-              letterSpacing: '0.02em',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              fontFamily: 'inherit',
-              boxShadow: '0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,235,170,0.4)',
-            }}
-          >
-            <span style={{ fontSize: 18 }}>📜</span>
-            <span>{t.registry.title}</span>
+            главную чтобы PostMortem'ы были на виду. Показывается всегда —
+            страница сама умеет «Летопись пуста», игрок видит куда идти за
+            историей. */}
+        <motion.button
+          initial={{ opacity: 0.001, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05, duration: 0.18 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={() => { tgHaptic?.impactOccurred('light'); navigate('/registry') }}
+          style={{
+            width: '100%',
+            marginTop: spacing.md,
+            padding: '12px 16px',
+            background: gradients.cta,
+            border: `1.5px solid ${colors.ctaBorder}`,
+            borderRadius: '12px',
+            color: colors.ctaText,
+            fontWeight: 700,
+            fontSize: '14px',
+            cursor: 'pointer',
+            letterSpacing: '0.02em',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            fontFamily: 'inherit',
+            boxShadow: '0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,235,170,0.4)',
+          }}
+        >
+          <span style={{ fontSize: 18 }}>📜</span>
+          <span>{t.registry.title}</span>
+          {gameState.closedProjectsCount > 0 && (
             <span style={{ fontSize: 11, opacity: 0.75, fontWeight: 600 }}>
               ({gameState.closedProjectsCount})
             </span>
-          </motion.button>
-        )}
+          )}
+        </motion.button>
 
         {/* Входящие — компактная лента из топ-2 + ссылка на полный список */}
         {gameState.inboxProjects.length > 0 && (
