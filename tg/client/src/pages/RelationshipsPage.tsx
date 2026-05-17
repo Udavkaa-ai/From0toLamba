@@ -8,6 +8,7 @@ import { MerchantToken, ARCHETYPE_TINT } from '@/components/MerchantToken'
 import { useGameStore } from '@/stores/gameStore'
 import { MINIGAME_INFO } from '@/components/minigames/info'
 import { colors, spacing , gradients } from '@/theme'
+import { getTheme } from '@/theme/colors'
 import { useT } from '@/i18n'
 
 const ARCHETYPES = ['BURATINO', 'BOYARIN', 'KOLOBOK', 'KOSCHEI', 'ZOLUSHKA', 'BABA_YAGA', 'IVAN_DURAK'] as const
@@ -31,6 +32,37 @@ const ARCHETYPE_EMOJI: Record<Archetype, string> = {
   ZOLUSHKA: '👠',
   BABA_YAGA: '🧙‍♀️',
   IVAN_DURAK: '🃏',
+}
+
+function avatarUrl(arch: Archetype): string {
+  const slug = arch.toLowerCase()
+  const suffix = getTheme() === 'fairy' ? '_LIGHT' : ''
+  return `/avatars/${slug}${suffix}.webp`
+}
+
+/**
+ * Круглая аватарка хозяина. Источник — /avatars/<slug>(_LIGHT).webp.
+ * Пока файла нет (или не сгенерили) — onError откатывает к эмодзи,
+ * страница не ломается.
+ */
+function ArchetypeAvatar({ archetype, size }: { archetype: Archetype; size: number }) {
+  const [failed, setFailed] = useState(false)
+  if (failed) {
+    return <div style={{ fontSize: Math.round(size * 0.7), lineHeight: 1 }}>{ARCHETYPE_EMOJI[archetype]}</div>
+  }
+  return (
+    <img
+      src={avatarUrl(archetype)}
+      alt=""
+      onError={() => setFailed(true)}
+      style={{
+        width: size, height: size, borderRadius: '50%',
+        objectFit: 'cover', display: 'block',
+        // Лёгкая золотая обводка как в эталонной плитке.
+        boxShadow: `inset 0 0 0 2px ${colors.fairyGold}55`,
+      }}
+    />
+  )
 }
 
 export function RelationshipsPage() {
@@ -93,7 +125,7 @@ export function RelationshipsPage() {
                   position: 'relative',
                 }}
               >
-                <div style={{ fontSize: 32, lineHeight: 1 }}>{ARCHETYPE_EMOJI[arch]}</div>
+                <ArchetypeAvatar archetype={arch} size={56} />
                 <div style={{
                   color: ARCHETYPE_TINT[arch], fontSize: 10, fontWeight: 700, letterSpacing: '0.04em',
                 }}>
@@ -209,7 +241,7 @@ function RelationshipDetails({ archetype, onClose }: { archetype: Archetype; onC
           display: 'flex', alignItems: 'center', gap: spacing.md, marginBottom: spacing.md,
           paddingRight: 44,  // не наезжать на X-кнопку
         }}>
-          <div style={{ fontSize: 56, lineHeight: 1 }}>{ARCHETYPE_EMOJI[archetype]}</div>
+          <ArchetypeAvatar archetype={archetype} size={72} />
           <div style={{ flex: 1 }}>
             <div style={{ color: tint, fontSize: 22, fontWeight: 800 }}>
               {SHORT_NAME[archetype]}
