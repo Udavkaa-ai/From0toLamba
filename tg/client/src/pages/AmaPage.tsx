@@ -7,6 +7,7 @@ import { playSound } from '@/sounds'
 import { api } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing, gradients } from '@/theme'
+import { getTheme } from '@/theme/colors'
 import { CoinIcon } from '@/components/icons'
 import { useT } from '@/i18n'
 
@@ -27,7 +28,10 @@ function pickSessionQuestions(allQuestions: string[], sessionId: string | undefi
 function personaBgUrl(archetype: string | undefined): string | null {
   if (!archetype) return null
   const slug = archetype.toLowerCase()
-  return `/personas/${slug}.png`
+  // Сказочная тема использует параллельный набор солнечных портретов
+  // (<slug>_LIGHT.png). См. tools/banners/personas.json + generate_personas.py.
+  const suffix = getTheme() === 'fairy' ? '_LIGHT' : ''
+  return `/personas/${slug}${suffix}.png`
 }
 
 export function AmaPage() {
