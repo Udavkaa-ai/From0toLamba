@@ -29,9 +29,9 @@ function personaBgUrl(archetype: string | undefined): string | null {
   if (!archetype) return null
   const slug = archetype.toLowerCase()
   // Сказочная тема использует параллельный набор солнечных портретов
-  // (<slug>_LIGHT.png). См. tools/banners/personas.json + generate_personas.py.
+  // (<slug>_LIGHT.webp). См. tools/banners/personas.json + generate_personas.py.
   const suffix = getTheme() === 'fairy' ? '_LIGHT' : ''
-  return `/personas/${slug}${suffix}.png`
+  return `/personas/${slug}${suffix}.webp`
 }
 
 export function AmaPage() {
