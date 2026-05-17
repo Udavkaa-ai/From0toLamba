@@ -436,8 +436,13 @@ export function KolobokGame({ seed, onComplete, restoredErrorCount }: KolobokGam
       if (!box.visible) {
         const innerCtr: Container = (box as any).__inner
         const cellH: number = (box as any).__cellH
-        // Удаляем старого персонажа из inner-контейнера и кладём нового
-        innerCtr.removeChildren()
+        // Удаляем старого персонажа из inner-контейнера и кладём нового.
+        // КРИТИЧЕСКОЕ: destroy({children:true}) — иначе Text glyph-атлас
+        // эмодзи не освобождается. На длинной игре копится ~50-80 Text'ов.
+        const oldKids = innerCtr.removeChildren()
+        for (const k of oldKids) {
+          try { k.destroy({ children: true }) } catch { /* noop */ }
+        }
         addCharacterEmoji(innerCtr, hole.character, cellH * 0.32)
         box.visible = true
         box.eventMode = 'static'

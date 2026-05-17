@@ -363,7 +363,12 @@ export function ZolushkaGame({ seed, onComplete, restoredErrorCount }: ZolushkaG
       }
     }
     coinsRef.current = []
-    app.stage.removeChildren()
+    // removeChildren() без destroy оставляет WebGL-ресурсы фоновых элементов
+    // (reference layer, шум листьев и т.д.). Сносим явно.
+    const removed = app.stage.removeChildren()
+    for (const r of removed) {
+      try { r.destroy({ children: true }) } catch { /* noop */ }
+    }
 
     const startMs = performance.now()
     const W = app.screen.width
@@ -411,6 +416,11 @@ export function ZolushkaGame({ seed, onComplete, restoredErrorCount }: ZolushkaG
     app.ticker.add(cb)
     return () => {
       try { app.ticker.remove(cb) } catch { /* noop */ }
+      // Уничтожаем сами стопки монет — без этого 15 контейнеров с
+      // вложенными Graphics-faces оставались висеть до общего app.destroy.
+      for (const p of piles) {
+        try { p.container.destroy({ children: true }) } catch { /* noop */ }
+      }
     }
   }, [showPiles, pixiReady])
 

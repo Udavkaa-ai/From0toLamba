@@ -296,7 +296,13 @@ export function IvanDurakGame({ seed, onComplete, restoredErrorCount }: IvanDura
         requestAnimationFrame(render)
         return
       }
-      app.stage.removeChildren()
+      // removeChildren() убирает старые карты со сцены, но не освобождает
+      // их WebGL-ресурсы. На 7 раундов ×6 карт ×9 Pixi-объектов на карту
+      // копится ~380 leaked objects. destroy({children:true}) сносит сразу.
+      const old = app.stage.removeChildren()
+      for (const o of old) {
+        try { o.destroy({ children: true }) } catch { /* noop */ }
+      }
 
       // Фаза «приготовиться»: пустой стол, ничего не рисуем тут — цифра
       // отсчёта показывается через DOM-overlay (центрированный <div>).

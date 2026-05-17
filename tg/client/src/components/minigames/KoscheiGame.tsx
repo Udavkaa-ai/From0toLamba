@@ -215,12 +215,30 @@ export function KoscheiGame({ seed, onComplete, restoredErrorCount }: KoscheiGam
       return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2)
     }
 
+    // Ограничение количества циклов пирамиды. После MAX_CYCLES rAF
+    // останавливается, пирамида замирает на последнем кадре hold-фазы.
+    // Без лимита rAF крутил GPU/CPU бесконечно (пока игрок не уйдёт со
+    // страницы) — на слабых WebView это лишний расход батареи и память.
+    const MAX_CYCLES = 3
+    const MAX_RUNTIME_MS = MAX_CYCLES * TOTAL_CYCLE * 1000
     let raf = 0
     const start = performance.now()
     const tick = () => {
       const now = performance.now()
+      const elapsed = now - start
+      if (elapsed >= MAX_RUNTIME_MS) {
+        // Финальный стоп-кадр: пирамида в hold-фазе (полностью собранная)
+        STEPS.forEach((s, i) => {
+          const node = nodes[i]
+          node.alpha = 1
+          node.scale.set(1)
+          node.y = baseY - i * stepGap
+        })
+        sparkles.forEach(g => { g.alpha = 0 })
+        return  // НЕ планируем следующий rAF
+      }
       // Модуло вокруг полного цикла → build → hold → dissolve → restart.
-      const cycle = ((now - start) / 1000) % TOTAL_CYCLE
+      const cycle = (elapsed / 1000) % TOTAL_CYCLE
 
       STEPS.forEach((s, i) => {
         const node = nodes[i]
