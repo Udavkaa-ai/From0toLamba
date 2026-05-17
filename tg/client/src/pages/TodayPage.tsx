@@ -204,7 +204,15 @@ function LeaderboardBlock({ today, myTelegramId, t }: {
   myTelegramId: string
   t: ReturnType<typeof useT>
 }) {
+  const [tab, setTab] = useState<'wealth' | 'ties'>('wealth')
   const lb = today.leaderboard
+  const { data: tiesData } = useQuery({
+    queryKey: ['leaderboard', 'ties'],
+    queryFn: api.leaderboard.getTies,
+    enabled: tab === 'ties',
+    staleTime: 60_000,
+  })
+
   return (
     <FairyCard>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm }}>
@@ -212,56 +220,144 @@ function LeaderboardBlock({ today, myTelegramId, t }: {
           {t.today.leaderboardTitle}
         </div>
         <div style={{ color: colors.textMuted, fontSize: 11 }}>
-          {t.today.leaderboardCount(lb.totalPlayers)}
+          {t.today.leaderboardCount(tab === 'ties' ? (tiesData?.totalPlayers ?? 0) : lb.totalPlayers)}
         </div>
       </div>
+
+      {/* Табы Злато / Связи. Раньше виджет показывал только wealth — теперь
+          вторая вкладка с топом по сумме уровней Завязок со всеми архетипами
+          (см. tiesService.ts). Данные тянутся on-demand с /api/leaderboard/ties. */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: spacing.sm }}>
+        {([
+          { v: 'wealth' as const, label: '💰 Злато' },
+          { v: 'ties'   as const, label: '⚡ Связи' },
+        ]).map(({ v, label }) => {
+          const active = tab === v
+          return (
+            <button
+              key={v}
+              onClick={() => setTab(v)}
+              style={{
+                flex: 1, padding: '6px 8px',
+                background: active ? `${colors.fairyGold}22` : 'rgba(0,0,0,0.18)',
+                border: `1px solid ${active ? colors.fairyGold : 'rgba(0,0,0,0.18)'}`,
+                borderRadius: 8,
+                color: active ? colors.fairyGold : colors.textSecondary,
+                fontSize: 12, fontWeight: active ? 800 : 600,
+                cursor: 'pointer',
+              }}
+            >
+              {label}
+            </button>
+          )
+        })}
+      </div>
+
       <div style={{ color: colors.textMuted, fontSize: 11, marginBottom: spacing.sm }}>
-        {t.today.leaderboardHint}
+        {tab === 'wealth'
+          ? t.today.leaderboardHint
+          : 'По сумме уровней Завязок со всеми дельцами. Каждый жетон = +1 уровень.'}
       </div>
-      {lb.top.length === 0 ? (
-        <div style={{ color: colors.textMuted, fontSize: 12, padding: `${spacing.md} 0`, textAlign: 'center' }}>
-          {t.common.loading}
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {lb.top.map((entry, i) => {
-            const isMe = entry.telegramId === myTelegramId
-            const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`
-            return (
-              <div
-                key={entry.telegramId}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: spacing.sm,
-                  padding: '8px 10px',
-                  background: isMe ? `${colors.fairyGold}18` : 'rgba(255,255,255,0.03)',
-                  border: `1px solid ${isMe ? colors.fairyGold : 'transparent'}`,
-                  borderRadius: 10,
-                }}
-              >
-                <span style={{ width: 28, fontSize: 14, fontWeight: 700, color: colors.textPrimary }}>
-                  {medal}
-                </span>
-                <span style={{
-                  flex: 1,
-                  color: isMe ? colors.fairyGold : colors.textPrimary,
-                  fontSize: 13, fontWeight: isMe ? 700 : 500,
-                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                }}>
-                  {entry.nickname || entry.firstName}
-                </span>
-                <span style={{
-                  color: colors.fairyGold, fontWeight: 700, fontSize: 13,
-                  fontVariantNumeric: 'tabular-nums',
-                }}>
-                  {entry.wealth.toLocaleString('ru')} г
-                </span>
-              </div>
-            )
-          })}
-        </div>
+
+      {/* ── ВКЛАДКА ЗЛАТО ── */}
+      {tab === 'wealth' && (
+        lb.top.length === 0 ? (
+          <div style={{ color: colors.textMuted, fontSize: 12, padding: `${spacing.md} 0`, textAlign: 'center' }}>
+            {t.common.loading}
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {lb.top.map((entry, i) => {
+              const isMe = entry.telegramId === myTelegramId
+              const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`
+              return (
+                <div
+                  key={entry.telegramId}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: spacing.sm,
+                    padding: '8px 10px',
+                    background: isMe ? `${colors.fairyGold}18` : 'rgba(255,255,255,0.03)',
+                    border: `1px solid ${isMe ? colors.fairyGold : 'transparent'}`,
+                    borderRadius: 10,
+                  }}
+                >
+                  <span style={{ width: 28, fontSize: 14, fontWeight: 700, color: colors.textPrimary }}>
+                    {medal}
+                  </span>
+                  <span style={{
+                    flex: 1,
+                    color: isMe ? colors.fairyGold : colors.textPrimary,
+                    fontSize: 13, fontWeight: isMe ? 700 : 500,
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>
+                    {entry.nickname || entry.firstName}
+                  </span>
+                  <span style={{
+                    color: colors.fairyGold, fontWeight: 700, fontSize: 13,
+                    fontVariantNumeric: 'tabular-nums',
+                  }}>
+                    {entry.wealth.toLocaleString('ru')} г
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        )
       )}
 
-      {lb.myPosition && lb.myPosition > 10 && (
+      {/* ── ВКЛАДКА СВЯЗИ ── */}
+      {tab === 'ties' && (
+        !tiesData ? (
+          <div style={{ color: colors.textMuted, fontSize: 12, padding: `${spacing.md} 0`, textAlign: 'center' }}>
+            {t.common.loading}
+          </div>
+        ) : tiesData.entries.length === 0 ? (
+          <div style={{ color: colors.textMuted, fontSize: 12, padding: `${spacing.md} 0`, textAlign: 'center' }}>
+            Пока никто не завёл связей
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {tiesData.entries.slice(0, 10).map((entry, i) => {
+              const isMe = entry.isMe
+              const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`
+              const displayName = entry.username ? `@${entry.username}` : entry.firstName
+              return (
+                <div
+                  key={entry.userId}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: spacing.sm,
+                    padding: '8px 10px',
+                    background: isMe ? `${colors.fairyGold}18` : 'rgba(255,255,255,0.03)',
+                    border: `1px solid ${isMe ? colors.fairyGold : 'transparent'}`,
+                    borderRadius: 10,
+                  }}
+                >
+                  <span style={{ width: 28, fontSize: 14, fontWeight: 700, color: colors.textPrimary }}>
+                    {medal}
+                  </span>
+                  <span style={{
+                    flex: 1,
+                    color: isMe ? colors.fairyGold : colors.textPrimary,
+                    fontSize: 13, fontWeight: isMe ? 700 : 500,
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>
+                    {displayName}{isMe ? ' (вы)' : ''}
+                  </span>
+                  <span style={{
+                    color: colors.fairyGold, fontWeight: 700, fontSize: 13,
+                    fontVariantNumeric: 'tabular-nums',
+                  }}>
+                    ⚡ {entry.tiesTotal}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        )
+      )}
+
+      {/* «Ты на N месте» — отдельная подпись для каждой вкладки */}
+      {tab === 'wealth' && lb.myPosition && lb.myPosition > 10 && (
         <div style={{
           marginTop: spacing.sm, padding: '8px 10px',
           background: `${colors.fairyGold}10`,
@@ -270,6 +366,17 @@ function LeaderboardBlock({ today, myTelegramId, t }: {
           color: colors.textMuted, fontSize: 12, textAlign: 'center',
         }}>
           Ты на {lb.myPosition} месте из {lb.totalPlayers}
+        </div>
+      )}
+      {tab === 'ties' && tiesData?.myPosition && tiesData.myPosition > 10 && (
+        <div style={{
+          marginTop: spacing.sm, padding: '8px 10px',
+          background: `${colors.fairyGold}10`,
+          border: `1px dashed ${colors.fairyGold}55`,
+          borderRadius: 10,
+          color: colors.textMuted, fontSize: 12, textAlign: 'center',
+        }}>
+          Ты на {tiesData.myPosition} месте из {tiesData.totalPlayers}
         </div>
       )}
     </FairyCard>
