@@ -36,6 +36,30 @@ const HANDOVER_REASONS_UNICORN = [
   'Великая артель забрала дело — вкладчикам досталась их доля чистым золотом',
 ]
 
+/** Гарантированный пул вестей для VIP-дел (спонсорские).
+ *  Если pickRandomEvent почему-то не нашёл подходящего POSITIVE/NEUTRAL — берётся
+ *  отсюда. Тон — «всё идёт по плану, ярмарка живая, грош крепнет». Без
+ *  негатива и без обещаний выше реального линейного прироста к 3×.
+ *  {name} → название дела, {amount} → дневной прирост в грошах. */
+const SPONSOR_FALLBACK_NEWS: { title: string; body: string }[] = [
+  { title: 'Воеводская грамота подтверждена',
+    body: 'Дело «{name}» получило подтверждение от воеводы — на ярмарке прибавка {amount} г к казне.' },
+  { title: 'Артель работает споро',
+    body: 'У дела «{name}» артель не сидит сложа руки — за день в казне прибавилось {amount} г.' },
+  { title: 'Покупатели в очередь',
+    body: 'У лавки «{name}» с утра шумно — народ толпится, золото в сундук прибыло на {amount} г.' },
+  { title: 'Княжеский указ в помощь',
+    body: 'Сам князь покровительствует делу «{name}» — за день добавилось {amount} г.' },
+  { title: 'Слово купеческое держится',
+    body: 'Дело «{name}» идёт ровно: что обещали, то и платят — сегодня прибыло {amount} г.' },
+  { title: 'Караван прибыл с барышом',
+    body: 'Караван дела «{name}» вернулся с ярмарки — добыча в общий котёл {amount} г.' },
+  { title: 'Кузнецы славят заказ',
+    body: 'Дело «{name}» расплатилось с кузнецами сполна — те молвят добрые слова, ещё {amount} г к делу.' },
+  { title: 'Молва добрая идёт',
+    body: 'Про «{name}» добрая молва пошла — новые вкладчики, ещё {amount} г в казну.' },
+]
+
 const NEW_PROJECTS_PER_DAY_MIN = 1
 const NEW_PROJECTS_PER_DAY_MAX = 3
 
@@ -181,27 +205,38 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
         // currentValue остаётся на линейной траектории к 3×. Это сделано для
         // того чтобы хозяин канала мог спокойно гарантировать +200% без
         // случайных корректировок.
+        const deltaRubles = Math.round(newValue - project.currentValueRubles)
         const sponsorEvent = pickRandomEvent(
           project.type as ProjectType,
           fate,
           undefined,
           { positiveOnly: true, chance: 1.0 },
         )
-        if (sponsorEvent) {
-          await prisma.dailyUpdate.create({
-            data: {
-              projectId: project.id,
-              userId,
-              day: newDaysSince,
-              title: sponsorEvent.newsTitle,
-              body: renderEventBody(sponsorEvent.newsBody, project.name, Math.round(newValue - project.currentValueRubles)),
-              redFlags: [],
-              payoutStatus: 'BOOSTED',
-              eventKind: sponsorEvent.kind,
-              userCountDelta: 0,
-            },
-          }).catch(err => console.error('[Sponsor news] insert failed:', err))
-        }
+        // Если pickRandomEvent почему-то ничего не вернул (например, у этого
+        // ProjectType нет совпадающих событий) — берём гарантированный
+        // VIP-fallback. Главное чтобы VIP-карточка не оставалась без вестей —
+        // иначе игроку кажется, что дело «мёртвое».
+        const fallback = SPONSOR_FALLBACK_NEWS[Math.floor(Math.random() * SPONSOR_FALLBACK_NEWS.length)]
+        const newsTitle = sponsorEvent?.newsTitle ?? fallback.title
+        const newsBody = renderEventBody(
+          sponsorEvent?.newsBody ?? fallback.body,
+          project.name,
+          deltaRubles,
+        )
+        const newsKind: 'POSITIVE' | 'NEUTRAL' = (sponsorEvent?.kind === 'NEUTRAL' ? 'NEUTRAL' : 'POSITIVE')
+        await prisma.dailyUpdate.create({
+          data: {
+            projectId: project.id,
+            userId,
+            day: newDaysSince,
+            title: newsTitle,
+            body: newsBody,
+            redFlags: [],
+            payoutStatus: 'BOOSTED',
+            eventKind: newsKind,
+            userCountDelta: 0,
+          },
+        }).catch(err => console.error('[Sponsor news] insert failed:', err))
       }
       continue
     }
