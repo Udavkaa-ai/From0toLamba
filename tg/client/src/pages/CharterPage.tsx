@@ -1150,7 +1150,10 @@ function SponsorPromocodeScreen({
         </div>
       </div>
 
-      {/* Условия */}
+      {/* Условия. Описание теперь в тёмном «скрижальном» инсете —
+          раньше тёмная сепия на тёплом пергаменте давала низкий контраст
+          и на телефоне читалось плохо. Кремовая роспись на дереве работает
+          в обеих темах. */}
       <div style={{
         padding: spacing.md,
         background: gradients.card,
@@ -1158,8 +1161,16 @@ function SponsorPromocodeScreen({
         borderRadius: 12,
         boxShadow: `0 0 18px ${colors.fairyGold}30, inset 0 1px 0 ${colors.cardHighlight}`,
       }}>
-        <div style={{ color: colors.textPrimary, fontSize: 14, lineHeight: 1.55, marginBottom: spacing.sm }}>
-          {project.description}
+        <div style={{
+          padding: '10px 12px',
+          background: 'rgba(20,10,2,0.78)',
+          border: '1px solid rgba(212,160,60,0.45)',
+          borderRadius: 8,
+          marginBottom: spacing.sm,
+        }}>
+          <div style={{ color: '#F8E4B2', fontSize: 14, fontWeight: 500, lineHeight: 1.55 }}>
+            {project.description}
+          </div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: spacing.sm, borderTop: `1px solid ${colors.cardBorder}` }}>
           <div>
@@ -1177,17 +1188,18 @@ function SponsorPromocodeScreen({
         </div>
       </div>
 
-      {/* Промокод */}
+      {/* Промокод. Внутри — кремовый текст: блок имеет тёмную подложку
+          rgba(0,0,0,0.32), и тёмная сепия из fairy theme на ней не читалась. */}
       <div style={{
         padding: spacing.md,
-        background: 'rgba(0,0,0,0.32)',
+        background: 'rgba(20,10,2,0.78)',
         border: `1.5px solid rgba(212,160,60,0.55)`,
         borderRadius: 12,
       }}>
         <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: 13, marginBottom: 4 }}>
           🔑 Скажи заветное слово
         </div>
-        <div style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 1.5, marginBottom: spacing.sm }}>
+        <div style={{ color: '#F8E4B2', fontSize: 12, lineHeight: 1.5, marginBottom: spacing.sm, fontWeight: 500 }}>
           Хозяин дела {project.developerName} объявил заветное слово на своём канале. Найди его и впиши сюда — тогда можно будет вложиться без испытания.
         </div>
         {project.sponsorChannelUrl && (

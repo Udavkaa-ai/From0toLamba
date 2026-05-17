@@ -117,36 +117,39 @@ function InboxCard({ project, onClick, tourAttr }: { project: ProjectDTO; onClic
   const isVip = project.isSponsor
 
   return (
-    <div style={{ position: 'relative', marginBottom: spacing.md }}>
+    <div style={{ position: 'relative', marginBottom: spacing.md, paddingTop: isVip ? 12 : 0 }}>
       {/* VIP-обводка снаружи карточки + бесконечное золотое пульсирование */}
       {isVip && (
         <div aria-hidden className="vip-glow" style={{
-          position: 'absolute', inset: -3, borderRadius: 18,
+          position: 'absolute', inset: `${12 - 3}px -3px -3px -3px`, borderRadius: 18,
           background: 'linear-gradient(135deg, #FFD24A 0%, #FFB800 50%, #B07400 100%)',
           zIndex: 0,
         }} />
+      )}
+      {/* «ЗОЛОТАЯ ГРАМОТА» — в обёртке поверх FairyCard.
+          Раньше бейдж жил внутри FairyCard, у которого overflow:hidden,
+          поэтому верх клипался (см. скрин 4.4.9). */}
+      {isVip && (
+        <div style={{
+          position: 'absolute', top: 2, left: '50%', transform: 'translateX(-50%)',
+          padding: '2px 14px',
+          background: 'linear-gradient(135deg, #FFD24A, #FFB800)',
+          color: '#3A2010', fontWeight: 800, fontSize: '11px',
+          letterSpacing: '0.15em',
+          borderRadius: 8,
+          boxShadow: '0 3px 10px rgba(0,0,0,0.45)',
+          zIndex: 3,
+          fontFamily: "'Cinzel', 'Marcellus', serif",
+          whiteSpace: 'nowrap',
+        }}>
+          ✦ ЗОЛОТАЯ ГРАМОТА ✦
+        </div>
       )}
       <FairyCard onClick={onClick} style={{
         cursor: 'pointer',
         position: 'relative', zIndex: 1,
         ...(isVip ? { border: `2px solid #FFE090` } : {}),
       }}>
-        {isVip && (
-          <div style={{
-            position: 'absolute', top: -10, left: '50%', transform: 'translateX(-50%)',
-            padding: '2px 14px',
-            background: 'linear-gradient(135deg, #FFD24A, #FFB800)',
-            color: '#3A2010', fontWeight: 800, fontSize: '11px',
-            letterSpacing: '0.15em',
-            borderRadius: 8,
-            boxShadow: '0 3px 10px rgba(0,0,0,0.45)',
-            zIndex: 2,
-            fontFamily: "'Cinzel', 'Marcellus', serif",
-            whiteSpace: 'nowrap',
-          }}>
-            ✦ ЗОЛОТАЯ ГРАМОТА ✦
-          </div>
-        )}
         {project.bannerImageUrl && (
           <img
             src={project.bannerImageUrl}
