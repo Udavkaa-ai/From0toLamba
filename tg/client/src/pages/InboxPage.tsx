@@ -7,6 +7,7 @@ import { FairyCard, OrnamentDivider, SkeletonCard } from '@/components/FairyCard
 import { PageTitle, PageSubtitle } from '@/components/PageTitle'
 import { VipArrivalOverlay, getSeenVipIds, markVipSeen } from '@/components/VipArrivalOverlay'
 import { api, type ProjectDTO } from '@/api/client'
+import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing, gradients, ctaButton } from '@/theme'
 import { useT } from '@/i18n'
 
@@ -97,6 +98,9 @@ export function InboxPage() {
 }
 
 function InboxCard({ project, onClick, tourAttr }: { project: ProjectDTO; onClick: () => void; tourAttr?: boolean }) {
+  const { gameState } = useGameStore()
+  const tieLevel = gameState?.tieLevels?.[project.personaArchetype] ?? 0
+  const bonusPct = Math.round(tieLevel * (gameState?.tiesBonusPerLevel ?? 0.01) * 100)
   const t = useT()
   const typeLabel = t.inbox.types
   const isVip = project.isSponsor
@@ -148,6 +152,22 @@ function InboxCard({ project, onClick, tourAttr }: { project: ProjectDTO; onClic
               {(typeLabel as Record<string, string>)[project.type] ?? project.type}
             </div>
           </div>
+          {/* Бонус «Связи» — показывается только если игрок уже прокачал
+              отношения с этим архетипом и дело не VIP (у VIP свой фикс +200%) */}
+          {!isVip && bonusPct > 0 && (
+            <div style={{
+              padding: '4px 8px',
+              background: `${colors.success}26`,
+              border: `1px solid ${colors.success}`,
+              borderRadius: 6,
+              color: colors.success,
+              fontWeight: 800, fontSize: '11px',
+              fontVariantNumeric: 'tabular-nums',
+              whiteSpace: 'nowrap',
+            }}>
+              ⚡ +{bonusPct}%/день связи
+            </div>
+          )}
           {isVip && (
             <div style={{
               padding: '4px 8px',

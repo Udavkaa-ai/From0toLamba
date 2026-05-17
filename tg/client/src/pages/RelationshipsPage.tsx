@@ -93,6 +93,23 @@ export function RelationshipsPage() {
         <div style={{ textAlign: 'center', marginBottom: spacing.xl }}>
           <PageTitle>{t.relations.title}</PageTitle>
           <PageSubtitle>{t.relations.subtitle}</PageSubtitle>
+          {/* Сумма уровней Завязок по всем дельцам — это показатель «насколько ты
+              врос в ярмарку». Большое число = много дел с разными хозяевами. */}
+          {(gameState?.tiesTotal ?? 0) > 0 && (
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              marginTop: 8,
+              padding: '4px 12px',
+              background: `${colors.fairyGold}22`,
+              border: `1px solid ${colors.fairyGold}66`,
+              borderRadius: 20,
+              color: colors.fairyGold,
+              fontSize: 12, fontWeight: 700,
+              boxShadow: `inset 0 1px 0 ${colors.cardHighlight}`,
+            }}>
+              ⚡ Связи: {gameState?.tiesTotal}
+            </div>
+          )}
         </div>
 
         <div style={{
@@ -102,6 +119,7 @@ export function RelationshipsPage() {
           {ARCHETYPES.map(arch => {
             const tokens = gameState?.archetypeTokens?.[arch]
             const balance = tokens?.balance ?? 0
+            const tieLevel = gameState?.tieLevels?.[arch] ?? 0
             return (
               <motion.button
                 key={arch}
@@ -135,15 +153,29 @@ export function RelationshipsPage() {
                 }}>
                   {SHORT_NAME[arch]}
                 </div>
-                {balance > 0 && (
+                {/* Бейдж уровня Завязок (lv1..lv10) + балансовый счётчик жетонов */}
+                {tieLevel > 0 && (
                   <div style={{
                     position: 'absolute', top: -6, right: -6,
                     display: 'flex', alignItems: 'center', gap: 2,
-                    padding: '2px 6px',
-                    background: colors.fairyGold,
+                    padding: '2px 7px',
+                    background: tieLevel >= 10 ? colors.success : colors.fairyGold,
                     color: colors.nightBlue,
-                    borderRadius: 12, fontSize: 11, fontWeight: 800,
+                    borderRadius: 12, fontSize: 10, fontWeight: 800, letterSpacing: '0.04em',
                     boxShadow: `0 0 0 2px ${colors.nightBlue}, 0 2px 8px ${colors.fairyGold}66`,
+                  }}>
+                    Lv {tieLevel}
+                  </div>
+                )}
+                {balance > 0 && (
+                  <div style={{
+                    position: 'absolute', bottom: -6, right: -6,
+                    display: 'flex', alignItems: 'center', gap: 2,
+                    padding: '1px 5px',
+                    background: colors.nightBlue,
+                    color: colors.fairyGold,
+                    borderRadius: 10, fontSize: 9, fontWeight: 700,
+                    boxShadow: `0 0 0 1.5px ${colors.fairyGold}55`,
                   }}>
                     🪙 {balance}
                   </div>
@@ -278,6 +310,9 @@ function RelationshipDetails({ archetype, onClose }: { archetype: Archetype; onC
           </div>
         </div>
 
+        {/* Завязки — уровень отношения и бонус доходности */}
+        <TiesLevelCard archetype={archetype} tint={tint} earned={earned} />
+
         {/* Статистика отношений */}
         <OrnamentDivider />
         <div style={{ color: colors.textSecondary, fontSize: 12, fontWeight: 600, marginBottom: spacing.sm, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
@@ -332,6 +367,67 @@ function RelationshipDetails({ archetype, onClose }: { archetype: Archetype; onC
         </div>
       </motion.div>
     </motion.div>
+  )
+}
+
+/**
+ * Карточка «Завязки» — уровень отношения с архетипом + бонус доходности.
+ * Уровень = жизненное число полученных жетонов (0..maxLevel из gameState).
+ * Бонус = level × bonusPerLevel/день к доходности дел этого архетипа.
+ */
+function TiesLevelCard({ archetype, tint, earned }: { archetype: Archetype; tint: string; earned: number }) {
+  const { gameState } = useGameStore()
+  const maxLevel = gameState?.tiesMaxLevel ?? 10
+  const bonusPerLevel = gameState?.tiesBonusPerLevel ?? 0.01
+  const level = gameState?.tieLevels?.[archetype] ?? 0
+  const bonusPct = Math.round(level * bonusPerLevel * 100)
+  const isMaxed = level >= maxLevel
+  const progress = isMaxed ? 1 : (level + (Math.min(earned, level + 1) - level)) / maxLevel
+  return (
+    <div style={{
+      padding: spacing.md,
+      background: gradients.card,
+      border: `1.5px solid ${tint}`,
+      borderRadius: 14,
+      marginBottom: spacing.md,
+      boxShadow: `inset 0 1px 0 ${colors.cardHighlight}, 0 2px 10px rgba(0,0,0,0.35)`,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
+        <div style={{ color: tint, fontSize: 12, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+          Завязки
+        </div>
+        <div style={{
+          color: isMaxed ? colors.success : colors.fairyGold,
+          fontSize: 18, fontWeight: 900, fontVariantNumeric: 'tabular-nums',
+        }}>
+          Lv {level}<span style={{ fontSize: 11, opacity: 0.65, marginLeft: 4 }}>/ {maxLevel}</span>
+        </div>
+      </div>
+      <div style={{ color: colors.textPrimary, fontSize: 13, fontWeight: 600 }}>
+        {bonusPct > 0
+          ? <>Дела с этим хозяином приносят <span style={{ color: colors.success, fontWeight: 800 }}>+{bonusPct}%</span> в день</>
+          : <>Заведи связь — каждый уровень даёт <span style={{ color: colors.success, fontWeight: 800 }}>+1%</span> в день</>}
+      </div>
+      <div style={{
+        marginTop: 8, height: 8, borderRadius: 4,
+        background: 'rgba(0,0,0,0.3)', border: `1px solid ${colors.cardBorder}`,
+        overflow: 'hidden',
+      }}>
+        <div style={{
+          width: `${Math.min(100, (level / maxLevel) * 100)}%`,
+          height: '100%',
+          background: isMaxed
+            ? `linear-gradient(90deg, ${colors.success}, ${colors.fairyGold})`
+            : `linear-gradient(90deg, ${tint}, ${colors.fairyGold})`,
+          transition: 'width 0.3s',
+        }} />
+      </div>
+      {isMaxed && (
+        <div style={{ color: colors.success, fontSize: 11, marginTop: 6, fontWeight: 700, textAlign: 'center' }}>
+          ✦ Максимум — отношения закалены
+        </div>
+      )}
+    </div>
   )
 }
 

@@ -117,6 +117,13 @@ export interface GameStateDTO {
    *  5 дел = +1 жетон), spent = потрачено, balance = доступно. Пусто для
    *  архетипов, с которыми игрок ещё не сталкивался. */
   archetypeTokens: Record<string, { earned: number; spent: number; balance: number; gamesPlayed: number; dealsTaken: number; welcomeBonus: boolean }>
+  /** Завязки — уровни отношений (0..tiesMaxLevel) по каждому архетипу.
+   *  Каждый уровень даёт +tiesBonusPerLevel/день к доходности дел с этим
+   *  типом дельцов. На уровне tiesMaxLevel прокачка останавливается. */
+  tieLevels: Record<string, number>
+  tiesTotal: number
+  tiesMaxLevel: number
+  tiesBonusPerLevel: number
   dayStreak: number
   isOnboardingComplete: boolean
   totalInvested: number
@@ -199,6 +206,22 @@ export interface ReferralLeaderboardEntryDTO {
 
 export interface ReferralLeaderboardDTO {
   entries: ReferralLeaderboardEntryDTO[]
+  myPosition: number | null
+  totalPlayers: number
+}
+
+export interface TiesLeaderboardEntryDTO {
+  userId: number
+  firstName: string
+  username: string | null
+  investorRank: string
+  tiesTotal: number
+  isMe: boolean
+  position: number
+}
+
+export interface TiesLeaderboardDTO {
+  entries: TiesLeaderboardEntryDTO[]
   myPosition: number | null
   totalPlayers: number
 }
@@ -372,6 +395,7 @@ export const api = {
     get: () => apiClient.get<LeaderboardDTO>('/leaderboard').then(r => r.data),
     getWeek: () => apiClient.get<WeeklyLeaderboardDTO>('/leaderboard/week').then(r => r.data),
     getReferrals: () => apiClient.get<ReferralLeaderboardDTO>('/leaderboard/referrals').then(r => r.data),
+    getTies: () => apiClient.get<TiesLeaderboardDTO>('/leaderboard/ties').then(r => r.data),
     getByIntuition: () => apiClient.get<LeaderboardDTO>('/leaderboard/intuition').then(r => r.data),
     getByDays: () => apiClient.get<LeaderboardDTO>('/leaderboard/days').then(r => r.data),
     getByAchievements: () => apiClient.get<AchievementLeaderboardDTO>('/leaderboard/achievements').then(r => r.data),

@@ -8,6 +8,7 @@ import { ensureWeekStartSnapshot } from '../../game/weeklyService'
 import { generateOnboardingProject } from '../../game/GenerateProjectService'
 import { toPublicDTO } from '../../game/projectUtils'
 import { computeArchetypeTokens } from '../../game/tokenService'
+import { computeTieLevels, totalTies, MAX_TIE_LEVEL, TIE_BONUS_PER_LEVEL, tieLevelFromEarned } from '../../game/tiesService'
 
 export async function gameRoutes(app: FastifyInstance) {
 
@@ -182,6 +183,15 @@ export async function gameRoutes(app: FastifyInstance) {
     // Жетоны хозяев — внутриигровая мини-валюта по архетипам
     const archetypeTokens = await computeArchetypeTokens(user.id)
 
+    // «Завязки» — уровни отношений (0..10) производные от lifetime earned-жетонов.
+    // Каждый уровень даёт +TIE_BONUS_PER_LEVEL/день к доходности дел этого
+    // архетипа. См. tiesService.ts.
+    const tieLevels: Record<string, number> = {}
+    for (const [arch, info] of Object.entries(archetypeTokens)) {
+      tieLevels[arch] = tieLevelFromEarned(info.earned)
+    }
+    const tiesTotal = totalTies(tieLevels)
+
     return {
       balance: gameState.balance,
       currentDay: gameState.currentDay,
@@ -194,6 +204,10 @@ export async function gameRoutes(app: FastifyInstance) {
       dealsCount,              // число дел, в которые игрок вложил гроши
       minigameStats,           // статистика игр по архетипам: {BURATINO: {played, perfect, won, lost}, ...}
       archetypeTokens,         // {BURATINO: {earned, spent, balance, gamesPlayed, dealsTaken}, ...}
+      tieLevels,               // {BURATINO: 3, BOYARIN: 7, ...} — уровни Завязок (0..10)
+      tiesTotal,               // сумма всех уровней — для рейтинга «Связи»
+      tiesMaxLevel: MAX_TIE_LEVEL,
+      tiesBonusPerLevel: TIE_BONUS_PER_LEVEL,
       referralCount,           // число приведённых купцов
       weekStartWealth,         // снимок состояния на начало текущей недели
       userId: user.id,         // нужен для построения пригласительной ссылки
@@ -521,6 +535,85 @@ export async function gameRoutes(app: FastifyInstance) {
       })
       .filter((e): e is NonNullable<typeof e> => e !== null)
       .sort((a, b) => b.referralCount - a.referralCount)
+
+    const totalPlayers = ranked.length
+    const top100 = ranked.slice(0, 100).map((e, i) => ({ ...e, position: i + 1 }))
+
+    let myPosition: number | null = null
+    if (currentUser) {
+      const myIdx = ranked.findIndex(e => e.userId === currentUser.id)
+      if (myIdx >= 0) myPosition = myIdx + 1
+    }
+
+    return reply.send({ entries: top100, myPosition, totalPlayers })
+  })
+
+  // GET /api/leaderboard/ties — «связи»: суммарный уровень Завязок со всеми дельцами
+  app.get('/api/leaderboard/ties', { preHandler: telegramAuthHook }, async (request, reply) => {
+    const tgUser = request.telegramUser
+    const currentUser = await prisma.user.findUnique({
+      where: { telegramId: String(tgUser.id) },
+      select: { id: true },
+    })
+
+    // Считаем уровни сразу для всех игроков одним блоком (без 1000 запросов
+    // computeTieLevels). Источники: AmaSession (для подсчёта сыгранных мини-игр),
+    // Project (для подсчёта взятых дел и знакомств) → дальше группируем по
+    // userId × archetype и применяем ту же формулу что в tokenService.
+    const TOKENS_PER_GAMES = 10
+    const TOKENS_PER_DEALS = 5
+
+    const [allUsers, allSessions, allInvestedProjects, allProjects] = await Promise.all([
+      prisma.gameState.findMany({
+        where: { isOnboardingComplete: true },
+        include: { user: { select: { id: true, firstName: true, username: true } } },
+      }),
+      prisma.amaSession.findMany({
+        where: { charterSubmittedAt: { not: null } },
+        select: { userId: true, project: { select: { personaArchetype: true } } },
+      }),
+      prisma.project.findMany({
+        where: { investedAmountRubles: { gt: 0 } },
+        select: { userId: true, personaArchetype: true },
+      }),
+      prisma.project.findMany({ select: { userId: true, personaArchetype: true } }),
+    ])
+
+    // userId → archetype → counters
+    const stats = new Map<number, Record<string, { games: number; deals: number; met: boolean }>>()
+    const touch = (uid: number, arch: string) => {
+      let m = stats.get(uid)
+      if (!m) { m = {}; stats.set(uid, m) }
+      let r = m[arch]
+      if (!r) { r = { games: 0, deals: 0, met: false }; m[arch] = r }
+      return r
+    }
+    for (const s of allSessions) touch(s.userId, s.project.personaArchetype).games += 1
+    for (const p of allInvestedProjects) touch(p.userId, p.personaArchetype).deals += 1
+    for (const p of allProjects) touch(p.userId, p.personaArchetype).met = true
+
+    // Свернуть в суммарный уровень Завязок по игроку
+    const ranked = allUsers
+      .map(gs => {
+        const m = stats.get(gs.userId) ?? {}
+        let totalLvl = 0
+        for (const r of Object.values(m)) {
+          const earned = (r.met ? 1 : 0)
+            + Math.floor(r.games / TOKENS_PER_GAMES)
+            + Math.floor(r.deals / TOKENS_PER_DEALS)
+          totalLvl += Math.min(MAX_TIE_LEVEL, earned)
+        }
+        return {
+          userId: gs.userId,
+          firstName: gs.user.firstName,
+          username: gs.user.username ?? null,
+          investorRank: gs.investorRank,
+          tiesTotal: totalLvl,
+          isMe: currentUser ? gs.userId === currentUser.id : false,
+        }
+      })
+      .filter(e => e.tiesTotal > 0)
+      .sort((a, b) => b.tiesTotal - a.tiesTotal)
 
     const totalPlayers = ranked.length
     const top100 = ranked.slice(0, 100).map((e, i) => ({ ...e, position: i + 1 }))

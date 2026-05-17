@@ -483,6 +483,7 @@ leaderboard: {
     days: '📅 Дни',
     deals: '🎯 Дела',
     referrals: '🤝 Сваты',
+    ties: '⚡ Связи',
   },
   captions: {
     wealth: 'Богатейшие купцы Лукоморья',
@@ -490,6 +491,7 @@ leaderboard: {
     days: 'Дольше всех на ярмарке',
     deals: 'Больше всего вложений в дела + грамот',
     referrals: 'Больше всего сосватанных купцов',
+    ties: 'Самые крепкие связи с дельцами',
   },
   empty: {
     wealth: 'Пока никто не накопил злата',
@@ -497,6 +499,7 @@ leaderboard: {
     days: 'Пока никто не прошёл и дня',
     deals: 'Пока никто не завершил дел',
     referrals: 'Пока никто не сосватал купцов',
+    ties: 'Пока никто не завёл связей',
   },
   hints: {
     wealth: 'Копи злато — поднимайся выше!',
@@ -504,6 +507,7 @@ leaderboard: {
     days: 'Жми следующий день каждый раз!',
     deals: 'Входи в дела и разбирай грамоты!',
     referrals: 'Зови купцов — расти в рейтинге!',
+    ties: 'Играй с разными дельцами — связи дают +1%/день!',
   },
   showAll: '👥 Смотреть всех купцов',
   yourPlace: (pos: number, total: number) => `Ваше место: #${pos} из ${total}`,
@@ -512,6 +516,7 @@ leaderboard: {
   investments: (n: number) => `${n} вложений`,
   charters: (n: number) => `📜 ${n} грамот`,
   refs: (n: number) => `🤝 ${n} сватов`,
+  ties: (n: number) => `⚡ ${n} ур.`,
 },
 
 // ─── Летопись ─────────────────────────────────────────────────────────────────
@@ -1324,6 +1329,7 @@ leaderboard: {
     days: '📅 Days',
     deals: '🎯 Ventures',
     referrals: '🤝 Referrals',
+    ties: '⚡ Ties',
   },
   captions: {
     wealth: 'Wealthiest merchants of Lukomorye',
@@ -1331,6 +1337,7 @@ leaderboard: {
     days: 'Longest on the market',
     deals: 'Most investments and charters',
     referrals: 'Most merchants invited',
+    ties: 'Strongest ties with dealers',
   },
   empty: {
     wealth: 'No one has accumulated wealth yet',
@@ -1338,6 +1345,7 @@ leaderboard: {
     days: 'No one has played a full day yet',
     deals: 'No one has closed ventures yet',
     referrals: 'No one has invited merchants yet',
+    ties: 'No one has built ties yet',
   },
   hints: {
     wealth: 'Accumulate wealth — climb higher!',
@@ -1345,6 +1353,7 @@ leaderboard: {
     days: 'Press Next Day every time!',
     deals: 'Enter ventures and study charters!',
     referrals: 'Invite merchants — rise in rankings!',
+    ties: 'Play with different dealers — ties give +1%/day!',
   },
   showAll: '👥 View all merchants',
   yourPlace: (pos: number, total: number) => `Your place: #${pos} of ${total}`,
@@ -1353,6 +1362,7 @@ leaderboard: {
   investments: (n: number) => `${n} investments`,
   charters: (n: number) => `📜 ${n} charters`,
   refs: (n: number) => `🤝 ${n} referrals`,
+  ties: (n: number) => `⚡ ${n} lvl`,
 },
 registry: {
   title: 'Chronicle',

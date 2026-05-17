@@ -10,6 +10,7 @@ import {
   pickMafiaOffer, renderMafiaText,
   MAFIA_OFFER_DAYS_BEFORE, MAFIA_OFFER_CHANCE, MAFIA_FORCED_CLOSURE_RETURN_PERCENT,
 } from './mafiaOffers'
+import { computeTieLevels, tieBonusFromLevel } from './tiesService'
 
 /** Правильный % прибыли с учётом выводов: (выведено + возврат − вложено) / вложено */
 async function computeProfitPercent(projectId: string, investedAmount: number, returned: number): Promise<number> {
@@ -138,6 +139,12 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
     where: { userId, isActive: true },
   })
 
+  // Уровни «Завязок» по архетипам — берутся ОДИН раз перед циклом advance.
+  // На каждый уровень даём +1%/день к доходности дел этого архетипа,
+  // максимум +10% на уровне 10 (см. tiesService.MAX_TIE_LEVEL).
+  // Не применяется к VIP/SPONSOR_FIXED — у них своя линейная траектория.
+  const tieLevels = await computeTieLevels(userId)
+
   let balanceDelta = 0
   let returnedDelta = 0  // сумма всех автозакрытий за этот день — для totalReturned
   const closures: ClosureSummary[] = []
@@ -217,9 +224,9 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
         // VIP-fallback. Главное чтобы VIP-карточка не оставалась без вестей —
         // иначе игроку кажется, что дело «мёртвое».
         const fallback = SPONSOR_FALLBACK_NEWS[Math.floor(Math.random() * SPONSOR_FALLBACK_NEWS.length)]
-        const newsTitle = sponsorEvent?.newsTitle ?? fallback.title
+        const newsTitle = sponsorEvent?.title ?? fallback.title
         const newsBody = renderEventBody(
-          sponsorEvent?.newsBody ?? fallback.body,
+          sponsorEvent?.body ?? fallback.body,
           project.name,
           deltaRubles,
         )
@@ -345,9 +352,13 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
       continue
     }
 
-    // Начисляем доходность: investedAmount × realDailyYield
+    // Начисляем доходность: investedAmount × (realDailyYield + tie-бонус).
+    // tie-бонус = level(archetype) × 1%/день, max +10%/день на 10 уровне.
+    // На «честных» делах это превращает SURVIVOR в почти-юникорн при
+    // максимальной прокачке отношений; на скаме всё равно сгорит до закрытия.
     if (project.investedAmountRubles > 0) {
-      const dailyYield = project.investedAmountRubles * project.realDailyYieldRubles
+      const tieBonus = tieBonusFromLevel(tieLevels[project.personaArchetype] ?? 0)
+      const dailyYield = project.investedAmountRubles * (project.realDailyYieldRubles + tieBonus)
       updatedValue += dailyYield
     }
 
