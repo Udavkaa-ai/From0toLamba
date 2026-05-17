@@ -222,6 +222,12 @@ export function HomePage() {
   // (заменены глобальным FAB-кнопкой в main.tsx → NextWeekFab).
 
   const localModelInitRef = useRef(false)
+
+  // Куда вернуться после завершения перехода на следующий день.
+  // FAB передаёт исходный pathname в event.detail.returnTo если игрок
+  // нажал «Следующий день» не с главной — после оверлеев HomePage
+  // возвращает игрока на ту же вкладку. null = остаёмся на главной.
+  const returnAfterAdvanceRef = useRef<string | null>(null)
   const { isLoading, isError, error, data: freshGameState } = useQuery({
     queryKey: ['gameState'],
     queryFn: () => api.game.getState(),
@@ -298,6 +304,14 @@ export function HomePage() {
       setTimeout(() => {
         setIsDayTransition(false)
         setReadyForShower(true)
+        // FAB запомнил исходную вкладку — возвращаем туда.
+        const ret = returnAfterAdvanceRef.current
+        if (ret && ret !== '/') {
+          returnAfterAdvanceRef.current = null
+          navigate(ret)
+        } else {
+          returnAfterAdvanceRef.current = null
+        }
       }, 800)
     },
     onError: () => {
@@ -305,6 +319,7 @@ export function HomePage() {
       setIsDayTransition(false)
       setPendingShowerSnapshot(null)
       setReadyForShower(false)
+      returnAfterAdvanceRef.current = null
     },
   })
 
@@ -321,6 +336,13 @@ export function HomePage() {
       setTimeout(() => {
         setIsDayTransition(false)
         setReadyForShower(true)
+        const ret = returnAfterAdvanceRef.current
+        if (ret && ret !== '/') {
+          returnAfterAdvanceRef.current = null
+          navigate(ret)
+        } else {
+          returnAfterAdvanceRef.current = null
+        }
       }, 800)
     }
     try {
@@ -413,15 +435,21 @@ export function HomePage() {
   // Слушатели от глобального NextWeekFab — он диспатчит CustomEvent'ы.
   // Здесь мы решаем: показать inbox-guard или сразу advance / открыть payment.
   useEffect(() => {
-    const advanceHandler = () => {
+    const advanceHandler = (e: Event) => {
       tgHaptic?.impactOccurred('medium')
+      const det = (e as CustomEvent).detail as { returnTo?: string } | undefined
+      returnAfterAdvanceRef.current = det?.returnTo ?? null
       if ((gameState?.inboxProjects.length ?? 0) > 0) {
         setShowInboxLeftConfirm(true)
       } else {
         advanceMutation.mutate()
       }
     }
-    const skipHandler = () => setShowPaymentModal(true)
+    const skipHandler = (e: Event) => {
+      const det = (e as CustomEvent).detail as { returnTo?: string } | undefined
+      returnAfterAdvanceRef.current = det?.returnTo ?? null
+      setShowPaymentModal(true)
+    }
     // Финал тура → открываем Настройки и пульсируем ЧАВО-кнопку 3 сек.
     const openFaqHandler = () => {
       setShowSettings(true)
@@ -1438,7 +1466,11 @@ export function HomePage() {
           <StarsPaymentOverlay
             isPending={paymentPending}
             onConfirm={handleTimerSkipPayment}
-            onClose={() => setShowPaymentModal(false)}
+            onClose={() => {
+              setShowPaymentModal(false)
+              // Закрыли модалку без оплаты — никуда не возвращаемся.
+              returnAfterAdvanceRef.current = null
+            }}
           />
         )}
       </AnimatePresence>
@@ -1452,7 +1484,12 @@ export function HomePage() {
           <InboxLeftConfirmSheet
             leftCount={gameState?.inboxProjects.length ?? 0}
             pending={advanceMutation.isPending}
-            onStay={() => setShowInboxLeftConfirm(false)}
+            onStay={() => {
+              setShowInboxLeftConfirm(false)
+              // Игрок передумал — сбросить запомненную исходную вкладку,
+              // иначе следующий advance уведёт его туда без причины.
+              returnAfterAdvanceRef.current = null
+            }}
             onAdvance={() => {
               setShowInboxLeftConfirm(false)
               advanceMutation.mutate()

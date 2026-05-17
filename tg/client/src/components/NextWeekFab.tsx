@@ -75,17 +75,27 @@ export function NextWeekFab() {
     }
     // Второй тап — действие
     if (isLocked) {
-      window.dispatchEvent(new CustomEvent('request-skip-payment'))
+      const sp = location.pathname
+      const det = sp !== '/' ? { returnTo: sp } : undefined
+      // HomePage держит модалку платежа — пере-ходим туда заранее,
+      // чтобы пользователь не увидел пустой экран на 200мс между
+      // dispatch и появлением sheet'а.
+      if (sp !== '/') navigate('/')
+      setTimeout(() => window.dispatchEvent(new CustomEvent('request-skip-payment', { detail: det })), sp === '/' ? 0 : 200)
       return
     }
     // На главной — триггерим advance через event; на других вкладках —
-    // сначала уходим на главную, чтобы overlay'и итогов дня отрисовались.
-    if (location.pathname === '/') {
-      window.dispatchEvent(new CustomEvent('advance-day'))
+    // сначала уходим на главную, чтобы overlay'и итогов дня (DayTransition,
+    // CoinShower, dayClosures sheet) могли отрисоваться. После завершения
+    // перехода HomePage сам вернёт игрока обратно на returnTo (см. ref в
+    // HomePage.advanceMutation.onSuccess).
+    const sourcePath = location.pathname
+    const detail = sourcePath !== '/' ? { returnTo: sourcePath } : undefined
+    if (sourcePath === '/') {
+      window.dispatchEvent(new CustomEvent('advance-day', { detail }))
     } else {
       navigate('/')
-      // Подождать рендер HomePage, потом триггер
-      setTimeout(() => window.dispatchEvent(new CustomEvent('advance-day')), 200)
+      setTimeout(() => window.dispatchEvent(new CustomEvent('advance-day', { detail })), 200)
     }
     setExpanded(false)
   }
