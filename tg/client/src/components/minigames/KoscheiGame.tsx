@@ -180,10 +180,11 @@ export function KoscheiGame({ seed, onComplete, restoredErrorCount }: KoscheiGam
     const TOTAL_CYCLE   = BUILD_END + HOLD_DUR + DISSOLVE_DUR + 0.4
 
     const cx = W / 2
-    // Поднимаем основание пирамиды повыше — снизу всегда есть плашка
-    // результата с кнопками, дуб тонул под ней. 0.82 → 0.66.
-    const baseY = H * 0.66
-    const stepGap = Math.min(H / 7.5, 70)
+    // Основание чуть ниже середины + шаг покомпактнее, чтобы вся
+    // пирамида влезала: снизу не уходила под result-плашку, сверху —
+    // не обрезалась шапкой мини-игры.
+    const baseY = H * 0.72
+    const stepGap = Math.min(H / 9, 58)
 
     // Создаём по контейнеру на каждый шаг — стартово невидимы и схлопнуты в точку
     const nodes: Container[] = STEPS.map((s, i) => {
