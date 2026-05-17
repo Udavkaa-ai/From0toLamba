@@ -19,10 +19,11 @@ Usage:
 
 После генерации:
   1. python compress.py --inplace output_personas
-  2. Скопировать output_personas/*.webp → tg/server/public/personas/
-     (имена соответствуют слагу архетипа: buratino.webp, buratino_LIGHT.webp)
+  2. Скопировать output_personas/*.webp → tg/client/public/personas/
+     (имена соответствуют слагу архетипа: buratino.webp, buratino_LIGHT.webp).
+     Это исходники — Vite копирует их в билд при npm run build.
   3. Обновить AmaPage.tsx — добавить суффикс _LIGHT для fairy-темы
-  4. git add tg/server/public/personas/*.webp + push
+  4. git add tg/client/public/personas/*.webp + push
 """
 
 from __future__ import annotations
@@ -206,9 +207,10 @@ def main() -> int:
     print(f"\n[done] {len(todo)}/{len(todo)} → {OUTPUT_DIR}")
     print("\nNext steps:")
     print(f"  1. python compress.py --inplace output_personas   (PNG → WebP)")
-    print(f"  2. cp output_personas/*.webp ../../tg/server/public/personas/")
-    print(f"  3. (если ещё не сделано) обновить AmaPage.tsx — добавить _LIGHT-суффикс в fairy-теме")
-    print(f"  4. git add tg/server/public/personas/*.webp + push")
+    print(f"  2. cp output_personas/*.webp ../../tg/client/public/personas/")
+    print(f"     (исходники для Vite — gitignore'нутый tg/server/public/ это билд)")
+    print(f"  3. AmaPage уже подхватывает _LIGHT-суффикс для fairy-темы")
+    print(f"  4. git add tg/client/public/personas/*.webp + push")
     return 0
 
 
