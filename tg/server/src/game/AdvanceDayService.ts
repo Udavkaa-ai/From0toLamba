@@ -212,6 +212,10 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
         // currentValue остаётся на линейной траектории к 3×. Это сделано для
         // того чтобы хозяин канала мог спокойно гарантировать +200% без
         // случайных корректировок.
+        // Если игрок выключил новости — пропускаем вставку DailyUpdate.
+        if (!gameState.newsEnabled) {
+          continue
+        }
         const deltaRubles = Math.round(newValue - project.currentValueRubles)
         const sponsorEvent = pickRandomEvent(
           project.type as ProjectType,
@@ -522,7 +526,10 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
     // Генерируем весть для проекта (кроме INSTANT_SCAM — он молчит до самого исчезновения).
     // Если выпало случайное событие — кладём его текст мгновенно как DailyUpdate
     // и НЕ зовём AI. Иначе — обычный плейсхолдер + AI-генерация поверх.
-    if (fate !== ProjectFate.INSTANT_SCAM || eventApplied) {
+    // Игрок мог выключить новости (gameState.newsEnabled=false) — тогда
+    // показатели меняются как обычно (см. updatedValue/newUserCount выше),
+    // но текст новости НЕ создаётся и AI НЕ зовётся.
+    if (gameState.newsEnabled && (fate !== ProjectFate.INSTANT_SCAM || eventApplied)) {
       if (eventApplied) {
         await prisma.dailyUpdate.create({
           data: {

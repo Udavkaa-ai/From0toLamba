@@ -57,6 +57,10 @@ model GameState {
   pendingRankUp        String?
   preferredModel       String    @default("deepseek/deepseek-v4-flash")
   preferredLanguage    String    @default("ru")
+  // Игрок выключил ежедневные AI-новости — экономит токены OpenRouter и
+  // время игрока. Значения дел (доходность, число вкладчиков) при этом
+  // меняются как обычно, просто без сопроводительного текста.
+  newsEnabled          Boolean   @default(true)
   lastAdvancedAt       DateTime?
   // Флаг: отправлено ли уведомление о доступности следующего дня для текущего lastAdvancedAt.
   // Сбрасывается в false при advance-day, ставится в true в cron'е, когда уведомление отправлено.

@@ -372,6 +372,12 @@ export function HomePage() {
     api.game.updateSettings({ preferredLanguage: l }).catch(() => {})
   }
 
+  const toggleNews = (enabled: boolean) => {
+    api.game.updateSettings({ newsEnabled: enabled }).catch(() => {})
+    const gs = useGameStore.getState().gameState
+    if (gs) useGameStore.getState().setGameState({ ...gs, newsEnabled: enabled })
+  }
+
   const completeOnboardingMutation = useMutation({
     mutationFn: api.game.completeOnboarding,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['gameState'] }),
@@ -683,8 +689,8 @@ export function HomePage() {
         <MyReferralsSheet onClose={() => setShowMyReferrals(false)} />
       )}
 
-      {showDayNews && gameState.activeProjects.length > 0 && (
-        <DayNewsOverlay projects={gameState.activeProjects} closures={dayClosures} onClose={() => setShowDayNews(false)} />
+      {showDayNews && gameState.activeProjects.length > 0 && (gameState.newsEnabled || dayClosures.length > 0) && (
+        <DayNewsOverlay projects={gameState.newsEnabled ? gameState.activeProjects : []} closures={dayClosures} onClose={() => setShowDayNews(false)} />
       )}
 
       {/* Settings Sheet */}
@@ -1006,6 +1012,43 @@ export function HomePage() {
                     {t.home.settingsTourHint}
                   </div>
                 </button>
+              </div>
+
+              {/* Ежедневные новости */}
+              <div style={{ marginBottom: '28px' }}>
+                <div style={{ color: colors.textOnDarkSecond, fontSize: '12px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  {t.home.settingsSectionNews}
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {([
+                    { v: true,  label: t.home.settingsNewsOn },
+                    { v: false, label: t.home.settingsNewsOff },
+                  ]).map(({ v, label }) => {
+                    const active = !!gameState.newsEnabled === v
+                    return (
+                      <button
+                        key={String(v)}
+                        onClick={() => { playSound('tap'); toggleNews(v) }}
+                        style={{
+                          flex: 1,
+                          padding: '12px 8px',
+                          background: active ? `${colors.fairyGold}18` : 'rgba(255,255,255,0.05)',
+                          border: `1px solid ${active ? colors.fairyGold : 'rgba(255,255,255,0.1)'}`,
+                          borderRadius: '12px',
+                          color: active ? colors.fairyGold : colors.textOnDarkSecond,
+                          fontSize: '14px',
+                          fontWeight: active ? 700 : 400,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {label}
+                      </button>
+                    )
+                  })}
+                </div>
+                <div style={{ color: colors.textOnDarkMuted, fontSize: '11px', marginTop: '8px' }}>
+                  {t.home.settingsNewsHint}
+                </div>
               </div>
 
               {/* Язык / Language */}
@@ -2101,6 +2144,33 @@ function DayNewsOverlay({
           <div style={{ color: colors.textOnDarkMuted, fontSize: '10px', textAlign: 'center', marginTop: '8px', opacity: 0.7 }}>
             {t.home.dayNewsSwipe}
           </div>
+          {/* Опт-аут от ежедневных вестей. Глобальный флаг GameState.newsEnabled —
+              сервер перестаёт генерировать AI-новости и пропускает random-event
+              text-инсерты. Показатели дел (доходность, число вкладчиков) меняются
+              как обычно. Включить обратно можно из Настроек. */}
+          {!isClosure && (
+            <button
+              onClick={async e => {
+                e.stopPropagation()
+                try {
+                  await api.game.updateSettings({ newsEnabled: false })
+                  // Локально мгновенно меняем — UI не дёргается до рефетча
+                  const gs = useGameStore.getState().gameState
+                  if (gs) useGameStore.getState().setGameState({ ...gs, newsEnabled: false })
+                } catch { /* noop — кнопка отключения не критична */ }
+                onClose()
+              }}
+              style={{
+                display: 'block', margin: '8px auto 0',
+                background: 'none', border: 'none',
+                color: colors.textOnDarkMuted, fontSize: '11px',
+                cursor: 'pointer', padding: '4px 8px',
+                textDecoration: 'underline', opacity: 0.7,
+              }}
+            >
+              {t.home.dayNewsDisable}
+            </button>
+          )}
         </motion.div>
       </AnimatePresence>
     </div>

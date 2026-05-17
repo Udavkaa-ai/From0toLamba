@@ -220,6 +220,7 @@ export async function gameRoutes(app: FastifyInstance) {
       pendingRankUp: gameState.pendingRankUp,
       preferredModel: gameState.preferredModel,
       preferredLanguage: gameState.preferredLanguage ?? 'ru',
+      newsEnabled: gameState.newsEnabled,
       lastAdvancedAt: gameState.lastAdvancedAt ? gameState.lastAdvancedAt.toISOString() : null,
       advanceCooldownMs: ADVANCE_COOLDOWN_MS,
       consecutiveAdvances: gameState.consecutiveAdvances,
@@ -372,20 +373,22 @@ export async function gameRoutes(app: FastifyInstance) {
         'google/gemini-3.1-flash-lite-preview',
       ]).optional(),
       preferredLanguage: z.enum(['ru', 'en']).optional(),
+      newsEnabled: z.boolean().optional(),
     }).safeParse(request.body)
     if (!body.success) return reply.status(400).send({ error: 'Invalid settings' })
 
     const user = await prisma.user.findUniqueOrThrow({
       where: { telegramId: String(tgUser.id) },
     })
-    const updateData: Record<string, string> = {}
+    const updateData: Record<string, string | boolean> = {}
     if (body.data.preferredModel) updateData.preferredModel = body.data.preferredModel
     if (body.data.preferredLanguage) updateData.preferredLanguage = body.data.preferredLanguage
+    if (typeof body.data.newsEnabled === 'boolean') updateData.newsEnabled = body.data.newsEnabled
     await prisma.gameState.update({
       where: { userId: user.id },
       data: updateData,
     })
-    return { success: true, preferredModel: body.data.preferredModel, preferredLanguage: body.data.preferredLanguage }
+    return { success: true, ...body.data }
   })
 
   // GET /api/leaderboard — топ-100 по общему состоянию

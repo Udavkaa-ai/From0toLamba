@@ -133,6 +133,8 @@ export interface GameStateDTO {
   pendingRankUp: string | null
   preferredModel: string
   preferredLanguage: string
+  /** Игрок выключил ежедневные AI-новости (карточки «Вести 1/N» при advance-day). */
+  newsEnabled: boolean
   lastAdvancedAt: string | null
   advanceCooldownMs: number
   consecutiveAdvances: number
@@ -362,7 +364,7 @@ export const api = {
     clearRankUp: () => apiClient.post('/game/clear-rank-up').then(r => r.data),
     completeOnboarding: () => apiClient.post('/game/complete-onboarding').then(r => r.data),
     getSettings: () => apiClient.get<{ preferredModel: string }>('/game/settings').then(r => r.data),
-    updateSettings: (data: { preferredModel?: string; preferredLanguage?: string }) => apiClient.post<{ success: boolean }>('/game/settings', data).then(r => r.data),
+    updateSettings: (data: { preferredModel?: string; preferredLanguage?: string; newsEnabled?: boolean }) => apiClient.post<{ success: boolean }>('/game/settings', data).then(r => r.data),
     resetGame: () => apiClient.post('/game/reset').then(r => r.data),
   },
 
