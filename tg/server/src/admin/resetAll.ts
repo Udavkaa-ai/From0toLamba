@@ -56,7 +56,7 @@ async function resetAll() {
     await prisma.gameState.update({
       where: { userId: user.id },
       data: {
-        balance: 0,
+        balance: 50, // STARTING_GIFT
         currentDay: 0,
         investorRank: 'NEWBIE',
         intuitionScore: 0,

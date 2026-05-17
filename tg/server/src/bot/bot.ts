@@ -235,7 +235,7 @@ function setupHandlers(bot: Bot) {
         await prisma.gameState.update({
           where: { userId: user.id },
           data: {
-            balance: 0,
+            balance: 50, // STARTING_GIFT — иначе после /resetall стартовый подарок не начисляется (см. /api/game/reset)
             currentDay: 0,
             investorRank: 'NEWBIE',
             intuitionScore: 0,

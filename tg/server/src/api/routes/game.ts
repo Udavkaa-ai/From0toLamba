@@ -904,12 +904,16 @@ export async function gameRoutes(app: FastifyInstance) {
       where: { id: user.id },
       data: { pendingReferralParam: null },
     })
-    // Reset game state (keep preferredModel)
+    // Reset game state (keep preferredModel).
+    // balance стартует с STARTING_GIFT (50 г) — иначе после сброса транзакция
+    // «Подарок от Хозяина Ярмарки» создаётся (txCount===0 после deleteMany),
+    // но грошей нет, потому что balance: 50 при upsert навешивается ТОЛЬКО
+    // в create-ветке (для новых юзеров), а у сбросившего user уже существует.
     const preferredModel = user.gameState?.preferredModel ?? 'deepseek/deepseek-v4-flash'
     await prisma.gameState.update({
       where: { userId: user.id },
       data: {
-        balance: 0,
+        balance: 50,
         currentDay: 0,
         investorRank: 'NEWBIE',
         intuitionScore: 0,
