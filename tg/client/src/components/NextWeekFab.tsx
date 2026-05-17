@@ -31,11 +31,32 @@ export function NextWeekFab() {
   const [expanded, setExpanded] = useState(false)
   const [now, setNow] = useState(Date.now())
 
-  // Тикер раз в секунду для live-обновления countdown'а в locked-pill
+  // Скрытие на полноэкранных страницах (как у BottomNav)
+  const hidden = location.pathname.startsWith('/ama/') ||
+    location.pathname.startsWith('/charter/') ||
+    location.pathname === '/registry'
+
+  const lastMs = gameState?.lastAdvancedAt ? new Date(gameState.lastAdvancedAt).getTime() : 0
+  const cooldownMs = gameState?.advanceCooldownMs ?? 2 * 60 * 60 * 1000
+  const remainingFreePresses = Math.max(0, (gameState?.maxConsecutiveAdvances ?? 7) - (gameState?.consecutiveAdvances ?? 0))
+  const remainingMs = Math.max(0, lastMs + cooldownMs - now)
+  const isLocked = remainingFreePresses === 0 && remainingMs > 0
+
+  // Тикер запускается ТОЛЬКО когда:
+  //   • FAB видим (не на /ama/, /charter/, /registry — мини-игры держат rAF)
+  //   • Кулдаун активен (нужно живо обновлять countdown)
+  // На остальное время тикер выключен — иначе раз в секунду React делает
+  // reconciliation поверх дерева страницы и мерцают анимации мини-игр и
+  // фоновые SVG-эффекты.
+  // Плюс: когда осталось > 1 мин — тикаем раз в 15 сек (минуты меняются
+  // редко); когда < 1 мин — каждую секунду чтобы видеть секунды убегающими.
+  const tickerActive = !hidden && isLocked
+  const tickInterval = remainingMs > 60_000 ? 15_000 : 1_000
   useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000)
+    if (!tickerActive) return
+    const id = setInterval(() => setNow(Date.now()), tickInterval)
     return () => clearInterval(id)
-  }, [])
+  }, [tickerActive, tickInterval])
 
   // Авто-сворачивание через 4 сек, если игрок не тапнул второй раз
   useEffect(() => {
@@ -44,17 +65,7 @@ export function NextWeekFab() {
     return () => clearTimeout(id)
   }, [expanded])
 
-  // Скрытие на полноэкранных страницах (как у BottomNav)
-  const hidden = location.pathname.startsWith('/ama/') ||
-    location.pathname.startsWith('/charter/') ||
-    location.pathname === '/registry'
   if (hidden || !gameState) return null
-
-  const lastMs = gameState.lastAdvancedAt ? new Date(gameState.lastAdvancedAt).getTime() : 0
-  const cooldownMs = gameState.advanceCooldownMs ?? 2 * 60 * 60 * 1000
-  const remainingFreePresses = Math.max(0, (gameState.maxConsecutiveAdvances ?? 7) - (gameState.consecutiveAdvances ?? 0))
-  const remainingMs = Math.max(0, lastMs + cooldownMs - now)
-  const isLocked = remainingFreePresses === 0 && remainingMs > 0
 
   const handleTap = () => {
     haptic?.impactOccurred('light')
