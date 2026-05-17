@@ -7,8 +7,9 @@ export const APP_VERSION = 'бета 4.3.0'
 
 /**
  * Один раз за модульную сессию: предзагрузить ВСЕ фоновые картинки активной
- * темы (12 шт: 7 HOME + 5 BG). После этого браузер держит их в кэше и при
- * переключении между вкладками фон отображается мгновенно вместо «секунда
+ * темы (12 шт: 7 HOME + 5 BG) + 7 аватарок хозяев (RelationshipsPage).
+ * После этого браузер держит их в кэше — при переключении между вкладками
+ * и заходе в Relations картинки отображаются мгновенно вместо «секунда
  * на загрузку из сети».
  *
  * Запускается лениво при первом импорте модуля (одна гонка с первым рендером
@@ -32,6 +33,13 @@ function preloadAllBackgrounds(): void {
     `/backgrounds/BG_STATS${suffix}.webp`,
     `/backgrounds/BG_LEADERBOARD${suffix}.webp`,
     `/backgrounds/BG_REGISTRY${suffix}.webp`,
+    `/avatars/buratino${suffix}.webp`,
+    `/avatars/boyarin${suffix}.webp`,
+    `/avatars/kolobok${suffix}.webp`,
+    `/avatars/koschei${suffix}.webp`,
+    `/avatars/zolushka${suffix}.webp`,
+    `/avatars/baba_yaga${suffix}.webp`,
+    `/avatars/ivan_durak${suffix}.webp`,
   ]
   for (const p of paths) {
     const img = new Image()
