@@ -17,7 +17,12 @@ const PLAY_SECONDS = 20
 // часть игрового процесса, а не промах. Поэтому:
 //   собрал все 6 пар в 20 секунд → 0 ошибок (победа, совет чуйки)
 //   не собрал                    → 2 ошибки (поражение, только за звёзды)
-const REVEAL_DELAY_MS = 700
+//
+// Задержки между «открыл вторую карту» → «следующая попытка»:
+// — для match: чуть длиннее (полюбоваться парой)
+// — для miss: коротко, чтобы не накапливалось ожидание
+const REVEAL_DELAY_MATCH_MS = 450
+const REVEAL_DELAY_MISS_MS  = 380
 const SYMBOL_COUNT = 6
 const COLS = 3
 const ROWS = 4
@@ -295,7 +300,7 @@ export function KoscheiGame({ seed, onComplete, restoredErrorCount }: KoscheiGam
       setSelectedA(null)
       setSelectedB(null)
       resolvingRef.current = false
-    }, REVEAL_DELAY_MS)
+    }, isMatch ? REVEAL_DELAY_MATCH_MS : REVEAL_DELAY_MISS_MS)
     return () => clearTimeout(delay)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedA, selectedB])
