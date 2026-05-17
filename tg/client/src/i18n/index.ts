@@ -180,12 +180,13 @@ home: {
     ],
   },
   preReset: {
-    title: '📜 Второй сезон на ярмарке!',
+    title: '📜 Сезон 2 на ярмарке!',
     sections: [
-      { heading: '🗝️ Свои забавы у каждого дельца', body: 'Теперь у каждого хозяина дела будет своя забава: кто ключик прячет, кто зелье варит, кто в картишки зовёт перекинуться.\n\nПока не докажешь, что ловок и глаз намётан — с тобой дела иметь не будут.' },
-      { heading: '📊 Летописец считает победы', body: 'Летописец считает твои победы с каждым дельцом — будет, чем похвастаться.' },
-      { heading: '👑 Путь к княжескому венцу', body: 'К княжескому венцу теперь ведёт не чуйка, а счёт взятых дел.' },
-      { heading: null as unknown as string, body: 'Новые игры, чтобы некогда было скучать!\n\nЗагляни на ярмарку 18 мая! 🎉' },
+      { heading: '🗝️ Своя забава у каждого дельца', body: 'Карты, печати, котёл, ключи. Пройди испытание — узнаешь правду о деле.' },
+      { heading: '⚡ Связи с дельцами', body: 'Жетон от сыгранной игры или взятого дела = +1 уровень знакомства, +1% к доходу его дел (до +10). Отдельный рейтинг ⚡ Связи.' },
+      { heading: '👑 Чуйка убрана', body: 'К княжескому венцу теперь ведёт счёт взятых дел:\n5 → Купец, 20 → Мудрец, 50 → Боярин, 100 → Князь.' },
+      { heading: '🟡 Дела от спонсоров', body: 'Гарантированные +200% за 14 дней. Заветное слово на канале хозяина — и вкладываешься без испытания.' },
+      { heading: '🏆 Турнир: 23 мая — 1 июня', body: 'Отдельная регистрация, призовой ряд. Подробности скоро на канале.' },
     ],
   },
   // Theme picker в настройках
@@ -1056,10 +1057,11 @@ home: {
   preReset: {
     title: '📜 Season 2 at the Fair!',
     sections: [
-      { heading: '🗝️ Every dealer has their own game', body: 'Every venture owner now has their own trick: one hides a key, one brews a potion, one invites you to a card game.\n\nUntil you prove you\'re sharp-eyed and clever — they won\'t deal with you.' },
-      { heading: '📊 The Chronicler counts', body: 'The Chronicler tracks your wins with each dealer — you\'ll have plenty to boast about.' },
-      { heading: '👑 Path to the crown', body: 'The path to the Prince\'s crown is no longer paved with intuition — it\'s paved with deals won.' },
-      { heading: null as unknown as string, body: 'New games, so there\'s never a dull moment!\n\nVisit the fair on May 18! 🎉' },
+      { heading: '🗝️ Each dealer\'s own game', body: 'Cards, seals, cauldron, keys. Pass the trial — uncover the truth about the deal.' },
+      { heading: '⚡ Ties with dealers', body: 'A token from a played game or a taken deal = +1 acquaintance level, +1% to that dealer\'s yield (up to +10). Separate ⚡ Ties leaderboard.' },
+      { heading: '👑 Intuition removed', body: 'The path to the Prince\'s crown is now paved with deals taken:\n5 → Merchant, 20 → Sage, 50 → Boyar, 100 → Prince.' },
+      { heading: '🟡 Sponsor deals', body: 'Guaranteed +200% over 14 days. Find the secret word on the dealer\'s channel — invest without a trial.' },
+      { heading: '🏆 Tournament: May 23 — June 1', body: 'Separate registration, prize line-up. Details soon on the channel.' },
     ],
   },
   themeSection:        'Theme',
