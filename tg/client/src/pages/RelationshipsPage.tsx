@@ -127,7 +127,11 @@ export function RelationshipsPage() {
               >
                 <ArchetypeAvatar archetype={arch} size={56} />
                 <div style={{
-                  color: ARCHETYPE_TINT[arch], fontSize: 10, fontWeight: 700, letterSpacing: '0.04em',
+                  color: ARCHETYPE_TINT[arch], fontSize: 10, fontWeight: 800, letterSpacing: '0.04em',
+                  // Тень нужна потому что цвет лейбла = тинт архетипа, который
+                  // совпадает с цветом канта/свечения плитки → без тени
+                  // надписи сливаются (Боярин, Кощей, Баба-Яга, Иван).
+                  textShadow: '0 0 4px rgba(0,0,0,0.95), 0 1px 2px rgba(0,0,0,0.9)',
                 }}>
                   {SHORT_NAME[arch]}
                 </div>
