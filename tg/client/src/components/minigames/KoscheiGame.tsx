@@ -57,7 +57,7 @@ function dealCards(rng: () => number): Card[] {
 // ── Символы — эмодзи, без процедурного рисования ───────────────────────────
 // Раньше каждый символ собирался из десятков Pixi-примитивов. Сейчас рендерим
 // эмодзи текстом — Telegram-клиент даёт полированный цветной emoji-глиф.
-const SYMBOL_EMOJI = ['🌳', '🧰', '🐰', '🦆', '🥚', '🪡'] as const
+const SYMBOL_EMOJI = ['🌳', '🧰', '🐇', '🦆', '🥚', '🪡'] as const
 const SYMBOL_NAMES = ['Дуб', 'Сундук', 'Заяц', 'Утка', 'Яйцо', 'Игла']
 void SYMBOL_NAMES  // оставлено для будущей пасхалки/подсказки
 
@@ -165,8 +165,12 @@ export function KoscheiGame({ seed, onComplete, restoredErrorCount }: KoscheiGam
       { symbolIdx: 4, size: 54,  spawnAt: 3.1 },   // Яйцо из утки
       { symbolIdx: 5, size: 46,  spawnAt: 3.9 },   // Игла из яйца
     ]
-    const HOLD_AFTER_NEEDLE = 3.0
-    const TOTAL_CYCLE = STEPS[STEPS.length - 1].spawnAt + HOLD_AFTER_NEEDLE
+    // После того как пирамида построилась — каждый эмодзи независимо
+    // запускает цикл «увеличивается + растворяется» (bloom-fade).
+    // Период одного цикла одного эмодзи + сдвиг фазы между ними = волна.
+    const BLOOM_DUR = 1.8
+    const BLOOM_PHASE_OFFSET = 0.28
+    const BLOOM_SCALE_TO   = 1.55
 
     const cx = W / 2
     const baseY = H * 0.82
@@ -205,7 +209,9 @@ export function KoscheiGame({ seed, onComplete, restoredErrorCount }: KoscheiGam
     const start = performance.now()
     const tick = () => {
       const now = performance.now()
-      const cycle = ((now - start) / 1000) % TOTAL_CYCLE
+      // Время от старта без модуло — пирамида строится один раз, дальше
+      // живёт за счёт bloom-fade каждого эмодзи (а не за счёт пересборки).
+      const cycle = (now - start) / 1000
 
       STEPS.forEach((s, i) => {
         const node = nodes[i]
@@ -226,10 +232,16 @@ export function KoscheiGame({ seed, onComplete, restoredErrorCount }: KoscheiGam
           // «Выпрыгивает» вверх: стартует чуть ниже своего места
           node.y = homeY + (1 - t) * 18
         } else {
-          node.alpha = 1
-          const breath = 1 + Math.sin((cycle + i * 0.5) * 1.8) * 0.045
-          node.scale.set(breath)
-          node.y = homeY + Math.sin((cycle + i * 0.4) * 1.6) * 2
+          // Цикл bloom-fade: scale 1.0 → BLOOM_SCALE_TO + alpha 1.0 → 0.0
+          // за BLOOM_DUR секунд, фаза смещена по высоте пирамиды.
+          const phase = ((local - appearDur) + i * BLOOM_PHASE_OFFSET) % BLOOM_DUR
+          const t = phase / BLOOM_DUR
+          // smoothstep — симметричная S-кривая: плавный старт, плавное
+          // окончание. Эмодзи мягко вырастает и так же мягко растворяется.
+          const eased = t * t * (3 - 2 * t)
+          node.scale.set(1.0 + (BLOOM_SCALE_TO - 1.0) * eased)
+          node.alpha = 1.0 - eased
+          node.y = homeY
         }
       })
 
