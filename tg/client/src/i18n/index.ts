@@ -180,7 +180,7 @@ home: {
     ],
   },
   preReset: {
-    title: '📜 Сезон 2 на ярмарке!',
+    title: '📜 ВТОРОЙ СЕЗОН ИГРЫ!',
     sections: [
       { heading: '🗝️ Своя забава у каждого дельца', body: 'Карты, печати, котёл, ключи. Пройди испытание — узнаешь правду о деле.' },
       { heading: '⚡ Связи с дельцами', body: 'Жетон от сыгранной игры или взятого дела = +1 уровень знакомства, +1% к доходу его дел (до +10). Отдельный рейтинг ⚡ Связи.' },
@@ -1055,7 +1055,7 @@ home: {
     ],
   },
   preReset: {
-    title: '📜 Season 2 at the Fair!',
+    title: '📜 SEASON 2 IS LIVE!',
     sections: [
       { heading: '🗝️ Each dealer\'s own game', body: 'Cards, seals, cauldron, keys. Pass the trial — uncover the truth about the deal.' },
       { heading: '⚡ Ties with dealers', body: 'A token from a played game or a taken deal = +1 acquaintance level, +1% to that dealer\'s yield (up to +10). Separate ⚡ Ties leaderboard.' },

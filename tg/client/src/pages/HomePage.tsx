@@ -2452,7 +2452,14 @@ function BannerAnnouncementModal({ onClose }: { onClose: () => void }) {
           borderBottom: `1px solid ${colors.fairyGold}25`,
           flexShrink: 0,
         }}>
-          <div style={{ color: colors.fairyGold, fontSize: '16px', fontWeight: 800, flex: 1, paddingRight: spacing.sm }}>
+          <div style={{
+            color: colors.fairyGold,
+            fontSize: '18px',
+            fontWeight: 800,
+            flex: 1, paddingRight: spacing.sm,
+            fontFamily: "'Cinzel', 'Marcellus', serif",
+            letterSpacing: '0.03em',
+          }}>
             {content ? content.title : '🧪 Тестируем 2 сезон!'}
           </div>
           <button
@@ -2463,23 +2470,30 @@ function BannerAnnouncementModal({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        {/* Скроллируемый контент */}
-        <div style={{ overflowY: 'auto', flex: 1, padding: spacing.lg }}>
+        {/* Скроллируемый контент — единый поток без плашек.
+            Заголовок секции золотом, тело кремом modalText на тёмном дереве. */}
+        <div style={{ overflowY: 'auto', flex: 1, padding: `${spacing.lg} ${spacing.lg} ${spacing.md}` }}>
           {content ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.md }}>
               {content.sections.map((s, i) => (
-                <div key={i} style={{
-                  padding: `${spacing.sm} ${spacing.md}`,
-                  background: 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${colors.cardBorder}`,
-                  borderRadius: '10px',
-                }}>
+                <div key={i}>
                   {s.heading && (
-                    <div style={{ color: colors.fairyGold, fontSize: '12px', fontWeight: 700, marginBottom: '4px' }}>
+                    <div style={{
+                      color: colors.fairyGold,
+                      fontSize: '14px',
+                      fontWeight: 800,
+                      marginBottom: '4px',
+                      letterSpacing: '0.01em',
+                    }}>
                       {s.heading}
                     </div>
                   )}
-                  <div style={{ color: colors.textPrimary, fontSize: '13px', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
+                  <div style={{
+                    color: colors.modalText,
+                    fontSize: '14px',
+                    lineHeight: 1.55,
+                    whiteSpace: 'pre-line',
+                  }}>
                     {s.body}
                   </div>
                 </div>
