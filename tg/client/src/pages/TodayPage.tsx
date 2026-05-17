@@ -293,8 +293,12 @@ function LeaderboardBlock({ today, myTelegramId, t }: {
                     {entry.nickname || entry.firstName}
                   </span>
                   <span style={{
-                    color: colors.fairyGold, fontWeight: 700, fontSize: 13,
+                    padding: '2px 8px',
+                    background: 'rgba(20,10,2,0.55)',
+                    borderRadius: 8,
+                    color: colors.fairyGold, fontWeight: 800, fontSize: 13,
                     fontVariantNumeric: 'tabular-nums',
+                    whiteSpace: 'nowrap',
                   }}>
                     {entry.wealth.toLocaleString('ru')} г
                   </span>
@@ -344,8 +348,12 @@ function LeaderboardBlock({ today, myTelegramId, t }: {
                     {displayName}{isMe ? ' (вы)' : ''}
                   </span>
                   <span style={{
-                    color: colors.fairyGold, fontWeight: 700, fontSize: 13,
+                    padding: '2px 8px',
+                    background: 'rgba(20,10,2,0.55)',
+                    borderRadius: 8,
+                    color: colors.fairyGold, fontWeight: 800, fontSize: 13,
                     fontVariantNumeric: 'tabular-nums',
+                    whiteSpace: 'nowrap',
                   }}>
                     ⚡ {entry.tiesTotal}
                   </span>

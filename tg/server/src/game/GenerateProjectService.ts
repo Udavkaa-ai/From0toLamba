@@ -34,6 +34,12 @@ const ALL_FATES = Object.entries(FATE_CONFIG).map(([value, cfg]) => ({
 const ALL_TYPES = Object.values(ProjectType)
 const ALL_ARCHETYPES = Object.values(PersonaArchetype)
 
+// In-memory mutex для VIP-критической секции: одна запись на userId,
+// удерживается пока идёт async-проверка существующего VIP + создание.
+// Защищает от TOCTOU между параллельными generateProject() (см. комментарий
+// внутри функции). Railway → один Node-процесс, шарить через DB не нужно.
+const vipCreationLocks = new Set<number>()
+
 export async function generateProject(
   userId: number,
   overrideFate?: ProjectFate,
@@ -47,25 +53,33 @@ export async function generateProject(
   // (isInbox=true, isPreloaded=false внутри materializeSponsorProject),
   // даже если этот вызов был фоновым из advance-day preload-цикла.
   if (!overrideFate && Math.random() < SPONSOR_CHANCE) {
-    // Защита от дублей и от ранней выдачи: VIP не катится если
-    //   • игрок ещё не завершил онбординг (нет смысла показывать
-    //     богатое предложение когда у новичка нет ни денег, ни понимания
-    //     механик — он закрывает дело и оно больше не выпадает),
-    //   • у игрока уже есть VIP в inbox/active (race на пачке advance-day,
-    //     иначе 2-3 параллельных generateProject() могли материализовать
-    //     одну и ту же кампанию).
-    const gs = await prisma.gameState.findUnique({
-      where: { userId },
-      select: { isOnboardingComplete: true },
-    })
-    const existingSponsor = await prisma.project.count({
-      where: { userId, isSponsor: true, OR: [{ isInbox: true }, { isActive: true }] },
-    })
-    if (gs?.isOnboardingComplete && existingSponsor === 0) {
-      const campaign = await pickRandomActiveCampaign(userId)
-      if (campaign) {
-        const sponsored = await materializeSponsorProject(userId, campaign)
-        return sponsored.id
+    // Защита от дублей. AdvanceDayService и /api/game стреляют 2-3
+    // generateProject() параллельно (fire-and-forget). Раньше тут
+    // была только async проверка existingSponsor===0 — это TOCTOU,
+    // оба параллельных вызова проходили проверку ДО того как любой
+    // успел вставить запись, и игрок получал 2 одинаковых VIP в инбокс.
+    // Теперь — модульный in-memory mutex по userId: первый параллельный
+    // VIP-ролл захватывает лок, остальные сразу проваливаются в обычную
+    // генерацию (потеря VIP-шанса для них — приемлемо, лучше чем дубль).
+    if (!vipCreationLocks.has(userId)) {
+      vipCreationLocks.add(userId)
+      try {
+        const gs = await prisma.gameState.findUnique({
+          where: { userId },
+          select: { isOnboardingComplete: true },
+        })
+        const existingSponsor = await prisma.project.count({
+          where: { userId, isSponsor: true, OR: [{ isInbox: true }, { isActive: true }] },
+        })
+        if (gs?.isOnboardingComplete && existingSponsor === 0) {
+          const campaign = await pickRandomActiveCampaign(userId)
+          if (campaign) {
+            const sponsored = await materializeSponsorProject(userId, campaign)
+            return sponsored.id
+          }
+        }
+      } finally {
+        vipCreationLocks.delete(userId)
       }
     }
   }
