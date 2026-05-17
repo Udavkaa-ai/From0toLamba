@@ -202,15 +202,36 @@ function setupHandlers(bot: Bot) {
   const newSeasonNumber = parseInt(process.env.NEW_SEASON_NUMBER ?? '2', 10)
   const RESET_MARKER_TELEGRAM_ID = `system:reset_marker_s${newSeasonNumber}`
 
+  // In-memory guard — отбивает повторные вызовы в этом же процессе ДО
+  // того как мы успеем атомарно вставить marker в БД. Раньше длинный
+  // цикл реcetа (>10 сек для большой базы) не успевал создать marker,
+  // и Telegram-ретрай / двойной тап / второй инстанс запускали параллельный
+  // сброс — игроки получали по 2-3 onboarding-проекта.
+  let resetallInProgress = false
+
   bot.command('resetall', async (ctx) => {
     if (ctx.from?.id !== ADMIN_TELEGRAM_ID) return
 
-    const marker = await prisma.user.findFirst({ where: { telegramId: RESET_MARKER_TELEGRAM_ID } })
-    if (marker) {
-      await ctx.reply(`⚠️ Сброс для сезона ${newSeasonNumber} уже был выполнен. Повторный запуск заблокирован. (Чтобы запустить ещё раз для нового сезона — задай новый NEW_SEASON_NUMBER в Railway env.)`)
+    if (resetallInProgress) {
+      await ctx.reply('⚠️ Сброс уже идёт. Подожди ✅-уведомление.')
       return
     }
 
+    // АТОМАРНО берём marker как блокировку: первый caller вставит,
+    // конкурирующие получат P2002 (unique violation) → бейлим. Это
+    // гарантирует одну попытку даже если повторные команды прилетят
+    // в момент когда in-memory флаг ещё не выставлен (например, второй
+    // инстанс на Railway во время редеплоя).
+    try {
+      await prisma.user.create({
+        data: { telegramId: RESET_MARKER_TELEGRAM_ID, firstName: 'system' },
+      })
+    } catch {
+      await ctx.reply(`⚠️ Сброс для сезона ${newSeasonNumber} уже выполнен (или сейчас выполняется). Повторный запуск заблокирован. Чтобы запустить новый сезон — подними NEW_SEASON_NUMBER в Railway env.`)
+      return
+    }
+
+    resetallInProgress = true
     await ctx.reply(`🔄 Запускаю глобальный сброс (старт сезона ${newSeasonNumber})...`)
 
     try {
@@ -262,15 +283,15 @@ function setupHandlers(bot: Bot) {
         count++
       }
 
-      // Маркер защищает от повторного запуска
-      await prisma.user.create({
-        data: { telegramId: RESET_MARKER_TELEGRAM_ID, firstName: 'system' },
-      })
-
       await ctx.reply(`✅ Сброс завершён. Обработано игроков: ${count}.`)
     } catch (err) {
       console.error('[resetall] Error:', err)
-      await ctx.reply('❌ Ошибка при сбросе. Проверьте логи.')
+      // Marker уже создан — но что-то пошло не так. Удалим его, чтобы можно
+      // было перезапустить (иначе остаётся залочено на этот сезон навсегда).
+      await prisma.user.delete({ where: { telegramId: RESET_MARKER_TELEGRAM_ID } }).catch(() => {})
+      await ctx.reply('❌ Ошибка при сбросе. Маркер снят, можно запустить заново. Проверь логи.')
+    } finally {
+      resetallInProgress = false
     }
   })
 
