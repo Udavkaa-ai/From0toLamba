@@ -670,23 +670,38 @@ function TransactionSection({ transactions }: { transactions: TransactionDTO[] }
   if (transactions.length === 0) return null
   return (
     <section style={{ marginTop: spacing.xl }}>
-      <button
+      {/* CTA-стиль как у кнопки Летописи — чтобы не выглядело как
+          невзрачный текст-аккордеон. Раньше был plain <button> без фона. */}
+      <motion.button
+        whileTap={{ scale: 0.97 }}
         onClick={() => setOpen(v => !v)}
         style={{
-          width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0',
+          width: '100%',
+          padding: '12px 16px',
+          background: gradients.cta,
+          border: `1.5px solid ${colors.ctaBorder}`,
+          borderRadius: '12px',
+          color: colors.ctaText,
+          fontWeight: 700,
+          fontSize: '14px',
+          cursor: 'pointer',
+          letterSpacing: '0.02em',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
+          fontFamily: 'inherit',
+          boxShadow: '0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,235,170,0.4)',
           marginBottom: open ? spacing.sm : 0,
         }}
       >
-        <span style={{
-          color: colors.textPrimary, fontSize: '13px', fontWeight: 700,
-          textShadow: '0 1px 4px rgba(0,0,0,0.5)',
-        }}>{t.portfolio.tabFlow}</span>
-        <span style={{
-          color: colors.textPrimary, fontSize: '18px', lineHeight: 1, fontWeight: 700,
-          textShadow: '0 1px 4px rgba(0,0,0,0.5)',
-        }}>{open ? '−' : '+'}</span>
-      </button>
+        <span style={{ fontSize: 18 }}>💰</span>
+        <span>{t.portfolio.tabFlow}</span>
+        <span style={{ fontSize: 11, opacity: 0.75, fontWeight: 600 }}>
+          ({transactions.length})
+        </span>
+        <span style={{ marginLeft: 4, fontSize: 16, lineHeight: 1 }}>{open ? '−' : '+'}</span>
+      </motion.button>
       <AnimatePresence>
         {open && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
@@ -703,7 +718,7 @@ function TransactionSection({ transactions }: { transactions: TransactionDTO[] }
 function TransactionRow({ tx }: { tx: TransactionDTO }) {
   const t = useT()
   const isOut = tx.type === 'INVEST' || tx.type === 'ADD'
-  const color = isOut ? '#E86060' : '#60C878'
+  const color = isOut ? '#E34234' : '#2E8B57'
   const sign = isOut ? '−' : '+'
   const label = t.portfolio.txTypes[tx.type as keyof typeof t.portfolio.txTypes] ?? tx.type
 
@@ -712,22 +727,25 @@ function TransactionRow({ tx }: { tx: TransactionDTO }) {
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      padding: '7px 10px',
+      padding: '8px 10px',
       marginBottom: '4px',
-      background: 'rgba(42, 25, 96, 0.25)',
+      // Раньше: rgba(42,25,96,0.25) — полупрозрачное → на ярких bg-картинках
+      // строки сливались с фоном. Теперь — непрозрачный пергамент карточки.
+      background: gradients.card,
       border: `1px solid ${colors.cardBorder}`,
       borderRadius: '8px',
+      boxShadow: `inset 0 1px 0 ${colors.cardHighlight}`,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <span style={{ fontSize: '14px' }}>{TX_TYPE_ICON[tx.type] ?? '•'}</span>
         <div>
-          <div style={{ color: colors.textSecondary, fontSize: '12px' }}>
+          <div style={{ color: colors.textPrimary, fontSize: '12px', fontWeight: 600 }}>
             {label}: {tx.projectName}
           </div>
-          <div style={{ color: colors.textMuted, fontSize: '10px' }}>{t.common.day} {tx.day}</div>
+          <div style={{ color: colors.textSecondary, fontSize: '10px' }}>{t.common.day} {tx.day}</div>
         </div>
       </div>
-      <div style={{ color, fontWeight: 700, fontSize: '13px', flexShrink: 0 }}>
+      <div style={{ color, fontWeight: 800, fontSize: '13px', flexShrink: 0 }}>
         {sign}{Math.floor(tx.amount)} {t.common.currency}
       </div>
     </div>

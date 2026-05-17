@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
@@ -18,7 +17,6 @@ import { useT } from '@/i18n'
 type ChartScale = 30 | 90 | 999
 
 export function StatsPage() {
-  const navigate = useNavigate()
   const t = useT()
   const gameState = useGameStore(s => s.gameState)
   const [chartScale, setChartScale] = useState<ChartScale>(30)
@@ -170,32 +168,9 @@ export function StatsPage() {
           </FairyCard>
         )}
 
-        {/* Отношения с дельцами — отдельная страница */}
-        <button
-          onClick={() => navigate('/relationships')}
-          style={{
-            width: '100%',
-            display: 'flex', alignItems: 'center', gap: spacing.md,
-            marginTop: spacing.lg, marginBottom: spacing.lg,
-            padding: spacing.md,
-            background: `linear-gradient(135deg, ${colors.fairyGold}1A, ${colors.fairyGold}08)`,
-            border: `1px solid ${colors.fairyGold}55`,
-            borderRadius: 14,
-            color: colors.fairyGold,
-            cursor: 'pointer',
-            textAlign: 'left',
-            fontFamily: 'inherit',
-          }}
-        >
-          <div style={{ fontSize: 32, lineHeight: 1 }}>🪙</div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 15, fontWeight: 700 }}>Отношения с дельцами</div>
-            <div style={{ fontSize: 11, color: colors.textMuted, marginTop: 2 }}>
-              7 хозяев · жетоны за прокачку отношений
-            </div>
-          </div>
-          <span style={{ fontSize: 18, color: colors.fairyGold }}>→</span>
-        </button>
+        {/* «Отношения с дельцами» больше не дублируются здесь — они
+            есть на главной как чип под балансом, плюс в нижней нав-кнопке
+            нет необходимости вести их сюда повторно. */}
 
         {/* Награды за подписку */}
         <ChannelTasksBlock />

@@ -1151,13 +1151,15 @@ export function HomePage() {
           animate={{ opacity: 1, y: 0 }}
           style={{ marginBottom: spacing.xxl }}
         >
-          {/* Кнопки звука и настроек — строка над заголовком */}
+          {/* Кнопки звука и настроек — строка над заголовком.
+              Раньше были полупрозрачные (gold-14) и сливались с фоном —
+              пользователи их не замечали (см. скриншот с обведёнными кружками).
+              Теперь тёмная подложка + жирный золотой кант + тень для контраста
+              против любого bg-изображения. */}
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
             <button
               onClick={() => {
                 playSound('tap')
-                // Кнопка-выключатель «всё разом»: если хоть что-то играет — выключить всё;
-                // если всё выключено — включить и музыку, и звуки
                 const allOff = soundMuted && musicMuted
                 const next = !allOff
                 setSoundMuted(next)
@@ -1166,13 +1168,15 @@ export function HomePage() {
                 setMusicMuted(next)
               }}
               style={{
-                background: `${colors.fairyGold}14`,
-                border: `1px solid ${colors.fairyGold}35`,
-                borderRadius: '10px',
-                color: (soundMuted && musicMuted) ? colors.textMuted : colors.fairyGold,
-                fontSize: '16px',
-                cursor: 'pointer', padding: '5px 8px',
+                background: 'rgba(20, 12, 6, 0.85)',
+                border: `1.5px solid ${colors.fairyGold}`,
+                borderRadius: '12px',
+                color: (soundMuted && musicMuted) ? 'rgba(255,184,0,0.45)' : colors.fairyGold,
+                fontSize: '20px',
+                cursor: 'pointer',
+                padding: '8px 12px',
                 lineHeight: 1,
+                boxShadow: `0 2px 10px rgba(0,0,0,0.55), 0 0 12px ${colors.fairyGold}40`,
               }}
             >
               {(soundMuted && musicMuted) ? '🔇' : '🔊'}
@@ -1180,13 +1184,15 @@ export function HomePage() {
             <button
               onClick={() => { playSound('tap'); handleOpenSettings() }}
               style={{
-                background: `${colors.fairyGold}14`,
-                border: `1px solid ${colors.fairyGold}35`,
-                borderRadius: '10px',
+                background: 'rgba(20, 12, 6, 0.85)',
+                border: `1.5px solid ${colors.fairyGold}`,
+                borderRadius: '12px',
                 color: colors.fairyGold,
-                fontSize: '16px',
-                cursor: 'pointer', padding: '5px 8px',
+                fontSize: '20px',
+                cursor: 'pointer',
+                padding: '8px 12px',
                 lineHeight: 1,
+                boxShadow: `0 2px 10px rgba(0,0,0,0.55), 0 0 12px ${colors.fairyGold}40`,
               }}
             >
               ⚙️
@@ -1261,14 +1267,23 @@ export function HomePage() {
         {/* Баланс */}
         <motion.div data-tour="balance" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <FairyCard accent style={{ marginBottom: spacing.lg, textAlign: 'center' }}>
-            <div style={{ color: colors.textSecondary, fontSize: '12px', marginBottom: '4px' }}>{t.home.freeBalance}</div>
+            <div style={{ color: colors.textPrimary, fontSize: '12px', marginBottom: '4px', fontWeight: 600 }}>{t.home.freeBalance}</div>
             <div style={{
               color: colors.fairyGold,
               fontFamily: typography.headingFontFamily,
               fontSize: '40px',
               fontWeight: 700,
               letterSpacing: '0.02em',
-              textShadow: `0 0 28px ${colors.fairyGold}50`,
+              // Темная обводка нужна потому что цифра золотая, а пергамент
+              // карточки тоже желтоватый — без неё цифра «плавает».
+              textShadow: [
+                `0 0 28px ${colors.fairyGold}50`,
+                '0 2px 4px rgba(0,0,0,0.7)',
+                '1px 0 0 rgba(0,0,0,0.55)',
+                '-1px 0 0 rgba(0,0,0,0.55)',
+                '0 1px 0 rgba(0,0,0,0.55)',
+                '0 -1px 0 rgba(0,0,0,0.55)',
+              ].join(', '),
               fontVariantNumeric: 'tabular-nums',
             }}>
               <CountUp value={gameState.balance} />
@@ -1307,6 +1322,44 @@ export function HomePage() {
 
         {/* «Активные дела» с главной убраны — они теперь только в Казне.
             Главная — про новые предложения, статус казны и отношения с дельцами. */}
+
+        {/* Летопись закрытых дел — раньше была глубоко в Казне, перенесли на
+            главную чтобы PostMortem'ы были на виду. CTA-стиль как у "Принять
+            испытание" — золотой градиент, тёмная сепия. */}
+        {gameState.closedProjectsCount > 0 && (
+          <motion.button
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => { tgHaptic?.impactOccurred('light'); navigate('/registry') }}
+            style={{
+              width: '100%',
+              marginTop: spacing.md,
+              padding: '12px 16px',
+              background: gradients.cta,
+              border: `1.5px solid ${colors.ctaBorder}`,
+              borderRadius: '12px',
+              color: colors.ctaText,
+              fontWeight: 700,
+              fontSize: '14px',
+              cursor: 'pointer',
+              letterSpacing: '0.02em',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              fontFamily: 'inherit',
+              boxShadow: '0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,235,170,0.4)',
+            }}
+          >
+            <span style={{ fontSize: 18 }}>📜</span>
+            <span>{t.registry.title}</span>
+            <span style={{ fontSize: 11, opacity: 0.75, fontWeight: 600 }}>
+              ({gameState.closedProjectsCount})
+            </span>
+          </motion.button>
+        )}
 
         {/* Входящие — компактная лента из топ-2 + ссылка на полный список */}
         {gameState.inboxProjects.length > 0 && (
