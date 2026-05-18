@@ -212,7 +212,10 @@ export function HomePage() {
     if (!gameState) return
     const entry = getPendingChangelog(APP_VERSION, gameState.isOnboardingComplete)
     if (entry) setPendingChangelog(entry)
-    if (gameState.isOnboardingComplete && shouldShowChannelPromo()) setShowChannelPromo(true)
+    // Авто-открытие «Заданий ярмарки» отключено по фидбэку — оверлей раз
+    // в день перехватывал утренний вход и раздражал. Список заданий есть
+    // на сервере, при желании вернём кнопкой в Настройках.
+    // if (gameState.isOnboardingComplete && shouldShowChannelPromo()) setShowChannelPromo(true)
     if (gameState.isOnboardingComplete && gameState.pendingMarketAnnouncement) setShowMarketAnnouncement(true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState?.isOnboardingComplete])
@@ -439,7 +442,13 @@ export function HomePage() {
       tgHaptic?.impactOccurred('medium')
       const det = (e as CustomEvent).detail as { returnTo?: string } | undefined
       returnAfterAdvanceRef.current = det?.returnTo ?? null
-      if ((gameState?.inboxProjects.length ?? 0) > 0) {
+      // Читаем АКТУАЛЬНЫЙ inbox-count из Zustand-стора, а не через
+      // замыкание над gameState. Раньше при гонке (фоновый рефетч
+      // gameState ещё не докатился до этого useEffect) хендлер видел
+      // stale count > 0, открывал модалку, а на рендере leftCount уже
+      // показывал 0 — игрок видел «осталось 0 предложений».
+      const liveInbox = useGameStore.getState().gameState?.inboxProjects.length ?? 0
+      if (liveInbox > 0) {
         setShowInboxLeftConfirm(true)
       } else {
         advanceMutation.mutate()
@@ -1492,7 +1501,13 @@ export function HomePage() {
          'advance-day' и 'request-skip-payment' через useEffect ниже. */}
 
       <AnimatePresence>
-        {showInboxLeftConfirm && (
+        {/* Гонка: модалка открывается когда inboxProjects.length > 0, но
+            фоновый рефетч /api/game может прийти позже и обнулить инбокс.
+            leftCount читает gameState live, поэтому показывает 0 — игрок
+            видит «осталось 0 предложений». Дополнительная проверка
+            > 0 на рендере: если за время открытия инбокс опустел, модалка
+            закрывается сама. */}
+        {showInboxLeftConfirm && (gameState?.inboxProjects.length ?? 0) > 0 && (
           <InboxLeftConfirmSheet
             leftCount={gameState?.inboxProjects.length ?? 0}
             pending={advanceMutation.isPending}
