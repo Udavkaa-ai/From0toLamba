@@ -3,7 +3,7 @@ import { SparklesOverlay } from './SparklesOverlay'
 import { gradients, colors } from '@/theme'
 import { getTheme } from '@/theme/colors'
 
-export const APP_VERSION = 'бета 4.6.2'
+export const APP_VERSION = 'бета 4.6.3'
 
 /**
  * Один раз за модульную сессию: предзагрузить ВСЕ фоновые картинки активной
@@ -64,9 +64,29 @@ export function ScreenBackground({ children, showSparkles = true, showMist = tru
     fetch('/api/version')
       .then(r => r.json())
       .then(({ version }: { version: string }) => {
-        if (version !== APP_VERSION) {
-          window.location.reload()
+        if (version === APP_VERSION) {
+          // Версии совпали — сбрасываем флаг «уже пытались», чтобы при следующем
+          // настоящем деплое reload снова сработал.
+          sessionStorage.removeItem('version-reload-attempted')
+          return
         }
+        // Защита от бесконечной петли reload'ов.
+        // Если JS-бандл закэширован Telegram-WebView или CDN, после reload
+        // браузер может опять загрузить старый бандл со старым APP_VERSION,
+        // /api/version вернёт новый → петля. Это вызывало визуальное мерцание
+        // (контент мелькает на доли секунды между перезагрузками).
+        // Пробуем reload максимум один раз за сессию; если после него версия
+        // всё ещё не совпала — значит дело не в простом кэше, тихо пишем
+        // warning и оставляем игрока на старой версии (играть можно).
+        if (sessionStorage.getItem('version-reload-attempted')) {
+          console.warn('[version] mismatch persists after reload, staying on cached bundle', {
+            client: APP_VERSION,
+            server: version,
+          })
+          return
+        }
+        sessionStorage.setItem('version-reload-attempted', '1')
+        window.location.reload()
       })
       .catch(() => {})
   }, [])
