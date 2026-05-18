@@ -11,17 +11,7 @@ import {
   MAFIA_OFFER_DAYS_BEFORE, MAFIA_OFFER_CHANCE, MAFIA_FORCED_CLOSURE_RETURN_PERCENT,
 } from './mafiaOffers'
 import { computeTieLevels, tieBonusFromLevel } from './tiesService'
-
-/** Правильный % прибыли с учётом выводов: (выведено + возврат − вложено) / вложено */
-async function computeProfitPercent(projectId: string, investedAmount: number, returned: number): Promise<number> {
-  if (investedAmount <= 0) return 0
-  const agg = await prisma.transaction.aggregate({
-    where: { projectId, type: 'WITHDRAWN' },
-    _sum: { amount: true },
-  })
-  const totalWithdrawn = agg._sum.amount ?? 0
-  return ((returned + totalWithdrawn - investedAmount) / investedAmount) * 100
-}
+import { computeProjectProfitPercent, getCumulativeInvested } from './projectUtils'
 
 const HANDOVER_REASONS_SURVIVOR = [
   'Дело выкупил племянник воеводы — прибыль выплачена 📜',
@@ -180,15 +170,19 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
         createSponsorPostMortem(closedProject, returned, newDaysSince).catch(console.error)
         balanceDelta += returned
         returnedDelta += returned
+        // В Летописи показываем кумулятивно «сколько всего положил» — иначе после
+        // частичных выводов цифра выглядит мизерной.
+        const cumulativeInvestedSponsor = await getCumulativeInvested(project.id)
+        const sponsorProfitPct = await computeProjectProfitPercent(project.id, returned)
         closures.push({
           id: project.id,
           name: project.name,
           developerName: project.developerName,
           fate: project.fate,
           personaArchetype: project.personaArchetype,
-          investedAmount: project.investedAmountRubles,
+          investedAmount: cumulativeInvestedSponsor,
           returnedAmount: returned,
-          profitPercent: (SPONSOR_PROFIT_MULT - 1) * 100,
+          profitPercent: sponsorProfitPct,
           daysActive: newDaysSince,
           closureReason: 'Воеводская награда исполнена',
           bannerImageUrl: project.bannerImageUrl ? `/api/banner/${project.id}` : null,
@@ -298,8 +292,13 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
       balanceDelta += returned
       returnedDelta += returned
 
-      // Генерируем PostMortem
-      const profitPercent = await computeProfitPercent(project.id, project.investedAmountRubles, returned)
+      // Кумулятивные суммы — берём из истории транзакций, потому что
+      // investedAmountRubles теперь означает «текущий принципал» (после
+      // частичных выводов уменьшается пропорционально).
+      const [cumulativeInvested, profitPercent] = await Promise.all([
+        getCumulativeInvested(project.id),
+        computeProjectProfitPercent(project.id, returned),
+      ])
 
       const amaSession = await prisma.amaSession.findUnique({ where: { projectId: project.id } })
 
@@ -309,7 +308,7 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
         archetype: project.personaArchetype,
         fate: project.fate,
         lieTopics: project.lieTopics,
-        investedAmount: project.investedAmountRubles,
+        investedAmount: cumulativeInvested,
         returnedAmount: returned,
         profitPercent,
         daysActive: project.daysSinceJoined,
@@ -344,7 +343,7 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
         developerName: project.developerName,
         fate: project.fate,
         personaArchetype: project.personaArchetype,
-        investedAmount: project.investedAmountRubles,
+        investedAmount: cumulativeInvested,
         returnedAmount: returned,
         profitPercent,
         daysActive: project.daysSinceJoined,
@@ -446,14 +445,17 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
       balanceDelta += returned
       returnedDelta += returned
 
-      const profitPct = await computeProfitPercent(project.id, project.investedAmountRubles, returned)
+      const [cumulativeInvestedAb, profitPct] = await Promise.all([
+        getCumulativeInvested(project.id),
+        computeProjectProfitPercent(project.id, returned),
+      ])
       const amaSessionAbandoned = await prisma.amaSession.findUnique({ where: { projectId: project.id } })
       generatePostMortem({
         projectId: project.id, userId,
         archetype: project.personaArchetype,
         fate: project.fate,
         lieTopics: project.lieTopics,
-        investedAmount: project.investedAmountRubles,
+        investedAmount: cumulativeInvestedAb,
         returnedAmount: returned,
         profitPercent: profitPct,
         daysActive: project.daysSinceJoined,
@@ -484,7 +486,7 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
         developerName: project.developerName,
         fate: project.fate,
         personaArchetype: project.personaArchetype,
-        investedAmount: project.investedAmountRubles,
+        investedAmount: cumulativeInvestedAb,
         returnedAmount: returned,
         profitPercent: profitPct,
         daysActive: project.daysSinceJoined,
