@@ -8,7 +8,11 @@ import { colors, spacing } from '@/theme'
 
 const CHANNEL_URL = 'https://t.me/vknyazi_izgryazi'
 
-// Лучики сияния вокруг заголовка
+// Лучики сияния вокруг заголовка — статичные SVG-линии без анимации.
+// Раньше каждая из 12 линий имела свою motion.line с opacity-keyframes и
+// бесконечным повтором. На Android WebView эти 12 параллельных rAF плюс
+// прочие infinite-анимации в overlay'е давали тяжёлое подтормаживание
+// при появлении модалки. Картинка визуально та же.
 function Rays() {
   return (
     <svg
@@ -22,42 +26,17 @@ function Rays() {
         const x2 = 100 + Math.cos(angle) * 85
         const y2 = 100 + Math.sin(angle) * 85
         return (
-          <motion.line
+          <line
             key={i}
             x1={x1} y1={y1} x2={x2} y2={y2}
             stroke="#FFB800"
             strokeWidth="1.5"
             strokeLinecap="round"
-            initial={{ opacity: 0.2 }}
-            animate={{ opacity: [0.2, 0.9, 0.2] }}
-            transition={{ duration: 2, repeat: Infinity, delay: i * 0.15, ease: 'easeInOut' }}
+            opacity={0.55}
           />
         )
       })}
     </svg>
-  )
-}
-
-// Плавающие искры
-function Sparks() {
-  const positions = [
-    { top: '12%', left: '8%' }, { top: '18%', right: '10%' },
-    { top: '60%', left: '5%' }, { bottom: '20%', right: '8%' },
-    { top: '40%', right: '4%' }, { bottom: '32%', left: '6%' },
-  ]
-  return (
-    <>
-      {positions.map((pos, i) => (
-        <motion.div
-          key={i}
-          style={{ position: 'absolute', ...pos, fontSize: '14px', pointerEvents: 'none' }}
-          animate={{ y: [0, -8, 0], opacity: [0.4, 1, 0.4], scale: [0.8, 1.2, 0.8] }}
-          transition={{ duration: 2.5, repeat: Infinity, delay: i * 0.4, ease: 'easeInOut' }}
-        >
-          ✦
-        </motion.div>
-      ))}
-    </>
   )
 }
 
@@ -107,34 +86,26 @@ export function MarketAnnouncementOverlay({ onClose }: { onClose: () => void }) 
       }}
     >
       <motion.div
-        initial={{ scale: 0.85, y: 30, opacity: 0 }}
-        animate={{ scale: 1, y: 0, opacity: 1 }}
-        exit={{ scale: 0.85, y: 30, opacity: 0 }}
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
         transition={{ type: 'spring', damping: 22, stiffness: 260 }}
         onClick={e => e.stopPropagation()}
         style={{ position: 'relative', width: '100%', maxWidth: '400px' }}
       >
-        {/* Пульсирующая рамка-сияние */}
-        <motion.div
-          style={{
-            position: 'absolute', inset: '-3px',
-            borderRadius: '22px',
-            background: `conic-gradient(from 0deg, ${colors.fairyGold}, #fff8dc, ${colors.fairyGold}, #b8860b, ${colors.fairyGold})`,
-            opacity: 0.7,
-          }}
-          animate={{ rotate: 360, opacity: [0.5, 0.9, 0.5] }}
-          transition={{ rotate: { duration: 6, repeat: Infinity, ease: 'linear' }, opacity: { duration: 2, repeat: Infinity } }}
-        />
-
+        {/* Раньше была conic-gradient вращающаяся рамка + 6 motion.div
+            искр + scale на замке + opacity на заголовке — всё infinite.
+            На слабых WebView суммарная нагрузка приводила к мерцанию и
+            подтормаживанию overlay'а на входе. Заменено на статичную
+            золотую рамку — визуальный акцент сохраняется. */}
         <div style={{
           position: 'relative',
           background: `linear-gradient(160deg, #1a0e40 0%, ${colors.nightBlue} 60%, #0a1025 100%)`,
           borderRadius: '20px',
+          border: `2px solid ${colors.fairyGold}`,
           overflow: 'hidden',
-          boxShadow: `0 20px 60px rgba(0,0,0,0.7), 0 0 40px ${colors.fairyGold}30`,
+          boxShadow: `0 20px 60px rgba(0,0,0,0.7), 0 0 32px ${colors.fairyGold}55`,
         }}>
-          <Sparks />
-
           {/* Верхний декоративный блок */}
           <div style={{
             background: `linear-gradient(180deg, ${colors.fairyGold}18 0%, transparent 100%)`,
@@ -145,29 +116,21 @@ export function MarketAnnouncementOverlay({ onClose }: { onClose: () => void }) 
             {/* Иконка с лучами */}
             <div style={{ position: 'relative', display: 'inline-block', width: '80px', height: '80px', marginBottom: spacing.md }}>
               <Rays />
-              <motion.div
-                style={{ fontSize: '48px', position: 'relative', zIndex: 1, lineHeight: '80px' }}
-                animate={{ scale: [1, 1.08, 1] }}
-                transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-              >
+              <div style={{ fontSize: '48px', position: 'relative', zIndex: 1, lineHeight: '80px' }}>
                 🏰
-              </motion.div>
+              </div>
             </div>
 
-            <motion.div
-              style={{
-                fontSize: '22px', fontWeight: 900,
-                background: `linear-gradient(135deg, #fff5c0, ${colors.fairyGold}, #b8860b)`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                marginBottom: '4px',
-              }}
-              animate={{ opacity: [0.85, 1, 0.85] }}
-              transition={{ duration: 3, repeat: Infinity }}
-            >
+            <div style={{
+              fontSize: '22px', fontWeight: 900,
+              background: `linear-gradient(135deg, #fff5c0, ${colors.fairyGold}, #b8860b)`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              marginBottom: '4px',
+            }}>
               {t.marketAnnouncement.title}
-            </motion.div>
+            </div>
 
             <div style={{ color: `${colors.fairyGold}99`, fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
               {t.marketAnnouncement.subtitle}
@@ -187,10 +150,9 @@ export function MarketAnnouncementOverlay({ onClose }: { onClose: () => void }) 
             </div>
 
             {/* Кнопка перехода — главная */}
-            <motion.button
+            <button
               onClick={openAndClaim}
               disabled={visiting}
-              whileTap={{ scale: 0.96 }}
               style={{
                 width: '100%',
                 padding: `${spacing.md} ${spacing.lg}`,
@@ -216,7 +178,7 @@ export function MarketAnnouncementOverlay({ onClose }: { onClose: () => void }) 
                   </span>
                 </>
               )}
-            </motion.button>
+            </button>
 
             {/* Кнопка закрыть */}
             <button
