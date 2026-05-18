@@ -1253,9 +1253,11 @@ export function HomePage() {
       <div style={{ padding: `calc(${spacing.xxl} + var(--tg-safe-area-inset-top, env(safe-area-inset-top, 0px))) ${spacing.lg} calc(140px + env(safe-area-inset-bottom))`, maxWidth: '500px', margin: '0 auto' }}>
 
         {/* Логотип + кнопка настроек */}
+        {/* Шапка с логотипом — раньше с initial:opacity:0,y:-20 fade-in.
+            Убрано: на низком FPS визуально воспринималось как мерцание
+            при переходе с другой вкладки (см. кадры скринкаста — заголовок
+            появляется в первом же кадре, но мнимо «прыгает»). */}
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
           style={{ marginBottom: spacing.xxl }}
         >
           {/* Кнопки звука и настроек — строка над заголовком.
@@ -1372,7 +1374,15 @@ export function HomePage() {
         </motion.div>
 
         {/* Баланс */}
-        <motion.div data-tour="balance" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+        {/* Карточка баланса — раньше была с initial:opacity:0 +
+            transition.delay:0.1, появлялась через ~150мс после маунта
+            страницы. При переходе между вкладками и resume Mini App
+            пользователь видел заметный «провал» — карточки на месте
+            нет, потом плавно проявляется. Скринкаст пользователя на
+            24fps показывает кадры где balance card на opacity~0.3 и
+            «Отношения» / «Летопись» вообще ещё не появились (delay 0.3).
+            Делаем рендер мгновенным — без initial:opacity:0 и без delay. */}
+        <motion.div data-tour="balance">
           <FairyCard accent style={{ marginBottom: spacing.lg, textAlign: 'center' }}>
             <div style={{ color: colors.textPrimary, fontSize: '12px', marginBottom: '4px', fontWeight: 600 }}>{t.home.freeBalance}</div>
             <div style={bigNumber(40)}>
@@ -1418,9 +1428,6 @@ export function HomePage() {
             страница сама умеет «Летопись пуста», игрок видит куда идти за
             историей. */}
         <motion.button
-          initial={{ opacity: 0.001, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05, duration: 0.18 }}
           whileTap={{ scale: 0.97 }}
           onClick={() => { tgHaptic?.impactOccurred('light'); navigate('/registry') }}
           style={{
@@ -1444,7 +1451,7 @@ export function HomePage() {
 
         {/* Входящие — компактная лента из топ-2 + ссылка на полный список */}
         {gameState.inboxProjects.length > 0 && (
-          <motion.div data-tour="inbox-section" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+          <motion.div data-tour="inbox-section">
             <div style={{
               display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
               margin: `${spacing.lg} 4px ${spacing.sm}`,

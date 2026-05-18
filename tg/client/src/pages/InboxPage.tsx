@@ -76,14 +76,7 @@ export function InboxPage() {
           <motion.div
             key={p.id}
             {...(i === 0 ? { 'data-tour': 'first-project' } : {})}
-            initial={p.isSponsor
-              ? { opacity: 0, scale: 0.8, y: -20 }
-              : { opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
             whileTap={{ scale: 0.97 }}
-            transition={p.isSponsor
-              ? { type: 'spring', damping: 14, stiffness: 200, delay: i * 0.07 }
-              : { delay: i * 0.07, duration: 0.1 }}
           >
             <InboxCard project={p} onClick={() => navigate(`/charter/${p.id}`)} tourAttr={i === 0} />
           </motion.div>
