@@ -15,6 +15,7 @@ import { ChannelPromoOverlay, shouldShowChannelPromo, markChannelPromoSeen } fro
 import { MarketAnnouncementOverlay } from '@/components/MarketAnnouncementOverlay'
 import { DayTransitionOverlay } from '@/components/DayTransitionOverlay'
 import { TonWalletSection } from '@/components/TonWalletSection'
+import { registerStarsInvoice } from '@/lib/analytics'
 import { CoinShowerOverlay } from '@/components/CoinShowerOverlay'
 import { CountUp } from '@/components/CountUp'
 import { EyeIcon, LockIcon } from '@/components/icons'
@@ -367,6 +368,7 @@ export function HomePage() {
         setPaymentPending(false)
         return
       }
+      registerStarsInvoice(resp.analyticsPayload)
       tgWebApp.openInvoice(resp.invoiceLink, async (status: string) => {
         if (status === 'paid') {
           try {

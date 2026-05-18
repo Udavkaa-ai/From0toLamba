@@ -460,7 +460,20 @@ export const api = {
       projectId?: string,
       merchantName?: string,
     ) =>
-      apiClient.post<{ invoiceLink: string | null }>('/payments/invoice', { feature, projectId, merchantName }).then(r => r.data),
+      apiClient.post<{
+        invoiceLink: string | null
+        // Структура для telegramAnalytics.registerInvoice() — приходит когда
+        // PAYMENTS_ENABLED=true, иначе фича активируется бесплатно и инвойс
+        // не создаётся.
+        analyticsPayload?: {
+          slug: string
+          title: string
+          description: string
+          payload: string
+          currency: string
+          prices: { label: string; amount: number }[]
+        }
+      }>('/payments/invoice', { feature, projectId, merchantName }).then(r => r.data),
     activateTimerSkip: () =>
       apiClient.post<AdvanceDayResultDTO>('/payments/activate', { feature: 'timer_skip' }).then(r => r.data),
     activateAmaUnlock: (projectId: string) =>

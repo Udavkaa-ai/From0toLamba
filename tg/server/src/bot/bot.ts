@@ -92,48 +92,74 @@ export const bot = new Proxy({} as Bot, {
   },
 })
 
-export async function createTimerSkipInvoice(userId: number, payload: string): Promise<string> {
-  return getBot().api.createInvoiceLink(
-    'Пропуск ожидания',
-    'Снять 2-часовой кулдаун и сразу перейти к следующему дню',
-    payload,
-    '',
-    'XTR',
-    [{ label: 'Пропуск кулдауна', amount: STARS_TIMER_SKIP }],
-  )
+// ─── Stars-инвойсы ───────────────────────────────────────────────────────────
+// Каждый хелпер возвращает { link, analytics }:
+//   link — t.me/$xxx URL для openInvoice() в Mini App
+//   analytics — структура для telegramAnalytics.registerInvoice() (требование
+//   Telegram Apps Center: чтобы в каталоге был виден revenue от Stars).
+export type StarsInvoiceAnalytics = {
+  slug: string
+  title: string
+  description: string
+  payload: string
+  currency: string
+  prices: { label: string; amount: number }[]
+}
+export type StarsInvoiceResult = {
+  link: string
+  analytics: StarsInvoiceAnalytics
 }
 
-export async function createAmaUnlockInvoice(merchantName: string, userId: number, payload: string): Promise<string> {
-  return getBot().api.createInvoiceLink(
-    `Беседа с ${merchantName}`,
-    'Открыть личную беседу с дельцом и задать до 10 вопросов',
-    payload,
-    '',
-    'XTR',
-    [{ label: 'Беседа с дельцом', amount: STARS_AMA_UNLOCK }],
+async function buildInvoice(analytics: StarsInvoiceAnalytics): Promise<StarsInvoiceResult> {
+  const link = await getBot().api.createInvoiceLink(
+    analytics.title, analytics.description, analytics.payload,
+    '', analytics.currency, analytics.prices,
   )
+  return { link, analytics }
 }
 
-export async function createExtraSlotInvoice(userId: number, payload: string): Promise<string> {
-  return getBot().api.createInvoiceLink(
-    'Дополнительный слот для дела',
-    'Открыть один слот сверх лимита 5 дел — для одного нового вложения',
+export async function createTimerSkipInvoice(userId: number, payload: string): Promise<StarsInvoiceResult> {
+  return buildInvoice({
+    slug: 'timer_skip',
+    title: 'Пропуск ожидания',
+    description: 'Снять 2-часовой кулдаун и сразу перейти к следующему дню',
     payload,
-    '',
-    'XTR',
-    [{ label: 'Доп. слот', amount: STARS_EXTRA_SLOT }],
-  )
+    currency: 'XTR',
+    prices: [{ label: 'Пропуск кулдауна', amount: STARS_TIMER_SKIP }],
+  })
 }
 
-export async function createMinigameBypassInvoice(userId: number, payload: string): Promise<string> {
-  return getBot().api.createInvoiceLink(
-    'Вложить, минуя испытание',
-    'Пропустить проверку чуйки и вложиться в дело несмотря на проигрыш в мини-игре',
+export async function createAmaUnlockInvoice(merchantName: string, userId: number, payload: string): Promise<StarsInvoiceResult> {
+  return buildInvoice({
+    slug: 'ama_unlock',
+    title: `Беседа с ${merchantName}`,
+    description: 'Открыть личную беседу с дельцом и задать до 10 вопросов',
     payload,
-    '',
-    'XTR',
-    [{ label: 'Пропуск проверки', amount: STARS_MINIGAME_BYPASS }],
-  )
+    currency: 'XTR',
+    prices: [{ label: 'Беседа с дельцом', amount: STARS_AMA_UNLOCK }],
+  })
+}
+
+export async function createExtraSlotInvoice(userId: number, payload: string): Promise<StarsInvoiceResult> {
+  return buildInvoice({
+    slug: 'extra_slot',
+    title: 'Дополнительный слот для дела',
+    description: 'Открыть один слот сверх лимита 5 дел — для одного нового вложения',
+    payload,
+    currency: 'XTR',
+    prices: [{ label: 'Доп. слот', amount: STARS_EXTRA_SLOT }],
+  })
+}
+
+export async function createMinigameBypassInvoice(userId: number, payload: string): Promise<StarsInvoiceResult> {
+  return buildInvoice({
+    slug: 'minigame_bypass',
+    title: 'Вложить, минуя испытание',
+    description: 'Пропустить проверку чуйки и вложиться в дело несмотря на проигрыш в мини-игре',
+    payload,
+    currency: 'XTR',
+    prices: [{ label: 'Пропуск проверки', amount: STARS_MINIGAME_BYPASS }],
+  })
 }
 
 function setupHandlers(bot: Bot) {

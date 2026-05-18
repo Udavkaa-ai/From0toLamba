@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ScreenBackground } from '@/components/ScreenBackground'
 import { api } from '@/api/client'
 import type { CharterDTO, CharterResultDTO, CharterSubmitDTO, GameStateDTO, ProjectDTO } from '@/api/client'
+import { registerStarsInvoice } from '@/lib/analytics'
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing, gradients } from '@/theme'
 import { Seal, generateReferenceSeal, sealForCell, mutateSeal, RANK_MUT_POOLS } from '@/components/Seal'
@@ -1751,9 +1752,11 @@ function MiniGameResultSheet({
     try {
       const resp = await api.payments.createInvoice('minigame_bypass', project.id) as {
         invoiceLink: string | null
+        analyticsPayload?: Parameters<typeof registerStarsInvoice>[0]
         perfectInsight?: string | null
       }
       if (resp.invoiceLink) {
+        registerStarsInvoice(resp.analyticsPayload)
         tg.openInvoice(resp.invoiceLink, async (status: string) => {
           if (status === 'paid') {
             try {
@@ -2341,8 +2344,9 @@ function ExtraSlotModal({
     setError(null)
     setStarsPending(true)
     try {
-      const { invoiceLink } = await api.payments.createInvoice('extra_slot')
+      const { invoiceLink, analyticsPayload } = await api.payments.createInvoice('extra_slot')
       if (invoiceLink) {
+        registerStarsInvoice(analyticsPayload)
         tg.openInvoice(invoiceLink, async (status: string) => {
           if (status === 'paid') {
             try {

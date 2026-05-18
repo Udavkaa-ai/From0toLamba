@@ -39,23 +39,25 @@ export async function paymentsRoutes(app: FastifyInstance) {
 
     const uuid = randomUUID()
     let payload: string
-    let invoiceLink: string
+    // Хелперы возвращают { link, analytics } — analytics уходит клиенту, тот
+    // зовёт telegramAnalytics.registerInvoice() для трекинга revenue в каталоге.
+    let invoiceResult: Awaited<ReturnType<typeof createTimerSkipInvoice>>
 
     if (body.data.feature === 'timer_skip') {
       payload = `ts:${uuid}`
-      invoiceLink = await createTimerSkipInvoice(user.id, payload)
+      invoiceResult = await createTimerSkipInvoice(user.id, payload)
     } else if (body.data.feature === 'extra_slot') {
       payload = `es:${uuid}`
-      invoiceLink = await createExtraSlotInvoice(user.id, payload)
+      invoiceResult = await createExtraSlotInvoice(user.id, payload)
     } else if (body.data.feature === 'minigame_bypass') {
       payload = `mb:${uuid}`
-      invoiceLink = await createMinigameBypassInvoice(user.id, payload)
+      invoiceResult = await createMinigameBypassInvoice(user.id, payload)
     } else {
       const projectId = body.data.projectId
       if (!projectId) return reply.status(400).send({ error: 'projectId обязателен для ama_unlock' })
       payload = `au:${uuid}:${projectId}`
       const merchantName = body.data.merchantName ?? 'дельцом'
-      invoiceLink = await createAmaUnlockInvoice(merchantName, user.id, payload)
+      invoiceResult = await createAmaUnlockInvoice(merchantName, user.id, payload)
     }
 
     // Сохраняем запись для аудита и возможных возвратов
@@ -73,7 +75,7 @@ export async function paymentsRoutes(app: FastifyInstance) {
       },
     })
 
-    return { invoiceLink }
+    return { invoiceLink: invoiceResult.link, analyticsPayload: invoiceResult.analytics }
   })
 
   // POST /api/payments/spend-token — оплатить фичу жетоном хозяина (вместо Stars).

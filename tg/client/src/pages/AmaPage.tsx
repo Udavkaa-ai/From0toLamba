@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ScreenBackground } from '@/components/ScreenBackground'
 import { playSound } from '@/sounds'
 import { api } from '@/api/client'
+import { registerStarsInvoice } from '@/lib/analytics'
 import { useGameStore } from '@/stores/gameStore'
 import { colors, spacing, gradients } from '@/theme'
 import { getTheme } from '@/theme/colors'
@@ -116,6 +117,7 @@ export function AmaPage() {
         setAmaPaymentPending(false)
         return
       }
+      registerStarsInvoice(resp.analyticsPayload)
       tgWebApp.openInvoice(resp.invoiceLink, async (status: string) => {
         if (status === 'paid') {
           try {
