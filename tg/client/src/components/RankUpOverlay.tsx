@@ -38,19 +38,23 @@ export function RankUpOverlay({ rank }: RankUpOverlayProps) {
           overflow: 'hidden',
         }}
       >
-        {/* Лучи от центра — через CSS conic-gradient */}
+        {/* Радиальное золотое сияние от центра — статичное, без вращения.
+            Раньше тут крутился 160vmin conic-gradient с 24 секторами и
+            mask-image на radial-gradient. На Android WebView эта пара
+            (большой conic + mask) — самая тяжёлая GPU-операция в игре.
+            Поскольку оверлей висит до тапа, при каждом resume Mini App
+            это снова заводилось и давало мерцание. Радиал-градиент даёт
+            тот же визуальный «сияние из центра» бесплатно. */}
         <motion.div
           aria-hidden
-          initial={{ opacity: 0, scale: 0.6, rotate: 0 }}
-          animate={{ opacity: 0.6, scale: 1, rotate: 360 }}
-          transition={{ opacity: { duration: 0.5 }, scale: { duration: 0.6 }, rotate: { duration: 36, repeat: Infinity, ease: 'linear' } }}
+          initial={{ opacity: 0, scale: 0.6 }}
+          animate={{ opacity: 0.85, scale: 1 }}
+          transition={{ opacity: { duration: 0.5 }, scale: { duration: 0.6 } }}
           style={{
             position: 'absolute',
             width: '160vmin',
             height: '160vmin',
-            background: `conic-gradient(from 0deg, transparent 0deg 8deg, ${accent}30 8deg 12deg, transparent 12deg 30deg, ${accent}20 30deg 32deg, transparent 32deg 60deg, ${accent}30 60deg 64deg, transparent 64deg 90deg, ${accent}20 90deg 92deg, transparent 92deg 120deg, ${accent}30 120deg 124deg, transparent 124deg 150deg, ${accent}20 150deg 152deg, transparent 152deg 180deg, ${accent}30 180deg 184deg, transparent 184deg 210deg, ${accent}20 210deg 212deg, transparent 212deg 240deg, ${accent}30 240deg 244deg, transparent 244deg 270deg, ${accent}20 270deg 272deg, transparent 272deg 300deg, ${accent}30 300deg 304deg, transparent 304deg 330deg, ${accent}20 330deg 332deg, transparent 332deg 360deg)`,
-            maskImage: 'radial-gradient(circle, black 20%, transparent 65%)',
-            WebkitMaskImage: 'radial-gradient(circle, black 20%, transparent 65%)',
+            background: `radial-gradient(circle, ${accent}55 0%, ${accent}22 25%, transparent 55%)`,
           }}
         />
 
