@@ -426,14 +426,18 @@ PAGE_BG.portfolio           // '/backgrounds/BG_PORTFOLIO.webp'
 
 **Переменные окружения:**
 ```
-DATABASE_URL          ${{Postgres.DATABASE_URL}}
+DATABASE_URL              ${{Postgres.DATABASE_URL}}
 TELEGRAM_BOT_TOKEN
-MINI_APP_URL          https://from0tolamba-production.up.railway.app
-OPENROUTER_API_KEY    sk-or-...
-PAYMENTS_ENABLED      true   # false = dev bypass (Stars не списываются)
-POLLINATIONS_API_KEY  (опционально, legacy)
-NODE_ENV              production
+MINI_APP_URL              https://from0tolamba-production.up.railway.app
+OPENROUTER_API_KEY        sk-or-...
+PAYMENTS_ENABLED          true   # false = dev bypass (Stars не списываются)
+POLLINATIONS_API_KEY      (опционально, legacy)
+NODE_ENV                  production
+VITE_TG_ANALYTICS_TOKEN   eyJ...  # JWT-токен из TON Builders; запекается в JS-бандл во время билда
+VITE_TG_ANALYTICS_APP     v_knyazi
 ```
+
+**Важно про VITE_-переменные:** Vite инлайнит их в бандл на этапе билда, **не подтягивает в рантайме**. Любое изменение → нужен Redeploy. Dockerfile уже объявляет `ARG VITE_TG_ANALYTICS_*` и пробрасывает их через `ENV` перед `npm run build` — Railway автоматически передаёт env-переменные в docker build как build-args, но только те, что объявлены через ARG.
 
 ---
 
@@ -462,15 +466,37 @@ python compress.py --inplace output_backgrounds/
 
 ## Telegram Stars (платежи)
 
-Три фичи, все по **10 Stars** (`bot.ts`):
+Четыре фичи, все по **10 Stars** (`bot.ts`):
 - `timer_skip` — пропуск 2-часового кулдауна; payload prefix `ts:`
 - `ama_unlock` — открыть беседу с дельцом; payload prefix `au:`
 - `extra_slot` — докупить слот сверх лимита 5 дел; payload prefix `es:`
+- `minigame_bypass` — пропустить мини-игру и вложиться несмотря на проигрыш; payload prefix `mb:`
 
-Флоу: `POST /api/payments/invoice` → клиент вызывает `Telegram.WebApp.openInvoice(link)` → по callback `'paid'` → `POST /api/payments/activate`. `PAYMENTS_ENABLED=false` в `.env` пропускает весь флоу и активирует фичу бесплатно.
+Флоу: `POST /api/payments/invoice` → клиент **сначала** зовёт `registerStarsInvoice(analyticsPayload)` из `@/lib/analytics` (трекинг в TON Builders, см. ниже) → затем `Telegram.WebApp.openInvoice(link)` → по callback `'paid'` → `POST /api/payments/activate-*`. `PAYMENTS_ENABLED=false` в `.env` пропускает весь флоу и активирует фичу бесплатно.
 
-- `bot.ts` содержит обязательный хендлер `pre_checkout_query` и логгер `successful_payment`
-- Stars зачисляются на баланс бота; смотреть через BotFather → /mybots → Revenue
+- Invoice-хелперы в `bot.ts` возвращают `{ link, analytics }` — `analytics` уходит клиенту в `analyticsPayload` для `registerInvoice`.
+- `bot.ts` содержит обязательный хендлер `pre_checkout_query` и логгер `successful_payment`.
+- Stars зачисляются на баланс бота; смотреть через BotFather → /mybots → Revenue.
+
+---
+
+## Telegram Analytics (TON Builders)
+
+SDK `@telegram-apps/analytics` v1.6.4 трекает launches + TON Connect + Stars-инвойсы. Видно в [TON Builders дашборде](https://builders.ton.org) — каталог ранжирует приложения по этим метрикам.
+
+**Инициализация** — `tg/client/src/main.tsx`, ДО `ReactDOM.createRoot().render()`:
+```typescript
+telegramAnalytics.init({ token: VITE_TG_ANALYTICS_TOKEN, appName: VITE_TG_ANALYTICS_APP })
+```
+
+**Stars-инвойсы** — `tg/client/src/lib/analytics.ts` экспортирует `registerStarsInvoice(payload)`. Все 4 точки `openInvoice()` (HomePage timer_skip, AmaPage ama_unlock, CharterPage extra_slot и minigame_bypass) обязаны звать его ДО `openInvoice`. Иначе revenue в каталоге не появится.
+
+**Подводные камни** (если будущему Клоду снова придётся это поднимать):
+- `VITE_*` переменные **инлайнятся Vite во время билда**, не в рантайме. Если только добавил env-var в Railway — нужен **новый билд** (Redeploy), иначе бандл останется со старым/пустым значением.
+- В Dockerfile **обязательно** объявить `ARG VITE_TG_ANALYTICS_TOKEN` + `ARG VITE_TG_ANALYTICS_APP` и пробросить через `ENV` перед `npm run build` — Railway передаёт env-переменные в docker build только через ARG.
+- **Mini app domain в TON Builders дашборде должен быть строго lowercase**, без `/` в конце. Домен запекается внутрь JWT-токена; браузер шлёт `Origin` всегда в lowercase, и если в токене было `From0tolamba-...` с заглавной F — бэкенд `tganalytics.xyz/events` отвечает `400 Bad Request` с пустым `{}` (мы на этом потеряли вечер). Лечится только **revoke + создать новый ключ** с правильным доменом.
+- В `main.tsx` логируем `[analytics] init OK` / `init skipped` — удобный диагностический сигнал в DevTools-консоли. Не убирать.
+- Тестировать аналитику **только через настоящего Telegram-клиента** (Desktop/Mobile/Web) с переходом из бота. В обычном браузере прямым URL — `initData` пустая и события всё равно отбросит бэкенд.
 
 ---
 
