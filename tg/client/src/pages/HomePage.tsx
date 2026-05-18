@@ -1805,8 +1805,12 @@ function StarsPaymentOverlay({
 function ActiveProjectCard({ project, delay, onPress }: { project: ProjectDTO; delay: number; onPress: () => void }) {
   const navigate = useNavigate()
   const t = useT()
-  const profit = project.investedAmountRubles > 0
-    ? ((project.currentValueRubles - project.investedAmountRubles) / project.investedAmountRubles * 100)
+  // Честный profit% по полной истории: (currentValue + всё-выведенное − всё-вложенное)
+  // ÷ всё-вложенное × 100. С 4.5.21 `investedAmountRubles` означает текущий принципал
+  // (уменьшается при partialWithdraw), поэтому в знаменателе totalInvestedRubles.
+  const totalInvested = project.totalInvestedRubles ?? project.investedAmountRubles
+  const profit = totalInvested > 0
+    ? ((project.currentValueRubles + (project.totalWithdrawnRubles ?? 0) - totalInvested) / totalInvested * 100)
     : 0
 
   const { data: updates } = useQuery({
@@ -1842,7 +1846,7 @@ function ActiveProjectCard({ project, delay, onPress }: { project: ProjectDTO; d
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ color: colors.textMuted, fontSize: '10px', letterSpacing: '0.02em' }}>
-              {t.home.activeCardInvested} {Math.floor(project.investedAmountRubles)} {t.common.currency}
+              {t.home.activeCardInvested} {Math.floor(totalInvested)} {t.common.currency}
             </div>
             <div style={{
               color: colors.fairyGold,
@@ -2385,8 +2389,9 @@ function ProjectNewsCardContent({ project }: { project: ProjectDTO }) {
     else if (latest.payoutStatus === 'DELAYED' || latest.userCountDelta < -5) { signal = '🔴'; signalColor = colors.danger }
   }
 
-  const profit = project.investedAmountRubles > 0
-    ? ((project.currentValueRubles - project.investedAmountRubles) / project.investedAmountRubles * 100)
+  const totalInvested = project.totalInvestedRubles ?? project.investedAmountRubles
+  const profit = totalInvested > 0
+    ? ((project.currentValueRubles + (project.totalWithdrawnRubles ?? 0) - totalInvested) / totalInvested * 100)
     : 0
 
   return (

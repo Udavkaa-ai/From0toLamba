@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import { prisma } from '../../db/prisma'
 import { telegramAuthHook } from '../../middleware/telegramAuth'
-import { toPublicDTO } from '../../game/projectUtils'
+import { toPublicDTO, getCumulativeInvestedMap } from '../../game/projectUtils'
 
 export async function projectRoutes(app: FastifyInstance) {
 
@@ -15,7 +15,7 @@ export async function projectRoutes(app: FastifyInstance) {
       orderBy: { createdAt: 'desc' },
     })
 
-    return projects.map(toPublicDTO)
+    return projects.map(p => toPublicDTO(p))
   })
 
   // GET /api/projects/portfolio — казна (активные + закрытые)
@@ -40,10 +40,17 @@ export async function projectRoutes(app: FastifyInstance) {
       }),
     ])
 
+    // Одним groupBy достаём cumulative invested для всех активных + закрытых
+    // дел — клиенту нужно для честного profit% и «Вложено X г» на карточке.
+    const cumulativeMap = await getCumulativeInvestedMap([
+      ...active.map(p => p.id),
+      ...closed.map(p => p.id),
+    ])
+
     return {
-      active: active.map(toPublicDTO),
+      active: active.map(p => toPublicDTO(p, { totalInvested: cumulativeMap.get(p.id) })),
       closed: closed.map(p => ({
-        ...toPublicDTO(p),
+        ...toPublicDTO(p, { totalInvested: cumulativeMap.get(p.id) }),
         postMortem: p.postMortem
           ? {
               revealedArchetype: p.postMortem.revealedArchetype,

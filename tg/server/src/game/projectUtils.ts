@@ -74,8 +74,13 @@ export function generateNpcTruthParams(
   }
 }
 
-/** Конвертирует DB-запись в публичное DTO (без скрытых полей) */
-export function toPublicDTO(project: Project): ProjectPublicDTO {
+/** Конвертирует DB-запись в публичное DTO (без скрытых полей).
+ *
+ * `opts.totalInvested` — кумулятивно вложено в это дело за всё время (sum INVEST+ADD
+ * из Transaction). Передаётся из роутов, которые делают groupBy одним запросом для
+ * всего списка проектов. Если не передано — fallback на `investedAmountRubles`
+ * (для inbox/закрытых, где это совпадает или просто 0). */
+export function toPublicDTO(project: Project, opts?: { totalInvested?: number }): ProjectPublicDTO {
   return {
     id: project.id,
     name: project.name,
@@ -95,6 +100,7 @@ export function toPublicDTO(project: Project): ProjectPublicDTO {
     investedAmountRubles: project.investedAmountRubles,
     currentValueRubles: project.currentValueRubles,
     totalWithdrawnRubles: project.totalWithdrawnRubles ?? 0,
+    totalInvestedRubles: opts?.totalInvested ?? project.investedAmountRubles,
     daysSinceJoined: project.daysSinceJoined,
     isWithdrawalLocked: project.isWithdrawalLocked,
     closureReason: project.closureReason,
@@ -151,6 +157,25 @@ export async function getCumulativeInvested(projectId: string): Promise<number> 
     _sum: { amount: true },
   })
   return agg._sum.amount ?? 0
+}
+
+/**
+ * Кумулятивно вложено по каждому проекту из списка — одним groupBy-запросом.
+ * Используется в роутах `/api/projects/portfolio` и `/api/game` для batch-обогащения
+ * DTO активных дел полем `totalInvestedRubles` (без N+1 запросов).
+ */
+export async function getCumulativeInvestedMap(projectIds: string[]): Promise<Map<string, number>> {
+  if (projectIds.length === 0) return new Map()
+  const rows = await prisma.transaction.groupBy({
+    by: ['projectId'],
+    where: { projectId: { in: projectIds }, type: { in: ['INVEST', 'ADD'] } },
+    _sum: { amount: true },
+  })
+  const map = new Map<string, number>()
+  for (const r of rows) {
+    if (r.projectId) map.set(r.projectId, r._sum.amount ?? 0)
+  }
+  return map
 }
 
 /**

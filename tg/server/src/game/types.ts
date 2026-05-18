@@ -184,6 +184,12 @@ export interface ProjectPublicDTO {
   roadmap: string[]
   investedAmountRubles: number
   currentValueRubles: number
+  totalWithdrawnRubles: number
+  // Кумулятивно вложено за всё время — сумма INVEST + ADD из Transaction.
+  // С версии 4.5.21 `investedAmountRubles` означает «текущий принципал» (после
+  // partialWithdraw уменьшается пропорционально), поэтому для честного profit%
+  // и красивого «Вложено X г» клиенту нужна именно кумулятивная сумма.
+  totalInvestedRubles: number
   daysSinceJoined: number
   isWithdrawalLocked: boolean
   closureReason: string | null

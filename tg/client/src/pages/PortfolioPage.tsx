@@ -272,8 +272,12 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
   // Берём 3 свежайшие; внутри блока показываем сверху самую свежую.
   const recentUpdates = (updates ?? []).slice(0, 3)
 
-  const profit = project.investedAmountRubles > 0
-    ? ((project.currentValueRubles + (project.totalWithdrawnRubles ?? 0) - project.investedAmountRubles) / project.investedAmountRubles * 100)
+  // Честный profit% — со знаменателем = всё-вложенное за всё время. Иначе
+  // после частичных выводов `investedAmountRubles` (текущий принципал)
+  // уменьшается, и формула искажает реальность. См. ProjectDTO.totalInvestedRubles.
+  const totalInvested = project.totalInvestedRubles ?? project.investedAmountRubles
+  const profit = totalInvested > 0
+    ? ((project.currentValueRubles + (project.totalWithdrawnRubles ?? 0) - totalInvested) / totalInvested * 100)
     : 0
 
   const portfolioHaptic = (window as any).Telegram?.WebApp?.HapticFeedback
@@ -325,7 +329,7 @@ function ActiveProjectCard({ project, tourFirst }: { project: ProjectDTO; tourFi
         </div>
         <div style={{ textAlign: 'right' }}>
           <div style={{ color: colors.textMuted, fontSize: '10px', letterSpacing: '0.02em' }}>
-            {t.portfolio.investedIn} {Math.floor(project.investedAmountRubles)} {t.common.currency}
+            {t.portfolio.investedIn} {Math.floor(totalInvested)} {t.common.currency}
           </div>
           <div style={{ ...bigNumber(22), marginTop: '2px' }}>
             <CountUp value={project.currentValueRubles} /> {t.common.currency}

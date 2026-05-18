@@ -6,7 +6,7 @@ import { advanceDay, ADVANCE_COOLDOWN_MS, MAX_CONSECUTIVE_ADVANCES } from '../..
 import { tryAttachReferrer, countReferrals, REFERRAL_DEALS_THRESHOLD } from '../../game/referralService'
 import { ensureWeekStartSnapshot } from '../../game/weeklyService'
 import { generateOnboardingProject } from '../../game/GenerateProjectService'
-import { toPublicDTO } from '../../game/projectUtils'
+import { toPublicDTO, getCumulativeInvestedMap } from '../../game/projectUtils'
 import { computeArchetypeTokens } from '../../game/tokenService'
 import { computeTieLevels, totalTies, MAX_TIE_LEVEL, TIE_BONUS_PER_LEVEL, tieLevelFromEarned } from '../../game/tiesService'
 import { getArchivedLeaderboard, findMyPositionInArchive } from '../../game/seasonArchive'
@@ -162,6 +162,12 @@ export async function gameRoutes(app: FastifyInstance) {
     const currentWealth = gameState.balance + activeProjects.reduce((s, p) => s + p.currentValueRubles, 0)
     const weekStartWealth = await ensureWeekStartSnapshot(user.id, currentWealth)
 
+    // Кумулятивно вложено по каждому активному делу — для честного profit%
+    // на карточках в HomePage/Portfolio. inboxProjects сюда не нужны (там нет
+    // транзакций ещё). См. partialWithdraw — investedAmountRubles теперь
+    // означает «текущий принципал», не суммарное.
+    const cumulativeInvestedMap = await getCumulativeInvestedMap(activeProjects.map(p => p.id))
+
     // Точность чуйки по всем разобранным грамотам: TP / (TP + FP + FN)
     let tp = 0, fp = 0, fn = 0
     for (const s of charterSessions) {
@@ -247,8 +253,8 @@ export async function gameRoutes(app: FastifyInstance) {
       advanceCooldownMs: ADVANCE_COOLDOWN_MS,
       consecutiveAdvances: gameState.consecutiveAdvances,
       maxConsecutiveAdvances: MAX_CONSECUTIVE_ADVANCES,
-      activeProjects: activeProjects.map(toPublicDTO),
-      inboxProjects: inboxProjects.map(toPublicDTO),
+      activeProjects: activeProjects.map(p => toPublicDTO(p, { totalInvested: cumulativeInvestedMap.get(p.id) })),
+      inboxProjects: inboxProjects.map(p => toPublicDTO(p)),
       seenTypes,
       seenArchetypes,
       seenFates,

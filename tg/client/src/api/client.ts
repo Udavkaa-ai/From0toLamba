@@ -51,6 +51,10 @@ export interface ProjectDTO {
   investedAmountRubles: number
   currentValueRubles: number
   totalWithdrawnRubles: number
+  // Кумулятивно вложено за всё время (sum INVEST+ADD). Для честного profit%
+  // и подписи «Вложено X г» — `investedAmountRubles` теперь означает текущий
+  // принципал в работе (после partialWithdraw уменьшается пропорционально).
+  totalInvestedRubles: number
   daysSinceJoined: number
   isWithdrawalLocked: boolean
   closureReason: string | null
