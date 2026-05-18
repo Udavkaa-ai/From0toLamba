@@ -24,6 +24,8 @@ type BroadcastProgress = {
   startedAt: Date | null
   finishedAt: Date | null
   textPreview: string    // первые 60 символов рассылки
+  errorBreakdown: Record<string, number>  // 'blocked' | 'deactivated' | 'not_found' | 'parse_error' | 'flood_wait' | 'other'
+  errorSamples: string[] // первые 5 уникальных «other» — для диагностики
 }
 let broadcastProgress: BroadcastProgress = {
   active: false,
@@ -32,6 +34,8 @@ let broadcastProgress: BroadcastProgress = {
   sent: 0, failed: 0, deduped: 0, total: 0,
   startedAt: null, finishedAt: null,
   textPreview: '',
+  errorBreakdown: {},
+  errorSamples: [],
 }
 
 export function cancelBroadcast() {
@@ -48,7 +52,22 @@ function resetBroadcastProgress(scope: string, text: string, total: number) {
     startedAt: new Date(),
     finishedAt: null,
     textPreview: text.slice(0, 60),
+    errorBreakdown: {},
+    errorSamples: [],
   }
+}
+
+/** Категоризирует Telegram-ошибку рассылки по описанию (err.description у grammy). */
+function categorizeBroadcastError(err: any): string {
+  const desc: string = String(err?.description ?? err?.message ?? '').toLowerCase()
+  if (desc.includes('blocked by the user')) return 'blocked'
+  if (desc.includes('user is deactivated')) return 'deactivated'
+  if (desc.includes('chat not found')) return 'not_found'
+  if (desc.includes("can't parse entities") || desc.includes('parse entities')) return 'parse_error'
+  if (desc.includes('too many requests') || desc.includes('flood')) return 'flood_wait'
+  if (desc.includes('bot was kicked')) return 'kicked'
+  if (desc.includes('forbidden')) return 'forbidden_other'
+  return 'other'
 }
 
 function finalizeBroadcastProgress() {
@@ -455,11 +474,21 @@ function setupHandlers(bot: Bot) {
     const status = p.active
       ? '⏳ Идёт'
       : p.cancelled ? '🛑 Остановлена' : '✅ Завершена'
+
+    const breakdownEntries = Object.entries(p.errorBreakdown).sort((a, b) => b[1] - a[1])
+    const breakdownText = breakdownEntries.length > 0
+      ? '\n\n🔎 Ошибки:\n' + breakdownEntries.map(([k, v]) => `  • ${k}: ${v}`).join('\n')
+      : ''
+    const samplesText = p.errorSamples.length > 0
+      ? '\n\n📋 Сэмплы other:\n' + p.errorSamples.map(s => `  • ${s}`).join('\n')
+      : ''
+
     await ctx.reply(
       `${status} — ${p.scope}\n` +
       `📤 ${p.sent}/${p.total} (${p.failed} ошибок)\n` +
       `⏱️ ${elapsedSec}с, ~${rate}/с\n` +
-      `📝 «${p.textPreview}${p.textPreview.length >= 60 ? '…' : ''}»`,
+      `📝 «${p.textPreview}${p.textPreview.length >= 60 ? '…' : ''}»` +
+      breakdownText + samplesText,
     )
   })
 
@@ -898,8 +927,19 @@ function setupHandlers(bot: Bot) {
           ...(keyboard ? { reply_markup: keyboard } : {}),
         })
         sent++
-      } catch {
+      } catch (err: any) {
         failed++
+        const category = categorizeBroadcastError(err)
+        broadcastProgress.errorBreakdown[category] = (broadcastProgress.errorBreakdown[category] ?? 0) + 1
+        // Сэмплируем 'other' — это то, чего мы НЕ ожидаем; первые 5 уникальных
+        // descriptions сохраняем для /broadcaststatus.
+        if (category === 'other') {
+          const desc = String(err?.description ?? err?.message ?? 'unknown').slice(0, 120)
+          if (!broadcastProgress.errorSamples.includes(desc) && broadcastProgress.errorSamples.length < 5) {
+            broadcastProgress.errorSamples.push(desc)
+            console.error('[broadcast] uncategorized error sample:', desc)
+          }
+        }
       }
       // Прогресс в shared state — для /broadcaststatus и editMessage.
       broadcastProgress.sent = sent
