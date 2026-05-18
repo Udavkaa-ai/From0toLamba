@@ -28,6 +28,14 @@ model User {
   nickname              String?
   utmSource             String?   // источник первого входа: utm_gk, utm_cm и т.д.
 
+  // Может ли бот доставить юзеру сообщение через sendMessage. False ставится
+  // автоматически в рассылке при ошибках not_found / blocked / deactivated /
+  // kicked / forbidden_other — это «постоянные» провалы, нет смысла бить туда
+  // снова. Возвращается в true при /start (например, юзер разблокировал бота).
+  // Источник проблемы: боты с купленного трафика регистрировались через
+  // Mini App без `/start` боту → 96% not_found на /broadcastall.
+  canReceiveBroadcast    Boolean   @default(true)
+
   gameState      GameState?
   projects       Project[]
   amaSessions    AmaSession[]

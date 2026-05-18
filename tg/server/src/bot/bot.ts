@@ -169,6 +169,9 @@ function setupHandlers(bot: Bot) {
             firstName: ctx.from!.first_name ?? 'купец',
             lastName: ctx.from!.last_name,
             username: ctx.from!.username,
+            // /start всегда означает «бот может писать юзеру» — даже если он
+            // ранее был помечен мёртвым рассылкой. Разблокировал и пришёл.
+            canReceiveBroadcast: true,
             ...(/^ref_\d+$/.test(payload) ? { pendingReferralParam: payload } : {}),
           },
         })
@@ -422,6 +425,7 @@ function setupHandlers(bot: Bot) {
           where: {
             gameState: { isOnboardingComplete: true },
             NOT: { telegramId: { startsWith: 'system:' } },
+            canReceiveBroadcast: true,
           },
           select: { telegramId: true },
         })
@@ -519,7 +523,10 @@ function setupHandlers(bot: Bot) {
     void (async () => {
       try {
         const users = await prisma.user.findMany({
-          where: { NOT: { telegramId: { startsWith: 'system:' } } },
+          where: {
+            NOT: { telegramId: { startsWith: 'system:' } },
+            canReceiveBroadcast: true,
+          },
           select: { telegramId: true },
         })
         resetBroadcastProgress('всем в БД', text, users.length)
@@ -906,6 +913,12 @@ function setupHandlers(bot: Bot) {
   //   • 50мс задержка между сообщениями.
   //   • Уважает broadcastCancelled — выходит при /broadcaststop.
   // ─────────────────────────────────────────────────────────────────────
+  // Категории ошибок, при которых юзеру бесполезно слать впредь:
+  // фейковые регистрации через Mini App без /start, заблокировали, удалили
+  // аккаунт. Помечаем canReceiveBroadcast=false — следующие рассылки летят
+  // мимо них и проходят в 10× быстрее.
+  const PERMANENT_FAIL_CATEGORIES = new Set(['not_found', 'blocked', 'deactivated', 'kicked', 'forbidden_other'])
+
   async function sendBroadcastBatch(
     users: Array<{ telegramId: string }>,
     text: string,
@@ -939,6 +952,12 @@ function setupHandlers(bot: Bot) {
             broadcastProgress.errorSamples.push(desc)
             console.error('[broadcast] uncategorized error sample:', desc)
           }
+        }
+        if (PERMANENT_FAIL_CATEGORIES.has(category)) {
+          prisma.user.updateMany({
+            where: { telegramId: user.telegramId },
+            data: { canReceiveBroadcast: false },
+          }).catch(() => {}) // best-effort, не блокируем цикл
         }
       }
       // Прогресс в shared state — для /broadcaststatus и editMessage.
