@@ -35,9 +35,17 @@ const analyticsApp = import.meta.env.VITE_TG_ANALYTICS_APP as string | undefined
 if (analyticsToken && analyticsApp) {
   try {
     telegramAnalytics.init({ token: analyticsToken, appName: analyticsApp })
+    console.log('[analytics] init OK, appName=%s', analyticsApp)
   } catch (err) {
     console.warn('[analytics] init failed:', err)
   }
+} else {
+  // Видно в DevTools — если в продакшене этот лог появляется, значит env-vars
+  // не попали в Vite-билд (см. Dockerfile ARG VITE_TG_ANALYTICS_*).
+  console.warn('[analytics] init skipped: VITE_TG_ANALYTICS_TOKEN/APP missing', {
+    hasToken: !!analyticsToken,
+    hasApp: !!analyticsApp,
+  })
 }
 
 // URL манифеста TON Connect. Файл лежит в tg/client/public/tonconnect-manifest.json

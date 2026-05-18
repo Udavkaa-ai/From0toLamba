@@ -7,6 +7,16 @@ WORKDIR /build/tg/client
 COPY tg/client/package*.json ./
 RUN npm install
 COPY tg/client ./
+# Vite инлайнит VITE_*-переменные в бандл ВО ВРЕМЯ билда — рантайма недостаточно.
+# Railway-переменные становятся build-args автоматически, но Dockerfile должен
+# объявить их через ARG. После — пробрасываем как ENV перед `npm run build`,
+# чтобы Vite их подхватил из process.env.
+# Если переменных нет (локальная сборка) — VITE_-значение будет undefined и
+# Telegram Analytics SDK просто не инициализируется (см. main.tsx safe-init).
+ARG VITE_TG_ANALYTICS_TOKEN
+ARG VITE_TG_ANALYTICS_APP
+ENV VITE_TG_ANALYTICS_TOKEN=$VITE_TG_ANALYTICS_TOKEN
+ENV VITE_TG_ANALYTICS_APP=$VITE_TG_ANALYTICS_APP
 # outDir в vite.config.ts = '../server/public' → /build/tg/server/public
 RUN npm run build
 
