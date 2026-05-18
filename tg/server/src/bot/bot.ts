@@ -82,7 +82,11 @@ function setupHandlers(bot: Bot) {
     const payload = (ctx.match ?? '').trim()
     const telegramId = ctx.from ? String(ctx.from.id) : null
 
-    if (telegramId && /^ref_\d+$/.test(payload)) {
+    // Любой /start создаёт запись User — иначе при /broadcast мы не знаем
+    // про тех, кто запустил бота, но не зашёл в Mini App. Раньше User
+    // создавался только при ref_X / utm_X payload — остальные оставались
+    // невидимыми для рассылок.
+    if (telegramId) {
       try {
         await prisma.user.upsert({
           where: { telegramId },
@@ -91,33 +95,24 @@ function setupHandlers(bot: Bot) {
             firstName: ctx.from!.first_name ?? 'купец',
             lastName: ctx.from!.last_name,
             username: ctx.from!.username,
-            pendingReferralParam: payload,
+            // gameState создаётся ОБЯЗАТЕЛЬНО, иначе /api/game при первом
+            // открытии Mini App встретит User без GameState (попадёт в
+            // update-ветку upsert'а) и упадёт на `gameState!`.
             gameState: { create: { balance: 0 } },
+            ...(/^ref_\d+$/.test(payload) ? { pendingReferralParam: payload } : {}),
+            ...(/^utm_/.test(payload)     ? { utmSource: payload }           : {}),
           },
-          update: { pendingReferralParam: payload },
-        })
-      } catch (err) {
-        console.error('[Bot] Failed to store pendingReferralParam:', err)
-      }
-    }
-
-    if (telegramId && /^utm_/.test(payload)) {
-      try {
-        await prisma.user.upsert({
-          where: { telegramId },
-          create: {
-            telegramId,
+          update: {
+            // Обновляем профильные поля на свежие, но НЕ перетираем
+            // utmSource (первый вход — приоритет) и referralBonusGranted.
             firstName: ctx.from!.first_name ?? 'купец',
             lastName: ctx.from!.last_name,
             username: ctx.from!.username,
-            utmSource: payload,
-            gameState: { create: { balance: 0 } },
+            ...(/^ref_\d+$/.test(payload) ? { pendingReferralParam: payload } : {}),
           },
-          // Не перезаписываем если UTM уже записан (первый вход — приоритет)
-          update: {},
         })
       } catch (err) {
-        console.error('[Bot] Failed to store utmSource:', err)
+        console.error('[Bot] /start upsert failed:', err)
       }
     }
 
@@ -388,6 +383,69 @@ function setupHandlers(bot: Bot) {
     }
     broadcastCancelled = true
     await ctx.reply('🛑 Останавливаю рассылку...')
+  })
+
+  // /broadcastall <текст> — расширенная версия /broadcast: шлёт ВСЕМ
+  // юзерам с telegramId (включая тех, кто только /start нажал и не зашёл
+  // в Mini App). Использует тот же broadcastActive флаг — параллельно
+  // с /broadcast не запустится.
+  bot.command('broadcastall', async (ctx) => {
+    if (ctx.from?.id !== ADMIN_TELEGRAM_ID) return
+
+    if (broadcastActive) {
+      await ctx.reply('⚠️ Рассылка уже идёт. /broadcaststop, потом запусти снова.')
+      return
+    }
+
+    const text = (ctx.match ?? '').trim()
+    if (!text) {
+      await ctx.reply('Использование: /broadcastall <текст>. Шлёт всем юзерам с telegramId (включая не онбордженных).')
+      return
+    }
+
+    broadcastActive = true
+    broadcastCancelled = false
+    await ctx.reply('📡 Запускаю рассылку (всем юзерам в БД)...')
+
+    // Длинный цикл — в фоне, чтобы хендлер выходил мгновенно и Telegram
+    // не ретраил webhook (см. 4.5.8). Тяжёлая часть отвязана от ctx.
+    void (async () => {
+      try {
+        const users = await prisma.user.findMany({
+          where: { NOT: { telegramId: { startsWith: 'system:' } } },
+          select: { telegramId: true },
+        })
+
+        const appUrl = process.env.MINI_APP_URL ?? ''
+        const keyboard = appUrl ? new InlineKeyboard().webApp('🏪 Открыть ярмарку', appUrl) : undefined
+
+        let sent = 0, failed = 0
+        for (const user of users) {
+          if (broadcastCancelled) break
+          try {
+            await bot.api.sendMessage(user.telegramId, text, {
+              parse_mode: 'Markdown',
+              ...(keyboard ? { reply_markup: keyboard } : {}),
+            })
+            sent++
+          } catch {
+            failed++
+          }
+          await new Promise(r => setTimeout(r, 50))
+        }
+
+        broadcastActive = false
+        const tag = broadcastCancelled ? '🛑 Остановлена' : '✅ Завершена'
+        await bot.api.sendMessage(
+          String(ADMIN_TELEGRAM_ID),
+          `${tag} рассылка-all. Доставлено: ${sent}, ошибок: ${failed}, всего в DB: ${users.length}.`,
+        )
+      } catch (err) {
+        console.error('[broadcastall] Error:', err)
+        broadcastActive = false
+        await bot.api.sendMessage(String(ADMIN_TELEGRAM_ID), '❌ Ошибка при рассылке-all. Проверь логи.').catch(() => {})
+      }
+    })()
   })
 
   // /sponsor — управление VIP-кампаниями (только для админа).
