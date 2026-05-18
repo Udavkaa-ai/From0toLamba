@@ -1252,12 +1252,11 @@ export function HomePage() {
           плюс зазор 12px чтобы карточки можно было докрутить выше кнопки */}
       <div style={{ padding: `calc(${spacing.xxl} + var(--tg-safe-area-inset-top, env(safe-area-inset-top, 0px))) ${spacing.lg} calc(140px + env(safe-area-inset-bottom))`, maxWidth: '500px', margin: '0 auto' }}>
 
-        {/* Логотип + кнопка настроек */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          style={{ marginBottom: spacing.xxl }}
-        >
+        {/* Логотип + кнопка настроек. Раньше был motion.div с
+            initial:{opacity:0,y:-20} — иногда после фонового режима
+            Mini App анимация не догоняла до animate, контент оставался
+            невидимым. Заменено на обычный div. */}
+        <div style={{ marginBottom: spacing.xxl }}>
           {/* Кнопки звука и настроек — строка над заголовком.
               Раньше были полупрозрачные (gold-14) и сливались с фоном —
               пользователи их не замечали (см. скриншот с обведёнными кружками).
@@ -1369,10 +1368,11 @@ export function HomePage() {
           </div>
           </div>{/* end centre block */}
 
-        </motion.div>
+        </div>
 
-        {/* Баланс */}
-        <motion.div data-tour="balance" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+        {/* Баланс. motion.div убран — была проблема с зависанием анимации
+            после восстановления Mini App из фона (см. 4.5.13). */}
+        <div data-tour="balance">
           <FairyCard accent style={{ marginBottom: spacing.lg, textAlign: 'center' }}>
             <div style={{ color: colors.textPrimary, fontSize: '12px', marginBottom: '4px', fontWeight: 600 }}>{t.home.freeBalance}</div>
             <div style={bigNumber(40)}>
@@ -1405,7 +1405,7 @@ export function HomePage() {
               </div>
             </div>
           </FairyCard>
-        </motion.div>
+        </div>
 
         {/* Быстрый доступ к «Отношениям» — чип с суммарным числом жетонов */}
         <TokensQuickChip onNavigate={() => navigate('/relationships')} />
@@ -1417,11 +1417,7 @@ export function HomePage() {
             главную чтобы PostMortem'ы были на виду. Показывается всегда —
             страница сама умеет «Летопись пуста», игрок видит куда идти за
             историей. */}
-        <motion.button
-          initial={{ opacity: 0.001, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05, duration: 0.18 }}
-          whileTap={{ scale: 0.97 }}
+        <button
           onClick={() => { tgHaptic?.impactOccurred('light'); navigate('/registry') }}
           style={{
             ...ctaButton.lg,
@@ -1440,11 +1436,13 @@ export function HomePage() {
               ({gameState.closedProjectsCount})
             </span>
           )}
-        </motion.button>
+        </button>
 
-        {/* Входящие — компактная лента из топ-2 + ссылка на полный список */}
+        {/* Входящие — компактная лента из топ-2 + ссылка на полный список.
+            motion.div убран — анимация с delay:0.3 могла застрять на
+            opacity:0 если Mini App ушёл в фон до её старта. */}
         {gameState.inboxProjects.length > 0 && (
-          <motion.div data-tour="inbox-section" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+          <div data-tour="inbox-section">
             <div style={{
               display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
               margin: `${spacing.lg} 4px ${spacing.sm}`,
@@ -1476,7 +1474,7 @@ export function HomePage() {
                 onPress={() => { tgHaptic?.impactOccurred('light'); navigate(`/charter/${p.id}`) }}
               />
             ))}
-          </motion.div>
+          </div>
         )}
 
       </div>
@@ -1824,7 +1822,7 @@ function ActiveProjectCard({ project, delay, onPress }: { project: ProjectDTO; d
   const eventGlyph = eventKind === 'NEUTRAL' ? '◇' : '◆'
 
   return (
-    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay }}>
+    <div>
       <FairyCard onClick={onPress} style={{ marginBottom: spacing.sm }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
@@ -1899,7 +1897,7 @@ function ActiveProjectCard({ project, delay, onPress }: { project: ProjectDTO; d
           </button>
         </div>
       </FairyCard>
-    </motion.div>
+    </div>
   )
 }
 
@@ -1909,13 +1907,9 @@ function InboxFeedCard({ project, delay, onPress }: { project: ProjectDTO; delay
   const typeLabels = t.inbox.types as Record<string, string>
   const typeLabel = typeLabels[project.type] ?? project.type
   return (
-    // initial.opacity=0.001 (а не 0) — карточка остаётся «видимой» с самой
-    // первой кадровой выкладки: рендерится её пергаментный фон и текст.
-    // Без этого при возврате с другой вкладки/после advance-day полсекунды
-    // показывался только cream-фон без содержимого (см. видео-баг).
-    // Анимация по-прежнему даёт лёгкий fade-in за 0.18с — но контент уже
-    // прочитываем с момента появления.
-    <motion.div initial={{ opacity: 0.001, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay, duration: 0.18 }}>
+    // motion.div убран — после фонового режима Mini App анимация иногда
+    // зависала и карточки не показывались. Рендерим сразу.
+    <div>
       <FairyCard onClick={onPress} style={{ marginBottom: spacing.sm, cursor: 'pointer', padding: spacing.md }}>
         <div style={{ display: 'flex', gap: spacing.md, alignItems: 'center' }}>
           {project.bannerImageUrl && (
@@ -1952,7 +1946,7 @@ function InboxFeedCard({ project, delay, onPress }: { project: ProjectDTO; delay
           </div>
         </div>
       </FairyCard>
-    </motion.div>
+    </div>
   )
 }
 
