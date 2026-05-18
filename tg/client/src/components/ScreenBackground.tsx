@@ -1,9 +1,10 @@
 import { ReactNode, useEffect } from 'react'
-import { SparklesOverlay } from './SparklesOverlay'
+// SparklesOverlay временно не рендерится — см. ниже. Импорт убран чтобы
+// не тянуть лишний код в бандл; восстановить при необходимости.
 import { gradients, colors } from '@/theme'
 import { getTheme } from '@/theme/colors'
 
-export const APP_VERSION = 'бета 4.5.11'
+export const APP_VERSION = 'бета 4.5.12'
 
 /**
  * Один раз за модульную сессию: предзагрузить ВСЕ фоновые картинки активной
@@ -52,6 +53,10 @@ if (typeof window !== 'undefined') preloadAllBackgrounds()
 
 interface ScreenBackgroundProps {
   children: ReactNode
+  /** @deprecated SparklesOverlay временно отключён — подозревали что
+   *  его постоянный rAF на fixed canvas виноват в мерцании других слоёв
+   *  после сворачивания/восстановления Mini App. Prop оставлен для
+   *  совместимости с существующими вызовами; рендер игнорируется. */
   showSparkles?: boolean
   /** Атмосферный туман — лёгкий движущийся слой. По умолчанию включён. */
   showMist?: boolean
@@ -59,7 +64,9 @@ interface ScreenBackgroundProps {
   bgImage?: string
 }
 
-export function ScreenBackground({ children, showSparkles = true, showMist = true, bgImage }: ScreenBackgroundProps) {
+export function ScreenBackground({ children, showSparkles: _showSparkles = true, showMist = true, bgImage }: ScreenBackgroundProps) {
+  // _showSparkles намеренно игнорируется — см. JSDoc выше.
+  void _showSparkles
   useEffect(() => {
     fetch('/api/version')
       .then(r => r.json())
@@ -102,7 +109,9 @@ export function ScreenBackground({ children, showSparkles = true, showMist = tru
         />
       )}
       {showMist && <div className="mist-layer" aria-hidden />}
-      {showSparkles && <SparklesOverlay />}
+      {/* SparklesOverlay временно отключён — подозревали мерцание после
+          фонового режима Mini App. Если ничего не вернётся — компонент
+          можно удалить целиком. */}
       <div style={{ position: 'relative', zIndex: 2 }}>
         {children}
       </div>
