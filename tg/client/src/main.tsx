@@ -71,7 +71,19 @@ function AppShell() {
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: { retry: 2, staleTime: 10_000 },
+    queries: {
+      retry: 2,
+      staleTime: 10_000,
+      // refetchOnWindowFocus отключён — после сворачивания/восстановления
+      // Mini App все запросы дёргались разом, дерево перерисовывалось
+      // полностью, AnimatePresence-overlay'и перезапускали анимации с
+      // initial:opacity:0 → визуальное мерцание на главной/грамотах.
+      // Свежие данные подтягиваются по staleTime (10s) при следующем
+      // взаимодействии — этого хватает.
+      refetchOnWindowFocus: false,
+      // refetchOnReconnect оставлен default (true) — если сеть рвалась,
+      // данные правда стоит подтянуть.
+    },
   },
 })
 
