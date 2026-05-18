@@ -3,7 +3,7 @@ import { SparklesOverlay } from './SparklesOverlay'
 import { gradients, colors } from '@/theme'
 import { getTheme } from '@/theme/colors'
 
-export const APP_VERSION = 'бета 4.5.10'
+export const APP_VERSION = 'бета 4.5.11'
 
 /**
  * Один раз за модульную сессию: предзагрузить ВСЕ фоновые картинки активной

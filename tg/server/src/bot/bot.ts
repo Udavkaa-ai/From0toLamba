@@ -322,56 +322,59 @@ function setupHandlers(bot: Bot) {
     }
   })
 
-  // /broadcast <text> — рассылка всем игрокам, прошедшим онбординг
+  // /broadcast <text> — рассылка всем онбордженным игрокам.
+  //
+  // Гарантия «строго один раз на пользователя»:
+  // 1) broadcastActive — синхронный module-level флаг. Между его чтением
+  //    и установкой нет await'ов — node single-thread не даст двум
+  //    параллельным вызовам обоим пройти.
+  // 2) Heavy цикл в void async IIFE — webhook отвечает 200 моментально,
+  //    Telegram не ретраит. (До 4.5.8 цикл блокировал handler 2+ минуты,
+  //    Telegram ретраил каждые 30 сек → 5 параллельных рассылок.)
+  // 3) Set<telegramId> внутри цикла — defensive дедуп. Если БД когда-то
+  //    деградирует и вернёт дубль — мы один и тот же telegramId не
+  //    пошлём дважды в рамках одной рассылки.
   bot.command('broadcast', async (ctx) => {
     if (ctx.from?.id !== ADMIN_TELEGRAM_ID) return
 
+    // КРИТИЧЕСКАЯ СЕКЦИЯ — между check и set ниже НЕТ await'ов.
     if (broadcastActive) {
-      await ctx.reply('⚠️ Рассылка уже идёт. Останови её командой /broadcaststop, потом запусти снова.')
+      await ctx.reply('⚠️ Рассылка уже идёт. /broadcaststop, потом запусти снова.')
       return
     }
-
     const text = (ctx.match ?? '').trim()
     if (!text) {
       await ctx.reply('Использование: /broadcast <текст сообщения>')
       return
     }
-
     broadcastActive = true
     broadcastCancelled = false
+    // ↑ конец критической секции
 
-    await ctx.reply('📡 Запускаю рассылку...')
+    await ctx.reply('📡 Запускаю рассылку (онбордженным)...')
 
-    const users = await prisma.user.findMany({
-      where: { gameState: { isOnboardingComplete: true } },
-      select: { telegramId: true },
-    })
-
-    const appUrl = process.env.MINI_APP_URL ?? ''
-    const keyboard = appUrl ? new InlineKeyboard().webApp('🏪 Открыть ярмарку', appUrl) : undefined
-
-    let sent = 0, failed = 0
-    for (const user of users) {
-      if (broadcastCancelled) break
-      if (user.telegramId.startsWith('system:')) continue
+    void (async () => {
       try {
-        await bot.api.sendMessage(user.telegramId, text, {
-          parse_mode: 'Markdown',
-          ...(keyboard ? { reply_markup: keyboard } : {}),
+        const users = await prisma.user.findMany({
+          where: {
+            gameState: { isOnboardingComplete: true },
+            NOT: { telegramId: { startsWith: 'system:' } },
+          },
+          select: { telegramId: true },
         })
-        sent++
-      } catch {
-        failed++
+        const stats = await sendBroadcastBatch(users, text)
+        const tag = broadcastCancelled ? '🛑 Остановлена' : '✅ Завершена'
+        await bot.api.sendMessage(
+          String(ADMIN_TELEGRAM_ID),
+          `${tag} рассылка (онбордженным). Доставлено: ${stats.sent}, ошибок: ${stats.failed}, всего: ${users.length}.`,
+        )
+      } catch (err) {
+        console.error('[broadcast] Error:', err)
+        await bot.api.sendMessage(String(ADMIN_TELEGRAM_ID), '❌ Ошибка при рассылке. Проверь логи.').catch(() => {})
+      } finally {
+        broadcastActive = false
       }
-      await new Promise(r => setTimeout(r, 50))
-    }
-
-    broadcastActive = false
-    if (broadcastCancelled) {
-      await bot.api.sendMessage(String(ADMIN_TELEGRAM_ID), `✅ Рассылка остановлена. Доставлено: ${sent}, ошибок: ${failed}.`)
-    } else {
-      await ctx.reply(`✅ Рассылка завершена. Доставлено: ${sent}, ошибок: ${failed}.`)
-    }
+    })()
   })
 
   // /broadcaststop — остановить текущую рассылку
@@ -386,64 +389,44 @@ function setupHandlers(bot: Bot) {
   })
 
   // /broadcastall <текст> — расширенная версия /broadcast: шлёт ВСЕМ
-  // юзерам с telegramId (включая тех, кто только /start нажал и не зашёл
-  // в Mini App). Использует тот же broadcastActive флаг — параллельно
-  // с /broadcast не запустится.
+  // юзерам с telegramId (включая не онбордженных). См. /broadcast выше
+  // про защиту от двойных доставок.
   bot.command('broadcastall', async (ctx) => {
     if (ctx.from?.id !== ADMIN_TELEGRAM_ID) return
 
+    // КРИТИЧЕСКАЯ СЕКЦИЯ — без await до set.
     if (broadcastActive) {
       await ctx.reply('⚠️ Рассылка уже идёт. /broadcaststop, потом запусти снова.')
       return
     }
-
     const text = (ctx.match ?? '').trim()
     if (!text) {
-      await ctx.reply('Использование: /broadcastall <текст>. Шлёт всем юзерам с telegramId (включая не онбордженных).')
+      await ctx.reply('Использование: /broadcastall <текст>. Шлёт всем юзерам с telegramId.')
       return
     }
-
     broadcastActive = true
     broadcastCancelled = false
-    await ctx.reply('📡 Запускаю рассылку (всем юзерам в БД)...')
+    // ↑ конец критической секции
 
-    // Длинный цикл — в фоне, чтобы хендлер выходил мгновенно и Telegram
-    // не ретраил webhook (см. 4.5.8). Тяжёлая часть отвязана от ctx.
+    await ctx.reply('📡 Запускаю рассылку (всем в БД)...')
+
     void (async () => {
       try {
         const users = await prisma.user.findMany({
           where: { NOT: { telegramId: { startsWith: 'system:' } } },
           select: { telegramId: true },
         })
-
-        const appUrl = process.env.MINI_APP_URL ?? ''
-        const keyboard = appUrl ? new InlineKeyboard().webApp('🏪 Открыть ярмарку', appUrl) : undefined
-
-        let sent = 0, failed = 0
-        for (const user of users) {
-          if (broadcastCancelled) break
-          try {
-            await bot.api.sendMessage(user.telegramId, text, {
-              parse_mode: 'Markdown',
-              ...(keyboard ? { reply_markup: keyboard } : {}),
-            })
-            sent++
-          } catch {
-            failed++
-          }
-          await new Promise(r => setTimeout(r, 50))
-        }
-
-        broadcastActive = false
+        const stats = await sendBroadcastBatch(users, text)
         const tag = broadcastCancelled ? '🛑 Остановлена' : '✅ Завершена'
         await bot.api.sendMessage(
           String(ADMIN_TELEGRAM_ID),
-          `${tag} рассылка-all. Доставлено: ${sent}, ошибок: ${failed}, всего в DB: ${users.length}.`,
+          `${tag} рассылка-all. Доставлено: ${stats.sent}, ошибок: ${stats.failed}, всего: ${users.length}.`,
         )
       } catch (err) {
         console.error('[broadcastall] Error:', err)
-        broadcastActive = false
         await bot.api.sendMessage(String(ADMIN_TELEGRAM_ID), '❌ Ошибка при рассылке-all. Проверь логи.').catch(() => {})
+      } finally {
+        broadcastActive = false
       }
     })()
   })
@@ -800,6 +783,42 @@ function setupHandlers(bot: Bot) {
     const keyboard = new InlineKeyboard().webApp('🏪 Открыть ярмарку', appUrl)
     await ctx.reply('Открой ярмарку и начни торговать! 🛒', { reply_markup: keyboard })
   })
+
+  // ─────────────────────────────────────────────────────────────────────
+  // Общий цикл рассылки — используется /broadcast и /broadcastall.
+  // Гарантии:
+  //   • Set<telegramId> внутри пропускает дубли (defense in depth,
+  //     даже если БД когда-то выдаст один id дважды).
+  //   • 50мс задержка между сообщениями.
+  //   • Уважает broadcastCancelled — выходит при /broadcaststop.
+  // ─────────────────────────────────────────────────────────────────────
+  async function sendBroadcastBatch(
+    users: Array<{ telegramId: string }>,
+    text: string,
+  ): Promise<{ sent: number; failed: number; deduped: number }> {
+    const appUrl = process.env.MINI_APP_URL ?? ''
+    const keyboard = appUrl ? new InlineKeyboard().webApp('🏪 Открыть ярмарку', appUrl) : undefined
+
+    const seen = new Set<string>()
+    let sent = 0, failed = 0, deduped = 0
+
+    for (const user of users) {
+      if (broadcastCancelled) break
+      if (seen.has(user.telegramId)) { deduped++; continue }
+      seen.add(user.telegramId)
+      try {
+        await bot.api.sendMessage(user.telegramId, text, {
+          parse_mode: 'Markdown',
+          ...(keyboard ? { reply_markup: keyboard } : {}),
+        })
+        sent++
+      } catch {
+        failed++
+      }
+      await new Promise(r => setTimeout(r, 50))
+    }
+    return { sent, failed, deduped }
+  }
 }
 
 export function createWebhookHandler() {
