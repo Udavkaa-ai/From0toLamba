@@ -11,8 +11,50 @@ let _bot: Bot | null = null
 let broadcastActive = false
 let broadcastCancelled = false
 
+// Снимок последней (или текущей) рассылки — для /broadcaststatus и для
+// editMessage-обновлений прогресса. Живёт в памяти, после редеплоя сбрасывается.
+type BroadcastProgress = {
+  active: boolean
+  cancelled: boolean
+  scope: string          // 'онбордженным' | 'всем в БД'
+  sent: number
+  failed: number
+  deduped: number
+  total: number
+  startedAt: Date | null
+  finishedAt: Date | null
+  textPreview: string    // первые 60 символов рассылки
+}
+let broadcastProgress: BroadcastProgress = {
+  active: false,
+  cancelled: false,
+  scope: '',
+  sent: 0, failed: 0, deduped: 0, total: 0,
+  startedAt: null, finishedAt: null,
+  textPreview: '',
+}
+
 export function cancelBroadcast() {
   broadcastCancelled = true
+}
+
+function resetBroadcastProgress(scope: string, text: string, total: number) {
+  broadcastProgress = {
+    active: true,
+    cancelled: false,
+    scope,
+    sent: 0, failed: 0, deduped: 0,
+    total,
+    startedAt: new Date(),
+    finishedAt: null,
+    textPreview: text.slice(0, 60),
+  }
+}
+
+function finalizeBroadcastProgress() {
+  broadcastProgress.active = false
+  broadcastProgress.cancelled = broadcastCancelled
+  broadcastProgress.finishedAt = new Date()
 }
 
 export function getBot(): Bot {
@@ -351,7 +393,9 @@ function setupHandlers(bot: Bot) {
     broadcastCancelled = false
     // ↑ конец критической секции
 
-    await ctx.reply('📡 Запускаю рассылку (онбордженным)...')
+    const startMsg = await ctx.reply('📡 Запускаю рассылку (онбордженным)...')
+    const chatId = startMsg.chat.id
+    const messageId = startMsg.message_id
 
     void (async () => {
       try {
@@ -362,14 +406,22 @@ function setupHandlers(bot: Bot) {
           },
           select: { telegramId: true },
         })
-        const stats = await sendBroadcastBatch(users, text)
+        resetBroadcastProgress('онбордженным', text, users.length)
+        const stats = await sendBroadcastBatch(users, text, async (sent, failed) => {
+          await bot.api.editMessageText(
+            chatId, messageId,
+            `📤 Рассылка (онбордженным): ${sent}/${users.length} отправлено, ${failed} ошибок`,
+          )
+        })
+        finalizeBroadcastProgress()
         const tag = broadcastCancelled ? '🛑 Остановлена' : '✅ Завершена'
-        await bot.api.sendMessage(
-          String(ADMIN_TELEGRAM_ID),
+        await bot.api.editMessageText(
+          chatId, messageId,
           `${tag} рассылка (онбордженным). Доставлено: ${stats.sent}, ошибок: ${stats.failed}, всего: ${users.length}.`,
-        )
+        ).catch(() => {})
       } catch (err) {
         console.error('[broadcast] Error:', err)
+        finalizeBroadcastProgress()
         await bot.api.sendMessage(String(ADMIN_TELEGRAM_ID), '❌ Ошибка при рассылке. Проверь логи.').catch(() => {})
       } finally {
         broadcastActive = false
@@ -386,6 +438,29 @@ function setupHandlers(bot: Bot) {
     }
     broadcastCancelled = true
     await ctx.reply('🛑 Останавливаю рассылку...')
+  })
+
+  // /broadcaststatus — показать прогресс текущей или последней рассылки.
+  // Состояние in-memory: после редеплоя контейнера сбрасывается, и команда
+  // отвечает «не было активности». В этом случае в логах Railway смотреть.
+  bot.command('broadcaststatus', async (ctx) => {
+    if (ctx.from?.id !== ADMIN_TELEGRAM_ID) return
+    const p = broadcastProgress
+    if (!p.startedAt) {
+      await ctx.reply('Нет данных о рассылке (контейнер только запустился или ещё не было).')
+      return
+    }
+    const elapsedSec = Math.round(((p.finishedAt ?? new Date()).getTime() - p.startedAt.getTime()) / 1000)
+    const rate = elapsedSec > 0 ? (p.sent / elapsedSec).toFixed(1) : '—'
+    const status = p.active
+      ? '⏳ Идёт'
+      : p.cancelled ? '🛑 Остановлена' : '✅ Завершена'
+    await ctx.reply(
+      `${status} — ${p.scope}\n` +
+      `📤 ${p.sent}/${p.total} (${p.failed} ошибок)\n` +
+      `⏱️ ${elapsedSec}с, ~${rate}/с\n` +
+      `📝 «${p.textPreview}${p.textPreview.length >= 60 ? '…' : ''}»`,
+    )
   })
 
   // /broadcastall <текст> — расширенная версия /broadcast: шлёт ВСЕМ
@@ -408,7 +483,9 @@ function setupHandlers(bot: Bot) {
     broadcastCancelled = false
     // ↑ конец критической секции
 
-    await ctx.reply('📡 Запускаю рассылку (всем в БД)...')
+    const startMsg = await ctx.reply('📡 Запускаю рассылку (всем в БД)...')
+    const chatId = startMsg.chat.id
+    const messageId = startMsg.message_id
 
     void (async () => {
       try {
@@ -416,14 +493,22 @@ function setupHandlers(bot: Bot) {
           where: { NOT: { telegramId: { startsWith: 'system:' } } },
           select: { telegramId: true },
         })
-        const stats = await sendBroadcastBatch(users, text)
+        resetBroadcastProgress('всем в БД', text, users.length)
+        const stats = await sendBroadcastBatch(users, text, async (sent, failed) => {
+          await bot.api.editMessageText(
+            chatId, messageId,
+            `📤 Рассылка-all: ${sent}/${users.length} отправлено, ${failed} ошибок`,
+          )
+        })
+        finalizeBroadcastProgress()
         const tag = broadcastCancelled ? '🛑 Остановлена' : '✅ Завершена'
-        await bot.api.sendMessage(
-          String(ADMIN_TELEGRAM_ID),
+        await bot.api.editMessageText(
+          chatId, messageId,
           `${tag} рассылка-all. Доставлено: ${stats.sent}, ошибок: ${stats.failed}, всего: ${users.length}.`,
-        )
+        ).catch(() => {})
       } catch (err) {
         console.error('[broadcastall] Error:', err)
+        finalizeBroadcastProgress()
         await bot.api.sendMessage(String(ADMIN_TELEGRAM_ID), '❌ Ошибка при рассылке-all. Проверь логи.').catch(() => {})
       } finally {
         broadcastActive = false
@@ -795,6 +880,7 @@ function setupHandlers(bot: Bot) {
   async function sendBroadcastBatch(
     users: Array<{ telegramId: string }>,
     text: string,
+    onProgress?: (sent: number, failed: number) => Promise<void>,
   ): Promise<{ sent: number; failed: number; deduped: number }> {
     const appUrl = process.env.MINI_APP_URL ?? ''
     const keyboard = appUrl ? new InlineKeyboard().webApp('🏪 Открыть ярмарку', appUrl) : undefined
@@ -814,6 +900,15 @@ function setupHandlers(bot: Bot) {
         sent++
       } catch {
         failed++
+      }
+      // Прогресс в shared state — для /broadcaststatus и editMessage.
+      broadcastProgress.sent = sent
+      broadcastProgress.failed = failed
+      broadcastProgress.deduped = deduped
+      // Колбэк дёргаем каждые 500 доставок (sent+failed) — реже спам в Telegram,
+      // но достаточно часто для ощущения «живой» рассылки на 6-7к юзеров.
+      if (onProgress && (sent + failed) % 500 === 0) {
+        await onProgress(sent, failed).catch(() => {})
       }
       await new Promise(r => setTimeout(r, 50))
     }
