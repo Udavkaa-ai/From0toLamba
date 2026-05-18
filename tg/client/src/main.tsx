@@ -22,7 +22,28 @@ import { TourOverlay } from './components/TourOverlay'
 import { LanguagePicker } from './components/LanguagePicker'
 import { useLangStore } from './stores/langStore'
 import { useTelegramBackButton } from './hooks/useTelegramBackButton'
+import { TonConnectUIProvider } from '@tonconnect/ui-react'
+import telegramAnalytics from '@telegram-apps/analytics'
 import './styles.css'
+
+// Telegram Apps Analytics SDK — требование Telegram Apps Center. Токен
+// получается через @DataChief_bot и кладётся в Railway env как
+// VITE_TG_ANALYTICS_TOKEN + VITE_TG_ANALYTICS_APP. Если переменных нет —
+// init не зовётся (билд не падает, чтобы dev-сборка работала локально).
+const analyticsToken = import.meta.env.VITE_TG_ANALYTICS_TOKEN as string | undefined
+const analyticsApp = import.meta.env.VITE_TG_ANALYTICS_APP as string | undefined
+if (analyticsToken && analyticsApp) {
+  try {
+    telegramAnalytics.init({ token: analyticsToken, appName: analyticsApp })
+  } catch (err) {
+    console.warn('[analytics] init failed:', err)
+  }
+}
+
+// URL манифеста TON Connect. Файл лежит в tg/client/public/tonconnect-manifest.json
+// → Vite кладёт его в корень дистрибутива. На проде Fastify раздаёт его как
+// /tonconnect-manifest.json. На локалке dev-сервер сам отдаёт public-файлы.
+const tonConnectManifestUrl = `${window.location.origin}/tonconnect-manifest.json`
 
 const LS_LANG_PICKED = 'lang-picked-v1'
 
@@ -107,11 +128,13 @@ if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <AppShell />
-        </BrowserRouter>
-      </QueryClientProvider>
+      <TonConnectUIProvider manifestUrl={tonConnectManifestUrl}>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <AppShell />
+          </BrowserRouter>
+        </QueryClientProvider>
+      </TonConnectUIProvider>
     </ErrorBoundary>
   </React.StrictMode>,
 )

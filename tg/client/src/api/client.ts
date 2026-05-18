@@ -494,6 +494,20 @@ export const api = {
     verify: (projectId: string, promocode: string) =>
       apiClient.post<{ ok: boolean }>(`/sponsor/${projectId}/verify`, { promocode }).then(r => r.data),
   },
+
+  wallet: {
+    // Привязать TON-кошелёк. Первое подключение выдаёт +200 г бонус.
+    connect: (address: string) =>
+      apiClient.post<{ bonusGranted: boolean; bonusAmount?: number; address: string }>(
+        '/wallet/connect', { address },
+      ).then(r => r.data),
+    disconnect: () =>
+      apiClient.post<{ ok: boolean }>('/wallet/disconnect').then(r => r.data),
+    // Адрес для донатов. null если TON_DONATE_ADDRESS не задан в env — клиент
+    // в этом случае скрывает кнопку «Поддержать разработчика».
+    getDonateAddress: () =>
+      apiClient.get<{ address: string | null }>('/wallet/donate-address').then(r => r.data),
+  },
 }
 
 export interface ChatMessageDTO {

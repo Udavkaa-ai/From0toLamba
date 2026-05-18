@@ -16,6 +16,7 @@ import { chatRoutes } from './api/routes/chat'
 import { publicRoutes } from './api/routes/public'
 import { todayRoutes } from './api/routes/today'
 import { sponsorRoutes } from './api/routes/sponsor'
+import { walletRoutes } from './api/routes/wallet'
 import { createWebhookHandler, getBot, cancelBroadcast } from './bot/bot'
 import { startDailyScheduler } from './scheduler/dailyJob'
 import { prisma } from './db/prisma'
@@ -52,6 +53,7 @@ async function main() {
   await app.register(publicRoutes)
   await app.register(todayRoutes)
   await app.register(sponsorRoutes)
+  await app.register(walletRoutes)
 
   // Telegram webhook
   const webhookSecret = process.env.TELEGRAM_BOT_TOKEN?.split(':')[0]
@@ -65,7 +67,7 @@ async function main() {
   app.get('/health', async () => ({ ok: true, ts: new Date().toISOString() }))
 
   // Version endpoint — клиент сравнивает и перезагружается если устарел
-  app.get('/api/version', async () => ({ version: 'бета 4.5.25' }))
+  app.get('/api/version', async () => ({ version: 'бета 4.6.0' }))
 
   // Баннеры персонажей — предгенерированные WebP. Тоже immutable (имя файла
   // включает архетип+тип+вариант, новые версии получают другое имя).

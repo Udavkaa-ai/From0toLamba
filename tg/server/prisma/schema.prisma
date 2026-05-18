@@ -36,6 +36,11 @@ model User {
   // Mini App без `/start` боту → 96% not_found на /broadcastall.
   canReceiveBroadcast    Boolean   @default(true)
 
+  // TON-кошелёк, привязанный через TON Connect SDK (требование Telegram Apps
+  // Center). Сохраняется при первом подключении вместе с бонусом +200 г.
+  tonWallet                 String?
+  tonConnectBonusGranted    Boolean   @default(false)
+
   gameState      GameState?
   projects       Project[]
   amaSessions    AmaSession[]

@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.62.8",
+    "@telegram-apps/analytics": "^1.6.4",
+    "@tonconnect/ui-react": "^2.4.4",
     "axios": "^1.7.9",
     "framer-motion": "^11.15.0",
     "pixi.js": "^8.18.1",

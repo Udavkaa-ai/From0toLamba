@@ -14,6 +14,7 @@ import { FaqModal, FaqAnnouncementModal, useFaqAnnouncement } from '@/components
 import { ChannelPromoOverlay, shouldShowChannelPromo, markChannelPromoSeen } from '@/components/ChannelPromoOverlay'
 import { MarketAnnouncementOverlay } from '@/components/MarketAnnouncementOverlay'
 import { DayTransitionOverlay } from '@/components/DayTransitionOverlay'
+import { TonWalletSection } from '@/components/TonWalletSection'
 import { CoinShowerOverlay } from '@/components/CoinShowerOverlay'
 import { CountUp } from '@/components/CountUp'
 import { EyeIcon, LockIcon } from '@/components/icons'
@@ -991,6 +992,9 @@ export function HomePage() {
                   {t.home.themeReloadHint}
                 </div>
               </div>
+
+              {/* TON-кошелёк (Telegram Apps Center требование) */}
+              <TonWalletSection />
 
               {/* Повторный просмотр вводного рассказа */}
               <div style={{ marginBottom: '28px' }}>

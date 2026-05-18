@@ -881,6 +881,19 @@ nickname: {
   errorProfanity: 'Такое имя не пройдёт',
 },
 
+// ─── TON-кошелёк ─────────────────────────────────────────────────────────────
+tonWallet: {
+  sectionLabel: 'TON-кошелёк',
+  hint: 'Привяжи кошелёк через TON Connect — за первое подключение получишь 200 г к казне.',
+  connectedAs: 'Привязан:',
+  bonusGranted: '🎁 +{n} г зачислено за подключение кошелька',
+  donateCta: '💛 Поддержать разработчика 0.1 TON',
+  donateHint: 'Транзакция уйдёт прямо из твоего кошелька. Спасибо!',
+  donateSending: '⏳ Подтверди в кошельке…',
+  donateSent: '✅ Перевод отправлен',
+  donateError: '❌ Отмена или ошибка',
+},
+
 // ─── Дополнительный слот ─────────────────────────────────────────────────────
 extraSlot: {
   title: 'Все 5 дел заняты',
@@ -1716,6 +1729,19 @@ nickname: {
   reset: 'Reset',
   errorChars: 'Letters, digits, space, dash, dot allowed (max 20)',
   errorProfanity: 'That name won\'t pass',
+},
+
+// ─── TON wallet ──────────────────────────────────────────────────────────────
+tonWallet: {
+  sectionLabel: 'TON wallet',
+  hint: 'Connect your wallet via TON Connect — get 200 g bonus on first connection.',
+  connectedAs: 'Connected:',
+  bonusGranted: '🎁 +{n} g credited for connecting your wallet',
+  donateCta: '💛 Tip the dev 0.1 TON',
+  donateHint: 'Transaction is sent directly from your wallet. Thanks!',
+  donateSending: '⏳ Confirm in your wallet…',
+  donateSent: '✅ Transfer sent',
+  donateError: '❌ Cancelled or failed',
 },
 
 extraSlot: {
