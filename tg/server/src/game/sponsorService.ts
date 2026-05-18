@@ -11,7 +11,7 @@
 import { prisma } from '../db/prisma'
 import type { SponsorCampaign, Project } from '@prisma/client'
 import { SPONSOR_PROFIT_MULT, ProjectFate, PersonaArchetype, ProjectType } from './types'
-import { generateNpcTruthParams } from './projectUtils'
+import { generateNpcTruthParams, computeProjectProfitPercent, getCumulativeInvested } from './projectUtils'
 
 /** Случайная активная кампания (по весам), которую этот игрок ещё не видел.
  *  Исключает все кампании, по которым у него уже был Project любого статуса
@@ -145,10 +145,11 @@ export async function createSponsorPostMortem(
   returnedAmount: number,
   daysActive: number,
 ): Promise<void> {
-  const totalWithdrawn = project.totalWithdrawnRubles ?? 0
-  const profitPercent = project.investedAmountRubles > 0
-    ? ((returnedAmount + totalWithdrawn - project.investedAmountRubles) / project.investedAmountRubles) * 100
-    : 0
+  // Кумулятивные суммы — из истории транзакций (см. partialWithdraw в InvestService).
+  const [cumulativeInvested, profitPercent] = await Promise.all([
+    getCumulativeInvested(project.id),
+    computeProjectProfitPercent(project.id, returnedAmount),
+  ])
   await prisma.postMortem.create({
     data: {
       projectId: project.id,
@@ -157,7 +158,7 @@ export async function createSponsorPostMortem(
       fate: project.fate,
       lieTopics: [],
       analysis: project.description,
-      investedAmount: project.investedAmountRubles,
+      investedAmount: cumulativeInvested,
       returnedAmount,
       profitPercent,
       daysActive,

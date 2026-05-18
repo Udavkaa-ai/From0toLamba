@@ -1,5 +1,6 @@
 import type { Project } from '@prisma/client'
 import { ProjectPublicDTO, PersonaArchetype, ProjectFate, LieTopic, ProjectType, WITHDRAWAL_RULES } from './types'
+import { prisma } from '../db/prisma'
 
 export interface NpcTruthParams {
   realPatronCount: number
@@ -135,6 +136,43 @@ export function weightedRandom<T>(items: Array<{ value: T; weight: number }>): T
     if (rand <= 0) return item.value
   }
   return items[items.length - 1].value
+}
+
+/**
+ * Сколько всего г игрок положил в дело за всё время — сумма INVEST + ADD.
+ * Источник правды — таблица Transaction. С версии 4.4.8 `Project.investedAmountRubles`
+ * означает «текущий принципал в работе» (уменьшается при partialWithdraw
+ * пропорционально), поэтому для красивых цифр в Летописи и корректного
+ * profit% нужна история транзакций, а не текущее поле.
+ */
+export async function getCumulativeInvested(projectId: string): Promise<number> {
+  const agg = await prisma.transaction.aggregate({
+    where: { projectId, type: { in: ['INVEST', 'ADD'] } },
+    _sum: { amount: true },
+  })
+  return agg._sum.amount ?? 0
+}
+
+/**
+ * profit% по итогам дела:  (returned + всё-выведенное − всё-вложенное) / всё-вложенное × 100.
+ * `returned` — финальная выплата (exit/RETURNED). Возвраты по WITHDRAW и сумма
+ * вложений берутся из Transaction. Если игрок ни рубля не положил — 0%.
+ */
+export async function computeProjectProfitPercent(projectId: string, returned: number): Promise<number> {
+  const [investAgg, withdrawAgg] = await Promise.all([
+    prisma.transaction.aggregate({
+      where: { projectId, type: { in: ['INVEST', 'ADD'] } },
+      _sum: { amount: true },
+    }),
+    prisma.transaction.aggregate({
+      where: { projectId, type: 'WITHDRAW' },
+      _sum: { amount: true },
+    }),
+  ])
+  const totalDeposited = investAgg._sum.amount ?? 0
+  const totalWithdrawn = withdrawAgg._sum.amount ?? 0
+  if (totalDeposited <= 0) return 0
+  return ((returned + totalWithdrawn - totalDeposited) / totalDeposited) * 100
 }
 
 /** Выбрать lieTopics и truthTopics для проекта по архетипу */

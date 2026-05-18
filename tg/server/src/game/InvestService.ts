@@ -4,6 +4,7 @@ import { computeClaimedAPY } from './GenerateProjectService'
 import { generatePostMortem } from '../ai/openRouterClient'
 import { createSponsorPostMortem } from './sponsorService'
 import { recomputeRank } from './rankService'
+import { computeProjectProfitPercent, getCumulativeInvested } from './projectUtils'
 
 const MIN_INVEST = 5
 const MAX_INVEST_PER_PROJECT = 5000
@@ -237,11 +238,25 @@ export async function partialWithdraw(userId: number, projectId: string, amount:
 
   const received = amount * (1 - rules.feePercent)
 
+  // Уменьшаем «текущий принципал» (`investedAmountRubles`) пропорционально доле
+  // вывода от currentValue — иначе игрок мог через цикл withdraw→addInvestment
+  // надувать принципал и получать огромный yield на следующий день
+  // (особенно драматично у спонсорских с линейной траекторией к 3×).
+  // Кумулятивные суммы для PostMortem и profit% теперь берутся из Transaction.
+  // Эпсилон 0.001 г держит дело видимым в проверках `investedAmountRubles > 0`
+  // (рейтинги, токены, Летопись) даже после полного вывода — Math.floor в UI
+  // показывает 0, и доходность на такой принципал пренебрежимо мала.
+  const withdrawRatio = project.currentValueRubles > 0
+    ? Math.min(1, amount / project.currentValueRubles)
+    : 0
+  const newInvested = Math.max(0.001, project.investedAmountRubles * (1 - withdrawRatio))
+
   await prisma.$transaction([
     prisma.project.update({
       where: { id: projectId },
       data: {
         currentValueRubles: { decrement: amount },
+        investedAmountRubles: newInvested,
         totalWithdrawnRubles: { increment: received },
       },
     }),
@@ -295,10 +310,14 @@ export async function exitProject(userId: number, projectId: string): Promise<nu
   })
 
   const amaSession = await prisma.amaSession.findUnique({ where: { projectId } })
-  const totalWithdrawn = project.totalWithdrawnRubles
-  const profitPercent = project.investedAmountRubles > 0
-    ? ((received + totalWithdrawn - project.investedAmountRubles) / project.investedAmountRubles) * 100
-    : 0
+  // Кумулятивные суммы — для корректного profit% и красивой цифры
+  // «вложено столько-то» в PostMortem (см. partialWithdraw: investedAmountRubles
+  // теперь означает «текущий принципал», поэтому брать его в PostMortem нельзя —
+  // если игрок частично выводил, цифра занижена).
+  const [cumulativeInvested, profitPercent] = await Promise.all([
+    getCumulativeInvested(projectId),
+    computeProjectProfitPercent(projectId, received),
+  ])
 
   // VIP-дело: PostMortem пишется без AI, analysis = project.description
   // (сказочное описание от хозяина канала). Иначе обычный AI-разбор.
@@ -311,7 +330,7 @@ export async function exitProject(userId: number, projectId: string): Promise<nu
       archetype: project.personaArchetype,
       fate: project.fate,
       lieTopics: project.lieTopics,
-      investedAmount: project.investedAmountRubles,
+      investedAmount: cumulativeInvested,
       returnedAmount: received,
       profitPercent,
       daysActive: project.daysSinceJoined,
