@@ -3,7 +3,7 @@ import { SparklesOverlay } from './SparklesOverlay'
 import { gradients, colors } from '@/theme'
 import { getTheme } from '@/theme/colors'
 
-export const APP_VERSION = 'бета 4.5.17'
+export const APP_VERSION = 'бета 4.5.18'
 
 /**
  * Один раз за модульную сессию: предзагрузить ВСЕ фоновые картинки активной
@@ -101,7 +101,10 @@ export function ScreenBackground({ children, showSparkles = true, showMist = tru
           aria-hidden
         />
       )}
-      {showMist && <div className="mist-layer" aria-hidden />}
+      {/* mist-layer временно отключён (4.5.18) — единственная CSS-инфинит-
+          анимация общая для главной и грамот, но отсутствующая на settings
+          sheet. Если уберём её и мерцание уйдёт — был он. */}
+      {showMist && null}
       {showSparkles && <SparklesOverlay />}
       <div style={{ position: 'relative', zIndex: 2 }}>
         {children}
