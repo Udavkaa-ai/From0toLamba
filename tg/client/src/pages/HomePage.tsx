@@ -15,7 +15,6 @@ import { ChannelPromoOverlay, shouldShowChannelPromo, markChannelPromoSeen } fro
 import { MarketAnnouncementOverlay } from '@/components/MarketAnnouncementOverlay'
 import { DayTransitionOverlay } from '@/components/DayTransitionOverlay'
 import { TonWalletSection } from '@/components/TonWalletSection'
-import { PerformanceSection } from '@/components/PerformanceSection'
 import { registerStarsInvoice } from '@/lib/analytics'
 import { CoinShowerOverlay } from '@/components/CoinShowerOverlay'
 import { CountUp } from '@/components/CountUp'
@@ -57,20 +56,11 @@ function attachGlobalAudioListeners() {
   if (pauseListenersAttached) return
   pauseListenersAttached = true
 
-  // Диагностический guard: на resume Android-WebView дёргает 4 события
-  // подряд (visibilitychange + pageshow + focus + viewportChanged) → 4×
-  // audio.play() за миллисекунды. Подозрение что это вызывает мерцание
-  // через GPU recomposit. Через настройки можно полностью отключить
-  // эти handler'ы и проверить гипотезу. См. fxStore.disableMusicHandlers.
-  const isDisabled = () => useFxStore.getState().disableMusicHandlers
-
   const pause = () => {
-    if (isDisabled()) return
     const a = audioElement
     if (a && !a.paused) a.pause()
   }
   const resume = () => {
-    if (isDisabled()) return
     const a = audioElement
     if (!a || userPausedMusic) return
     if (isMusicMuted()) return
@@ -1020,11 +1010,6 @@ export function HomePage() {
 
               {/* TON-кошелёк (Telegram Apps Center требование) */}
               <TonWalletSection />
-
-              {/* Диагностика мерцания. Игрок выключает эффекты по одному и
-                 смотрит на каком отпадает мерцание (после сворачивания/
-                 восстановления Mini App). См. stores/fxStore.ts. */}
-              <PerformanceSection />
 
               {/* Повторный просмотр вводного рассказа */}
               <div style={{ marginBottom: '28px' }}>

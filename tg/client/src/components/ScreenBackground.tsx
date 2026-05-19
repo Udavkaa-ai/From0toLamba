@@ -4,7 +4,7 @@ import { gradients, colors } from '@/theme'
 import { getTheme } from '@/theme/colors'
 import { useFxStore } from '@/stores/fxStore'
 
-export const APP_VERSION = 'бета 4.6.9'
+export const APP_VERSION = 'бета 4.6.10'
 
 /**
  * Один раз за модульную сессию: предзагрузить ВСЕ фоновые картинки активной
@@ -92,14 +92,11 @@ export function ScreenBackground({ children, showSparkles = true, showMist = tru
       .catch(() => {})
   }, [])
 
-  // Диагностические рычаги. Если игрок выключил эффект через настройки —
-  // пропускаем его рендер. См. stores/fxStore.ts.
-  // modalOpen — выставляется когда открыт fullscreen-sheet (Настройки).
+  // Пока открыта fullscreen-модалка (Настройки) — прячем sparkles+mist.
   // При нажатии кнопок внутри модалки whileTap-animations и popup'ы
   // (TonConnect modal) на доли секунды переставляют GPU-композит-слои —
-  // если sparkles/mist жили под opaque sheet'ом, они проблескивают.
-  // Прячем их полностью пока модалка открыта.
-  const { disableSparkles, disableMist, disableBgImage, modalOpen } = useFxStore()
+  // если sparkles/mist жили в дереве, они проблескивали. См. fxStore.
+  const modalOpen = useFxStore(s => s.modalOpen)
 
   return (
     <div
@@ -116,7 +113,7 @@ export function ScreenBackground({ children, showSparkles = true, showMist = tru
          намёк (0.18) поверх тёмного градиента; в fairy картинки видны,
          но не доминируют (0.5) — иначе золотые сцены с жёлтыми листьями
          перебивают парчмент-карточки и золотой текст. */}
-      {bgImage && !disableBgImage && (
+      {bgImage && (
         <div
           style={{
             position: 'fixed',
@@ -131,8 +128,8 @@ export function ScreenBackground({ children, showSparkles = true, showMist = tru
           aria-hidden
         />
       )}
-      {showMist && !disableMist && !modalOpen && <div className="mist-layer" aria-hidden />}
-      {showSparkles && !disableSparkles && !modalOpen && <SparklesOverlay />}
+      {showMist && !modalOpen && <div className="mist-layer" aria-hidden />}
+      {showSparkles && !modalOpen && <SparklesOverlay />}
       <div style={{ position: 'relative', zIndex: 2 }}>
         {children}
       </div>

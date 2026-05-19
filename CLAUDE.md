@@ -413,6 +413,19 @@ PAGE_BG.portfolio           // '/backgrounds/BG_PORTFOLIO.webp'
 - В `generateProject` перед роллом VIP проверяется что у игрока **уже нет** sponsor-проекта в `isInbox || isActive` — иначе при параллельных вызовах все попадали в одну `pickRandomActiveCampaign()` и материализовали ту же кампанию дважды.
 - `VipArrivalOverlay` в `InboxPage` показывается **один раз за визит** на страницу — даже если непросмотренных VIP несколько (раньше открывался цепочкой по 4.2с каждый, инбокс мелькал между ними).
 
+**Мерцание на Android WebView — два правила:**
+
+1. **Никаких entrance-cascade анимаций** (`<motion.div initial={{opacity:0}} ... transition={{delay: i * X}}>` вокруг карточек в map'е). На slow-WebView (24fps кадровая выдача) каскад появлений читается глазом как мерцание. Чинено в `a791722` (HomePage header/balance/inbox) и `c9182c9` (PortfolioPage, HomePage InboxFeedCard, tokens-chip). Карточки рендерим мгновенно с opacity:1. `motion.div`-обёртки оставляем ТОЛЬКО когда у них есть `whileTap` или другие interaction-эффекты.
+
+2. **SparklesOverlay + mist-layer + полупрозрачный слой сверху = GPU storm.** Canvas с rAF-loop и CSS-keyframes infinite сами по себе ОК, но если на них ложится полупрозрачный backdrop (`rgba(0,0,0,0.6)`), GPU **каждый кадр** пересобирает композит `canvas → backdrop(alpha) → sheet`. В моменты tap-анимаций (whileTap, TonConnect popup) создаются временные composit-слои → видимые «вспышки». Решение для fullscreen-модалок:
+   - **Settings sheet делаем `inset: 0` + полностью opaque background** (не bottom-sheet с alpha-backdrop)
+   - **Дополнительно прячем sparkles+mist через `useFxStore.modalOpen`** пока модалка открыта — нечему пересобираться вообще
+   - См. `stores/fxStore.ts`, `components/ScreenBackground.tsx`, settings sheet в `pages/HomePage.tsx`
+
+   ⚠️ **НЕ пытаться** «починить» полупрозрачный backdrop повышением alpha до 0.95 — Android WebView начинает не рисовать sheet под ним до scroll-trigger (видели в 4.6.7).
+
+   ⚠️ **Что было исключено** (зря не копаться там при следующих регрессиях): музыкальные resume-listeners (`visibilitychange`/`viewportChanged` → `audio.play()`) — не виноваты. TonConnect SDK и Telegram Analytics SDK — не виноваты. Reload-loop при version-check — не было причиной (защитный guard в `ScreenBackground` всё равно полезен).
+
 ---
 
 ## Деплой (Railway)
