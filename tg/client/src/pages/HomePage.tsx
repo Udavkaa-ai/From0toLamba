@@ -768,17 +768,17 @@ export function HomePage() {
               exit={{ opacity: 0 }}
               onClick={() => { setShowSettings(false); setShowResetConfirm(false) }}
               style={{
-                // Раньше тут было rgba(0,0,0,0.6) — sparkles-canvas (rAF 60fps)
-                // под backdrop'ом мерцал через полупрозрачность. Каждый кадр
-                // GPU пересобирал композит (canvas → backdrop с alpha →
-                // settings sheet) — заметное мерцание на Android WebView,
-                // особенно в долго открытых настройках. Делаем backdrop
-                // практически непрозрачным — GPU понимает что под ним
-                // ничего значимого и пропускает re-composit нижних слоёв.
-                position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 100,
+                position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 100,
               }}
             />
-            {/* Sheet */}
+            {/* Sheet — fullscreen, полностью непрозрачный.
+               Раньше был bottom-sheet на 85dvh с полупрозрачным backdrop'ом
+               под ним. SparklesOverlay-canvas (rAF 60fps) перерисовывался
+               через полупрозрачные слои, GPU пересобирал композит каждый
+               кадр — мерцало на Android WebView. Fullscreen + opaque фон
+               полностью скрывает sparkles/mist под собой — GPU не делает
+               re-composit невидимых слоёв.
+               Закрывается крестиком внутри (см. ниже) или Telegram-back-button. */}
             <motion.div
               key="settings-sheet"
               initial={{ y: '100%' }}
@@ -786,12 +786,9 @@ export function HomePage() {
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
               style={{
-                position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 101,
+                position: 'fixed', inset: 0, zIndex: 101,
                 background: gradients.modal,
-                borderTop: `1px solid ${colors.fairyGold}40`,
-                borderRadius: '20px 20px 0 0',
-                padding: `24px 20px calc(140px + env(safe-area-inset-bottom))`,
-                maxHeight: '85dvh',
+                padding: `24px 20px calc(40px + env(safe-area-inset-bottom)) 20px`,
                 overflowY: 'auto',
               }}
             >
