@@ -16,9 +16,17 @@ interface FxStore {
   disableSparkles: boolean
   disableMist: boolean
   disableBgImage: boolean
+  /** Глобальные visibility/blur/viewportChanged-слушатели музыки. По
+   *  хронологии коммитов (17 мая 2026: одновременно music-resume-fix и
+   *  начало эпохи мерцания) это подозреваемый виновник: на resume Android
+   *  WebView дёргает 4 события подряд → 4× audio.play() → возможно
+   *  GPU recomposit. Выключение убивает auto-resume музыки, зато можно
+   *  проверить эту гипотезу. */
+  disableMusicHandlers: boolean
   setDisableSparkles: (v: boolean) => void
   setDisableMist: (v: boolean) => void
   setDisableBgImage: (v: boolean) => void
+  setDisableMusicHandlers: (v: boolean) => void
   /** Eco-mode — выключает всё разом. Удобно как «попробовать всё». */
   setEcoAll: (v: boolean) => void
 }
@@ -29,10 +37,17 @@ export const useFxStore = create<FxStore>()(
       disableSparkles: false,
       disableMist: false,
       disableBgImage: false,
+      disableMusicHandlers: false,
       setDisableSparkles: (v) => set({ disableSparkles: v }),
       setDisableMist: (v) => set({ disableMist: v }),
       setDisableBgImage: (v) => set({ disableBgImage: v }),
-      setEcoAll: (v) => set({ disableSparkles: v, disableMist: v, disableBgImage: v }),
+      setDisableMusicHandlers: (v) => set({ disableMusicHandlers: v }),
+      setEcoAll: (v) => set({
+        disableSparkles: v,
+        disableMist: v,
+        disableBgImage: v,
+        disableMusicHandlers: v,
+      }),
     }),
     { name: 'game-fx' },
   ),

@@ -22,6 +22,7 @@ import { CountUp } from '@/components/CountUp'
 import { EyeIcon, LockIcon } from '@/components/icons'
 import { api, type ProjectDTO, type DailyUpdateDTO, type ClosureSummaryDTO, type MyReferralEntryDTO } from '@/api/client'
 import { useGameStore } from '@/stores/gameStore'
+import { useFxStore } from '@/stores/fxStore'
 import { useTourStore, isTourDone } from '@/stores/tourStore'
 import { useLangStore, type Lang } from '@/stores/langStore'
 import { useT } from '@/i18n'
@@ -56,11 +57,20 @@ function attachGlobalAudioListeners() {
   if (pauseListenersAttached) return
   pauseListenersAttached = true
 
+  // Диагностический guard: на resume Android-WebView дёргает 4 события
+  // подряд (visibilitychange + pageshow + focus + viewportChanged) → 4×
+  // audio.play() за миллисекунды. Подозрение что это вызывает мерцание
+  // через GPU recomposit. Через настройки можно полностью отключить
+  // эти handler'ы и проверить гипотезу. См. fxStore.disableMusicHandlers.
+  const isDisabled = () => useFxStore.getState().disableMusicHandlers
+
   const pause = () => {
+    if (isDisabled()) return
     const a = audioElement
     if (a && !a.paused) a.pause()
   }
   const resume = () => {
+    if (isDisabled()) return
     const a = audioElement
     if (!a || userPausedMusic) return
     if (isMusicMuted()) return

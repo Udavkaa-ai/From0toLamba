@@ -16,18 +16,21 @@ export function PerformanceSection() {
     disableSparkles,
     disableMist,
     disableBgImage,
+    disableMusicHandlers,
     setDisableSparkles,
     setDisableMist,
     setDisableBgImage,
+    setDisableMusicHandlers,
     setEcoAll,
   } = useFxStore()
 
-  const allOff = disableSparkles && disableMist && disableBgImage
+  const allOff = disableSparkles && disableMist && disableBgImage && disableMusicHandlers
 
   const rows: Array<{ key: string; label: string; off: boolean; set: (v: boolean) => void }> = [
-    { key: 'sparkles', label: t.home.settingsPerfSparkles, off: disableSparkles, set: setDisableSparkles },
-    { key: 'mist',     label: t.home.settingsPerfMist,     off: disableMist,     set: setDisableMist },
-    { key: 'bg',       label: t.home.settingsPerfBg,       off: disableBgImage,  set: setDisableBgImage },
+    { key: 'music',    label: t.home.settingsPerfMusic,    off: disableMusicHandlers, set: setDisableMusicHandlers },
+    { key: 'sparkles', label: t.home.settingsPerfSparkles, off: disableSparkles,      set: setDisableSparkles },
+    { key: 'mist',     label: t.home.settingsPerfMist,     off: disableMist,          set: setDisableMist },
+    { key: 'bg',       label: t.home.settingsPerfBg,       off: disableBgImage,       set: setDisableBgImage },
   ]
 
   return (
