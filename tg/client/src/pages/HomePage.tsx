@@ -15,6 +15,7 @@ import { ChannelPromoOverlay, shouldShowChannelPromo, markChannelPromoSeen } fro
 import { MarketAnnouncementOverlay } from '@/components/MarketAnnouncementOverlay'
 import { DayTransitionOverlay } from '@/components/DayTransitionOverlay'
 import { TonWalletSection } from '@/components/TonWalletSection'
+import { PerformanceSection } from '@/components/PerformanceSection'
 import { registerStarsInvoice } from '@/lib/analytics'
 import { CoinShowerOverlay } from '@/components/CoinShowerOverlay'
 import { CountUp } from '@/components/CountUp'
@@ -997,6 +998,11 @@ export function HomePage() {
 
               {/* TON-кошелёк (Telegram Apps Center требование) */}
               <TonWalletSection />
+
+              {/* Диагностика мерцания. Игрок выключает эффекты по одному и
+                 смотрит на каком отпадает мерцание (после сворачивания/
+                 восстановления Mini App). См. stores/fxStore.ts. */}
+              <PerformanceSection />
 
               {/* Повторный просмотр вводного рассказа */}
               <div style={{ marginBottom: '28px' }}>

@@ -2,8 +2,9 @@ import { ReactNode, useEffect } from 'react'
 import { SparklesOverlay } from './SparklesOverlay'
 import { gradients, colors } from '@/theme'
 import { getTheme } from '@/theme/colors'
+import { useFxStore } from '@/stores/fxStore'
 
-export const APP_VERSION = 'бета 4.6.3'
+export const APP_VERSION = 'бета 4.6.4'
 
 /**
  * Один раз за модульную сессию: предзагрузить ВСЕ фоновые картинки активной
@@ -91,6 +92,10 @@ export function ScreenBackground({ children, showSparkles = true, showMist = tru
       .catch(() => {})
   }, [])
 
+  // Диагностические рычаги. Если игрок выключил эффект через настройки —
+  // пропускаем его рендер. См. stores/fxStore.ts.
+  const { disableSparkles, disableMist, disableBgImage } = useFxStore()
+
   return (
     <div
       style={{
@@ -106,7 +111,7 @@ export function ScreenBackground({ children, showSparkles = true, showMist = tru
          намёк (0.18) поверх тёмного градиента; в fairy картинки видны,
          но не доминируют (0.5) — иначе золотые сцены с жёлтыми листьями
          перебивают парчмент-карточки и золотой текст. */}
-      {bgImage && (
+      {bgImage && !disableBgImage && (
         <div
           style={{
             position: 'fixed',
@@ -121,8 +126,8 @@ export function ScreenBackground({ children, showSparkles = true, showMist = tru
           aria-hidden
         />
       )}
-      {showMist && <div className="mist-layer" aria-hidden />}
-      {showSparkles && <SparklesOverlay />}
+      {showMist && !disableMist && <div className="mist-layer" aria-hidden />}
+      {showSparkles && !disableSparkles && <SparklesOverlay />}
       <div style={{ position: 'relative', zIndex: 2 }}>
         {children}
       </div>
