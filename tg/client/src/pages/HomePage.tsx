@@ -768,7 +768,14 @@ export function HomePage() {
               exit={{ opacity: 0 }}
               onClick={() => { setShowSettings(false); setShowResetConfirm(false) }}
               style={{
-                position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 100,
+                // Раньше тут было rgba(0,0,0,0.6) — sparkles-canvas (rAF 60fps)
+                // под backdrop'ом мерцал через полупрозрачность. Каждый кадр
+                // GPU пересобирал композит (canvas → backdrop с alpha →
+                // settings sheet) — заметное мерцание на Android WebView,
+                // особенно в долго открытых настройках. Делаем backdrop
+                // практически непрозрачным — GPU понимает что под ним
+                // ничего значимого и пропускает re-composit нижних слоёв.
+                position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 100,
               }}
             />
             {/* Sheet */}
