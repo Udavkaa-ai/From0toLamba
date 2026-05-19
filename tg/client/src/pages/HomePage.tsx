@@ -129,6 +129,14 @@ export function HomePage() {
   const [musicMuted, setMusicMutedState] = useState(isMusicMuted)
   const [soundVolume, setSoundVolume] = useState(getVolume)
 
+  // Синхронизируем флаг modalOpen в fxStore с открытием Настроек. ScreenBackground
+  // подписан и скрывает sparkles+mist пока fullscreen-модалка открыта — иначе
+  // на нажатия кнопок (whileTap-анимации, TonConnect popup) GPU создавал
+  // временные composit-слои, через которые проблескивали sparkles/mist.
+  useEffect(() => {
+    useFxStore.getState().setModalOpen(showSettings)
+  }, [showSettings])
+
   // ─── Фоновая музыка — только один раз за сессию ────────────────────────────
   const audioRef = useRef<HTMLAudioElement | null>(null)
   // Множитель: при ползунке 0.5 (по умолчанию) музыка на 20% (0.5 × 0.4 = 0.2)

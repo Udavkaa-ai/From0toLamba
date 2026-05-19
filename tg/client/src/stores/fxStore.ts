@@ -23,10 +23,19 @@ interface FxStore {
    *  GPU recomposit. Выключение убивает auto-resume музыки, зато можно
    *  проверить эту гипотезу. */
   disableMusicHandlers: boolean
+  /** Транзитный флаг — выставляется на время открытия fullscreen-модалок
+   *  (Настройки сейчас, в будущем возможно FAQ/Reset). Когда true —
+   *  ScreenBackground прячет sparkles и mist ПОЛНОСТЬЮ. На Android WebView
+   *  при нажатии кнопок внутри модалки появляются временные composit-слои
+   *  (whileTap, TonConnect modal popup и т.п.), через которые могут
+   *  проблескивать sparkles/mist — единичные «вспышки». Прячем их вообще
+   *  пока модалка открыта — нечему мерцать. Не persist'ится. */
+  modalOpen: boolean
   setDisableSparkles: (v: boolean) => void
   setDisableMist: (v: boolean) => void
   setDisableBgImage: (v: boolean) => void
   setDisableMusicHandlers: (v: boolean) => void
+  setModalOpen: (v: boolean) => void
   /** Eco-mode — выключает всё разом. Удобно как «попробовать всё». */
   setEcoAll: (v: boolean) => void
 }
@@ -38,10 +47,12 @@ export const useFxStore = create<FxStore>()(
       disableMist: false,
       disableBgImage: false,
       disableMusicHandlers: false,
+      modalOpen: false,
       setDisableSparkles: (v) => set({ disableSparkles: v }),
       setDisableMist: (v) => set({ disableMist: v }),
       setDisableBgImage: (v) => set({ disableBgImage: v }),
       setDisableMusicHandlers: (v) => set({ disableMusicHandlers: v }),
+      setModalOpen: (v) => set({ modalOpen: v }),
       setEcoAll: (v) => set({
         disableSparkles: v,
         disableMist: v,
@@ -49,6 +60,15 @@ export const useFxStore = create<FxStore>()(
         disableMusicHandlers: v,
       }),
     }),
-    { name: 'game-fx' },
+    {
+      name: 'game-fx',
+      // modalOpen — транзитный, не нужен в localStorage.
+      partialize: (s) => ({
+        disableSparkles: s.disableSparkles,
+        disableMist: s.disableMist,
+        disableBgImage: s.disableBgImage,
+        disableMusicHandlers: s.disableMusicHandlers,
+      }),
+    },
   ),
 )

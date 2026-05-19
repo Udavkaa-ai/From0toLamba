@@ -4,7 +4,7 @@ import { gradients, colors } from '@/theme'
 import { getTheme } from '@/theme/colors'
 import { useFxStore } from '@/stores/fxStore'
 
-export const APP_VERSION = 'бета 4.6.8'
+export const APP_VERSION = 'бета 4.6.9'
 
 /**
  * Один раз за модульную сессию: предзагрузить ВСЕ фоновые картинки активной
@@ -94,7 +94,12 @@ export function ScreenBackground({ children, showSparkles = true, showMist = tru
 
   // Диагностические рычаги. Если игрок выключил эффект через настройки —
   // пропускаем его рендер. См. stores/fxStore.ts.
-  const { disableSparkles, disableMist, disableBgImage } = useFxStore()
+  // modalOpen — выставляется когда открыт fullscreen-sheet (Настройки).
+  // При нажатии кнопок внутри модалки whileTap-animations и popup'ы
+  // (TonConnect modal) на доли секунды переставляют GPU-композит-слои —
+  // если sparkles/mist жили под opaque sheet'ом, они проблескивают.
+  // Прячем их полностью пока модалка открыта.
+  const { disableSparkles, disableMist, disableBgImage, modalOpen } = useFxStore()
 
   return (
     <div
@@ -126,8 +131,8 @@ export function ScreenBackground({ children, showSparkles = true, showMist = tru
           aria-hidden
         />
       )}
-      {showMist && !disableMist && <div className="mist-layer" aria-hidden />}
-      {showSparkles && !disableSparkles && <SparklesOverlay />}
+      {showMist && !disableMist && !modalOpen && <div className="mist-layer" aria-hidden />}
+      {showSparkles && !disableSparkles && !modalOpen && <SparklesOverlay />}
       <div style={{ position: 'relative', zIndex: 2 }}>
         {children}
       </div>
