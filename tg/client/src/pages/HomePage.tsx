@@ -1497,11 +1497,10 @@ export function HomePage() {
                 </button>
               )}
             </div>
-            {gameState.inboxProjects.slice(0, 2).map((p, i) => (
+            {gameState.inboxProjects.slice(0, 2).map((p) => (
               <InboxFeedCard
                 key={p.id}
                 project={p}
-                delay={i * 0.04}
                 onPress={() => { tgHaptic?.impactOccurred('light'); navigate(`/charter/${p.id}`) }}
               />
             ))}
@@ -1937,18 +1936,17 @@ function ActiveProjectCard({ project, delay, onPress }: { project: ProjectDTO; d
 }
 
 // Карточка входящего дела для ленты на главной — компактная, тап ведёт прямо к испытанию.
-function InboxFeedCard({ project, delay, onPress }: { project: ProjectDTO; delay: number; onPress: () => void }) {
+function InboxFeedCard({ project, onPress }: { project: ProjectDTO; onPress: () => void }) {
   const t = useT()
   const typeLabels = t.inbox.types as Record<string, string>
   const typeLabel = typeLabels[project.type] ?? project.type
   return (
-    // initial.opacity=0.001 (а не 0) — карточка остаётся «видимой» с самой
-    // первой кадровой выкладки: рендерится её пергаментный фон и текст.
-    // Без этого при возврате с другой вкладки/после advance-day полсекунды
-    // показывался только cream-фон без содержимого (см. видео-баг).
-    // Анимация по-прежнему даёт лёгкий fade-in за 0.18с — но контент уже
-    // прочитываем с момента появления.
-    <motion.div initial={{ opacity: 0.001, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay, duration: 0.18 }}>
+    // Раньше тут была motion.div с initial.opacity=0.001 + x:-20 stagger.
+    // Это давало визуально каскад появлений на slow Android-WebView при
+    // переключении на главную — выглядело как мерцание. См. a791722:
+    // тот же фикс применялся к другим компонентам, InboxFeedCard был
+    // пропущен. Сейчас — мгновенный рендер без анимации появления.
+    <div>
       <FairyCard onClick={onPress} style={{ marginBottom: spacing.sm, cursor: 'pointer', padding: spacing.md }}>
         <div style={{ display: 'flex', gap: spacing.md, alignItems: 'center' }}>
           {project.bannerImageUrl && (
@@ -1985,7 +1983,7 @@ function InboxFeedCard({ project, delay, onPress }: { project: ProjectDTO; delay
           </div>
         </div>
       </FairyCard>
-    </motion.div>
+    </div>
   )
 }
 
@@ -2011,9 +2009,6 @@ function TokensQuickChip({ onNavigate }: { onNavigate: () => void }) {
     <motion.button
       data-tour="tokens-chip"
       onClick={onNavigate}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.15 }}
       whileTap={{ scale: 0.98 }}
       style={{
         width: '100%',

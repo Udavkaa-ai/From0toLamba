@@ -66,13 +66,12 @@ export function PortfolioPage() {
               {t.portfolio.tabActive}
             </div>
             {data.active.map((p, i) => (
-              <motion.div
+              <div
                 key={p.id}
                 {...(i === 0 ? { 'data-tour': 'portfolio-project' } : {})}
-                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
               >
                 <ActiveProjectCard project={p} tourFirst={i === 0} />
-              </motion.div>
+              </div>
             ))}
           </section>
         )}
@@ -93,10 +92,10 @@ export function PortfolioPage() {
             <div style={{ color: colors.textMuted, fontSize: '13px', fontWeight: 600, marginBottom: spacing.sm }}>
               {t.portfolio.tabHistory}
             </div>
-            {data.closed.filter(p => p.investedAmountRubles > 0).slice(0, 3).map((p, i) => (
-              <motion.div key={p.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}>
+            {data.closed.filter(p => p.investedAmountRubles > 0).slice(0, 3).map((p) => (
+              <div key={p.id}>
                 <ClosedProjectCard project={p} postMortem={p.postMortem} />
-              </motion.div>
+              </div>
             ))}
             <motion.button
               whileTap={{ scale: 0.96 }}
