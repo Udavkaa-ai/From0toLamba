@@ -2007,7 +2007,10 @@ function ResultSheet({
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
         style={{
           width: '100%', maxWidth: '500px',
-          background: `linear-gradient(180deg, ${colors.nightBlue}f0 0%, ${colors.nightBlue} 35%)`,
+          // Был полупрозрачный начало градиента (f0=94%) + backdrop-filter:blur(8px).
+          // Backdrop-filter — самый дорогой эффект на Android, убран. Градиент
+          // теперь полностью непрозрачный.
+          background: `linear-gradient(180deg, ${colors.nightBlue} 0%, ${colors.nightBlue} 35%)`,
           borderRadius: '20px 20px 0 0',
           border: `1px solid ${colors.fairyGold}40`,
           borderBottom: 'none',
@@ -2019,7 +2022,6 @@ function ResultSheet({
             : `calc(${spacing.xl} + env(safe-area-inset-bottom))`,
           boxShadow: '0 -8px 32px rgba(0,0,0,0.6)',
           pointerEvents: 'auto',
-          backdropFilter: 'blur(8px)',
         }}
       >
         {/* Маркер-ручка: тап по верху листа переключает свёрнутое состояние */}
@@ -2596,10 +2598,12 @@ const bonusStyle: React.CSSProperties = {
   left: '50%',
   transform: 'translateX(-50%)',
   padding: `${spacing.md} ${spacing.lg}`,
-  background: `${colors.fairyGold}20`,
+  // Был полупрозрачный золотой fill + backdrop-filter:blur(8px). Backdrop-filter
+  // убран (см. остальные backdrop-filter правки). Чтобы тост остался видимым
+  // без blur — заменили на solid тёмный фон с золотой рамкой.
+  background: colors.nightBlue,
   border: `1px solid ${colors.fairyGold}`,
   borderRadius: '12px',
   textAlign: 'center',
   zIndex: 150,
-  backdropFilter: 'blur(8px)',
 }

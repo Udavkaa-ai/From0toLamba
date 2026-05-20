@@ -163,15 +163,10 @@ export function RegistryPage() {
           </FairyCard>
         )}
 
-        {closed.map((project, i) => (
-          <motion.div
-            key={project.id}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.04 }}
-          >
+        {closed.map((project) => (
+          <div key={project.id}>
             <RegistryCard project={project} postMortem={project.postMortem} />
-          </motion.div>
+          </div>
         ))}
       </div>
     </ScreenBackground>

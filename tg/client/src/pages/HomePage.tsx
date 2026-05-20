@@ -1567,10 +1567,11 @@ function InboxLeftConfirmSheet({
       onClick={onStay}
       style={{
         position: 'fixed', inset: 0, zIndex: 250,
-        background: 'rgba(6, 4, 18, 0.85)',
+        // backdrop-filter:blur(4px) убран — самый дорогой эффект на Android,
+        // alpha поднят с 0.85 до 0.95 для непрозрачности.
+        background: 'rgba(6, 4, 18, 0.95)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: spacing.lg,
-        backdropFilter: 'blur(4px)',
       }}
     >
       <motion.div

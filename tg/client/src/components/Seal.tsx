@@ -292,8 +292,12 @@ export function Seal({ params, size = 72, dim = false }: SealProps) {
       style={{
         opacity,
         display: 'block',
-        // Soft outer glow + drop shadow — подчёркивают, что печать «лежит» на пергаменте
-        filter: `drop-shadow(0 1.5px 1.5px rgba(0,0,0,0.55)) drop-shadow(0 0 2.5px ${color.primary}40)`,
+        // Drop-shadow «лежит на пергаменте». Раньше тут было два drop-shadow
+        // (тень + цветной glow) — на CharterPage 24 печатей = 48 paint extensions
+        // одновременно, тяжело для Android WebView. Цветной glow убран (его
+        // alpha 0x40 = 25% — почти невидимый эффект, не стоит цены), осталась
+        // только тень для 3D-ощущения.
+        filter: 'drop-shadow(0 1.5px 1.5px rgba(0,0,0,0.55))',
       }}
     >
       <defs>

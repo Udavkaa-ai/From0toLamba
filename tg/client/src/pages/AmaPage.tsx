@@ -336,12 +336,14 @@ export function AmaPage() {
         {/* Шапка */}
         <div style={{
           padding: `${spacing.md} ${spacing.lg}`,
-          background: 'rgba(10, 8, 24, 0.85)',
+          // Было: rgba(...0.85) + backdropFilter:blur(8px). На Android WebView
+          // backdrop-filter — самый дорогой эффект, на AmaPage таких было 5.
+          // Убрали ради перфоманса, alpha поднята до 0.92.
+          background: 'rgba(10, 8, 24, 0.92)',
           borderBottom: `1px solid ${colors.cardBorder}`,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          backdropFilter: 'blur(8px)',
         }}>
           <button
             onClick={() => navigate(-1)}
@@ -392,13 +394,13 @@ export function AmaPage() {
                   padding: `${spacing.sm} ${spacing.md}`,
                   borderRadius: msg.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
                   background: msg.role === 'user'
-                    ? `${colors.enchantedPurple}dd`
-                    : 'rgba(20, 12, 48, 0.85)',
+                    ? `${colors.enchantedPurple}f0`
+                    : 'rgba(20, 12, 48, 0.94)',
                   border: `1px solid ${msg.role === 'user' ? colors.fairyGold + '30' : colors.cardBorder}`,
                   color: colors.textOnDark,
                   fontSize: '14px',
                   lineHeight: 1.5,
-                  backdropFilter: 'blur(6px)',
+                  // backdropFilter:blur(6px) убран — см. шапку выше.
                 }}>
                   <TypewriterText text={msg.content} animate={isLastAssistant} />
                 </div>
@@ -411,11 +413,11 @@ export function AmaPage() {
               <div style={{
                 padding: `${spacing.sm} ${spacing.md}`,
                 borderRadius: '16px 16px 16px 4px',
-                background: 'rgba(20, 12, 48, 0.85)',
+                background: 'rgba(20, 12, 48, 0.94)',
                 border: `1px solid ${colors.cardBorder}`,
                 color: colors.textOnDarkMuted,
                 fontSize: '14px',
-                backdropFilter: 'blur(6px)',
+                // backdropFilter:blur(6px) убран — см. шапку выше.
               }}>
                 {t.ama.thinking}
               </div>
@@ -452,9 +454,9 @@ export function AmaPage() {
         {session.isComplete && (
           <div style={{
             padding: `${spacing.md} ${spacing.lg}`,
-            background: 'rgba(10, 8, 24, 0.9)',
+            background: 'rgba(10, 8, 24, 0.95)',
             borderTop: `1px solid ${colors.cardBorder}`,
-            backdropFilter: 'blur(8px)',
+            // backdropFilter:blur(8px) убран — см. шапку выше.
           }}>
             <button
               onClick={() => setShowInvestSheet(true)}
@@ -479,9 +481,9 @@ export function AmaPage() {
         {/* Шаблоны вопросов + поле ввода */}
         {!session.isComplete && (
           <div style={{
-            background: 'rgba(10, 8, 24, 0.9)',
+            background: 'rgba(10, 8, 24, 0.95)',
             borderTop: `1px solid ${colors.cardBorder}`,
-            backdropFilter: 'blur(8px)',
+            // backdropFilter:blur(8px) убран — см. шапку выше.
           }}>
             {/* Шаблоны */}
             {!sendMutation.isPending && (

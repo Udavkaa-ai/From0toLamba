@@ -19,9 +19,10 @@ export function DayTransitionOverlay() {
       transition={{ duration: 0.25 }}
       style={{
         position: 'fixed', inset: 0, zIndex: 500,
-        background: 'rgba(8, 4, 24, 0.92)',
+        // backdrop-filter:blur(6px) убран ради перфоманса на Android WebView,
+        // alpha поднят с 0.92 до 0.97 чтобы фон под оверлеем не отвлекал.
+        background: 'rgba(8, 4, 24, 0.97)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        backdropFilter: 'blur(6px)',
       }}
     >
       <div style={{

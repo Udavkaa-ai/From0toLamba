@@ -33,8 +33,10 @@ export function RankUpOverlay({ rank }: RankUpOverlayProps) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'rgba(6, 4, 18, 0.92)',
-          backdropFilter: 'blur(10px)',
+          // backdrop-filter:blur(10px) убран — самый дорогой эффект на
+          // Android WebView, плюс под ним крутятся анимированные drop-shadow
+          // токены. Alpha поднят с 0.92 до 0.97 для непрозрачности.
+          background: 'rgba(6, 4, 18, 0.97)',
           overflow: 'hidden',
         }}
       >
