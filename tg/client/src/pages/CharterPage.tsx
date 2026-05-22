@@ -1085,6 +1085,7 @@ function SponsorPromocodeScreen({
   project: ProjectDTO
   onVerified: () => void
 }) {
+  const t = useT()
   const [input, setInput] = useState('')
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -1142,7 +1143,7 @@ function SponsorPromocodeScreen({
           boxShadow: '0 3px 10px rgba(0,0,0,0.45)',
           marginBottom: spacing.sm,
         }}>
-          ✦ ЗОЛОТАЯ ГРАМОТА ✦
+          {t.overlays.goldenCharterBadge}
         </div>
         <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: 22, fontFamily: "'Cinzel', 'Marcellus', serif", letterSpacing: '0.02em' }}>
           {project.name}

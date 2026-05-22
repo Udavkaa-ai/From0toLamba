@@ -4,7 +4,7 @@ import { gradients, colors } from '@/theme'
 import { getTheme } from '@/theme/colors'
 import { useFxStore } from '@/stores/fxStore'
 
-export const APP_VERSION = 'бета 4.6.13'
+export const APP_VERSION = 'бета 4.6.14'
 
 /**
  * Один раз за модульную сессию: предзагрузить ВСЕ фоновые картинки активной

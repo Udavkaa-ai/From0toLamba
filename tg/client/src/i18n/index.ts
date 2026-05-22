@@ -231,6 +231,31 @@ today: {
   hallOfFameLink:  '🏛 Зал славы · сезон 1',
 },
 
+// ─── Полноэкранные оверлеи (DayTransition / VipArrival) ───────────────────────
+overlays: {
+  // DayTransitionOverlay — пока сервер крутит advance-day
+  dawnTitle:    'На ярмарке светает…',
+  dawnSubtitle: 'Гости съезжаются, купцы товар раскладывают — ищешь, куда вложиться сегодня.',
+  // VipArrivalOverlay — VIP-дело пришло в инбокс
+  goldenCharterBadge: '✦ ЗОЛОТАЯ ГРАМОТА ✦',
+  vipLuck:            'Вот это удача!',
+  vipSubtitleStart:   'Пришла',
+  vipSubtitleHl:      'золотая грамота',
+  vipSubtitleEnd:     '— без испытания, по заветному слову с канала хозяина',
+  vipApyOver:         (apy: number, days: number) => `+${apy}% за ${days} ${days === 1 ? 'день' : days < 5 ? 'дня' : 'дней'}`,
+  vipOpenCharter:     '🔑 Открыть грамоту',
+  vipTapToContinue:   'тапни в любом месте, чтобы продолжить',
+  vipSayPassword:     '🔑 Сказать заветное слово',
+},
+
+// ─── Транзакции (системные комментарии в Cash Flow) ───────────────────────────
+// projectName в БД хранит ключ из этого словаря (например 'tx:gift') — клиент
+// его транслирует. Старые транзакции с прямой RU-строкой остаются как есть.
+transactions: {
+  gift:        'Подарок от Хозяина Ярмарки',
+  dailyRitual: 'Дневной ритуал',
+},
+
 // ─── Зал славы (архив прошедших сезонов) ──────────────────────────────────────
 hallOfFame: {
   back:               '← Назад',
@@ -1254,6 +1279,25 @@ today: {
   tabTies:         '⚡ Ties',
   yourPosition:    (rank: number, total: number) => `You are #${rank} of ${total}`,
   hallOfFameLink:  '🏛 Hall of Fame · season 1',
+},
+
+overlays: {
+  dawnTitle:    'Dawn over the fair…',
+  dawnSubtitle: 'Guests are arriving, merchants laying out their wares — where will you invest today?',
+  goldenCharterBadge: '✦ GOLDEN CHARTER ✦',
+  vipLuck:            'What a stroke of luck!',
+  vipSubtitleStart:   'A',
+  vipSubtitleHl:      'golden charter',
+  vipSubtitleEnd:     'has arrived — no trial needed, just the secret word from the owner\'s channel',
+  vipApyOver:         (apy: number, days: number) => `+${apy}% over ${days} ${days === 1 ? 'day' : 'days'}`,
+  vipOpenCharter:     '🔑 Open the charter',
+  vipTapToContinue:   'tap anywhere to continue',
+  vipSayPassword:     '🔑 Say the secret word',
+},
+
+transactions: {
+  gift:        'Gift from the Fair Owner',
+  dailyRitual: 'Daily ritual',
 },
 
 hallOfFame: {

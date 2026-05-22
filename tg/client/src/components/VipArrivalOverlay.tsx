@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { playSound } from '@/sounds'
 import type { ProjectDTO } from '@/api/client'
+import { useT } from '@/i18n'
 
 const tg = (window as any).Telegram?.WebApp
 const haptic = tg?.HapticFeedback
@@ -27,6 +28,7 @@ export function VipArrivalOverlay({
   onClose: () => void
   onOpenDeal: () => void
 }) {
+  const t = useT()
   // Конфетти-частицы: компактный разлёт, оптимизация GPU.
   // Раньше было 32 — на средних телефонах overlay тормозил после открытия.
   // 10 эмодзи + ровно 1 анимация на каждое = плавно даже на старых.
@@ -131,7 +133,7 @@ export function VipArrivalOverlay({
           boxShadow: '0 5px 16px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.4)',
           whiteSpace: 'nowrap',
         }}>
-          ✦ ЗОЛОТАЯ ГРАМОТА ✦
+          {t.overlays.goldenCharterBadge}
         </div>
       </motion.div>
 
@@ -152,7 +154,7 @@ export function VipArrivalOverlay({
           textTransform: 'uppercase',
         }}
       >
-        Вот это удача!
+        {t.overlays.vipLuck}
       </motion.div>
 
       {/* ПОДЗАГОЛОВОК */}
@@ -168,7 +170,7 @@ export function VipArrivalOverlay({
           textShadow: '0 2px 8px rgba(0,0,0,0.85)',
         }}
       >
-        Пришла <b style={{ color: '#FFD660' }}>золотая грамота</b> — без испытания, по заветному слову с канала хозяина
+        {t.overlays.vipSubtitleStart} <b style={{ color: '#FFD660' }}>{t.overlays.vipSubtitleHl}</b> {t.overlays.vipSubtitleEnd}
       </motion.div>
 
       {/* ПРЕВЬЮ ДЕЛА */}
@@ -202,7 +204,7 @@ export function VipArrivalOverlay({
           fontVariantNumeric: 'tabular-nums',
           textShadow: '0 0 12px rgba(80,200,120,0.6)',
         }}>
-          +200% за 14 дней
+          {t.overlays.vipApyOver(200, 14)}
         </div>
       </motion.div>
 
@@ -231,7 +233,7 @@ export function VipArrivalOverlay({
           textTransform: 'uppercase',
         }}
       >
-        🔑 Открыть грамоту
+        {t.overlays.vipOpenCharter}
       </motion.button>
 
       <motion.div
@@ -245,7 +247,7 @@ export function VipArrivalOverlay({
           textShadow: '0 2px 6px rgba(0,0,0,0.8)',
         }}
       >
-        тапни в любом месте, чтобы продолжить
+        {t.overlays.vipTapToContinue}
       </motion.div>
     </motion.div>
   )

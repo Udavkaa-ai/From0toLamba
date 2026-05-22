@@ -135,7 +135,7 @@ function InboxCard({ project, onClick, tourAttr }: { project: ProjectDTO; onClic
           fontFamily: "'Cinzel', 'Marcellus', serif",
           whiteSpace: 'nowrap',
         }}>
-          ✦ ЗОЛОТАЯ ГРАМОТА ✦
+          {t.overlays.goldenCharterBadge}
         </div>
       )}
       <FairyCard onClick={onClick} style={{
@@ -213,7 +213,7 @@ function InboxCard({ project, onClick, tourAttr }: { project: ProjectDTO; onClic
         }}
           {...(tourAttr ? { 'data-tour': 'charter-btn' } : {})}
         >
-          {isVip ? '🔑 Сказать заветное слово' : t.inbox.studyBtn}
+          {isVip ? t.overlays.vipSayPassword : t.inbox.studyBtn}
         </div>
       </FairyCard>
     </div>

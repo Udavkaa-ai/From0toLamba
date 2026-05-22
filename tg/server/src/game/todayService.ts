@@ -129,7 +129,7 @@ export async function claimDaily(userId: number): Promise<ClaimResult> {
     data: {
       userId,
       projectId: 'daily-streak',
-      projectName: 'Дневной ритуал',
+      projectName: 'tx:dailyRitual',  // i18n-ключ, расшифровывается клиентом
       type: 'RETURNED',
       amount: reward,
       day: gs.currentDay,

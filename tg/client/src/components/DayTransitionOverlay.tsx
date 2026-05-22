@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { colors, spacing } from '@/theme'
+import { useT } from '@/i18n'
 
 /**
  * Полноэкранный оверлей-плейсхолдер, который перекрывает интерфейс на время
@@ -11,6 +12,7 @@ import { colors, spacing } from '@/theme'
  * купец-странник в шляпе и волшебные искры.
  */
 export function DayTransitionOverlay() {
+  const t = useT()
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -137,7 +139,7 @@ export function DayTransitionOverlay() {
             letterSpacing: '0.02em',
           }}
         >
-          На ярмарке светает…
+          {t.overlays.dawnTitle}
         </motion.div>
 
         {/* Подтекст */}
@@ -147,7 +149,7 @@ export function DayTransitionOverlay() {
           textAlign: 'center',
           lineHeight: 1.5,
         }}>
-          Гости съезжаются, купцы товар раскладывают — ищешь, куда вложиться сегодня.
+          {t.overlays.dawnSubtitle}
         </div>
       </div>
     </motion.div>

@@ -690,6 +690,12 @@ function TransactionRow({ tx }: { tx: TransactionDTO }) {
   const color = isOut ? '#E34234' : '#2E8B57'
   const sign = isOut ? '−' : '+'
   const label = t.portfolio.txTypes[tx.type as keyof typeof t.portfolio.txTypes] ?? tx.type
+  // Системные транзакции хранят на сервере i18n-ключ вида 'tx:gift'.
+  // Раскрываем его через t.transactions.<key>. Остальные значения (имена
+  // AI-генерированных проектов) рендерим как есть.
+  const projectLabel = tx.projectName?.startsWith('tx:')
+    ? (t.transactions as Record<string, string | undefined>)[tx.projectName.slice(3)] ?? tx.projectName
+    : tx.projectName
 
   return (
     <div style={{
@@ -709,7 +715,7 @@ function TransactionRow({ tx }: { tx: TransactionDTO }) {
         <span style={{ fontSize: '14px' }}>{TX_TYPE_ICON[tx.type] ?? '•'}</span>
         <div>
           <div style={{ color: colors.textPrimary, fontSize: '12px', fontWeight: 600 }}>
-            {label}: {tx.projectName}
+            {label}: {projectLabel}
           </div>
           <div style={{ color: colors.textSecondary, fontSize: '10px' }}>{t.common.day} {tx.day}</div>
         </div>

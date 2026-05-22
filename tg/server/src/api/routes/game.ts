@@ -58,7 +58,10 @@ export async function gameRoutes(app: FastifyInstance) {
         data: {
           userId: user.id,
           projectId: null,
-          projectName: 'Подарок от Хозяина Ярмарки',
+          // Ключ для i18n: клиент в Transaction-карточках расшифровывает
+          // 'tx:gift' через t.transactions.gift. Старые транзакции с прямой
+          // RU-строкой остаются как есть — клиент их показывает as-is.
+          projectName: 'tx:gift',
           type: 'GIFT',
           amount: STARTING_GIFT,
           day: gameState.currentDay,
