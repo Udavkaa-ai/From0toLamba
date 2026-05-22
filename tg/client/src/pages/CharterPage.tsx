@@ -1844,7 +1844,7 @@ function MiniGameResultSheet({
           }}>
             <span>{emoji}</span>
             <span style={{ color: colors.fairyGold, fontWeight: 700 }}>{titleText}</span>
-            <span>· ошибок: {errorCount}</span>
+            <span>· {t.charter.mgErrorsCountLower(errorCount)}</span>
           </div>
         )}
 
@@ -1954,7 +1954,7 @@ function MiniGameResultSheet({
                 disabled={bypassPending}
                 style={{ ...primaryBtnStyle, opacity: bypassPending ? 0.6 : 1 }}
               >
-                {bypassPending ? '⏳' : hasToken ? `🪙 Раскрыть жетоном (${tokenBalance})` : '10 ⭐ — раскрыть дело'}
+                {bypassPending ? t.charter.resolvingInsight : hasToken ? t.charter.revealWithToken(tokenBalance) : t.charter.revealForStars}
               </button>
               {hasToken && (
                 <button
@@ -1966,7 +1966,7 @@ function MiniGameResultSheet({
                     padding: '2px 0', textDecoration: 'underline',
                   }}
                 >
-                  Или 10 ⭐
+                  {t.charter.orStars}
                 </button>
               )}
             </div>

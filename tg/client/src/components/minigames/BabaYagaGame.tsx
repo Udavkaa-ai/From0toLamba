@@ -4,6 +4,7 @@ import { Application, Container, Graphics, Text } from 'pixi.js'
 import { rngFromSeed } from './seedRng'
 import { colors, spacing } from '@/theme'
 import { playSound } from '@/sounds'
+import { useT } from '@/i18n'
 import type { MiniGameDifficulty } from './BuratinoGame'
 import { GameHeader } from './GameChrome'
 
@@ -284,6 +285,7 @@ interface ExplosionParticle {
 }
 
 export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaGameProps) {
+  const t = useT()
   const isFrozen = restoredErrorCount !== null && restoredErrorCount !== undefined
   const refMount = useRef<HTMLDivElement>(null)
   const refApp = useRef<Application | null>(null)
@@ -791,16 +793,16 @@ export function BabaYagaGame({ seed, onComplete, restoredErrorCount }: BabaYagaG
     }}>
       <GameHeader
         title={isFrozen
-          ? 'Котёл Бабы Яги · разобрано'
+          ? t.charter.mgBabaYagaFrozen
           : phase === 'reference'
-            ? `Запомни порядок · ${refCountdown}`
-            : `Котёл Бабы Яги · ${playCountdown} сек`}
+            ? t.charter.mgBabaYagaRefTitle(refCountdown)
+            : t.charter.mgBabaYagaStep(0, RECIPE_LENGTH, playCountdown)}
         urgent={!isFrozen && phase !== 'reference' && playCountdown <= 5}
         hint={phase === 'reference'
-          ? 'Слева направо, сверху вниз — порядок броска ингредиентов'
+          ? t.charter.mgBabaYagaRefHint
           : isFrozen
-            ? 'Уже сыграно'
-            : `Шаг ${Math.min(collected + 1, RECIPE_LENGTH)} из ${RECIPE_LENGTH}. Бросай ингредиенты в котёл по порядку`}
+            ? t.charter.mgPlayed
+            : t.charter.mgBabaYagaStepHint(Math.min(collected + 1, RECIPE_LENGTH), RECIPE_LENGTH)}
         timerProgress={isFrozen
           ? null
           : phase === 'reference'

@@ -4,6 +4,7 @@ import { Application, Container, Graphics, Text, Ticker } from 'pixi.js'
 import { rngFromSeed } from './seedRng'
 import { colors, spacing } from '@/theme'
 import { playSound } from '@/sounds'
+import { useT } from '@/i18n'
 import type { MiniGameDifficulty } from './BuratinoGame'
 import { GameHeader, ScoreChip } from './GameChrome'
 
@@ -103,6 +104,7 @@ interface FloatLabel {
 }
 
 export function KolobokGame({ seed, onComplete, restoredErrorCount }: KolobokGameProps) {
+  const t = useT()
   const refMount = useRef<HTMLDivElement>(null)
   const refApp = useRef<Application | null>(null)
   const isFrozen = restoredErrorCount !== null && restoredErrorCount !== undefined
@@ -470,7 +472,7 @@ export function KolobokGame({ seed, onComplete, restoredErrorCount }: KolobokGam
       <GameHeader
         title={<>Нора-нора-нора · {playCountdown} сек</>}
         urgent={playCountdown <= 5}
-        hint={<>Тапай зверушек (+1), не задень Колобка (−3). 7 — пройти, 12 — раскрыть совет чуйки</>}
+        hint={t.charter.mgKolobokHint}
         scoreChip={
           <ScoreChip tone={score >= TARGET_PERFECT ? 'success' : score >= TARGET_OK ? 'gold' : 'danger'}>
             Счёт: {score}

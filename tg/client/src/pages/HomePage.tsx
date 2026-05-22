@@ -1561,6 +1561,7 @@ function InboxLeftConfirmSheet({
   onStay: () => void
   onAdvance: () => void
 }) {
+  const t = useT()
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -1590,12 +1591,10 @@ function InboxLeftConfirmSheet({
         <div style={{ textAlign: 'center', marginBottom: spacing.lg }}>
           <div style={{ fontSize: 44, marginBottom: 4 }}>📜</div>
           <div style={{ color: colors.fairyGold, fontSize: 17, fontWeight: 700 }}>
-            Не все дела ещё рассмотрены
+            {t.charter.inboxLeftTitle}
           </div>
           <div style={{ color: colors.modalTextSec, fontSize: 13, marginTop: spacing.sm, lineHeight: 1.5, fontWeight: 500 }}>
-            В инбоксе осталось <b style={{ color: colors.fairyGold, fontWeight: 800 }}>{leftCount}</b>{' '}
-            {leftCount === 1 ? 'предложение' : leftCount < 5 ? 'предложения' : 'предложений'}.
-            Уйдёшь до утра — пропустишь шанс вложиться.
+            {t.charter.inboxLeftBody(leftCount)}
           </div>
         </div>
         <div style={{ display: 'flex', gap: spacing.sm }}>
@@ -1612,7 +1611,7 @@ function InboxLeftConfirmSheet({
               cursor: 'pointer',
             }}
           >
-            Остаться на ярмарке
+            {t.charter.inboxLeftStay}
           </button>
           <button
             onClick={onAdvance}
@@ -1628,7 +1627,7 @@ function InboxLeftConfirmSheet({
               opacity: pending ? 0.6 : 1,
             }}
           >
-            {pending ? '⏳' : 'Всё равно уйти'}
+            {pending ? '⏳' : t.charter.inboxLeftLeave}
           </button>
         </div>
       </motion.div>

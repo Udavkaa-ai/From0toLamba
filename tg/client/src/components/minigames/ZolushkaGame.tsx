@@ -4,6 +4,7 @@ import { Application, Container, Graphics, Text, Ticker } from 'pixi.js'
 import { rngFromSeed } from './seedRng'
 import { colors, spacing } from '@/theme'
 import { playSound } from '@/sounds'
+import { useT } from '@/i18n'
 import type { MiniGameDifficulty } from './BuratinoGame'
 import { GameHeader, ScoreChip } from './GameChrome'
 
@@ -300,6 +301,7 @@ interface FloatLabel {
 }
 
 export function ZolushkaGame({ seed, onComplete, restoredErrorCount }: ZolushkaGameProps) {
+  const t = useT()
   const isFrozen = restoredErrorCount !== null && restoredErrorCount !== undefined
   const refMount = useRef<HTMLDivElement>(null)
   const refApp = useRef<Application | null>(null)
@@ -618,16 +620,16 @@ export function ZolushkaGame({ seed, onComplete, restoredErrorCount }: ZolushkaG
     }}>
       <GameHeader
         title={phase === 'reference'
-          ? `Запомни монету · ${refCountdown}`
-          : `Лови золотые · ${playCountdown} сек`}
+          ? t.charter.mgZolushkaRefTitle(refCountdown)
+          : t.charter.mgZolushkaPlayTitle(playCountdown)}
         urgent={phase !== 'reference' && playCountdown <= 5}
         hint={phase === 'reference'
-          ? 'Запомни обе стороны: аверс с цифрой и реверс с солнцем'
-          : 'Тапай настоящую (+1), не тапай подделки (−2). 6 — пройти, 10 — раскрыть совет'}
+          ? t.charter.mgZolushkaRefHint
+          : t.charter.mgZolushkaHint}
         scoreChip={phase === 'play'
           ? (
             <ScoreChip tone={score >= TARGET_PERFECT ? 'success' : score >= TARGET_OK ? 'gold' : 'danger'}>
-              Поймано: {score}
+              {t.charter.mgZolushkaCaught(score)}
             </ScoreChip>
           )
           : undefined}

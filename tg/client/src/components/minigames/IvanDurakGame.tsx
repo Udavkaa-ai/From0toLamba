@@ -4,8 +4,20 @@ import { Application, Container, Graphics, Text } from 'pixi.js'
 import { rngFromSeed, pickInt } from './seedRng'
 import { colors, spacing } from '@/theme'
 import { playSound } from '@/sounds'
+import { useT } from '@/i18n'
+import { getLang } from '@/stores/langStore'
 import type { MiniGameDifficulty } from './BuratinoGame'
 import { GameHeader, ScoreChip } from './GameChrome'
+
+// Локализация рангов карт: внутри логика игры использует RU-сокращения
+// 'В' (валет) и 'Д' (дама) для сравнения карт. На дисплее EN-юзеры видят
+// привычные J/Q.
+function displayRank(rank: Rank): string {
+  const en = getLang() === 'en'
+  if (rank === 'В') return en ? 'J' : 'В'
+  if (rank === 'Д') return en ? 'Q' : 'Д'
+  return rank
+}
 
 const tg = (window as any).Telegram?.WebApp
 const haptic = tg?.HapticFeedback
@@ -85,7 +97,7 @@ function buildCard(card: Card, w: number, h: number, state: 'normal' | 'correct'
   topLeft.x = -w / 2 + 8
   topLeft.y = -h / 2 + 6
   const topRank = new Text({
-    text: card.rank,
+    text: displayRank(card.rank),
     style: {
       fontFamily: 'Georgia, "Times New Roman", serif',
       fontSize: cornerSize,
@@ -110,7 +122,7 @@ function buildCard(card: Card, w: number, h: number, state: 'normal' | 'correct'
   bottomRight.y = h / 2 - 6
   bottomRight.rotation = Math.PI
   const botRank = new Text({
-    text: card.rank,
+    text: displayRank(card.rank),
     style: {
       fontFamily: 'Georgia, "Times New Roman", serif',
       fontSize: cornerSize,
@@ -177,6 +189,7 @@ function buildRounds(seed: string): RoundData[] {
 }
 
 export function IvanDurakGame({ seed, onComplete, restoredErrorCount }: IvanDurakGameProps) {
+  const t = useT()
   const isFrozen = restoredErrorCount !== null && restoredErrorCount !== undefined
   const refMount = useRef<HTMLDivElement>(null)
   const refApp = useRef<Application | null>(null)
@@ -390,11 +403,11 @@ export function IvanDurakGame({ seed, onComplete, restoredErrorCount }: IvanDura
     }}>
       <GameHeader
         title={phase === 'ready' && !isFrozen
-          ? `Приготовься · ${readyCountdown}`
-          : `Переводной дурак · ход ${Math.min(round + 1, ROUNDS)} из ${ROUNDS}`}
+          ? t.charter.mgReadyCountdown(readyCountdown)
+          : t.charter.mgIvanTurn(Math.min(round + 1, ROUNDS), ROUNDS)}
         hint={phase === 'ready' && !isFrozen
-          ? 'Иван сейчас откроет карту — у тебя в руке будет такая же. У тебя 2 секунды на тап.'
-          : 'Иван открывает карту — у тебя в руке такая же. Тапай за секунду.'}
+          ? t.charter.mgIvanPrepHint
+          : t.charter.mgIvanPlayHint}
         scoreChip={phase === 'play' && !isFrozen
           ? (
             <ScoreChip tone="gold">
@@ -408,7 +421,7 @@ export function IvanDurakGame({ seed, onComplete, restoredErrorCount }: IvanDura
               color: errorsRef.current >= 2 ? colors.danger : 'rgba(232,213,168,0.55)',
               fontSize: 12, fontVariantNumeric: 'tabular-nums',
             }}>
-              Ошибки: {errorsRef.current}
+              {t.charter.mgErrorsCount(errorsRef.current)}
             </span>
           )
           : undefined}

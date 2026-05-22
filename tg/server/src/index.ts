@@ -67,7 +67,7 @@ async function main() {
   app.get('/health', async () => ({ ok: true, ts: new Date().toISOString() }))
 
   // Version endpoint — клиент сравнивает и перезагружается если устарел
-  app.get('/api/version', async () => ({ version: 'бета 4.6.14' }))
+  app.get('/api/version', async () => ({ version: 'бета 4.6.15' }))
 
   // Баннеры персонажей — предгенерированные WebP. Тоже immutable (имя файла
   // включает архетип+тип+вариант, новые версии получают другое имя).
