@@ -302,6 +302,16 @@ relations: {
   tieBonusActive:     (pct: number) => `Дела с этим хозяином приносят +${pct}% в день`,
   tieBonusHint:       'Заведи связь — каждый уровень даёт +1% в день',
   tiesMax:            '✦ Максимум — отношения закалены',
+  // Короткие описания архетипов на странице Летописи (RegistryPage)
+  archetypeDesc: {
+    BURATINO:   'Наивный лжец — верил своим выдумкам',
+    BOYARIN:    'Пышно-официальный, ссылался на «людей при дворе»',
+    KOLOBOK:    'Бодрый хвастун, укатывался от неудобных вопросов',
+    KOSCHEI:    'Холодный и уверенный, говорил цифрами как приговорами',
+    ZOLUSHKA:   'Давила на жалость и создавала дедлайны',
+    BABA_YAGA:  'Отвечала загадками, скрывала всё за туманом',
+    IVAN_DURAK: 'Открыто говорил о провалах — и снова проваливался',
+  } as Record<string, string>,
   defaultGameName:    'Испытание хозяина',
   // Короткие имена хозяев (для аватарок и шапок). EN-варианты — транслит/
   // близкие аналоги, чтобы англоязычный игрок узнал сказочного героя.
@@ -1377,6 +1387,15 @@ relations: {
   tieBonusActive:     (pct: number) => `Ventures with this owner pay +${pct}% per day`,
   tieBonusHint:       'Build a tie — each level adds +1% per day',
   tiesMax:            '✦ Maxed out — your bond is forged',
+  archetypeDesc: {
+    BURATINO:   'A naive liar — he believed his own tales',
+    BOYARIN:    'Pompously formal, name-dropped "people at court"',
+    KOLOBOK:    'A cheerful braggart who rolled past uncomfortable questions',
+    KOSCHEI:    'Cold and confident, spoke in numbers like verdicts',
+    ZOLUSHKA:   'Played the pity card and invented deadlines',
+    BABA_YAGA:  'Answered in riddles, hid everything behind fog',
+    IVAN_DURAK: 'Spoke openly about failures — and kept failing again',
+  } as Record<string, string>,
   defaultGameName:    'Owner trial',
   names: {
     BURATINO: 'Buratino',

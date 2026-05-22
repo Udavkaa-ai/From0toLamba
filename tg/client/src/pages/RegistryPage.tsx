@@ -179,7 +179,10 @@ function RegistryCard({ project, postMortem }: { project: ClosedProject; postMor
 
   const archetypeMeta = postMortem ? ARCHETYPE_META[postMortem.revealedArchetype] : null
   const archetypeName = postMortem ? (t.archetypes[postMortem.revealedArchetype as keyof typeof t.archetypes] ?? postMortem.revealedArchetype) : null
-  const archetype = archetypeMeta && archetypeName ? { ...archetypeMeta, name: archetypeName } : null
+  // Локализованное описание архетипа (раньше было захардкожено в ARCHETYPE_META).
+  // Emoji всё ещё берём оттуда — он одинаковый для всех языков.
+  const archetypeDesc = postMortem ? (t.relations.archetypeDesc[postMortem.revealedArchetype] ?? archetypeMeta?.desc ?? '') : ''
+  const archetype = archetypeMeta && archetypeName ? { emoji: archetypeMeta.emoji, name: archetypeName, desc: archetypeDesc } : null
   const fateColor = postMortem ? (FATE_COLOR[postMortem.fate] ?? colors.textMuted) : null
   const fateLabel = postMortem ? (t.fates[postMortem.fate as keyof typeof t.fates] ?? postMortem.fate) : null
   const fate = fateColor && fateLabel ? { color: fateColor, label: fateLabel } : null
