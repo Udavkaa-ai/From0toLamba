@@ -1,11 +1,20 @@
 // Справочник мини-игр по архетипам: имя для шапки экрана + подсказка интро + текст кнопки.
 // Используется в IntroScreen для не-BOYARIN, в заголовке CharterPage и в phaseCaption.
+//
+// Тексты живут в i18n (RU + EN под ключом `minigame.<ARCHETYPE>`). Старый
+// `MINIGAME_INFO` оставлен для обратной совместимости и используется только
+// как fallback, если t не передан.
+
+import type { Translations } from '@/i18n'
 
 export interface MiniGameInfo {
   name: string         // отображается в шапке (заменяет «Купеческая грамота»)
   hint: string         // подсказка на интро-экране перед запуском
   startBtn: string     // текст кнопки запуска
 }
+
+const ARCHETYPES = ['BOYARIN', 'BURATINO', 'KOSCHEI', 'KOLOBOK', 'ZOLUSHKA', 'BABA_YAGA', 'IVAN_DURAK'] as const
+type Archetype = typeof ARCHETYPES[number]
 
 export const MINIGAME_INFO: Record<string, MiniGameInfo> = {
   BOYARIN: {
@@ -43,6 +52,14 @@ export const MINIGAME_INFO: Record<string, MiniGameInfo> = {
     hint: 'У тебя в руке всегда 7 карт. Иван открывает одну — у тебя такая же есть, тапай. На каждый ход 2 секунды, карты перетасовываются. Всего 7 ходов. 0 ошибок — совет чуйки; 1 — пройдёшь без подсказок; ≥2 — только за звёзды.',
     startBtn: 'Принять испытание →',
   },
+}
+
+/** Получает локализованный MiniGameInfo. Если архетип неизвестен или t.minigame
+ *  ещё не подгружен — возвращает значение из MINIGAME_INFO (RU fallback). */
+export function getMiniGameInfo(archetype: string, t: Translations): MiniGameInfo | undefined {
+  if (!(ARCHETYPES as readonly string[]).includes(archetype)) return undefined
+  const localized = (t.minigame as Record<Archetype, MiniGameInfo> | undefined)?.[archetype as Archetype]
+  return localized ?? MINIGAME_INFO[archetype]
 }
 
 export function isMiniGameArchetype(archetype: string | undefined | null): boolean {

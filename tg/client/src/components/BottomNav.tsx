@@ -19,7 +19,7 @@ export function BottomNav() {
   const { pathname } = useLocation()
   const t = useT()
 
-  const tabLabels = [t.nav.home, t.nav.inbox, t.nav.portfolio, t.nav.stats, 'Сегодня']
+  const tabLabels = [t.nav.home, t.nav.inbox, t.nav.portfolio, t.nav.stats, t.nav.today]
 
   if (pathname.startsWith('/ama/') || pathname.startsWith('/charter/') || pathname === '/registry') return null
 

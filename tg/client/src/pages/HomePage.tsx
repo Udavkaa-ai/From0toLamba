@@ -914,7 +914,7 @@ export function HomePage() {
                       fontSize: '13px', fontWeight: 600, cursor: 'pointer',
                     }}
                   >
-                    {musicMuted ? 'Включить' : 'Выключить'}
+                    {musicMuted ? t.home.settingsSoundEnable : t.home.settingsSoundDisable}
                   </button>
                 </div>
 
@@ -939,7 +939,7 @@ export function HomePage() {
                       fontSize: '13px', fontWeight: 600, cursor: 'pointer',
                     }}
                   >
-                    {soundMuted ? 'Включить' : 'Выключить'}
+                    {soundMuted ? t.home.settingsSoundEnable : t.home.settingsSoundDisable}
                   </button>
                 </div>
 

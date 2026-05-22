@@ -48,6 +48,7 @@ nav: {
   portfolio: 'Казна',
   stats: 'Успехи',
   leaderboard: 'Рейтинг',
+  today: 'Сегодня',
 },
 
 // ─── Главная страница ─────────────────────────────────────────────────────────
@@ -215,11 +216,35 @@ today: {
   rewardClaimed:   '✓ Награда получена. Заходи завтра — серия не оборвётся.',
   nextBonus:       (day: number, bonus: number, daysLeft: number) =>
     `До следующего бонуса (день ${day}, +${bonus} г) — ${daysLeft === 1 ? 'ещё 1 день' : `ещё ${daysLeft} ${daysLeft < 5 ? 'дня' : 'дней'}`}.`,
+  claimReward:     'Забрать',
   ladderTitle:     'Лестница серии',
   leaderboardTitle: '👑 Купеческий рейтинг',
   leaderboardCount: (n: number) =>
     `${n} ${n === 1 ? 'игрок' : n < 5 ? 'игрока' : 'игроков'}`,
   leaderboardHint: 'По общему состоянию (баланс + дела). Обновляется онлайн.',
+  tiesLeaderboardHint: 'По сумме уровней Завязок со всеми дельцами. Каждый жетон = +1 уровень.',
+  tabWealth:       '💰 Злато',
+  tabTies:         '⚡ Связи',
+  yourPosition:    (rank: number, total: number) => `Ты на ${rank} месте из ${total}`,
+  hallOfFameLink:  '🏛 Зал славы · сезон 1',
+},
+
+// ─── Зал славы (архив прошедших сезонов) ──────────────────────────────────────
+hallOfFame: {
+  back:               '← Назад',
+  title:              '🏛 Зал славы',
+  subtitle:           (season: number) => `Сезон ${season} · финальный топ-100`,
+  notOpen:            (season: number) => `Зал славы сезона ${season} ещё не открыт.`,
+  noData:             'Данных по этой категории нет.',
+  totalPlayers:       (n: number) => `Всего игроков в категории: ${n}`,
+  frozenHistory:      'История заморожена и сохраняется навсегда.',
+  currentRankingHint: 'Текущий рейтинг — на вкладке «Сегодня».',
+  catWealth:          'Злато',
+  catTies:            'Связи',
+  catAchievements:    'Достижения',
+  catReferrals:       'Сваты',
+  suffixAchievements: 'оч',
+  suffixReferrals:    'чел',
 },
 
 // ─── Отношения с дельцами ─────────────────────────────────────────────────────
@@ -336,6 +361,18 @@ charter: {
   cellPerfect: '🎯 идеал',
   cellWon:     '🙂 победа',
   cellLost:    '😅 провал',
+  // MiniGameIntroScreen
+  rewardLadderTitle: 'За что получишь награду:',
+  firstTime: (gameName: string) => `Впервые играешь в «${gameName}» — покажи, на что способен.`,
+  or: 'ИЛИ',
+  amaTitle: 'Беседа с дельцом',
+  amaTokenChip: (n: number) => `🪙 жетон (${n})`,
+  amaDescription: 'Задай до 10 вопросов лично. Опытный жулик звучит убедительно, но под давлением проговаривается — самый верный способ почуять скам.',
+  teamSizeUnit: 'чел.',
+  // Default minigame info fallbacks (когда архетип неизвестен — редкий случай)
+  defaultGameName: 'Испытание хозяина',
+  defaultGameHint: 'Хозяин предложит испытание. Пройди его — и сможешь вложиться.',
+  defaultStartBtn: 'Принять испытание →',
   // Лист результата мини-игры
   resultPhaseBreakdown: 'Разбор испытания',
   resultCollapse: '▼ Свернуть лист',
@@ -444,6 +481,46 @@ portfolio: {
     SURVIVOR: '⚓ Выжил',
     UNICORN: '🔥 Жар-птица',
     SPONSOR_FIXED: '👑 Воеводская награда',
+  },
+},
+
+// ─── Мини-игры: имена + подсказки + кнопка запуска ────────────────────────────
+// Используется через getMiniGameInfo(archetype, t) — см. components/minigames/info.ts.
+minigame: {
+  BOYARIN: {
+    name: 'Купеческая грамота',
+    hint: 'Хозяин покажет 24 печати. Запомни эталон, потом найди подделки. 15 секунд. 0 ошибок — раскроется намёк о деле; 1 ошибка — увидишь тип и посул; ≥2 — вложиться можно только за звёзды.',
+    startBtn: 'Принять испытание →',
+  },
+  BURATINO: {
+    name: 'Золотой ключик',
+    hint: 'Буратино покажет ключ-образец на 10 секунд. Затем найди в точности такой же среди 7 ключей за 10 секунд.',
+    startBtn: 'Принять испытание →',
+  },
+  KOSCHEI: {
+    name: 'Память Кощея',
+    hint: '12 карт лицом вниз. Открывай по две и собирай 6 пар: дуб, сундук, заяц, утка, яйцо, игла. 20 секунд на всё. Соберёшь все пары — раскроется совет чуйки; не успеешь — только за звёзды.',
+    startBtn: 'Принять испытание →',
+  },
+  KOLOBOK: {
+    name: 'Нора-нора-нора',
+    hint: 'Из норок выскакивают зверушки (+1) и Колобок (−3). 15 секунд. 7 баллов — пройти, 12 — раскрыть совет чуйки.',
+    startBtn: 'Принять испытание →',
+  },
+  ZOLUSHKA: {
+    name: 'Золушкино счастье',
+    hint: 'Запомни эталонную монету (5 сек), потом лови её среди падающих. Настоящая +1, подделка −2. 20 секунд. 6 — пройти, 10 — раскрыть совет чуйки.',
+    startBtn: 'Принять испытание →',
+  },
+  BABA_YAGA: {
+    name: 'Котёл Бабы Яги',
+    hint: 'Запомни рецепт из 5 ингредиентов (6 секунд). Бросай их в котёл по порядку. Тапнул не тот — ошибка засчитана, но шаг остаётся, выбирай заново. 20 секунд на всё. 0 ошибок — совет чуйки; 1 — пройдёшь без подсказок; ≥2 — только за звёзды.',
+    startBtn: 'Принять испытание →',
+  },
+  IVAN_DURAK: {
+    name: 'Переводной дурак',
+    hint: 'У тебя в руке всегда 7 карт. Иван открывает одну — у тебя такая же есть, тапай. На каждый ход 2 секунды, карты перетасовываются. Всего 7 ходов. 0 ошибок — совет чуйки; 1 — пройдёшь без подсказок; ≥2 — только за звёзды.',
+    startBtn: 'Принять испытание →',
   },
 },
 
@@ -796,6 +873,21 @@ achievements: {
     first_scroll:      { name: 'Первая грамота',               description: 'Разобрал свою первую купеческую грамоту' },
     ten_scrolls:       { name: 'Бывалый грамотей',             description: 'Разобрал 10 грамот' },
     fifty_scrolls:     { name: 'Книжник-летописец',            description: 'Разобрал 50 грамот' },
+    master_boyarin:    { name: 'Магистр печатей',              description: '3 идеальных разбора Купеческой грамоты Царя Гороха' },
+    expert_boyarin:    { name: 'Знаток печатей',               description: '5 успешных проходов Купеческой грамоты (с идеалом или с ошибкой)' },
+    master_buratino:   { name: 'Магистр ключика',              description: '3 идеальных Золотых ключика у Буратино' },
+    expert_buratino:   { name: 'Знаток ключика',               description: '5 успешных проходов Золотого ключика' },
+    master_koschei:    { name: 'Магистр памяти',               description: '3 идеальных прохождения Памяти Кощея' },
+    expert_koschei:    { name: 'Знаток памяти',                description: '5 успешных проходов Памяти Кощея' },
+    master_kolobok:    { name: 'Магистр нор',                  description: '3 идеальных раунда «Нора-нора-нора» у Колобка' },
+    expert_kolobok:    { name: 'Знаток нор',                   description: '5 успешных проходов «Нора-нора-нора»' },
+    master_zolushka:   { name: 'Магистр монет',                description: '3 идеальных «Золушкиных счастья»' },
+    expert_zolushka:   { name: 'Знаток монет',                 description: '5 успешных проходов Золушкиного счастья' },
+    master_baba_yaga:  { name: 'Магистр котла',                description: '3 идеальных прохождения Котла Бабы Яги' },
+    expert_baba_yaga:  { name: 'Знаток котла',                 description: '5 успешных проходов Котла Бабы Яги' },
+    master_ivan_durak: { name: 'Магистр карт',                 description: '3 идеальных прохождения Переводного дурака' },
+    expert_ivan_durak: { name: 'Знаток карт',                  description: '5 успешных проходов Переводного дурака' },
+    seven_skills:      { name: 'Семь умений',                  description: 'Прошёл идеально хотя бы по одной игре каждого из 7 хозяев' },
     sharp_eye:         { name: 'Купеческий глаз',              description: 'Точность чуйки 80% после 10+ грамот' },
     hawk_eye:          { name: 'Ястребиный взор',              description: 'Точность чуйки 95% после 20+ грамот' },
     first_deal:        { name: 'Первый барыш',                 description: 'Закрыл первое дело' },
@@ -941,6 +1033,7 @@ nav: {
   portfolio: 'Treasury',
   stats: 'Feats',
   leaderboard: 'Rankings',
+  today: 'Today',
 },
 home: {
   balance: 'free kopecks',
@@ -1097,10 +1190,33 @@ today: {
   rewardClaimed:   '✓ Reward claimed. Come back tomorrow — your streak holds.',
   nextBonus:       (day: number, bonus: number, daysLeft: number) =>
     `Next bonus (day ${day}, +${bonus} g) — ${daysLeft === 1 ? '1 day' : `${daysLeft} days`} to go.`,
+  claimReward:     'Claim',
   ladderTitle:     'Streak Ladder',
   leaderboardTitle: '👑 Merchant Leaderboard',
   leaderboardCount: (n: number) => `${n} ${n === 1 ? 'player' : 'players'}`,
   leaderboardHint: 'By total worth (balance + ventures). Updated live.',
+  tiesLeaderboardHint: 'By total tie levels across all dealers. Each token = +1 level.',
+  tabWealth:       '💰 Wealth',
+  tabTies:         '⚡ Ties',
+  yourPosition:    (rank: number, total: number) => `You are #${rank} of ${total}`,
+  hallOfFameLink:  '🏛 Hall of Fame · season 1',
+},
+
+hallOfFame: {
+  back:               '← Back',
+  title:              '🏛 Hall of Fame',
+  subtitle:           (season: number) => `Season ${season} · final top 100`,
+  notOpen:            (season: number) => `Hall of Fame for season ${season} is not open yet.`,
+  noData:             'No data for this category.',
+  totalPlayers:       (n: number) => `Total players in this category: ${n}`,
+  frozenHistory:      'History frozen and kept forever.',
+  currentRankingHint: 'Current ranking is on the «Today» tab.',
+  catWealth:          'Wealth',
+  catTies:            'Ties',
+  catAchievements:    'Feats',
+  catReferrals:       'Referrals',
+  suffixAchievements: 'pt',
+  suffixReferrals:    'p',
 },
 
 relations: {
@@ -1211,6 +1327,18 @@ charter: {
   cellPerfect: '🎯 perfect',
   cellWon:     '🙂 win',
   cellLost:    '😅 loss',
+  // MiniGameIntroScreen
+  rewardLadderTitle: 'What you will earn:',
+  firstTime: (gameName: string) => `First time playing «${gameName}» — show what you can do.`,
+  or: 'OR',
+  amaTitle: 'Speak with the dealer',
+  amaTokenChip: (n: number) => `🪙 token (${n})`,
+  amaDescription: 'Ask up to 10 questions in person. A seasoned crook sounds convincing, but slips up under pressure — the surest way to sniff out a scam.',
+  teamSizeUnit: 'ppl',
+  // Default minigame info fallbacks
+  defaultGameName: 'Owner trial',
+  defaultGameHint: 'The owner will offer a trial. Pass it — and you can invest.',
+  defaultStartBtn: 'Accept the trial →',
   resultPhaseBreakdown: 'Trial breakdown',
   resultCollapse: '▼ Collapse',
   resultExpand:   '▲ Expand',
@@ -1314,6 +1442,43 @@ portfolio: {
     SURVIVOR: '⚓ Survived',
     UNICORN: '🔥 Firebird',
     SPONSOR_FIXED: '👑 Voivode reward',
+  },
+},
+minigame: {
+  BOYARIN: {
+    name: 'Merchant Charter',
+    hint: 'The owner will show 24 seals. Memorize the reference, then find the forgeries. 15 seconds. 0 errors — a hint about the venture is revealed; 1 error — you see type and yield; ≥2 — investing only via Stars.',
+    startBtn: 'Accept the trial →',
+  },
+  BURATINO: {
+    name: 'Golden Key',
+    hint: 'Buratino will show a key sample for 10 seconds. Then find the exact match among 7 keys in 10 seconds.',
+    startBtn: 'Accept the trial →',
+  },
+  KOSCHEI: {
+    name: "Koschei's Memory",
+    hint: '12 cards face down. Flip pairs and collect 6 matches: oak, chest, hare, duck, egg, needle. 20 seconds total. Match all pairs — intuition hint revealed; otherwise — only via Stars.',
+    startBtn: 'Accept the trial →',
+  },
+  KOLOBOK: {
+    name: 'Burrow-Burrow-Burrow',
+    hint: 'Critters pop out of burrows (+1) along with Kolobok (−3). 15 seconds. 7 points — pass, 12 — unlock the intuition hint.',
+    startBtn: 'Accept the trial →',
+  },
+  ZOLUSHKA: {
+    name: "Cinderella's Luck",
+    hint: 'Memorize the reference coin (5 sec), then catch it among falling coins. Real one +1, fake −2. 20 seconds. 6 — pass, 10 — unlock the intuition hint.',
+    startBtn: 'Accept the trial →',
+  },
+  BABA_YAGA: {
+    name: "Baba Yaga's Cauldron",
+    hint: 'Memorize a recipe of 5 ingredients (6 seconds). Drop them into the cauldron in order. Wrong tap — error counted but step remains, pick again. 20 seconds total. 0 errors — intuition hint; 1 — pass without hints; ≥2 — only via Stars.',
+    startBtn: 'Accept the trial →',
+  },
+  IVAN_DURAK: {
+    name: 'Pass-the-Fool',
+    hint: 'You always have 7 cards in hand. Ivan opens one — if you have the same, tap. 2 seconds per move, cards reshuffle. 7 moves total. 0 errors — intuition hint; 1 — pass without hints; ≥2 — only via Stars.',
+    startBtn: 'Accept the trial →',
   },
 },
 stats: {
@@ -1646,6 +1811,21 @@ achievements: {
     first_scroll:      { name: 'First Charter',            description: 'Reviewed your first merchant charter' },
     ten_scrolls:       { name: 'Seasoned Reader',          description: 'Reviewed 10 charters' },
     fifty_scrolls:     { name: 'Chronicle Keeper',         description: 'Reviewed 50 charters' },
+    master_boyarin:    { name: 'Seal Master',              description: '3 perfect Merchant Charter runs' },
+    expert_boyarin:    { name: 'Seal Expert',              description: '5 successful Merchant Charter runs (perfect or with errors)' },
+    master_buratino:   { name: 'Key Master',               description: "3 perfect Golden Key runs with Buratino" },
+    expert_buratino:   { name: 'Key Expert',               description: '5 successful Golden Key runs' },
+    master_koschei:    { name: 'Memory Master',            description: "3 perfect Koschei's Memory runs" },
+    expert_koschei:    { name: 'Memory Expert',            description: "5 successful Koschei's Memory runs" },
+    master_kolobok:    { name: 'Burrow Master',            description: "3 perfect «Burrow-Burrow-Burrow» rounds with Kolobok" },
+    expert_kolobok:    { name: 'Burrow Expert',            description: "5 successful «Burrow-Burrow-Burrow» runs" },
+    master_zolushka:   { name: 'Coin Master',              description: "3 perfect «Cinderella's Luck» runs" },
+    expert_zolushka:   { name: 'Coin Expert',              description: "5 successful «Cinderella's Luck» runs" },
+    master_baba_yaga:  { name: 'Cauldron Master',          description: "3 perfect Baba Yaga's Cauldron runs" },
+    expert_baba_yaga:  { name: 'Cauldron Expert',          description: "5 successful Baba Yaga's Cauldron runs" },
+    master_ivan_durak: { name: 'Card Master',              description: '3 perfect Pass-the-Fool runs' },
+    expert_ivan_durak: { name: 'Card Expert',              description: '5 successful Pass-the-Fool runs' },
+    seven_skills:      { name: 'Seven Skills',             description: 'Perfect run in at least one game of each of the 7 owners' },
     sharp_eye:         { name: "Merchant's Eye",           description: '80% intuition accuracy after 10+ charters' },
     hawk_eye:          { name: "Hawk's Gaze",              description: '95% intuition accuracy after 20+ charters' },
     first_deal:        { name: 'First Profit',             description: 'Closed your first venture' },

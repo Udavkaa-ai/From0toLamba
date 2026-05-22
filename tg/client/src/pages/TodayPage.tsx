@@ -76,7 +76,7 @@ export function TodayPage() {
               pointerEvents: 'none',
             }}
           >
-            +{claimedAnim} г
+            +{claimedAnim} {t.common.currency}
           </motion.div>
         )}
       </AnimatePresence>
@@ -130,7 +130,7 @@ function StreakBlock({ today, onClaim, pending }: {
             boxShadow: `0 4px 18px ${colors.fairyGold}55`,
           }}
         >
-          🎁 Забрать {today.todayReward} г
+          🎁 {t.today.claimReward} {today.todayReward} {t.common.currency}
           {today.milestoneBonus > 0 && (
             <span style={{
               padding: '3px 8px', borderRadius: 6,
@@ -190,7 +190,7 @@ function MilestonesBlock({ today }: { today: TodayDTO }) {
                 {passed ? '✓' : m.day}
               </div>
               <div style={{ color: passed ? colors.success : colors.textSecondary, fontSize: 9, fontWeight: 600 }}>
-                +{m.bonus} г
+                +{m.bonus} {t.common.currency}
               </div>
             </div>
           )
@@ -231,8 +231,8 @@ function LeaderboardBlock({ today, myTelegramId, t }: {
           (см. tiesService.ts). Данные тянутся on-demand с /api/leaderboard/ties. */}
       <div style={{ display: 'flex', gap: 6, marginBottom: spacing.sm }}>
         {([
-          { v: 'wealth' as const, label: '💰 Злато' },
-          { v: 'ties'   as const, label: '⚡ Связи' },
+          { v: 'wealth' as const, label: t.today.tabWealth },
+          { v: 'ties'   as const, label: t.today.tabTies },
         ]).map(({ v, label }) => {
           const active = tab === v
           return (
@@ -258,7 +258,7 @@ function LeaderboardBlock({ today, myTelegramId, t }: {
       <div style={{ color: colors.textMuted, fontSize: 11, marginBottom: spacing.sm }}>
         {tab === 'wealth'
           ? t.today.leaderboardHint
-          : 'По сумме уровней Завязок со всеми дельцами. Каждый жетон = +1 уровень.'}
+          : t.today.tiesLeaderboardHint}
       </div>
 
       {/* ── ВКЛАДКА ЗЛАТО ── */}
@@ -302,7 +302,7 @@ function LeaderboardBlock({ today, myTelegramId, t }: {
                     fontVariantNumeric: 'tabular-nums',
                     whiteSpace: 'nowrap',
                   }}>
-                    {entry.wealth.toLocaleString('ru')} г
+                    {entry.wealth.toLocaleString('ru')} {t.common.currency}
                   </span>
                 </div>
               )
@@ -375,7 +375,7 @@ function LeaderboardBlock({ today, myTelegramId, t }: {
           borderRadius: 10,
           color: colors.textMuted, fontSize: 12, textAlign: 'center',
         }}>
-          Ты на {lb.myPosition} месте из {lb.totalPlayers}
+          {t.today.yourPosition(lb.myPosition, lb.totalPlayers)}
         </div>
       )}
       {tab === 'ties' && tiesData?.myPosition && tiesData.myPosition > 10 && (
@@ -386,7 +386,7 @@ function LeaderboardBlock({ today, myTelegramId, t }: {
           borderRadius: 10,
           color: colors.textMuted, fontSize: 12, textAlign: 'center',
         }}>
-          Ты на {tiesData.myPosition} месте из {tiesData.totalPlayers}
+          {t.today.yourPosition(tiesData.myPosition, tiesData.totalPlayers)}
         </div>
       )}
 
@@ -405,7 +405,7 @@ function LeaderboardBlock({ today, myTelegramId, t }: {
           display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8,
         }}
       >
-        <span>🏛 Зал славы · сезон 1</span>
+        <span>{t.today.hallOfFameLink}</span>
         <span style={{ fontSize: 16 }}>→</span>
       </button>
     </FairyCard>

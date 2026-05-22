@@ -6,7 +6,7 @@ import { FairyCard, OrnamentDivider } from '@/components/FairyCard'
 import { PageTitle, PageSubtitle } from '@/components/PageTitle'
 import { MerchantToken, ARCHETYPE_TINT } from '@/components/MerchantToken'
 import { useGameStore } from '@/stores/gameStore'
-import { MINIGAME_INFO } from '@/components/minigames/info'
+import { getMiniGameInfo } from '@/components/minigames/info'
 import { colors, spacing , gradients } from '@/theme'
 import { getTheme } from '@/theme/colors'
 import { useT } from '@/i18n'
@@ -215,7 +215,7 @@ function RelationshipDetails({ archetype, onClose }: { archetype: Archetype; onC
   const { gameState } = useGameStore()
   const tokens = gameState?.archetypeTokens?.[archetype]
   const stats = gameState?.minigameStats?.[archetype]
-  const info = MINIGAME_INFO[archetype]
+  const info = getMiniGameInfo(archetype, t)
   const tint = ARCHETYPE_TINT[archetype]
 
   const games = tokens?.gamesPlayed ?? stats?.played ?? 0

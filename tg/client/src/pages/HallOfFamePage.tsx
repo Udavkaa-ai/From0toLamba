@@ -6,6 +6,7 @@ import { FairyCard, SkeletonCard } from '@/components/FairyCard'
 import { PageTitle, PageSubtitle } from '@/components/PageTitle'
 import { api } from '@/api/client'
 import { colors, spacing, ctaButton } from '@/theme'
+import { useT } from '@/i18n'
 
 // ───────────────────────────────────────────────────────────
 // Зал славы 1 сезона: финальный топ-100 по каждой категории
@@ -15,18 +16,19 @@ import { colors, spacing, ctaButton } from '@/theme'
 
 type Category = 'WEALTH' | 'TIES' | 'ACHIEVEMENTS' | 'REFERRALS'
 
-const CATEGORY_LABELS: Record<Category, { label: string; emoji: string; valueLabel: string }> = {
-  WEALTH:       { label: 'Злато',       emoji: '💰', valueLabel: 'г'  },
-  TIES:         { label: 'Связи',       emoji: '⚡', valueLabel: 'lv' },
-  ACHIEVEMENTS: { label: 'Достижения',  emoji: '🏆', valueLabel: 'оч' },
-  REFERRALS:    { label: 'Сваты',       emoji: '🤝', valueLabel: 'чел' },
-}
-
 export function HallOfFamePage() {
+  const t = useT()
   const navigate = useNavigate()
   const params = useParams<{ seasonNumber?: string }>()
   const seasonNumber = parseInt(params.seasonNumber ?? '1', 10)
   const [tab, setTab] = useState<Category>('WEALTH')
+
+  const CATEGORY_LABELS: Record<Category, { label: string; emoji: string; valueLabel: string }> = {
+    WEALTH:       { label: t.hallOfFame.catWealth,       emoji: '💰', valueLabel: t.common.currency },
+    TIES:         { label: t.hallOfFame.catTies,         emoji: '⚡', valueLabel: 'lv' },
+    ACHIEVEMENTS: { label: t.hallOfFame.catAchievements, emoji: '🏆', valueLabel: t.hallOfFame.suffixAchievements },
+    REFERRALS:    { label: t.hallOfFame.catReferrals,    emoji: '🤝', valueLabel: t.hallOfFame.suffixReferrals },
+  }
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['seasonArchive', seasonNumber],
@@ -49,17 +51,17 @@ export function HallOfFamePage() {
             padding: '4px 0',
           }}
         >
-          ← Назад
+          {t.hallOfFame.back}
         </button>
 
-        <PageTitle>🏛 Зал славы</PageTitle>
-        <PageSubtitle>Сезон {seasonNumber} · финальный топ-100</PageSubtitle>
+        <PageTitle>{t.hallOfFame.title}</PageTitle>
+        <PageSubtitle>{t.hallOfFame.subtitle(seasonNumber)}</PageSubtitle>
 
         {isLoading && <SkeletonCard lines={6} />}
         {error && (
           <FairyCard>
             <div style={{ color: colors.textPrimary, fontSize: 14, padding: spacing.md, textAlign: 'center' }}>
-              Зал славы сезона {seasonNumber} ещё не открыт.
+              {t.hallOfFame.notOpen(seasonNumber)}
             </div>
           </FairyCard>
         )}
@@ -104,8 +106,8 @@ export function HallOfFamePage() {
           color: colors.textMuted, fontSize: 11, textAlign: 'center',
           lineHeight: 1.5,
         }}>
-          История заморожена и сохраняется навсегда.<br/>
-          Текущий рейтинг — на вкладке «Сегодня».
+          {t.hallOfFame.frozenHistory}<br/>
+          {t.hallOfFame.currentRankingHint}
         </div>
       </div>
     </ScreenBackground>
@@ -116,10 +118,11 @@ function CategoryList({ category, archive }: {
   category: Category
   archive: { entries: any[]; totalPlayers: number; capturedAt: string } | undefined
 }) {
+  const t = useT()
   if (!archive) {
     return (
       <div style={{ color: colors.textMuted, fontSize: 12, padding: spacing.md, textAlign: 'center' }}>
-        Данных по этой категории нет.
+        {t.hallOfFame.noData}
       </div>
     )
   }
@@ -129,20 +132,20 @@ function CategoryList({ category, archive }: {
       case 'WEALTH':
         // Math.floor — totalWealth в архиве может прийти с дробной частью
         // (старые снимки писали balance + Σ currentValueRubles без округления).
-        return { display: Math.floor(e.totalWealth ?? 0).toLocaleString('ru'), suffix: 'г' }
+        return { display: Math.floor(e.totalWealth ?? 0).toLocaleString('ru'), suffix: t.common.currency }
       case 'TIES':
         return { display: String(Math.floor(e.tiesTotal ?? 0)), suffix: '' }
       case 'ACHIEVEMENTS':
-        return { display: String(Math.floor(e.achievementScore ?? 0)), suffix: 'оч' }
+        return { display: String(Math.floor(e.achievementScore ?? 0)), suffix: t.hallOfFame.suffixAchievements }
       case 'REFERRALS':
-        return { display: String(Math.floor(e.referralCount ?? 0)), suffix: 'чел' }
+        return { display: String(Math.floor(e.referralCount ?? 0)), suffix: t.hallOfFame.suffixReferrals }
     }
   }
 
   return (
     <>
       <div style={{ color: colors.textMuted, fontSize: 11, marginBottom: spacing.sm }}>
-        Всего игроков в категории: {archive.totalPlayers}
+        {t.hallOfFame.totalPlayers(archive.totalPlayers)}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         {archive.entries.map((entry, i) => {

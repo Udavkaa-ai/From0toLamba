@@ -11,7 +11,7 @@ import { colors, spacing, gradients } from '@/theme'
 import { Seal, generateReferenceSeal, sealForCell, mutateSeal, RANK_MUT_POOLS } from '@/components/Seal'
 import type { MutTarget } from '@/components/Seal'
 import { MiniGame } from '@/components/minigames/MiniGame'
-import { MINIGAME_INFO, isMiniGameArchetype } from '@/components/minigames/info'
+import { MINIGAME_INFO, isMiniGameArchetype, getMiniGameInfo } from '@/components/minigames/info'
 import { CoinIcon } from '@/components/icons'
 import { useTelegramBackHandler } from '@/hooks/useTelegramBackButton'
 import { playSound } from '@/sounds'
@@ -665,7 +665,7 @@ function TutorialSheet({ rank, archetype, onClose }: { rank: string; archetype: 
   const pool = RANK_MUT_POOLS[rank] ?? RANK_MUT_POOLS.NEWBIE
   const nextHintRaw = t.charter.rankNextHint[rank as keyof typeof t.charter.rankNextHint] ?? ''
   const nextHint = nextHintRaw || null
-  const info = MINIGAME_INFO[archetype]
+  const info = getMiniGameInfo(archetype, t)
   const gameName = info?.name ?? t.charter.tutorialTitle
   const gameHint = info?.hint ?? ''
 
@@ -730,7 +730,7 @@ function TutorialSheet({ rank, archetype, onClose }: { rank: string; archetype: 
 
           {/* Лесенка наград — единый блок для всех мини-игр */}
           <div style={{ color: colors.fairyGold, fontWeight: 700, fontSize: '13px', marginBottom: spacing.sm }}>
-            За что получишь награду:
+            {t.charter.rewardLadderTitle}
           </div>
           <TierLadder />
 
@@ -970,7 +970,7 @@ function MinigameStatsBlock({
         fontSize: 12,
         textAlign: 'center',
       }}>
-        Впервые играешь в «{gameName}» — покажи, на что способен.
+        {t.charter.firstTime(gameName)}
       </div>
     )
   }
@@ -1282,10 +1282,10 @@ function MiniGameIntroScreen({
 }) {
   const t = useT()
   const { gameState } = useGameStore()
-  const info = MINIGAME_INFO[project.personaArchetype]
-  const gameName = info?.name ?? 'Испытание хозяина'
-  const gameHint = info?.hint ?? 'Хозяин предложит испытание. Пройди его — и сможешь вложиться.'
-  const gameBtn  = info?.startBtn ?? 'Принять испытание →'
+  const info = getMiniGameInfo(project.personaArchetype, t)
+  const gameName = info?.name ?? t.charter.defaultGameName
+  const gameHint = info?.hint ?? t.charter.defaultGameHint
+  const gameBtn  = info?.startBtn ?? t.charter.defaultStartBtn
   const stats = getMinigameStats(gameState, project.personaArchetype)
   const tokenBalance = gameState?.archetypeTokens?.[project.personaArchetype]?.balance ?? 0
   const hasToken = tokenBalance >= 1
@@ -1308,7 +1308,7 @@ function MiniGameIntroScreen({
       {/* Посул скрыт до прохождения испытания — он часть награды за победу. */}
       <div style={paramsRowStyle}>
         <ParamChip label={t.charter.users} value={project.currentUserCount.toLocaleString('ru')} />
-        <ParamChip label={t.charter.guild} value={`${project.claimedTeamSize} чел.`} />
+        <ParamChip label={t.charter.guild} value={`${project.claimedTeamSize} ${t.charter.teamSizeUnit}`} />
       </div>
 
       {/* Описание дела — карточка в стиле текущей темы (парчмент в fairy / фиолет в classic) */}
@@ -1350,7 +1350,7 @@ function MiniGameIntroScreen({
           {gameHint}
         </div>
         <div style={{ color: 'rgba(248,228,178,0.75)', fontSize: 11, marginTop: spacing.sm, marginBottom: 4 }}>
-          За что получишь награду:
+          {t.charter.rewardLadderTitle}
         </div>
         <TierLadder />
       </div>
@@ -1367,7 +1367,7 @@ function MiniGameIntroScreen({
           пульсирующий ободок и подзаголовок-намёк. */}
       <div style={{ marginTop: spacing.md, display: 'flex', alignItems: 'center', gap: spacing.sm }}>
         <div style={{ flex: 1, height: 1, background: `${colors.fairyGold}25` }} />
-        <div style={{ color: colors.textMuted, fontSize: 11, letterSpacing: '0.08em' }}>ИЛИ</div>
+        <div style={{ color: colors.textMuted, fontSize: 11, letterSpacing: '0.08em' }}>{t.charter.or}</div>
         <div style={{ flex: 1, height: 1, background: `${colors.fairyGold}25` }} />
       </div>
 
@@ -1399,13 +1399,13 @@ function MiniGameIntroScreen({
         <div style={{ fontSize: 32, lineHeight: 1 }}>💬</div>
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-            <span>Беседа с дельцом</span>
+            <span>{t.charter.amaTitle}</span>
             {hasToken ? (
               <span style={{
                 fontSize: 10, padding: '2px 6px',
                 background: colors.success, color: colors.nightBlue,
                 borderRadius: 6, fontWeight: 800, letterSpacing: '0.04em',
-              }}>🪙 жетон ({tokenBalance})</span>
+              }}>{t.charter.amaTokenChip(tokenBalance)}</span>
             ) : (
               <span style={{
                 fontSize: 10, padding: '2px 6px',
@@ -1415,7 +1415,7 @@ function MiniGameIntroScreen({
             )}
           </div>
           <div style={{ fontSize: 12, color: colors.ctaText, opacity: 0.92, fontWeight: 500, marginTop: 3, lineHeight: 1.4 }}>
-            Задай до 10 вопросов лично. Опытный жулик звучит убедительно, но под давлением проговаривается — самый верный способ почуять скам.
+            {t.charter.amaDescription}
           </div>
         </div>
       </motion.button>
@@ -1456,7 +1456,7 @@ function IntroScreen({
       <div style={paramsRowStyle}>
         <ParamChip label={t.charter.apy} value={`${project.claimedAPY}%`} />
         <ParamChip label={t.charter.users} value={project.currentUserCount.toLocaleString('ru')} />
-        <ParamChip label={t.charter.guild} value={`${project.claimedTeamSize} чел.`} />
+        <ParamChip label={t.charter.guild} value={`${project.claimedTeamSize} ${t.charter.teamSizeUnit}`} />
       </div>
 
       <div style={{
@@ -1710,8 +1710,8 @@ function MiniGameResultSheet({
     won:     baseStats.won     + (deltaKey === 'won' ? 1 : 0),
     lost:    baseStats.lost    + (deltaKey === 'lost' ? 1 : 0),
   }
-  const info = MINIGAME_INFO[archetype]
-  const gameName = info?.name ?? 'Испытание'
+  const info = getMiniGameInfo(archetype, t)
+  const gameName = info?.name ?? t.charter.defaultGameName
   const emoji = effectiveErrorCount === 0 ? '🎯' : effectiveErrorCount === 1 ? '🙂' : '😅'
   const titleText = bypassed
     ? t.charter.resultStatusBypass
@@ -2482,12 +2482,15 @@ function phaseCaption(phase: Phase, charter: CharterDTO, scanCountdown: number |
   if (phase === 'intro')      return t.charter.phaseIntro
   if (phase === 'reference')  return t.charter.phaseMemorize
   if (phase === 'scan')       return `${t.charter.phaseFind} · ${scanCountdown ?? charter.timeLimitSeconds} ${t.charter.timer}`
-  if (phase === 'minigame')   return MINIGAME_INFO[archetype]?.name ?? t.charter.phaseFind
+  if (phase === 'minigame')   return getMiniGameInfo(archetype, t)?.name ?? t.charter.phaseFind
   return t.charter.resultPhaseBreakdown
 }
 
 function pageTitle(archetype: string | undefined, t: ReturnType<typeof useT>): string {
-  if (archetype && MINIGAME_INFO[archetype]) return MINIGAME_INFO[archetype].name
+  if (archetype) {
+    const info = getMiniGameInfo(archetype, t)
+    if (info) return info.name
+  }
   return t.charter.title
 }
 
