@@ -172,7 +172,7 @@ function InboxCard({ project, onClick, tourAttr }: { project: ProjectDTO; onClic
               fontVariantNumeric: 'tabular-nums',
               whiteSpace: 'nowrap',
             }}>
-              ⚡ +{bonusPct}%/день связи
+              {t.inbox.tieBonusPerDay(bonusPct)}
             </div>
           )}
           {isVip && (

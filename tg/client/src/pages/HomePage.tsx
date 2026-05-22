@@ -1429,7 +1429,7 @@ export function HomePage() {
                 </div>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ color: colors.textMuted, fontSize: '11px' }}>Дел взято</div>
+                <div style={{ color: colors.textMuted, fontSize: '11px' }}>{t.home.dealsTaken}</div>
                 <div style={{ color: colors.textPrimary, fontWeight: 600 }}>{gameState.dealsCount}</div>
               </div>
             </div>
@@ -1989,6 +1989,7 @@ function InboxFeedCard({ project, onPress }: { project: ProjectDTO; onPress: () 
 // Показывает сумму всех жетонов + ВСЕ 7 архетипов с их балансом
 // (×0 для тех, кого ещё не встретили) — симметричная сетка.
 function TokensQuickChip({ onNavigate }: { onNavigate: () => void }) {
+  const t = useT()
   const { gameState } = useGameStore()
   const tokens = gameState?.archetypeTokens ?? {}
   // Фиксированный порядок 7 архетипов — чтобы сетка не «прыгала»
@@ -2030,7 +2031,7 @@ function TokensQuickChip({ onNavigate }: { onNavigate: () => void }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
         <div style={{ fontSize: 22, lineHeight: 1 }}>🪙</div>
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 14, fontWeight: 700 }}>Отношения с дельцами</span>
+          <span style={{ fontSize: 14, fontWeight: 700 }}>{t.home.ownerRelationsChip}</span>
           {totalBalance > 0 && (
             <span style={{
               padding: '2px 8px', borderRadius: 8,

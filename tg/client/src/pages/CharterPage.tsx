@@ -503,6 +503,7 @@ export function CharterPage() {
  * кружков и эмодзи — этого хватает, чтобы пояснить механику.
  */
 function TutorialGraphicalExample({ archetype }: { archetype: string }) {
+  const t = useT()
   const Card = ({ children, label, tone = 'neutral' }: {
     children: React.ReactNode
     label: string
@@ -535,13 +536,13 @@ function TutorialGraphicalExample({ archetype }: { archetype: string }) {
     return (
       <div style={{ marginBottom: spacing.md }}>
         <div style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 6 }}>
-          Среди 7 ключей один в точности совпадает с эталоном по форме головки и рисунку бороздок:
+          {t.charter.previewBuratinoHint}
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <Card label="Эталон" tone="neutral">🗝️</Card>
+          <Card label={t.charter.cardEtalon} tone="neutral">🗝️</Card>
           <div style={{ alignSelf: 'center', color: colors.textMuted, fontSize: 18 }}>→</div>
-          <Card label="Тот же" tone="good">🗝️</Card>
-          <Card label="Похож, но не он" tone="bad">🔑</Card>
+          <Card label={t.charter.cardSame} tone="good">🗝️</Card>
+          <Card label={t.charter.cardSimilar} tone="bad">🔑</Card>
         </div>
       </div>
     )
@@ -551,14 +552,14 @@ function TutorialGraphicalExample({ archetype }: { archetype: string }) {
     return (
       <div style={{ marginBottom: spacing.md }}>
         <div style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 6 }}>
-          Открывай по две карточки. Совпали символы — пара остаётся открытой:
+          {t.charter.previewKoscheiHint}
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <Card label="🌳 дуб" tone="good">🌳</Card>
-          <Card label="🌳 дуб" tone="good">🌳</Card>
+          <Card label={t.charter.cardOak} tone="good">🌳</Card>
+          <Card label={t.charter.cardOak} tone="good">🌳</Card>
           <div style={{ alignSelf: 'center', color: colors.success, fontSize: 22 }}>✓</div>
-          <Card label="не пара" tone="bad">🐇</Card>
-          <Card label="не пара" tone="bad">🦆</Card>
+          <Card label={t.charter.cardNoMatch} tone="bad">🐇</Card>
+          <Card label={t.charter.cardNoMatch} tone="bad">🦆</Card>
         </div>
       </div>
     )
@@ -568,7 +569,7 @@ function TutorialGraphicalExample({ archetype }: { archetype: string }) {
     return (
       <div style={{ marginBottom: spacing.md }}>
         <div style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 6 }}>
-          Тапай зверушек, обходи Колобка. Цель — 7 баллов за 15 секунд (12 для совета):
+          {t.charter.previewKolobokHint}
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <Card label="+1" tone="good">🐇</Card>
@@ -610,13 +611,13 @@ function TutorialGraphicalExample({ archetype }: { archetype: string }) {
     return (
       <div style={{ marginBottom: spacing.md }}>
         <div style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 6 }}>
-          У каждой монеты две стороны: цифра и символ. Подделка отличается либо аверсом, либо реверсом — лови только если совпадают обе:
+          {t.charter.previewZolushkaHint}
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <Card label="Эталон" tone="neutral"><CoinPreview num="3" sym="✦" /></Card>
-          <Card label="Та же (лови)" tone="good"><CoinPreview num="3" sym="✦" /></Card>
-          <Card label="Подделка" tone="bad"><CoinPreview num="5" sym="✦" /></Card>
-          <Card label="Подделка" tone="bad"><CoinPreview num="3" sym="☼" /></Card>
+          <Card label={t.charter.cardEtalon} tone="neutral"><CoinPreview num="3" sym="✦" /></Card>
+          <Card label={t.charter.cardSameCatch} tone="good"><CoinPreview num="3" sym="✦" /></Card>
+          <Card label={t.charter.cardFake} tone="bad"><CoinPreview num="5" sym="✦" /></Card>
+          <Card label={t.charter.cardFake} tone="bad"><CoinPreview num="3" sym="☼" /></Card>
         </div>
       </div>
     )
@@ -626,7 +627,7 @@ function TutorialGraphicalExample({ archetype }: { archetype: string }) {
     return (
       <div style={{ marginBottom: spacing.md }}>
         <div style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 6 }}>
-          Запомни порядок и кидай ингредиенты в котёл по очереди. Ошибся — шаг остаётся, выбирай другой:
+          {t.charter.previewBabaYagaHint}
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <Card label="1️⃣" tone="good">🪨</Card>
@@ -643,14 +644,14 @@ function TutorialGraphicalExample({ archetype }: { archetype: string }) {
     return (
       <div style={{ marginBottom: spacing.md }}>
         <div style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 6 }}>
-          Иван открывает карту — найди такую же в своей руке за 2 секунды. Карты тасуются после каждого хода:
+          {t.charter.previewIvanDurakHint}
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <Card label="Иван" tone="neutral">7♠</Card>
+          <Card label={t.charter.cardIvan} tone="neutral">7♠</Card>
           <div style={{ color: colors.textMuted, fontSize: 16 }}>↓</div>
-          <Card label="Тапни" tone="good">7♠</Card>
-          <Card label="Не она" tone="bad">9♦</Card>
-          <Card label="Не она" tone="bad">К♥</Card>
+          <Card label={t.charter.cardTap} tone="good">7♠</Card>
+          <Card label={t.charter.cardNotIt} tone="bad">9♦</Card>
+          <Card label={t.charter.cardNotIt} tone="bad">К♥</Card>
         </div>
       </div>
     )
@@ -702,7 +703,7 @@ function TutorialSheet({ rank, archetype, onClose }: { rank: string; archetype: 
             {gameName}
           </div>
           <div style={{ color: colors.textOnDarkMuted, fontSize: '12px', marginTop: '4px' }}>
-            {isBoyarin ? t.charter.tutorialBody : 'Правила испытания и лесенка наград'}
+            {isBoyarin ? t.charter.tutorialBody : t.charter.trialRulesSubtitle}
           </div>
         </div>
 

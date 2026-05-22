@@ -14,15 +14,8 @@ import { useT } from '@/i18n'
 const ARCHETYPES = ['BURATINO', 'BOYARIN', 'KOLOBOK', 'KOSCHEI', 'ZOLUSHKA', 'BABA_YAGA', 'IVAN_DURAK'] as const
 type Archetype = typeof ARCHETYPES[number]
 
-const SHORT_NAME: Record<Archetype, string> = {
-  BURATINO: 'Буратино',
-  BOYARIN: 'Царь Горох',
-  KOLOBOK: 'Колобок',
-  KOSCHEI: 'Кощей',
-  ZOLUSHKA: 'Золушка',
-  BABA_YAGA: 'Баба Яга',
-  IVAN_DURAK: 'Иван Дурак',
-}
+// Имена живут в i18n под t.relations.names — этот объект убран. Доступ через
+// t.relations.names[archetype] в местах рендера (компонент имеет t из useT()).
 
 const ARCHETYPE_EMOJI: Record<Archetype, string> = {
   BURATINO: '🪆',
@@ -107,7 +100,7 @@ export function RelationshipsPage() {
               fontSize: 12, fontWeight: 700,
               boxShadow: `inset 0 1px 0 ${colors.cardHighlight}`,
             }}>
-              ⚡ Связи: {gameState?.tiesTotal}
+              {t.relations.tiesChip(gameState?.tiesTotal ?? 0)}
             </div>
           )}
         </div>
@@ -151,7 +144,7 @@ export function RelationshipsPage() {
                   // надписи сливаются (Боярин, Кощей, Баба-Яга, Иван).
                   textShadow: '0 0 4px rgba(0,0,0,0.95), 0 1px 2px rgba(0,0,0,0.9)',
                 }}>
-                  {SHORT_NAME[arch]}
+                  {t.relations.names[arch]}
                 </div>
                 {/* Бейдж уровня Завязок (1..10) + балансовый счётчик жетонов */}
                 {tieLevel > 0 && (
@@ -281,10 +274,10 @@ function RelationshipDetails({ archetype, onClose }: { archetype: Archetype; onC
           <ArchetypeAvatar archetype={archetype} size={72} />
           <div style={{ flex: 1 }}>
             <div style={{ color: tint, fontSize: 22, fontWeight: 800 }}>
-              {SHORT_NAME[archetype]}
+              {t.relations.names[archetype]}
             </div>
             <div style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>
-              {info?.name ?? 'Испытание хозяина'}
+              {info?.name ?? t.relations.defaultGameName}
             </div>
           </div>
         </div>
@@ -302,11 +295,11 @@ function RelationshipDetails({ archetype, onClose }: { archetype: Archetype; onC
           <MerchantToken archetype={archetype} size={56} />
           <div style={{ flex: 1 }}>
             <div style={{ color: colors.fairyGold, fontSize: 22, fontWeight: 800, lineHeight: 1.1 }}>
-              {balance} {balance === 1 ? 'жетон' : balance < 5 ? 'жетона' : 'жетонов'}
+              {t.relations.tokensCount(balance)}
             </div>
             <div style={{ color: colors.textMuted, fontSize: 11, marginTop: 4 }}>
-              Заработано {earned} · потрачено {spent}
-              {welcomeBonus && <span style={{ color: tint, marginLeft: 6 }}>· 🎁 подарок</span>}
+              {t.relations.earnedSpent(earned, spent)}
+              {welcomeBonus && <span style={{ color: tint, marginLeft: 6 }}>· {t.relations.giftBadge}</span>}
             </div>
           </div>
         </div>
@@ -317,15 +310,15 @@ function RelationshipDetails({ archetype, onClose }: { archetype: Archetype; onC
         {/* Статистика отношений */}
         <OrnamentDivider />
         <div style={{ color: colors.textSecondary, fontSize: 12, fontWeight: 600, marginBottom: spacing.sm, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-          Статистика
+          {t.relations.statsTitle}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing.sm, marginBottom: spacing.md }}>
-          <StatTile label="Сыграно игр" value={games} accent={tint} />
-          <StatTile label="Взято дел" value={deals} accent={tint} />
-          <StatTile label="Идеально" value={stats?.perfect ?? 0} accent={colors.success} />
-          <StatTile label="Победа" value={stats?.won ?? 0} accent={colors.fairyGold} />
-          <StatTile label="Провал" value={stats?.lost ?? 0} accent={colors.danger} />
-          <StatTile label="Жетонов" value={earned} accent={tint} />
+          <StatTile label={t.relations.statPlayed}  value={games} accent={tint} />
+          <StatTile label={t.relations.statDeals}   value={deals} accent={tint} />
+          <StatTile label={t.relations.statPerfect} value={stats?.perfect ?? 0} accent={colors.success} />
+          <StatTile label={t.relations.statWon}     value={stats?.won ?? 0} accent={colors.fairyGold} />
+          <StatTile label={t.relations.statLost}    value={stats?.lost ?? 0} accent={colors.danger} />
+          <StatTile label={t.relations.statTokens}  value={earned} accent={tint} />
         </div>
 
         {/* Прогресс до следующего жетона */}
@@ -338,16 +331,16 @@ function RelationshipDetails({ archetype, onClose }: { archetype: Archetype; onC
           boxShadow: `inset 0 1px 0 ${colors.cardHighlight}`,
         }}>
           <div style={{ color: colors.fairyGold, fontSize: 12, fontWeight: 700, marginBottom: spacing.xs }}>
-            До следующего жетона
+            {t.relations.nextTokenTitle}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
             <ProgressBar
-              label={`Сыграй ещё ${nextGameToToken} ${nextGameToToken === 1 ? 'игру' : 'игр'}`}
+              label={t.relations.playMoreGames(nextGameToToken)}
               progress={(games % 10) / 10}
               accent={tint}
             />
             <ProgressBar
-              label={`Возьми ещё ${nextDealToToken} ${nextDealToToken === 1 ? 'дело' : 'дел'}`}
+              label={t.relations.takeMoreDeals(nextDealToToken)}
               progress={(deals % 5) / 5}
               accent={tint}
             />
@@ -377,6 +370,7 @@ function RelationshipDetails({ archetype, onClose }: { archetype: Archetype; onC
  * Бонус = level × bonusPerLevel/день к доходности дел этого архетипа.
  */
 function TiesLevelCard({ archetype, tint, earned }: { archetype: Archetype; tint: string; earned: number }) {
+  const t = useT()
   const { gameState } = useGameStore()
   const maxLevel = gameState?.tiesMaxLevel ?? 10
   const bonusPerLevel = gameState?.tiesBonusPerLevel ?? 0.01
@@ -395,7 +389,7 @@ function TiesLevelCard({ archetype, tint, earned }: { archetype: Archetype; tint
     }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
         <div style={{ color: tint, fontSize: 12, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-          Завязки
+          {t.relations.tiesBlockTitle}
         </div>
         <div style={{
           color: isMaxed ? colors.success : colors.fairyGold,
@@ -406,8 +400,8 @@ function TiesLevelCard({ archetype, tint, earned }: { archetype: Archetype; tint
       </div>
       <div style={{ color: colors.textPrimary, fontSize: 13, fontWeight: 600 }}>
         {bonusPct > 0
-          ? <>Дела с этим хозяином приносят <span style={{ color: colors.success, fontWeight: 800 }}>+{bonusPct}%</span> в день</>
-          : <>Заведи связь — каждый уровень даёт <span style={{ color: colors.success, fontWeight: 800 }}>+1%</span> в день</>}
+          ? t.relations.tieBonusActive(bonusPct)
+          : t.relations.tieBonusHint}
       </div>
       <div style={{
         marginTop: 8, height: 8, borderRadius: 4,
@@ -425,7 +419,7 @@ function TiesLevelCard({ archetype, tint, earned }: { archetype: Archetype; tint
       </div>
       {isMaxed && (
         <div style={{ color: colors.success, fontSize: 11, marginTop: 6, fontWeight: 700, textAlign: 'center' }}>
-          ✦ Максимум — отношения закалены
+          {t.relations.tiesMax}
         </div>
       )}
     </div>

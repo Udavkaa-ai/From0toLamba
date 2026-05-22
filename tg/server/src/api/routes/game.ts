@@ -23,6 +23,12 @@ export async function gameRoutes(app: FastifyInstance) {
     // приветственная сумма выдаётся одной транзакцией сразу при создании
     // GameState (см. ниже после upsert'а).
     const STARTING_GIFT = 50
+    // Дефолтный язык игрока: 'en' (требование Telegram Apps Center —
+    // English по дефолту), кроме случая когда Telegram-клиент игрока
+    // на русском (language_code='ru'). Только при создании нового
+    // GameState — для существующих юзеров не трогаем preferredLanguage.
+    const initialLang: 'ru' | 'en' = tgUser.language_code === 'ru' ? 'ru' : 'en'
+
     const user = await prisma.user.upsert({
       where: { telegramId: String(tgUser.id) },
       create: {
@@ -31,7 +37,7 @@ export async function gameRoutes(app: FastifyInstance) {
         lastName: tgUser.last_name,
         username: tgUser.username,
         gameState: {
-          create: { balance: STARTING_GIFT },
+          create: { balance: STARTING_GIFT, preferredLanguage: initialLang },
         },
       },
       update: {

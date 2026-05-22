@@ -54,6 +54,22 @@ if (analyticsToken && analyticsApp) {
 const tonConnectManifestUrl = `${window.location.origin}/tonconnect-manifest.json`
 
 const LS_LANG_PICKED = 'lang-picked-v1'
+const LS_LANG_STORE  = 'game-lang'  // имя zustand persist key (см. langStore.ts)
+
+// Telegram Apps Center требует: English = default, переключение на другой
+// язык ТОЛЬКО если он есть в Telegram-клиенте пользователя (никаких system
+// settings, IP и т.п.). Запускается ОДИН раз при первом старте игры —
+// до того как LanguagePicker покажется. Если zustand persist уже сохранил
+// выбор пользователя (LS_LANG_STORE есть в localStorage) — ничего не
+// делаем, уважаем явный выбор игрока.
+function detectInitialLang(): void {
+  if (localStorage.getItem(LS_LANG_STORE)) return  // юзер уже выбирал
+  const tgLang = window.Telegram?.WebApp?.initDataUnsafe?.user?.language_code
+  // Поддерживаем сейчас RU и EN. RU клиент → RU, всё остальное → EN (default).
+  const initial: 'ru' | 'en' = tgLang === 'ru' ? 'ru' : 'en'
+  useLangStore.getState().setLang(initial)
+}
+detectInitialLang()
 
 function AppShell() {
   useTelegramBackButton()
@@ -153,6 +169,13 @@ declare global {
     Telegram?: {
       WebApp: {
         initData: string
+        initDataUnsafe?: {
+          user?: {
+            id?: number
+            language_code?: string
+            first_name?: string
+          }
+        }
         ready(): void
         expand(): void
         setHeaderColor(color: string): void
