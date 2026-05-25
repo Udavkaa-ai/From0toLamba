@@ -189,7 +189,6 @@ home: {
       { heading: '⚡ Связи с дельцами', body: 'Жетон от сыгранной игры или взятого дела = +1 уровень знакомства, +1% к доходу его дел (до +10). Отдельный рейтинг ⚡ Связи.' },
       { heading: '👑 Чуйка убрана', body: 'К княжескому венцу теперь ведёт счёт взятых дел:\n5 → Купец, 20 → Мудрец, 50 → Боярин, 100 → Князь.' },
       { heading: '🟡 Дела от спонсоров', body: 'Гарантированные +200% за 14 дней. Заветное слово на канале хозяина — и вкладываешься без испытания.' },
-      { heading: '🏆 Турнир: 23 мая — 1 июня', body: 'Отдельная регистрация, призовой ряд. Подробности скоро на канале.' },
     ],
   },
   // Theme picker в настройках
@@ -1290,7 +1289,6 @@ home: {
       { heading: '⚡ Ties with dealers', body: 'A token from a played game or a taken deal = +1 acquaintance level, +1% to that dealer\'s yield (up to +10). Separate ⚡ Ties leaderboard.' },
       { heading: '👑 Intuition removed', body: 'The path to the Prince\'s crown is now paved with deals taken:\n5 → Merchant, 20 → Sage, 50 → Boyar, 100 → Prince.' },
       { heading: '🟡 Sponsor deals', body: 'Guaranteed +200% over 14 days. Find the secret word on the dealer\'s channel — invest without a trial.' },
-      { heading: '🏆 Tournament: May 23 — June 1', body: 'Separate registration, prize line-up. Details soon on the channel.' },
     ],
   },
   themeSection:        'Theme',

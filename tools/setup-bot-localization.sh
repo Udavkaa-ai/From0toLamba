@@ -39,9 +39,7 @@ DESC_EN='"From Rags to Riches" — a merchant-investor simulator in fairy-tale R
 
 📜 Decipher the Merchant Charter with 24 seals
 💬 Question the Dealers in person — under pressure they slip up
-🏆 Compete with other merchants on the market fair ranking
-
-⭐ Season 2 starts May 1st — top merchants get prizes!'
+🏆 Compete with other merchants on the market fair ranking'
 
 DESC_RU='«Из грязи в князи» — симулятор купца-инвестора в сказочной Руси.
 
@@ -49,9 +47,7 @@ DESC_RU='«Из грязи в князи» — симулятор купца-и�
 
 📜 Разбирай Купеческую грамоту с 24 печатями
 💬 Допрашивай Дельцов лично — под давлением они проговариваются
-🏆 Соревнуйся с другими купцами в ярмарочном рейтинге
-
-⭐ С 1 мая — стартовый чемпионат. Лучших купцов ждут призы!'
+🏆 Соревнуйся с другими купцами в ярмарочном рейтинге'
 
 # ── Вызов API ────────────────────────────────────────────────────────────────
 
