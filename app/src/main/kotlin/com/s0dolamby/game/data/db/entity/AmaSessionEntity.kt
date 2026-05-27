@@ -14,7 +14,21 @@ data class AmaSessionEntity(
     val projectId: String,
     val questionCount: Int = 0,
     val isComplete: Boolean = false,
-    val isIntuitionEvaluated: Boolean = false
+    val isIntuitionEvaluated: Boolean = false,
+
+    // --- Phase 1: мини-игра BOYARIN «Купеческая грамота» (server-first) ---
+    // СКРЫТЫЕ от UI на этом устройстве — заполняются сервером, клиент видит только результат сабмита.
+    val gridSeed: String? = null,              // seed процедурной генерации печатей
+    @androidx.room.ColumnInfo(defaultValue = "0")
+    val gridSize: Int = 0,
+    val difficulty: String? = null,            // EASY | MEDIUM | HARD
+    @androidx.room.ColumnInfo(defaultValue = "[]")
+    val charterSelectedIndices: String = "[]", // JSON Int[] — что отметил игрок
+    val gridStartedAt: Long? = null,           // epoch millis: нажат «Принять испытание»
+    val charterSubmittedAt: Long? = null,
+    // Беседа куплена за жетон/звезду (помечается isPaid=true), пропуск 2ч-таймера.
+    @androidx.room.ColumnInfo(defaultValue = "0")
+    val isPaid: Boolean = false
 )
 
 @Entity(

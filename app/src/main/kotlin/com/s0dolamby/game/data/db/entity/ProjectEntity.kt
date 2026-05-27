@@ -49,7 +49,36 @@ data class ProjectEntity(
     val apyHistory: String = "[]",
 
     @androidx.room.ColumnInfo(defaultValue = "0")
-    val lieGuessCorrect: Boolean = false
+    val lieGuessCorrect: Boolean = false,
+
+    // --- Phase 1: server-first public-field mirror (tg/server ProjectPublicDTO) ---
+    // Явный флаг inbox (сервер использует его как источник). На клиенте логика
+    // запросов пока остаётся «!isActive && !isClosed» — поле дублирует для совместимости.
+    @androidx.room.ColumnInfo(defaultValue = "1")
+    val isInbox: Boolean = true,
+    // Сгенерировано заранее, ждёт следующего advance-day для попадания в инбокс.
+    @androidx.room.ColumnInfo(defaultValue = "0")
+    val isPreloaded: Boolean = false,
+    // Кумулятивная сумма всех выводов (после комиссии) — для корректного profit%.
+    @androidx.room.ColumnInfo(defaultValue = "0")
+    val totalWithdrawnRubles: Double = 0.0,
+    // «Предложение от которого нельзя отказаться» — выдано за 2-3 дня до автозакрытия.
+    @androidx.room.ColumnInfo(defaultValue = "0")
+    val mafiaOfferIssued: Boolean = false,
+    // Дело занимает дополнительный слот (купленный за extraSlotsBalance).
+    @androidx.room.ColumnInfo(defaultValue = "0")
+    val isExtraSlot: Boolean = false,
+    // История стоимости дела для графика — последние 30 дней.
+    @androidx.room.ColumnInfo(defaultValue = "[]")
+    val valueHistory: String = "[]",
+    // VIP-дело от спонсорского канала: фиксированный возврат 3× за durationDays.
+    @androidx.room.ColumnInfo(defaultValue = "0")
+    val isSponsor: Boolean = false,
+    val sponsorChannelUrl: String? = null,
+    @androidx.room.ColumnInfo(defaultValue = "0")
+    val sponsorPromoVerified: Boolean = false,
+    // Промокод для VIP-дела: клиент шлёт plain текст на верификацию, сервер сравнивает case-insensitive.
+    val promocode: String? = null
 )
 
 fun ProjectEntity.toDomain(gson: com.google.gson.Gson): Project = Project(

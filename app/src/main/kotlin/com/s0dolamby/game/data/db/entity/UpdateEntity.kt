@@ -18,7 +18,12 @@ data class UpdateEntity(
     val payoutStatus: String,
     val announcement: String?,
     val redFlags: String,   // JSON array
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+
+    // --- Phase 1: server-first ---
+    // Случайное событие (см. tg/server randomEvents.ts): NEGATIVE | POSITIVE | NEUTRAL | null.
+    // null = обычная ежедневная весть.
+    val eventKind: String? = null
 )
 
 fun UpdateEntity.toDomain(gson: com.google.gson.Gson) = DailyUpdate(
