@@ -62,6 +62,9 @@ export const MAX_CONSECUTIVE_ADVANCES = 7
 export interface AdvanceDayOptions {
   /** Если true — пропускает проверку кулдауна (используется крон-jobом и заглушкой рекламы) */
   bypassCooldown?: boolean
+  /** Если true — вызов из cron'а, НЕ обновляем lastUserActionAt. Иначе зомби-юзеры
+   *  навечно остаются в выборке scheduler'а и жгут AI-токены. */
+  fromCron?: boolean
 }
 
 /** Итоги закрытия одного дела за этот advance-day — для оверлея «карточки закрытий» */
@@ -531,6 +534,13 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
     // Игрок мог выключить новости (gameState.newsEnabled=false) — тогда
     // показатели меняются как обычно (см. updatedValue/newUserCount выше),
     // но текст новости НЕ создаётся и AI НЕ зовётся.
+    //
+    // ВАЖНО: AI-вызов для каждого дела каждый день — главный жор токенов на
+    // OpenRouter. У игрока 5 дел = 5 AI-вызовов ежедневно. Зовём AI ТОЛЬКО
+    // когда в этот день случилось что-то осмысленное (изменение количества
+    // вкладчиков ≥ 5, задержка/повышение выплат, событие). В «штатные» дни
+    // оставляем только плейсхолдер — он шаблонный, но игрок не теряется в
+    // тонне одинаковых нарративных текстов.
     if (gameState.newsEnabled && (fate !== ProjectFate.INSTANT_SCAM || eventApplied)) {
       if (eventApplied) {
         await prisma.dailyUpdate.create({
@@ -547,7 +557,31 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
           },
         }).catch(err => console.error('[Event news] insert failed:', err))
       } else if (fate !== ProjectFate.INSTANT_SCAM) {
-        generateDailyUpdate(project.id, userId, project, userCountDelta, payoutStatus, gameState.preferredModel, gameState.preferredLanguage ?? 'ru').catch(console.error)
+        const hasNotableChange =
+          payoutStatus !== 'NORMAL' ||
+          Math.abs(userCountDelta) >= 5
+        if (hasNotableChange) {
+          generateDailyUpdate(project.id, userId, project, userCountDelta, payoutStatus, gameState.preferredModel, gameState.preferredLanguage ?? 'ru').catch(console.error)
+        }
+        // Иначе — placeholder уже записан выше в generateDailyUpdate'е
+        // (он там создаётся синхронно перед AI-вызовом). Но мы не зовём
+        // generateDailyUpdate вообще, значит placeholder не запишется.
+        // Записываем напрямую короткий placeholder без AI.
+        else {
+          const dayNumber = project.daysSinceJoined + 1
+          await prisma.dailyUpdate.create({
+            data: {
+              projectId: project.id,
+              userId,
+              day: dayNumber,
+              title: project.name,
+              body: payoutStatus === 'NORMAL' ? '' : '',
+              redFlags: [],
+              payoutStatus,
+              userCountDelta,
+            },
+          }).catch(err => console.error('[DailyUpdate placeholder] failed:', err))
+        }
       }
     }
   }
@@ -586,6 +620,9 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
       investedHistory,
       pendingRankUp: rankUp ? newRank : null,
       lastAdvancedAt: new Date(),
+      // lastUserActionAt обновляем ТОЛЬКО при ручном advance-day — иначе
+      // cron сам же помечает юзера активным и завтра вернётся к нему.
+      ...(options.fromCron ? {} : { lastUserActionAt: new Date() }),
       // Автозакрытия (SURVIVOR/UNICORN/SLOW_DRAIN/HONEST_FAIL/INSTANT_SCAM)
       // тоже считаются как «возвращённые рубли» — иначе на Главной выглядит
       // как сплошной убыток, хотя жирные авто-выплаты от прибыльных дел
@@ -598,19 +635,16 @@ export async function advanceDay(userId: number, options: AdvanceDayOptions = {}
   })
 
   // Предзагружаем дела на следующий день в фоне — AI успевает сгенерить имена/описания
-  // за время между advance-day'ями (обычно минимум 2 часа кулдауна)
+  // за время между advance-day'ями (обычно минимум 2 часа кулдауна).
+  //
+  // ВНИМАНИЕ: раньше тут был fallback `if (promoted.count === 0)` который
+  // запускал ВТОРОЙ раунд generateProject(..., {})  — итого 2-6 проектов
+  // вместо 1-3. Это удвоенно жгло токены. Убран: preloaded подоспеют сами
+  // (генерация ~10 сек), а инбокс пустой 10 сек у нового юзера — не проблема.
   const lang = gameState.preferredLanguage ?? 'ru'
   const preloadCount = irng(NEW_PROJECTS_PER_DAY_MIN, NEW_PROJECTS_PER_DAY_MAX)
   for (let i = 0; i < preloadCount; i++) {
     generateProject(userId, undefined, undefined, { preloaded: true }, lang).catch(console.error)
-  }
-
-  // Fallback: если из предзагрузки ничего не пришло (первый advance-day игрока),
-  // запускаем обычную синхронную генерацию прямо в inbox как раньше — хоть что-то да появится
-  if (promoted.count === 0) {
-    for (let i = 0; i < preloadCount; i++) {
-      generateProject(userId, undefined, undefined, {}, lang).catch(console.error)
-    }
   }
 
   return { newRank: rankUp ? newRank : undefined, closures }

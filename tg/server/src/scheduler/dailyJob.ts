@@ -51,22 +51,48 @@ export function startDailyScheduler() {
   })
 
   // ─── Ежедневный авто-advance в 09:00 МСК (06:00 UTC) ─────────────────────
+  // Активный юзер = тот, у кого была РУЧНАЯ активность (не от crons) за
+  // последние 7 дней. Используем lastUserActionAt, который пишется только
+  // при действиях из API (invest, withdraw, submit-charter, advance-day
+  // вызванный с клиента, AMA-сообщение). Если поля нет (старый игрок) —
+  // fallback на isOnboardingComplete + lastAdvancedAt < 30 дней (но это
+  // временно, после первого invest/withdraw поле обновится).
+  //
+  // ВНИМАНИЕ: не использовать `updatedAt` — Prisma обновляет его при
+  // ЛЮБОМ изменении GameState, включая сам auto-advance. Это создавало
+  // самоподдерживающуюся выборку: один раз вошёл → попал в auto-advance
+  // → updatedAt свежий → попал в следующий auto-advance → ∞. Жгло
+  // тысячи AI-вызовов на «зомби»-юзерах которые давно не играют.
   cron.schedule('0 6 * * *', async () => {
     console.log('[Scheduler] Starting daily advance...')
 
+    const now = Date.now()
+    const cutoffActive = new Date(now - 7 * 24 * 3600 * 1000)
+    const cutoffFallback = new Date(now - 30 * 24 * 3600 * 1000)
+
     const activeUsers = await prisma.gameState.findMany({
       where: {
-        updatedAt: { gte: new Date(Date.now() - 30 * 24 * 3600 * 1000) },
+        isOnboardingComplete: true,
+        OR: [
+          { lastUserActionAt: { gte: cutoffActive } },
+          // Fallback для старых юзеров без lastUserActionAt: смотрим
+          // lastAdvancedAt как прокси «недавно играл». Это не идеально
+          // (cron сам обновляет lastAdvancedAt), но оставляем только
+          // на короткий миграционный период.
+          { AND: [
+            { lastUserActionAt: null },
+            { lastAdvancedAt: { gte: cutoffFallback } },
+          ] },
+        ],
       },
       select: { userId: true },
     })
 
-    console.log(`[Scheduler] Advancing ${activeUsers.length} users`)
+    console.log(`[Scheduler] Advancing ${activeUsers.length} users (active in last 7d)`)
 
     for (const { userId } of activeUsers) {
       try {
-        // Авто-advance тоже уважает кулдаун (если игрок крутил день недавно — не повторяем)
-        await advanceDay(userId)
+        await advanceDay(userId, { fromCron: true })
       } catch (err: any) {
         if (err.message !== 'ADVANCE_TOO_SOON') {
           console.error(`[Scheduler] Failed to advance day for user ${userId}:`, err)

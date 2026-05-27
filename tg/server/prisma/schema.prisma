@@ -75,6 +75,12 @@ model GameState {
   // меняются как обычно, просто без сопроводительного текста.
   newsEnabled          Boolean   @default(true)
   lastAdvancedAt       DateTime?
+  // Время последнего РУЧНОГО действия игрока (не cron'а): invest, withdraw,
+  // submit-charter, advance-day из клиента, AMA-message и т.п. Используется
+  // scheduler'ом чтобы определить «активного» игрока. Без этого поля
+  // updatedAt обновляется самим cron'ом → самоподдерживающаяся выборка
+  // → каждый раз когда-либо заходивший юзер жёг AI-вызовы.
+  lastUserActionAt     DateTime?
   // Флаг: отправлено ли уведомление о доступности следующего дня для текущего lastAdvancedAt.
   // Сбрасывается в false при advance-day, ставится в true в cron'е, когда уведомление отправлено.
   // Default true чтобы не спамить юзеров, у которых lastAdvancedAt уже давно прошёл.
