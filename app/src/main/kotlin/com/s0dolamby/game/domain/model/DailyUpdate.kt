@@ -16,6 +16,10 @@ data class DailyUpdate(
 
 enum class PayoutStatus { DELAYED, NORMAL, BOOSTED }
 
+// Случайное событие при advance-day (соответствует server-полю DailyUpdate.eventKind).
+// null = обычная ежедневная весть, иначе — выпавшее событие, подсвечивается в ленте.
+enum class DailyEventKind { NEGATIVE, POSITIVE, NEUTRAL }
+
 enum class AnnouncementType {
     // Обычные события
     LISTING, NEW_SEASON, COLLAB, AUDIT,

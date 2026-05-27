@@ -14,6 +14,8 @@ enum class ProjectFate {
     HONEST_FAIL,     // Честно старался, не взлетело, 15%
     SURVIVOR,        // Долгожитель, стабильный маленький доход, 20%
     UNICORN          // Взлетел по-настоящему: слава, иксы, 10%
+    // SPONSOR_FIXED добавится в Phase 2 вместе с server-driven fate
+    // и обработкой VIP-дел (фиксированный возврат 3× за durationDays).
 }
 
 enum class LieTopic {

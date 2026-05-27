@@ -15,7 +15,10 @@ import com.s0dolamby.game.data.db.entity.*
         PostMortemEntity::class,
         SettingsEntity::class
     ],
-    version = 11,
+    // Phase 1 (Android port → server-first): кэш публичных полей tg/server.
+    // Расширены GameStateEntity, ProjectEntity, AmaSessionEntity, UpdateEntity.
+    // fallbackToDestructiveMigration: при server-first wipe безопасен — данные ресинкаются с API.
+    version = 12,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

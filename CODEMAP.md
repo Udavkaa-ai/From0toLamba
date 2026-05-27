@@ -212,18 +212,34 @@ Bottom Nav (в HomeScreen): Home | Inbox | Portfolio | News | Stats
 ## База данных
 
 ```
-AppDatabase.kt (Room, version=9, fallbackToDestructiveMigration)
+AppDatabase.kt (Room, version=12, fallbackToDestructiveMigration)
   Таблицы:
-  ├─ projects          ← ProjectEntity
-  ├─ game_state        ← GameStateEntity   (+ investedHistory, intuitionScore, pendingRankUp)
-  ├─ ama_sessions      ← AmaSessionEntity  (+ isIntuitionEvaluated)
-  ├─ ama_messages      ← AmaMessageEntity  (FK → ama_sessions.id CASCADE DELETE)
-  ├─ daily_updates     ← UpdateEntity
-  └─ post_mortems      ← PostMortemEntity
+  ├─ projects          ← ProjectEntity   (+ Phase 1: isInbox, isPreloaded, totalWithdrawnRubles,
+  │                                        mafiaOfferIssued, isExtraSlot, valueHistory, isSponsor,
+  │                                        sponsorChannelUrl, sponsorPromoVerified, promocode)
+  ├─ game_state        ← GameStateEntity (+ Phase 1: extraSlotsBalance, archetypeTokensSpent,
+  │                                        timerSkipTokens, loginStreak, lastSeenDay, lastDailyClaim,
+  │                                        consecutiveAdvances, weekStartWealth, weekStartAt,
+  │                                        preferredLanguage, newsEnabled, nextDayNotified,
+  │                                        lastUserActionAt, lastAdvancedAt,
+  │                                        marketAnnouncementSeen, marketAnnouncementRewardClaimed)
+  ├─ ama_sessions      ← AmaSessionEntity (+ Phase 1: gridSeed, gridSize, difficulty,
+  │                                         charterSelectedIndices, gridStartedAt,
+  │                                         charterSubmittedAt, isPaid)
+  ├─ ama_messages      ← AmaMessageEntity (FK → ama_sessions.id CASCADE DELETE)
+  ├─ daily_updates     ← UpdateEntity    (+ Phase 1: eventKind)
+  ├─ post_mortems      ← PostMortemEntity
+  └─ settings          ← SettingsEntity
 ```
 
 **ВАЖНО:** При добавлении нового поля в Entity — нужна миграция Room или версия БД +1.
-Текущая политика: `fallbackToDestructiveMigration` — данные сотрутся. Пока ок для dev.
+Текущая политика: `fallbackToDestructiveMigration` — данные сотрутся. При server-first wipe кэша
+безопасен: настоящие данные живут на бэке (`tg/server/`), Room ресинкается через API.
+
+**Phase 1 (Android port → server-first, версия БД 12):** аддитивно добавлены публичные поля из
+tg/server (см. `docs/ANDROID_PORT.md` Фаза 1 и `tg/server/prisma/schema.prisma`). Скрытые поля
+(`fate`, `lieTopics`, `truthTopics`, `npcTruthParams` и т.д.) НЕ переносятся в Room — клиент их
+не видит до PostMortem. ChatMessage/Leaderboard/SeasonArchive — сетевые DTO без Room-таблиц.
 
 ---
 
