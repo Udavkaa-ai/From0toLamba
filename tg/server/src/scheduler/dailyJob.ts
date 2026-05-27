@@ -1,16 +1,31 @@
 import cron from 'node-cron'
 import { InlineKeyboard } from 'grammy'
 import { prisma } from '../db/prisma'
-import { advanceDay, ADVANCE_COOLDOWN_MS } from '../game/AdvanceDayService'
+import { ADVANCE_COOLDOWN_MS } from '../game/AdvanceDayService'
 import { getBot } from '../bot/bot'
 
 /**
- * Cron-задачи сервера:
- *   1) Раз в 5 минут — рассылка уведомлений «новый день доступен» по telegramId
- *   2) Раз в сутки в 09:00 МСК — авто-advance для всех залогинившихся за 30 дней
+ * Cron-задачи сервера.
+ *
+ * Сейчас остался ОДИН job — рассылка уведомлений «новый день доступен» по
+ * telegramId раз в 5 минут. Это бесплатный Telegram-API трафик, не AI.
+ *
+ * Ежедневный авто-advance в 09:00 МСК был УДАЛЁН (см. коммит 4.6.19). Он
+ * жёг 6000+ AI-запросов и 5М токенов в день за счёт того что каждое утро
+ * для каждого «активного за 30 дней» юзера крутил полный advance-day
+ * (генерация новых проектов через AI + AI-вести по каждому активному
+ * делу). При 5-7 реальных игроках это была чистая трата денег на зомби.
+ *
+ * Новая логика: ВСЕ advance-day только по ручному нажатию «Следующий
+ * день» в Mini App. Кто играет — тот и платит за свой AI. Никаких
+ * фоновых генераций.
+ *
+ * Если в будущем понадобится снова включить — см. git log этого файла.
  */
 export function startDailyScheduler() {
   // ─── Уведомления о доступности нового дня ────────────────────────────────
+  // Раз в 5 минут проверяем кто закончил 2-часовой кулдаун и не получал
+  // напоминание — шлём «🌅 Новый день настал». Без AI, только Telegram API.
   cron.schedule('*/5 * * * *', async () => {
     const cutoff = new Date(Date.now() - ADVANCE_COOLDOWN_MS)
     const ready = await prisma.gameState.findMany({
@@ -50,58 +65,5 @@ export function startDailyScheduler() {
     }
   })
 
-  // ─── Ежедневный авто-advance в 09:00 МСК (06:00 UTC) ─────────────────────
-  // Активный юзер = тот, у кого была РУЧНАЯ активность (не от crons) за
-  // последние 7 дней. Используем lastUserActionAt, который пишется только
-  // при действиях из API (invest, withdraw, submit-charter, advance-day
-  // вызванный с клиента, AMA-сообщение). Если поля нет (старый игрок) —
-  // fallback на isOnboardingComplete + lastAdvancedAt < 30 дней (но это
-  // временно, после первого invest/withdraw поле обновится).
-  //
-  // ВНИМАНИЕ: не использовать `updatedAt` — Prisma обновляет его при
-  // ЛЮБОМ изменении GameState, включая сам auto-advance. Это создавало
-  // самоподдерживающуюся выборку: один раз вошёл → попал в auto-advance
-  // → updatedAt свежий → попал в следующий auto-advance → ∞. Жгло
-  // тысячи AI-вызовов на «зомби»-юзерах которые давно не играют.
-  cron.schedule('0 6 * * *', async () => {
-    console.log('[Scheduler] Starting daily advance...')
-
-    const now = Date.now()
-    const cutoffActive = new Date(now - 7 * 24 * 3600 * 1000)
-    const cutoffFallback = new Date(now - 30 * 24 * 3600 * 1000)
-
-    const activeUsers = await prisma.gameState.findMany({
-      where: {
-        isOnboardingComplete: true,
-        OR: [
-          { lastUserActionAt: { gte: cutoffActive } },
-          // Fallback для старых юзеров без lastUserActionAt: смотрим
-          // lastAdvancedAt как прокси «недавно играл». Это не идеально
-          // (cron сам обновляет lastAdvancedAt), но оставляем только
-          // на короткий миграционный период.
-          { AND: [
-            { lastUserActionAt: null },
-            { lastAdvancedAt: { gte: cutoffFallback } },
-          ] },
-        ],
-      },
-      select: { userId: true },
-    })
-
-    console.log(`[Scheduler] Advancing ${activeUsers.length} users (active in last 7d)`)
-
-    for (const { userId } of activeUsers) {
-      try {
-        await advanceDay(userId, { fromCron: true })
-      } catch (err: any) {
-        if (err.message !== 'ADVANCE_TOO_SOON') {
-          console.error(`[Scheduler] Failed to advance day for user ${userId}:`, err)
-        }
-      }
-    }
-
-    console.log('[Scheduler] Daily advance complete')
-  })
-
-  console.log('[Scheduler] Cron jobs scheduled (next-day notifier every 5min + daily auto-advance 09:00 MSK)')
+  console.log('[Scheduler] Cron jobs scheduled (next-day notifier every 5min, NO auto-advance)')
 }
