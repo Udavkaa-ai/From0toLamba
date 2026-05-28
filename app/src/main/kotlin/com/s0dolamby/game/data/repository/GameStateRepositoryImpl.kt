@@ -4,6 +4,7 @@ import com.s0dolamby.game.data.db.dao.PlayerDao
 import com.s0dolamby.game.data.db.dao.ProjectDao
 import com.s0dolamby.game.data.db.entity.GameStateEntity
 import com.s0dolamby.game.domain.model.*
+import com.s0dolamby.game.domain.ranks.RankService
 import com.s0dolamby.game.domain.repository.GameConfig
 import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.google.gson.Gson
@@ -89,11 +90,8 @@ class GameStateRepositoryImpl @Inject constructor(
 
     override suspend fun updateRankIfNeeded() {
         val state = playerDao.getGameState() ?: return
-        // Total wealth = free balance + current value of all active projects
-        val activeProjectsValue = projectDao.getActiveProjects()
-            .sumOf { it.currentValueRubles }
-        val totalWealth = state.balance + activeProjectsValue
-        val newRank = computeRank(state.currentDay, totalWealth, state.intuitionScore)
+        val takenDeals = projectDao.countTakenDeals()
+        val newRank = RankService.rankFor(takenDeals)
         val currentRank = InvestorRank.valueOf(state.investorRank)
         if (newRank.ordinal > currentRank.ordinal) {
             playerDao.update(state.copy(investorRank = newRank.name, pendingRankUp = newRank.name))
@@ -101,14 +99,6 @@ class GameStateRepositoryImpl @Inject constructor(
     }
 
     override suspend fun clearRankUpNotification() = playerDao.clearRankUpNotification()
-
-    private fun computeRank(day: Int, totalWealth: Double, intuitionScore: Int): InvestorRank = when {
-        day >= 777 && totalWealth >= 7777.0 && intuitionScore >= 20 -> InvestorRank.LAMBO_SENSEI
-        day >= 50  && totalWealth >= 1000.0 && intuitionScore >= 10 -> InvestorRank.SHARK
-        day >= 30  && totalWealth >= 300.0  && intuitionScore >= 5  -> InvestorRank.ANALYST
-        day >= 5   || totalWealth >= 20.0                            -> InvestorRank.AMBASSADOR
-        else -> InvestorRank.NEWBIE
-    }
 
     override suspend fun recordIntuitionPoints(delta: Int) {
         val state = playerDao.getGameState() ?: return

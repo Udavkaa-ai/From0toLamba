@@ -53,6 +53,7 @@ class InvestUseCaseTest {
         coEvery { projectRepo.updateProject(any()) } just Runs
         coEvery { gameStateRepo.updateBalance(any()) } just Runs
         coEvery { gameStateRepo.recordInvestment(any()) } just Runs
+        coEvery { gameStateRepo.updateRankIfNeeded() } just Runs
 
         val result = useCase("p1", 10.0)
 

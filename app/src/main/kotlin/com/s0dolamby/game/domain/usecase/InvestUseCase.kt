@@ -48,6 +48,10 @@ class InvestUseCase @Inject constructor(
         gameStateRepository.updateBalance(state.balance - amountRubles)
         gameStateRepository.recordInvestment(amountRubles)
 
+        if (isFirstInvestment) {
+            gameStateRepository.updateRankIfNeeded()
+        }
+
         if (isFirstInvestment && project.bannerImageUrl == null) {
             scope.launch {
                 generateProjectBannerUseCase(updated)
