@@ -35,6 +35,14 @@ android {
             "POLLINATIONS_API_KEY",
             "\"${localProperties.getProperty("POLLINATIONS_API_KEY", "")}\""
         )
+        // Базовый URL Fastify-сервера (Railway). Можно переопределить в local.properties:
+        //   API_BASE_URL=https://staging.example.com
+        // Дефолт — production Railway-домен.
+        buildConfigField(
+            "String",
+            "API_BASE_URL",
+            "\"${localProperties.getProperty("API_BASE_URL", "https://from0tolamba-production.up.railway.app")}\""
+        )
     }
 
     buildTypes {

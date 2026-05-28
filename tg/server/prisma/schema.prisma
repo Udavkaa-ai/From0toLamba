@@ -41,6 +41,13 @@ model User {
   tonWallet                 String?
   tonConnectBonusGranted    Boolean   @default(false)
 
+  // Идентификатор Android-устройства (Settings.Secure.ANDROID_ID или DataStore-сгенерированный
+  // UUID). Заполняется middleware'ом при первом запросе с заголовком X-Android-Device-Id —
+  // позволяет одному пользователю иметь стабильный аккаунт без Telegram. telegramId для
+  // таких юзеров формируется как стабильный numeric hash device-id'а в отрицательном
+  // диапазоне (чтобы не пересекаться с реальными Telegram ID, всегда положительными).
+  androidDeviceId           String?   @unique
+
   gameState      GameState?
   projects       Project[]
   amaSessions    AmaSession[]

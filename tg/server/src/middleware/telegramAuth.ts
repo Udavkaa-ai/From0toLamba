@@ -1,5 +1,6 @@
-import { createHmac } from 'crypto'
+import { createHash, createHmac } from 'crypto'
 import type { FastifyRequest, FastifyReply } from 'fastify'
+import { prisma } from '../db/prisma'
 
 export interface TelegramUser {
   id: number
@@ -9,11 +10,14 @@ export interface TelegramUser {
   language_code?: string
 }
 
-// Добавляем telegramUser к типу FastifyRequest
+// Добавляем telegramUser и authSource к типу FastifyRequest.
+// authSource = 'telegram' | 'android' — позволяет роутам отличать источник
+// если нужна разная логика (например, отключить TON-донат для Android).
 declare module 'fastify' {
   interface FastifyRequest {
     telegramUser: TelegramUser
     telegramStartParam: string | null
+    authSource: 'telegram' | 'android'
   }
 }
 
@@ -58,14 +62,74 @@ export function validateTelegramInitData(initData: string, botToken: string):
 }
 
 /**
- * Fastify preHandler hook — проверяет initData из заголовка X-Telegram-Init-Data.
- * Кидает 401 если данные невалидны.
+ * Превращает Android device-id (строка ≥ 8 символов) в стабильный numeric ID
+ * в отрицательном диапазоне ([-2^47, -1]). Telegram IDs всегда положительные,
+ * поэтому коллизии исключены — Android-юзер живёт со своим уникальным числом
+ * в той же таблице User.telegramId. 48 бит SHA-256 → шанс коллизии ~10^-14
+ * при миллионе устройств, для нашего масштаба избыточно надёжно.
+ */
+export function deviceIdToTelegramId(deviceId: string): number {
+  const hash = createHash('sha256').update(deviceId).digest()
+  // readUIntBE(0, 6) = 48-битное unsigned число. Делаем отрицательным.
+  return -1 * hash.readUIntBE(0, 6)
+}
+
+const ANDROID_FALLBACK_FIRSTNAME = 'Купец'
+const MIN_DEVICE_ID_LENGTH = 8
+const MAX_DEVICE_ID_LENGTH = 128
+
+/**
+ * Fastify preHandler hook — принимает ОДИН из двух способов авторизации:
+ *
+ *   1) X-Telegram-Init-Data — стандартный Telegram WebApp initData (HMAC-валидация).
+ *   2) X-Android-Device-Id  — device-id Android-клиента (UUID/ANDROID_ID, длина 8..128).
+ *      Middleware апсёртит User по этому device-id и подставляет стабильный
+ *      numeric ID в request.telegramUser, чтобы дальнейшие роуты работали без правок.
+ *
+ * Источник доступен в request.authSource: 'telegram' | 'android'.
  */
 export async function telegramAuthHook(request: FastifyRequest, reply: FastifyReply) {
   const initData = request.headers['x-telegram-init-data'] as string | undefined
+  const androidDeviceId = request.headers['x-android-device-id'] as string | undefined
+
+  if (androidDeviceId) {
+    // Санитайз: только printable ASCII без пробелов, ограниченная длина.
+    if (
+      androidDeviceId.length < MIN_DEVICE_ID_LENGTH ||
+      androidDeviceId.length > MAX_DEVICE_ID_LENGTH ||
+      !/^[A-Za-z0-9_\-]+$/.test(androidDeviceId)
+    ) {
+      return reply.status(401).send({ error: 'Invalid X-Android-Device-Id header' })
+    }
+
+    const numericId = deviceIdToTelegramId(androidDeviceId)
+    const telegramIdStr = String(numericId)
+
+    // Гарантируем существование User для этого device-id. Используем
+    // androidDeviceId как ключ (он @unique), чтобы при первом контакте
+    // создать User со стабильным telegramId-хэшем.
+    await prisma.user.upsert({
+      where: { androidDeviceId },
+      create: {
+        telegramId: telegramIdStr,
+        androidDeviceId,
+        firstName: ANDROID_FALLBACK_FIRSTNAME,
+      },
+      update: {},
+    })
+
+    request.telegramUser = {
+      id: numericId,
+      first_name: ANDROID_FALLBACK_FIRSTNAME,
+      language_code: (request.headers['accept-language'] as string | undefined)?.startsWith('ru') ? 'ru' : 'en',
+    }
+    request.telegramStartParam = null
+    request.authSource = 'android'
+    return
+  }
 
   if (!initData) {
-    return reply.status(401).send({ error: 'Missing X-Telegram-Init-Data header' })
+    return reply.status(401).send({ error: 'Missing X-Telegram-Init-Data or X-Android-Device-Id header' })
   }
 
   const botToken = process.env.TELEGRAM_BOT_TOKEN
@@ -77,6 +141,7 @@ export async function telegramAuthHook(request: FastifyRequest, reply: FastifyRe
   if (process.env.NODE_ENV === 'development' && initData === 'dev') {
     request.telegramUser = { id: 1, first_name: 'Dev', username: 'devuser' }
     request.telegramStartParam = null
+    request.authSource = 'telegram'
     return
   }
 
@@ -87,4 +152,5 @@ export async function telegramAuthHook(request: FastifyRequest, reply: FastifyRe
 
   request.telegramUser = result.user
   request.telegramStartParam = result.startParam
+  request.authSource = 'telegram'
 }
