@@ -57,4 +57,47 @@ interface GameApi {
 
     @GET("/api/projects/transactions")
     suspend fun getTransactions(): List<TransactionDto>
+
+    // ---- AMA (беседа с хозяином) ----
+
+    @POST("/api/ama/{projectId}/start")
+    suspend fun startAmaSession(@Path("projectId") projectId: String): AmaStartResponse
+
+    @GET("/api/ama/{projectId}")
+    suspend fun getAmaSession(@Path("projectId") projectId: String): AmaSessionResponse
+
+    @POST("/api/ama/{projectId}/message")
+    suspend fun sendAmaMessage(
+        @Path("projectId") projectId: String,
+        @Body body: AmaMessageBody,
+    ): AmaMessageResponse
+
+    @POST("/api/ama/{projectId}/evaluate-intuition")
+    suspend fun evaluateIntuition(
+        @Path("projectId") projectId: String,
+        @Body body: IntuitionEvalBody,
+    ): IntuitionEvalResponse
+
+    // ---- Invest (вложения и выводы) ----
+
+    @POST("/api/invest/{projectId}")
+    suspend fun invest(
+        @Path("projectId") projectId: String,
+        @Body body: InvestBody,
+    ): InvestResponse
+
+    @POST("/api/invest/{projectId}/add")
+    suspend fun addInvestment(
+        @Path("projectId") projectId: String,
+        @Body body: AddInvestBody,
+    ): SimpleSuccessResponse
+
+    @POST("/api/invest/{projectId}/withdraw")
+    suspend fun partialWithdraw(
+        @Path("projectId") projectId: String,
+        @Body body: WithdrawBody,
+    ): WithdrawResponse
+
+    @POST("/api/invest/{projectId}/exit")
+    suspend fun exitProject(@Path("projectId") projectId: String): WithdrawResponse
 }
