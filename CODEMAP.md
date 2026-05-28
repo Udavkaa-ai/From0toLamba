@@ -180,10 +180,55 @@ GenerateProjectBannerUseCase
 | Модуль | Что предоставляет |
 |---|---|
 | `di/DatabaseModule.kt` | `AppDatabase` (Room), все DAO (`ProjectDao`, `PlayerDao`, `AmaDao`, `UpdateDao`) |
-| `di/NetworkModule.kt` | `OkHttpClient`, `Gson`, `Retrofit`, `OpenRouterApiService` |
+| `di/NetworkModule.kt` | Два HTTP-стека через qualifier'ы `@OpenRouterClient` и `@GameApiClient`: для OpenRouter (AI) — без auth, для `GameApi` (Fastify) — с `AndroidAuthInterceptor`. Биндит `OpenRouterApiService` и `GameApi`. |
 | `di/RepositoryModule.kt` | Binds: `ProjectRepository→Impl`, `GameStateRepository→Impl`, `AmaRepository→Impl`, `UpdateRepository→Impl` |
 
-**Авто-инжектируемые (нет модуля):** `PersonaRegistry`, `ProjectRegistry`, `PromptBuilder`, `AmaSessionManager`, все UseCase
+**Авто-инжектируемые (нет модуля):** `PersonaRegistry`, `ProjectRegistry`, `PromptBuilder`, `AmaSessionManager`, `DeviceIdProvider`, `AndroidAuthInterceptor`, все UseCase
+
+---
+
+## Network-стек (Phase 2 — server-first порт)
+
+```
+GameApi (Retrofit) — tg/server/src/api/routes/*
+  ├─ /api/game, /advance-day, /reset, /complete-onboarding, /clear-rank-up
+  ├─ /api/game/settings
+  ├─ /api/projects/{inbox, portfolio, :id/updates, :id/skip, transactions}
+  ├─ /api/ama/:projectId/{start, get, message, evaluate-intuition}
+  └─ /api/invest/:projectId/{root, add, withdraw, exit}
+
+AndroidAuthInterceptor (OkHttp)
+  ├─ DeviceIdProvider.get()        ← Settings.Secure.ANDROID_ID или UUID, persisted в SharedPreferences
+  ├─ X-Android-Device-Id: <id>     ← серверный middleware апсёртит User по этому ключу
+  └─ Accept-Language: ru | en      ← сервер использует при создании новых GameState
+
+Сервер (tg/server/src/middleware/telegramAuth.ts):
+  - Принимает X-Telegram-Init-Data (Mini App) ИЛИ X-Android-Device-Id (Android).
+  - Для Android: deviceIdToTelegramId() → отрицательный 48-bit int → stable telegramId-ключ.
+  - User.androidDeviceId @unique хранит оригинальный device-id для аудита/recovery.
+  - request.authSource: 'telegram' | 'android' — для логики разделения (Play vs Stars и т.п.).
+```
+
+DTO (`data/remote/dto/`) — публичные представления серверных моделей. **Скрытые поля
+(`fate`, `lieTopics`, `truthTopics`, `npcTruthParams`, `realDailyYieldRubles`,
+`daysUntilCollapse`) НЕ приходят на клиент** до закрытия дела — они раскрываются
+только внутри `PostMortemDto` (в `PortfolioResponse.closed[].postMortem`).
+
+| DTO | Использование |
+|---|---|
+| `GameStateResponse` | `GET /api/game` — полный снимок состояния, включая активные/inbox дела, токены архетипов, завязки |
+| `ProjectPublicDto` | Карточки в Inbox/Active — публичные поля |
+| `PortfolioResponse` + `ClosedProjectDto` + `PostMortemDto` | `GET /api/projects/portfolio` |
+| `DailyUpdateDto` | `GET /api/projects/:id/updates` |
+| `TransactionDto` | `GET /api/projects/transactions` |
+| `AmaStartResponse`, `AmaSessionResponse`, `AmaMessageBody/Response`, `IntuitionEvalBody/Response` | AMA-беседа |
+| `InvestBody/Response`, `AddInvestBody`, `WithdrawBody/Response` | Вложения / выводы |
+| `SettingsResponse`, `SettingsUpdateBody`, `SimpleSuccessResponse`, `AdvanceCooldownErrorBody` | Настройки и mutation-ответы |
+
+**Status (Phase 2.C.2 — pending):** UseCase'ы и Repository'и ещё работают с Room
+как с источником правды. Переключение на GameApi (Room остаётся как кэш) —
+следующий шаг. Удаление скрытых полей из `ProjectEntity` и split `Project` →
+`ProjectPublic` + `ProjectPostMortem` — там же.
 
 ---
 
