@@ -1,9 +1,13 @@
 package com.s0dolamby.game.presentation.minigame.goldenkey
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -12,26 +16,37 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.s0dolamby.game.R
+import com.s0dolamby.game.presentation.common.components.FairyCard
+import com.s0dolamby.game.presentation.common.components.ScreenBackground
+import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
+import com.s0dolamby.game.presentation.common.theme.FairyGold
+import com.s0dolamby.game.presentation.common.theme.NightBlue
 import com.s0dolamby.game.util.SeedRng
 import kotlinx.coroutines.delay
+import kotlin.math.cos
+import kotlin.math.sin
 
 // ─── модель ключа ─────────────────────────────────────────────────────────────
 
 enum class BowlShape { ROUND, SQUARE, OVAL }
-enum class KeyColor(val rgb: Color) {
-    GOLD(Color(0xFFFFD700)),
-    SILVER(Color(0xFFE0E0E0)),
-    COPPER(Color(0xFFB87333))
+enum class KeyColor(val light: Color, val dark: Color) {
+    GOLD(Color(0xFFFFE082), Color(0xFFB8860B)),
+    SILVER(Color(0xFFF0F0F0), Color(0xFF7C8595)),
+    COPPER(Color(0xFFEAA17C), Color(0xFF8A4423))
 }
 enum class StemPattern { SMOOTH, DOTTED, STRIPED }
 
@@ -67,23 +82,26 @@ private fun mutate(rng: SeedRng, base: GoldenKey): GoldenKey {
     return rng.pick(mutations)(base)
 }
 
-internal fun buildRound(seed: String): Pair<GoldenKey, List<GoldenKey>> {
+internal fun buildRound(seed: String, optionCount: Int = OPTIONS_COUNT): Pair<GoldenKey, List<GoldenKey>> {
+    // Полное пространство: 3 формы × 3 цвета × 3 зубчика × 3 узора × 2 кисточки = 162
+    require(optionCount in 2..162) { "optionCount must fit the attribute space (162)" }
     val rng = SeedRng(seed)
     val correct = randomKey(rng)
     val options = mutableListOf(correct)
     var attempts = 0
-    while (options.size < 4 && attempts < 30) {
+    val maxAttempts = optionCount * 12
+    while (options.size < optionCount && attempts < maxAttempts) {
         val candidate = mutate(rng, correct)
         if (candidate !in options) options += candidate
         attempts++
     }
-    while (options.size < 4) {
-        // fallback — добавить любую новую случайную (на случай вырожденного пространства)
+    // Fallback — иногда мутация в одно свойство не даёт достаточно вариантов;
+    // добавляем случайные ключи, пока не наберём нужное число
+    while (options.size < optionCount) {
         val candidate = randomKey(rng)
         if (candidate !in options) options += candidate
     }
     return correct to options.toMutableList().also {
-        // Простая детерминированная перетасовка (Fisher-Yates на seed-rng)
         for (i in it.indices.reversed()) {
             val j = rng.nextInt(i + 1)
             val tmp = it[i]; it[i] = it[j]; it[j] = tmp
@@ -93,87 +111,189 @@ internal fun buildRound(seed: String): Pair<GoldenKey, List<GoldenKey>> {
 
 // ─── рисование ключа ─────────────────────────────────────────────────────────
 
-internal fun DrawScope.drawKey(key: GoldenKey, sizePx: Float) {
+private fun DrawScope.drawKey(key: GoldenKey, sizePx: Float) {
     val cx = size.width / 2f
     val topY = (size.height - sizePx) / 2f
-    val bowlRadius = sizePx * 0.22f
+    val bowlRadius = sizePx * 0.23f
     val stemHeight = sizePx * 0.55f
-    val stemWidth = sizePx * 0.12f
+    val stemWidth = sizePx * 0.13f
     val stemTop = topY + bowlRadius * 2f
-    val color = key.color.rgb
+    val light = key.color.light
+    val dark = key.color.dark
 
-    // Bowl
     val bowlCenter = Offset(cx, topY + bowlRadius)
-    when (key.bowlShape) {
-        BowlShape.ROUND -> drawCircle(color, radius = bowlRadius, center = bowlCenter)
-        BowlShape.SQUARE -> drawRect(
-            color,
-            topLeft = Offset(cx - bowlRadius, topY),
-            size = Size(bowlRadius * 2f, bowlRadius * 2f)
-        )
-        BowlShape.OVAL -> drawOval(
-            color,
-            topLeft = Offset(cx - bowlRadius * 1.2f, topY + bowlRadius * 0.2f),
-            size = Size(bowlRadius * 2.4f, bowlRadius * 1.6f)
-        )
-    }
-    drawCircle(Color.Black.copy(alpha = 0.55f), radius = bowlRadius * 0.35f, center = bowlCenter)
 
-    // Stem
-    drawRect(
-        color,
-        topLeft = Offset(cx - stemWidth / 2f, stemTop),
-        size = Size(stemWidth, stemHeight)
+    // ─── Drop shadow под ключом ─────────────────────────────────────────────
+    val shadowOffset = sizePx * 0.035f
+    val shadowColor = Color.Black.copy(alpha = 0.45f)
+    when (key.bowlShape) {
+        BowlShape.ROUND -> drawCircle(shadowColor, radius = bowlRadius * 1.02f,
+            center = bowlCenter.copy(x = bowlCenter.x + shadowOffset, y = bowlCenter.y + shadowOffset))
+        BowlShape.SQUARE -> drawRect(shadowColor,
+            topLeft = Offset(cx - bowlRadius + shadowOffset, topY + shadowOffset),
+            size = Size(bowlRadius * 2f, bowlRadius * 2f))
+        BowlShape.OVAL -> drawOval(shadowColor,
+            topLeft = Offset(cx - bowlRadius * 1.2f + shadowOffset, topY + bowlRadius * 0.2f + shadowOffset),
+            size = Size(bowlRadius * 2.4f, bowlRadius * 1.6f))
+    }
+    drawRect(shadowColor,
+        topLeft = Offset(cx - stemWidth / 2f + shadowOffset, stemTop + shadowOffset),
+        size = Size(stemWidth, stemHeight))
+
+    // ─── Bowl с радиальным градиентом ───────────────────────────────────────
+    val bowlGradient = Brush.radialGradient(
+        colors = listOf(light, dark),
+        center = Offset(cx - bowlRadius * 0.3f, topY + bowlRadius * 0.6f),
+        radius = bowlRadius * 1.6f
     )
-    // Pattern на stem
+    when (key.bowlShape) {
+        BowlShape.ROUND -> drawCircle(bowlGradient, radius = bowlRadius, center = bowlCenter)
+        BowlShape.SQUARE -> drawRect(bowlGradient,
+            topLeft = Offset(cx - bowlRadius, topY),
+            size = Size(bowlRadius * 2f, bowlRadius * 2f))
+        BowlShape.OVAL -> drawOval(bowlGradient,
+            topLeft = Offset(cx - bowlRadius * 1.2f, topY + bowlRadius * 0.2f),
+            size = Size(bowlRadius * 2.4f, bowlRadius * 1.6f))
+    }
+
+    // ─── Bowl filigree (различим по форме) ──────────────────────────────────
+    val filigree = dark.copy(alpha = 0.75f)
+    when (key.bowlShape) {
+        BowlShape.ROUND -> {
+            drawCircle(filigree, radius = bowlRadius * 0.62f, center = bowlCenter,
+                style = Stroke(width = sizePx * 0.012f))
+            drawCircle(filigree, radius = bowlRadius * 0.38f, center = bowlCenter,
+                style = Stroke(width = sizePx * 0.012f))
+            // 6 точек по окружности
+            for (i in 0 until 6) {
+                val a = Math.PI * 2 * i / 6
+                drawCircle(filigree, radius = sizePx * 0.012f,
+                    center = Offset(cx + (bowlRadius * 0.78f * cos(a)).toFloat(),
+                        bowlCenter.y + (bowlRadius * 0.78f * sin(a)).toFloat()))
+            }
+        }
+        BowlShape.SQUARE -> {
+            // Внутренний ромб
+            val r = bowlRadius * 0.7f
+            val rhomb = Path().apply {
+                moveTo(cx, bowlCenter.y - r)
+                lineTo(cx + r, bowlCenter.y)
+                lineTo(cx, bowlCenter.y + r)
+                lineTo(cx - r, bowlCenter.y)
+                close()
+            }
+            drawPath(rhomb, color = filigree, style = Stroke(width = sizePx * 0.014f))
+            drawCircle(filigree, radius = sizePx * 0.022f, center = bowlCenter)
+        }
+        BowlShape.OVAL -> {
+            // Две дуги-овала внутри
+            drawOval(filigree,
+                topLeft = Offset(cx - bowlRadius * 0.85f, topY + bowlRadius * 0.55f),
+                size = Size(bowlRadius * 1.7f, bowlRadius * 1.0f),
+                style = Stroke(width = sizePx * 0.012f))
+            drawOval(filigree,
+                topLeft = Offset(cx - bowlRadius * 0.5f, topY + bowlRadius * 0.75f),
+                size = Size(bowlRadius * 1.0f, bowlRadius * 0.6f),
+                style = Stroke(width = sizePx * 0.012f))
+        }
+    }
+
+    // ─── Bowl hole в центре ─────────────────────────────────────────────────
+    drawCircle(NightBlue.copy(alpha = 0.85f), radius = bowlRadius * 0.18f, center = bowlCenter)
+
+    // ─── Stem с градиентом ──────────────────────────────────────────────────
+    val stemGradient = Brush.horizontalGradient(
+        colors = listOf(dark, light, dark),
+        startX = cx - stemWidth / 2f, endX = cx + stemWidth / 2f
+    )
+    drawRect(stemGradient,
+        topLeft = Offset(cx - stemWidth / 2f, stemTop),
+        size = Size(stemWidth, stemHeight))
+
+    // ─── Stem pattern ───────────────────────────────────────────────────────
+    val patternColor = dark.copy(alpha = 0.85f)
     when (key.stemPattern) {
         StemPattern.SMOOTH -> Unit
         StemPattern.DOTTED -> {
-            val dots = 5
+            val dots = 6
             for (i in 0 until dots) {
                 val y = stemTop + stemHeight * (i + 0.5f) / dots
-                drawCircle(Color.Black.copy(alpha = 0.45f), radius = stemWidth * 0.18f, center = Offset(cx, y))
+                drawCircle(patternColor, radius = stemWidth * 0.22f, center = Offset(cx, y))
             }
         }
         StemPattern.STRIPED -> {
-            val stripes = 4
+            val stripes = 6
             for (i in 1..stripes) {
                 val y = stemTop + stemHeight * i / (stripes + 1)
-                drawLine(
-                    Color.Black.copy(alpha = 0.45f),
+                drawLine(patternColor,
                     start = Offset(cx - stemWidth / 2f, y),
                     end = Offset(cx + stemWidth / 2f, y),
-                    strokeWidth = stemWidth * 0.18f
-                )
+                    strokeWidth = sizePx * 0.018f)
             }
         }
     }
 
-    // Teeth — справа внизу stem
-    val toothWidth = sizePx * 0.10f
+    // ─── Teeth — трапециевидные, справа внизу stem ──────────────────────────
+    val toothBase = sizePx * 0.13f
+    val toothTop = sizePx * 0.07f
     val toothHeight = sizePx * 0.06f
-    val teethRightX = cx + stemWidth / 2f
+    val toothGap = sizePx * 0.03f
+    val teethX = cx + stemWidth / 2f
     val teethBaseY = stemTop + stemHeight
     for (i in 0 until key.teethCount) {
-        val y = teethBaseY - toothHeight * (i + 1) * 1.2f
-        drawRect(
-            color,
-            topLeft = Offset(teethRightX, y),
-            size = Size(toothWidth, toothHeight)
-        )
-    }
-
-    // Tassel — слева от bowl
-    if (key.hasTassel) {
-        val tasselX = cx - bowlRadius * 1.3f
-        val tasselY = topY + bowlRadius * 0.6f
-        val tasselPath = Path().apply {
-            moveTo(tasselX, tasselY)
-            lineTo(tasselX - sizePx * 0.08f, tasselY + sizePx * 0.12f)
-            lineTo(tasselX + sizePx * 0.04f, tasselY + sizePx * 0.18f)
+        val y = teethBaseY - (i + 1) * (toothHeight + toothGap) + toothGap
+        val tooth = Path().apply {
+            moveTo(teethX, y)
+            lineTo(teethX + toothBase, y + toothHeight * 0.15f)
+            lineTo(teethX + toothBase * 0.7f, y + toothHeight)
+            lineTo(teethX, y + toothHeight * 0.85f)
             close()
         }
-        drawPath(tasselPath, color = Color(0xFFB22222))
+        drawPath(tooth, brush = Brush.horizontalGradient(listOf(light, dark),
+            startX = teethX, endX = teethX + toothBase))
+    }
+
+    // ─── Tassel — кисточка с бахромой ──────────────────────────────────────
+    if (key.hasTassel) {
+        val tasselTopX = cx - bowlRadius * 1.05f
+        val tasselTopY = topY + bowlRadius * 0.4f
+        val cordLen = sizePx * 0.10f
+        val cordEndX = tasselTopX - cordLen * 0.4f
+        val cordEndY = tasselTopY + cordLen
+        drawLine(Color(0xFFB8860B), start = Offset(tasselTopX, tasselTopY),
+            end = Offset(cordEndX, cordEndY), strokeWidth = sizePx * 0.015f)
+        // Корона кисточки — маленький эллипс
+        drawOval(Color(0xFF7B1818),
+            topLeft = Offset(cordEndX - sizePx * 0.035f, cordEndY - sizePx * 0.015f),
+            size = Size(sizePx * 0.07f, sizePx * 0.04f))
+        // Бахрома — 5 линий вниз
+        for (i in 0..4) {
+            val sx = cordEndX - sizePx * 0.03f + sizePx * 0.015f * i
+            drawLine(Color(0xFFCC1F1F),
+                start = Offset(sx, cordEndY + sizePx * 0.015f),
+                end = Offset(sx + sizePx * 0.005f, cordEndY + sizePx * 0.11f),
+                strokeWidth = sizePx * 0.012f)
+        }
+    }
+}
+
+private fun DrawScope.drawSparkles(centerX: Float, centerY: Float, radius: Float, intensity: Float) {
+    val points = listOf(
+        Offset(centerX - radius, centerY - radius * 0.5f),
+        Offset(centerX + radius * 0.9f, centerY - radius * 0.7f),
+        Offset(centerX - radius * 0.8f, centerY + radius * 0.6f),
+        Offset(centerX + radius * 0.7f, centerY + radius * 0.8f),
+        Offset(centerX, centerY - radius * 1.1f)
+    )
+    points.forEach { p ->
+        val r = radius * 0.08f * intensity
+        drawCircle(FairyGold.copy(alpha = 0.85f * intensity), radius = r, center = p)
+        drawLine(FairyGold.copy(alpha = 0.6f * intensity),
+            start = Offset(p.x - r * 2f, p.y), end = Offset(p.x + r * 2f, p.y),
+            strokeWidth = r * 0.6f)
+        drawLine(FairyGold.copy(alpha = 0.6f * intensity),
+            start = Offset(p.x, p.y - r * 2f), end = Offset(p.x, p.y + r * 2f),
+            strokeWidth = r * 0.6f)
     }
 }
 
@@ -194,10 +314,10 @@ fun GoldenKeyScreen(onBack: () -> Unit) {
 
     LaunchedEffect(seed, stage) {
         if (stage == Stage.MEMORIZE) {
-            while (memorizeLeft > 0) {
+            while (memorizeLeft > 0 && stage == Stage.MEMORIZE) {
                 delay(1000); memorizeLeft -= 1
             }
-            stage = Stage.CHOOSE
+            if (stage == Stage.MEMORIZE) stage = Stage.CHOOSE
         } else if (stage == Stage.CHOOSE) {
             while (chooseLeft > 0 && stage == Stage.CHOOSE) {
                 delay(1000); chooseLeft -= 1
@@ -206,84 +326,146 @@ fun GoldenKeyScreen(onBack: () -> Unit) {
         }
     }
 
-    Scaffold(
-        containerColor = Color(0xFF0D1735),
-        topBar = {
-            TopAppBar(
-                title = { Text("🔑 Золотой ключик", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Назад") }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                    titleContentColor = Color(0xFFFFB800),
-                    navigationIconContentColor = Color(0xFFFFB800)
-                )
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            when (stage) {
-                Stage.MEMORIZE -> MemorizeStage(correct, memorizeLeft)
-                Stage.CHOOSE -> ChooseStage(options, chooseLeft) { idx ->
-                    pickedIndex = idx
-                    stage = Stage.RESULT
-                }
-                Stage.RESULT -> ResultStage(
-                    correct = correct,
-                    options = options,
-                    pickedIndex = pickedIndex,
-                    onAgain = {
-                        seed = System.currentTimeMillis().toString()
-                        memorizeLeft = MEMORIZE_SECONDS
-                        chooseLeft = CHOOSE_SECONDS
-                        pickedIndex = -1
+    ScreenBackground(R.drawable.home_bg) {
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text("✦", color = FairyGold, fontSize = 12.sp)
+                            Text("Золотой ключик", fontWeight = FontWeight.Bold)
+                            Text("✦", color = FairyGold, fontSize = 12.sp)
+                        }
                     },
-                    onClose = onBack
+                    navigationIcon = {
+                        IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Назад") }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                        titleContentColor = Color.White,
+                        navigationIconContentColor = FairyGold
+                    )
                 )
+            }
+        ) { padding ->
+            Column(
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                BuratinoHeader(stage = stage, secondsLeft = when (stage) {
+                    Stage.MEMORIZE -> memorizeLeft
+                    Stage.CHOOSE -> chooseLeft
+                    Stage.RESULT -> 0
+                })
+
+                Spacer(Modifier.height(16.dp))
+
+                when (stage) {
+                    Stage.MEMORIZE -> MemorizeStage(
+                        key = correct,
+                        onReady = { stage = Stage.CHOOSE }
+                    )
+                    Stage.CHOOSE -> ChooseStage(options) { idx ->
+                        pickedIndex = idx
+                        stage = Stage.RESULT
+                    }
+                    Stage.RESULT -> ResultStage(
+                        correct = correct,
+                        options = options,
+                        pickedIndex = pickedIndex,
+                        onAgain = {
+                            seed = System.currentTimeMillis().toString()
+                            memorizeLeft = MEMORIZE_SECONDS
+                            chooseLeft = CHOOSE_SECONDS
+                            pickedIndex = -1
+                        },
+                        onClose = onBack
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun MemorizeStage(key: GoldenKey, secondsLeft: Int) {
-    Spacer(Modifier.height(12.dp))
-    Text(
-        "Запомни ключ — у тебя $secondsLeft сек",
-        color = Color.White, fontSize = 16.sp
-    )
-    Spacer(Modifier.height(24.dp))
-    KeyCard(key = key, selected = false, size = 220.dp)
-    Spacer(Modifier.height(12.dp))
-    Text(
-        "Цвет · форма · число зубчиков · узор стержня · кисточка",
-        color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp
-    )
+private fun BuratinoHeader(stage: Stage, secondsLeft: Int) {
+    val (label, ttl) = when (stage) {
+        Stage.MEMORIZE -> "Запомни мой ключ, друг" to "Осталось $secondsLeft сек"
+        Stage.CHOOSE -> "Найди его среди подделок" to "Осталось $secondsLeft сек"
+        Stage.RESULT -> "Ну как, узнал?" to ""
+    }
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Image(
+            painter = painterResource(R.drawable.beseda_buratino),
+            contentDescription = "Буратино",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(56.dp)
+                .clip(CircleShape)
+                .border(2.dp, FairyGold, CircleShape)
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text("Буратино", color = FairyGold,
+                fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text(label, color = Color.White, fontSize = 15.sp)
+            if (ttl.isNotEmpty()) {
+                Text(ttl, color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
+            }
+        }
+    }
 }
 
 @Composable
-private fun ChooseStage(options: List<GoldenKey>, secondsLeft: Int, onPick: (Int) -> Unit) {
-    Spacer(Modifier.height(12.dp))
-    Text(
-        "Выбери тот же ключ — $secondsLeft сек",
-        color = Color.White, fontSize = 16.sp
+private fun MemorizeStage(key: GoldenKey, onReady: () -> Unit) {
+    val infinite = rememberInfiniteTransition(label = "memorize-pulse")
+    val pulse by infinite.animateFloat(
+        initialValue = 0.96f, targetValue = 1.04f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1100, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulse"
     )
+    Spacer(Modifier.height(8.dp))
+    KeyShowcase(key = key, size = 240.dp, scale = pulse, sparkleIntensity = 0f)
     Spacer(Modifier.height(16.dp))
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        for (row in 0..1) {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                for (col in 0..1) {
-                    val idx = row * 2 + col
+    Text(
+        "5 признаков: форма · цвет · зубчики · узор · кисточка",
+        color = Color.White.copy(alpha = 0.65f), fontSize = 12.sp
+    )
+    Spacer(Modifier.height(20.dp))
+    Button(
+        onClick = onReady,
+        colors = ButtonDefaults.buttonColors(containerColor = FairyGold, contentColor = NightBlue)
+    ) {
+        Text("Запомнил", fontWeight = FontWeight.SemiBold)
+    }
+}
+
+@Composable
+private fun ChooseStage(options: List<GoldenKey>, onPick: (Int) -> Unit) {
+    Spacer(Modifier.height(4.dp))
+    val cols = 3
+    val cellSize = 100.dp
+    val gap = 8.dp
+    Column(verticalArrangement = Arrangement.spacedBy(gap)) {
+        options.chunked(cols).forEachIndexed { rowIdx, rowKeys ->
+            Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
+                rowKeys.forEachIndexed { colIdx, key ->
+                    val idx = rowIdx * cols + colIdx
                     KeyCard(
-                        key = options[idx],
-                        selected = false,
-                        size = 140.dp,
+                        key = key,
+                        highlight = false,
+                        size = cellSize,
                         onClick = { onPick(idx) }
                     )
                 }
@@ -302,30 +484,37 @@ private fun ResultStage(
 ) {
     val picked = options.getOrNull(pickedIndex)
     val win = picked == correct
-    Spacer(Modifier.height(20.dp))
+    Spacer(Modifier.height(8.dp))
     Text(
-        if (win) "🎉 Ключ узнан!" else if (picked == null) "⌛ Не успел" else "❌ Ошибся",
-        color = if (win) Color(0xFFFFD700) else Color(0xFFFF8A65),
-        fontSize = 22.sp, fontWeight = FontWeight.Bold
+        when {
+            win -> "🎉 Ключ узнан!"
+            picked == null -> "⌛ Не успел"
+            else -> "❌ Ошибся"
+        },
+        color = if (win) FairyGold else Color(0xFFFF8A65),
+        fontSize = 24.sp, fontWeight = FontWeight.Bold
     )
-    Spacer(Modifier.height(12.dp))
-    if (win) {
-        Text("Чуйка раскрыта: дельца можно вести в дело.",
-            color = Color.White.copy(alpha = 0.8f), fontSize = 13.sp)
-    } else {
-        Text("Без жетона. Можно посмотреть рекламу, чтобы пройти в обход.",
-            color = Color.White.copy(alpha = 0.65f), fontSize = 13.sp)
-    }
+    Spacer(Modifier.height(8.dp))
+    Text(
+        if (win) "Жетон Буратино пойман. Чуйка раскрыта."
+        else "Жетон не получен. Скоро тут — реклама в обмен на проход.",
+        color = Color.White.copy(alpha = 0.75f), fontSize = 13.sp
+    )
     Spacer(Modifier.height(20.dp))
     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("Эталон", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
-            KeyCard(key = correct, selected = true, size = 120.dp)
+            Text("Эталон", color = FairyGold, fontSize = 12.sp)
+            Spacer(Modifier.height(4.dp))
+            KeyCard(key = correct, highlight = true, size = 140.dp,
+                sparkleIntensity = if (win) 1f else 0f)
         }
         if (picked != null) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("Твой выбор", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
-                KeyCard(key = picked, selected = false, size = 120.dp)
+                Text("Твой выбор",
+                    color = if (win) FairyGold else Color(0xFFFF8A65), fontSize = 12.sp)
+                Spacer(Modifier.height(4.dp))
+                KeyCard(key = picked, highlight = win, size = 140.dp,
+                    sparkleIntensity = 0f)
             }
         }
     }
@@ -333,45 +522,66 @@ private fun ResultStage(
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Button(
             onClick = onAgain,
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFB800), contentColor = Color.Black)
-        ) { Text("Ещё раз") }
+            colors = ButtonDefaults.buttonColors(containerColor = FairyGold, contentColor = NightBlue)
+        ) { Text("Ещё раз", fontWeight = FontWeight.SemiBold) }
         OutlinedButton(onClick = onClose) { Text("Закрыть") }
+    }
+}
+
+@Composable
+private fun KeyShowcase(
+    key: GoldenKey,
+    size: androidx.compose.ui.unit.Dp,
+    scale: Float = 1f,
+    sparkleIntensity: Float = 0f
+) {
+    Box(
+        modifier = Modifier.size(size),
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize().scale(scale)) {
+            if (sparkleIntensity > 0f) {
+                drawSparkles(this.size.width / 2f, this.size.height / 2f,
+                    this.size.minDimension * 0.45f, sparkleIntensity)
+            }
+            drawKey(key, sizePx = this.size.minDimension * 0.78f)
+        }
     }
 }
 
 @Composable
 private fun KeyCard(
     key: GoldenKey,
-    selected: Boolean,
+    highlight: Boolean,
     size: androidx.compose.ui.unit.Dp,
+    sparkleIntensity: Float = 0f,
     onClick: (() -> Unit)? = null
 ) {
-    val border = if (selected) Color(0xFFFFD700) else Color.White.copy(alpha = 0.2f)
-    val bg = Color(0xFF2A1960)
-    val mod = Modifier
-        .size(size)
-        .clip(RoundedCornerShape(16.dp))
-        .background(bg)
-        .let { m ->
-            // border via stroke in Canvas — проще нарисовать в Canvas overlay
-            if (onClick != null) m.clickable { onClick() } else m
-        }
-    Box(modifier = mod, contentAlignment = Alignment.Center) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val px = this.size.minDimension
-            drawKey(key, sizePx = px * 0.75f)
-            drawRect(
-                color = border,
-                topLeft = Offset.Zero,
-                size = this.size,
-                style = Stroke(
-                    width = if (selected) 4.dp.toPx() else 2.dp.toPx(),
-                    pathEffect = if (selected) null else PathEffect.dashPathEffect(floatArrayOf(8f, 6f))
+    val borderColor = if (highlight) FairyGold else Color.White.copy(alpha = 0.18f)
+    val borderWidth = if (highlight) 3.dp else 1.dp
+    Box(
+        modifier = Modifier
+            .size(size)
+            .clip(RoundedCornerShape(20.dp))
+            .background(
+                Brush.verticalGradient(
+                    listOf(EnchantedPurple.copy(alpha = 0.85f), NightBlue.copy(alpha = 0.95f))
                 )
             )
+            .border(borderWidth, borderColor, RoundedCornerShape(20.dp))
+            .let { m -> if (onClick != null) m.clickable { onClick() } else m },
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            if (sparkleIntensity > 0f) {
+                drawSparkles(this.size.width / 2f, this.size.height / 2f,
+                    this.size.minDimension * 0.4f, sparkleIntensity)
+            }
+            drawKey(key, sizePx = this.size.minDimension * 0.72f)
         }
     }
 }
 
-private const val MEMORIZE_SECONDS = 10
-private const val CHOOSE_SECONDS = 10
+private const val MEMORIZE_SECONDS = 15
+private const val CHOOSE_SECONDS = 20
+private const val OPTIONS_COUNT = 9

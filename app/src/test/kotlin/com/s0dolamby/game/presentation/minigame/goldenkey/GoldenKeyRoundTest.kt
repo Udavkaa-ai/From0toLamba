@@ -7,11 +7,18 @@ import org.junit.Test
 class GoldenKeyRoundTest {
 
     @Test
-    fun `round has exactly 4 unique options including the correct key`() {
+    fun `default round has 9 unique options including the correct key`() {
         val (correct, options) = buildRound("seed-1")
-        assertEquals(4, options.size)
-        assertEquals(4, options.toSet().size)
+        assertEquals(9, options.size)
+        assertEquals(9, options.toSet().size)
         assertTrue("correct key must be among options", correct in options)
+    }
+
+    @Test
+    fun `custom optionCount honored`() {
+        val (_, options) = buildRound("seed-1", optionCount = 6)
+        assertEquals(6, options.size)
+        assertEquals(6, options.toSet().size)
     }
 
     @Test
