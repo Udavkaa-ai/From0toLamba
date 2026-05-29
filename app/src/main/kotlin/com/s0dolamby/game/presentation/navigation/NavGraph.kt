@@ -13,6 +13,7 @@ import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.s0dolamby.game.presentation.ama.AmaScreen
 import com.s0dolamby.game.presentation.home.HomeScreen
 import com.s0dolamby.game.presentation.inbox.InboxScreen
+import com.s0dolamby.game.presentation.minigame.goldenkey.GoldenKeyScreen
 import com.s0dolamby.game.presentation.news.NewsScreen
 import com.s0dolamby.game.presentation.onboarding.OnboardingScreen
 import com.s0dolamby.game.presentation.portfolio.PortfolioScreen
@@ -40,6 +41,7 @@ sealed class Screen(val route: String) {
     object Stats : Screen("stats")
     object PersonaRegistry : Screen("registry")
     object Settings : Screen("settings")
+    object GoldenKey : Screen("minigame/golden-key")
 }
 
 @HiltViewModel
@@ -143,8 +145,12 @@ fun NavGraph() {
                     navController.navigate(Screen.Onboarding.route) {
                         popUpTo(0) { inclusive = true }
                     }
-                }
+                },
+                onTryGoldenKey = { navController.navigate(Screen.GoldenKey.route) }
             )
+        }
+        composable(Screen.GoldenKey.route) {
+            GoldenKeyScreen(onBack = { navController.popBackStack() })
         }
     }
 }

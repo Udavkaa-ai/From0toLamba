@@ -25,6 +25,7 @@ import com.s0dolamby.game.presentation.common.theme.FairyGold
 fun SettingsScreen(
     onBack: () -> Unit,
     onResetDone: () -> Unit,
+    onTryGoldenKey: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -142,6 +143,33 @@ fun SettingsScreen(
                                 checkedTrackColor = FairyGold.copy(alpha = 0.4f)
                             )
                         )
+                    }
+                }
+
+                OrnamentDivider()
+
+                // ── Мини-игры (бета) ───────────────────────────────────
+                FairyCard(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        "Мини-игры (бета)",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = FairyGold,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "Пока в стороне от инвест-цикла. Скоро будут условием входа в дело.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.65f)
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedButton(
+                        onClick = onTryGoldenKey,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f))
+                    ) {
+                        Text("🔑 Золотой ключик (BURATINO)", fontWeight = FontWeight.SemiBold)
                     }
                 }
 
