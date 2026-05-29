@@ -38,9 +38,19 @@ android {
     }
 
     buildTypes {
+        debug {
+            // CI собирает debug-APK, релиз в Play подписан другим ключом —
+            // без суффикса Android не даёт обновить (конфликт подписей).
+            // С суффиксом debug-сборка ставится рядом как отдельное приложение.
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+            resValue("string", "app_name_override", "Из грязи в князи (debug)")
+            manifestPlaceholders["appLabel"] = "@string/app_name_override"
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            manifestPlaceholders["appLabel"] = "@string/app_name"
         }
     }
 
