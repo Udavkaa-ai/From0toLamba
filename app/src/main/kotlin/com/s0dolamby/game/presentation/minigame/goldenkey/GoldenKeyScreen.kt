@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -352,13 +353,22 @@ private fun MemorizeStage(key: GoldenKey, onReady: () -> Unit) {
         ),
         label = "pulse"
     )
+    val etalonRotation by infinite.animateFloat(
+        initialValue = 0f, targetValue = 360f,
+        animationSpec = infiniteRepeatable(tween(7000, easing = LinearEasing)),
+        label = "etalonRotation"
+    )
     Text(
         "Запомни эталонный ключ",
         color = Color.White.copy(alpha = 0.85f), fontSize = 14.sp
     )
     Spacer(Modifier.height(16.dp))
     Box(modifier = Modifier.size(220.dp), contentAlignment = Alignment.Center) {
-        Canvas(modifier = Modifier.fillMaxSize().scale(pulse)) {
+        Canvas(modifier = Modifier
+            .fillMaxSize()
+            .scale(pulse)
+            .graphicsLayer { rotationZ = etalonRotation }
+        ) {
             drawSparkleHalo(
                 center = Offset(this.size.width / 2f, this.size.height / 2f),
                 radius = this.size.minDimension * 0.45f,
@@ -386,6 +396,12 @@ private fun MemorizeStage(key: GoldenKey, onReady: () -> Unit) {
 
 @Composable
 private fun ChooseStage(options: List<GoldenKey>, onPick: (Int) -> Unit) {
+    val infinite = rememberInfiniteTransition(label = "key-rotate")
+    val rotation by infinite.animateFloat(
+        initialValue = 0f, targetValue = 360f,
+        animationSpec = infiniteRepeatable(tween(5500, easing = LinearEasing)),
+        label = "rotation"
+    )
     Text(
         "Найди тот же среди ${options.size} ключей",
         color = Color.White.copy(alpha = 0.85f), fontSize = 14.sp
@@ -399,7 +415,16 @@ private fun ChooseStage(options: List<GoldenKey>, onPick: (Int) -> Unit) {
             Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
                 rowKeys.forEachIndexed { colIdx, key ->
                     val idx = rowIdx * cols + colIdx
-                    KeyCard(key = key, highlight = false, size = cellSize, onClick = { onPick(idx) })
+                    // Каждый ключ — со своей фазой вращения, чтобы они не крутились синхронно
+                    val phaseOffset = (idx * 47f) % 360f
+                    val effectiveRotation = (rotation + phaseOffset) % 360f
+                    KeyCard(
+                        key = key,
+                        highlight = false,
+                        size = cellSize,
+                        rotationDeg = effectiveRotation,
+                        onClick = { onPick(idx) }
+                    )
                 }
             }
         }
@@ -433,6 +458,7 @@ private fun KeyCard(
     key: GoldenKey,
     highlight: Boolean,
     size: androidx.compose.ui.unit.Dp,
+    rotationDeg: Float = 0f,
     onClick: (() -> Unit)? = null
 ) {
     val borderColor = if (highlight) FairyGold else Color.White.copy(alpha = 0.18f)
@@ -450,7 +476,10 @@ private fun KeyCard(
             .let { m -> if (onClick != null) m.clickable { onClick() } else m },
         contentAlignment = Alignment.Center
     ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
+        Canvas(modifier = Modifier
+            .fillMaxSize()
+            .graphicsLayer { rotationZ = rotationDeg }
+        ) {
             drawKey(key, sizePx = this.size.minDimension * 0.72f)
         }
     }

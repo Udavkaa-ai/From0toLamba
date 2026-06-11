@@ -29,6 +29,7 @@ fun SettingsScreen(
     onTryKoscheiMemory: () -> Unit = {},
     onTryKolobokNora: () -> Unit = {},
     onTryZolushkaCoins: () -> Unit = {},
+    onTryBabaYagaCauldron: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -181,7 +182,7 @@ fun SettingsScreen(
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
                         border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f))
                     ) {
-                        Text("❄ Память Кощея · Кощей", fontWeight = FontWeight.SemiBold)
+                        Text("⛓ Цепь Кощея · Кощей", fontWeight = FontWeight.SemiBold)
                     }
                     Spacer(Modifier.height(6.dp))
                     OutlinedButton(
@@ -199,7 +200,16 @@ fun SettingsScreen(
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
                         border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f))
                     ) {
-                        Text("🪙 Падающие монеты · Золушка", fontWeight = FontWeight.SemiBold)
+                        Text("🌾 Перебери зерно · Золушка", fontWeight = FontWeight.SemiBold)
+                    }
+                    Spacer(Modifier.height(6.dp))
+                    OutlinedButton(
+                        onClick = onTryBabaYagaCauldron,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f))
+                    ) {
+                        Text("🧪 Котёл · Баба-Яга", fontWeight = FontWeight.SemiBold)
                     }
                 }
 

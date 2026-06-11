@@ -1,5 +1,6 @@
 package com.s0dolamby.game.presentation.minigame.koschei
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -15,8 +16,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -28,110 +32,117 @@ import com.s0dolamby.game.presentation.minigame.common.MinigameShell
 import com.s0dolamby.game.presentation.minigame.common.MinigameStage
 import com.s0dolamby.game.presentation.minigame.common.drawSparkleHalo
 import kotlinx.coroutines.delay
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlin.random.Random
 
-// ─── модель «руны» Кощея ─────────────────────────────────────────────────────
+// ─── элементы цепочки Кощея ─────────────────────────────────────────────
 
-private enum class Rune(
-    val baseColor: Color,
-    val glowColor: Color,
-    val label: String
-) {
-    ICE(Color(0xFF26C6DA), Color(0xFF80DEEA), "лёд"),
-    BONE(Color(0xFFCFD8DC), Color(0xFFFFFFFF), "кость"),
-    MORN(Color(0xFFAB47BC), Color(0xFFCE93D8), "ночь"),
-    MIST(Color(0xFF66BB6A), Color(0xFFA5D6A7), "туман")
+private enum class KoscheiKind(val label: String, val color: Color) {
+    OAK("Дуб", Color(0xFF8BC34A)),
+    CHEST("Ларец", Color(0xFFFFB300)),
+    HARE("Заяц", Color(0xFFE0E0E0)),
+    DUCK("Утка", Color(0xFFFFE082)),
+    EGG("Яйцо", Color(0xFFFFF8E1)),
+    NEEDLE("Игла", Color(0xFFCFD8DC))
 }
 
-private val ALL_RUNES = Rune.values().toList()
+private data class Card(
+    val id: Int,
+    val kind: KoscheiKind,
+    var isFaceUp: Boolean = false,
+    var isMatched: Boolean = false
+)
 
-private enum class Phase { SHOWCASE, INPUT, FINAL_ROUND }
+private const val GRID_ROWS = 4
+private const val GRID_COLS = 3
+private const val PAIR_COUNT = (GRID_ROWS * GRID_COLS) / 2
+private const val MISMATCH_HIDE_MS = 950L
+private const val TIME_BUDGET_S = 60
 
 @Composable
 fun KoscheiMemoryScreen(onBack: () -> Unit) {
     var seed by remember { mutableStateOf(System.currentTimeMillis()) }
-    var round by remember(seed) { mutableStateOf(1) }
-    var sequence by remember(seed) { mutableStateOf(generateSequence(round, seed)) }
-    var phase by remember(seed) { mutableStateOf(Phase.SHOWCASE) }
-    var litRune by remember(seed) { mutableStateOf<Rune?>(null) }
-    var playerInput by remember(seed) { mutableStateOf(emptyList<Rune>()) }
+    val cards = remember(seed) { mutableStateListOf<Card>().apply { addAll(buildDeck(seed)) } }
+    var firstFlippedIdx by remember(seed) { mutableStateOf<Int?>(null) }
+    var secondFlippedIdx by remember(seed) { mutableStateOf<Int?>(null) }
+    var lockTaps by remember(seed) { mutableStateOf(false) }
+    var attempts by remember(seed) { mutableStateOf(0) }
     var errors by remember(seed) { mutableStateOf(0) }
-    var stage by remember(seed) { mutableStateOf(MinigameStage.MEMORIZE) }
-    var secondsLeft by remember(seed) { mutableStateOf(0) }
-    var timedOut by remember(seed) { mutableStateOf(false) }
+    var pairsFound by remember(seed) { mutableStateOf(0) }
+    var stage by remember(seed) { mutableStateOf(MinigameStage.PLAY) }
+    var secondsLeft by remember(seed) { mutableStateOf(TIME_BUDGET_S) }
 
-    // SHOWCASE: воспроизвести подсветку каждой руны в последовательности
-    LaunchedEffect(seed, round, phase) {
-        if (phase == Phase.SHOWCASE) {
-            stage = MinigameStage.MEMORIZE
-            secondsLeft = sequence.size + 2
-            delay(700) // пауза перед первой вспышкой
-            sequence.forEach { rune ->
-                litRune = rune
-                delay(SHOWCASE_LIT_MS)
-                litRune = null
-                delay(SHOWCASE_GAP_MS)
-            }
-            // переход к вводу
-            phase = Phase.INPUT
-            stage = MinigameStage.PLAY
-            secondsLeft = INPUT_SECONDS
-            playerInput = emptyList()
+    LaunchedEffect(seed) {
+        while (secondsLeft > 0 && stage == MinigameStage.PLAY) {
+            delay(1000)
+            secondsLeft -= 1
+        }
+        if (stage == MinigameStage.PLAY && secondsLeft == 0) {
+            stage = MinigameStage.RESULT
         }
     }
 
-    // INPUT: обратный отсчёт секунд
-    LaunchedEffect(seed, phase, round) {
-        if (phase == Phase.INPUT) {
-            while (secondsLeft > 0 && phase == Phase.INPUT) {
-                delay(1000); secondsLeft -= 1
+    // Обработка пары: после двух flip — пауза, оценка
+    LaunchedEffect(secondFlippedIdx) {
+        val first = firstFlippedIdx
+        val second = secondFlippedIdx
+        if (first != null && second != null) {
+            lockTaps = true
+            val match = cards[first].kind == cards[second].kind
+            if (match) {
+                delay(450)
+                cards[first] = cards[first].copy(isMatched = true)
+                cards[second] = cards[second].copy(isMatched = true)
+                pairsFound += 1
+                if (pairsFound == PAIR_COUNT) {
+                    stage = MinigameStage.RESULT
+                }
+            } else {
+                errors += 1
+                delay(MISMATCH_HIDE_MS)
+                cards[first] = cards[first].copy(isFaceUp = false)
+                cards[second] = cards[second].copy(isFaceUp = false)
             }
-            if (phase == Phase.INPUT && stage == MinigameStage.PLAY) {
-                timedOut = true
-                stage = MinigameStage.RESULT
-            }
+            attempts += 1
+            firstFlippedIdx = null
+            secondFlippedIdx = null
+            lockTaps = false
         }
     }
 
     val outcome: MinigameOutcome? = if (stage == MinigameStage.RESULT) {
-        MinigameOutcome(errorCount = errors + (if (timedOut) 2 else 0), timeoutReached = timedOut)
+        val timeout = pairsFound < PAIR_COUNT
+        MinigameOutcome(errorCount = errors, timeoutReached = timeout)
     } else null
 
-    fun handleTap(rune: Rune) {
-        if (phase != Phase.INPUT) return
-        val expected = sequence.getOrNull(playerInput.size) ?: return
-        val newInput = playerInput + rune
-        playerInput = newInput
-        if (rune != expected) {
-            errors += 1
-        }
-        if (newInput.size == sequence.size) {
-            // Раунд закончен
-            if (round >= TOTAL_ROUNDS) {
-                stage = MinigameStage.RESULT
-            } else {
-                round += 1
-                sequence = generateSequence(round, seed + round)
-                phase = Phase.SHOWCASE
-            }
-        }
+    fun handleTap(idx: Int) {
+        if (lockTaps) return
+        if (stage != MinigameStage.PLAY) return
+        val card = cards.getOrNull(idx) ?: return
+        if (card.isFaceUp || card.isMatched) return
+        cards[idx] = card.copy(isFaceUp = true)
+        if (firstFlippedIdx == null) firstFlippedIdx = idx
+        else if (secondFlippedIdx == null) secondFlippedIdx = idx
     }
 
     fun restart() {
         seed = System.currentTimeMillis()
-        round = 1
-        sequence = generateSequence(round, seed)
-        phase = Phase.SHOWCASE
-        playerInput = emptyList()
+        cards.clear()
+        cards.addAll(buildDeck(seed))
+        firstFlippedIdx = null
+        secondFlippedIdx = null
+        lockTaps = false
+        attempts = 0
         errors = 0
-        litRune = null
-        timedOut = false
-        stage = MinigameStage.MEMORIZE
+        pairsFound = 0
+        stage = MinigameStage.PLAY
+        secondsLeft = TIME_BUDGET_S
     }
 
     MinigameShell(
         archetype = PersonaArchetype.KOSCHEI,
-        gameTitle = "Память Кощея",
+        gameTitle = "Цепь Кощея",
         stage = stage,
         secondsLeft = if (stage == MinigameStage.RESULT) null else secondsLeft.coerceAtLeast(0),
         outcome = outcome,
@@ -139,28 +150,21 @@ fun KoscheiMemoryScreen(onBack: () -> Unit) {
         onAgain = { restart() },
         onClose = onBack
     ) {
-        if (stage == MinigameStage.MEMORIZE || stage == MinigameStage.PLAY) {
-            RoundCounter(round = round, total = TOTAL_ROUNDS, sequenceSize = sequence.size,
-                input = playerInput.size, phase = phase)
-            Spacer(Modifier.height(16.dp))
-            RuneGrid(litRune = litRune, enabled = phase == Phase.INPUT, onTap = ::handleTap)
+        if (stage == MinigameStage.PLAY) {
+            ScoreLine(pairsFound, attempts, errors)
+            Spacer(Modifier.height(14.dp))
+            CardGrid(cards = cards, onTap = ::handleTap)
             Spacer(Modifier.height(10.dp))
-            ProgressBar(
-                color = ArchetypePalette[PersonaArchetype.KOSCHEI].primary,
-                size = sequence.size,
-                inputSize = playerInput.size,
-                expected = sequence,
-                input = playerInput
-            )
+            ChainHint()
         }
         if (stage == MinigameStage.RESULT) {
             Spacer(Modifier.height(20.dp))
             Text(
-                "Раундов сыграно: $round / $TOTAL_ROUNDS",
-                color = Color.White.copy(alpha = 0.7f), fontSize = 13.sp
+                "Собрано пар: $pairsFound из $PAIR_COUNT",
+                color = Color.White, fontSize = 14.sp
             )
             Text(
-                "Ошибок: $errors",
+                "Промахов: $errors",
                 color = Color.White.copy(alpha = 0.7f), fontSize = 13.sp
             )
         }
@@ -168,181 +172,357 @@ fun KoscheiMemoryScreen(onBack: () -> Unit) {
 }
 
 @Composable
-private fun RoundCounter(round: Int, total: Int, sequenceSize: Int, input: Int, phase: Phase) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+private fun ScoreLine(pairsFound: Int, attempts: Int, errors: Int) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
         Text(
-            "Раунд $round из $total",
+            "Пар: $pairsFound / $PAIR_COUNT",
             color = ArchetypePalette[PersonaArchetype.KOSCHEI].primary,
             fontSize = 13.sp, fontWeight = FontWeight.SemiBold
         )
-        Spacer(Modifier.height(4.dp))
-        val text = when (phase) {
-            Phase.SHOWCASE -> "Запоминай · $sequenceSize рун"
-            Phase.INPUT -> "Повтори ($input / $sequenceSize)"
-            Phase.FINAL_ROUND -> ""
-        }
-        Text(text, color = Color.White.copy(alpha = 0.75f), fontSize = 13.sp)
-    }
-}
-
-@Composable
-private fun RuneGrid(litRune: Rune?, enabled: Boolean, onTap: (Rune) -> Unit) {
-    val infinite = rememberInfiniteTransition(label = "rune-glow")
-    val glow by infinite.animateFloat(
-        initialValue = 0.7f, targetValue = 1.0f,
-        animationSpec = infiniteRepeatable(
-            tween(700, easing = LinearEasing), repeatMode = RepeatMode.Reverse
-        ),
-        label = "glow"
-    )
-
-    Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            RuneTile(Rune.ICE, lit = litRune == Rune.ICE, enabled = enabled,
-                glow = if (litRune == Rune.ICE) glow else 0f, onTap = onTap)
-            RuneTile(Rune.BONE, lit = litRune == Rune.BONE, enabled = enabled,
-                glow = if (litRune == Rune.BONE) glow else 0f, onTap = onTap)
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            RuneTile(Rune.MIST, lit = litRune == Rune.MIST, enabled = enabled,
-                glow = if (litRune == Rune.MIST) glow else 0f, onTap = onTap)
-            RuneTile(Rune.MORN, lit = litRune == Rune.MORN, enabled = enabled,
-                glow = if (litRune == Rune.MORN) glow else 0f, onTap = onTap)
-        }
-    }
-}
-
-@Composable
-private fun RuneTile(
-    rune: Rune,
-    lit: Boolean,
-    enabled: Boolean,
-    glow: Float,
-    onTap: (Rune) -> Unit
-) {
-    val tap = remember { Animatable(1f) }
-    LaunchedEffect(lit) {
-        if (lit) {
-            tap.snapTo(0.92f)
-            tap.animateTo(1f, animationSpec = tween(220))
-        }
-    }
-    val scale = tap.value * (if (lit) 1.05f else 1f)
-    val alpha = if (lit) 1f else 0.6f
-
-    Box(
-        modifier = Modifier
-            .size(110.dp)
-            .scale(scale)
-            .shadow(if (lit) 16.dp else 4.dp, RoundedCornerShape(24.dp))
-            .clip(RoundedCornerShape(24.dp))
-            .background(
-                Brush.radialGradient(
-                    colors = if (lit) listOf(rune.glowColor, rune.baseColor)
-                    else listOf(rune.baseColor.copy(alpha = 0.55f), rune.baseColor.copy(alpha = 0.85f))
-                )
-            )
-            .border(
-                width = if (lit) 3.dp else 1.dp,
-                color = if (lit) rune.glowColor else Color.White.copy(alpha = 0.12f),
-                shape = RoundedCornerShape(24.dp)
-            )
-            .let { if (enabled) it.clickable { onTap(rune) } else it },
-        contentAlignment = Alignment.Center
-    ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            // Декоративная руна — символ-узор
-            val sz = this.size.minDimension
-            val center = Offset(this.size.width / 2f, this.size.height / 2f)
-            if (lit) {
-                drawSparkleHalo(
-                    center = center,
-                    radius = sz * 0.45f,
-                    count = 4,
-                    sparkleSize = 7f,
-                    color = rune.glowColor,
-                    intensity = glow
-                )
-            }
-            // Внутренний орнамент-руна
-            val pad = sz * 0.25f
-            drawCircle(
-                color = if (lit) Color.White.copy(alpha = 0.4f * alpha)
-                else rune.baseColor.copy(alpha = 0.3f),
-                radius = sz * 0.22f,
-                center = center,
-                style = Stroke(width = 2f)
-            )
-            drawCircle(
-                color = if (lit) Color.White.copy(alpha = 0.6f) else rune.baseColor.copy(alpha = 0.6f),
-                radius = sz * 0.06f,
-                center = center
-            )
-            // 4 точки по сторонам
-            val r = sz * 0.32f
-            val dotColor = if (lit) Color.White.copy(alpha = 0.85f) else rune.baseColor.copy(alpha = 0.4f)
-            listOf(
-                Offset(center.x, center.y - r),
-                Offset(center.x + r, center.y),
-                Offset(center.x, center.y + r),
-                Offset(center.x - r, center.y)
-            ).forEach { drawCircle(dotColor, radius = sz * 0.025f, center = it) }
-        }
         Text(
-            rune.label,
-            color = if (lit) Color.White else Color.White.copy(alpha = 0.55f),
-            fontSize = 11.sp,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(bottom = 8.dp).align(Alignment.BottomCenter)
+            "Промахов: $errors",
+            color = Color.White.copy(alpha = 0.6f),
+            fontSize = 12.sp
         )
     }
 }
 
 @Composable
-private fun ProgressBar(
-    color: Color,
-    size: Int,
-    inputSize: Int,
-    expected: List<Rune>,
-    input: List<Rune>
-) {
-    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        for (i in 0 until size) {
-            val state = when {
-                i >= input.size -> 0  // ещё не введено
-                input[i] == expected[i] -> 1  // верно
-                else -> 2  // ошибка
-            }
-            val c = when (state) {
-                1 -> color
-                2 -> Color(0xFFFF6E5C)
-                else -> Color.White.copy(alpha = 0.18f)
-            }
-            Box(
-                modifier = Modifier
-                    .height(6.dp)
-                    .width(28.dp)
-                    .clip(RoundedCornerShape(3.dp))
-                    .background(c)
+private fun ChainHint() {
+    val labels = listOf("Дуб", "Ларец", "Заяц", "Утка", "Яйцо", "Игла")
+    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        labels.forEachIndexed { idx, label ->
+            Text(
+                label,
+                color = Color.White.copy(alpha = 0.45f),
+                fontSize = 10.sp
             )
+            if (idx < labels.size - 1) {
+                Text(
+                    "→",
+                    color = ArchetypePalette[PersonaArchetype.KOSCHEI].primary.copy(alpha = 0.6f),
+                    fontSize = 10.sp
+                )
+            }
         }
     }
 }
 
-// ─── логика ──────────────────────────────────────────────────────────────────
-
-private fun generateSequence(round: Int, seed: Long): List<Rune> {
-    val rng = Random(seed + round * 17L)
-    val length = SEQUENCE_LEN_BASE + (round - 1) * SEQUENCE_LEN_STEP
-    return List(length) { ALL_RUNES[rng.nextInt(ALL_RUNES.size)] }
+@Composable
+private fun CardGrid(cards: List<Card>, onTap: (Int) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        for (row in 0 until GRID_ROWS) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                for (col in 0 until GRID_COLS) {
+                    val idx = row * GRID_COLS + col
+                    val card = cards[idx]
+                    CardView(card = card, onClick = { onTap(idx) })
+                }
+            }
+        }
+    }
 }
 
-private const val TOTAL_ROUNDS = 3
-private const val SEQUENCE_LEN_BASE = 3
-private const val SEQUENCE_LEN_STEP = 2
-private const val SHOWCASE_LIT_MS = 600L
-private const val SHOWCASE_GAP_MS = 250L
-private const val INPUT_SECONDS = 12
+@Composable
+private fun CardView(card: Card, onClick: () -> Unit) {
+    val matchedScale = remember(card.isMatched) { Animatable(if (card.isMatched) 1.05f else 1f) }
+    LaunchedEffect(card.isMatched) {
+        if (card.isMatched) {
+            matchedScale.animateTo(1.10f, tween(180))
+            matchedScale.animateTo(1f, tween(220))
+        }
+    }
+    Box(
+        modifier = Modifier
+            .size(width = 96.dp, height = 116.dp)
+            .scale(matchedScale.value)
+            .shadow(if (card.isFaceUp) 8.dp else 4.dp, RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(14.dp))
+            .clickable { onClick() }
+    ) {
+        Crossfade(targetState = card.isFaceUp, animationSpec = tween(200), label = "card-flip") { faceUp ->
+            if (faceUp) {
+                CardFace(card)
+            } else {
+                CardBack()
+            }
+        }
+    }
+}
+
+@Composable
+private fun CardFace(card: Card) {
+    val borderColor = if (card.isMatched) ArchetypePalette[PersonaArchetype.KOSCHEI].primary
+    else Color.White.copy(alpha = 0.25f)
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color(0xFF1A2030), Color(0xFF0B121F))
+                )
+            )
+            .border(if (card.isMatched) 2.5.dp else 1.dp, borderColor, RoundedCornerShape(14.dp)),
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize().padding(8.dp)) {
+            val sz = this.size.minDimension
+            val center = Offset(this.size.width / 2f, this.size.height / 2f - sz * 0.08f)
+            if (card.isMatched) {
+                drawSparkleHalo(
+                    center = center,
+                    radius = sz * 0.40f,
+                    count = 4,
+                    sparkleSize = 5f,
+                    color = ArchetypePalette[PersonaArchetype.KOSCHEI].primary,
+                    intensity = 0.65f
+                )
+            }
+            drawKoscheiKind(card.kind, center, sz * 0.4f)
+        }
+        Text(
+            card.kind.label,
+            color = if (card.isMatched) ArchetypePalette[PersonaArchetype.KOSCHEI].primary
+            else Color.White.copy(alpha = 0.75f),
+            fontSize = 10.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 6.dp)
+        )
+    }
+}
+
+@Composable
+private fun CardBack() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color(0xFF2A1840), Color(0xFF0F0A1E))
+                )
+            )
+            .border(1.dp, Color(0xFF80DEEA).copy(alpha = 0.35f), RoundedCornerShape(14.dp))
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val w = this.size.width
+            val h = this.size.height
+            val center = Offset(w / 2f, h / 2f)
+            val ice = Color(0xFF80DEEA).copy(alpha = 0.45f)
+            // Снежинка: 6 лучей
+            for (i in 0 until 6) {
+                val a = Math.PI * 2 * i / 6
+                val r = w * 0.30f
+                val end = Offset(
+                    center.x + (r * cos(a)).toFloat(),
+                    center.y + (r * sin(a)).toFloat()
+                )
+                drawLine(ice, start = center, end = end, strokeWidth = 1.5f)
+                // боковые лучики
+                val mid = Offset(
+                    center.x + (r * 0.6f * cos(a)).toFloat(),
+                    center.y + (r * 0.6f * sin(a)).toFloat()
+                )
+                val side1 = Offset(
+                    mid.x + (r * 0.18f * cos(a + Math.PI / 4)).toFloat(),
+                    mid.y + (r * 0.18f * sin(a + Math.PI / 4)).toFloat()
+                )
+                val side2 = Offset(
+                    mid.x + (r * 0.18f * cos(a - Math.PI / 4)).toFloat(),
+                    mid.y + (r * 0.18f * sin(a - Math.PI / 4)).toFloat()
+                )
+                drawLine(ice, start = mid, end = side1, strokeWidth = 1f)
+                drawLine(ice, start = mid, end = side2, strokeWidth = 1f)
+            }
+            drawCircle(Color(0xFFCFD8DC).copy(alpha = 0.8f), radius = w * 0.04f, center = center)
+        }
+    }
+}
+
+// ─── рисование иконок цепочки ──────────────────────────────────────────
+
+private fun DrawScope.drawKoscheiKind(kind: KoscheiKind, center: Offset, sizePx: Float) {
+    when (kind) {
+        KoscheiKind.OAK -> drawOak(center, sizePx)
+        KoscheiKind.CHEST -> drawChest(center, sizePx)
+        KoscheiKind.HARE -> drawHare(center, sizePx)
+        KoscheiKind.DUCK -> drawDuck(center, sizePx)
+        KoscheiKind.EGG -> drawEgg(center, sizePx)
+        KoscheiKind.NEEDLE -> drawNeedle(center, sizePx)
+    }
+}
+
+private fun DrawScope.drawOak(center: Offset, sizePx: Float) {
+    // Ствол
+    drawRect(
+        Color(0xFF6D4C41),
+        topLeft = Offset(center.x - sizePx * 0.08f, center.y + sizePx * 0.05f),
+        size = Size(sizePx * 0.16f, sizePx * 0.45f)
+    )
+    // Крона — три круга
+    val green = Color(0xFF7CB342)
+    val greenDark = Color(0xFF4E7A22)
+    drawCircle(green, radius = sizePx * 0.30f, center = Offset(center.x, center.y - sizePx * 0.10f))
+    drawCircle(greenDark, radius = sizePx * 0.22f, center = Offset(center.x - sizePx * 0.18f, center.y))
+    drawCircle(greenDark, radius = sizePx * 0.22f, center = Offset(center.x + sizePx * 0.18f, center.y))
+    // Жёлуди
+    drawCircle(Color(0xFF8B4513), radius = sizePx * 0.04f, center = Offset(center.x - sizePx * 0.10f, center.y + sizePx * 0.05f))
+    drawCircle(Color(0xFF8B4513), radius = sizePx * 0.04f, center = Offset(center.x + sizePx * 0.05f, center.y + sizePx * 0.10f))
+}
+
+private fun DrawScope.drawChest(center: Offset, sizePx: Float) {
+    // Низ ларца
+    drawRect(
+        Color(0xFF8D6E63),
+        topLeft = Offset(center.x - sizePx * 0.35f, center.y - sizePx * 0.10f),
+        size = Size(sizePx * 0.70f, sizePx * 0.40f)
+    )
+    // Крышка (арка)
+    val lid = Path().apply {
+        moveTo(center.x - sizePx * 0.35f, center.y - sizePx * 0.10f)
+        quadraticBezierTo(center.x, center.y - sizePx * 0.45f, center.x + sizePx * 0.35f, center.y - sizePx * 0.10f)
+        close()
+    }
+    drawPath(lid, color = Color(0xFFA1887F))
+    // Замок
+    drawRect(
+        Color(0xFFFFB300),
+        topLeft = Offset(center.x - sizePx * 0.06f, center.y - sizePx * 0.12f),
+        size = Size(sizePx * 0.12f, sizePx * 0.18f)
+    )
+    drawCircle(Color(0xFFFFE082), radius = sizePx * 0.025f, center = Offset(center.x, center.y - sizePx * 0.04f))
+    // Скрепы
+    drawLine(Color(0xFF5D4037),
+        start = Offset(center.x - sizePx * 0.35f, center.y + sizePx * 0.06f),
+        end = Offset(center.x + sizePx * 0.35f, center.y + sizePx * 0.06f),
+        strokeWidth = sizePx * 0.02f)
+}
+
+private fun DrawScope.drawHare(center: Offset, sizePx: Float) {
+    val grey = Color(0xFFE0E0E0)
+    val darkGrey = Color(0xFFBDBDBD)
+    // Уши — два длинных овала
+    drawOval(grey,
+        topLeft = Offset(center.x - sizePx * 0.20f, center.y - sizePx * 0.55f),
+        size = Size(sizePx * 0.10f, sizePx * 0.40f))
+    drawOval(grey,
+        topLeft = Offset(center.x + sizePx * 0.10f, center.y - sizePx * 0.55f),
+        size = Size(sizePx * 0.10f, sizePx * 0.40f))
+    drawOval(Color(0xFFFFCDD2).copy(alpha = 0.7f),
+        topLeft = Offset(center.x - sizePx * 0.17f, center.y - sizePx * 0.48f),
+        size = Size(sizePx * 0.05f, sizePx * 0.25f))
+    drawOval(Color(0xFFFFCDD2).copy(alpha = 0.7f),
+        topLeft = Offset(center.x + sizePx * 0.12f, center.y - sizePx * 0.48f),
+        size = Size(sizePx * 0.05f, sizePx * 0.25f))
+    // Голова
+    drawCircle(grey, radius = sizePx * 0.25f, center = Offset(center.x, center.y - sizePx * 0.05f))
+    // Тело
+    drawOval(darkGrey,
+        topLeft = Offset(center.x - sizePx * 0.27f, center.y + sizePx * 0.10f),
+        size = Size(sizePx * 0.54f, sizePx * 0.40f))
+    // Глаза
+    drawCircle(Color.Black, radius = sizePx * 0.04f, center = Offset(center.x - sizePx * 0.08f, center.y - sizePx * 0.05f))
+    drawCircle(Color.Black, radius = sizePx * 0.04f, center = Offset(center.x + sizePx * 0.08f, center.y - sizePx * 0.05f))
+    // Нос
+    drawCircle(Color(0xFFEC407A), radius = sizePx * 0.025f, center = Offset(center.x, center.y + sizePx * 0.05f))
+}
+
+private fun DrawScope.drawDuck(center: Offset, sizePx: Float) {
+    val yellow = Color(0xFFFFE082)
+    val yellowDark = Color(0xFFFFC107)
+    // Тело — крупный овал
+    drawOval(yellow,
+        topLeft = Offset(center.x - sizePx * 0.35f, center.y - sizePx * 0.05f),
+        size = Size(sizePx * 0.70f, sizePx * 0.50f))
+    // Голова — круг
+    drawCircle(yellow, radius = sizePx * 0.22f, center = Offset(center.x - sizePx * 0.25f, center.y - sizePx * 0.15f))
+    // Клюв — оранжевый треугольник
+    val beak = Path().apply {
+        moveTo(center.x - sizePx * 0.42f, center.y - sizePx * 0.15f)
+        lineTo(center.x - sizePx * 0.62f, center.y - sizePx * 0.12f)
+        lineTo(center.x - sizePx * 0.42f, center.y - sizePx * 0.05f)
+        close()
+    }
+    drawPath(beak, color = Color(0xFFFF8F00))
+    // Глаз
+    drawCircle(Color.Black, radius = sizePx * 0.035f, center = Offset(center.x - sizePx * 0.30f, center.y - sizePx * 0.18f))
+    // Крыло
+    drawOval(yellowDark,
+        topLeft = Offset(center.x - sizePx * 0.10f, center.y + sizePx * 0.05f),
+        size = Size(sizePx * 0.30f, sizePx * 0.18f))
+}
+
+private fun DrawScope.drawEgg(center: Offset, sizePx: Float) {
+    val cream = Color(0xFFFFF8E1)
+    val creamDark = Color(0xFFEAD9A8)
+    // Тело яйца — асимметричный овал
+    drawOval(
+        Brush.radialGradient(
+            colors = listOf(cream, creamDark),
+            center = Offset(center.x - sizePx * 0.05f, center.y - sizePx * 0.15f),
+            radius = sizePx * 0.6f
+        ),
+        topLeft = Offset(center.x - sizePx * 0.27f, center.y - sizePx * 0.40f),
+        size = Size(sizePx * 0.54f, sizePx * 0.80f)
+    )
+    // Блик
+    drawOval(
+        Color.White.copy(alpha = 0.65f),
+        topLeft = Offset(center.x - sizePx * 0.18f, center.y - sizePx * 0.32f),
+        size = Size(sizePx * 0.12f, sizePx * 0.22f)
+    )
+    // Маленькая трещинка
+    val crack = Path().apply {
+        moveTo(center.x - sizePx * 0.05f, center.y + sizePx * 0.10f)
+        lineTo(center.x, center.y + sizePx * 0.18f)
+        lineTo(center.x + sizePx * 0.08f, center.y + sizePx * 0.12f)
+        lineTo(center.x + sizePx * 0.04f, center.y + sizePx * 0.22f)
+    }
+    drawPath(crack, color = Color(0xFFA1887F).copy(alpha = 0.45f), style = Stroke(width = sizePx * 0.015f))
+}
+
+private fun DrawScope.drawNeedle(center: Offset, sizePx: Float) {
+    val silver = Color(0xFFE0E0E0)
+    val silverDark = Color(0xFF9E9E9E)
+    // Ушко — кольцо сверху
+    val needleTopY = center.y - sizePx * 0.50f
+    val needleBotY = center.y + sizePx * 0.50f
+    drawCircle(silver, radius = sizePx * 0.07f, center = Offset(center.x, needleTopY),
+        style = Stroke(width = sizePx * 0.03f))
+    // Стержень — узкий вертикальный градиент от широкого к острому
+    val needlePath = Path().apply {
+        moveTo(center.x - sizePx * 0.025f, needleTopY + sizePx * 0.04f)
+        lineTo(center.x + sizePx * 0.025f, needleTopY + sizePx * 0.04f)
+        lineTo(center.x + sizePx * 0.005f, needleBotY)
+        lineTo(center.x - sizePx * 0.005f, needleBotY)
+        close()
+    }
+    drawPath(needlePath,
+        brush = Brush.verticalGradient(
+            listOf(silver, silverDark, Color(0xFF616161)),
+            startY = needleTopY, endY = needleBotY
+        )
+    )
+    // Блик
+    drawLine(Color.White.copy(alpha = 0.5f),
+        start = Offset(center.x - sizePx * 0.012f, needleTopY + sizePx * 0.10f),
+        end = Offset(center.x - sizePx * 0.003f, needleBotY - sizePx * 0.05f),
+        strokeWidth = sizePx * 0.008f)
+}
+
+// ─── deck builder ──────────────────────────────────────────────────────
+
+private fun buildDeck(seed: Long): List<Card> {
+    val kinds = KoscheiKind.values().toList()
+    require(kinds.size == PAIR_COUNT) {
+        "PAIR_COUNT ($PAIR_COUNT) must match number of KoscheiKind values (${kinds.size})"
+    }
+    val rng = Random(seed)
+    val pairs = kinds.flatMap { listOf(it, it) }
+    val shuffled = pairs.shuffled(rng)
+    return shuffled.mapIndexed { idx, kind -> Card(id = idx, kind = kind) }
+}

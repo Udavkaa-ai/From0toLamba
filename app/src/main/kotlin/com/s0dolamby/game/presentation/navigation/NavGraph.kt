@@ -14,6 +14,7 @@ import com.s0dolamby.game.presentation.ama.AmaScreen
 import com.s0dolamby.game.presentation.home.HomeScreen
 import com.s0dolamby.game.presentation.inbox.InboxScreen
 import com.s0dolamby.game.presentation.leaderboard.LeaderboardScreen
+import com.s0dolamby.game.presentation.minigame.babayaga.BabaYagaCauldronScreen
 import com.s0dolamby.game.presentation.minigame.goldenkey.GoldenKeyScreen
 import com.s0dolamby.game.presentation.minigame.kolobok.KolobokNoraScreen
 import com.s0dolamby.game.presentation.minigame.koschei.KoscheiMemoryScreen
@@ -49,6 +50,7 @@ sealed class Screen(val route: String) {
     object KoscheiMemory : Screen("minigame/koschei-memory")
     object KolobokNora : Screen("minigame/kolobok-nora")
     object ZolushkaCoins : Screen("minigame/zolushka-coins")
+    object BabaYagaCauldron : Screen("minigame/baba-yaga-cauldron")
     object Leaderboard : Screen("leaderboard")
 }
 
@@ -158,7 +160,8 @@ fun NavGraph() {
                 onTryGoldenKey = { navController.navigate(Screen.GoldenKey.route) },
                 onTryKoscheiMemory = { navController.navigate(Screen.KoscheiMemory.route) },
                 onTryKolobokNora = { navController.navigate(Screen.KolobokNora.route) },
-                onTryZolushkaCoins = { navController.navigate(Screen.ZolushkaCoins.route) }
+                onTryZolushkaCoins = { navController.navigate(Screen.ZolushkaCoins.route) },
+                onTryBabaYagaCauldron = { navController.navigate(Screen.BabaYagaCauldron.route) }
             )
         }
         composable(Screen.GoldenKey.route) {
@@ -172,6 +175,9 @@ fun NavGraph() {
         }
         composable(Screen.ZolushkaCoins.route) {
             ZolushkaCoinsScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.BabaYagaCauldron.route) {
+            BabaYagaCauldronScreen(onBack = { navController.popBackStack() })
         }
         composable(Screen.Leaderboard.route) {
             LeaderboardScreen(onBack = { navController.popBackStack() })
