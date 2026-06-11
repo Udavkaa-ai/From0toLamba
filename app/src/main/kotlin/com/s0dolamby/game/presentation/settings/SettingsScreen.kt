@@ -26,6 +26,8 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onResetDone: () -> Unit,
     onTryGoldenKey: () -> Unit = {},
+    onTryKoscheiMemory: () -> Unit = {},
+    onTryKolobokNora: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -169,7 +171,25 @@ fun SettingsScreen(
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
                         border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f))
                     ) {
-                        Text("🔑 Золотой ключик (BURATINO)", fontWeight = FontWeight.SemiBold)
+                        Text("🔑 Золотой ключик · Буратино", fontWeight = FontWeight.SemiBold)
+                    }
+                    Spacer(Modifier.height(6.dp))
+                    OutlinedButton(
+                        onClick = onTryKoscheiMemory,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f))
+                    ) {
+                        Text("❄ Память Кощея · Кощей", fontWeight = FontWeight.SemiBold)
+                    }
+                    Spacer(Modifier.height(6.dp))
+                    OutlinedButton(
+                        onClick = onTryKolobokNora,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f))
+                    ) {
+                        Text("🕳 Нора-нора-нора · Колобок", fontWeight = FontWeight.SemiBold)
                     }
                 }
 

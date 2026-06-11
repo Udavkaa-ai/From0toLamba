@@ -15,6 +15,8 @@ import com.s0dolamby.game.presentation.home.HomeScreen
 import com.s0dolamby.game.presentation.inbox.InboxScreen
 import com.s0dolamby.game.presentation.leaderboard.LeaderboardScreen
 import com.s0dolamby.game.presentation.minigame.goldenkey.GoldenKeyScreen
+import com.s0dolamby.game.presentation.minigame.kolobok.KolobokNoraScreen
+import com.s0dolamby.game.presentation.minigame.koschei.KoscheiMemoryScreen
 import com.s0dolamby.game.presentation.news.NewsScreen
 import com.s0dolamby.game.presentation.onboarding.OnboardingScreen
 import com.s0dolamby.game.presentation.portfolio.PortfolioScreen
@@ -43,6 +45,8 @@ sealed class Screen(val route: String) {
     object PersonaRegistry : Screen("registry")
     object Settings : Screen("settings")
     object GoldenKey : Screen("minigame/golden-key")
+    object KoscheiMemory : Screen("minigame/koschei-memory")
+    object KolobokNora : Screen("minigame/kolobok-nora")
     object Leaderboard : Screen("leaderboard")
 }
 
@@ -149,11 +153,19 @@ fun NavGraph() {
                         popUpTo(0) { inclusive = true }
                     }
                 },
-                onTryGoldenKey = { navController.navigate(Screen.GoldenKey.route) }
+                onTryGoldenKey = { navController.navigate(Screen.GoldenKey.route) },
+                onTryKoscheiMemory = { navController.navigate(Screen.KoscheiMemory.route) },
+                onTryKolobokNora = { navController.navigate(Screen.KolobokNora.route) }
             )
         }
         composable(Screen.GoldenKey.route) {
             GoldenKeyScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.KoscheiMemory.route) {
+            KoscheiMemoryScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.KolobokNora.route) {
+            KolobokNoraScreen(onBack = { navController.popBackStack() })
         }
         composable(Screen.Leaderboard.route) {
             LeaderboardScreen(onBack = { navController.popBackStack() })
