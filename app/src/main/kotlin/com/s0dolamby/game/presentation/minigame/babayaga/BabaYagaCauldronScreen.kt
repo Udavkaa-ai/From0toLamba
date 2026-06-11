@@ -35,7 +35,7 @@ import kotlin.random.Random
 
 // ─── ингредиенты Бабы-Яги ─────────────────────────────────────────────
 
-private enum class Ingredient(val emoji: String, val name: String, val color: Color) {
+private enum class Ingredient(val emoji: String, val ruName: String, val color: Color) {
     MUHOMOR("🍄", "мухомор", Color(0xFFEF5350)),
     BONE("🦴", "кость", Color(0xFFECEFF1)),
     TOAD("🐸", "жаба", Color(0xFF66BB6A)),

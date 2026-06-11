@@ -30,6 +30,8 @@ fun SettingsScreen(
     onTryKolobokNora: () -> Unit = {},
     onTryZolushkaCoins: () -> Unit = {},
     onTryBabaYagaCauldron: () -> Unit = {},
+    onTryBoyarinCharter: () -> Unit = {},
+    onTryIvanDurakMap: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -210,6 +212,24 @@ fun SettingsScreen(
                         border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f))
                     ) {
                         Text("🧪 Котёл · Баба-Яга", fontWeight = FontWeight.SemiBold)
+                    }
+                    Spacer(Modifier.height(6.dp))
+                    OutlinedButton(
+                        onClick = onTryBoyarinCharter,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f))
+                    ) {
+                        Text("📜 Купеческая грамота · Боярин", fontWeight = FontWeight.SemiBold)
+                    }
+                    Spacer(Modifier.height(6.dp))
+                    OutlinedButton(
+                        onClick = onTryIvanDurakMap,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f))
+                    ) {
+                        Text("🗺 Повторить карту · Иван-Дурак", fontWeight = FontWeight.SemiBold)
                     }
                 }
 

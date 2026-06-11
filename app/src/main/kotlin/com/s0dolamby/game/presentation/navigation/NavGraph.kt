@@ -15,7 +15,9 @@ import com.s0dolamby.game.presentation.home.HomeScreen
 import com.s0dolamby.game.presentation.inbox.InboxScreen
 import com.s0dolamby.game.presentation.leaderboard.LeaderboardScreen
 import com.s0dolamby.game.presentation.minigame.babayaga.BabaYagaCauldronScreen
+import com.s0dolamby.game.presentation.minigame.boyarin.BoyarinCharterScreen
 import com.s0dolamby.game.presentation.minigame.goldenkey.GoldenKeyScreen
+import com.s0dolamby.game.presentation.minigame.ivandurak.IvanDurakMapScreen
 import com.s0dolamby.game.presentation.minigame.kolobok.KolobokNoraScreen
 import com.s0dolamby.game.presentation.minigame.koschei.KoscheiMemoryScreen
 import com.s0dolamby.game.presentation.minigame.zolushka.ZolushkaCoinsScreen
@@ -51,6 +53,8 @@ sealed class Screen(val route: String) {
     object KolobokNora : Screen("minigame/kolobok-nora")
     object ZolushkaCoins : Screen("minigame/zolushka-coins")
     object BabaYagaCauldron : Screen("minigame/baba-yaga-cauldron")
+    object BoyarinCharter : Screen("minigame/boyarin-charter")
+    object IvanDurakMap : Screen("minigame/ivan-durak-map")
     object Leaderboard : Screen("leaderboard")
 }
 
@@ -161,7 +165,9 @@ fun NavGraph() {
                 onTryKoscheiMemory = { navController.navigate(Screen.KoscheiMemory.route) },
                 onTryKolobokNora = { navController.navigate(Screen.KolobokNora.route) },
                 onTryZolushkaCoins = { navController.navigate(Screen.ZolushkaCoins.route) },
-                onTryBabaYagaCauldron = { navController.navigate(Screen.BabaYagaCauldron.route) }
+                onTryBabaYagaCauldron = { navController.navigate(Screen.BabaYagaCauldron.route) },
+                onTryBoyarinCharter = { navController.navigate(Screen.BoyarinCharter.route) },
+                onTryIvanDurakMap = { navController.navigate(Screen.IvanDurakMap.route) }
             )
         }
         composable(Screen.GoldenKey.route) {
@@ -178,6 +184,12 @@ fun NavGraph() {
         }
         composable(Screen.BabaYagaCauldron.route) {
             BabaYagaCauldronScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.BoyarinCharter.route) {
+            BoyarinCharterScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.IvanDurakMap.route) {
+            IvanDurakMapScreen(onBack = { navController.popBackStack() })
         }
         composable(Screen.Leaderboard.route) {
             LeaderboardScreen(onBack = { navController.popBackStack() })
