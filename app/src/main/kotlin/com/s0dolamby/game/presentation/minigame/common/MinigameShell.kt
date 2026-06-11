@@ -21,14 +21,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.s0dolamby.game.R
 import com.s0dolamby.game.domain.model.PersonaArchetype
-import com.s0dolamby.game.presentation.common.components.ScreenBackground
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.NightBlue
 
@@ -80,12 +79,52 @@ fun MinigameShell(
         }
     }
 
-    ScreenBackground(R.drawable.home_bg) {
+    // Архетипный фон: zoom-portrait дельца сильно затемнён + цветной градиент-вуаль
+    // — даёт 7 разных «комнат» вместо одного home_bg. Сверху всё ещё mist в цвете
+    // архетипа для движения.
+    Box(modifier = Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(style.portraitRes),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            alpha = 0.55f,
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer { scaleX = 1.6f; scaleY = 1.6f }
+        )
+        // Архетипная вуаль — снизу темнее, сверху прозрачнее в цвете архетипа
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colorStops = arrayOf(
+                            0f to style.shadow.copy(alpha = 0.88f),
+                            0.4f to style.shadow.copy(alpha = 0.78f),
+                            1f to Color(0xF0050715)
+                        )
+                    )
+                )
+        )
+        // Радиальная подсветка под палитру архетипа — лёгкое свечение в центре
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(
+                            style.primary.copy(alpha = 0.12f),
+                            Color.Transparent
+                        ),
+                        radius = 800f
+                    )
+                )
+        )
         // Архетипный туман поверх фона — тонко окрашивает сцену в характер дельца
         MinigameMistOverlay(
             modifier = Modifier.fillMaxSize(),
             accent = style.primary,
-            intensity = if (stage == MinigameStage.RESULT && outcome?.isPerfect == true) 1.4f else 0.7f
+            intensity = if (stage == MinigameStage.RESULT && outcome?.isPerfect == true) 1.4f else 0.85f
         )
 
         Scaffold(
