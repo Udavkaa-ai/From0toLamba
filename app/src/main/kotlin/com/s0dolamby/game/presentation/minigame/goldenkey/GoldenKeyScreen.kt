@@ -266,7 +266,10 @@ private fun DrawScope.drawKey(key: GoldenKey, sizePx: Float) {
 // ─── экран ───────────────────────────────────────────────────────────────────
 
 @Composable
-fun GoldenKeyScreen(onBack: () -> Unit) {
+fun GoldenKeyScreen(
+    onBack: () -> Unit,
+    onComplete: ((MinigameOutcome) -> Unit)? = null
+) {
     var seed by remember { mutableStateOf(System.currentTimeMillis().toString()) }
     val (correct, options) = remember(seed) { buildRound(seed) }
 
@@ -326,7 +329,8 @@ fun GoldenKeyScreen(onBack: () -> Unit) {
         outcome = outcome,
         onBack = onBack,
         onAgain = { restart() },
-        onClose = onBack
+        onClose = onBack,
+        onComplete = onComplete
     ) {
         when (stage) {
             MinigameStage.MEMORIZE -> MemorizeStage(

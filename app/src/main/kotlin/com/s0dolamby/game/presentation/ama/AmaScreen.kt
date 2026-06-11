@@ -155,6 +155,7 @@ private fun pickSessionQuestions(sessionId: String?): List<String> {
 fun AmaScreen(
     onBack: () -> Unit,
     onOpenRegistry: () -> Unit = {},
+    onPlayMinigame: (archetypeName: String, projectId: String) -> Unit = { _, _ -> },
     viewModel: AmaViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -162,6 +163,16 @@ fun AmaScreen(
     var usedTemplates by remember { mutableStateOf(emptySet<String>()) }
     val listState = rememberLazyListState()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // Реагируем на запрос инвеста при ещё не пройденной мини-игре
+    LaunchedEffect(uiState.pendingMinigameArchetype) {
+        val arch = uiState.pendingMinigameArchetype
+        val pid = uiState.project?.id
+        if (arch != null && pid != null) {
+            onPlayMinigame(arch.name, pid)
+            viewModel.clearPendingMinigame()
+        }
+    }
 
     val messages = uiState.session?.messages ?: emptyList()
     val questionCount = uiState.session?.questionCount ?: 0
@@ -222,8 +233,11 @@ fun AmaScreen(
                 },
                 actions = {
                     if (!sessionEnded) {
-                        TextButton(onClick = viewModel::showInvestSheet) {
-                            Text("Вложить", color = FairyGold, fontWeight = FontWeight.SemiBold)
+                        TextButton(onClick = viewModel::requestInvest) {
+                            Text(
+                                if (uiState.minigameUnlocked) "Вложить" else "🎲 Испытать",
+                                color = FairyGold, fontWeight = FontWeight.SemiBold
+                            )
                         }
                     }
                 },
@@ -356,7 +370,7 @@ fun AmaScreen(
                 if (sessionEnded) {
                     item {
                         SessionEndBanner(
-                            onInvest = viewModel::showInvestSheet,
+                            onInvest = viewModel::requestInvest,
                             onEvaluate = viewModel::evaluateIntuition,
                             onBack = onBack,
                             intuitionEvaluated = uiState.session?.isIntuitionEvaluated == true

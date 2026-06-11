@@ -67,9 +67,18 @@ fun MinigameShell(
     outcome: MinigameOutcome? = null,
     onAgain: () -> Unit = {},
     onClose: () -> Unit = onBack,
+    /** Зовётся один раз, когда игра впервые переходит в стадию RESULT. */
+    onComplete: ((MinigameOutcome) -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val style = ArchetypePalette[archetype]
+
+    // Уведомляем верхний уровень о завершении игры — один раз
+    LaunchedEffect(stage, outcome) {
+        if (stage == MinigameStage.RESULT && outcome != null) {
+            onComplete?.invoke(outcome)
+        }
+    }
 
     ScreenBackground(R.drawable.home_bg) {
         // Архетипный туман поверх фона — тонко окрашивает сцену в характер дельца

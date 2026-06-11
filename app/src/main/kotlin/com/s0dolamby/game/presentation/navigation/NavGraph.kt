@@ -14,8 +14,10 @@ import com.s0dolamby.game.presentation.ama.AmaScreen
 import com.s0dolamby.game.presentation.home.HomeScreen
 import com.s0dolamby.game.presentation.inbox.InboxScreen
 import com.s0dolamby.game.presentation.leaderboard.LeaderboardScreen
+import com.s0dolamby.game.domain.model.PersonaArchetype
 import com.s0dolamby.game.presentation.minigame.babayaga.BabaYagaCauldronScreen
 import com.s0dolamby.game.presentation.minigame.boyarin.BoyarinCharterScreen
+import com.s0dolamby.game.presentation.minigame.gate.MinigameGateScreen
 import com.s0dolamby.game.presentation.minigame.goldenkey.GoldenKeyScreen
 import com.s0dolamby.game.presentation.minigame.ivandurak.IvanDurakMapScreen
 import com.s0dolamby.game.presentation.minigame.kolobok.KolobokNoraScreen
@@ -39,6 +41,11 @@ sealed class Screen(val route: String) {
     object Inbox : Screen("inbox")
     object Ama : Screen("ama/{projectId}") {
         fun createRoute(projectId: String) = "ama/$projectId"
+    }
+    /** Универсальный «вход в дело»: сначала мини-игра дельца, потом инвест. */
+    object MinigameGate : Screen("minigame-gate/{archetype}/{projectId}") {
+        fun createRoute(archetype: String, projectId: String) =
+            "minigame-gate/$archetype/$projectId"
     }
     object Portfolio : Screen("portfolio")
     object ProjectDetail : Screen("project/{projectId}") {
@@ -123,6 +130,9 @@ fun NavGraph() {
                 onOpenRegistry = {
                     navController.popBackStack()
                     navController.navigate(Screen.PersonaRegistry.route)
+                },
+                onPlayMinigame = { archetypeName, projectId ->
+                    navController.navigate(Screen.MinigameGate.createRoute(archetypeName, projectId))
                 }
             )
         }
@@ -190,6 +200,28 @@ fun NavGraph() {
         }
         composable(Screen.IvanDurakMap.route) {
             IvanDurakMapScreen(onBack = { navController.popBackStack() })
+        }
+        composable(
+            route = Screen.MinigameGate.route,
+            arguments = listOf(
+                navArgument("archetype") { type = NavType.StringType },
+                navArgument("projectId") { type = NavType.StringType }
+            )
+        ) { entry ->
+            val archetypeStr = entry.arguments?.getString("archetype").orEmpty()
+            val projectId = entry.arguments?.getString("projectId").orEmpty()
+            val archetype = runCatching { PersonaArchetype.valueOf(archetypeStr) }
+                .getOrElse { PersonaArchetype.BURATINO }
+            MinigameGateScreen(
+                archetype = archetype,
+                projectId = projectId,
+                onBack = { navController.popBackStack() },
+                onContinueToInvest = {
+                    // После победы возвращаемся в AMA — там кнопка инвеста уже
+                    // увидит unlock в MinigameUnlockStore и откроет invest sheet.
+                    navController.popBackStack()
+                }
+            )
         }
         composable(Screen.Leaderboard.route) {
             LeaderboardScreen(onBack = { navController.popBackStack() })

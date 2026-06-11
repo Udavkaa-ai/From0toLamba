@@ -47,7 +47,10 @@ private fun dealHand(seed: Long): List<PlayCard> {
 }
 
 @Composable
-fun IvanDurakMapScreen(onBack: () -> Unit) {
+fun IvanDurakMapScreen(
+    onBack: () -> Unit,
+    onComplete: ((MinigameOutcome) -> Unit)? = null
+) {
     var seed by remember { mutableStateOf(System.currentTimeMillis()) }
     val hand = remember(seed) { dealHand(seed) }
 
@@ -131,7 +134,8 @@ fun IvanDurakMapScreen(onBack: () -> Unit) {
         outcome = outcome,
         onBack = onBack,
         onAgain = { restart() },
-        onClose = onBack
+        onClose = onBack,
+        onComplete = onComplete
     ) {
         if (stage == MinigameStage.PLAY) {
             Text(

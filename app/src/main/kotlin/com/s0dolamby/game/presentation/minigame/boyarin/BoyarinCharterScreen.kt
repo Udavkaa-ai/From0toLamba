@@ -98,7 +98,10 @@ private fun buildField(seed: Long): Pair<Seal, List<SealCell>> {
 // ─── экран ──────────────────────────────────────────────────────────────
 
 @Composable
-fun BoyarinCharterScreen(onBack: () -> Unit) {
+fun BoyarinCharterScreen(
+    onBack: () -> Unit,
+    onComplete: ((MinigameOutcome) -> Unit)? = null
+) {
     var seed by remember { mutableStateOf(System.currentTimeMillis()) }
     val (etalon, initialCells) = remember(seed) { buildField(seed) }
     val cells = remember(seed) { mutableStateListOf<SealCell>().apply { addAll(initialCells) } }
@@ -158,7 +161,8 @@ fun BoyarinCharterScreen(onBack: () -> Unit) {
         outcome = outcome,
         onBack = onBack,
         onAgain = { restart() },
-        onClose = onBack
+        onClose = onBack,
+        onComplete = onComplete
     ) {
         if (stage == MinigameStage.PLAY) {
             // Эталон + счёт

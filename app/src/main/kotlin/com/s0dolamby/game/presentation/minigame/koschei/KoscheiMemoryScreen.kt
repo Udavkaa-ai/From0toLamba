@@ -61,7 +61,10 @@ private const val MISMATCH_HIDE_MS = 950L
 private const val TIME_BUDGET_S = 60
 
 @Composable
-fun KoscheiMemoryScreen(onBack: () -> Unit) {
+fun KoscheiMemoryScreen(
+    onBack: () -> Unit,
+    onComplete: ((MinigameOutcome) -> Unit)? = null
+) {
     var seed by remember { mutableStateOf(System.currentTimeMillis()) }
     val cards = remember(seed) { mutableStateListOf<Card>().apply { addAll(buildDeck(seed)) } }
     var firstFlippedIdx by remember(seed) { mutableStateOf<Int?>(null) }
@@ -148,7 +151,8 @@ fun KoscheiMemoryScreen(onBack: () -> Unit) {
         outcome = outcome,
         onBack = onBack,
         onAgain = { restart() },
-        onClose = onBack
+        onClose = onBack,
+        onComplete = onComplete
     ) {
         if (stage == MinigameStage.PLAY) {
             ScoreLine(pairsFound, attempts)

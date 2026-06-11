@@ -46,7 +46,10 @@ private enum class NoraGuest(val emoji: String, val label: String) {
 private val ANIMALS = listOf(NoraGuest.HARE, NoraGuest.WOLF, NoraGuest.BEAR, NoraGuest.FOX)
 
 @Composable
-fun KolobokNoraScreen(onBack: () -> Unit) {
+fun KolobokNoraScreen(
+    onBack: () -> Unit,
+    onComplete: ((MinigameOutcome) -> Unit)? = null
+) {
     var seed by remember { mutableStateOf(System.currentTimeMillis()) }
     var attemptKey by remember(seed) { mutableStateOf(0) }
     var attemptIdx by remember(seed) { mutableStateOf(0) }
@@ -149,7 +152,8 @@ fun KolobokNoraScreen(onBack: () -> Unit) {
         outcome = outcome,
         onBack = onBack,
         onAgain = { restart() },
-        onClose = onBack
+        onClose = onBack,
+        onComplete = onComplete
     ) {
         if (stage == MinigameStage.PLAY) {
             Text(

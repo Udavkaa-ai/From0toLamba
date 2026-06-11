@@ -3,8 +3,10 @@ package com.s0dolamby.game.presentation.ama
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.s0dolamby.game.data.minigame.MinigameUnlockStore
 import com.s0dolamby.game.domain.model.AmaSession
 import com.s0dolamby.game.domain.model.LieTopic
+import com.s0dolamby.game.domain.model.PersonaArchetype
 import com.s0dolamby.game.domain.model.Project
 import com.s0dolamby.game.domain.repository.AmaRepository
 import com.s0dolamby.game.domain.repository.GameStateRepository
@@ -12,6 +14,7 @@ import com.s0dolamby.game.domain.repository.ProjectRepository
 import com.s0dolamby.game.domain.usecase.InvestUseCase
 import com.s0dolamby.game.domain.usecase.SendAmaMessageUseCase
 import com.s0dolamby.game.domain.usecase.StartAmaSessionUseCase
+import com.s0dolamby.game.presentation.minigame.common.MinigameOutcome
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -33,7 +36,12 @@ data class AmaUiState(
     val investResult: String? = null,
     val selectedLieTopics: Set<LieTopic> = emptySet(),
     val intuitionResult: IntuitionResult? = null,
-    val freeBalance: Double = 0.0
+    val freeBalance: Double = 0.0,
+    /** Уже пройдена мини-игра этого дела (любой не-проигрыш). */
+    val minigameUnlocked: Boolean = false,
+    val minigamePerfect: Boolean = false,
+    /** Куда вести при попытке инвеста, если игра ещё не пройдена. */
+    val pendingMinigameArchetype: PersonaArchetype? = null
 )
 
 @HiltViewModel
@@ -44,10 +52,26 @@ class AmaViewModel @Inject constructor(
     private val projectRepository: ProjectRepository,
     private val amaRepository: AmaRepository,
     private val gameStateRepository: GameStateRepository,
+    private val minigameUnlockStore: MinigameUnlockStore,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val projectId: String = checkNotNull(savedStateHandle["projectId"])
+
+    init {
+        // Подписываемся на изменения unlock-стора, чтобы кнопка инвеста
+        // мгновенно превратилась из «Сыграть в игру дельца» в «Вложить рубли»
+        // после возврата из gate-экрана.
+        viewModelScope.launch {
+            minigameUnlockStore.outcomes.collect { map ->
+                val outcome: MinigameOutcome? = map[projectId]
+                _uiState.update { it.copy(
+                    minigameUnlocked = outcome?.isWin == true,
+                    minigamePerfect = outcome?.isPerfect == true
+                ) }
+            }
+        }
+    }
 
     private val _uiState = MutableStateFlow(AmaUiState(isLoading = true))
     val uiState: StateFlow<AmaUiState> = _uiState.asStateFlow()
@@ -119,6 +143,24 @@ class AmaViewModel @Inject constructor(
     }
 
     fun clearIntuitionResult() = _uiState.update { it.copy(intuitionResult = null) }
+
+    /**
+     * Кнопка «Вложиться». Если мини-игра дельца ещё не пройдена — попросим
+     * UI отправить пользователя в [MinigameGate], запомнив архетип. Если
+     * пройдена — открываем sheet для ввода суммы.
+     */
+    fun requestInvest() {
+        val state = _uiState.value
+        if (state.minigameUnlocked) {
+            _uiState.update { it.copy(showInvestSheet = true) }
+        } else {
+            val arch = state.project?.personaArchetype ?: return
+            _uiState.update { it.copy(pendingMinigameArchetype = arch) }
+        }
+    }
+
+    /** UI прочитал [pendingMinigameArchetype] и навигировал — забываем запрос. */
+    fun clearPendingMinigame() = _uiState.update { it.copy(pendingMinigameArchetype = null) }
 
     fun showInvestSheet() = _uiState.update { it.copy(showInvestSheet = true) }
     fun hideInvestSheet() = _uiState.update { it.copy(showInvestSheet = false) }

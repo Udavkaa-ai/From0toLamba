@@ -49,7 +49,10 @@ private val ALL_INGREDIENTS = Ingredient.values().toList()
 private enum class Phase { SHOWCASE, INPUT }
 
 @Composable
-fun BabaYagaCauldronScreen(onBack: () -> Unit) {
+fun BabaYagaCauldronScreen(
+    onBack: () -> Unit,
+    onComplete: ((MinigameOutcome) -> Unit)? = null
+) {
     var seed by remember { mutableStateOf(System.currentTimeMillis()) }
     var sequence by remember(seed) { mutableStateOf(generateRecipe(seed)) }
     var phase by remember(seed) { mutableStateOf(Phase.SHOWCASE) }
@@ -133,7 +136,8 @@ fun BabaYagaCauldronScreen(onBack: () -> Unit) {
         outcome = outcome,
         onBack = onBack,
         onAgain = { restart() },
-        onClose = onBack
+        onClose = onBack,
+        onComplete = onComplete
     ) {
         if (stage == MinigameStage.MEMORIZE || stage == MinigameStage.PLAY) {
             HeaderHint(phase = phase, sequenceSize = sequence.size, input = playerInput.size)

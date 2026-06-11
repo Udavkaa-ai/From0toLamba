@@ -54,7 +54,10 @@ private val ALL_GRAINS = Grain.values().toList()
 private enum class Phase { SHOWCASE, INPUT }
 
 @Composable
-fun ZolushkaCoinsScreen(onBack: () -> Unit) {
+fun ZolushkaCoinsScreen(
+    onBack: () -> Unit,
+    onComplete: ((MinigameOutcome) -> Unit)? = null
+) {
     var seed by remember { mutableStateOf(System.currentTimeMillis()) }
     // Одна мастер-последовательность на всю игру; раунды показывают
     // растущий префикс: 3 → 5 → 7 зёрен. Начало всегда одно и то же —
@@ -138,7 +141,8 @@ fun ZolushkaCoinsScreen(onBack: () -> Unit) {
         outcome = outcome,
         onBack = onBack,
         onAgain = { restart() },
-        onClose = onBack
+        onClose = onBack,
+        onComplete = onComplete
     ) {
         if (stage == MinigameStage.MEMORIZE || stage == MinigameStage.PLAY) {
             RoundCounter(round = round, total = TOTAL_ROUNDS, sequenceSize = sequence.size,
