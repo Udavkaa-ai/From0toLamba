@@ -124,36 +124,8 @@ fun SettingsScreen(
                     }
                 }
 
-                // ── Генерация картинок ─────────────────────────────────
-                FairyCard(modifier = Modifier.fillMaxWidth()) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                "Генерация баннеров",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = FairyGold,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Text(
-                                "Создавать картинки для новых дел через Pollinations",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.White.copy(alpha = 0.6f)
-                            )
-                        }
-                        Switch(
-                            checked = uiState.settings.imageGenerationEnabled,
-                            onCheckedChange = { viewModel.setImageGenerationEnabled(it) },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = FairyGold,
-                                checkedTrackColor = FairyGold.copy(alpha = 0.4f)
-                            )
-                        )
-                    }
-                }
+                // Тоггл «генерации баннеров через Pollinations» удалён —
+                // обложки теперь всегда из бандл-стока (assets/banners/).
 
                 OrnamentDivider()
 

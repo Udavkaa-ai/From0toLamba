@@ -39,7 +39,7 @@ class GameApplication : Application(), Configuration.Provider {
                 .okHttpClient {
                     OkHttpClient.Builder()
                         .connectTimeout(30, TimeUnit.SECONDS)
-                        .readTimeout(120, TimeUnit.SECONDS)  // Pollinations.ai generates on-demand
+                        .readTimeout(120, TimeUnit.SECONDS)  // длинные OpenRouter-ответы
                         .writeTimeout(30, TimeUnit.SECONDS)
                         .build()
                 }

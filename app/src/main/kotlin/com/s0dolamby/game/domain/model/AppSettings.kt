@@ -1,15 +1,22 @@
 package com.s0dolamby.game.domain.model
 
 data class AppSettings(
-    val textModel: String = "qwen/qwen3.5-flash-02-23",
-    val imageGenerationEnabled: Boolean = true
+    val textModel: String = DEFAULT_TEXT_MODEL,
+    val imageGenerationEnabled: Boolean = false
 )
 
 data class ModelOption(val label: String, val modelId: String)
 
+/**
+ * Дефолтная модель — тот же ID, что в продакшен-сервере TG-версии
+ * (tg/server/src/ai/openRouterClient.ts: `DEFAULT_MODEL = 'deepseek/deepseek-v4-flash'`).
+ * Это lite-вариант DeepSeek v4, быстрый и дешёвый.
+ */
+const val DEFAULT_TEXT_MODEL = "deepseek/deepseek-v4-flash"
+
 val TEXT_MODEL_OPTIONS = listOf(
-    ModelOption("Qwen Flash (рекомендуется)", "qwen/qwen3.5-flash-02-23"),
+    ModelOption("DeepSeek v4 Flash (рекомендуется)", DEFAULT_TEXT_MODEL),
     ModelOption("DeepSeek Chat v3", "deepseek/deepseek-chat-v3-0324"),
     ModelOption("Gemini Flash Lite", "google/gemini-2.5-flash-lite-preview-09-2025"),
-    ModelOption("Qwen3 235B (мощный)", "qwen/qwen3-235b-a22b")
+    ModelOption("Qwen Flash", "qwen/qwen3.5-flash-02-23")
 )

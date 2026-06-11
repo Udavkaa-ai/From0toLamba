@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.s0dolamby.game.presentation.common.components.rememberBannerUrl
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.s0dolamby.game.R
 import com.s0dolamby.game.domain.model.Project
@@ -121,10 +122,13 @@ fun InboxScreen(
 @Composable
 private fun InboxProjectCard(project: Project, onClick: () -> Unit) {
     FairyCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-        // Обложка дела из стока (как в TG: 120dp, скруглённая)
-        project.bannerImageUrl?.takeIf { it.isNotEmpty() }?.let { url ->
+        // Обложка дела из стока (как в TG: 120dp, скруглённая).
+        // Берётся напрямую из assets через rememberBannerUrl — даже у старых дел
+        // в БД без bannerImageUrl всё равно подберётся картинка.
+        val bannerUrl = rememberBannerUrl(project.personaArchetype, project.type, project.id)
+        if (bannerUrl != null) {
             AsyncImage(
-                model = url,
+                model = bannerUrl,
                 contentDescription = project.claimedName,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier

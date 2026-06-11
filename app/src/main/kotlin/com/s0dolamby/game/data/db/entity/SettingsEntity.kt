@@ -2,10 +2,11 @@ package com.s0dolamby.game.data.db.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.s0dolamby.game.domain.model.DEFAULT_TEXT_MODEL
 
 @Entity(tableName = "settings")
 data class SettingsEntity(
     @PrimaryKey val id: Int = 1,
-    val textModel: String = "qwen/qwen3.5-flash-02-23",
-    val imageGenerationEnabled: Boolean = true
+    val textModel: String = DEFAULT_TEXT_MODEL,
+    val imageGenerationEnabled: Boolean = false
 )

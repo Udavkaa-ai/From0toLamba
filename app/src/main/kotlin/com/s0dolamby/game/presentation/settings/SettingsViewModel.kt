@@ -42,11 +42,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.updateSettings(updated) }
     }
 
-    fun setImageGenerationEnabled(enabled: Boolean) {
-        val updated = _uiState.value.settings.copy(imageGenerationEnabled = enabled)
-        _uiState.value = _uiState.value.copy(settings = updated)
-        viewModelScope.launch { settingsRepository.updateSettings(updated) }
-    }
+    // setImageGenerationEnabled удалён — обложки теперь из стока, переключать нечего.
 
     fun resetGame() {
         viewModelScope.launch {

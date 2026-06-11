@@ -1,5 +1,7 @@
 package com.s0dolamby.game.domain.repository
 
+import com.s0dolamby.game.domain.model.DEFAULT_TEXT_MODEL
+
 object GameConfig {
     const val STARTING_BALANCE = 0.0
     const val ONBOARDING_BONUS_RUBLES = 50.0   // выплата за обучающую беседу в кабаке
@@ -11,14 +13,9 @@ object GameConfig {
     const val NEW_PROJECTS_PER_DAY_MAX = 3
 
     const val OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1/"
-    const val TEXT_MODEL = "qwen/qwen3.5-flash-02-23"
+    val TEXT_MODEL = DEFAULT_TEXT_MODEL
     const val MAX_TOKENS_AMA = 512
     const val MAX_TOKENS_UPDATE = 650
     const val MAX_TOKENS_POSTMORTEM = 600
     const val MAX_TOKENS_NAME_GEN = 20
-    const val MAX_TOKENS_BANNER_CONCEPT = 120
-
-    // Генерация изображений через /chat/completions + modalities:["image"]
-    const val IMAGE_MODEL = "black-forest-labs/flux.2-flex"
-    const val BANNER_IMAGE_SIZE = "512x512"
 }

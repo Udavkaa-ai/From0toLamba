@@ -230,24 +230,8 @@ ${if (event != null) "Для этого события используй: ${eve
         else -> "объявление_хозяина"
     }
 
-    fun buildBannerConceptPrompt(projectName: String): String = """
-Придумай визуальный концепт для баннера игры в стиле русских народных сказок.
-Название дела: «$projectName»
-
-Требования:
-- Вдохновляйся буквальным и переносным смыслом названия, ищи связь со сказочными образами
-- Придумай атмосферу, цветовую палитру и центральный образ в духе русской народной сказки (кабак, ярмарка, лес, избушка, замок, Жар-птица, волшебство, богатыри, купцы и т.д.)
-- Никакого блокчейна, крипты, телефонов — только сказочная Русь
-- Стиль: сказочная иллюстрация, народный орнамент, лубок, фэнтези, акварель — выбирай по смыслу
-- Верни ТОЛЬКО одно предложение-описание на английском, подходящее как промпт для image generation
-- Примеры духа (не копируй!): «A glowing magical cauldron in an enchanted forest at midnight, golden sparks flying, fairy tale illustration style», «Baba Yaga's hut on chicken legs surrounded by fireflies in a dark Russian forest, folk art style»
-
-Верни только промпт, без объяснений.
-    """.trimIndent()
-
-    fun buildFinalImagePrompt(concept: String): String =
-        "$concept, mobile game banner format, 16:9 aspect, " +
-                "high quality digital art, bold composition, no text, no letters"
+    // Старые buildBannerConceptPrompt / buildFinalImagePrompt удалены —
+    // обложки теперь только из сток-ассетов.
 
     fun buildPostMortemPrompt(project: Project, chatHistory: List<AmaMessage>): String {
         val history = chatHistory.joinToString("\n") { "${it.role}: ${it.content}" }

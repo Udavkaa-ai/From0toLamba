@@ -30,11 +30,6 @@ android {
             "OPENROUTER_API_KEY",
             "\"${localProperties.getProperty("OPENROUTER_API_KEY", "")}\""
         )
-        buildConfigField(
-            "String",
-            "POLLINATIONS_API_KEY",
-            "\"${localProperties.getProperty("POLLINATIONS_API_KEY", "")}\""
-        )
     }
 
     signingConfigs {

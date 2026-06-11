@@ -105,7 +105,7 @@ fun ProjectDetailScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                ProjectBannerImage(bannerUrl = project.bannerImageUrl, projectName = project.claimedName)
+                ProjectBannerImage(project = project)
             }
 
             item { ProjectInfoCard(project = project) }
