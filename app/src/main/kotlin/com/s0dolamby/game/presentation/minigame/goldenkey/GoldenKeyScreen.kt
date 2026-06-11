@@ -353,11 +353,14 @@ private fun MemorizeStage(key: GoldenKey, onReady: () -> Unit) {
         ),
         label = "pulse"
     )
-    val etalonRotation by infinite.animateFloat(
-        initialValue = 0f, targetValue = 360f,
-        animationSpec = infiniteRepeatable(tween(7000, easing = LinearEasing)),
-        label = "etalonRotation"
+    // Перспективное 3D-покачивание вокруг вертикальной оси (как ключ на верёвочке)
+    val etalonSwingPhase by infinite.animateFloat(
+        initialValue = 0f, targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(3600, easing = LinearEasing)),
+        label = "etalonSwing"
     )
+    val swingY = (kotlin.math.sin(etalonSwingPhase * 2 * Math.PI) * 38f).toFloat()
+    val swingZ = (kotlin.math.sin(etalonSwingPhase * 4 * Math.PI) * 6f).toFloat()
     Text(
         "Запомни эталонный ключ",
         color = Color.White.copy(alpha = 0.85f), fontSize = 14.sp
@@ -367,7 +370,11 @@ private fun MemorizeStage(key: GoldenKey, onReady: () -> Unit) {
         Canvas(modifier = Modifier
             .fillMaxSize()
             .scale(pulse)
-            .graphicsLayer { rotationZ = etalonRotation }
+            .graphicsLayer {
+                rotationY = swingY
+                rotationZ = swingZ
+                cameraDistance = 12f * density
+            }
         ) {
             drawSparkleHalo(
                 center = Offset(this.size.width / 2f, this.size.height / 2f),
@@ -396,11 +403,11 @@ private fun MemorizeStage(key: GoldenKey, onReady: () -> Unit) {
 
 @Composable
 private fun ChooseStage(options: List<GoldenKey>, onPick: (Int) -> Unit) {
-    val infinite = rememberInfiniteTransition(label = "key-rotate")
-    val rotation by infinite.animateFloat(
-        initialValue = 0f, targetValue = 360f,
-        animationSpec = infiniteRepeatable(tween(5500, easing = LinearEasing)),
-        label = "rotation"
+    val infinite = rememberInfiniteTransition(label = "key-swing")
+    val swingPhase by infinite.animateFloat(
+        initialValue = 0f, targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(3200, easing = LinearEasing)),
+        label = "swingPhase"
     )
     Text(
         "Найди тот же среди ${options.size} ключей",
@@ -415,14 +422,15 @@ private fun ChooseStage(options: List<GoldenKey>, onPick: (Int) -> Unit) {
             Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
                 rowKeys.forEachIndexed { colIdx, key ->
                     val idx = rowIdx * cols + colIdx
-                    // Каждый ключ — со своей фазой вращения, чтобы они не крутились синхронно
-                    val phaseOffset = (idx * 47f) % 360f
-                    val effectiveRotation = (rotation + phaseOffset) % 360f
+                    // Каждый ключ покачивается в 3D со своей фазой —
+                    // амплитуда ±30°, ключ всегда читаем (не встаёт ребром)
+                    val phase = (swingPhase + idx * 0.13f) % 1f
+                    val rotY = (kotlin.math.sin(phase * 2 * Math.PI) * 30f).toFloat()
                     KeyCard(
                         key = key,
                         highlight = false,
                         size = cellSize,
-                        rotationDeg = effectiveRotation,
+                        rotationYDeg = rotY,
                         onClick = { onPick(idx) }
                     )
                 }
@@ -458,7 +466,7 @@ private fun KeyCard(
     key: GoldenKey,
     highlight: Boolean,
     size: androidx.compose.ui.unit.Dp,
-    rotationDeg: Float = 0f,
+    rotationYDeg: Float = 0f,
     onClick: (() -> Unit)? = null
 ) {
     val borderColor = if (highlight) FairyGold else Color.White.copy(alpha = 0.18f)
@@ -478,7 +486,10 @@ private fun KeyCard(
     ) {
         Canvas(modifier = Modifier
             .fillMaxSize()
-            .graphicsLayer { rotationZ = rotationDeg }
+            .graphicsLayer {
+                rotationY = rotationYDeg
+                cameraDistance = 12f * density
+            }
         ) {
             drawKey(key, sizePx = this.size.minDimension * 0.72f)
         }

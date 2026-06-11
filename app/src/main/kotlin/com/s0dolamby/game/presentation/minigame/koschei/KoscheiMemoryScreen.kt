@@ -1,6 +1,5 @@
 package com.s0dolamby.game.presentation.minigame.koschei
 
-import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -14,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -235,20 +235,40 @@ private fun CardView(card: Card, onClick: () -> Unit) {
             matchedScale.animateTo(1f, tween(220))
         }
     }
+    // Настоящий 3D-флип: rotationY 0° (рубашка) → 180° (лицо).
+    // На 90° карта стоит ребром — контент меняем именно в этот момент.
+    val flip = remember { Animatable(if (card.isFaceUp) 180f else 0f) }
+    LaunchedEffect(card.isFaceUp) {
+        flip.animateTo(
+            targetValue = if (card.isFaceUp) 180f else 0f,
+            animationSpec = tween(340, easing = FastOutSlowInEasing)
+        )
+    }
+    val showFace = flip.value > 90f
+
     Box(
         modifier = Modifier
             .size(width = 96.dp, height = 116.dp)
             .scale(matchedScale.value)
             .shadow(if (card.isFaceUp) 8.dp else 4.dp, RoundedCornerShape(14.dp))
             .clip(RoundedCornerShape(14.dp))
+            .graphicsLayer {
+                rotationY = flip.value
+                cameraDistance = 14f * density
+            }
             .clickable { onClick() }
     ) {
-        Crossfade(targetState = card.isFaceUp, animationSpec = tween(200), label = "card-flip") { faceUp ->
-            if (faceUp) {
+        if (showFace) {
+            // Лицо рисуем с компенсирующим зеркалированием — иначе при 180°
+            // оно было бы отражено по горизонтали
+            Box(modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer { rotationY = 180f }
+            ) {
                 CardFace(card)
-            } else {
-                CardBack()
             }
+        } else {
+            CardBack()
         }
     }
 }

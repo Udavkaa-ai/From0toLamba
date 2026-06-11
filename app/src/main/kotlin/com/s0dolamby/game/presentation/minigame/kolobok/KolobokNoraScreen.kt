@@ -284,6 +284,16 @@ private fun NoraSlot(
                 }
             }
             if (kolobokScale.value > 0.02f) {
+                // 3D-покачивание выпрыгнувшего колобка (перспектива по Y)
+                val infinite = rememberInfiniteTransition(label = "kolobok-swing")
+                val swing by infinite.animateFloat(
+                    initialValue = -16f, targetValue = 16f,
+                    animationSpec = infiniteRepeatable(
+                        tween(420, easing = FastOutSlowInEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ),
+                    label = "swing"
+                )
                 Box(
                     modifier = Modifier
                         .size(54.dp)
@@ -291,6 +301,8 @@ private fun NoraSlot(
                         .graphicsLayer {
                             scaleX = kolobokScale.value
                             scaleY = kolobokScale.value
+                            rotationY = swing
+                            cameraDistance = 10f * density
                         },
                     contentAlignment = Alignment.Center
                 ) {
