@@ -14,12 +14,15 @@ import androidx.compose.runtime.*
 import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.s0dolamby.game.R
 import com.s0dolamby.game.domain.model.Project
@@ -118,6 +121,19 @@ fun InboxScreen(
 @Composable
 private fun InboxProjectCard(project: Project, onClick: () -> Unit) {
     FairyCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+        // Обложка дела из стока (как в TG: 120dp, скруглённая)
+        project.bannerImageUrl?.takeIf { it.isNotEmpty() }?.let { url ->
+            AsyncImage(
+                model = url,
+                contentDescription = project.claimedName,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp)
+                    .clip(MaterialTheme.shapes.medium)
+            )
+            Spacer(Modifier.height(10.dp))
+        }
         // Заголовок: имя дела + тип, бейдж «N% посул» справа
         Row(
             modifier = Modifier.fillMaxWidth(),

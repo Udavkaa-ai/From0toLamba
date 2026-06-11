@@ -1,5 +1,6 @@
 package com.s0dolamby.game.domain.usecase
 
+import com.s0dolamby.game.data.banners.BannerAssets
 import com.s0dolamby.game.data.registry.DeveloperNameBank
 import com.s0dolamby.game.data.registry.PersonaRegistry
 import com.s0dolamby.game.data.registry.ProjectRegistry
@@ -12,7 +13,8 @@ import kotlin.random.Random
 class GenerateProjectUseCase @Inject constructor(
     private val projectRegistry: ProjectRegistry,
     private val personaRegistry: PersonaRegistry,
-    private val projectRepository: ProjectRepository
+    private val projectRepository: ProjectRepository,
+    private val bannerAssets: BannerAssets
 ) {
     suspend operator fun invoke(isOnboarding: Boolean = false): Result<Project> = runCatching {
         val template = if (isOnboarding) {
@@ -36,8 +38,12 @@ class GenerateProjectUseCase @Inject constructor(
         val realYield = calcRealYield(fate)
         val npcTruthParams = generateNpcTruthParams(fate, template.type, claimedUserCount, claimedTeamSize, realYield)
 
+        val projectId = UUID.randomUUID().toString()
         val project = Project(
-            id = UUID.randomUUID().toString(),
+            id = projectId,
+            // Обложка из стока сразу при генерации — бесплатно и мгновенно,
+            // карточка в инбоксе показывает её как в TG
+            bannerImageUrl = bannerAssets.bannerUrl(archetype, template.type, projectId),
             name = template.buildName(),
             type = template.type,
             developerPersonaId = persona.id,

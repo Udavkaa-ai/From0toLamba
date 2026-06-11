@@ -1,73 +1,32 @@
 package com.s0dolamby.game.domain.usecase
 
-import com.s0dolamby.game.BuildConfig
-import com.s0dolamby.game.data.ai.ChatMessage
-import com.s0dolamby.game.data.ai.ChatRequest
-import com.s0dolamby.game.data.ai.OpenRouterApiService
-import com.s0dolamby.game.data.ai.PromptBuilder
+import com.s0dolamby.game.data.banners.BannerAssets
 import com.s0dolamby.game.data.logging.AppLogger
 import com.s0dolamby.game.domain.model.Project
-import com.s0dolamby.game.domain.repository.GameConfig
 import com.s0dolamby.game.domain.repository.ProjectRepository
-import com.s0dolamby.game.domain.repository.SettingsRepository
 import javax.inject.Inject
 
 /**
- * Generates a project banner in two steps:
- *  1. DeepSeek invents a visual concept (creative, unique per project name) — ~$0.00003
- *  2. Builds a Pollinations.ai URL from that concept — FREE, FLUX.1-schnell under the hood
+ * Подбирает обложку дела из стратегического запаса в assets/banners/
+ * (278 заранее сгенерированных webp по архетипу × типу дела).
  *
- * Pollinations.ai generates the image lazily when Coil first loads the URL.
- * Coil disk-cache ensures the image is only fetched once per device.
+ * Раньше тут была двухступенчатая AI-генерация (DeepSeek-концепт →
+ * Pollinations/FLUX) — медленно, требовала сеть и иногда давала мусор.
+ * Теперь: мгновенно, оффлайн, бесплатно и стилистически однородно.
  */
 class GenerateProjectBannerUseCase @Inject constructor(
-    private val api: OpenRouterApiService,
-    private val promptBuilder: PromptBuilder,
-    private val projectRepository: ProjectRepository,
-    private val settingsRepository: SettingsRepository
+    private val bannerAssets: BannerAssets,
+    private val projectRepository: ProjectRepository
 ) {
     suspend operator fun invoke(project: Project): Result<String> = runCatching {
-        if (!settingsRepository.getSettings().imageGenerationEnabled) {
-            return@runCatching ""
-        }
-        // Step 1: unique visual concept from DeepSeek — keeps every banner distinct
-        val textModel = settingsRepository.getSettings().textModel
-        val concept = try {
-            val resp = api.chatCompletion(
-                auth = "Bearer ${BuildConfig.OPENROUTER_API_KEY}",
-                request = ChatRequest(
-                    model = textModel,
-                    messages = listOf(
-                        ChatMessage("user", promptBuilder.buildBannerConceptPrompt(project.claimedName))
-                    ),
-                    maxTokens = GameConfig.MAX_TOKENS_BANNER_CONCEPT,
-                    temperature = 1.0f
-                )
-            )
-            resp.choices.first().message.content
-                .trim()
-                .replace(Regex("^[*_\"'`]+|[*_\"'`]+$"), "") // strip markdown bold/italic/quotes
-                .trim()
-        } catch (e: Exception) {
-            // Fallback concept if DeepSeek is unavailable — still gives a decent image
-            AppLogger.i("GenerateProjectBannerUseCase", "Concept gen failed, using name: ${e.message}")
-            "digital art illustration inspired by the name ${project.claimedName}, vibrant colors, mobile game banner"
-        }
-
-        val finalPrompt = promptBuilder.buildFinalImagePrompt(concept)
-
-        // Step 2: Pollinations.ai — FLUX.1-schnell under the hood.
-        // URLEncoder + replace("+","%20") guarantees RFC-3986 compliant path segment.
-        val encoded = java.net.URLEncoder.encode(finalPrompt.take(400), "UTF-8")
-            .replace("+", "%20")
-        val seed = kotlin.math.abs(project.id.hashCode())
-        val key = BuildConfig.POLLINATIONS_API_KEY
-        val extras = if (key.isNotEmpty()) "&nologo=true&key=$key" else ""
-        val url = "https://gen.pollinations.ai/image/$encoded" +
-                  "?width=512&height=512&seed=$seed&model=flux$extras"
-
-        AppLogger.i("GenerateProjectBannerUseCase", "Banner URL saved for ${project.claimedName}")
-        projectRepository.updateBannerUrl(project.id, url, concept)
+        val url = bannerAssets.bannerUrl(project.personaArchetype, project.type, project.id)
+            ?: run {
+                AppLogger.i("GenerateProjectBannerUseCase",
+                    "No stock banner for ${project.personaArchetype}/${project.type}")
+                return@runCatching ""
+            }
+        projectRepository.updateBannerUrl(project.id, url, "stock-asset")
+        AppLogger.i("GenerateProjectBannerUseCase", "Stock banner set for ${project.claimedName}")
         url
     }
 }

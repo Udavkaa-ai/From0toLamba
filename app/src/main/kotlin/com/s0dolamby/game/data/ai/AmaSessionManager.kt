@@ -50,6 +50,47 @@ class AmaSessionManager @Inject constructor(
         )
     }
 
+    /**
+     * Первое приветственное сообщение дельца (как в TG: AI генерит приветствие
+     * в характере персоны). При ошибке сети — статичный fallback, чтобы беседа
+     * всегда начиналась с реплики хозяина.
+     */
+    suspend fun generateFirstMessage(
+        project: Project,
+        persona: DeveloperPersona,
+        sessionId: String
+    ): AmaMessage {
+        val content = runCatching {
+            val model = settingsRepository.getSettings().textModel
+            val systemPrompt = promptBuilder.buildAmaSystemPrompt(project, persona, questionCount = 1)
+            val response = api.chatCompletion(
+                auth = "Bearer ${BuildConfig.OPENROUTER_API_KEY}",
+                request = ChatRequest(
+                    model = model,
+                    messages = listOf(
+                        ChatMessage("system", systemPrompt),
+                        ChatMessage("user", promptBuilder.buildAmaFirstMessagePrompt(
+                            project.developerName, project.claimedName
+                        ))
+                    ),
+                    maxTokens = GameConfig.MAX_TOKENS_AMA,
+                    temperature = 0.85f
+                )
+            )
+            response.choices.first().message.content.trim().stripMarkdown()
+        }.onFailure {
+            AppLogger.e("AmaSessionManager", "First message gen failed", it)
+        }.getOrDefault(
+            "Здравствуй! Я ${project.developerName}, хозяин дела «${project.claimedName}». Задавай вопросы!"
+        )
+        return AmaMessage(
+            id = UUID.randomUUID().toString(),
+            sessionId = sessionId,
+            role = MessageRole.ASSISTANT,
+            content = content
+        )
+    }
+
     private fun String.stripMarkdown(): String = this
         .replace(Regex("\\*\\*(.+?)\\*\\*"), "$1")
         .replace(Regex("\\*(.+?)\\*"), "$1")
