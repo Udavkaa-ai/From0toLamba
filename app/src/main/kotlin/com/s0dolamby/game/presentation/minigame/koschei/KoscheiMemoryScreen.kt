@@ -68,7 +68,6 @@ fun KoscheiMemoryScreen(onBack: () -> Unit) {
     var secondFlippedIdx by remember(seed) { mutableStateOf<Int?>(null) }
     var lockTaps by remember(seed) { mutableStateOf(false) }
     var attempts by remember(seed) { mutableStateOf(0) }
-    var errors by remember(seed) { mutableStateOf(0) }
     var pairsFound by remember(seed) { mutableStateOf(0) }
     var stage by remember(seed) { mutableStateOf(MinigameStage.PLAY) }
     var secondsLeft by remember(seed) { mutableStateOf(TIME_BUDGET_S) }
@@ -99,7 +98,8 @@ fun KoscheiMemoryScreen(onBack: () -> Unit) {
                     stage = MinigameStage.RESULT
                 }
             } else {
-                errors += 1
+                // Несовпавшая пара — НЕ ошибка, просто закрываем обратно.
+                // Ошибки считаются по неоткрытым парам на таймауте.
                 delay(MISMATCH_HIDE_MS)
                 cards[first] = cards[first].copy(isFaceUp = false)
                 cards[second] = cards[second].copy(isFaceUp = false)
@@ -111,9 +111,10 @@ fun KoscheiMemoryScreen(onBack: () -> Unit) {
         }
     }
 
+    // Ошибки = пары, не открытые до конца таймера. Собрал все = идеал.
     val outcome: MinigameOutcome? = if (stage == MinigameStage.RESULT) {
-        val timeout = pairsFound < PAIR_COUNT
-        MinigameOutcome(errorCount = errors, timeoutReached = timeout)
+        val unmatchedPairs = PAIR_COUNT - pairsFound
+        MinigameOutcome(errorCount = unmatchedPairs, timeoutReached = false)
     } else null
 
     fun handleTap(idx: Int) {
@@ -134,7 +135,6 @@ fun KoscheiMemoryScreen(onBack: () -> Unit) {
         secondFlippedIdx = null
         lockTaps = false
         attempts = 0
-        errors = 0
         pairsFound = 0
         stage = MinigameStage.PLAY
         secondsLeft = TIME_BUDGET_S
@@ -151,7 +151,7 @@ fun KoscheiMemoryScreen(onBack: () -> Unit) {
         onClose = onBack
     ) {
         if (stage == MinigameStage.PLAY) {
-            ScoreLine(pairsFound, attempts, errors)
+            ScoreLine(pairsFound, attempts)
             Spacer(Modifier.height(14.dp))
             CardGrid(cards = cards, onTap = ::handleTap)
             Spacer(Modifier.height(10.dp))
@@ -164,7 +164,7 @@ fun KoscheiMemoryScreen(onBack: () -> Unit) {
                 color = Color.White, fontSize = 14.sp
             )
             Text(
-                "Промахов: $errors",
+                "Попыток: $attempts",
                 color = Color.White.copy(alpha = 0.7f), fontSize = 13.sp
             )
         }
@@ -172,7 +172,7 @@ fun KoscheiMemoryScreen(onBack: () -> Unit) {
 }
 
 @Composable
-private fun ScoreLine(pairsFound: Int, attempts: Int, errors: Int) {
+private fun ScoreLine(pairsFound: Int, attempts: Int) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -183,7 +183,7 @@ private fun ScoreLine(pairsFound: Int, attempts: Int, errors: Int) {
             fontSize = 13.sp, fontWeight = FontWeight.SemiBold
         )
         Text(
-            "Промахов: $errors",
+            "Попыток: $attempts",
             color = Color.White.copy(alpha = 0.6f),
             fontSize = 12.sp
         )

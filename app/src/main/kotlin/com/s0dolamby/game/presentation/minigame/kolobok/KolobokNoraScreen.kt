@@ -16,11 +16,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,17 +33,30 @@ import com.s0dolamby.game.presentation.minigame.common.drawSparkle
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
+// ─── кто выскакивает из норы ────────────────────────────────────────────
+
+private enum class NoraGuest(val emoji: String, val label: String) {
+    HARE("🐰", "заяц"),
+    WOLF("🐺", "волк"),
+    BEAR("🐻", "медведь"),
+    FOX("🦊", "лиса"),
+    KOLOBOK("", "колобок")   // рисуется Canvas, не эмодзи
+}
+
+private val ANIMALS = listOf(NoraGuest.HARE, NoraGuest.WOLF, NoraGuest.BEAR, NoraGuest.FOX)
+
 @Composable
 fun KolobokNoraScreen(onBack: () -> Unit) {
     var seed by remember { mutableStateOf(System.currentTimeMillis()) }
-    // Каждая попытка — это новый «уникальный ключ»; меняем когда показ закончен
     var attemptKey by remember(seed) { mutableStateOf(0) }
-    var attemptIdx by remember(seed) { mutableStateOf(0) }       // 0..TOTAL_ATTEMPTS
-    var currentNora by remember(seed) { mutableStateOf(-1) }     // -1 = пока пусто
-    var caughtCount by remember(seed) { mutableStateOf(0) }
+    var attemptIdx by remember(seed) { mutableStateOf(0) }
+    var activeNora by remember(seed) { mutableStateOf(-1) }            // где сейчас гость
+    var activeGuest by remember(seed) { mutableStateOf<NoraGuest?>(null) }
+    var caught by remember(seed) { mutableStateOf(0) }                  // пойманные звери
     var errors by remember(seed) { mutableStateOf(0) }
     var stage by remember(seed) { mutableStateOf(MinigameStage.PLAY) }
-    var feedback by remember(seed) { mutableStateOf<Pair<Int, Boolean>?>(null) }
+    var feedback by remember(seed) { mutableStateOf<Pair<Int, Boolean>?>(null) }   // (idx, good?)
+    var resolved by remember(seed) { mutableStateOf(false) }            // обработан ли текущий показ
 
     LaunchedEffect(seed, attemptKey) {
         if (stage != MinigameStage.PLAY) return@LaunchedEffect
@@ -51,18 +64,28 @@ fun KolobokNoraScreen(onBack: () -> Unit) {
             stage = MinigameStage.RESULT
             return@LaunchedEffect
         }
-        // Пауза-«затишье», потом колобок выглянет
         feedback = null
+        resolved = false
         delay(Random.nextLong(WAIT_MIN_MS, WAIT_MAX_MS + 1))
-        val target = Random.nextInt(NORA_COUNT)
-        currentNora = target
-        // Время на реакцию
+        val isKolobok = Random.nextDouble() < KOLOBOK_PROBABILITY
+        val guest = if (isKolobok) NoraGuest.KOLOBOK else ANIMALS.random()
+        val nora = Random.nextInt(NORA_COUNT)
+        activeGuest = guest
+        activeNora = nora
         delay(REACTION_WINDOW_MS)
-        if (currentNora == target) {
-            // Игрок не успел
-            errors += 1
-            feedback = target to false
-            currentNora = -1
+        if (!resolved) {
+            // Окно реакции истекло без тапа
+            resolved = true
+            if (guest == NoraGuest.KOLOBOK) {
+                // Колобка трогать не надо — молодец, что не тапнул
+                feedback = nora to true
+            } else {
+                // Зверь ушёл непойманным — ошибка
+                errors += 1
+                feedback = nora to false
+            }
+            activeNora = -1
+            activeGuest = null
             delay(FEEDBACK_MS)
             attemptIdx += 1
             attemptKey += 1
@@ -71,28 +94,30 @@ fun KolobokNoraScreen(onBack: () -> Unit) {
 
     fun handleTap(idx: Int) {
         if (stage != MinigameStage.PLAY) return
-        if (feedback != null) return
-        when (currentNora) {
-            idx -> {
-                caughtCount += 1
-                feedback = idx to true
-                currentNora = -1
-            }
-            -1 -> {
-                // Холостой тап — лёгкое наказание (тап в пустоту)
-                errors += 1
-                feedback = idx to false
+        if (resolved || feedback != null) return
+        val guest = activeGuest
+        when {
+            activeNora == idx && guest != null -> {
+                resolved = true
+                if (guest == NoraGuest.KOLOBOK) {
+                    // Тапнул по колобку — ошибка!
+                    errors += 1
+                    feedback = idx to false
+                } else {
+                    caught += 1
+                    feedback = idx to true
+                }
+                activeNora = -1
+                activeGuest = null
             }
             else -> {
-                errors += 1
-                feedback = idx to false
-                currentNora = -1
+                // Тап мимо/в пустую нору — мягко игнорируем (зверь мог уже спрятаться)
             }
         }
     }
 
     LaunchedEffect(feedback) {
-        if (feedback != null && currentNora == -1) {
+        if (feedback != null && resolved && activeNora == -1) {
             delay(FEEDBACK_MS)
             attemptIdx += 1
             attemptKey += 1
@@ -107,10 +132,12 @@ fun KolobokNoraScreen(onBack: () -> Unit) {
         seed = System.currentTimeMillis()
         attemptKey = 0
         attemptIdx = 0
-        currentNora = -1
-        caughtCount = 0
+        activeNora = -1
+        activeGuest = null
+        caught = 0
         errors = 0
         feedback = null
+        resolved = false
         stage = MinigameStage.PLAY
     }
 
@@ -126,32 +153,31 @@ fun KolobokNoraScreen(onBack: () -> Unit) {
     ) {
         if (stage == MinigameStage.PLAY) {
             Text(
-                "Колобок выглянет — тапни нору",
+                "Лови зверей — 🐰🐺🐻🦊 — но не тронь Колобка!",
                 color = Color.White.copy(alpha = 0.85f), fontSize = 14.sp
             )
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(4.dp))
             Text(
-                "Поймал $caughtCount  ·  промахов $errors",
+                "Поймано $caught  ·  ошибок $errors",
                 color = ArchetypePalette[PersonaArchetype.KOLOBOK].primary,
                 fontSize = 12.sp
             )
-            Spacer(Modifier.height(28.dp))
-            NoraRow(
-                currentNora = currentNora,
+            Spacer(Modifier.height(16.dp))
+            NoraGrid(
+                activeNora = activeNora,
+                activeGuest = activeGuest,
                 feedback = feedback,
                 onTap = ::handleTap
             )
-            Spacer(Modifier.height(16.dp))
-            ForestGround()
         }
         if (stage == MinigameStage.RESULT) {
             Spacer(Modifier.height(20.dp))
             Text(
-                "Поймал $caughtCount из $TOTAL_ATTEMPTS",
-                color = Color.White.copy(alpha = 0.7f), fontSize = 14.sp
+                "Поймано зверей: $caught",
+                color = Color.White, fontSize = 14.sp
             )
             Text(
-                "Промахов: $errors",
+                "Ошибок (упущенные звери + тапы по Колобку): $errors",
                 color = Color.White.copy(alpha = 0.7f), fontSize = 13.sp
             )
         }
@@ -159,180 +185,138 @@ fun KolobokNoraScreen(onBack: () -> Unit) {
 }
 
 @Composable
-private fun ForestGround() {
-    Canvas(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(36.dp)
-    ) {
-        drawRect(
-            Brush.verticalGradient(
-                listOf(Color(0xFF3E1F00), Color(0xFF1A0F00))
-            ),
-            topLeft = Offset.Zero,
-            size = Size(size.width, size.height)
-        )
-        // Опавшие листья — несколько маленьких оранжевых овалов
-        for (i in 0..9) {
-            val x = size.width * (0.05f + 0.10f * i)
-            val y = size.height * (0.4f + 0.3f * ((i % 3) / 2f))
-            drawOval(
-                Color(0xFFE65100).copy(alpha = 0.45f),
-                topLeft = Offset(x - 6f, y - 3f),
-                size = Size(12f, 6f)
-            )
-        }
-    }
-}
-
-@Composable
-private fun NoraRow(
-    currentNora: Int,
+private fun NoraGrid(
+    activeNora: Int,
+    activeGuest: NoraGuest?,
     feedback: Pair<Int, Boolean>?,
     onTap: (Int) -> Unit
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.Bottom
-    ) {
-        for (idx in 0 until NORA_COUNT) {
-            NoraSlot(
-                index = idx,
-                isKolobokOut = currentNora == idx,
-                feedback = feedback?.takeIf { it.first == idx },
-                onTap = { onTap(idx) }
-            )
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        for (row in 0 until GRID_ROWS) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                for (col in 0 until GRID_COLS) {
+                    val idx = row * GRID_COLS + col
+                    Box(modifier = Modifier.weight(1f)) {
+                        NoraSlot(
+                            isActive = activeNora == idx,
+                            guest = if (activeNora == idx) activeGuest else null,
+                            feedback = feedback?.takeIf { it.first == idx },
+                            onTap = { onTap(idx) }
+                        )
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
 private fun NoraSlot(
-    index: Int,
-    isKolobokOut: Boolean,
+    isActive: Boolean,
+    guest: NoraGuest?,
     feedback: Pair<Int, Boolean>?,
     onTap: () -> Unit
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable { onTap() }
-    ) {
-        Box(
-            modifier = Modifier
-                .size(width = 96.dp, height = 110.dp),
-            contentAlignment = Alignment.BottomCenter
-        ) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                // Земляная горка
-                val mound = Path().apply {
-                    moveTo(0f, size.height)
-                    quadraticBezierTo(size.width / 2f, size.height * 0.05f, size.width, size.height)
-                    close()
-                }
-                drawPath(
-                    mound,
-                    brush = Brush.verticalGradient(
-                        listOf(Color(0xFF7B4F2A), Color(0xFF3E2723)),
-                        startY = 0f, endY = size.height
-                    )
-                )
-                // Вход в нору
-                drawOval(
-                    Color(0xFF0F0700),
-                    topLeft = Offset(size.width * 0.22f, size.height * 0.15f),
-                    size = Size(size.width * 0.56f, size.height * 0.42f)
-                )
-                drawOval(
-                    Color.Black.copy(alpha = 0.6f),
-                    topLeft = Offset(size.width * 0.25f, size.height * 0.18f),
-                    size = Size(size.width * 0.50f, size.height * 0.36f),
-                    style = Stroke(width = 1.5f)
-                )
-                // Маленькие травинки сбоку
-                for (i in 0..2) {
-                    val gx = size.width * (0.05f + 0.1f * i)
-                    drawLine(
-                        Color(0xFF4E342E),
-                        start = Offset(gx, size.height * 0.95f),
-                        end = Offset(gx, size.height * 0.75f),
-                        strokeWidth = 2f
-                    )
-                }
-                for (i in 0..2) {
-                    val gx = size.width * (0.85f + 0.05f * i)
-                    drawLine(
-                        Color(0xFF4E342E),
-                        start = Offset(gx, size.height * 0.95f),
-                        end = Offset(gx, size.height * 0.75f),
-                        strokeWidth = 2f
-                    )
-                }
-            }
+    val guestScale = remember { Animatable(0f) }
+    LaunchedEffect(isActive) {
+        if (isActive) {
+            guestScale.snapTo(0.3f)
+            guestScale.animateTo(1f, spring(dampingRatio = Spring.DampingRatioMediumBouncy))
+        } else {
+            guestScale.animateTo(0f, tween(140))
+        }
+    }
+    // Лёгкое 3D-покачивание гостя
+    val infinite = rememberInfiniteTransition(label = "guest-swing")
+    val swing by infinite.animateFloat(
+        initialValue = -14f, targetValue = 14f,
+        animationSpec = infiniteRepeatable(
+            tween(380, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "swing"
+    )
 
-            // Колобок выскакивает (анимация масштаба)
-            val kolobokScale = remember { Animatable(0f) }
-            LaunchedEffect(isKolobokOut) {
-                if (isKolobokOut) {
-                    kolobokScale.snapTo(0.3f)
-                    kolobokScale.animateTo(
-                        targetValue = 1f,
-                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
-                    )
-                } else {
-                    kolobokScale.animateTo(0f, tween(160))
-                }
+    Box(
+        modifier = Modifier
+            .aspectRatio(1f)
+            .clickable { onTap() },
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            // Земляная горка с норой
+            val mound = Path().apply {
+                moveTo(0f, size.height)
+                quadraticBezierTo(size.width / 2f, size.height * 0.18f, size.width, size.height)
+                close()
             }
-            if (kolobokScale.value > 0.02f) {
-                // 3D-покачивание выпрыгнувшего колобка (перспектива по Y)
-                val infinite = rememberInfiniteTransition(label = "kolobok-swing")
-                val swing by infinite.animateFloat(
-                    initialValue = -16f, targetValue = 16f,
-                    animationSpec = infiniteRepeatable(
-                        tween(420, easing = FastOutSlowInEasing),
-                        repeatMode = RepeatMode.Reverse
-                    ),
-                    label = "swing"
+            drawPath(
+                mound,
+                brush = Brush.verticalGradient(
+                    listOf(Color(0xFF7B4F2A), Color(0xFF3E2723)),
+                    startY = 0f, endY = size.height
                 )
-                Box(
-                    modifier = Modifier
-                        .size(54.dp)
-                        .offset(y = (-32).dp)
-                        .graphicsLayer {
-                            scaleX = kolobokScale.value
-                            scaleY = kolobokScale.value
-                            rotationY = swing
-                            cameraDistance = 10f * density
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
+            )
+            drawOval(
+                Color(0xFF0F0700),
+                topLeft = Offset(size.width * 0.24f, size.height * 0.30f),
+                size = Size(size.width * 0.52f, size.height * 0.34f)
+            )
+            drawOval(
+                Color.Black.copy(alpha = 0.6f),
+                topLeft = Offset(size.width * 0.27f, size.height * 0.33f),
+                size = Size(size.width * 0.46f, size.height * 0.28f),
+                style = Stroke(width = 1.5f)
+            )
+        }
+
+        // Гость
+        if (guestScale.value > 0.02f && guest != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize(0.62f)
+                    .offset(y = (-14).dp)
+                    .graphicsLayer {
+                        scaleX = guestScale.value
+                        scaleY = guestScale.value
+                        rotationY = swing
+                        cameraDistance = 10f * density
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                if (guest == NoraGuest.KOLOBOK) {
                     Canvas(modifier = Modifier.fillMaxSize()) {
                         drawKolobok(this.size.width, this.size.height)
                     }
+                } else {
+                    Text(guest.emoji, fontSize = 38.sp)
                 }
             }
+        }
 
-            // Feedback overlay
-            feedback?.let { (_, hit) ->
-                Box(
-                    modifier = Modifier
-                        .size(64.dp)
-                        .offset(y = (-40).dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (hit) Color(0xFF66BB6A).copy(alpha = 0.85f)
-                            else Color(0xFFE57373).copy(alpha = 0.85f)
-                        )
-                        .border(2.dp, Color.White.copy(alpha = 0.55f), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        if (hit) "✓" else "✗",
-                        color = Color.White,
-                        fontSize = 30.sp,
-                        fontWeight = FontWeight.Bold
+        // Feedback
+        feedback?.let { (_, good) ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize(0.55f)
+                    .offset(y = (-16).dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (good) Color(0xFF66BB6A).copy(alpha = 0.85f)
+                        else Color(0xFFE57373).copy(alpha = 0.85f)
                     )
-                }
+                    .border(2.dp, Color.White.copy(alpha = 0.55f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    if (good) "✓" else "✗",
+                    color = Color.White,
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }
@@ -348,7 +332,6 @@ private fun DrawScope.drawKolobok(w: Float, h: Float) {
         topLeft = Offset(cx - r * 0.9f, cy + r * 0.6f),
         size = Size(r * 1.8f, r * 0.3f)
     )
-
     drawCircle(
         Brush.radialGradient(
             colors = listOf(Color(0xFFFFE082), Color(0xFFD4A017), Color(0xFF6D4C00)),
@@ -358,33 +341,30 @@ private fun DrawScope.drawKolobok(w: Float, h: Float) {
         radius = r,
         center = Offset(cx, cy)
     )
-
     drawCircle(
         Color.White.copy(alpha = 0.5f),
         radius = r * 0.25f,
         center = Offset(cx - r * 0.3f, cy - r * 0.35f)
     )
-
-    // Глаза
     drawCircle(Color.Black, radius = r * 0.10f, center = Offset(cx - r * 0.28f, cy - r * 0.10f))
     drawCircle(Color.Black, radius = r * 0.10f, center = Offset(cx + r * 0.28f, cy - r * 0.10f))
     drawCircle(Color.White, radius = r * 0.04f, center = Offset(cx - r * 0.25f, cy - r * 0.13f))
     drawCircle(Color.White, radius = r * 0.04f, center = Offset(cx + r * 0.31f, cy - r * 0.13f))
-
-    // Улыбка
     val smile = Path().apply {
         moveTo(cx - r * 0.35f, cy + r * 0.18f)
         quadraticBezierTo(cx, cy + r * 0.45f, cx + r * 0.35f, cy + r * 0.18f)
     }
     drawPath(smile, color = Color(0xFF3E1A00), style = Stroke(width = r * 0.08f))
-
     drawSparkle(Offset(cx + r * 1.0f, cy - r * 0.7f), r * 0.14f, color = Color(0xFFFFD54F))
     drawSparkle(Offset(cx - r * 1.05f, cy + r * 0.3f), r * 0.12f, color = Color(0xFFFFD54F))
 }
 
-private const val NORA_COUNT = 3
-private const val TOTAL_ATTEMPTS = 7
-private const val WAIT_MIN_MS = 450L
-private const val WAIT_MAX_MS = 1300L
-private const val REACTION_WINDOW_MS = 1050L
-private const val FEEDBACK_MS = 380L
+private const val GRID_ROWS = 3
+private const val GRID_COLS = 3
+private const val NORA_COUNT = GRID_ROWS * GRID_COLS
+private const val TOTAL_ATTEMPTS = 10
+private const val KOLOBOK_PROBABILITY = 0.30
+private const val WAIT_MIN_MS = 350L
+private const val WAIT_MAX_MS = 1000L
+private const val REACTION_WINDOW_MS = 1000L
+private const val FEEDBACK_MS = 360L

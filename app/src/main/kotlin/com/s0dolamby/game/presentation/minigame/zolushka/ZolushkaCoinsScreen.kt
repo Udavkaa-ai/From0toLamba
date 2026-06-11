@@ -19,6 +19,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
@@ -180,7 +181,7 @@ private fun RoundCounter(round: Int, total: Int, sequenceSize: Int, input: Int, 
 }
 
 @Composable
-private fun GrainGrid(litGrain: Grain?, enabled: Boolean, onTap: (Grain) -> Unit) {
+private fun ColumnScope.GrainGrid(litGrain: Grain?, enabled: Boolean, onTap: (Grain) -> Unit) {
     val infinite = rememberInfiniteTransition(label = "grain-glow")
     val glow by infinite.animateFloat(
         initialValue = 0.7f, targetValue = 1.0f,
@@ -189,22 +190,51 @@ private fun GrainGrid(litGrain: Grain?, enabled: Boolean, onTap: (Grain) -> Unit
         ),
         label = "glow"
     )
+    // Лёгкое «дыхание» всех клеток в режиме ожидания
+    val idleBreath by infinite.animateFloat(
+        initialValue = 0.985f, targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            tween(1400, easing = FastOutSlowInEasing), repeatMode = RepeatMode.Reverse
+        ),
+        label = "idleBreath"
+    )
 
+    // Клетки растягиваются на весь доступный экран: 2×2, каждая weight(1f)
     Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = Modifier
+            .weight(1f)
+            .fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            GrainTile(Grain.WHEAT, lit = litGrain == Grain.WHEAT, enabled = enabled,
-                glow = if (litGrain == Grain.WHEAT) glow else 0f, onTap = onTap)
-            GrainTile(Grain.LENTIL, lit = litGrain == Grain.LENTIL, enabled = enabled,
-                glow = if (litGrain == Grain.LENTIL) glow else 0f, onTap = onTap)
+        Row(
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Box(Modifier.weight(1f).fillMaxHeight()) {
+                GrainTile(Grain.WHEAT, lit = litGrain == Grain.WHEAT, enabled = enabled,
+                    glow = if (litGrain == Grain.WHEAT) glow else 0f,
+                    idleBreath = idleBreath, onTap = onTap)
+            }
+            Box(Modifier.weight(1f).fillMaxHeight()) {
+                GrainTile(Grain.LENTIL, lit = litGrain == Grain.LENTIL, enabled = enabled,
+                    glow = if (litGrain == Grain.LENTIL) glow else 0f,
+                    idleBreath = idleBreath, onTap = onTap)
+            }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            GrainTile(Grain.ACORN, lit = litGrain == Grain.ACORN, enabled = enabled,
-                glow = if (litGrain == Grain.ACORN) glow else 0f, onTap = onTap)
-            GrainTile(Grain.POMEGRANATE, lit = litGrain == Grain.POMEGRANATE, enabled = enabled,
-                glow = if (litGrain == Grain.POMEGRANATE) glow else 0f, onTap = onTap)
+        Row(
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Box(Modifier.weight(1f).fillMaxHeight()) {
+                GrainTile(Grain.ACORN, lit = litGrain == Grain.ACORN, enabled = enabled,
+                    glow = if (litGrain == Grain.ACORN) glow else 0f,
+                    idleBreath = idleBreath, onTap = onTap)
+            }
+            Box(Modifier.weight(1f).fillMaxHeight()) {
+                GrainTile(Grain.POMEGRANATE, lit = litGrain == Grain.POMEGRANATE, enabled = enabled,
+                    glow = if (litGrain == Grain.POMEGRANATE) glow else 0f,
+                    idleBreath = idleBreath, onTap = onTap)
+            }
         }
     }
 }
@@ -215,24 +245,36 @@ private fun GrainTile(
     lit: Boolean,
     enabled: Boolean,
     glow: Float,
+    idleBreath: Float,
     onTap: (Grain) -> Unit
 ) {
     val tap = remember { Animatable(1f) }
     LaunchedEffect(lit) {
         if (lit) {
-            tap.snapTo(0.92f)
-            tap.animateTo(1f, animationSpec = tween(220))
+            tap.snapTo(0.90f)
+            tap.animateTo(1.06f, spring(dampingRatio = Spring.DampingRatioMediumBouncy))
+            tap.animateTo(1f, tween(180))
         }
     }
-    val scale = tap.value * (if (lit) 1.05f else 1f)
+    // Покачивание зажжённой клетки + дыхание в покое
+    val infinite = rememberInfiniteTransition(label = "tile-wiggle")
+    val wiggle by infinite.animateFloat(
+        initialValue = -2f, targetValue = 2f,
+        animationSpec = infiniteRepeatable(
+            tween(260, easing = LinearEasing), repeatMode = RepeatMode.Reverse
+        ),
+        label = "wiggle"
+    )
+    val scale = tap.value * (if (lit) 1.04f else idleBreath)
     val alpha = if (lit) 1f else 0.7f
 
     Box(
         modifier = Modifier
-            .size(110.dp)
+            .fillMaxSize()
             .scale(scale)
-            .shadow(if (lit) 16.dp else 4.dp, RoundedCornerShape(24.dp))
-            .clip(RoundedCornerShape(24.dp))
+            .graphicsLayer { rotationZ = if (lit) wiggle else 0f }
+            .shadow(if (lit) 18.dp else 4.dp, RoundedCornerShape(28.dp))
+            .clip(RoundedCornerShape(28.dp))
             .background(
                 Brush.radialGradient(
                     colors = if (lit) listOf(Color(0xFFFFE0E6), grain.seedColor)
@@ -242,7 +284,7 @@ private fun GrainTile(
             .border(
                 width = if (lit) 3.dp else 1.dp,
                 color = if (lit) grain.glowColor else Color.White.copy(alpha = 0.15f),
-                shape = RoundedCornerShape(24.dp)
+                shape = RoundedCornerShape(28.dp)
             )
             .let { if (enabled) it.clickable { onTap(grain) } else it },
         contentAlignment = Alignment.Center
@@ -253,21 +295,21 @@ private fun GrainTile(
             if (lit) {
                 drawSparkleHalo(
                     center = center,
-                    radius = sz * 0.45f,
-                    count = 5,
-                    sparkleSize = 7f,
+                    radius = sz * 0.42f,
+                    count = 6,
+                    sparkleSize = 9f,
                     color = grain.glowColor,
                     intensity = glow
                 )
             }
-            drawGrainEmblem(grain, center, sz * 0.5f, lit, alpha)
+            drawGrainEmblem(grain, center, sz * 0.52f, lit, alpha)
         }
         Text(
             grain.label,
             color = if (lit) Color(0xFF2A0F1A) else Color.White.copy(alpha = 0.6f),
-            fontSize = 11.sp,
+            fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(bottom = 8.dp).align(Alignment.BottomCenter)
+            modifier = Modifier.padding(bottom = 10.dp).align(Alignment.BottomCenter)
         )
     }
 }
