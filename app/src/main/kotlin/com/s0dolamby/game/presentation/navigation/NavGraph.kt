@@ -13,6 +13,7 @@ import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.s0dolamby.game.presentation.ama.AmaScreen
 import com.s0dolamby.game.presentation.home.HomeScreen
 import com.s0dolamby.game.presentation.inbox.InboxScreen
+import com.s0dolamby.game.presentation.leaderboard.LeaderboardScreen
 import com.s0dolamby.game.presentation.minigame.goldenkey.GoldenKeyScreen
 import com.s0dolamby.game.presentation.news.NewsScreen
 import com.s0dolamby.game.presentation.onboarding.OnboardingScreen
@@ -42,6 +43,7 @@ sealed class Screen(val route: String) {
     object PersonaRegistry : Screen("registry")
     object Settings : Screen("settings")
     object GoldenKey : Screen("minigame/golden-key")
+    object Leaderboard : Screen("leaderboard")
 }
 
 @HiltViewModel
@@ -88,6 +90,7 @@ fun NavGraph() {
                 onPortfolioClick = { navController.navigate(Screen.Portfolio.route) },
                 onNewsClick = { navController.navigate(Screen.News.route) },
                 onStatsClick = { navController.navigate(Screen.Stats.route) },
+                onLeaderboardClick = { navController.navigate(Screen.Leaderboard.route) },
                 onRegistryClick = { navController.navigate(Screen.PersonaRegistry.route) },
                 onProjectClick = { projectId -> navController.navigate(Screen.ProjectDetail.createRoute(projectId)) },
                 onSettingsClick = { navController.navigate(Screen.Settings.route) }
@@ -151,6 +154,9 @@ fun NavGraph() {
         }
         composable(Screen.GoldenKey.route) {
             GoldenKeyScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.Leaderboard.route) {
+            LeaderboardScreen(onBack = { navController.popBackStack() })
         }
     }
 }
