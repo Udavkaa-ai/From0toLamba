@@ -58,10 +58,21 @@ class AmaViewModel @Inject constructor(
 
     private val projectId: String = checkNotNull(savedStateHandle["projectId"])
 
+    private val _uiState = MutableStateFlow(AmaUiState(isLoading = true))
+    val uiState: StateFlow<AmaUiState> = _uiState.asStateFlow()
+
     init {
-        // Подписываемся на изменения unlock-стора, чтобы кнопка инвеста
-        // мгновенно превратилась из «Сыграть в игру дельца» в «Вложить рубли»
-        // после возврата из gate-экрана.
+        loadSession()
+        viewModelScope.launch {
+            gameStateRepository.observeGameState().collect { state ->
+                _uiState.update { it.copy(freeBalance = state.balance) }
+            }
+        }
+        // Подписка на unlock-стор: кнопка инвеста мгновенно превращается из
+        // «Испытать» в «Вложить» после возврата из gate-экрана.
+        // ВАЖНО: init идёт ПОСЛЕ объявления _uiState — viewModelScope работает
+        // на Main.immediate и StateFlow.collect синхронно отдаёт первое
+        // значение прямо в конструкторе.
         viewModelScope.launch {
             minigameUnlockStore.outcomes.collect { map ->
                 val outcome: MinigameOutcome? = map[projectId]
@@ -73,24 +84,19 @@ class AmaViewModel @Inject constructor(
         }
     }
 
-    private val _uiState = MutableStateFlow(AmaUiState(isLoading = true))
-    val uiState: StateFlow<AmaUiState> = _uiState.asStateFlow()
-
-    init {
-        loadSession()
-        viewModelScope.launch {
-            gameStateRepository.observeGameState().collect { state ->
-                _uiState.update { it.copy(freeBalance = state.balance) }
-            }
-        }
-    }
-
     private fun loadSession() {
         viewModelScope.launch {
             val project = projectRepository.getProjectById(projectId)
             val sessionResult = startAmaSessionUseCase(projectId)
             sessionResult.onSuccess { session ->
-                _uiState.value = AmaUiState(project = project, session = session)
+                // update, а не замена всего state — иначе сотрём minigameUnlocked
+                // и freeBalance, выставленные параллельными collect'ами
+                _uiState.update { it.copy(
+                    project = project,
+                    session = session,
+                    isLoading = false,
+                    error = null
+                ) }
                 observeSession(session.id)
             }.onFailure {
                 _uiState.update { s -> s.copy(isLoading = false, error = it.message) }
