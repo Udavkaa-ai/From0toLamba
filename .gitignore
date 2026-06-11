@@ -9,4 +9,7 @@
 .cxx
 *.jks
 *.keystore
+# Debug-keystore нарочно в репозитории: фиксированная подпись debug-сборок,
+# чтобы APK из CI обновлялся поверх предыдущего без удаления
+!app/debug.keystore
 local.properties

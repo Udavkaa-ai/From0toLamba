@@ -45,10 +45,20 @@ private enum class WaxColor(val light: Color, val dark: Color) {
 
 private enum class Emblem { STAR, CROSS, CROWN }
 
+/**
+ * Печать. Цвет/эмблема/кольца у ВСЕХ печатей поля одинаковые (как у эталона) —
+ * подделка выдаёт себя только освещением воска:
+ * - [lightAngleDeg] — откуда падает свет (куда смещён центр градиента и блик).
+ *   У эталона 225° (верх-лево). У подделок свет повёрнут на 90/180/270°.
+ * - [inverted] — у подделки light/dark в градиенте поменяны местами
+ *   (воск «выпуклый» наоборот — вдавленный).
+ */
 private data class Seal(
     val wax: WaxColor,
     val emblem: Emblem,
-    val doubleRing: Boolean
+    val doubleRing: Boolean,
+    val lightAngleDeg: Float = ETALON_LIGHT_ANGLE,
+    val inverted: Boolean = false
 )
 
 private data class SealCell(
@@ -57,24 +67,24 @@ private data class SealCell(
     var found: Boolean = false
 )
 
-private fun randomSeal(rng: Random) = Seal(
-    wax = WaxColor.values().let { it[rng.nextInt(it.size)] },
-    emblem = Emblem.values().let { it[rng.nextInt(it.size)] },
-    doubleRing = rng.nextBoolean()
-)
-
 private fun forgeOf(real: Seal, rng: Random): Seal {
-    val mutations = listOf<(Seal) -> Seal>(
-        { it.copy(wax = WaxColor.values().filter { w -> w != it.wax }.random(rng)) },
-        { it.copy(emblem = Emblem.values().filter { e -> e != it.emblem }.random(rng)) },
-        { it.copy(doubleRing = !it.doubleRing) }
-    )
-    return mutations.random(rng)(real)
+    return if (rng.nextBoolean()) {
+        // Свет повёрнут на 90/180/270°
+        val delta = listOf(90f, 180f, 270f).random(rng)
+        real.copy(lightAngleDeg = (real.lightAngleDeg + delta) % 360f)
+    } else {
+        // Градиент инвертирован: светлый центр → тёмный центр
+        real.copy(inverted = true)
+    }
 }
 
 private fun buildField(seed: Long): Pair<Seal, List<SealCell>> {
     val rng = Random(seed)
-    val etalon = randomSeal(rng)
+    val etalon = Seal(
+        wax = WaxColor.values().let { it[rng.nextInt(it.size)] },
+        emblem = Emblem.values().let { it[rng.nextInt(it.size)] },
+        doubleRing = rng.nextBoolean()
+    )
     val cells = mutableListOf<SealCell>()
     repeat(TOTAL_SEALS - FORGED_COUNT) { cells += SealCell(etalon, isForged = false) }
     repeat(FORGED_COUNT) {
@@ -171,7 +181,7 @@ fun BoyarinCharterScreen(onBack: () -> Unit) {
                 }
                 Column {
                     Text(
-                        "Подлинная печать",
+                        "Подлинная печать · следи за бликом",
                         color = ArchetypePalette[PersonaArchetype.BOYARIN].primary,
                         fontSize = 12.sp, fontWeight = FontWeight.SemiBold
                     )
@@ -266,8 +276,16 @@ private fun SealCellView(cell: SealCell, wrongFlash: Boolean, onClick: () -> Uni
 // ─── рисование печати ──────────────────────────────────────────────────
 
 private fun DrawScope.drawSeal(seal: Seal, center: Offset, radius: Float) {
-    val light = seal.wax.light
-    val dark = seal.wax.dark
+    // Инверсия меняет местами light/dark — воск выглядит «вдавленным»
+    val light = if (seal.inverted) seal.wax.dark else seal.wax.light
+    val dark = if (seal.inverted) seal.wax.light else seal.wax.dark
+
+    // Точка, откуда падает свет — определяет центр градиента и позицию блика
+    val lightRad = Math.toRadians(seal.lightAngleDeg.toDouble())
+    val lightOffset = Offset(
+        center.x + (radius * 0.30f * cos(lightRad)).toFloat(),
+        center.y + (radius * 0.30f * sin(lightRad)).toFloat()
+    )
 
     // Восковая клякса — волнистый край из 12 лепестков
     val blobPath = Path().apply {
@@ -285,7 +303,7 @@ private fun DrawScope.drawSeal(seal: Seal, center: Offset, radius: Float) {
         blobPath,
         brush = Brush.radialGradient(
             colors = listOf(light, dark),
-            center = Offset(center.x - radius * 0.25f, center.y - radius * 0.25f),
+            center = lightOffset,
             radius = radius * 1.5f
         )
     )
@@ -351,11 +369,15 @@ private fun DrawScope.drawSeal(seal: Seal, center: Offset, radius: Float) {
         }
     }
 
-    // Блик на воске
+    // Блик на воске — со стороны источника света
+    val glintRad = Math.toRadians(seal.lightAngleDeg.toDouble())
     drawCircle(
-        Color.White.copy(alpha = 0.30f),
+        Color.White.copy(alpha = 0.32f),
         radius = radius * 0.13f,
-        center = Offset(center.x - radius * 0.40f, center.y - radius * 0.42f)
+        center = Offset(
+            center.x + (radius * 0.55f * cos(glintRad)).toFloat(),
+            center.y + (radius * 0.55f * sin(glintRad)).toFloat()
+        )
     )
 }
 
@@ -363,3 +385,4 @@ private const val GRID_COLS = 4
 private const val TOTAL_SEALS = 24
 private const val FORGED_COUNT = 8
 private const val TIME_BUDGET_S = 45
+private const val ETALON_LIGHT_ANGLE = 225f   // свет сверху-слева

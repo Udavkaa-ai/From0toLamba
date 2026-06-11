@@ -232,7 +232,7 @@ fun SettingsScreen(
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
                         border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f))
                     ) {
-                        Text("🗺 Повторить карту · Иван-Дурак", fontWeight = FontWeight.SemiBold)
+                        Text("🃏 Подкинь карту · Иван-Дурак", fontWeight = FontWeight.SemiBold)
                     }
                 }
 

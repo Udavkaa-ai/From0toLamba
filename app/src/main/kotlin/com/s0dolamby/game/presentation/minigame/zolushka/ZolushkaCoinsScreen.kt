@@ -56,8 +56,12 @@ private enum class Phase { SHOWCASE, INPUT }
 @Composable
 fun ZolushkaCoinsScreen(onBack: () -> Unit) {
     var seed by remember { mutableStateOf(System.currentTimeMillis()) }
+    // Одна мастер-последовательность на всю игру; раунды показывают
+    // растущий префикс: 3 → 5 → 7 зёрен. Начало всегда одно и то же —
+    // запоминать надо только новый хвост.
+    val master = remember(seed) { generateMaster(seed) }
     var round by remember(seed) { mutableStateOf(1) }
-    var sequence by remember(seed) { mutableStateOf(generateSequence(round, seed)) }
+    var sequence by remember(seed) { mutableStateOf(master.take(prefixLen(1))) }
     var phase by remember(seed) { mutableStateOf(Phase.SHOWCASE) }
     var litGrain by remember(seed) { mutableStateOf<Grain?>(null) }
     var playerInput by remember(seed) { mutableStateOf(emptyList<Grain>()) }
@@ -109,7 +113,7 @@ fun ZolushkaCoinsScreen(onBack: () -> Unit) {
                 stage = MinigameStage.RESULT
             } else {
                 round += 1
-                sequence = generateSequence(round, seed + round)
+                sequence = master.take(prefixLen(round))
                 phase = Phase.SHOWCASE
             }
         }
@@ -118,7 +122,7 @@ fun ZolushkaCoinsScreen(onBack: () -> Unit) {
     fun restart() {
         seed = System.currentTimeMillis()
         round = 1
-        sequence = generateSequence(round, seed)
+        sequence = master.take(prefixLen(1))
         phase = Phase.SHOWCASE
         playerInput = emptyList()
         errors = 0
@@ -173,7 +177,9 @@ private fun RoundCounter(round: Int, total: Int, sequenceSize: Int, input: Int, 
         )
         Spacer(Modifier.height(4.dp))
         val text = when (phase) {
-            Phase.SHOWCASE -> "Запоминай · $sequenceSize зёрнышек"
+            Phase.SHOWCASE ->
+                if (round == 1) "Запоминай · $sequenceSize зёрнышка"
+                else "Начало то же + 2 новых · всего $sequenceSize"
             Phase.INPUT -> "Перебери ($input / $sequenceSize)"
         }
         Text(text, color = Color.White.copy(alpha = 0.75f), fontSize = 13.sp)
@@ -439,15 +445,18 @@ private fun ProgressBar(
     }
 }
 
-private fun generateSequence(round: Int, seed: Long): List<Grain> {
-    val rng = Random(seed + round * 23L)
-    val length = SEQUENCE_LEN_BASE + (round - 1) * SEQUENCE_LEN_STEP
-    return List(length) { ALL_GRAINS[rng.nextInt(ALL_GRAINS.size)] }
+private fun generateMaster(seed: Long): List<Grain> {
+    val rng = Random(seed)
+    return List(MASTER_LENGTH) { ALL_GRAINS[rng.nextInt(ALL_GRAINS.size)] }
 }
+
+private fun prefixLen(round: Int): Int =
+    SEQUENCE_LEN_BASE + (round - 1) * SEQUENCE_LEN_STEP
 
 private const val TOTAL_ROUNDS = 3
 private const val SEQUENCE_LEN_BASE = 3
 private const val SEQUENCE_LEN_STEP = 2
+private const val MASTER_LENGTH = SEQUENCE_LEN_BASE + (TOTAL_ROUNDS - 1) * SEQUENCE_LEN_STEP  // 7
 private const val SHOWCASE_LIT_MS = 600L
 private const val SHOWCASE_GAP_MS = 250L
-private const val INPUT_SECONDS = 12
+private const val INPUT_SECONDS = 14

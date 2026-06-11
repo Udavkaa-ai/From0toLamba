@@ -37,6 +37,18 @@ android {
         )
     }
 
+    signingConfigs {
+        // Фиксированный debug-ключ из репозитория: каждый CI-раннер по умолчанию
+        // генерит СВОЙ debug.keystore → подпись меняется от сборки к сборке и
+        // Android отказывается обновлять APK. С общим ключом обновление работает.
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         debug {
             // CI собирает debug-APK, релиз в Play подписан другим ключом —
@@ -46,6 +58,7 @@ android {
             versionNameSuffix = "-debug"
             resValue("string", "app_name_override", "Из грязи в князи (debug)")
             manifestPlaceholders["appLabel"] = "@string/app_name_override"
+            signingConfig = signingConfigs.getByName("debug")
         }
         release {
             isMinifyEnabled = false
