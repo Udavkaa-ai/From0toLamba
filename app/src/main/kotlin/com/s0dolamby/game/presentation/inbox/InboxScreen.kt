@@ -75,26 +75,22 @@ fun InboxScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Text("✦", color = FairyGold.copy(alpha = 0.4f), fontSize = 28.sp)
+                            Text("📭", fontSize = 32.sp)
                             Text(
-                                "Возвращайся завтра,\nпока грамот нет",
+                                "Новых предложений нет",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = Color.White,
                                 fontWeight = FontWeight.SemiBold,
                                 textAlign = TextAlign.Center
                             )
                             Text(
-                                "Нажми «Следующая страница» на главной —\nновые грамоты появятся утром",
+                                "Они появятся после следующего дня",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = Color.White.copy(alpha = 0.65f),
+                                color = Color.White.copy(alpha = 0.55f),
                                 textAlign = TextAlign.Center
                             )
                         }
                     }
-                }
-            } else {
-                item {
-                    OrnamentDivider()
                 }
             }
             itemsIndexed(projects) { index, project ->
@@ -122,93 +118,99 @@ fun InboxScreen(
 @Composable
 private fun InboxProjectCard(project: Project, onClick: () -> Unit) {
     FairyCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-        // Genre badge + developer name
+        // Заголовок: имя дела + тип, бейдж «N% посул» справа
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top
         ) {
-            Surface(
-                color = FairyGold.copy(alpha = 0.15f),
-                shape = MaterialTheme.shapes.extraSmall
-            ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    project.type.displayName(),
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.SemiBold,
+                    project.claimedName,
                     color = FairyGold,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    project.type.displayWithEmoji(),
+                    color = Color.White.copy(alpha = 0.55f),
+                    fontSize = 11.sp,
+                    modifier = Modifier.padding(top = 2.dp)
                 )
             }
-            Text(
-                "от ${project.developerName}",
-                style = MaterialTheme.typography.labelMedium,
-                color = Color.White.copy(alpha = 0.55f)
-            )
+            Spacer(Modifier.width(8.dp))
+            Surface(
+                color = FairyGold.copy(alpha = 0.13f),
+                shape = MaterialTheme.shapes.small,
+                border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.4f))
+            ) {
+                Text(
+                    "${project.claimedAPY.toInt()}% посул",
+                    color = FairyGold,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
         }
 
-        Spacer(Modifier.height(6.dp))
+        OrnamentDivider()
 
         Text(
-            project.claimedName,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = Color.White
-        )
-
-        Text(
-            project.description,
+            project.description.take(160) + if (project.description.length > 160) "..." else "",
             style = MaterialTheme.typography.bodySmall,
             fontStyle = FontStyle.Italic,
-            color = Color.White.copy(alpha = 0.65f)
+            color = Color.White.copy(alpha = 0.7f),
+            lineHeight = 18.sp
         )
 
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(10.dp))
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            StatChip(label = "Доход", value = "${project.claimedAPY.toInt()}%")
-            StatChip(label = "Участники", value = formatCount(project.claimedUserCount))
-            StatChip(label = "Артель", value = "${project.claimedTeamSize}")
-        }
-
-        Spacer(Modifier.height(4.dp))
-
-        Button(
-            onClick = onClick,
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = FairyGold,
-                contentColor = Color(0xFF1A0A00)
-            )
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("Поговорить в кабаке →", fontWeight = FontWeight.SemiBold)
-        }
-    }
-}
-
-private fun ProjectType.displayName(): String = when (this) {
-    ProjectType.CARD_GAME -> "Азартная игра"
-    ProjectType.TREASURE_HUNT -> "Поиск клада"
-    ProjectType.POTION_BREW -> "Зелейное дело"
-    ProjectType.GUILD_SCHEME -> "Артель / Гильдия"
-    ProjectType.HONEST_TRADE -> "Честная торговля"
-}
-
-@Composable
-private fun StatChip(label: String, value: String) {
-    Surface(
-        color = Color.White.copy(alpha = 0.08f),
-        shape = MaterialTheme.shapes.small
-    ) {
-        Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)) {
             Text(
-                label,
-                style = MaterialTheme.typography.labelSmall,
-                color = FairyGold.copy(alpha = 0.7f)
+                "👤 ${project.developerName}",
+                color = Color.White.copy(alpha = 0.55f),
+                fontSize = 11.sp
             )
-            Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = Color.White)
+            Text(
+                "👥 ${formatCount(project.claimedUserCount)} вкладчиков",
+                color = Color.White.copy(alpha = 0.55f),
+                fontSize = 11.sp
+            )
+        }
+
+        Spacer(Modifier.height(10.dp))
+
+        // CTA «Открыть беседу →» — золотая плашка
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = FairyGold.copy(alpha = 0.13f),
+            shape = MaterialTheme.shapes.small,
+            onClick = onClick
+        ) {
+            Text(
+                "Открыть беседу →",
+                color = FairyGold,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 10.dp)
+            )
         }
     }
+}
+
+private fun ProjectType.displayWithEmoji(): String = when (this) {
+    ProjectType.CARD_GAME -> "🃏 Азартная игра"
+    ProjectType.TREASURE_HUNT -> "🗺 Поиск клада"
+    ProjectType.POTION_BREW -> "🧪 Зелейное дело"
+    ProjectType.GUILD_SCHEME -> "⚙ Артель"
+    ProjectType.HONEST_TRADE -> "🤝 Честная торговля"
 }
 
 private fun formatCount(count: Int): String = when {
