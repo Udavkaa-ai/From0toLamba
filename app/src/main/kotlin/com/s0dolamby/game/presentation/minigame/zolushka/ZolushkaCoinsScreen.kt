@@ -179,6 +179,7 @@ fun ZolushkaCoinsScreen(onBack: () -> Unit) {
         onAgain = { restart() },
         onClose = onBack
     ) {
+        // this — ColumnScope от MinigameShell
         when (stage) {
             MinigameStage.MEMORIZE -> MemorizeStage(target)
             MinigameStage.PLAY -> PlayStage(
@@ -229,7 +230,7 @@ private fun MemorizeStage(target: CoinStyle) {
 }
 
 @Composable
-private fun PlayStage(
+private fun ColumnScope.PlayStage(
     target: CoinStyle,
     coins: SnapshotStateList<FallingCoin>,
     nowMs: Long,
