@@ -28,6 +28,7 @@ fun SettingsScreen(
     onTryGoldenKey: () -> Unit = {},
     onTryKoscheiMemory: () -> Unit = {},
     onTryKolobokNora: () -> Unit = {},
+    onTryZolushkaCoins: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -190,6 +191,15 @@ fun SettingsScreen(
                         border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f))
                     ) {
                         Text("🕳 Нора-нора-нора · Колобок", fontWeight = FontWeight.SemiBold)
+                    }
+                    Spacer(Modifier.height(6.dp))
+                    OutlinedButton(
+                        onClick = onTryZolushkaCoins,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f))
+                    ) {
+                        Text("🪙 Падающие монеты · Золушка", fontWeight = FontWeight.SemiBold)
                     }
                 }
 

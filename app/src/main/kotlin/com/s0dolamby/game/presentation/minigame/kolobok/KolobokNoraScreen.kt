@@ -1,11 +1,6 @@
 package com.s0dolamby.game.presentation.minigame.kolobok
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,6 +16,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -274,16 +270,28 @@ private fun NoraSlot(
                 }
             }
 
-            // Колобок выскакивает
-            AnimatedVisibility(
-                visible = isKolobokOut,
-                enter = scaleIn(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)) + fadeIn(),
-                exit = scaleOut(tween(150)) + fadeOut(tween(150))
-            ) {
+            // Колобок выскакивает (анимация масштаба)
+            val kolobokScale = remember { Animatable(0f) }
+            LaunchedEffect(isKolobokOut) {
+                if (isKolobokOut) {
+                    kolobokScale.snapTo(0.3f)
+                    kolobokScale.animateTo(
+                        targetValue = 1f,
+                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
+                    )
+                } else {
+                    kolobokScale.animateTo(0f, tween(160))
+                }
+            }
+            if (kolobokScale.value > 0.02f) {
                 Box(
                     modifier = Modifier
                         .size(54.dp)
-                        .offset(y = (-32).dp),
+                        .offset(y = (-32).dp)
+                        .graphicsLayer {
+                            scaleX = kolobokScale.value
+                            scaleY = kolobokScale.value
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Canvas(modifier = Modifier.fillMaxSize()) {
