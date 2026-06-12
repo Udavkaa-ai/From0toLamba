@@ -61,9 +61,38 @@ jobs:
         run: chmod +x gradlew
 
       - name: Create local.properties
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" >> local.properties
-          echo "OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}" >> local.properties
+          # tr -d: убираем случайные \r\n/пробелы из скопированного секрета —
+          # иначе заголовок "Bearer sk-...\n" ломает авторизацию (401)
+          CLEAN_KEY=$(printf '%s' "$OPENROUTER_API_KEY" | tr -d '[:space:]')
+          printf 'OPENROUTER_API_KEY=%s\n' "$CLEAN_KEY" >> local.properties
+
+      - name: Check OpenRouter key validity
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          CLEAN_KEY=$(printf '%s' "$OPENROUTER_API_KEY" | tr -d '[:space:]')
+          echo "Key length (после trim): ${#CLEAN_KEY}"
+          if [ -z "$CLEAN_KEY" ]; then
+            echo "::error::OPENROUTER_API_KEY секрет пуст или не передан в workflow"
+            exit 0
+          fi
+          HTTP_CODE=$(curl -s -o /tmp/or_resp.json -w "%{http_code}" \
+            -H "Authorization: Bearer $CLEAN_KEY" \
+            https://openrouter.ai/api/v1/key)
+          echo "OpenRouter /api/v1/key → HTTP $HTTP_CODE"
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "Ключ валиден. Лимиты/usage:"
+            cat /tmp/or_resp.json
+          else
+            echo "::warning::OpenRouter отклонил ключ (HTTP $HTTP_CODE). Ответ:"
+            cat /tmp/or_resp.json
+            echo ""
+            echo "::warning::Скорее всего ключ отозван — сгенерируй новый на openrouter.ai/keys и обнови секрет"
+          fi
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug --stacktrace

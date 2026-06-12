@@ -117,8 +117,25 @@ class AmaViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isSending = true) }
             sendAmaMessageUseCase(sessionId, text)
-                .onFailure { err -> _uiState.update { it.copy(error = err.message) } }
+                .onFailure { err -> _uiState.update { it.copy(error = err.toUserMessage()) } }
             _uiState.update { it.copy(isSending = false) }
+        }
+    }
+
+    /** Переводим сетевые/HTTP-ошибки в понятный игроку текст. */
+    private fun Throwable.toUserMessage(): String {
+        val msg = message.orEmpty()
+        return when {
+            msg.contains("401") ->
+                "Ключ OpenRouter отклонён (401). Ключ невалиден или отозван — " +
+                    "нужен новый на openrouter.ai/keys"
+            msg.contains("402") ->
+                "На ключе OpenRouter закончились средства (402)"
+            msg.contains("429") ->
+                "OpenRouter перегружен или лимит запросов (429) — попробуй через минуту"
+            msg.contains("Unable to resolve host") || msg.contains("timeout") ->
+                "Нет связи с OpenRouter — проверь интернет"
+            else -> msg.ifBlank { "Неизвестная ошибка беседы" }
         }
     }
 
