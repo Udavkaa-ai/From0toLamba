@@ -11,14 +11,14 @@ class InvestUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(projectId: String, amountRubles: Double): Result<Unit> = runCatching {
         require(amountRubles >= GameConfig.MIN_INVESTMENT_RUBLES) {
-            "Минимальный вклад ${GameConfig.MIN_INVESTMENT_RUBLES.toInt()} ₽"
+            "Минимальный вклад ${GameConfig.MIN_INVESTMENT_RUBLES.toInt()} г"
         }
         require(amountRubles <= GameConfig.MAX_INVESTMENT_RUBLES) {
-            "Максимальный вклад ${GameConfig.MAX_INVESTMENT_RUBLES.toInt()} ₽"
+            "Максимальный вклад ${GameConfig.MAX_INVESTMENT_RUBLES.toInt()} г"
         }
 
         val state = gameStateRepository.getGameState()
-        require(state.balance >= amountRubles) { "Недостаточно рублей в кошеле" }
+        require(state.balance >= amountRubles) { "Недостаточно грошей в кошеле" }
 
         val project = projectRepository.getProjectById(projectId)
             ?: error("Дело не найдено")

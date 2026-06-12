@@ -100,7 +100,7 @@ fun StatsScreen(
 
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(16.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 90.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item { RankCard(state = state) }
@@ -176,7 +176,7 @@ private fun RankCard(state: GameState?) {
                     color = Color.White.copy(alpha = 0.6f)
                 )
                 Text(
-                    "Баланс: %.0f ₽".format(state?.balance ?: 0.0),
+                    "Баланс: %.0f г".format(state?.balance ?: 0.0),
                     style = MaterialTheme.typography.bodySmall,
                     color = FairyGold.copy(alpha = 0.7f)
                 )
@@ -297,7 +297,7 @@ private fun BalanceChartCard(state: GameState?) {
                         modifier = Modifier.size(16.dp)
                     )
                     Text(
-                        "%+.0f ₽".format(delta),
+                        "%+.0f г".format(delta),
                         style = MaterialTheme.typography.labelMedium,
                         color = if (delta >= 0) Success else Error,
                         fontWeight = FontWeight.SemiBold
@@ -471,9 +471,9 @@ private fun FinancialStats(state: GameState?) {
         }
 
         HorizontalDivider(color = Color.White.copy(alpha = 0.10f))
-        StatRow("Баланс", "%.0f ₽".format(state?.balance ?: 0.0))
-        StatRow("Всего вложено", "%.0f ₽".format(state?.totalInvested ?: 0.0))
-        StatRow("Всего получено", "%.0f ₽".format(state?.totalReturned ?: 0.0))
+        StatRow("Баланс", "%.0f г".format(state?.balance ?: 0.0))
+        StatRow("Всего вложено", "%.0f г".format(state?.totalInvested ?: 0.0))
+        StatRow("Всего получено", "%.0f г".format(state?.totalReturned ?: 0.0))
     }
 }
 

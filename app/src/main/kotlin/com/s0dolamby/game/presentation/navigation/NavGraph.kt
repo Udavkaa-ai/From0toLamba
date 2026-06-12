@@ -33,8 +33,10 @@ import com.s0dolamby.game.presentation.onboarding.OnboardingScreen
 import com.s0dolamby.game.presentation.portfolio.PortfolioScreen
 import com.s0dolamby.game.presentation.portfolio.ProjectDetailScreen
 import com.s0dolamby.game.presentation.registry.PersonaRegistryScreen
+import com.s0dolamby.game.presentation.relationships.RelationshipsScreen
 import com.s0dolamby.game.presentation.settings.SettingsScreen
 import com.s0dolamby.game.presentation.stats.StatsScreen
+import com.s0dolamby.game.presentation.today.TodayScreen
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -68,6 +70,8 @@ sealed class Screen(val route: String) {
     object BoyarinCharter : Screen("minigame/boyarin-charter")
     object IvanDurakMap : Screen("minigame/ivan-durak-map")
     object Leaderboard : Screen("leaderboard")
+    object Today : Screen("today")
+    object Relationships : Screen("relationships")
 }
 
 @HiltViewModel
@@ -77,6 +81,11 @@ class NavViewModel @Inject constructor(
 
     private val _isOnboardingComplete = MutableStateFlow<Boolean?>(null)
     val isOnboardingComplete: StateFlow<Boolean?> = _isOnboardingComplete.asStateFlow()
+
+    /** Размер инбокса — рисуется красным бейджем у вкладки «Грамоты». */
+    val inboxBadge: StateFlow<Int> = gameStateRepository.observeGameState()
+        .map { it.pendingInbox.size }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
     init {
         viewModelScope.launch {
@@ -120,6 +129,30 @@ fun NavGraph() {
     )
     val showGlobalFab = currentRoute != null && currentRoute !in hideFabRoutes
 
+    // Какая вкладка сейчас активна (для подсветки BottomNav) — null значит
+    // что мы на «не-табовом» экране (стек поверх) и BottomNav не показываем.
+    val currentTab: AppTab? = when (currentRoute) {
+        Screen.Home.route -> AppTab.HOME
+        Screen.Inbox.route -> AppTab.INBOX
+        Screen.Portfolio.route -> AppTab.PORTFOLIO
+        Screen.Stats.route -> AppTab.STATS
+        Screen.Today.route -> AppTab.TODAY
+        else -> null
+    }
+
+    // Переход между табами: всегда возвращаемся в стек к Home, чтобы не копить
+    // глубокий backstack из-за тапов по нижней навигации.
+    val navToTab: (String) -> Unit = { route ->
+        if (currentRoute != route) {
+            navController.navigate(route) {
+                popUpTo(Screen.Home.route) { inclusive = (route == Screen.Home.route) }
+                launchSingleTop = true
+                restoreState = true
+            }
+        }
+    }
+    val inboxBadge by navViewModel.inboxBadge.collectAsState()
+
     Box(modifier = Modifier.fillMaxSize()) {
     NavHost(navController = navController, startDestination = startDestination) {
         composable(Screen.Onboarding.route) {
@@ -133,9 +166,9 @@ fun NavGraph() {
             HomeScreen(
                 onInboxClick = { navController.navigate(Screen.Inbox.route) },
                 onPortfolioClick = { navController.navigate(Screen.Portfolio.route) },
-                onNewsClick = { navController.navigate(Screen.News.route) },
+                onTodayClick = { navController.navigate(Screen.Today.route) },
                 onStatsClick = { navController.navigate(Screen.Stats.route) },
-                onLeaderboardClick = { navController.navigate(Screen.Leaderboard.route) },
+                onRelationshipsClick = { navController.navigate(Screen.Relationships.route) },
                 onRegistryClick = { navController.navigate(Screen.PersonaRegistry.route) },
                 onProjectClick = { projectId -> navController.navigate(Screen.ProjectDetail.createRoute(projectId)) },
                 onSettingsClick = { navController.navigate(Screen.Settings.route) }
@@ -261,6 +294,12 @@ fun NavGraph() {
         composable(Screen.Leaderboard.route) {
             LeaderboardScreen(onBack = { navController.popBackStack() })
         }
+        composable(Screen.Today.route) {
+            TodayScreen()
+        }
+        composable(Screen.Relationships.route) {
+            RelationshipsScreen(onBack = { navController.popBackStack() })
+        }
     } // NavHost end
 
         // Глобальная плавающая «🌅 Следующий день» — поверх всех «обычных» экранов
@@ -268,5 +307,20 @@ fun NavGraph() {
             visible = showGlobalFab,
             modifier = Modifier.align(Alignment.BottomEnd)
         )
+
+        // BottomNav поверх контента на 5 табовых экранах (как в TG).
+        if (currentTab != null) {
+            Box(modifier = Modifier.align(Alignment.BottomCenter)) {
+                AppBottomNav(
+                    current = currentTab,
+                    pendingInboxCount = inboxBadge,
+                    onHomeClick = { navToTab(Screen.Home.route) },
+                    onInboxClick = { navToTab(Screen.Inbox.route) },
+                    onPortfolioClick = { navToTab(Screen.Portfolio.route) },
+                    onStatsClick = { navToTab(Screen.Stats.route) },
+                    onTodayClick = { navToTab(Screen.Today.route) }
+                )
+            }
+        }
     } // outer Box end
 }

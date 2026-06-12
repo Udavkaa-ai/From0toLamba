@@ -67,16 +67,16 @@ private val INTRO_CARDS = listOf(
     IntroCard("💬", "Беседа",
         "Задай до 10 вопросов хозяину дела. Честный отвечает одинаково, лжец путается. Слушай внимательно."),
     IntroCard("💰", "Вложения",
-        "Вложи рубли → они растут каждый день. Потерял — не беда, учись на ошибках. Начни с малого.")
+        "Вложи гроши → они растут каждый день. Потерял — не беда, учись на ошибках. Начни с малого.")
 )
 
 @Composable
 fun HomeScreen(
     onInboxClick: () -> Unit,
     onPortfolioClick: () -> Unit,
-    onNewsClick: () -> Unit,
+    onTodayClick: () -> Unit,
     onStatsClick: () -> Unit,
-    onLeaderboardClick: () -> Unit,
+    onRelationshipsClick: () -> Unit,
     onRegistryClick: () -> Unit,
     onProjectClick: (String) -> Unit,
     onSettingsClick: () -> Unit = {},
@@ -85,6 +85,7 @@ fun HomeScreen(
     val gameState by viewModel.gameState.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val pendingUpdateCards by viewModel.pendingUpdateCards.collectAsState()
+    val dealsTaken by viewModel.dealsTakenCount.collectAsState()
 
     Box(modifier = Modifier.fillMaxSize()) {
         // ── фон + оверлей + искры ──────────────────────────────────────────
@@ -120,7 +121,9 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 32.dp, bottom = 24.dp),
+                // bottom = 90dp оставляет место под AppBottomNav, который рисуется
+                // поверх контента на уровне NavGraph (одной плашкой для всех 5 табов).
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 32.dp, bottom = 90.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
@@ -138,9 +141,26 @@ fun HomeScreen(
                 item {
                     BalanceCard(
                         balance = gameState?.balance ?: 0.0,
-                        totalWealth = totalWealth(gameState),
+                        invested = gameState?.totalInvested ?: 0.0,
+                        returned = gameState?.totalReturned ?: 0.0,
                         roi = roi(gameState),
-                        activeCount = gameState?.activeProjects?.size ?: 0
+                        dealsTaken = dealsTaken
+                    )
+                }
+
+                // Плитка «Отношения с дельцами» — 7 архетипов, тап → отдельный экран.
+                item {
+                    MerchantRelationsCard(
+                        seenArchetypeCount = 0,  // TODO Phase 2: реальные seenArchetypes
+                        onClick = onRelationshipsClick
+                    )
+                }
+
+                // Кнопка «Летопись (N)» — крупная, под отношениями (как в TG).
+                item {
+                    LetopisChip(
+                        count = 0,  // TODO Phase 2: открытые типажи Летописи
+                        onClick = onRegistryClick
                     )
                 }
 
@@ -201,20 +221,6 @@ fun HomeScreen(
                     )
                 }
 
-                // Доп. ссылки — Грамоты / Казна / Успехи / Лидеры / Вести / Летопись.
-                // Bottom-nav как в TG отсутствует — все переходы кучкуются плиткой.
-                item {
-                    Spacer(Modifier.height(8.dp))
-                    SecondaryShortcuts(
-                        pendingInboxCount = gameState?.pendingInbox?.size ?: 0,
-                        onInboxClick = onInboxClick,
-                        onPortfolioClick = onPortfolioClick,
-                        onStatsClick = onStatsClick,
-                        onLeaderboardClick = onLeaderboardClick,
-                        onNewsClick = onNewsClick,
-                        onRegistryClick = onRegistryClick
-                    )
-                }
             }
         }
 
@@ -336,14 +342,15 @@ private fun IntroCardsRow() {
     }
 }
 
-// ─── Balance card (TG-стиль: «Свободные рубли» + 3 метрики) ───────────────
+// ─── Balance card (TG-стиль: «Свободные гроши» + 3 метрики) ───────────────
 
 @Composable
 private fun BalanceCard(
     balance: Double,
-    totalWealth: Double,
+    invested: Double,
+    returned: Double,
     roi: Double,
-    activeCount: Int
+    dealsTaken: Int
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -369,13 +376,13 @@ private fun BalanceCard(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    "Свободные рубли",
+                    "Свободные гроши",
                     color = Color.White.copy(alpha = 0.6f),
                     fontSize = 12.sp
                 )
                 Spacer(Modifier.height(4.dp))
                 AnimatedContent(
-                    targetState = "%.0f ₽".format(balance),
+                    targetState = "%.0f г".format(balance),
                     transitionSpec = {
                         slideInVertically(tween(350)) { it } + fadeIn(tween(250)) togetherWith
                             slideOutVertically(tween(250)) { -it } + fadeOut(tween(200))
@@ -395,23 +402,150 @@ private fun BalanceCard(
                     horizontalArrangement = Arrangement.SpaceAround
                 ) {
                     MetricColumn(
-                        label = "Всего злата",
-                        value = "%.0f ₽".format(totalWealth),
+                        label = "Вложено",
+                        value = "%.0f г".format(invested),
                         color = Color.White
                     )
                     MetricColumn(
-                        label = "Доход",
+                        label = "Получено",
+                        value = "%.0f г".format(returned),
+                        color = Color.White
+                    )
+                    MetricColumn(
+                        label = "Итог",
                         value = "%+.1f%%".format(roi),
                         color = if (roi >= 0) Success else Error
                     )
                     MetricColumn(
-                        label = "В делах",
-                        value = "$activeCount",
+                        label = "Дел взято",
+                        value = "$dealsTaken",
                         color = Color.White
                     )
                 }
             }
             CardCornerOrnaments(modifier = Modifier.matchParentSize())
+        }
+    }
+}
+
+// ─── Отношения с дельцами — плитка из 7 архетипов с переходом на экран ──
+
+@Composable
+private fun MerchantRelationsCard(seenArchetypeCount: Int, onClick: () -> Unit) {
+    val archetypes = com.s0dolamby.game.domain.model.PersonaArchetype.values()
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            EnchantedPurple.copy(alpha = 0.88f),
+                            NightBlue.copy(alpha = 0.95f)
+                        )
+                    )
+                )
+        ) {
+            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "🤝  Отношения с дельцами",
+                        color = FairyGold,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Surface(
+                        color = FairyGold.copy(alpha = 0.18f),
+                        shape = CircleShape,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.4f))
+                    ) {
+                        Text(
+                            "$seenArchetypeCount / ${archetypes.size}",
+                            color = FairyGold,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    archetypes.forEach { arch ->
+                        ArchetypeChip(arch)
+                    }
+                }
+            }
+            CardCornerOrnaments(modifier = Modifier.matchParentSize())
+        }
+    }
+}
+
+@Composable
+private fun ArchetypeChip(archetype: com.s0dolamby.game.domain.model.PersonaArchetype) {
+    val emoji = when (archetype) {
+        com.s0dolamby.game.domain.model.PersonaArchetype.BURATINO -> "🪆"
+        com.s0dolamby.game.domain.model.PersonaArchetype.BOYARIN -> "👑"
+        com.s0dolamby.game.domain.model.PersonaArchetype.KOLOBOK -> "🤗"
+        com.s0dolamby.game.domain.model.PersonaArchetype.KOSCHEI -> "💀"
+        com.s0dolamby.game.domain.model.PersonaArchetype.ZOLUSHKA -> "👠"
+        com.s0dolamby.game.domain.model.PersonaArchetype.BABA_YAGA -> "🧙"
+        com.s0dolamby.game.domain.model.PersonaArchetype.IVAN_DURAK -> "🃏"
+    }
+    Box(
+        modifier = Modifier
+            .size(36.dp)
+            .clip(CircleShape)
+            .background(FairyGold.copy(alpha = 0.12f))
+            .border(1.dp, FairyGold.copy(alpha = 0.3f), CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(emoji, fontSize = 18.sp)
+    }
+}
+
+// ─── «Летопись (N)» — крупный CTA как в TG ───────────────────────────────
+
+@Composable
+private fun LetopisChip(count: Int, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        color = Color.Transparent
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            EnchantedPurple.copy(alpha = 0.65f),
+                            NightBlue.copy(alpha = 0.85f)
+                        )
+                    )
+                )
+                .border(1.dp, FairyGold.copy(alpha = 0.35f), RoundedCornerShape(12.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            Row(
+                modifier = Modifier.padding(vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text("📖", fontSize = 18.sp)
+                Text("Летопись", color = FairyGold, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                Text("($count)", color = Color.White.copy(alpha = 0.5f), fontSize = 13.sp)
+            }
         }
     }
 }
@@ -498,7 +632,7 @@ private fun ActiveProjectCardCompact(
                     }
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            "%.0f ₽".format(project.currentValueRubles),
+                            "%.0f г".format(project.currentValueRubles),
                             color = FairyGold,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
@@ -616,7 +750,7 @@ private fun EmptyHomeCard(onInboxClick: () -> Unit) {
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    "Открой Грамоты — там ждут новые дельцы. Поговори с каждым и реши, достойно ли дело твоих рублей.",
+                    "Открой Грамоты — там ждут новые дельцы. Поговори с каждым и реши, достойно ли дело твоих грошей.",
                     color = Color.White.copy(alpha = 0.65f),
                     fontSize = 13.sp
                 )
@@ -692,90 +826,7 @@ private fun AdvanceDayButton(isLoading: Boolean, onClick: () -> Unit) {
     }
 }
 
-// ─── Secondary shortcuts (3×2 плитка — заменяет BottomNav, как в TG) ─────
-
-@Composable
-private fun SecondaryShortcuts(
-    pendingInboxCount: Int,
-    onInboxClick: () -> Unit,
-    onPortfolioClick: () -> Unit,
-    onStatsClick: () -> Unit,
-    onLeaderboardClick: () -> Unit,
-    onNewsClick: () -> Unit,
-    onRegistryClick: () -> Unit
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            SecondaryButton("📜", "Грамоты", onClick = onInboxClick, badge = pendingInboxCount, modifier = Modifier.weight(1f))
-            SecondaryButton("💰", "Казна", onClick = onPortfolioClick, modifier = Modifier.weight(1f))
-            SecondaryButton("📊", "Успехи", onClick = onStatsClick, modifier = Modifier.weight(1f))
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            SecondaryButton("🏆", "Рейтинг", onClick = onLeaderboardClick, modifier = Modifier.weight(1f))
-            SecondaryButton("📰", "Вести", onClick = onNewsClick, modifier = Modifier.weight(1f))
-            SecondaryButton("📖", "Летопись", onClick = onRegistryClick, modifier = Modifier.weight(1f))
-        }
-    }
-}
-
-@Composable
-private fun SecondaryButton(
-    icon: String,
-    label: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    badge: Int = 0
-) {
-    Box(
-        modifier = modifier
-            .height(64.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        EnchantedPurple.copy(alpha = 0.5f),
-                        NightBlue.copy(alpha = 0.7f)
-                    )
-                )
-            )
-            .border(1.dp, FairyGold.copy(alpha = 0.25f), RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Text(icon, fontSize = 20.sp)
-                if (badge > 0) {
-                    Box(
-                        modifier = Modifier
-                            .offset(x = 14.dp, y = (-8).dp)
-                            .size(16.dp)
-                            .background(Error, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("$badge", color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-            Spacer(Modifier.height(2.dp))
-            Text(
-                label,
-                color = Color.White.copy(alpha = 0.85f),
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium
-            )
-        }
-    }
-}
+// ─── BottomNav вынесен в presentation/navigation/AppBottomNav.kt ──────────
 
 // ─── Update card deck (TG DayNewsOverlay стиль) ──────────────────────────
 
@@ -970,10 +1021,10 @@ private val loadingPhrases = listOf(
     "Домовой пересчитывает монеты в казне...",
     "Жар-Птица летит с новостями с ярмарки...",
     "Кот учёный обходит дуб кругом...",
-    "Кощей прячет свои рубли в игле...",
+    "Кощей прячет свои гроши в игле...",
     "Баба Яга читает книгу учёта...",
     "Колобок катится за новым вкладчиком...",
-    "Водяной замораживает чужие рубли...",
+    "Водяной замораживает чужие гроши...",
     "Зеркальце ищет честных хозяев...",
     "Хитрая лиса считает долги в кабаке...",
     "Буратино закапывает монеты на Поле Чудес...",

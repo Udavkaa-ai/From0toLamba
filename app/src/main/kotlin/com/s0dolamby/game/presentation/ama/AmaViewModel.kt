@@ -157,7 +157,7 @@ class AmaViewModel @Inject constructor(
                 .onSuccess {
                     _uiState.update { it.copy(
                         showInvestSheet = false,
-                        investResult = "Вложено %.0f ₽".format(amountRubles)
+                        investResult = "Вложено %.0f г".format(amountRubles)
                     ) }
                 }
                 .onFailure { err ->

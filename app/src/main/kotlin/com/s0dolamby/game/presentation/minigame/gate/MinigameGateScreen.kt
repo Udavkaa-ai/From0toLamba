@@ -171,7 +171,7 @@ private fun GateResultScreen(
                         containerColor = FairyGold,
                         contentColor = NightBlue
                     )
-                ) { Text("Вложить рубли", fontWeight = FontWeight.SemiBold) }
+                ) { Text("Вложить гроши", fontWeight = FontWeight.SemiBold) }
                 Spacer(Modifier.height(8.dp))
             } else {
                 Button(

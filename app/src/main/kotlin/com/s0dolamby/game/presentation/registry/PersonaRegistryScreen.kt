@@ -51,7 +51,7 @@ class PersonaRegistryViewModel @Inject constructor(
         projectRepository.getClosedProjects(),
         projectRepository.getActiveProjects()
     ) { closed, active ->
-        // Архетип открывается, когда дело закрылось с вложенными рублями
+        // Архетип открывается, когда дело закрылось с вложенными грошами
         // (либо живёт сейчас как активное).
         val unlockedClosed = closed.filter { it.investedAmountRubles > 0 }
         val allUnlocked = (unlockedClosed + active).distinctBy { it.id }

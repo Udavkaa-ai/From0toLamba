@@ -90,7 +90,7 @@ fun PortfolioScreen(
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(16.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 90.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             if (activeProjects.isEmpty() && closedProjects.isEmpty()) {
@@ -109,7 +109,7 @@ fun PortfolioScreen(
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
-                                "Поговори с Дельцами во Входящих грамотах и вложи рубли",
+                                "Поговори с Дельцами во Входящих грамотах и вложи гроши",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color.White.copy(alpha = 0.65f)
                             )
@@ -210,7 +210,7 @@ private fun PortfolioProjectCard(
                         tint = Warning, modifier = Modifier.size(16.dp))
                 }
                 Text(
-                    "%.0f ₽".format(project.currentValueRubles),
+                    "%.0f г".format(project.currentValueRubles),
                     style = MaterialTheme.typography.titleMedium,
                     color = if (pnl >= 0) Success else Error,
                     fontWeight = FontWeight.Bold
@@ -218,12 +218,12 @@ private fun PortfolioProjectCard(
             }
         }
         Text(
-            "Вложено: %.0f ₽ • День ${project.daysSinceJoined}".format(project.investedAmountRubles),
+            "Вложено: %.0f г • День ${project.daysSinceJoined}".format(project.investedAmountRubles),
             style = MaterialTheme.typography.bodyMedium,
             color = Color.White.copy(alpha = 0.6f)
         )
         Text(
-            "П&У: %+.0f ₽".format(pnl),
+            "П&У: %+.0f г".format(pnl),
             style = MaterialTheme.typography.bodyMedium,
             color = if (pnl >= 0) Success else Error,
             fontWeight = FontWeight.Medium
@@ -268,9 +268,9 @@ private fun PortfolioProjectCard(
 }
 
 private fun formatRubles(amount: Double): String = when {
-    amount >= 1_000_000 -> "%.1fМ ₽".format(amount / 1_000_000)
-    amount >= 1_000 -> "%.1fТ ₽".format(amount / 1_000)
-    else -> "%.0f ₽".format(amount)
+    amount >= 1_000_000 -> "%.1fМ г".format(amount / 1_000_000)
+    amount >= 1_000 -> "%.1fТ г".format(amount / 1_000)
+    else -> "%.0f г".format(amount)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -314,13 +314,13 @@ private fun FundsBottomSheet(
             OutlinedTextField(
                 value = amountText,
                 onValueChange = { amountText = it.filter { c -> c.isDigit() || c == '.' } },
-                label = { Text("Сумма в рублях") },
-                suffix = { Text("₽") },
+                label = { Text("Сумма в грошах") },
+                suffix = { Text("г") },
                 modifier = Modifier.fillMaxWidth()
             )
             if (maxAmount != null) {
                 Text(
-                    "Доступно: %.0f ₽".format(maxAmount),
+                    "Доступно: %.0f г".format(maxAmount),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -363,7 +363,7 @@ private fun WithdrawBottomSheet(
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 when {
                     isLongTerm -> Text(
-                        "⚠ Лимит: не более 25%% от вложенного за раз (%.0f ₽)".format(effectiveMax),
+                        "⚠ Лимит: не более 25%% от вложенного за раз (%.0f г)".format(effectiveMax),
                         style = MaterialTheme.typography.bodySmall,
                         color = Warning
                     )
@@ -376,19 +376,19 @@ private fun WithdrawBottomSheet(
                 OutlinedTextField(
                     value = amountText,
                     onValueChange = { amountText = it.filter { c -> c.isDigit() || c == '.' } },
-                    label = { Text("Сумма в рублях") },
-                    suffix = { Text("₽") },
+                    label = { Text("Сумма в грошах") },
+                    suffix = { Text("г") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
                 Text(
-                    "Доступно: %.0f ₽ • Лимит: %.0f ₽".format(project.currentValueRubles, effectiveMax),
+                    "Доступно: %.0f г • Лимит: %.0f г".format(project.currentValueRubles, effectiveMax),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 if (hasFee && amount != null && amount >= 5.0) {
                     Text(
-                        "Получишь на руки: %.0f ₽".format(amount * 0.75),
+                        "Получишь на руки: %.0f г".format(amount * 0.75),
                         style = MaterialTheme.typography.bodySmall,
                         color = FairyGold,
                         fontWeight = FontWeight.Medium
@@ -424,7 +424,7 @@ private fun ClosedProjectCard(project: Project, onClick: () -> Unit) {
                 )
             }
             Text(
-                "%+.0f ₽".format(pnl),
+                "%+.0f г".format(pnl),
                 style = MaterialTheme.typography.titleMedium,
                 color = if (pnl >= 0) Success else Error,
                 fontWeight = FontWeight.Medium

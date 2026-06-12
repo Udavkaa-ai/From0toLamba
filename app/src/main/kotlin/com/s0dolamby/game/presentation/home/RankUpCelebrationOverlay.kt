@@ -66,7 +66,7 @@ private val InvestorRank.congratsTitle: String get() = when (this) {
 
 private val InvestorRank.congratsText: String get() = when (this) {
     InvestorRank.NEWBIE      -> "Пустой кошель — не приговор. Всякий Князь начинал Скоморохом."
-    InvestorRank.AMBASSADOR  -> "Ты вступил на купеческий путь. Первые рубли — первые уроки."
+    InvestorRank.AMBASSADOR  -> "Ты вступил на купеческий путь. Первые гроши — первые уроки."
     InvestorRank.ANALYST     -> "Двадцать дел за плечами — Мудрец пришёл на ярмарку. Дельцы трижды думают, прежде чем явиться к тебе с ложью."
     InvestorRank.SHARK       -> "Боярская хватка! Полсотни дел повидал — рукав уже не таит сюрпризов."
     InvestorRank.LAMBO_SENSEI -> "Князь! Сотню дел разобрал — имя твоё вписано в Летопись."

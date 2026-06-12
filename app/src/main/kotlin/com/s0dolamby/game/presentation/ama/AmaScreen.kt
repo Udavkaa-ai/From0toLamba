@@ -67,7 +67,7 @@ private fun besedaBackground(archetype: PersonaArchetype?): Int = when (archetyp
 private val allQuestions = listOf(
     // Доходность
     "Сколько реально зарабатывают участники в день?",
-    "Назови конкретную цифру дохода — сколько рублей в день на сотню вложенных?",
+    "Назови конкретную цифру дохода — сколько грошей в день на сотню вложенных?",
     "Откуда берётся такая высокая доходность?",
     "Почему у вас выгоднее, чем у конкурентов?",
     "Есть ли участник, готовый подтвердить свой доход?",
@@ -78,9 +78,9 @@ private val allQuestions = listOf(
     "Как быстро растёт число участников?",
     // Выплаты
     "Когда точно будут первые выплаты?",
-    "Как выглядит процесс вывода рублей — шаги, сроки?",
+    "Как выглядит процесс вывода грошей — шаги, сроки?",
     "Были ли когда-нибудь задержки выплат? По какой причине?",
-    "Можно вывести рубли прямо сейчас, не дожидаясь срока?",
+    "Можно вывести гроши прямо сейчас, не дожидаясь срока?",
     // Команда
     "Кто в артели? Можно проверить их имена?",
     "Где можно найти информацию об основателях дела?",
@@ -91,7 +91,7 @@ private val allQuestions = listOf(
     "Покажи книгу учёта доходов и расходов",
     "Кто проверял ваши расчёты и подтвердил честность?",
     // Вывод и ограничения
-    "Есть ли ограничения на вывод рублей?",
+    "Есть ли ограничения на вывод грошей?",
     "Почему нельзя вывести всё сразу?",
     "Что случится, если я захочу выйти из дела раньше срока?",
     // Покровители
@@ -497,7 +497,7 @@ private fun WelcomeMessage(projectName: String, devName: String) {
         )
         Spacer(Modifier.height(4.dp))
         Text(
-            "У тебя ${GameConfig.AMA_MAX_QUESTIONS} вопросов — узнай правду и реши, стоит ли вкладывать рубли.",
+            "У тебя ${GameConfig.AMA_MAX_QUESTIONS} вопросов — узнай правду и реши, стоит ли вкладывать гроши.",
             style = MaterialTheme.typography.bodySmall,
             color = Color.White.copy(alpha = 0.65f)
         )
@@ -525,7 +525,7 @@ private fun SessionEndBanner(
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(containerColor = FairyGold)
         ) {
-            Text("💰 Вложить рубли", color = NightBlue, fontWeight = FontWeight.Bold)
+            Text("💰 Вложить гроши", color = NightBlue, fontWeight = FontWeight.Bold)
         }
         OutlinedButton(
             onClick = onBack,
@@ -538,9 +538,9 @@ private fun SessionEndBanner(
 }
 
 private fun formatRubles(amount: Double): String = when {
-    amount >= 1_000_000 -> "%.1fМ ₽".format(amount / 1_000_000)
-    amount >= 1_000 -> "%.1fТ ₽".format(amount / 1_000)
-    else -> "%.0f ₽".format(amount)
+    amount >= 1_000_000 -> "%.1fМ г".format(amount / 1_000_000)
+    amount >= 1_000 -> "%.1fТ г".format(amount / 1_000)
+    else -> "%.0f г".format(amount)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -560,7 +560,7 @@ private fun InvestBottomSheet(freeBalance: Double, onDismiss: () -> Unit, onInve
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Вложить рубли", style = MaterialTheme.typography.titleLarge)
+                Text("Вложить гроши", style = MaterialTheme.typography.titleLarge)
                 Surface(
                     color = FairyGold.copy(alpha = 0.15f),
                     shape = MaterialTheme.shapes.small
@@ -576,12 +576,12 @@ private fun InvestBottomSheet(freeBalance: Double, onDismiss: () -> Unit, onInve
             OutlinedTextField(
                 value = amountText,
                 onValueChange = { amountText = it.filter { c -> c.isDigit() || c == '.' } },
-                label = { Text("Сумма в рублях") },
-                suffix = { Text("₽") },
+                label = { Text("Сумма в грошах") },
+                suffix = { Text("г") },
                 modifier = Modifier.fillMaxWidth()
             )
             Text(
-                "Минимум 5 ₽",
+                "Минимум 5 г",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

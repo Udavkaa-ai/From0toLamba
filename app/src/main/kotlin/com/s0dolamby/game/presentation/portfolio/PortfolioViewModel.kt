@@ -41,7 +41,7 @@ class PortfolioViewModel @Inject constructor(
     fun exitProject(projectId: String) {
         viewModelScope.launch {
             exitProjectUseCase(projectId)
-                .onSuccess { returned -> _actionResult.value = "Получено %.0f ₽".format(returned) }
+                .onSuccess { returned -> _actionResult.value = "Получено %.0f г".format(returned) }
                 .onFailure { _actionResult.value = "Ошибка: ${it.message}" }
         }
     }
@@ -49,7 +49,7 @@ class PortfolioViewModel @Inject constructor(
     fun addFunds(projectId: String, amountRubles: Double) {
         viewModelScope.launch {
             investUseCase(projectId, amountRubles)
-                .onSuccess { _actionResult.value = "Довложено %.0f ₽".format(amountRubles) }
+                .onSuccess { _actionResult.value = "Довложено %.0f г".format(amountRubles) }
                 .onFailure { _actionResult.value = "Ошибка: ${it.message}" }
         }
     }
@@ -61,7 +61,7 @@ class PortfolioViewModel @Inject constructor(
         viewModelScope.launch(handler) {
             runCatching { partialWithdrawUseCase(projectId, amountRubles) }
                 .getOrElse { Result.failure(it) }
-                .onSuccess { amount -> _actionResult.value = "Выведено %.0f ₽".format(amount) }
+                .onSuccess { amount -> _actionResult.value = "Выведено %.0f г".format(amount) }
                 .onFailure { _actionResult.value = "Ошибка: ${it.message}" }
         }
     }

@@ -15,9 +15,9 @@ class PartialWithdrawUseCase @Inject constructor(
             ?: error("Дело не найдено")
         require(project.isActive) { "Дело не активно" }
         require(!project.isWithdrawalLocked) { "Вывод заблокирован — ждите восстановления или закрытия" }
-        require(amountRubles >= 5.0) { "Минимум 5 ₽" }
+        require(amountRubles >= 5.0) { "Минимум 5 г" }
         require(amountRubles <= project.currentValueRubles) {
-            "Недостаточно средств: %.0f ₽ доступно".format(project.currentValueRubles)
+            "Недостаточно средств: %.0f г доступно".format(project.currentValueRubles)
         }
 
         // Withdrawal rules depend on project type
@@ -26,7 +26,7 @@ class PartialWithdrawUseCase @Inject constructor(
             ProjectType.POTION_BREW, ProjectType.GUILD_SCHEME -> {
                 val limit = project.investedAmountRubles * 0.25
                 require(amountRubles <= limit) {
-                    "Долгосрочное дело: лимит вывода %.0f ₽ (25%% от вложенного)".format(limit)
+                    "Долгосрочное дело: лимит вывода %.0f г (25%% от вложенного)".format(limit)
                 }
                 amountRubles
             }
