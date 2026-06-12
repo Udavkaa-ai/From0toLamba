@@ -37,10 +37,14 @@ import com.s0dolamby.game.presentation.common.theme.FairyGold
 @Composable
 fun InboxScreen(
     onBack: () -> Unit,
-    onProjectClick: (String) -> Unit,
+    /** Основной вход в дело — мини-игра дельца. */
+    onPlayMinigame: (archetypeName: String, projectId: String) -> Unit,
+    /** Альтернативный — «беседа за рекламу» (пока бесплатно, потом rewarded ad). */
+    onChatAfterAd: (projectId: String) -> Unit,
     viewModel: InboxViewModel = hiltViewModel()
 ) {
     val projects by viewModel.inboxProjects.collectAsState()
+    var adPromptForProjectId by remember { mutableStateOf<String?>(null) }
 
     ScreenBackground(R.drawable.inbox_bg) {
     Scaffold(
@@ -110,18 +114,52 @@ fun InboxScreen(
                         initialOffsetY = { it / 2 }
                     ) + fadeIn(tween(280))
                 ) {
-                    InboxProjectCard(project = project, onClick = { onProjectClick(project.id) })
+                    InboxProjectCard(
+                        project = project,
+                        onPlayMinigame = {
+                            onPlayMinigame(project.personaArchetype.name, project.id)
+                        },
+                        onChatAfterAd = { adPromptForProjectId = project.id }
+                    )
                 }
             }
         }
+    }
+    // Заглушка «реклама» — пока без реальных rewarded-ads. Согласие = переход в Ama.
+    adPromptForProjectId?.let { pid ->
+        AlertDialog(
+            onDismissRequest = { adPromptForProjectId = null },
+            title = { Text("📺 Беседа за просмотр рекламы") },
+            text = {
+                Text(
+                    "Пока бесплатно — просмотр рекламы будет позже подключён через AdMob/Yandex. " +
+                        "Сейчас просто открываем беседу с дельцом."
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    adPromptForProjectId = null
+                    onChatAfterAd(pid)
+                }) { Text("Смотреть и в кабак", color = FairyGold) }
+            },
+            dismissButton = {
+                TextButton(onClick = { adPromptForProjectId = null }) { Text("Отмена") }
+            }
+        )
     }
     } // ScreenBackground
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun InboxProjectCard(project: Project, onClick: () -> Unit) {
-    FairyCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+private fun InboxProjectCard(
+    project: Project,
+    onPlayMinigame: () -> Unit,
+    onChatAfterAd: () -> Unit
+) {
+    // Тап по карточке = основной вход = мини-игра. Альтернативный вход —
+    // «беседа за рекламу» — на отдельной полупрозрачной кнопке снизу.
+    FairyCard(onClick = onPlayMinigame, modifier = Modifier.fillMaxWidth()) {
         // Обложка дела из стока (как в TG: 120dp, скруглённая).
         // Берётся напрямую из assets через rememberBannerUrl — даже у старых дел
         // в БД без bannerImageUrl всё равно подберётся картинка.
@@ -204,15 +242,16 @@ private fun InboxProjectCard(project: Project, onClick: () -> Unit) {
 
         Spacer(Modifier.height(10.dp))
 
-        // CTA «Открыть беседу →» — золотая плашка
+        // Основная CTA — мини-игра дельца (золотая, на всю ширину)
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            color = FairyGold.copy(alpha = 0.13f),
+            color = FairyGold.copy(alpha = 0.18f),
             shape = MaterialTheme.shapes.small,
-            onClick = onClick
+            border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f)),
+            onClick = onPlayMinigame
         ) {
             Text(
-                "Открыть беседу →",
+                "🎲 Испытать дельца игрой →",
                 color = FairyGold,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -220,6 +259,27 @@ private fun InboxProjectCard(project: Project, onClick: () -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 10.dp)
+            )
+        }
+        Spacer(Modifier.height(6.dp))
+        // Альтернатива — беседа за просмотр рекламы (rewarded ad)
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = Color.White.copy(alpha = 0.06f),
+            shape = MaterialTheme.shapes.small,
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp, Color.White.copy(alpha = 0.20f)
+            ),
+            onClick = onChatAfterAd
+        ) {
+            Text(
+                "📺  Беседа в кабаке за просмотр рекламы",
+                color = Color.White.copy(alpha = 0.78f),
+                fontSize = 12.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 9.dp)
             )
         }
     }

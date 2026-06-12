@@ -1,12 +1,17 @@
 package com.s0dolamby.game.presentation.navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.s0dolamby.game.domain.repository.GameStateRepository
@@ -95,6 +100,27 @@ fun NavGraph() {
         true -> Screen.Home.route
     }
 
+    // Куда сейчас залетели — нужно чтобы прятать глобальную «Следующий день»
+    // на экранах, где она мешает (AMA-чат, мини-игры, gate, онбординг).
+    val currentEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = currentEntry?.destination?.route
+    val hideFabRoutes = setOf(
+        Screen.Onboarding.route,
+        // На главной у HomeScreen своя кнопка (нужна для DayNewsOverlay)
+        Screen.Home.route,
+        Screen.Ama.route,
+        Screen.MinigameGate.route,
+        Screen.GoldenKey.route,
+        Screen.KoscheiMemory.route,
+        Screen.KolobokNora.route,
+        Screen.ZolushkaCoins.route,
+        Screen.BabaYagaCauldron.route,
+        Screen.BoyarinCharter.route,
+        Screen.IvanDurakMap.route
+    )
+    val showGlobalFab = currentRoute != null && currentRoute !in hideFabRoutes
+
+    Box(modifier = Modifier.fillMaxSize()) {
     NavHost(navController = navController, startDestination = startDestination) {
         composable(Screen.Onboarding.route) {
             OnboardingScreen(onDone = {
@@ -118,7 +144,16 @@ fun NavGraph() {
         composable(Screen.Inbox.route) {
             InboxScreen(
                 onBack = { navController.popBackStack() },
-                onProjectClick = { projectId -> navController.navigate(Screen.Ama.createRoute(projectId)) }
+                onPlayMinigame = { archetypeName, projectId ->
+                    // Основной вход: сразу в мини-игру дельца. После выигрыша
+                    // gate сам отправит в Ama (там кнопка инвеста уже разблокирована).
+                    navController.navigate(Screen.MinigameGate.createRoute(archetypeName, projectId))
+                },
+                onChatAfterAd = { projectId ->
+                    // Альтернативный вход: «реклама» (пока заглушка) → Ama без unlock.
+                    // Игрок может поговорить, но кнопка инвеста по-прежнему «🎲 Испытать».
+                    navController.navigate(Screen.Ama.createRoute(projectId))
+                }
             )
         }
         composable(
@@ -226,5 +261,12 @@ fun NavGraph() {
         composable(Screen.Leaderboard.route) {
             LeaderboardScreen(onBack = { navController.popBackStack() })
         }
-    }
+    } // NavHost end
+
+        // Глобальная плавающая «🌅 Следующий день» — поверх всех «обычных» экранов
+        GlobalDayFab(
+            visible = showGlobalFab,
+            modifier = Modifier.align(Alignment.BottomEnd)
+        )
+    } // outer Box end
 }

@@ -198,6 +198,10 @@ fun HomeScreen(
                     item { EmptyHomeCard(onInboxClick = onInboxClick) }
                 }
 
+                // На главной кнопка остаётся обычной (внутри LazyColumn) — она
+                // дёргает HomeViewModel.advanceDay() и подбирает pendingUpdateCards
+                // для свайп-стопки. Глобальная FAB прячется на маршруте Home,
+                // чтобы не дублировать UI.
                 item {
                     Spacer(Modifier.height(4.dp))
                     AdvanceDayButton(
