@@ -62,10 +62,10 @@ private data class IntroCard(val icon: String, val title: String, val text: Stri
 private val INTRO_CARDS = listOf(
     IntroCard("📜", "Как играть",
         "Каждый день в «Грамотах» появляются новые предложения от дельцов. Большинство — обман. Твоя задача — разобраться кто есть кто."),
+    IntroCard("🎲", "Испытание дельца",
+        "Перед инвестом — мини-игра по архетипу хозяина. Прошёл — открывается «Вложить». Можно зайти и через беседу за просмотр рекламы."),
     IntroCard("💬", "Беседа",
         "Задай до 10 вопросов хозяину дела. Честный отвечает одинаково, лжец путается. Слушай внимательно."),
-    IntroCard("👁", "Чуйка",
-        "Отмечай темы подозрений. После беседы оцени — угадал ложь = +1 очко, ошибся = −1. Чуйка влияет на чин."),
     IntroCard("💰", "Вложения",
         "Вложи рубли → они растут каждый день. Потерял — не беда, учись на ошибках. Начни с малого.")
 )
@@ -114,16 +114,7 @@ fun HomeScreen(
         )
 
         Scaffold(
-            containerColor = Color.Transparent,
-            bottomBar = {
-                HomeBottomNav(
-                    pendingInboxCount = gameState?.pendingInbox?.size ?: 0,
-                    onInboxClick = onInboxClick,
-                    onPortfolioClick = onPortfolioClick,
-                    onStatsClick = onStatsClick,
-                    onLeaderboardClick = onLeaderboardClick
-                )
-            }
+            containerColor = Color.Transparent
         ) { padding ->
             LazyColumn(
                 modifier = Modifier
@@ -149,7 +140,7 @@ fun HomeScreen(
                         balance = gameState?.balance ?: 0.0,
                         totalWealth = totalWealth(gameState),
                         roi = roi(gameState),
-                        intuitionScore = gameState?.intuitionScore ?: 0
+                        activeCount = gameState?.activeProjects?.size ?: 0
                     )
                 }
 
@@ -210,10 +201,16 @@ fun HomeScreen(
                     )
                 }
 
-                // Доп. ссылки (Вести / Летопись) — не в нижнем nav-баре, как доп. блок
+                // Доп. ссылки — Грамоты / Казна / Успехи / Лидеры / Вести / Летопись.
+                // Bottom-nav как в TG отсутствует — все переходы кучкуются плиткой.
                 item {
                     Spacer(Modifier.height(8.dp))
                     SecondaryShortcuts(
+                        pendingInboxCount = gameState?.pendingInbox?.size ?: 0,
+                        onInboxClick = onInboxClick,
+                        onPortfolioClick = onPortfolioClick,
+                        onStatsClick = onStatsClick,
+                        onLeaderboardClick = onLeaderboardClick,
                         onNewsClick = onNewsClick,
                         onRegistryClick = onRegistryClick
                     )
@@ -346,7 +343,7 @@ private fun BalanceCard(
     balance: Double,
     totalWealth: Double,
     roi: Double,
-    intuitionScore: Int
+    activeCount: Int
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -408,8 +405,8 @@ private fun BalanceCard(
                         color = if (roi >= 0) Success else Error
                     )
                     MetricColumn(
-                        label = "Чуйка 👁",
-                        value = "$intuitionScore",
+                        label = "В делах",
+                        value = "$activeCount",
                         color = Color.White
                     )
                 }
@@ -695,47 +692,66 @@ private fun AdvanceDayButton(isLoading: Boolean, onClick: () -> Unit) {
     }
 }
 
-// ─── Bottom nav (5 TG-табов) ─────────────────────────────────────────────
+// ─── Secondary shortcuts (3×2 плитка — заменяет BottomNav, как в TG) ─────
 
 @Composable
-private fun HomeBottomNav(
+private fun SecondaryShortcuts(
     pendingInboxCount: Int,
     onInboxClick: () -> Unit,
     onPortfolioClick: () -> Unit,
     onStatsClick: () -> Unit,
-    onLeaderboardClick: () -> Unit
+    onLeaderboardClick: () -> Unit,
+    onNewsClick: () -> Unit,
+    onRegistryClick: () -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xF5060412))
-            .border(width = 1.dp, color = FairyGold.copy(alpha = 0.15f), shape = RoundedCornerShape(0.dp))
-            .padding(top = 6.dp, bottom = 8.dp)
-    ) {
-        BottomNavItem("🏠", "Главная", selected = true, onClick = {}, badge = 0, modifier = Modifier.weight(1f))
-        BottomNavItem("📜", "Грамоты", selected = false, onClick = onInboxClick, badge = pendingInboxCount, modifier = Modifier.weight(1f))
-        BottomNavItem("💰", "Казна", selected = false, onClick = onPortfolioClick, badge = 0, modifier = Modifier.weight(1f))
-        BottomNavItem("📊", "Успехи", selected = false, onClick = onStatsClick, badge = 0, modifier = Modifier.weight(1f))
-        BottomNavItem("🏆", "Рейтинг", selected = false, onClick = onLeaderboardClick, badge = 0, modifier = Modifier.weight(1f))
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            SecondaryButton("📜", "Грамоты", onClick = onInboxClick, badge = pendingInboxCount, modifier = Modifier.weight(1f))
+            SecondaryButton("💰", "Казна", onClick = onPortfolioClick, modifier = Modifier.weight(1f))
+            SecondaryButton("📊", "Успехи", onClick = onStatsClick, modifier = Modifier.weight(1f))
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            SecondaryButton("🏆", "Рейтинг", onClick = onLeaderboardClick, modifier = Modifier.weight(1f))
+            SecondaryButton("📰", "Вести", onClick = onNewsClick, modifier = Modifier.weight(1f))
+            SecondaryButton("📖", "Летопись", onClick = onRegistryClick, modifier = Modifier.weight(1f))
+        }
     }
 }
 
 @Composable
-private fun BottomNavItem(
+private fun SecondaryButton(
     icon: String,
     label: String,
-    selected: Boolean,
     onClick: () -> Unit,
-    badge: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    badge: Int = 0
 ) {
     Box(
         modifier = modifier
+            .height(64.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        EnchantedPurple.copy(alpha = 0.5f),
+                        NightBlue.copy(alpha = 0.7f)
+                    )
+                )
+            )
+            .border(1.dp, FairyGold.copy(alpha = 0.25f), RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
-            .padding(vertical = 4.dp),
-        contentAlignment = Alignment.Center
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
             Box(contentAlignment = Alignment.Center) {
                 Text(icon, fontSize = 20.sp)
                 if (badge > 0) {
@@ -753,54 +769,10 @@ private fun BottomNavItem(
             Spacer(Modifier.height(2.dp))
             Text(
                 label,
-                fontSize = 10.sp,
-                color = if (selected) FairyGold else Color.White.copy(alpha = 0.5f),
-                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
+                color = Color.White.copy(alpha = 0.85f),
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium
             )
-        }
-    }
-}
-
-// ─── Secondary shortcuts (Вести / Летопись — не в BottomNav) ─────────────
-
-@Composable
-private fun SecondaryShortcuts(
-    onNewsClick: () -> Unit,
-    onRegistryClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        SecondaryButton("📰", "Вести с ярмарки", onClick = onNewsClick, modifier = Modifier.weight(1f))
-        SecondaryButton("📖", "Летопись", onClick = onRegistryClick, modifier = Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun SecondaryButton(icon: String, label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .height(56.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        EnchantedPurple.copy(alpha = 0.5f),
-                        NightBlue.copy(alpha = 0.7f)
-                    )
-                )
-            )
-            .border(1.dp, FairyGold.copy(alpha = 0.25f), RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(icon, fontSize = 16.sp)
-            Text(label, color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp)
         }
     }
 }

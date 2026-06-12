@@ -51,17 +51,18 @@ class PersonaRegistryViewModel @Inject constructor(
         projectRepository.getClosedProjects(),
         projectRepository.getActiveProjects()
     ) { closed, active ->
-        val unlockedByClose = closed.filter { it.investedAmountRubles > 0 }
-        val unlockedByGuess = (closed + active).filter { it.lieGuessCorrect }
-        val allUnlocked = (unlockedByClose + unlockedByGuess).distinctBy { it.id }
+        // Архетип открывается, когда дело закрылось с вложенными рублями
+        // (либо живёт сейчас как активное).
+        val unlockedClosed = closed.filter { it.investedAmountRubles > 0 }
+        val allUnlocked = (unlockedClosed + active).distinctBy { it.id }
 
         val personas = PersonaArchetype.values().map { archetype ->
             val projects = allUnlocked.filter { it.personaArchetype == archetype }
             PersonaEntry(
                 archetype = archetype,
                 encountered = projects.isNotEmpty(),
-                timesIdentified = projects.count { it.lieGuessCorrect },
-                projectsClosed = unlockedByClose.count { it.personaArchetype == archetype }
+                timesIdentified = 0,
+                projectsClosed = unlockedClosed.count { it.personaArchetype == archetype }
             )
         }
 

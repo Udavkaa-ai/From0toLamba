@@ -18,16 +18,6 @@ enum class ProjectFate {
     // и обработкой VIP-дел (фиксированный возврат 3× за durationDays).
 }
 
-enum class LieTopic {
-    PATRON_COUNT,      // Количество вкладчиков/участников
-    DAILY_PROFIT,      // Ежедневный доход
-    PAYOUT_DATE,       // Дата выплат или листинга
-    GUILD_SIZE,        // Размер артели/команды
-    ELDER_BLESSING,    // Одобрение старейшин / проверка
-    NOBLE_BACKING,     // Поддержка знатных покровителей
-    WITHDRAWAL_LIMITS  // Ограничения на вывод средств
-}
-
 data class Project(
     val id: String,
     val name: String,
@@ -39,10 +29,6 @@ data class Project(
     val personaArchetype: PersonaArchetype,
     val daysUntilCollapse: Int?,
     val realDailyYieldRubles: Double,
-    val lieTopics: List<LieTopic>,
-    val truthTopics: List<LieTopic>,
-    /** Канонические факты: по truthTopics делец всегда называет именно эти значения */
-    val npcTruthParams: NpcTruthParams,
 
     // Публичные параметры — видит игрок
     val developerName: String,
@@ -70,7 +56,5 @@ data class Project(
     val isWithdrawalLocked: Boolean = false,
     val currentUserCount: Int = 0,
     val userCountHistory: List<Int> = emptyList(),
-    val apyHistory: List<Float> = emptyList(),
-
-    val lieGuessCorrect: Boolean = false
+    val apyHistory: List<Float> = emptyList()
 )

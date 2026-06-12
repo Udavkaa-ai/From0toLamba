@@ -35,9 +35,6 @@ interface AmaDao {
     @Query("UPDATE ama_sessions SET questionCount = questionCount + 1 WHERE id = :sessionId")
     suspend fun incrementQuestionCount(sessionId: String)
 
-    @Query("UPDATE ama_sessions SET isIntuitionEvaluated = 1 WHERE id = :sessionId")
-    suspend fun markIntuitionEvaluated(sessionId: String)
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPostMortem(report: PostMortemEntity)
 

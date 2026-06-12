@@ -5,8 +5,7 @@ data class AmaSession(
     val projectId: String,
     val messages: List<AmaMessage>,
     val questionCount: Int = 0,
-    val isComplete: Boolean = false,
-    val isIntuitionEvaluated: Boolean = false
+    val isComplete: Boolean = false
 )
 
 data class AmaMessage(
@@ -24,7 +23,6 @@ data class PostMortemReport(
     val projectName: String,
     val revealedArchetype: PersonaArchetype,
     val fate: ProjectFate,
-    val lieTopics: List<LieTopic>,
     val redFlagsFound: List<String>,
     val redFlagsMissed: List<String>,
     val profitLossRubles: Double,

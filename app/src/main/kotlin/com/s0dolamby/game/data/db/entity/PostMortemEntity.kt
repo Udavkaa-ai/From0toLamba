@@ -10,7 +10,6 @@ data class PostMortemEntity(
     val projectName: String,
     val revealedArchetype: String,
     val fate: String,
-    val lieTopics: String,         // JSON
     val redFlagsFound: String,     // JSON
     val redFlagsMissed: String,    // JSON
     val profitLossRubles: Double,
@@ -22,7 +21,6 @@ fun PostMortemEntity.toDomain(gson: com.google.gson.Gson) = PostMortemReport(
     projectName = projectName,
     revealedArchetype = PersonaArchetype.valueOf(revealedArchetype),
     fate = ProjectFate.valueOf(fate),
-    lieTopics = gson.fromJson(lieTopics, Array<LieTopic>::class.java).toList(),
     redFlagsFound = gson.fromJson(redFlagsFound, Array<String>::class.java).toList(),
     redFlagsMissed = gson.fromJson(redFlagsMissed, Array<String>::class.java).toList(),
     profitLossRubles = profitLossRubles,
@@ -34,7 +32,6 @@ fun PostMortemReport.toEntity(gson: com.google.gson.Gson) = PostMortemEntity(
     projectName = projectName,
     revealedArchetype = revealedArchetype.name,
     fate = fate.name,
-    lieTopics = gson.toJson(lieTopics),
     redFlagsFound = gson.toJson(redFlagsFound),
     redFlagsMissed = gson.toJson(redFlagsMissed),
     profitLossRubles = profitLossRubles,

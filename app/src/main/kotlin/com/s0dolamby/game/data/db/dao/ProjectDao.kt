@@ -39,9 +39,6 @@ interface ProjectDao {
     @Query("UPDATE projects SET bannerImageUrl = :url, bannerPromptUsed = :prompt WHERE id = :id")
     suspend fun updateBanner(id: String, url: String, prompt: String)
 
-    @Query("UPDATE projects SET lieGuessCorrect = 1 WHERE id = :id")
-    suspend fun markLieGuessCorrect(id: String)
-
     @Query(
         "SELECT COUNT(*) FROM projects " +
             "WHERE isActive = 1 OR (isClosed = 1 AND closureReason != 'Предложение не принято')"

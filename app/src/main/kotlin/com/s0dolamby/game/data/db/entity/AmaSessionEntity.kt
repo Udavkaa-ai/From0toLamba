@@ -14,7 +14,6 @@ data class AmaSessionEntity(
     val projectId: String,
     val questionCount: Int = 0,
     val isComplete: Boolean = false,
-    val isIntuitionEvaluated: Boolean = false,
 
     // --- Phase 1: мини-игра BOYARIN «Купеческая грамота» (server-first) ---
     // СКРЫТЫЕ от UI на этом устройстве — заполняются сервером, клиент видит только результат сабмита.

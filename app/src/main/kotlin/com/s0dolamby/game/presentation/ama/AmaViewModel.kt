@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.s0dolamby.game.data.minigame.MinigameUnlockStore
 import com.s0dolamby.game.domain.model.AmaSession
-import com.s0dolamby.game.domain.model.LieTopic
 import com.s0dolamby.game.domain.model.PersonaArchetype
 import com.s0dolamby.game.domain.model.Project
 import com.s0dolamby.game.domain.repository.AmaRepository
@@ -20,12 +19,6 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-data class IntuitionResult(
-    val deltaPoints: Int,
-    val correct: List<LieTopic>,
-    val falseAccusations: List<LieTopic>
-)
-
 data class AmaUiState(
     val project: Project? = null,
     val session: AmaSession? = null,
@@ -34,8 +27,6 @@ data class AmaUiState(
     val error: String? = null,
     val showInvestSheet: Boolean = false,
     val investResult: String? = null,
-    val selectedLieTopics: Set<LieTopic> = emptySet(),
-    val intuitionResult: IntuitionResult? = null,
     val freeBalance: Double = 0.0,
     /** Уже пройдена мини-игра этого дела (любой не-проигрыш). */
     val minigameUnlocked: Boolean = false,
@@ -138,34 +129,6 @@ class AmaViewModel @Inject constructor(
             else -> msg.ifBlank { "Неизвестная ошибка беседы" }
         }
     }
-
-    fun toggleLieTopic(topic: LieTopic) {
-        _uiState.update { state ->
-            val current = state.selectedLieTopics
-            state.copy(selectedLieTopics = if (topic in current) current - topic else current + topic)
-        }
-    }
-
-    fun evaluateIntuition() {
-        val project = _uiState.value.project ?: return
-        val sessionId = _uiState.value.session?.id ?: return
-        if (_uiState.value.session?.isIntuitionEvaluated == true) return
-        val selected = _uiState.value.selectedLieTopics
-        val actualLies = project.lieTopics.toSet()
-
-        val correct = selected.filter { it in actualLies }
-        val falseAccusations = selected.filter { it !in actualLies }
-        val delta = correct.size - falseAccusations.size
-
-        viewModelScope.launch {
-            gameStateRepository.recordIntuitionPoints(delta)
-            gameStateRepository.updateRankIfNeeded()
-            amaRepository.markIntuitionEvaluated(sessionId)
-            _uiState.update { it.copy(intuitionResult = IntuitionResult(delta, correct, falseAccusations)) }
-        }
-    }
-
-    fun clearIntuitionResult() = _uiState.update { it.copy(intuitionResult = null) }
 
     /**
      * Кнопка «Вложиться». Если мини-игра дельца ещё не пройдена — попросим

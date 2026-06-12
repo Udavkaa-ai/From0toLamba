@@ -16,9 +16,6 @@ data class ProjectEntity(
     val personaArchetype: String,
     val daysUntilCollapse: Int?,
     val realDailyYieldRubles: Double,
-    val lieTopics: String,       // JSON array as string
-    val truthTopics: String,     // JSON array as string
-    val npcTruthParams: String = "{}",  // JSON object
 
     // Публичные поля
     val developerName: String,
@@ -47,9 +44,6 @@ data class ProjectEntity(
     val currentUserCount: Int = 0,
     val userCountHistory: String = "[]",
     val apyHistory: String = "[]",
-
-    @androidx.room.ColumnInfo(defaultValue = "0")
-    val lieGuessCorrect: Boolean = false,
 
     // --- Phase 1: server-first public-field mirror (tg/server ProjectPublicDTO) ---
     // Явный флаг inbox (сервер использует его как источник). На клиенте логика
@@ -90,10 +84,6 @@ fun ProjectEntity.toDomain(gson: com.google.gson.Gson): Project = Project(
     personaArchetype = PersonaArchetype.valueOf(personaArchetype),
     daysUntilCollapse = daysUntilCollapse,
     realDailyYieldRubles = realDailyYieldRubles,
-    lieTopics = gson.fromJson(lieTopics, Array<LieTopic>::class.java).toList(),
-    truthTopics = gson.fromJson(truthTopics, Array<LieTopic>::class.java).toList(),
-    npcTruthParams = runCatching { gson.fromJson(npcTruthParams, NpcTruthParams::class.java) }.getOrNull()
-        ?: NpcTruthParams(0, "", "", 0, false, null, ""),
     developerName = developerName,
     developerAvatarSeed = developerAvatarSeed,
     claimedName = claimedName,
@@ -113,8 +103,7 @@ fun ProjectEntity.toDomain(gson: com.google.gson.Gson): Project = Project(
     isWithdrawalLocked = isWithdrawalLocked,
     currentUserCount = currentUserCount,
     userCountHistory = gson.fromJson(userCountHistory, Array<Int>::class.java).toList(),
-    apyHistory = gson.fromJson(apyHistory, Array<Float>::class.java).toList(),
-    lieGuessCorrect = lieGuessCorrect
+    apyHistory = gson.fromJson(apyHistory, Array<Float>::class.java).toList()
 )
 
 fun Project.toEntity(gson: com.google.gson.Gson): ProjectEntity = ProjectEntity(
@@ -126,9 +115,6 @@ fun Project.toEntity(gson: com.google.gson.Gson): ProjectEntity = ProjectEntity(
     personaArchetype = personaArchetype.name,
     daysUntilCollapse = daysUntilCollapse,
     realDailyYieldRubles = realDailyYieldRubles,
-    lieTopics = gson.toJson(lieTopics),
-    truthTopics = gson.toJson(truthTopics),
-    npcTruthParams = gson.toJson(npcTruthParams),
     developerName = developerName,
     developerAvatarSeed = developerAvatarSeed,
     claimedName = claimedName,
@@ -148,6 +134,5 @@ fun Project.toEntity(gson: com.google.gson.Gson): ProjectEntity = ProjectEntity(
     isWithdrawalLocked = isWithdrawalLocked,
     currentUserCount = currentUserCount,
     userCountHistory = gson.toJson(userCountHistory),
-    apyHistory = gson.toJson(apyHistory),
-    lieGuessCorrect = lieGuessCorrect
+    apyHistory = gson.toJson(apyHistory)
 )

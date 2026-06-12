@@ -48,7 +48,6 @@ class GameStateRepositoryImpl @Inject constructor(
                 isOnboardingComplete = state.isOnboardingComplete,
                 balanceHistory = parseBalanceHistory(state.balanceHistory),
                 investedHistory = parseDoubleHistory(state.investedHistory),
-                intuitionScore = state.intuitionScore,
                 pendingRankUp = state.pendingRankUp?.let {
                     runCatching { InvestorRank.valueOf(it) }.getOrNull()
                 }
@@ -71,8 +70,7 @@ class GameStateRepositoryImpl @Inject constructor(
             dayStreak = state.dayStreak,
             isOnboardingComplete = state.isOnboardingComplete,
             balanceHistory = parseBalanceHistory(state.balanceHistory),
-            investedHistory = parseDoubleHistory(state.investedHistory),
-            intuitionScore = state.intuitionScore
+            investedHistory = parseDoubleHistory(state.investedHistory)
         )
     }
 
@@ -99,11 +97,6 @@ class GameStateRepositoryImpl @Inject constructor(
     }
 
     override suspend fun clearRankUpNotification() = playerDao.clearRankUpNotification()
-
-    override suspend fun recordIntuitionPoints(delta: Int) {
-        val state = playerDao.getGameState() ?: return
-        playerDao.update(state.copy(intuitionScore = state.intuitionScore + delta))
-    }
 
     override suspend fun updateBalance(newBalance: Double) =
         playerDao.updateBalance(newBalance)

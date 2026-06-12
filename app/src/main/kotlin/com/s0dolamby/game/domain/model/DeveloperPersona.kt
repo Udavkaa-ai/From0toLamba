@@ -20,7 +20,6 @@ data class DeveloperPersona(
 
     // From JSON template
     val speechStyle: String,
-    val defaultLieTopics: List<LieTopic>,
     val behaviorUnderPressure: String,
     val typicalPhrasesTemplate: List<String>,
 

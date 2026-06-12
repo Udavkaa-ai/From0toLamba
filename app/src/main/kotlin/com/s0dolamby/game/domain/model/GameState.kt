@@ -30,6 +30,5 @@ data class GameState(
     val isOnboardingComplete: Boolean = false,
     val balanceHistory: List<Double> = emptyList(),
     val investedHistory: List<Double> = emptyList(),
-    val intuitionScore: Int = 0,
     val pendingRankUp: InvestorRank? = null
 )

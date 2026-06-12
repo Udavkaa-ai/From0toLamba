@@ -12,7 +12,6 @@ interface AmaRepository {
     suspend fun createSession(session: AmaSession)
     suspend fun addMessage(message: AmaMessage)
     suspend fun completeSession(sessionId: String)
-    suspend fun markIntuitionEvaluated(sessionId: String)
     suspend fun savePostMortem(report: PostMortemReport)
     suspend fun getPostMortem(projectId: String): PostMortemReport?
 }

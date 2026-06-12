@@ -4,13 +4,11 @@ import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.s0dolamby.game.domain.model.DeveloperPersona
-import com.s0dolamby.game.domain.model.LieTopic
 import com.s0dolamby.game.domain.model.PersonaArchetype
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.random.Random
 
 @Singleton
 class PersonaRegistry @Inject constructor(
@@ -41,7 +39,6 @@ class PersonaRegistry @Inject constructor(
         val id: String,
         val archetype: String,
         @SerializedName("speechStyle") val speechStyle: String,
-        @SerializedName("defaultLieTopics") val defaultLieTopics: List<String>,
         @SerializedName("behaviorUnderPressure") val behaviorUnderPressure: String,
         @SerializedName("typicalPhrasesTemplate") val typicalPhrasesTemplate: List<String>
     ) {
@@ -51,9 +48,6 @@ class PersonaRegistry @Inject constructor(
             generatedName = "Аноним",
             avatarSeed = UUID.randomUUID().toString(),
             speechStyle = speechStyle,
-            defaultLieTopics = defaultLieTopics.mapNotNull {
-                runCatching { LieTopic.valueOf(it) }.getOrNull()
-            },
             behaviorUnderPressure = behaviorUnderPressure,
             typicalPhrasesTemplate = typicalPhrasesTemplate
         )

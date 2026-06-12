@@ -27,14 +27,10 @@ class GenerateProjectUseCase @Inject constructor(
         val fate = if (isOnboarding) ProjectFate.HONEST_FAIL else selectFate(template.fateWeights)
         val daysUntilCollapse = calcDaysUntilCollapse(fate)
 
-        val lieTopics = persona.defaultLieTopics.shuffled().take(Random.nextInt(2, 5))
-        val truthTopics = LieTopic.values().filter { it !in lieTopics }.shuffled().take(3)
-
         val developerName = generateDeveloperName(archetype)
         val claimedUserCount = Random.nextInt(template.claimedUserCountRange.first(), template.claimedUserCountRange.last())
         val claimedTeamSize = Random.nextInt(3, 20)
         val realYield = calcRealYield(fate)
-        val npcTruthParams = generateNpcTruthParams(fate, template.type, claimedUserCount, claimedTeamSize, realYield)
 
         val projectId = UUID.randomUUID().toString()
         val project = Project(
@@ -48,9 +44,6 @@ class GenerateProjectUseCase @Inject constructor(
             personaArchetype = archetype,
             daysUntilCollapse = daysUntilCollapse,
             realDailyYieldRubles = realYield,
-            lieTopics = lieTopics,
-            truthTopics = truthTopics,
-            npcTruthParams = npcTruthParams,
             developerName = developerName,
             developerAvatarSeed = UUID.randomUUID().toString(),
             claimedName = template.buildName(),
@@ -86,56 +79,6 @@ class GenerateProjectUseCase @Inject constructor(
         ProjectFate.HONEST_FAIL -> Random.nextInt(14, 30)
         ProjectFate.SURVIVOR -> Random.nextInt(20, 31)
         ProjectFate.UNICORN -> Random.nextInt(20, 31)
-    }
-
-    private fun generateNpcTruthParams(
-        fate: ProjectFate,
-        type: ProjectType,
-        claimedUserCount: Int,
-        claimedTeamSize: Int,
-        realDailyYieldRubles: Double
-    ): NpcTruthParams {
-        val realPatronCount = when (fate) {
-            ProjectFate.INSTANT_SCAM -> Random.nextInt(5, 50)
-            ProjectFate.SLOW_DRAIN -> (claimedUserCount * Random.nextDouble(0.05, 0.2)).toInt().coerceAtLeast(10)
-            ProjectFate.HONEST_FAIL -> (claimedUserCount * Random.nextDouble(0.3, 0.6)).toInt().coerceAtLeast(20)
-            ProjectFate.SURVIVOR -> (claimedUserCount * Random.nextDouble(0.7, 1.0)).toInt().coerceAtLeast(50)
-            ProjectFate.UNICORN -> (claimedUserCount * Random.nextDouble(0.9, 1.3)).toInt().coerceAtLeast(100)
-        }
-        val dailyPer100 = (realDailyYieldRubles * 100).toInt().coerceAtLeast(0)
-        val realDailyProfitDesc = if (dailyPer100 == 0) "копейки, почти ничего" else "$dailyPer100 ₽ в день на каждые 100 вложенных"
-        val realPayoutSchedule = when (fate) {
-            ProjectFate.INSTANT_SCAM -> "как накопится, точной даты нет"
-            ProjectFate.SLOW_DRAIN -> listOf("раз в месяц", "через 30 дней").random()
-            ProjectFate.HONEST_FAIL -> listOf("каждые 14 дней", "раз в месяц").random()
-            ProjectFate.SURVIVOR -> listOf("каждые 7 дней", "раз в две недели").random()
-            ProjectFate.UNICORN -> listOf("каждые 3 дня", "каждую неделю").random()
-        }
-        val realGuildSize = when (fate) {
-            ProjectFate.INSTANT_SCAM -> Random.nextInt(1, 3)
-            ProjectFate.SLOW_DRAIN -> Random.nextInt(2, 5)
-            else -> (claimedTeamSize * Random.nextDouble(0.6, 1.0)).toInt().coerceAtLeast(2)
-        }
-        val elderBlessingPassed = fate in listOf(ProjectFate.SURVIVOR, ProjectFate.UNICORN, ProjectFate.HONEST_FAIL)
-        val nobleBacking: String? = when (fate) {
-            ProjectFate.SURVIVOR -> listOf("Купеческая гильдия Новгорода", "Торговый дом Строгановых", null).random()
-            ProjectFate.UNICORN -> listOf("Купеческий союз Москвы", "Артель Рябушинских").random()
-            else -> null
-        }
-        val withdrawalPolicy = when (type) {
-            ProjectType.POTION_BREW, ProjectType.GUILD_SCHEME -> "не более 25% от вложенного за одну операцию"
-            ProjectType.CARD_GAME, ProjectType.TREASURE_HUNT -> "в любой момент, но с комиссией 25%"
-            ProjectType.HONEST_TRADE -> "без ограничений и без комиссии"
-        }
-        return NpcTruthParams(
-            realPatronCount = realPatronCount,
-            realDailyProfitDesc = realDailyProfitDesc,
-            realPayoutSchedule = realPayoutSchedule,
-            realGuildSize = realGuildSize,
-            elderBlessingPassed = elderBlessingPassed,
-            nobleBacking = nobleBacking,
-            withdrawalPolicy = withdrawalPolicy
-        )
     }
 
     private fun calcRealYield(fate: ProjectFate): Double = when (fate) {

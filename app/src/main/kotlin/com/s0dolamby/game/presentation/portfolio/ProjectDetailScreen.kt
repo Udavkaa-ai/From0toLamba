@@ -324,20 +324,6 @@ private fun PostMortemCard(project: Project, postMortem: PostMortemReport?) {
                 }
             }
 
-            if (project.lieTopics.isNotEmpty()) {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("Темы лжи", style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    project.lieTopics.forEach { topic ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Warning, null, tint = Error, modifier = Modifier.size(14.dp))
-                            Text(topic.displayName, style = MaterialTheme.typography.bodyMedium, color = Error)
-                        }
-                    }
-                }
-            }
-
             postMortem?.let { pm ->
                 Divider()
                 Text("Анализ", style = MaterialTheme.typography.labelSmall,
@@ -411,16 +397,6 @@ val ProjectFate.color: androidx.compose.ui.graphics.Color @Composable get() = wh
     ProjectFate.HONEST_FAIL -> MaterialTheme.colorScheme.onSurfaceVariant
     ProjectFate.SURVIVOR -> Success
     ProjectFate.UNICORN -> androidx.compose.ui.graphics.Color(0xFF9933FF)
-}
-
-val LieTopic.displayName: String get() = when (this) {
-    LieTopic.PATRON_COUNT -> "Количество вкладчиков"
-    LieTopic.DAILY_PROFIT -> "Дневной доход"
-    LieTopic.PAYOUT_DATE -> "Дата выплат"
-    LieTopic.GUILD_SIZE -> "Размер артели"
-    LieTopic.ELDER_BLESSING -> "Проверка старейшин"
-    LieTopic.NOBLE_BACKING -> "Покровители"
-    LieTopic.WITHDRAWAL_LIMITS -> "Лимиты вывода"
 }
 
 val PersonaArchetype.displayName: String get() = when (this) {

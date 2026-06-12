@@ -176,7 +176,7 @@ private fun RankCard(state: GameState?) {
                     color = Color.White.copy(alpha = 0.6f)
                 )
                 Text(
-                    "👁 Чуйка: ${state?.intuitionScore ?: 0}  •  баланс: %.0f ₽".format(state?.balance ?: 0.0),
+                    "Баланс: %.0f ₽".format(state?.balance ?: 0.0),
                     style = MaterialTheme.typography.bodySmall,
                     color = FairyGold.copy(alpha = 0.7f)
                 )

@@ -59,17 +59,17 @@ private val InvestorRank.celebrationEmoji: String get() = when (this) {
 private val InvestorRank.congratsTitle: String get() = when (this) {
     InvestorRank.NEWBIE      -> "Добро пожаловать в торговлю!"
     InvestorRank.AMBASSADOR  -> "Первые шаги сделаны!"
-    InvestorRank.ANALYST     -> "Чуйка не подводит!"
+    InvestorRank.ANALYST     -> "Глаз набит — двадцать дел за плечами!"
     InvestorRank.SHARK       -> "Слава о тебе гремит по ярмарке!"
     InvestorRank.LAMBO_SENSEI -> "Легенда среди купцов!"
 }
 
 private val InvestorRank.congratsText: String get() = when (this) {
     InvestorRank.NEWBIE      -> "Пустой кошель — не приговор. Всякий Князь начинал Скоморохом."
-    InvestorRank.AMBASSADOR  -> "Ты вступил на купеческий путь. Первые рубли — первые уроки. Слушай чуйку."
-    InvestorRank.ANALYST     -> "Твой взгляд острее дьячьего пера. Мошенники дрожат — Мудрец пришёл на ярмарку."
-    InvestorRank.SHARK       -> "Боярская хватка! Дельцы трижды думают, прежде чем явиться к тебе с ложью."
-    InvestorRank.LAMBO_SENSEI -> "Князь! Отныне имя твоё вписано в Летопись. Никакой обман тебя не проведёт."
+    InvestorRank.AMBASSADOR  -> "Ты вступил на купеческий путь. Первые рубли — первые уроки."
+    InvestorRank.ANALYST     -> "Двадцать дел за плечами — Мудрец пришёл на ярмарку. Дельцы трижды думают, прежде чем явиться к тебе с ложью."
+    InvestorRank.SHARK       -> "Боярская хватка! Полсотни дел повидал — рукав уже не таит сюрпризов."
+    InvestorRank.LAMBO_SENSEI -> "Князь! Сотню дел разобрал — имя твоё вписано в Летопись."
 }
 
 private val burstColors = listOf(

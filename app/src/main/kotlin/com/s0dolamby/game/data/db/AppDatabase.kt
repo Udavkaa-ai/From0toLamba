@@ -18,7 +18,9 @@ import com.s0dolamby.game.data.db.entity.*
     // Phase 1 (Android port → server-first): кэш публичных полей tg/server.
     // Расширены GameStateEntity, ProjectEntity, AmaSessionEntity, UpdateEntity.
     // fallbackToDestructiveMigration: при server-first wipe безопасен — данные ресинкаются с API.
-    version = 12,
+    // v13: вырезана Чуйка — lieTopics/truthTopics/npcTruthParams/lieGuessCorrect/
+    // intuitionScore/isIntuitionEvaluated удалены из всех таблиц.
+    version = 13,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

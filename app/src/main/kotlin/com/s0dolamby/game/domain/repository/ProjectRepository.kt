@@ -14,6 +14,5 @@ interface ProjectRepository {
     suspend fun updateBannerUrl(projectId: String, url: String, promptUsed: String)
     suspend fun getInboxProjectsList(): List<Project>
     suspend fun closeAllInboxProjects()
-    suspend fun markLieGuessCorrect(projectId: String)
     suspend fun getActiveProjectsTotalValue(): Double
 }

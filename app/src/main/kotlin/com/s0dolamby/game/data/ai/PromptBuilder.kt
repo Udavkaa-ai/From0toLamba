@@ -242,7 +242,6 @@ ${if (event != null) "Для этого события используй: ${eve
 Тип: ${project.type}
 Судьба: ${project.fate}
 Архетип хозяина: ${project.personaArchetype}
-Темы лжи: ${project.lieTopics.joinToString(", ")}
 Вложено: ${project.investedAmountRubles.toInt()} ₽
 Итоговая сумма: ${project.currentValueRubles.toInt()} ₽
 

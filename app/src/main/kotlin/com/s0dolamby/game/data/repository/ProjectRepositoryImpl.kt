@@ -44,8 +44,6 @@ class ProjectRepositoryImpl @Inject constructor(
 
     override suspend fun closeAllInboxProjects() = dao.closeAllInboxProjects()
 
-    override suspend fun markLieGuessCorrect(projectId: String) = dao.markLieGuessCorrect(projectId)
-
     override suspend fun getActiveProjectsTotalValue(): Double =
         dao.getActiveProjects().sumOf { it.currentValueRubles }
 }
