@@ -293,9 +293,14 @@ fun NavGraph() {
                 projectId = projectId,
                 onBack = { navController.popBackStack() },
                 onContinueToInvest = {
-                    // После победы возвращаемся в AMA — там кнопка инвеста уже
-                    // увидит unlock в MinigameUnlockStore и откроет invest sheet.
-                    navController.popBackStack()
+                    // После победы заменяем gate в стеке на AMA-беседу, где
+                    // кнопка инвеста увидит unlock в MinigameUnlockStore и
+                    // юзер сможет открыть invest-sheet тапом «Вложить».
+                    // Если был раскрыт идеал — AMA покажет панель «Раскрытые
+                    // сведения» с реальным посулом и судьбой дела.
+                    navController.navigate(Screen.Ama.createRoute(projectId)) {
+                        popUpTo(Screen.MinigameGate.route) { inclusive = true }
+                    }
                 }
             )
         }

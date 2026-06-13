@@ -56,6 +56,9 @@ class MinigameGateViewModel @Inject constructor(
             .map { it.archetypeTokens }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
+    /** Уже сохранённый результат мини-игры этого дела (если игра прошла раньше). */
+    fun storedOutcome(projectId: String): MinigameOutcome? = store.outcomeFor(projectId)
+
     fun record(projectId: String, outcome: MinigameOutcome) {
         viewModelScope.launch { store.record(projectId, outcome) }
     }
@@ -101,12 +104,20 @@ fun MinigameGateScreen(
 ) {
     val tokens by viewModel.archetypeTokens.collectAsState()
     val tokenCount = tokens[archetype] ?: 0
+    val previousOutcome = viewModel.storedOutcome(projectId)
 
-    // Если есть жетон — стартуем с экрана выбора. Иначе сразу в игру.
+    // Если игра уже была пройдена — сразу к экрану результата.
+    // Иначе: есть жетон → выбор, нет жетона → сразу в игру.
     var phase by remember(projectId) {
-        mutableStateOf(if (tokenCount > 0) GatePhase.INTRO else GatePhase.PLAYING)
+        mutableStateOf(when {
+            previousOutcome?.isWin == true -> GatePhase.FINISHED
+            tokenCount > 0 -> GatePhase.INTRO
+            else -> GatePhase.PLAYING
+        })
     }
-    var finished by remember(projectId) { mutableStateOf<MinigameOutcome?>(null) }
+    var finished by remember(projectId) {
+        mutableStateOf<MinigameOutcome?>(previousOutcome?.takeIf { it.isWin })
+    }
 
     val handleOutcome: (MinigameOutcome) -> Unit = remember(projectId) {
         { outcome ->

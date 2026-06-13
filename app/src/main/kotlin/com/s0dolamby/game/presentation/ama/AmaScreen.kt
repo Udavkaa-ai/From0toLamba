@@ -42,7 +42,13 @@ import com.s0dolamby.game.R
 import com.s0dolamby.game.domain.model.AmaMessage
 import com.s0dolamby.game.domain.model.MessageRole
 import com.s0dolamby.game.domain.model.PersonaArchetype
+import com.s0dolamby.game.domain.model.Project
+import com.s0dolamby.game.domain.model.ProjectFate
+import com.s0dolamby.game.domain.model.ProjectType
 import com.s0dolamby.game.domain.repository.GameConfig
+import com.s0dolamby.game.presentation.common.theme.Success
+import com.s0dolamby.game.presentation.common.theme.Warning
+import com.s0dolamby.game.presentation.common.theme.Error as ErrorColor
 import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
@@ -313,6 +319,11 @@ fun AmaScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            // Идеальное прохождение мини-игры → делец «раскрыл посул и тип
+            // дела». Показываем плашку с реальными цифрами поверх беседы.
+            if (uiState.minigamePerfect && uiState.project != null) {
+                item { RevealedDetailsCard(project = uiState.project!!) }
+            }
             if (messages.isEmpty()) {
                 item {
                     WelcomeMessage(
@@ -476,6 +487,75 @@ private fun MessageBubble(message: AmaMessage) {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun RevealedDetailsCard(project: Project) {
+    val realDailyPercent = project.realDailyYieldRubles * 100
+    val fateText = when (project.fate) {
+        ProjectFate.INSTANT_SCAM -> "🚨 Мгновенный скам — деньги уйдут на 1–3 день"
+        ProjectFate.SLOW_DRAIN -> "💀 Медленный слив — потеря 30–70% через 1–3 недели"
+        ProjectFate.HONEST_FAIL -> "🌫 Честный провал — старался, не взлетит, потеря 10–40%"
+        ProjectFate.SURVIVOR -> "🌿 Выживший — стабильный долгожитель"
+        ProjectFate.UNICORN -> "🦄 Единорог! Взрывной рост 2–10% в день"
+    }
+    val fateColor = when (project.fate) {
+        ProjectFate.INSTANT_SCAM, ProjectFate.SLOW_DRAIN -> ErrorColor
+        ProjectFate.HONEST_FAIL -> Warning
+        ProjectFate.SURVIVOR, ProjectFate.UNICORN -> Success
+    }
+    val typeText = when (project.type) {
+        ProjectType.CARD_GAME -> "🃏 Азартная игра"
+        ProjectType.TREASURE_HUNT -> "🗺 Поиск клада"
+        ProjectType.POTION_BREW -> "🧪 Зелейное дело"
+        ProjectType.GUILD_SCHEME -> "⚙ Артель / гильдия"
+        ProjectType.HONEST_TRADE -> "🤝 Честная торговля"
+    }
+    FairyCard(modifier = Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text("✨", fontSize = 18.sp)
+            Text(
+                "Раскрытые сведения",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = FairyGold
+            )
+        }
+        Spacer(Modifier.height(4.dp))
+        Text(
+            "Делец проболтался после идеала. Цифры — реальные.",
+            style = MaterialTheme.typography.labelSmall,
+            color = Color.White.copy(alpha = 0.55f)
+        )
+        OrnamentDivider()
+        DetailRow("Тип дела", typeText, Color.White)
+        DetailRow("Заявленный посул (APY)", "${project.claimedAPY.toInt()}% / год", Color.White.copy(alpha = 0.7f))
+        DetailRow(
+            "Реальный дневной доход",
+            if (project.realDailyYieldRubles <= 0.0) "0 (мошенник)" else "%.2f%% от вложенного".format(realDailyPercent),
+            if (project.realDailyYieldRubles <= 0.0) ErrorColor else Success
+        )
+        DetailRow("Подноготная", fateText, fateColor)
+        if (project.daysUntilCollapse != null) {
+            DetailRow(
+                "Дней до развязки",
+                "${project.daysUntilCollapse}",
+                if (project.daysUntilCollapse < 7) ErrorColor else Color.White.copy(alpha = 0.7f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun DetailRow(label: String, value: String, color: Color) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(label, style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.55f))
+        Text(value, style = MaterialTheme.typography.bodySmall, color = color, fontWeight = FontWeight.SemiBold)
     }
 }
 
