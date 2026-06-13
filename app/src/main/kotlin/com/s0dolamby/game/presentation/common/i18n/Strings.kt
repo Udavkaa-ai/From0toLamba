@@ -125,6 +125,10 @@ object Strings {
         "ama.reveal.fate" to "Подноготная",
         "ama.reveal.daysToFinale" to "Дней до развязки",
 
+        // Темы (имена в селекторе)
+        "theme.DARK_FAIRY" to "Тёмная ночь",
+        "theme.WARM_FAIRY" to "Тёплая ярмарка",
+
         // Отношения
         "rel.title" to "Отношения с дельцами",
         "rel.subtitle" to "Уровни связи (0..%d) растут от закрытия дел дельца в плюс. Жетоны — мини-валюта архетипа: позже можно будет пропустить мини-игру.",
@@ -401,6 +405,10 @@ object Strings {
         "ama.reveal.realApy" to "Real daily yield",
         "ama.reveal.fate" to "True fate",
         "ama.reveal.daysToFinale" to "Days to the finale",
+
+        // Theme switcher labels
+        "theme.DARK_FAIRY" to "Dark night",
+        "theme.WARM_FAIRY" to "Warm fair",
 
         // Relationships
         "rel.title" to "Merchant relations",

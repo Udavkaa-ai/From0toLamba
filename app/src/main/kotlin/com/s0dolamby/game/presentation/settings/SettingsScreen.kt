@@ -291,7 +291,7 @@ fun SettingsScreen(
                             FilterChip(
                                 selected = selected,
                                 onClick = { viewModel.setThemeMode(mode) },
-                                label = { Text("${mode.emoji} ${mode.displayName}") },
+                                label = { Text("${mode.emoji} ${Strings.t("theme.${mode.name}")}") },
                                 modifier = Modifier.weight(1f),
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = FairyGold.copy(alpha = 0.22f),
