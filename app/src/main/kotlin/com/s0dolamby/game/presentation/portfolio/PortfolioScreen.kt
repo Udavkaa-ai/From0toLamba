@@ -30,6 +30,8 @@ import com.s0dolamby.game.domain.model.Project
 import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
+import com.s0dolamby.game.presentation.common.format.formatGroshes
+import com.s0dolamby.game.presentation.common.format.formatGroshesSigned
 import com.s0dolamby.game.data.logging.AppLogger
 import com.s0dolamby.game.presentation.common.theme.Error
 import com.s0dolamby.game.presentation.common.theme.FairyGold
@@ -252,12 +254,12 @@ private fun PortfolioProjectCard(
                     Text("Вложено", color = Color.White.copy(alpha = 0.55f), fontSize = 10.sp)
                 }
                 Text(
-                    "%.0f г".format(project.investedAmountRubles),
+                    formatGroshes(project.investedAmountRubles),
                     color = Color.White.copy(alpha = 0.7f),
                     fontSize = 12.sp
                 )
                 Text(
-                    "%.0f г".format(project.currentValueRubles),
+                    formatGroshes(project.currentValueRubles),
                     color = FairyGold,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold

@@ -48,6 +48,8 @@ import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
+import com.s0dolamby.game.presentation.common.format.formatGroshes
+import com.s0dolamby.game.presentation.common.format.formatGroshesSigned
 import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.Error
 import com.s0dolamby.game.presentation.common.theme.FairyGold
@@ -163,13 +165,13 @@ private fun HallOfFameCard(state: GameState?, closed: List<com.s0dolamby.game.do
         } else {
             bestDeal?.let { p ->
                 val profit = p.currentValueRubles - p.investedAmountRubles
-                HallRow("🥇", Strings.t("stats.hof.bestDeal"), "%+.0f г".format(profit),
+                HallRow("🥇", Strings.t("stats.hof.bestDeal"), formatGroshesSigned(profit),
                     "${p.claimedName} · ${p.developerName}", Success)
             }
             worstDeal?.let { p ->
                 val loss = p.currentValueRubles - p.investedAmountRubles
                 if (loss < 0) {
-                    HallRow("💸", Strings.t("stats.hof.worstLoss"), "%+.0f г".format(loss),
+                    HallRow("💸", Strings.t("stats.hof.worstLoss"), formatGroshesSigned(loss),
                         "${p.claimedName} · ${p.developerName}", Error)
                 }
             }
@@ -665,9 +667,9 @@ private fun FinancialStats(state: GameState?) {
         }
 
         HorizontalDivider(color = Color.White.copy(alpha = 0.10f))
-        StatRow("Баланс", "%.0f г".format(state?.balance ?: 0.0))
-        StatRow("Всего вложено", "%.0f г".format(state?.totalInvested ?: 0.0))
-        StatRow("Всего получено", "%.0f г".format(state?.totalReturned ?: 0.0))
+        StatRow("Баланс", formatGroshes(state?.balance ?: 0.0))
+        StatRow("Всего вложено", formatGroshes(state?.totalInvested ?: 0.0))
+        StatRow("Всего получено", formatGroshes(state?.totalReturned ?: 0.0))
     }
 }
 

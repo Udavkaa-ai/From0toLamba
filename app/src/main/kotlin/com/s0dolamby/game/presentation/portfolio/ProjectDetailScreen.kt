@@ -281,8 +281,8 @@ private fun LiveStatsCard(project: Project, onManageClick: (() -> Unit)?) {
                     }
                 }
             }
-            StatRow("Вложено", "%.0f г".format(project.investedAmountRubles))
-            StatRow("Текущая стоимость", "%.0f г".format(project.currentValueRubles))
+            StatRow("Вложено", com.s0dolamby.game.presentation.common.format.formatGroshes(project.investedAmountRubles))
+            StatRow("Текущая стоимость", com.s0dolamby.game.presentation.common.format.formatGroshes(project.currentValueRubles))
             StatRow("П&У", "%+.0f г".format(pnl), color = if (pnl >= 0) Success else Error)
             StatRow("Дней в деле", "${project.daysSinceJoined}")
             StatRow("Посул (APY)", "${project.claimedAPY.toInt()}%")

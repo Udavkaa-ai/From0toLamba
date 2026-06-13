@@ -49,6 +49,8 @@ import com.s0dolamby.game.presentation.common.components.CardCornerOrnaments
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.components.PersonaAvatar
 import com.s0dolamby.game.presentation.common.components.SparklesOverlay
+import com.s0dolamby.game.presentation.common.format.formatGroshes
+import com.s0dolamby.game.presentation.common.format.formatGroshesCompact
 import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
 import com.s0dolamby.game.presentation.common.theme.Error
@@ -414,7 +416,7 @@ private fun BalanceCard(
                 )
                 Spacer(Modifier.height(4.dp))
                 AnimatedContent(
-                    targetState = "%.0f г".format(balance),
+                    targetState = formatGroshes(balance),
                     transitionSpec = {
                         slideInVertically(tween(350)) { it } + fadeIn(tween(250)) togetherWith
                             slideOutVertically(tween(250)) { -it } + fadeOut(tween(200))
@@ -433,8 +435,8 @@ private fun BalanceCard(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceAround
                 ) {
-                    MetricColumn(Strings.t("home.metric.invested"), "%.0f г".format(invested), Color.White)
-                    MetricColumn(Strings.t("home.metric.received"), "%.0f г".format(returned), Color.White)
+                    MetricColumn(Strings.t("home.metric.invested"), formatGroshesCompact(invested), Color.White)
+                    MetricColumn(Strings.t("home.metric.received"), formatGroshesCompact(returned), Color.White)
                     MetricColumn(Strings.t("home.metric.total"), "%+.1f%%".format(roi), if (roi >= 0) Success else Error)
                     MetricColumn(Strings.t("home.metric.dealsTaken"), "$dealsTaken", Color.White)
                 }
@@ -655,7 +657,7 @@ private fun ActiveProjectCardCompact(
                     }
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            "%.0f г".format(project.currentValueRubles),
+                            formatGroshes(project.currentValueRubles),
                             color = FairyGold,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
