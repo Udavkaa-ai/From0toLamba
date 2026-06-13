@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.s0dolamby.game.domain.model.PersonaArchetype
 import com.s0dolamby.game.presentation.common.components.FairyCard
+import com.s0dolamby.game.presentation.common.components.PersonaAvatar
 import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
 import com.s0dolamby.game.presentation.common.theme.FairyGold
@@ -187,15 +188,19 @@ private fun ArchetypeCell(entry: ArchetypeEntry, maxLevel: Int) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(FairyGold.copy(alpha = if (seen) 0.18f else 0.08f))
-                    .border(1.dp, FairyGold.copy(alpha = if (seen) 0.45f else 0.18f), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(emoji, fontSize = 26.sp)
+            if (seen) {
+                PersonaAvatar(archetype, size = 48.dp)
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(FairyGold.copy(alpha = 0.08f))
+                        .border(1.dp, FairyGold.copy(alpha = 0.18f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(emoji, fontSize = 26.sp)
+                }
             }
             Text(
                 if (seen) name else "?",

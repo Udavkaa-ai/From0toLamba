@@ -32,7 +32,10 @@ fun From0toLambaTheme(
         ThemeMode.DARK_FAIRY -> DarkFairyPalette
         ThemeMode.WARM_FAIRY -> WarmFairyPalette
     }
-    CompositionLocalProvider(LocalAppPalette provides palette) {
+    CompositionLocalProvider(
+        LocalAppPalette provides palette,
+        LocalThemeMode provides themeMode
+    ) {
         MaterialTheme(
             colorScheme = colorSchemeFor(palette),
             typography = Typography,

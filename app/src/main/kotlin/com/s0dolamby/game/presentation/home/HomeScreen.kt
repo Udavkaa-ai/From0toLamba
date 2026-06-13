@@ -47,6 +47,7 @@ import com.s0dolamby.game.domain.model.PayoutStatus
 import com.s0dolamby.game.domain.model.Project
 import com.s0dolamby.game.presentation.common.components.CardCornerOrnaments
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
+import com.s0dolamby.game.presentation.common.components.PersonaAvatar
 import com.s0dolamby.game.presentation.common.components.SparklesOverlay
 import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
@@ -502,30 +503,8 @@ private fun ArchetypeChip(
     archetype: com.s0dolamby.game.domain.model.PersonaArchetype,
     tokens: Int
 ) {
-    val emoji = when (archetype) {
-        com.s0dolamby.game.domain.model.PersonaArchetype.BURATINO -> "🪆"
-        com.s0dolamby.game.domain.model.PersonaArchetype.BOYARIN -> "👑"
-        com.s0dolamby.game.domain.model.PersonaArchetype.KOLOBOK -> "🤗"
-        com.s0dolamby.game.domain.model.PersonaArchetype.KOSCHEI -> "💀"
-        com.s0dolamby.game.domain.model.PersonaArchetype.ZOLUSHKA -> "👠"
-        com.s0dolamby.game.domain.model.PersonaArchetype.BABA_YAGA -> "🧙"
-        com.s0dolamby.game.domain.model.PersonaArchetype.IVAN_DURAK -> "🃏"
-    }
     Box(contentAlignment = Alignment.TopEnd) {
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(FairyGold.copy(alpha = if (tokens > 0) 0.18f else 0.08f))
-                .border(
-                    1.dp,
-                    FairyGold.copy(alpha = if (tokens > 0) 0.45f else 0.18f),
-                    CircleShape
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(emoji, fontSize = 18.sp)
-        }
+        PersonaAvatar(archetype, size = 36.dp)
         if (tokens > 0) {
             Box(
                 modifier = Modifier

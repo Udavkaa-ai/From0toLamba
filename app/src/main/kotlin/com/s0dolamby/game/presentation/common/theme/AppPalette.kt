@@ -2,6 +2,7 @@ package com.s0dolamby.game.presentation.common.theme
 
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.graphics.Color
+import com.s0dolamby.game.domain.model.ThemeMode
 
 /**
  * Палитра, через которую все экраны получают свои цвета. Меняем через
@@ -63,3 +64,6 @@ val WarmFairyPalette = AppPalette(
 )
 
 val LocalAppPalette = compositionLocalOf { DarkFairyPalette }
+
+/** Текущая тема — нужен помощникам выбора _LIGHT/_DARK ресурсов вне Material. */
+val LocalThemeMode = compositionLocalOf { ThemeMode.DARK_FAIRY }

@@ -18,6 +18,7 @@ import com.s0dolamby.game.R
 import com.s0dolamby.game.domain.model.PersonaArchetype
 import com.s0dolamby.game.domain.model.ProjectType
 import com.s0dolamby.game.presentation.common.components.FairyCard
+import com.s0dolamby.game.presentation.common.components.PersonaAvatar
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import androidx.compose.foundation.background
@@ -225,15 +226,7 @@ private fun PersonaCard(entry: PersonaEntry) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Surface(
-                modifier = Modifier.size(44.dp),
-                shape = MaterialTheme.shapes.medium,
-                color = FairyGold.copy(alpha = 0.15f)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(entry.archetype.emoji, style = MaterialTheme.typography.titleLarge)
-                }
-            }
+            PersonaAvatar(entry.archetype, size = 48.dp)
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     entry.archetype.displayName,
