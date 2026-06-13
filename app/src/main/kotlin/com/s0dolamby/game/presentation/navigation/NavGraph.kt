@@ -15,6 +15,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.s0dolamby.game.domain.repository.GameStateRepository
+import com.s0dolamby.game.presentation.achievements.AchievementUnlockedOverlay
 import com.s0dolamby.game.presentation.ama.AmaScreen
 import com.s0dolamby.game.presentation.home.HomeScreen
 import com.s0dolamby.game.presentation.inbox.InboxScreen
@@ -322,5 +323,9 @@ fun NavGraph() {
                 )
             }
         }
+
+        // Жалованная грамота — всплывает поверх всего на любом экране,
+        // когда use-case разблокировал подвиг.
+        AchievementUnlockedOverlay()
     } // outer Box end
 }

@@ -1,5 +1,6 @@
 package com.s0dolamby.game.domain.usecase
 
+import com.s0dolamby.game.data.achievements.AchievementUnlockStore
 import com.s0dolamby.game.domain.model.*
 import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.s0dolamby.game.domain.repository.ProjectRepository
@@ -13,6 +14,7 @@ class InvestUseCaseTest {
 
     private val gameStateRepo = mockk<GameStateRepository>()
     private val projectRepo = mockk<ProjectRepository>()
+    private val unlockStore = mockk<AchievementUnlockStore>(relaxed = true)
     private lateinit var useCase: InvestUseCase
 
     private val testProject = Project(
@@ -36,7 +38,7 @@ class InvestUseCaseTest {
 
     @Before
     fun setup() {
-        useCase = InvestUseCase(gameStateRepo, projectRepo)
+        useCase = InvestUseCase(gameStateRepo, projectRepo, unlockStore)
     }
 
     @Test
@@ -47,6 +49,7 @@ class InvestUseCaseTest {
         coEvery { gameStateRepo.updateBalance(any()) } just Runs
         coEvery { gameStateRepo.recordInvestment(any()) } just Runs
         coEvery { gameStateRepo.updateRankIfNeeded() } just Runs
+        coEvery { gameStateRepo.recomputeAchievements() } returns emptyList()
 
         val result = useCase("p1", 10.0)
 

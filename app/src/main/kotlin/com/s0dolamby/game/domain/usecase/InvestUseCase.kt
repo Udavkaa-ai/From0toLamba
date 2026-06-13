@@ -1,5 +1,6 @@
 package com.s0dolamby.game.domain.usecase
 
+import com.s0dolamby.game.data.achievements.AchievementUnlockStore
 import com.s0dolamby.game.domain.repository.GameConfig
 import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.s0dolamby.game.domain.repository.ProjectRepository
@@ -7,7 +8,8 @@ import javax.inject.Inject
 
 class InvestUseCase @Inject constructor(
     private val gameStateRepository: GameStateRepository,
-    private val projectRepository: ProjectRepository
+    private val projectRepository: ProjectRepository,
+    private val achievementUnlockStore: AchievementUnlockStore
 ) {
     suspend operator fun invoke(projectId: String, amountRubles: Double): Result<Unit> = runCatching {
         require(amountRubles >= GameConfig.MIN_INVESTMENT_RUBLES) {
@@ -43,6 +45,6 @@ class InvestUseCase @Inject constructor(
         if (isFirstInvestment) {
             gameStateRepository.updateRankIfNeeded()
         }
-        gameStateRepository.recomputeAchievements()
+        achievementUnlockStore.push(gameStateRepository.recomputeAchievements())
     }
 }

@@ -176,6 +176,16 @@ class GameStateRepositoryImpl @Inject constructor(
         ))
     }
 
+    override suspend fun spendArchetypeToken(archetype: PersonaArchetype): Boolean {
+        val state = playerDao.getGameState() ?: return false
+        val tokens = parseArchetypeMap(state.archetypeTokensJson).toMutableMap()
+        val current = tokens[archetype] ?: 0
+        if (current <= 0) return false
+        tokens[archetype] = current - 1
+        playerDao.update(state.copy(archetypeTokensJson = serializeArchetypeMap(tokens)))
+        return true
+    }
+
     override suspend fun claimDailyReward(): Result<Int> = runCatching {
         val state = playerDao.getGameState() ?: error("GameState не инициализирован")
         val today = TodayRewards.todayKey()

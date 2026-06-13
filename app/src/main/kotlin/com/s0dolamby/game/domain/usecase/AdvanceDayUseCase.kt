@@ -1,5 +1,6 @@
 package com.s0dolamby.game.domain.usecase
 
+import com.s0dolamby.game.data.achievements.AchievementUnlockStore
 import com.s0dolamby.game.data.logging.AppLogger
 import com.s0dolamby.game.domain.model.AnnouncementType
 import com.s0dolamby.game.domain.model.DailyUpdate
@@ -16,7 +17,8 @@ class AdvanceDayUseCase @Inject constructor(
     private val projectRepository: ProjectRepository,
     private val amaRepository: AmaRepository,
     private val generateProjectUseCase: GenerateProjectUseCase,
-    private val generateDailyUpdatesUseCase: GenerateDailyUpdatesUseCase
+    private val generateDailyUpdatesUseCase: GenerateDailyUpdatesUseCase,
+    private val achievementUnlockStore: AchievementUnlockStore
 ) {
     // Каждый игровой день засчитывается как 10 реальных — держит прогресс интересным
     private val YIELD_MULTIPLIER = 10.0
@@ -152,7 +154,7 @@ class AdvanceDayUseCase @Inject constructor(
         gameStateRepository.appendInvestedSnapshot(totalActiveValue)
         gameStateRepository.advanceDay()
         gameStateRepository.updateRankIfNeeded()
-        gameStateRepository.recomputeAchievements()
+        achievementUnlockStore.push(gameStateRepository.recomputeAchievements())
 
         // ── Подсчёт распознанных мошенников ──────────────────────────────────
         // Игрок "распознал" скам если: поговорил (≥1 вопрос в AMA) и отказался вкладывать.

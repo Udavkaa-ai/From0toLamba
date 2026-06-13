@@ -28,6 +28,11 @@ interface GameStateRepository {
      */
     suspend fun awardArchetypeProgress(archetype: com.s0dolamby.game.domain.model.PersonaArchetype, profitable: Boolean)
     /**
+     * Списать 1 жетон архетипа. Возвращает true, если жетон списан;
+     * false — если баланса не хватило.
+     */
+    suspend fun spendArchetypeToken(archetype: com.s0dolamby.game.domain.model.PersonaArchetype): Boolean
+    /**
      * Перебрать каталог [com.s0dolamby.game.domain.achievements.AchievementCatalog]
      * и разблокировать те, чьи условия теперь выполнены. Возвращает список
      * только что разблокированных подвигов (пустой, если ничего не изменилось).
