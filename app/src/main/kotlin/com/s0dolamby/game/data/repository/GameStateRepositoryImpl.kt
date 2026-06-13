@@ -8,7 +8,9 @@ import com.s0dolamby.game.domain.ranks.RankService
 import com.s0dolamby.game.domain.repository.GameConfig
 import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.s0dolamby.game.data.db.entity.toDomain
+import com.s0dolamby.game.domain.model.PersonaArchetype
 import com.s0dolamby.game.domain.today.TodayRewards
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -27,6 +29,17 @@ class GameStateRepositoryImpl @Inject constructor(
 
     // Keep old name as alias for migration compatibility
     private fun parseBalanceHistory(json: String) = parseDoubleHistory(json)
+
+    private fun parseArchetypeMap(json: String): Map<PersonaArchetype, Int> = runCatching {
+        val type = object : TypeToken<Map<String, Int>>() {}.type
+        val raw: Map<String, Int> = gson.fromJson(json, type) ?: emptyMap()
+        raw.mapNotNull { (k, v) ->
+            runCatching { PersonaArchetype.valueOf(k) }.getOrNull()?.let { it to v }
+        }.toMap()
+    }.getOrDefault(emptyMap())
+
+    private fun serializeArchetypeMap(map: Map<PersonaArchetype, Int>): String =
+        gson.toJson(map.mapKeys { it.key.name })
 
     override fun observeGameState(): Flow<GameState> =
         combine(
@@ -54,7 +67,9 @@ class GameStateRepositoryImpl @Inject constructor(
                 },
                 loginStreak = state.loginStreak,
                 lastSeenDay = state.lastSeenDay,
-                lastDailyClaim = state.lastDailyClaim
+                lastDailyClaim = state.lastDailyClaim,
+                tieLevels = parseArchetypeMap(state.tieLevelsJson),
+                archetypeTokens = parseArchetypeMap(state.archetypeTokensJson)
             )
         }
 
@@ -77,7 +92,9 @@ class GameStateRepositoryImpl @Inject constructor(
             investedHistory = parseDoubleHistory(state.investedHistory),
             loginStreak = state.loginStreak,
             lastSeenDay = state.lastSeenDay,
-            lastDailyClaim = state.lastDailyClaim
+            lastDailyClaim = state.lastDailyClaim,
+            tieLevels = parseArchetypeMap(state.tieLevelsJson),
+            archetypeTokens = parseArchetypeMap(state.archetypeTokensJson)
         )
     }
 
@@ -112,6 +129,20 @@ class GameStateRepositoryImpl @Inject constructor(
         playerDao.update(state.copy(
             loginStreak = newStreak,
             lastSeenDay = TodayRewards.todayKey()
+        ))
+    }
+
+    override suspend fun awardArchetypeProgress(archetype: PersonaArchetype, profitable: Boolean) {
+        if (!profitable) return
+        val state = playerDao.getGameState() ?: return
+        val ties = parseArchetypeMap(state.tieLevelsJson).toMutableMap()
+        val tokens = parseArchetypeMap(state.archetypeTokensJson).toMutableMap()
+        val currentTie = ties[archetype] ?: 0
+        if (currentTie < GameState.MAX_TIE_LEVEL) ties[archetype] = currentTie + 1
+        tokens[archetype] = (tokens[archetype] ?: 0) + 1
+        playerDao.update(state.copy(
+            tieLevelsJson = serializeArchetypeMap(ties),
+            archetypeTokensJson = serializeArchetypeMap(tokens)
         ))
     }
 

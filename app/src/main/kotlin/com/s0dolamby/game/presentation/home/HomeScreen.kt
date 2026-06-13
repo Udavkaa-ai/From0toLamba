@@ -150,8 +150,13 @@ fun HomeScreen(
 
                 // Плитка «Отношения с дельцами» — 7 архетипов, тап → отдельный экран.
                 item {
+                    val seen = gameState?.let { s ->
+                        com.s0dolamby.game.domain.model.PersonaArchetype.values()
+                            .count { (s.tieLevels[it] ?: 0) > 0 || (s.archetypeTokens[it] ?: 0) > 0 }
+                    } ?: 0
                     MerchantRelationsCard(
-                        seenArchetypeCount = 0,  // TODO Phase 2: реальные seenArchetypes
+                        seenArchetypeCount = seen,
+                        archetypeTokens = gameState?.archetypeTokens ?: emptyMap(),
                         onClick = onRelationshipsClick
                     )
                 }
@@ -431,7 +436,11 @@ private fun BalanceCard(
 // ─── Отношения с дельцами — плитка из 7 архетипов с переходом на экран ──
 
 @Composable
-private fun MerchantRelationsCard(seenArchetypeCount: Int, onClick: () -> Unit) {
+private fun MerchantRelationsCard(
+    seenArchetypeCount: Int,
+    archetypeTokens: Map<com.s0dolamby.game.domain.model.PersonaArchetype, Int>,
+    onClick: () -> Unit
+) {
     val archetypes = com.s0dolamby.game.domain.model.PersonaArchetype.values()
     Card(
         onClick = onClick,
@@ -481,7 +490,7 @@ private fun MerchantRelationsCard(seenArchetypeCount: Int, onClick: () -> Unit) 
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     archetypes.forEach { arch ->
-                        ArchetypeChip(arch)
+                        ArchetypeChip(arch, tokens = archetypeTokens[arch] ?: 0)
                     }
                 }
             }
@@ -491,7 +500,10 @@ private fun MerchantRelationsCard(seenArchetypeCount: Int, onClick: () -> Unit) 
 }
 
 @Composable
-private fun ArchetypeChip(archetype: com.s0dolamby.game.domain.model.PersonaArchetype) {
+private fun ArchetypeChip(
+    archetype: com.s0dolamby.game.domain.model.PersonaArchetype,
+    tokens: Int
+) {
     val emoji = when (archetype) {
         com.s0dolamby.game.domain.model.PersonaArchetype.BURATINO -> "🪆"
         com.s0dolamby.game.domain.model.PersonaArchetype.BOYARIN -> "👑"
@@ -501,15 +513,37 @@ private fun ArchetypeChip(archetype: com.s0dolamby.game.domain.model.PersonaArch
         com.s0dolamby.game.domain.model.PersonaArchetype.BABA_YAGA -> "🧙"
         com.s0dolamby.game.domain.model.PersonaArchetype.IVAN_DURAK -> "🃏"
     }
-    Box(
-        modifier = Modifier
-            .size(36.dp)
-            .clip(CircleShape)
-            .background(FairyGold.copy(alpha = 0.12f))
-            .border(1.dp, FairyGold.copy(alpha = 0.3f), CircleShape),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(emoji, fontSize = 18.sp)
+    Box(contentAlignment = Alignment.TopEnd) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(FairyGold.copy(alpha = if (tokens > 0) 0.18f else 0.08f))
+                .border(
+                    1.dp,
+                    FairyGold.copy(alpha = if (tokens > 0) 0.45f else 0.18f),
+                    CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(emoji, fontSize = 18.sp)
+        }
+        if (tokens > 0) {
+            Box(
+                modifier = Modifier
+                    .offset(x = 4.dp, y = (-4).dp)
+                    .clip(CircleShape)
+                    .background(FairyGold)
+                    .padding(horizontal = 4.dp, vertical = 0.dp)
+            ) {
+                Text(
+                    "×$tokens",
+                    color = NightBlue,
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
     }
 }
 

@@ -20,7 +20,9 @@ import com.s0dolamby.game.data.db.entity.*
     // fallbackToDestructiveMigration: при server-first wipe безопасен — данные ресинкаются с API.
     // v13: вырезана Чуйка — lieTopics/truthTopics/npcTruthParams/lieGuessCorrect/
     // intuitionScore/isIntuitionEvaluated удалены из всех таблиц.
-    version = 13,
+    // v14: добавлены tieLevelsJson / archetypeTokensJson в game_state
+    // (отношения с дельцами + жетоны архетипов).
+    version = 14,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

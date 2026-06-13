@@ -19,6 +19,15 @@ class ExitProjectUseCase @Inject constructor(
         gameStateRepository.updateBalance(state.balance + returned)
         gameStateRepository.recordReturn(returned)
 
+        // Прогресс по архетипу: связь и жетон даются только если дело
+        // вышло в плюс (возврат > вложений). Учитываем уже выведенные
+        // ранее средства из totalWithdrawnRubles нельзя — поля нет в
+        // domain Project, поэтому пока сравниваем по investedAmountRubles.
+        gameStateRepository.awardArchetypeProgress(
+            archetype = project.personaArchetype,
+            profitable = returned > project.investedAmountRubles
+        )
+
         returned
     }
 }

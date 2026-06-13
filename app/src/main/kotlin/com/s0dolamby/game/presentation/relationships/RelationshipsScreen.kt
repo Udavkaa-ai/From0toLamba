@@ -13,6 +13,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.s0dolamby.game.domain.model.PersonaArchetype
 import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
@@ -29,14 +32,17 @@ import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.NightBlue
 
 /**
- * Phase 1 — экран отношений с дельцами. Сетка 7 архетипов с пустыми
- * уровнями связи и балансом жетонов. Реальные tieLevels / archetypeTokens
- * подключаются отдельным шагом (нужны поля в GameState + Service логика).
+ * Экран отношений с дельцами. Сетка 7 архетипов с уровнями связи
+ * и балансом жетонов. Данные тянутся из GameState через RelationshipsViewModel.
  */
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RelationshipsScreen(onBack: () -> Unit) {
+fun RelationshipsScreen(
+    onBack: () -> Unit,
+    viewModel: RelationshipsViewModel = hiltViewModel()
+) {
+    val ui by viewModel.uiState.collectAsState()
     Box(modifier = Modifier.fillMaxSize().background(NightBlue)) {
         Box(
             modifier = Modifier
@@ -83,7 +89,8 @@ fun RelationshipsScreen(onBack: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    "Уровни связи (0..10) растут от прохождения мини-игр дельца и закрытия его дел в плюс. Жетоны — мини-валюта архетипа.",
+                    "Уровни связи (0..${ui.maxLevel}) растут от закрытия дел дельца в плюс. " +
+                        "Жетоны — мини-валюта архетипа: позже можно будет пропустить мини-игру.",
                     color = Color.White.copy(alpha = 0.65f),
                     fontSize = 12.sp
                 )
@@ -96,11 +103,23 @@ fun RelationshipsScreen(onBack: () -> Unit) {
                     ) {
                         Column {
                             Text("🎯 Сумма связей", color = Color.White.copy(alpha = 0.65f), fontSize = 12.sp)
-                            Text("0", color = FairyGold, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
+                            Text("${ui.tiesTotal}", color = FairyGold, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
+                            if (ui.seenCount > 0) {
+                                Text(
+                                    "Знаком с ${ui.seenCount} из ${ui.entries.size} типажей",
+                                    color = Color.White.copy(alpha = 0.5f),
+                                    fontSize = 11.sp
+                                )
+                            }
                         }
                         Column(horizontalAlignment = Alignment.End) {
                             Text("Бонус за уровень", color = Color.White.copy(alpha = 0.65f), fontSize = 12.sp)
-                            Text("+1% / день", color = FairyGold, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                            Text(
+                                "+${ui.bonusPercentPerLevel}% / день",
+                                color = FairyGold,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
                         }
                     }
                 }
@@ -111,8 +130,8 @@ fun RelationshipsScreen(onBack: () -> Unit) {
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    items(PersonaArchetype.values().toList()) { archetype ->
-                        ArchetypeCell(archetype)
+                    items(ui.entries) { entry ->
+                        ArchetypeCell(entry, ui.maxLevel)
                     }
                 }
             }
@@ -121,7 +140,8 @@ fun RelationshipsScreen(onBack: () -> Unit) {
 }
 
 @Composable
-private fun ArchetypeCell(archetype: PersonaArchetype) {
+private fun ArchetypeCell(entry: ArchetypeEntry, maxLevel: Int) {
+    val archetype = entry.archetype
     val emoji = when (archetype) {
         PersonaArchetype.BURATINO -> "🪆"
         PersonaArchetype.BOYARIN -> "👑"
@@ -140,21 +160,26 @@ private fun ArchetypeCell(archetype: PersonaArchetype) {
         PersonaArchetype.BABA_YAGA -> "Баба-Яга"
         PersonaArchetype.IVAN_DURAK -> "Иван-дурак"
     }
+    val seen = entry.seen
 
     Box(
         modifier = Modifier
-            .height(118.dp)
+            .height(124.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(
                 Brush.verticalGradient(
                     listOf(
-                        EnchantedPurple.copy(alpha = 0.6f),
-                        NightBlue.copy(alpha = 0.85f)
+                        EnchantedPurple.copy(alpha = if (seen) 0.7f else 0.35f),
+                        NightBlue.copy(alpha = if (seen) 0.95f else 0.6f)
                     )
                 )
             )
-            .border(1.dp, FairyGold.copy(alpha = 0.25f), RoundedCornerShape(14.dp))
-            .clickable { /* TODO Phase 2: open archetype detail */ }
+            .border(
+                1.dp,
+                if (seen) FairyGold.copy(alpha = 0.45f) else FairyGold.copy(alpha = 0.15f),
+                RoundedCornerShape(14.dp)
+            )
+            .clickable { /* TODO Phase 4: open archetype detail */ }
             .padding(8.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -166,15 +191,15 @@ private fun ArchetypeCell(archetype: PersonaArchetype) {
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .background(FairyGold.copy(alpha = 0.15f))
-                    .border(1.dp, FairyGold.copy(alpha = 0.4f), CircleShape),
+                    .background(FairyGold.copy(alpha = if (seen) 0.18f else 0.08f))
+                    .border(1.dp, FairyGold.copy(alpha = if (seen) 0.45f else 0.18f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Text(emoji, fontSize = 26.sp)
             }
             Text(
-                name,
-                color = Color.White.copy(alpha = 0.9f),
+                if (seen) name else "?",
+                color = Color.White.copy(alpha = if (seen) 0.9f else 0.4f),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center
@@ -183,10 +208,19 @@ private fun ArchetypeCell(archetype: PersonaArchetype) {
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("🤝 0", color = Color.White.copy(alpha = 0.5f), fontSize = 10.sp)
-                Text("·", color = Color.White.copy(alpha = 0.3f), fontSize = 10.sp)
-                Text("🪙 0", color = FairyGold.copy(alpha = 0.7f), fontSize = 10.sp)
+                Text(
+                    "🤝 ${entry.tieLevel}/$maxLevel",
+                    color = Color.White.copy(alpha = if (entry.tieLevel > 0) 0.85f else 0.4f),
+                    fontSize = 10.sp,
+                    fontWeight = if (entry.tieLevel > 0) FontWeight.SemiBold else FontWeight.Normal
+                )
             }
+            Text(
+                "🪙 ${entry.tokens}",
+                color = FairyGold.copy(alpha = if (entry.tokens > 0) 0.85f else 0.35f),
+                fontSize = 10.sp,
+                fontWeight = if (entry.tokens > 0) FontWeight.SemiBold else FontWeight.Normal
+            )
         }
     }
 }

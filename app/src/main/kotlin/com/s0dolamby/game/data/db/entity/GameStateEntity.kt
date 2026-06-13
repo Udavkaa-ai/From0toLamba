@@ -27,6 +27,13 @@ data class GameStateEntity(
     // Map<PersonaArchetype, Int> — сколько жетонов архетипа потрачено (заработок считается на лету).
     @androidx.room.ColumnInfo(defaultValue = "{}")
     val archetypeTokensSpent: String = "{}",
+    // Map<PersonaArchetype, Int> — уровень связи (0..10) с каждым архетипом.
+    // Растёт при закрытии его дел в плюс. Сумма дает бонус +1%/уровень/день.
+    @androidx.room.ColumnInfo(defaultValue = "{}")
+    val tieLevelsJson: String = "{}",
+    // Map<PersonaArchetype, Int> — текущий баланс жетонов архетипа.
+    @androidx.room.ColumnInfo(defaultValue = "{}")
+    val archetypeTokensJson: String = "{}",
     // Жетоны на пропуск 2ч-таймера «Следующий день».
     @androidx.room.ColumnInfo(defaultValue = "0")
     val timerSkipTokens: Int = 0,

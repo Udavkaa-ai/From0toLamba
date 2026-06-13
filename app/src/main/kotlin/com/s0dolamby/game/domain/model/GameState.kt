@@ -36,5 +36,14 @@ data class GameState(
     /** YYYY-MM-DD MSK — день когда стрик обновлялся в последний раз. */
     val lastSeenDay: String? = null,
     /** YYYY-MM-DD MSK — день последней забранной ежедневной награды. */
-    val lastDailyClaim: String? = null
-)
+    val lastDailyClaim: String? = null,
+    /** Уровень связи с архетипом дельца (0..[MAX_TIE_LEVEL]). */
+    val tieLevels: Map<PersonaArchetype, Int> = emptyMap(),
+    /** Баланс жетонов архетипа — мини-валюта на пропуск мини-игр и т.п. */
+    val archetypeTokens: Map<PersonaArchetype, Int> = emptyMap()
+) {
+    companion object {
+        const val MAX_TIE_LEVEL = 10
+        const val TIE_BONUS_PERCENT_PER_LEVEL = 1
+    }
+}

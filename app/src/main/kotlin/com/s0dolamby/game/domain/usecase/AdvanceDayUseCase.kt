@@ -84,6 +84,10 @@ class AdvanceDayUseCase @Inject constructor(
                         gameStateRepository.recordReturn(returned)
                         projectRepository.closeProject(project.id, buildClosureReason(project.fate), returned)
                         gameStateRepository.recordScamMissed()
+                        gameStateRepository.awardArchetypeProgress(
+                            project.personaArchetype,
+                            profitable = returned > project.investedAmountRubles
+                        )
                     }
                 }
 
@@ -98,6 +102,10 @@ class AdvanceDayUseCase @Inject constructor(
                     gameStateRepository.recordReturn(returned)
                     projectRepository.closeProject(project.id, buildClosureReason(project.fate), returned)
                     // Только INSTANT_SCAM/SLOW_DRAIN с вложениями = пропущенный мошенник
+                    gameStateRepository.awardArchetypeProgress(
+                        project.personaArchetype,
+                        profitable = returned > project.investedAmountRubles
+                    )
                 }
 
                 // Обычный день — начисляем доход внутри проекта, возможно случайное событие

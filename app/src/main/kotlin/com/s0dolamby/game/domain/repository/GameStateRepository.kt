@@ -22,4 +22,9 @@ interface GameStateRepository {
     suspend fun ensureDailyVisit()
     /** Забрать ежедневную награду. Возвращает сумму в грошах или ошибку «уже забрана». */
     suspend fun claimDailyReward(): Result<Int>
+    /**
+     * Зачислить прогресс по архетипу дельца после закрытия его дела.
+     * При profitable=true +1 уровень связи (cap 10) и +1 жетон архетипа.
+     */
+    suspend fun awardArchetypeProgress(archetype: com.s0dolamby.game.domain.model.PersonaArchetype, profitable: Boolean)
 }
