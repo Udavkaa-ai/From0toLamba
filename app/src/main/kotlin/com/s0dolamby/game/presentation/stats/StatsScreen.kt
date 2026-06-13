@@ -51,6 +51,8 @@ import com.s0dolamby.game.presentation.common.components.ScreenBackground
 import com.s0dolamby.game.presentation.common.format.formatGroshes
 import com.s0dolamby.game.presentation.common.format.formatGroshesSigned
 import com.s0dolamby.game.presentation.common.i18n.Strings
+import com.s0dolamby.game.presentation.common.i18n.localizedDescription
+import com.s0dolamby.game.presentation.common.i18n.localizedTitle
 import com.s0dolamby.game.presentation.common.theme.Error
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.Success
@@ -266,7 +268,7 @@ private fun AchievementsCard(unlocked: Set<String>) {
                 ) {
                     Text(cat.icon, fontSize = 16.sp)
                     Text(
-                        cat.title,
+                        cat.localizedTitle(),
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White
                     )
@@ -297,13 +299,13 @@ private fun AchievementsCard(unlocked: Set<String>) {
                             )
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    ach.title,
+                                    ach.localizedTitle(),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = if (isUnlocked) Color.White else Color.White.copy(alpha = 0.5f),
                                     fontWeight = if (isUnlocked) FontWeight.SemiBold else FontWeight.Normal
                                 )
                                 Text(
-                                    ach.description,
+                                    ach.localizedDescription(),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = Color.White.copy(alpha = if (isUnlocked) 0.7f else 0.4f)
                                 )

@@ -31,6 +31,9 @@ import com.s0dolamby.game.data.achievements.AchievementUnlockStore
 import com.s0dolamby.game.domain.achievements.Achievement
 import com.s0dolamby.game.presentation.common.components.CardCornerOrnaments
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
+import com.s0dolamby.game.presentation.common.i18n.Strings
+import com.s0dolamby.game.presentation.common.i18n.localizedDescription
+import com.s0dolamby.game.presentation.common.i18n.localizedTitle
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.NightBlue
@@ -99,7 +102,7 @@ fun AchievementUnlockedOverlay(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        "✦  Подвиг свершён  ✦",
+                        Strings.t("ach.unlocked.banner"),
                         style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
                         color = FairyGold.copy(alpha = 0.7f),
                         fontStyle = FontStyle.Italic,
@@ -109,14 +112,14 @@ fun AchievementUnlockedOverlay(
                     OrnamentDivider()
                     Text(top.emoji, fontSize = 64.sp)
                     Text(
-                        top.title,
+                        top.localizedTitle(),
                         color = FairyGold,
                         fontSize = 22.sp,
                         fontWeight = FontWeight.ExtraBold,
                         textAlign = TextAlign.Center
                     )
                     Text(
-                        top.description,
+                        top.localizedDescription(),
                         color = Color.White.copy(alpha = 0.8f),
                         fontSize = 13.sp,
                         textAlign = TextAlign.Center,
@@ -124,7 +127,7 @@ fun AchievementUnlockedOverlay(
                     )
                     OrnamentDivider()
                     Text(
-                        "Тап — продолжить" + if (queue.size > 1) "  (ещё ${queue.size - 1})" else "",
+                        Strings.t("ach.unlocked.tapHint") + if (queue.size > 1) Strings.t("ach.unlocked.queueMore", queue.size - 1) else "",
                         color = Color.White.copy(alpha = 0.4f),
                         fontSize = 11.sp,
                         textAlign = TextAlign.Center
