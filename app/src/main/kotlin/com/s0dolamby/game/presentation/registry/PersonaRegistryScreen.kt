@@ -20,6 +20,7 @@ import com.s0dolamby.game.domain.model.ProjectType
 import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.PersonaAvatar
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
+import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import androidx.compose.foundation.background
 import com.s0dolamby.game.presentation.portfolio.displayName
@@ -95,7 +96,11 @@ fun PersonaRegistryScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedTab by remember { mutableStateOf(0) }
-    val tabs = listOf("Типажи", "Виды дел", "Словарь")
+    val tabs = listOf(
+        Strings.t("registry.tab.personas"),
+        Strings.t("registry.tab.types"),
+        Strings.t("registry.tab.glossary")
+    )
 
     ScreenBackground(R.drawable.registry_bg) {
     Scaffold(
@@ -108,12 +113,12 @@ fun PersonaRegistryScreen(
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text("✦", color = FairyGold, fontSize = 12.sp)
-                        Text("Летопись", fontWeight = FontWeight.Bold)
+                        Text(Strings.t("registry.title"), fontWeight = FontWeight.Bold)
                         Text("✦", color = FairyGold, fontSize = 12.sp)
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Назад") }
+                    IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, Strings.t("btn.back")) }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
@@ -179,13 +184,13 @@ private fun PersonasTab(uiState: RegistryUiState) {
                     ) {
                         Text("✦", color = FairyGold.copy(alpha = 0.4f), fontSize = 24.sp)
                         Text(
-                            "Летопись пуста",
+                            Strings.t("registry.personas.empty.title"),
                             style = MaterialTheme.typography.titleMedium,
                             color = Color.White,
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
-                            "Поговори с Дельцами — типажи откроются после закрытия дел",
+                            Strings.t("registry.personas.empty.hint"),
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color.White.copy(alpha = 0.65f)
                         )
@@ -195,7 +200,7 @@ private fun PersonasTab(uiState: RegistryUiState) {
         } else {
             item {
                 Text(
-                    "Открыто ${uiState.personas.size} из ${uiState.personas.size + uiState.lockedCount} типажей",
+                    Strings.t("registry.personas.openedCount", uiState.personas.size, uiState.personas.size + uiState.lockedCount),
                     style = MaterialTheme.typography.bodyMedium,
                     color = FairyGold.copy(alpha = 0.7f)
                 )
@@ -208,7 +213,7 @@ private fun PersonasTab(uiState: RegistryUiState) {
             item {
                 FairyCard(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        "Ещё ${uiState.lockedCount} типажей скрыто — инвестируй в новые дела",
+                        Strings.t("registry.personas.lockedHint", uiState.lockedCount),
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.65f)
                     )
@@ -229,7 +234,7 @@ private fun PersonaCard(entry: PersonaEntry) {
             PersonaAvatar(entry.archetype, size = 48.dp)
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    entry.archetype.displayName,
+                    Strings.t("persona.${entry.archetype.name}"),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = Color.White

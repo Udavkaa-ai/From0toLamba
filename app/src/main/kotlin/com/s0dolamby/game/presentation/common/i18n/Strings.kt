@@ -78,6 +78,16 @@ object Strings {
         "persona.BABA_YAGA" to "Баба-Яга",
         "persona.IVAN_DURAK" to "Иван-дурак",
 
+        // Летопись (PersonaRegistry)
+        "registry.title" to "Летопись",
+        "registry.tab.personas" to "Типажи",
+        "registry.tab.types" to "Виды дел",
+        "registry.tab.glossary" to "Словарь",
+        "registry.personas.empty.title" to "Летопись пуста",
+        "registry.personas.empty.hint" to "Поговори с Дельцами — типажи откроются после закрытия дел",
+        "registry.personas.openedCount" to "Открыто %d из %d типажей",
+        "registry.personas.lockedHint" to "Ещё %d типажей скрыто — инвестируй в новые дела",
+
         // Отношения
         "rel.title" to "Отношения с дельцами",
         "rel.subtitle" to "Уровни связи (0..%d) растут от закрытия дел дельца в плюс. Жетоны — мини-валюта архетипа: позже можно будет пропустить мини-игру.",
@@ -311,6 +321,16 @@ object Strings {
         "persona.ZOLUSHKA" to "Zolushka",
         "persona.BABA_YAGA" to "Baba Yaga",
         "persona.IVAN_DURAK" to "Ivan the Fool",
+
+        // Chronicle (PersonaRegistry)
+        "registry.title" to "Chronicle",
+        "registry.tab.personas" to "Archetypes",
+        "registry.tab.types" to "Venture types",
+        "registry.tab.glossary" to "Glossary",
+        "registry.personas.empty.title" to "Chronicle is empty",
+        "registry.personas.empty.hint" to "Talk to merchants — archetypes appear after closing deals",
+        "registry.personas.openedCount" to "Opened %d of %d archetypes",
+        "registry.personas.lockedHint" to "%d archetypes still hidden — invest in new ventures",
 
         // Relationships
         "rel.title" to "Merchant relations",
