@@ -22,8 +22,8 @@ import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.LocalThemeMode
 
 /**
- * Slug файла — совпадает с TG `tg/client/public/personas/*.webp` и
- * `tg/client/public/avatars/*.webp`. К нему приклеивается `_LIGHT`
+ * Slug файла — совпадает с TG tg/client/public/personas/{slug}.webp и
+ * tg/client/public/avatars/{slug}.webp. К нему приклеивается _LIGHT
  * в [ThemeMode.WARM_FAIRY] для светлого варианта.
  */
 private fun PersonaArchetype.fileSlug(): String = when (this) {
