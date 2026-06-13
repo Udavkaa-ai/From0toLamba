@@ -144,9 +144,19 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
+                    val rankI18n = gameState?.investorRank?.let { rank ->
+                        when (rank.name) {
+                            "NEWBIE" -> Strings.t("rank.skomoroh")
+                            "AMBASSADOR" -> Strings.t("rank.kupec")
+                            "ANALYST" -> Strings.t("rank.mudrec")
+                            "SHARK" -> Strings.t("rank.boyarin")
+                            "LAMBO_SENSEI" -> Strings.t("rank.knyaz")
+                            else -> Strings.t("rank.skomoroh")
+                        }
+                    } ?: Strings.t("rank.skomoroh")
                     HomeHeader(
                         day = gameState?.currentDay ?: 1,
-                        rank = gameState?.investorRank?.displayName ?: "Скоморох",
+                        rank = rankI18n,
                         nickname = nickname,
                         onSettingsClick = onSettingsClick
                     )
@@ -313,7 +323,7 @@ private fun HomeHeader(
         ) {
             Icon(
                 Icons.Default.Settings,
-                contentDescription = "Настройки",
+                contentDescription = Strings.t("settings.title"),
                 tint = Color.White.copy(alpha = 0.6f),
                 modifier = Modifier.size(22.dp)
             )
