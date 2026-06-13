@@ -119,6 +119,8 @@ object Strings {
         "ama.invest.minimum" to "Минимум 5 г",
         "ama.reveal.title" to "Раскрытые сведения",
         "ama.reveal.subtitle" to "Делец проболтался после идеала. Цифры — реальные.",
+        "ama.reveal.subtitle.perfect" to "Идеал — делец проболтался про посул и тип дела.",
+        "ama.reveal.subtitle.win" to "Делец нехотя признал, чем торгует — но про доход и судьбу молчит.",
         "ama.reveal.type" to "Тип дела",
         "ama.reveal.apy" to "Заявленный посул (APY)",
         "ama.reveal.realApy" to "Реальный дневной доход",
@@ -201,6 +203,41 @@ object Strings {
         "rankup.SHARK.body" to "Боярская хватка! Полсотни дел повидал — рукав уже не таит сюрпризов.",
         "rankup.LAMBO_SENSEI.title" to "Легенда среди купцов!",
         "rankup.LAMBO_SENSEI.body" to "Князь! Сотню дел разобрал — имя твоё вписано в Летопись.",
+
+        // PersonaRegistry — описания дельцов и типов дел
+        "persona.BURATINO.desc" to "Очевидный лжец, верит в свои же сказки",
+        "persona.BOYARIN.desc" to "Пафосный, ссылается на великих покровителей",
+        "persona.KOLOBOK.desc" to "Хвастун-энтузиаст, от всех убегает с улыбкой",
+        "persona.KOSCHEI.desc" to "Холодный и уверенный, говорит только цифрами",
+        "persona.ZOLUSHKA.desc" to "Апеллирует к жалости и эмоциям, давит дедлайнами",
+        "persona.BABA_YAGA.desc" to "Отвечает загадками, технически подкована",
+        "persona.IVAN_DURAK.desc" to "Открыт про провалы — третий раз может взлететь",
+
+        "type.CARD_GAME.desc" to "Азартные игры на удачу с ставками",
+        "type.TREASURE_HUNT.desc" to "Поиск клада с командой или в одиночку",
+        "type.POTION_BREW.desc" to "Пассивный доход с варки зелий и ресурсов",
+        "type.GUILD_SCHEME.desc" to "Реферальная артель: зарабатывай на новичках",
+        "type.HONEST_TRADE.desc" to "Прозрачная торговля с открытыми условиями",
+
+        "risk.veryHigh" to "Очень высокий",
+        "risk.high" to "Высокий",
+        "risk.moderate" to "Умеренный",
+        "registry.types.empty" to "Здесь появятся виды дел после твоего участия в них.",
+        "registry.types.risk" to "Типичный риск: %s",
+
+        // Словарь (glossary) — заголовки и тексты
+        "glossary.apy.title" to "APY (чужеземное) — годовой прибыток",
+        "glossary.apy.body" to "Annual Percentage Yield — по-нашему: обещанный годовой прибыток с учётом накопленных процентов.\nПример: APY 365% = примерно 1% в день. В честных делах APY выше 100% почти не бывает.\nВ симуляторе APY — это посул хозяина дела. Настоящий прибыток может быть в разы ниже или вовсе нулевым.",
+        "glossary.roi.title" to "ROI (чужеземное) — окупаемость вложения",
+        "glossary.roi.body" to "Return on Investment — по-нашему: отдача от вложенного злата.\nСчитается так: (что получил − что вложил) / что вложил × 100%.\nПоложительный ROI = прибыток, отрицательный = убыток.",
+        "glossary.users.title" to "Количество участников",
+        "glossary.users.body" to "Ведомость числа участников дела — важный знак его здоровья.\nРезкое снижение (−10 000 за день) = тревожный знак: люди уходят.\nСтабильный рост = дело живёт. Взрывной рост перед «закрытием» = возможный обман.\nПомни: в скам-делах заявленные цифры часто выдуманы.",
+        "glossary.detect.title" to "Как распознать обманщика",
+        "glossary.detect.body" to "Тревожные знаки, на которые стоит обращать внимание:\n\n• Нереальный посул (APY >500% годовых) — такая прибыль не случается\n• Давление на срочность: «только сегодня», «осталось мало мест»\n• Расплывчатые ответы на прямые вопросы о выводе злата\n• Задержки выплат в вестях — первый признак медленного слива\n• Злость или обиды в ответ на скептические вопросы\n• Артель безымянна, нет проверки старейшин\n• Обещание большой выплаты «через неделю» без конкретики",
+        "glossary.lock.title" to "Блокировка вывода",
+        "glossary.lock.body" to "Когда хозяин дела начинает скамить, вывод средств может быть заблокирован.\nЭто означает: он перестал выплачивать и ищет выход.\n\nЕсть небольшой шанс (~20%), что дело «восстановится» и вывод откроется снова — это происходит, когда скамеру нужно привлечь новые деньги.\n\nЕсли вывод не открылся — жди закрытия и частичного возврата средств.",
+        "glossary.fates.title" to "Судьбы дел",
+        "glossary.fates.body" to "• Мгновенный скам — закрывается на 1–3 день, потеря 80–100%\n• Медленный слив — живёт 1–3 недели, потеря 30–70%\n• Честный провал — хозяин старался, экономика не взлетела, потеря 10–40%\n• Выживший — долгосрочный, стабильный небольшой доход\n• Единорог — редкость, реальный рост и доходность до 10% в день",
 
         // Отношения
         "rel.title" to "Отношения с дельцами",
@@ -473,6 +510,8 @@ object Strings {
         "ama.invest.minimum" to "Minimum 5 c",
         "ama.reveal.title" to "Revealed information",
         "ama.reveal.subtitle" to "The merchant slipped after a perfect game. Numbers are real.",
+        "ama.reveal.subtitle.perfect" to "Perfect — the merchant spilled the venture type and claimed APY.",
+        "ama.reveal.subtitle.win" to "The merchant grudgingly admitted what he sells — but stays silent on yield and fate.",
         "ama.reveal.type" to "Venture type",
         "ama.reveal.apy" to "Claimed APY",
         "ama.reveal.realApy" to "Real daily yield",
@@ -553,6 +592,41 @@ object Strings {
         "rankup.SHARK.body" to "A boyar's grip! Half a hundred deals seen — no sleeve hides surprises any more.",
         "rankup.LAMBO_SENSEI.title" to "Legend among merchants!",
         "rankup.LAMBO_SENSEI.body" to "Prince! A hundred deals studied — your name is written in the Chronicle.",
+
+        // PersonaRegistry — merchant + venture-type descriptions
+        "persona.BURATINO.desc" to "Obvious liar — believes his own fairy tales",
+        "persona.BOYARIN.desc" to "Pompous, name-drops great patrons",
+        "persona.KOLOBOK.desc" to "Boastful enthusiast — slips away with a smile",
+        "persona.KOSCHEI.desc" to "Cold and confident, speaks only in numbers",
+        "persona.ZOLUSHKA.desc" to "Plays on pity and emotion, presses with deadlines",
+        "persona.BABA_YAGA.desc" to "Answers in riddles, technically savvy",
+        "persona.IVAN_DURAK.desc" to "Honest about failures — the third try may fly",
+
+        "type.CARD_GAME.desc" to "Games of chance with stakes",
+        "type.TREASURE_HUNT.desc" to "Treasure hunting with a crew or alone",
+        "type.POTION_BREW.desc" to "Passive income from brewing potions and resources",
+        "type.GUILD_SCHEME.desc" to "Referral guild: earn on newcomers",
+        "type.HONEST_TRADE.desc" to "Transparent trade with open terms",
+
+        "risk.veryHigh" to "Very high",
+        "risk.high" to "High",
+        "risk.moderate" to "Moderate",
+        "registry.types.empty" to "Venture types will appear here after you take part in them.",
+        "registry.types.risk" to "Typical risk: %s",
+
+        // Glossary tab
+        "glossary.apy.title" to "APY (foreign word) — annual yield",
+        "glossary.apy.body" to "Annual Percentage Yield — in plain terms: the promised yearly return including compounded interest.\nExample: APY 365% ≈ 1% per day. In honest ventures APY above 100% is almost unheard of.\nIn this sim APY is the owner's claim. Real yield can be many times lower or zero.",
+        "glossary.roi.title" to "ROI (foreign word) — return on investment",
+        "glossary.roi.body" to "Return on Investment — how much your invested gold earned back.\nFormula: (received − invested) / invested × 100%.\nPositive ROI = profit, negative = loss.",
+        "glossary.users.title" to "Number of participants",
+        "glossary.users.body" to "The participant count is an important health signal for a venture.\nA sharp drop (−10 000 in a day) is a red flag: people are leaving.\nSteady growth = the venture is alive. Explosive growth right before a «close» = possible scam.\nRemember: scam ventures often invent these numbers.",
+        "glossary.detect.title" to "How to spot a scammer",
+        "glossary.detect.body" to "Warning signs worth noticing:\n\n• Unrealistic APY (>500% annual) — such returns don't happen\n• Urgency pressure: «only today», «few spots left»\n• Vague answers to direct questions about withdrawals\n• Payment delays in news — first sign of a slow drain\n• Anger or hurt feelings in response to skeptical questions\n• Anonymous guild, no elder verification\n• Promise of a big payout «in a week» with no specifics",
+        "glossary.lock.title" to "Withdrawal lock",
+        "glossary.lock.body" to "When a venture's owner starts scamming, withdrawals can be locked.\nThis means: he's stopped paying out and is looking for an exit.\n\nThere's a small (~20%) chance the venture «recovers» and withdrawals reopen — this happens when the scammer needs fresh deposits.\n\nIf withdrawals don't reopen — expect closure and a partial refund.",
+        "glossary.fates.title" to "Venture fates",
+        "glossary.fates.body" to "• Instant scam — closes on day 1–3, loss 80–100%\n• Slow drain — lives 1–3 weeks, loss 30–70%\n• Honest fail — the owner tried, the economy didn't take off, loss 10–40%\n• Survivor — long-term, steady small income\n• Unicorn — rare, real growth and yield up to 10% per day",
 
         // Relationships
         "rel.title" to "Merchant relations",

@@ -353,10 +353,15 @@ fun AmaScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Идеальное прохождение мини-игры → делец «раскрыл посул и тип
-            // дела». Показываем плашку с реальными цифрами поверх беседы.
-            if (uiState.minigamePerfect && uiState.project != null) {
-                item { RevealedDetailsCard(project = uiState.project!!) }
+            // Раскрытие сведений после мини-игры — двухступенчатое:
+            //   • idle/проигрыш: ничего не показываем (интрига цела).
+            //   • 1 ошибка (минимальный win): только «тип дела».
+            //   • идеал: тип + заявленный посул (APY) — чтобы оценить
+            //     обещанную доходность, но без фатэ/реального дохода/срока.
+            // Сами скрытые fate/realDailyYield/daysUntilCollapse игрок
+            // увидит только постфактум в Разборе дела (PostMortem).
+            if (uiState.minigameUnlocked && uiState.project != null) {
+                item { RevealedDetailsCard(project = uiState.project!!, perfect = uiState.minigamePerfect) }
             }
             if (messages.isEmpty()) {
                 item {
@@ -525,20 +530,7 @@ private fun MessageBubble(message: AmaMessage) {
 }
 
 @Composable
-private fun RevealedDetailsCard(project: Project) {
-    val realDailyPercent = project.realDailyYieldRubles * 100
-    val fateText = when (project.fate) {
-        ProjectFate.INSTANT_SCAM -> "🚨 Мгновенный скам — деньги уйдут на 1–3 день"
-        ProjectFate.SLOW_DRAIN -> "💀 Медленный слив — потеря 30–70% через 1–3 недели"
-        ProjectFate.HONEST_FAIL -> "🌫 Честный провал — старался, не взлетит, потеря 10–40%"
-        ProjectFate.SURVIVOR -> "🌿 Выживший — стабильный долгожитель"
-        ProjectFate.UNICORN -> "🦄 Единорог! Взрывной рост 2–10% в день"
-    }
-    val fateColor = when (project.fate) {
-        ProjectFate.INSTANT_SCAM, ProjectFate.SLOW_DRAIN -> ErrorColor
-        ProjectFate.HONEST_FAIL -> Warning
-        ProjectFate.SURVIVOR, ProjectFate.UNICORN -> Success
-    }
+private fun RevealedDetailsCard(project: Project, perfect: Boolean) {
     val typeText = when (project.type) {
         ProjectType.CARD_GAME -> "🃏 Азартная игра"
         ProjectType.TREASURE_HUNT -> "🗺 Поиск клада"
@@ -558,25 +550,20 @@ private fun RevealedDetailsCard(project: Project) {
         }
         Spacer(Modifier.height(4.dp))
         Text(
-            Strings.t("ama.reveal.subtitle"),
+            if (perfect) Strings.t("ama.reveal.subtitle.perfect")
+            else Strings.t("ama.reveal.subtitle.win"),
             style = MaterialTheme.typography.labelSmall,
             color = Color.White.copy(alpha = 0.55f)
         )
         OrnamentDivider()
+        // Базовый уровень (минимум 1 ошибка): только «тип дела» — игрок
+        // знает чем торгует, но не знает реальную доходность и судьбу.
         DetailRow(Strings.t("ama.reveal.type"), typeText, Color.White)
-        DetailRow(Strings.t("ama.reveal.apy"), "${project.claimedAPY.toInt()}% / год", Color.White.copy(alpha = 0.7f))
-        DetailRow(
-            Strings.t("ama.reveal.realApy"),
-            if (project.realDailyYieldRubles <= 0.0) "0 (мошенник)" else "%.2f%% от вложенного".format(realDailyPercent),
-            if (project.realDailyYieldRubles <= 0.0) ErrorColor else Success
-        )
-        DetailRow(Strings.t("ama.reveal.fate"), fateText, fateColor)
-        if (project.daysUntilCollapse != null) {
-            DetailRow(
-                Strings.t("ama.reveal.daysToFinale"),
-                "${project.daysUntilCollapse}",
-                if (project.daysUntilCollapse < 7) ErrorColor else Color.White.copy(alpha = 0.7f)
-            )
+        // Идеал (0 ошибок): добавляется заявленный посул (APY). Это
+        // обещание дельца, а не правда — реальную доходность и судьбу
+        // приходится оценивать самому в беседе.
+        if (perfect) {
+            DetailRow(Strings.t("ama.reveal.apy"), "${project.claimedAPY.toInt()}% / год", Color.White.copy(alpha = 0.7f))
         }
     }
 }

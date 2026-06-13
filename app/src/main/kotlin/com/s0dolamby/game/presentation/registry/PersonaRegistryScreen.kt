@@ -23,7 +23,6 @@ import com.s0dolamby.game.presentation.common.components.ScreenBackground
 import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import androidx.compose.foundation.background
-import com.s0dolamby.game.presentation.portfolio.displayName
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import javax.inject.Inject
@@ -240,7 +239,7 @@ private fun PersonaCard(entry: PersonaEntry) {
                     color = Color.White
                 )
                 Text(
-                    entry.archetype.description,
+                    Strings.t("persona.${entry.archetype.name}.desc"),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White.copy(alpha = 0.65f)
                 )
@@ -288,7 +287,7 @@ private fun ProjectTypesTab(types: List<ProjectType>) {
             item {
                 FairyCard(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        "Здесь появятся виды дел после твоего участия в них.",
+                        Strings.t("registry.types.empty"),
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.65f)
                     )
@@ -304,16 +303,32 @@ private fun ProjectTypesTab(types: List<ProjectType>) {
 
 @Composable
 private fun ProjectTypeCard(type: ProjectType) {
+    val (titleKey, descKey, riskKey) = when (type) {
+        ProjectType.CARD_GAME -> Triple("type.cardGame", "type.CARD_GAME.desc", "risk.veryHigh")
+        ProjectType.TREASURE_HUNT -> Triple("type.treasureHunt", "type.TREASURE_HUNT.desc", "risk.high")
+        ProjectType.POTION_BREW -> Triple("type.potionBrew", "type.POTION_BREW.desc", "risk.veryHigh")
+        ProjectType.GUILD_SCHEME -> Triple("type.guildScheme", "type.GUILD_SCHEME.desc", "risk.high")
+        ProjectType.HONEST_TRADE -> Triple("type.honestTrade", "type.HONEST_TRADE.desc", "risk.moderate")
+    }
     FairyCard(modifier = Modifier.fillMaxWidth()) {
-        Text(type.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
-        Text(type.description, style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.7f))
+        Text(Strings.t(titleKey), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+        Text(Strings.t(descKey), style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.7f))
         Text(
-            "Типичный риск: ${type.riskLevel}",
+            Strings.t("registry.types.risk", Strings.t(riskKey)),
             style = MaterialTheme.typography.labelSmall,
             color = FairyGold.copy(alpha = 0.7f)
         )
     }
 }
+
+private val glossaryItems = listOf(
+    "glossary.apy.title" to "glossary.apy.body",
+    "glossary.roi.title" to "glossary.roi.body",
+    "glossary.users.title" to "glossary.users.body",
+    "glossary.detect.title" to "glossary.detect.body",
+    "glossary.lock.title" to "glossary.lock.body",
+    "glossary.fates.title" to "glossary.fates.body"
+)
 
 @Composable
 private fun GlossaryTab() {
@@ -322,8 +337,8 @@ private fun GlossaryTab() {
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        items(glossaryItems) { item ->
-            GlossaryCard(title = item.first, body = item.second)
+        items(glossaryItems) { (titleKey, bodyKey) ->
+            GlossaryCard(title = Strings.t(titleKey), body = Strings.t(bodyKey))
         }
     }
 }
@@ -336,48 +351,6 @@ private fun GlossaryCard(title: String, body: String) {
         Text(body, style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.8f))
     }
 }
-
-private val glossaryItems = listOf(
-    "APY (чужеземное) — годовой прибыток" to
-        "Annual Percentage Yield — по-нашему: обещанный годовой прибыток с учётом накопленных процентов.\n" +
-        "Пример: APY 365% = примерно 1% в день. В честных делах APY выше 100% почти не бывает.\n" +
-        "В симуляторе APY — это посул хозяина дела. Настоящий прибыток может быть в разы ниже или вовсе нулевым.",
-
-    "ROI (чужеземное) — окупаемость вложения" to
-        "Return on Investment — по-нашему: отдача от вложенного злата.\n" +
-        "Считается так: (что получил − что вложил) / что вложил × 100%.\n" +
-        "Положительный ROI = прибыток, отрицательный = убыток.",
-
-    "Количество участников" to
-        "Ведомость числа участников дела — важный знак его здоровья.\n" +
-        "Резкое снижение (−10 000 за день) = тревожный знак: люди уходят.\n" +
-        "Стабильный рост = дело живёт. Взрывной рост перед «закрытием» = возможный обман.\n" +
-        "Помни: в скам-делах заявленные цифры часто выдуманы.",
-
-    "Как распознать обманщика" to
-        "Тревожные знаки, на которые стоит обращать внимание:\n\n" +
-        "• Нереальный посул (APY >500% годовых) — такая прибыль не случается\n" +
-        "• Давление на срочность: «только сегодня», «осталось мало мест»\n" +
-        "• Расплывчатые ответы на прямые вопросы о выводе злата\n" +
-        "• Задержки выплат в вестях — первый признак медленного слива\n" +
-        "• Злость или обиды в ответ на скептические вопросы\n" +
-        "• Артель безымянна, нет проверки старейшин\n" +
-        "• Обещание большой выплаты «через неделю» без конкретики",
-
-    "Блокировка вывода" to
-        "Когда хозяин дела начинает скамить, вывод средств может быть заблокирован.\n" +
-        "Это означает: он перестал выплачивать и ищет выход.\n\n" +
-        "Есть небольшой шанс (~20%), что дело «восстановится» и вывод откроется снова — " +
-        "это происходит, когда скамеру нужно привлечь новые деньги.\n\n" +
-        "Если вывод не открылся — жди закрытия и частичного возврата средств.",
-
-    "Судьбы дел" to
-        "• Мгновенный скам — закрывается на 1–3 день, потеря 80–100%\n" +
-        "• Медленный слив — живёт 1–3 недели, потеря 30–70%\n" +
-        "• Честный провал — хозяин старался, экономика не взлетела, потеря 10–40%\n" +
-        "• Выживший — долгосрочный, стабильный небольшой доход\n" +
-        "• Единорог — редкость, реальный рост и доходность до 10% в день"
-)
 
 val PersonaArchetype.emoji: String get() = when (this) {
     PersonaArchetype.BURATINO -> "🤥"
