@@ -8,7 +8,8 @@ import javax.inject.Inject
 class ExitProjectUseCase @Inject constructor(
     private val gameStateRepository: GameStateRepository,
     private val projectRepository: ProjectRepository,
-    private val achievementUnlockStore: AchievementUnlockStore
+    private val achievementUnlockStore: AchievementUnlockStore,
+    private val generatePostMortemUseCase: GeneratePostMortemUseCase
 ) {
     suspend operator fun invoke(projectId: String): Result<Double> = runCatching {
         val project = projectRepository.getProjectById(projectId)
@@ -30,6 +31,9 @@ class ExitProjectUseCase @Inject constructor(
             profitable = returned > project.investedAmountRubles
         )
         achievementUnlockStore.push(gameStateRepository.recomputeAchievements())
+
+        // Старец пишет разбор сделки в фоне — ошибка не валит выход из дела.
+        generatePostMortemUseCase(projectId)
 
         returned
     }

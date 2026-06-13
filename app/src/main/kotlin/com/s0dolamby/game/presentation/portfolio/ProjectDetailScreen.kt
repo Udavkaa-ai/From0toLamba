@@ -38,7 +38,8 @@ data class ProjectDetailUiState(
     val project: Project? = null,
     val updates: List<DailyUpdate> = emptyList(),
     val postMortem: PostMortemReport? = null,
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val isGeneratingPostMortem: Boolean = false
 )
 
 @HiltViewModel
@@ -46,6 +47,7 @@ class ProjectDetailViewModel @Inject constructor(
     private val projectRepository: ProjectRepository,
     private val updateRepository: UpdateRepository,
     private val amaRepository: AmaRepository,
+    private val generatePostMortemUseCase: com.s0dolamby.game.domain.usecase.GeneratePostMortemUseCase,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -63,12 +65,25 @@ class ProjectDetailViewModel @Inject constructor(
                         ?: projectRepository.getProjectById(projectId)
                     val updates = updateRepository.getUpdatesForProject(projectId)
                     val postMortem = if (project?.isClosed == true) amaRepository.getPostMortem(projectId) else null
-                    _uiState.value = ProjectDetailUiState(
-                        project = project,
-                        updates = updates,
-                        postMortem = postMortem,
-                        isLoading = false
-                    )
+                    _uiState.update {
+                        it.copy(
+                            project = project,
+                            updates = updates,
+                            postMortem = postMortem,
+                            isLoading = false
+                        )
+                    }
+                    // Lazy generation: дело закрыто, отчёта нет — старец пишет.
+                    if (project?.isClosed == true && postMortem == null && !_uiState.value.isGeneratingPostMortem) {
+                        _uiState.update { it.copy(isGeneratingPostMortem = true) }
+                        val result = generatePostMortemUseCase(projectId)
+                        _uiState.update {
+                            it.copy(
+                                postMortem = result.getOrNull(),
+                                isGeneratingPostMortem = false
+                            )
+                        }
+                    }
                 }
         }
     }
@@ -111,7 +126,13 @@ fun ProjectDetailScreen(
             item { ProjectInfoCard(project = project) }
 
             if (project.isClosed) {
-                item { PostMortemCard(project = project, postMortem = uiState.postMortem) }
+                item {
+                    PostMortemCard(
+                        project = project,
+                        postMortem = uiState.postMortem,
+                        isGenerating = uiState.isGeneratingPostMortem
+                    )
+                }
             } else {
                 item { LiveStatsCard(project = project, onManageClick = onManageClick) }
                 // Show charts only when we have enough history
@@ -291,7 +312,7 @@ private fun LiveStatsCard(project: Project, onManageClick: (() -> Unit)?) {
 }
 
 @Composable
-private fun PostMortemCard(project: Project, postMortem: PostMortemReport?) {
+private fun PostMortemCard(project: Project, postMortem: PostMortemReport?, isGenerating: Boolean = false) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
@@ -324,11 +345,30 @@ private fun PostMortemCard(project: Project, postMortem: PostMortemReport?) {
                 }
             }
 
-            postMortem?.let { pm ->
-                Divider()
-                Text("Анализ", style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(pm.analysis, style = MaterialTheme.typography.bodyMedium)
+            Divider()
+            Text("Разбор старца-наставника", style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            when {
+                postMortem != null -> Text(postMortem.analysis, style = MaterialTheme.typography.bodyMedium)
+                isGenerating -> Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(14.dp),
+                        strokeWidth = 2.dp
+                    )
+                    Text(
+                        "Старец размышляет о сделке…",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                else -> Text(
+                    "Разбор пока не доступен (проверь связь с OpenRouter и попробуй вернуться).",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
