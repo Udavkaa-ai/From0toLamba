@@ -98,18 +98,30 @@ fun HomeScreen(
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
+        // Темо-зависимый оверлей. Для WARM_FAIRY вместо фиолетовой ночи
+        // — тёплая ярмарочная карамель.
+        val themeMode = com.s0dolamby.game.presentation.common.theme.LocalThemeMode.current
+        val overlayBrush = if (themeMode == com.s0dolamby.game.domain.model.ThemeMode.WARM_FAIRY) {
+            Brush.verticalGradient(
+                colorStops = arrayOf(
+                    0f to Color(0xCC2B1A0C),
+                    0.4f to Color(0xB36E4322),
+                    1f to Color(0xE52B1A0C)
+                )
+            )
+        } else {
+            Brush.verticalGradient(
+                colorStops = arrayOf(
+                    0f to Color(0xD9060412),
+                    0.4f to Color(0xBF0A0818),
+                    1f to Color(0xF0060412)
+                )
+            )
+        }
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colorStops = arrayOf(
-                            0f to Color(0xD9060412),
-                            0.4f to Color(0xBF0A0818),
-                            1f to Color(0xF0060412)
-                        )
-                    )
-                )
+                .background(overlayBrush)
         )
         SparklesOverlay(
             modifier = Modifier

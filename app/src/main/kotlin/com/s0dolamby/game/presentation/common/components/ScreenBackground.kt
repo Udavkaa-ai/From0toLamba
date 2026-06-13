@@ -14,12 +14,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.s0dolamby.game.domain.model.ThemeMode
+import com.s0dolamby.game.presentation.common.theme.LocalThemeMode
 
 @Composable
 fun ScreenBackground(
     @DrawableRes imageRes: Int,
     content: @Composable () -> Unit
 ) {
+    val themeMode = LocalThemeMode.current
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(imageRes),
@@ -27,19 +30,30 @@ fun ScreenBackground(
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )
-        // Тот же градиентный оверлей, что на HomeScreen
+        // Темо-зависимый градиентный оверлей.
+        // DARK_FAIRY: фиолетово-чернильный, как ночь.
+        // WARM_FAIRY: тёплый янтарно-карамельный — фон будто облит
+        // ярмарочным мёдом, картинка просвечивает желтоватым тоном.
+        val gradient = when (themeMode) {
+            ThemeMode.DARK_FAIRY -> Brush.verticalGradient(
+                colorStops = arrayOf(
+                    0f to Color(0xD9060412),
+                    0.4f to Color(0xBF0A0818),
+                    1f to Color(0xF0060412)
+                )
+            )
+            ThemeMode.WARM_FAIRY -> Brush.verticalGradient(
+                colorStops = arrayOf(
+                    0f to Color(0xCC2B1A0C),     // верх — тёплое какао
+                    0.4f to Color(0xB36E4322),   // мидл — янтарь
+                    1f to Color(0xE52B1A0C)      // низ — снова какао
+                )
+            )
+        }
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colorStops = arrayOf(
-                            0f to Color(0xD9060412),
-                            0.4f to Color(0xBF0A0818),
-                            1f to Color(0xF0060412)
-                        )
-                    )
-                )
+                .background(gradient)
         )
         // Мерцающие искры — та же анимация, что на главном экране
         SparklesOverlay(
