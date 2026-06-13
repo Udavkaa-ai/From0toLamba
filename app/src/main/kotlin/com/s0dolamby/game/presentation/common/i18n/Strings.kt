@@ -187,6 +187,21 @@ object Strings {
         "ach.unlocked.tapHint" to "Тап — продолжить",
         "ach.unlocked.queueMore" to "  (ещё %d)",
 
+        // Жалованная Грамота при повышении чина
+        "rankup.header" to "✦  Жалованная Грамота  ✦",
+        "rankup.nowYouAre" to "Отныне чин твой —",
+        "rankup.accept" to "Принять с честью  ✦",
+        "rankup.NEWBIE.title" to "Добро пожаловать в торговлю!",
+        "rankup.NEWBIE.body" to "Пустой кошель — не приговор. Всякий Князь начинал Скоморохом.",
+        "rankup.AMBASSADOR.title" to "Первые шаги сделаны!",
+        "rankup.AMBASSADOR.body" to "Ты вступил на купеческий путь. Первые гроши — первые уроки.",
+        "rankup.ANALYST.title" to "Глаз набит — двадцать дел за плечами!",
+        "rankup.ANALYST.body" to "Двадцать дел за плечами — Мудрец пришёл на ярмарку. Дельцы трижды думают, прежде чем явиться к тебе с ложью.",
+        "rankup.SHARK.title" to "Слава о тебе гремит по ярмарке!",
+        "rankup.SHARK.body" to "Боярская хватка! Полсотни дел повидал — рукав уже не таит сюрпризов.",
+        "rankup.LAMBO_SENSEI.title" to "Легенда среди купцов!",
+        "rankup.LAMBO_SENSEI.body" to "Князь! Сотню дел разобрал — имя твоё вписано в Летопись.",
+
         // Отношения
         "rel.title" to "Отношения с дельцами",
         "rel.subtitle" to "Уровни связи (0..%d) растут от закрытия дел дельца в плюс. Жетоны — мини-валюта архетипа: позже можно будет пропустить мини-игру.",
@@ -523,6 +538,21 @@ object Strings {
         "ach.unlocked.banner" to "✦  Feat unlocked  ✦",
         "ach.unlocked.tapHint" to "Tap — continue",
         "ach.unlocked.queueMore" to "  (%d more)",
+
+        // Rank-up granted charter
+        "rankup.header" to "✦  Granted Charter  ✦",
+        "rankup.nowYouAre" to "From now on your rank is —",
+        "rankup.accept" to "Accept with honor  ✦",
+        "rankup.NEWBIE.title" to "Welcome to trade!",
+        "rankup.NEWBIE.body" to "An empty purse is not a verdict. Every Prince once started as a Jester.",
+        "rankup.AMBASSADOR.title" to "First steps taken!",
+        "rankup.AMBASSADOR.body" to "You have begun the merchant's path. First coins — first lessons.",
+        "rankup.ANALYST.title" to "Sharp eye — twenty deals behind you!",
+        "rankup.ANALYST.body" to "Twenty deals behind you — a Sage has come to the fair. Merchants think thrice before approaching you with a lie.",
+        "rankup.SHARK.title" to "Your fame thunders across the fair!",
+        "rankup.SHARK.body" to "A boyar's grip! Half a hundred deals seen — no sleeve hides surprises any more.",
+        "rankup.LAMBO_SENSEI.title" to "Legend among merchants!",
+        "rankup.LAMBO_SENSEI.body" to "Prince! A hundred deals studied — your name is written in the Chronicle.",
 
         // Relationships
         "rel.title" to "Merchant relations",

@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.s0dolamby.game.domain.model.InvestorRank
 import com.s0dolamby.game.presentation.common.components.CardCornerOrnaments
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
+import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.NightBlue
@@ -56,20 +57,22 @@ private val InvestorRank.celebrationEmoji: String get() = when (this) {
     InvestorRank.LAMBO_SENSEI -> "👑"
 }
 
-private val InvestorRank.congratsTitle: String get() = when (this) {
-    InvestorRank.NEWBIE      -> "Добро пожаловать в торговлю!"
-    InvestorRank.AMBASSADOR  -> "Первые шаги сделаны!"
-    InvestorRank.ANALYST     -> "Глаз набит — двадцать дел за плечами!"
-    InvestorRank.SHARK       -> "Слава о тебе гремит по ярмарке!"
-    InvestorRank.LAMBO_SENSEI -> "Легенда среди купцов!"
-}
+@Composable
+@androidx.compose.runtime.ReadOnlyComposable
+private fun InvestorRank.congratsTitle(): String = Strings.t("rankup.${this.name}.title")
 
-private val InvestorRank.congratsText: String get() = when (this) {
-    InvestorRank.NEWBIE      -> "Пустой кошель — не приговор. Всякий Князь начинал Скоморохом."
-    InvestorRank.AMBASSADOR  -> "Ты вступил на купеческий путь. Первые гроши — первые уроки."
-    InvestorRank.ANALYST     -> "Двадцать дел за плечами — Мудрец пришёл на ярмарку. Дельцы трижды думают, прежде чем явиться к тебе с ложью."
-    InvestorRank.SHARK       -> "Боярская хватка! Полсотни дел повидал — рукав уже не таит сюрпризов."
-    InvestorRank.LAMBO_SENSEI -> "Князь! Сотню дел разобрал — имя твоё вписано в Летопись."
+@Composable
+@androidx.compose.runtime.ReadOnlyComposable
+private fun InvestorRank.congratsText(): String = Strings.t("rankup.${this.name}.body")
+
+@Composable
+@androidx.compose.runtime.ReadOnlyComposable
+private fun InvestorRank.localizedDisplayName(): String = when (this) {
+    InvestorRank.NEWBIE -> Strings.t("rank.skomoroh")
+    InvestorRank.AMBASSADOR -> Strings.t("rank.kupec")
+    InvestorRank.ANALYST -> Strings.t("rank.mudrec")
+    InvestorRank.SHARK -> Strings.t("rank.boyarin")
+    InvestorRank.LAMBO_SENSEI -> Strings.t("rank.knyaz")
 }
 
 // Палитра фейерверка не зависит от темы — на тёмном overlay везде
@@ -211,7 +214,7 @@ fun RankUpCelebrationOverlay(
                     ) {
                         // Header
                         Text(
-                            "✦  Жалованная Грамота  ✦",
+                            Strings.t("rankup.header"),
                             style = MaterialTheme.typography.labelMedium,
                             color = FairyGold.copy(alpha = 0.65f),
                             fontStyle = FontStyle.Italic,
@@ -228,12 +231,12 @@ fun RankUpCelebrationOverlay(
 
                         // Rank name
                         Text(
-                            "Отныне чин твой —",
+                            Strings.t("rankup.nowYouAre"),
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.White.copy(alpha = 0.6f)
                         )
                         Text(
-                            rank.displayName,
+                            rank.localizedDisplayName(),
                             style = MaterialTheme.typography.headlineLarge,
                             fontWeight = FontWeight.Bold,
                             color = FairyGold,
@@ -244,7 +247,7 @@ fun RankUpCelebrationOverlay(
 
                         // Title
                         Text(
-                            rank.congratsTitle,
+                            rank.congratsTitle(),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.SemiBold,
                             color = Color.White,
@@ -253,7 +256,7 @@ fun RankUpCelebrationOverlay(
 
                         // Body text
                         Text(
-                            rank.congratsText,
+                            rank.congratsText(),
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color.White.copy(alpha = 0.75f),
                             textAlign = TextAlign.Center,
@@ -271,7 +274,7 @@ fun RankUpCelebrationOverlay(
                             )
                         ) {
                             Text(
-                                "Принять с честью  ✦",
+                                Strings.t("rankup.accept"),
                                 fontWeight = FontWeight.Bold,
                                 style = MaterialTheme.typography.bodyLarge
                             )
