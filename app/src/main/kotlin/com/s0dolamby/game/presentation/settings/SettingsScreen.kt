@@ -19,6 +19,7 @@ import com.s0dolamby.game.BuildConfig
 import com.s0dolamby.game.R
 import com.s0dolamby.game.domain.model.TEXT_MODEL_OPTIONS
 import com.s0dolamby.game.presentation.common.components.FairyCard
+import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
 import com.s0dolamby.game.presentation.common.theme.Error
@@ -57,7 +58,7 @@ fun SettingsScreen(
                     title = {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text("✦", color = FairyGold, fontSize = 12.sp)
-                            Text("Настройки", fontWeight = FontWeight.Bold)
+                            Text(Strings.t("settings.title"), fontWeight = FontWeight.Bold)
                             Text("✦", color = FairyGold, fontSize = 12.sp)
                         }
                     },
@@ -88,14 +89,14 @@ fun SettingsScreen(
                 // ── Прозвище игрока ────────────────────────────────────
                 FairyCard(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        "🧑‍🎤 Прозвище купца",
+                        Strings.t("settings.nickname.title"),
                         style = MaterialTheme.typography.titleMedium,
                         color = FairyGold,
                         fontWeight = FontWeight.SemiBold
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        "Покажем в шапке главной и в Зале славы. До 20 знаков.",
+                        Strings.t("settings.nickname.hint"),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.White.copy(alpha = 0.6f)
                     )
@@ -104,7 +105,7 @@ fun SettingsScreen(
                         value = uiState.settings.nickname,
                         onValueChange = viewModel::setNickname,
                         singleLine = true,
-                        placeholder = { Text("Гость") },
+                        placeholder = { Text(Strings.t("settings.nickname.placeholder")) },
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = FairyGold,
@@ -121,14 +122,14 @@ fun SettingsScreen(
                 // ── Модель текста ──────────────────────────────────────
                 FairyCard(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        "Нейросеть для текста",
+                        Strings.t("settings.model.title"),
                         style = MaterialTheme.typography.titleMedium,
                         color = FairyGold,
                         fontWeight = FontWeight.SemiBold
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        "Используется для бесед, вестей и генерации имён",
+                        Strings.t("settings.model.hint"),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.White.copy(alpha = 0.6f)
                     )
@@ -168,14 +169,14 @@ fun SettingsScreen(
                 // ── Мини-игры (бета) ───────────────────────────────────
                 FairyCard(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        "Мини-игры (бета)",
+                        Strings.t("settings.minigames.title"),
                         style = MaterialTheme.typography.titleMedium,
                         color = FairyGold,
                         fontWeight = FontWeight.SemiBold
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        "Пока в стороне от инвест-цикла. Скоро будут условием входа в дело.",
+                        Strings.t("settings.minigames.hint"),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.White.copy(alpha = 0.65f)
                     )
@@ -249,14 +250,14 @@ fun SettingsScreen(
                 // ── Язык и тема ────────────────────────────────────────
                 FairyCard(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        "Язык и тема",
+                        Strings.t("settings.langTheme.title"),
                         style = MaterialTheme.typography.titleMedium,
                         color = FairyGold,
                         fontWeight = FontWeight.SemiBold
                     )
                     Spacer(Modifier.height(10.dp))
                     Text(
-                        "🌐 Язык интерфейса",
+                        Strings.t("settings.lang.title"),
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.9f)
                     )
@@ -279,7 +280,7 @@ fun SettingsScreen(
                     }
                     Spacer(Modifier.height(14.dp))
                     Text(
-                        "🎨 Тема",
+                        Strings.t("settings.theme.title"),
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.9f)
                     )
@@ -312,21 +313,20 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column {
-                            Text("О приложении", style = MaterialTheme.typography.titleMedium, color = FairyGold, fontWeight = FontWeight.SemiBold)
+                            Text(Strings.t("settings.about.title"), style = MaterialTheme.typography.titleMedium, color = FairyGold, fontWeight = FontWeight.SemiBold)
                             Text(
-                                "Версия ${BuildConfig.VERSION_NAME} · код ${BuildConfig.VERSION_CODE}",
+                                Strings.t("settings.about.version", BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = Color.White.copy(alpha = 0.5f)
                             )
                         }
                         IconButton(onClick = { showFaqDialog = true }) {
-                            Icon(Icons.Default.Info, "ЧАВО", tint = FairyGold)
+                            Icon(Icons.Default.Info, Strings.t("settings.faq.title"), tint = FairyGold)
                         }
                     }
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        "«Из грязи в князи» — симулятор купца-инвестора в сказочной Руси. " +
-                            "Игра — для удовольствия. AI-беседы оплачиваются через OpenRouter.",
+                        Strings.t("settings.about.text"),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.White.copy(alpha = 0.65f)
                     )
@@ -337,7 +337,7 @@ fun SettingsScreen(
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
                         border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.4f))
                     ) {
-                        Text("❓ ЧАВО — частые вопросы", fontWeight = FontWeight.SemiBold)
+                        Text(Strings.t("settings.about.faq"), fontWeight = FontWeight.SemiBold)
                     }
                 }
 
@@ -346,14 +346,14 @@ fun SettingsScreen(
                 // ── Сброс игры ─────────────────────────────────────────
                 FairyCard(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        "Опасная зона",
+                        Strings.t("settings.danger.title"),
                         style = MaterialTheme.typography.titleMedium,
                         color = Error,
                         fontWeight = FontWeight.SemiBold
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        "Сброс удалит всё: злато, сделки, историю бесед. Игра начнётся заново с нуля.",
+                        Strings.t("settings.danger.hint"),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.White.copy(alpha = 0.65f)
                     )
@@ -364,7 +364,7 @@ fun SettingsScreen(
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = Error),
                         border = androidx.compose.foundation.BorderStroke(1.dp, Error.copy(alpha = 0.5f))
                     ) {
-                        Text("Начать заново", fontWeight = FontWeight.SemiBold)
+                        Text(Strings.t("settings.danger.reset"), fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
@@ -374,8 +374,8 @@ fun SettingsScreen(
     if (showResetDialog) {
         AlertDialog(
             onDismissRequest = { showResetDialog = false },
-            title = { Text("Начать заново?") },
-            text = { Text("Все данные будут удалены. Это действие необратимо.") },
+            title = { Text(Strings.t("settings.reset.confirmTitle")) },
+            text = { Text(Strings.t("settings.reset.confirmText")) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -383,10 +383,10 @@ fun SettingsScreen(
                         viewModel.resetGame()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Error)
-                ) { Text("Сбросить всё") }
+                ) { Text(Strings.t("settings.reset.confirmYes")) }
             },
             dismissButton = {
-                TextButton(onClick = { showResetDialog = false }) { Text("Отмена") }
+                TextButton(onClick = { showResetDialog = false }) { Text(Strings.t("btn.cancel")) }
             }
         )
     }

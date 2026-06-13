@@ -87,7 +87,31 @@ object Strings {
         "rank.kupec" to "Купец",
         "rank.mudrec" to "Мудрец",
         "rank.boyarin" to "Боярин",
-        "rank.knyaz" to "Князь"
+        "rank.knyaz" to "Князь",
+
+        // Settings
+        "settings.title" to "Настройки",
+        "settings.nickname.title" to "🧑‍🎤 Прозвище купца",
+        "settings.nickname.hint" to "Покажем в шапке главной и в Зале славы. До 20 знаков.",
+        "settings.nickname.placeholder" to "Гость",
+        "settings.model.title" to "Нейросеть для текста",
+        "settings.model.hint" to "Используется для бесед, вестей и генерации имён",
+        "settings.minigames.title" to "Мини-игры (бета)",
+        "settings.minigames.hint" to "Пока в стороне от инвест-цикла. Скоро будут условием входа в дело.",
+        "settings.langTheme.title" to "Язык и тема",
+        "settings.lang.title" to "🌐 Язык интерфейса",
+        "settings.theme.title" to "🎨 Тема",
+        "settings.about.title" to "О приложении",
+        "settings.about.version" to "Версия %s · код %d",
+        "settings.about.text" to "«Из грязи в князи» — симулятор купца-инвестора в сказочной Руси. Игра — для удовольствия. AI-беседы оплачиваются через OpenRouter.",
+        "settings.about.faq" to "❓ ЧАВО — частые вопросы",
+        "settings.danger.title" to "Опасная зона",
+        "settings.danger.hint" to "Сброс удалит всё: злато, сделки, историю бесед. Игра начнётся заново с нуля.",
+        "settings.danger.reset" to "Начать заново",
+        "settings.reset.confirmTitle" to "Начать заново?",
+        "settings.reset.confirmText" to "Все данные будут удалены. Это действие необратимо.",
+        "settings.reset.confirmYes" to "Сбросить всё",
+        "settings.faq.title" to "❓ ЧАВО"
     )
 
     private val EN: Map<String, String> = mapOf(
@@ -152,6 +176,30 @@ object Strings {
         "rank.kupec" to "Merchant",
         "rank.mudrec" to "Sage",
         "rank.boyarin" to "Boyar",
-        "rank.knyaz" to "Prince"
+        "rank.knyaz" to "Prince",
+
+        // Settings
+        "settings.title" to "Settings",
+        "settings.nickname.title" to "🧑‍🎤 Merchant nickname",
+        "settings.nickname.hint" to "Shown in the home header and Hall of Fame. Up to 20 characters.",
+        "settings.nickname.placeholder" to "Guest",
+        "settings.model.title" to "Text AI model",
+        "settings.model.hint" to "Used for chats, news and name generation",
+        "settings.minigames.title" to "Mini-games (beta)",
+        "settings.minigames.hint" to "Currently outside the investment cycle. Soon required to enter a deal.",
+        "settings.langTheme.title" to "Language and theme",
+        "settings.lang.title" to "🌐 UI language",
+        "settings.theme.title" to "🎨 Theme",
+        "settings.about.title" to "About",
+        "settings.about.version" to "Version %s · code %d",
+        "settings.about.text" to "From Mud to Glory — a merchant-investor sim in fairytale Russia. The game is for fun. AI chats run through OpenRouter.",
+        "settings.about.faq" to "❓ FAQ — frequent questions",
+        "settings.danger.title" to "Danger zone",
+        "settings.danger.hint" to "Reset wipes everything: gold, deals, chat history. The game starts from scratch.",
+        "settings.danger.reset" to "Start over",
+        "settings.reset.confirmTitle" to "Start over?",
+        "settings.reset.confirmText" to "All data will be deleted. This is irreversible.",
+        "settings.reset.confirmYes" to "Reset everything",
+        "settings.faq.title" to "❓ FAQ"
     )
 }
