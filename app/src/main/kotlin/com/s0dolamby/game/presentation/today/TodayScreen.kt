@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.s0dolamby.game.domain.today.TodayRewards
+import com.s0dolamby.game.presentation.common.components.CoinShowerOverlay
 import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
@@ -67,6 +68,10 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                     )
                 )
         )
+
+        // Золотой дождь при успешном claim — seed = размер награды, чтобы
+        // повторный заход в тот же день не запускал анимацию заново.
+        CoinShowerOverlay(seed = ui.claimedTodayReward)
 
         Scaffold(
             containerColor = Color.Transparent,

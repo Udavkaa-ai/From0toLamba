@@ -17,6 +17,7 @@ import androidx.navigation.navArgument
 import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.s0dolamby.game.presentation.achievements.AchievementUnlockedOverlay
 import com.s0dolamby.game.presentation.ama.AmaScreen
+import com.s0dolamby.game.presentation.common.components.DayBreakOverlay
 import com.s0dolamby.game.presentation.home.HomeScreen
 import com.s0dolamby.game.presentation.inbox.InboxScreen
 import com.s0dolamby.game.presentation.leaderboard.LeaderboardScreen
@@ -88,6 +89,11 @@ class NavViewModel @Inject constructor(
         .map { it.pendingInbox.size }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
+    /** Текущий день — нужен глобальной [DayBreakOverlay] чтобы анимировать переход. */
+    val currentDay: StateFlow<Int> = gameStateRepository.observeGameState()
+        .map { it.currentDay }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), -1)
+
     init {
         viewModelScope.launch {
             gameStateRepository.initializeGameState()
@@ -153,6 +159,7 @@ fun NavGraph() {
         }
     }
     val inboxBadge by navViewModel.inboxBadge.collectAsState()
+    val currentDay by navViewModel.currentDay.collectAsState()
 
     Box(modifier = Modifier.fillMaxSize()) {
     NavHost(navController = navController, startDestination = startDestination) {
@@ -327,5 +334,8 @@ fun NavGraph() {
         // Жалованная грамота — всплывает поверх всего на любом экране,
         // когда use-case разблокировал подвиг.
         AchievementUnlockedOverlay()
+
+        // Плашка «🌅 Утро дня N» при переходе дня — глобально.
+        if (currentDay > 0) DayBreakOverlay(currentDay)
     } // outer Box end
 }
