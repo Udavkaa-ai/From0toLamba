@@ -162,6 +162,39 @@ fun AmaScreen(
 
     val bgRes = besedaBackground(uiState.project?.personaArchetype)
 
+    // Пока проект не загружен — простой тёмный экран с заглушкой
+    // «Делец заходит в кабак…», без шаблонов вопросов и без
+    // неподходящего архетипу беседа-фона.
+    if (uiState.isLoading || uiState.project == null) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(NightBlue),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                CircularProgressIndicator(color = FairyGold, strokeWidth = 3.dp)
+                Text(
+                    "Делец заходит в кабак…",
+                    color = Color.White.copy(alpha = 0.7f),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    "Хозяин дела готовится к беседе",
+                    color = Color.White.copy(alpha = 0.45f),
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier.align(Alignment.TopStart).padding(top = 24.dp, start = 8.dp)
+            ) {
+                Icon(Icons.Default.ArrowBack, "Назад", tint = Color.White.copy(alpha = 0.7f))
+            }
+        }
+        return
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(bgRes),
