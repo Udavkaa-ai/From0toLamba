@@ -21,7 +21,11 @@ object Strings {
     @ReadOnlyComposable
     fun t(key: String, vararg args: Any): String {
         val lang = LocalLanguage.current
-        val raw = (if (lang == "en") EN else RU)[key] ?: key
+        // EN-словарь покрывает только часть ключей. Если перевода нет —
+        // не показываем сырой key (`stats.gold.title`), а откатываемся
+        // на русский: пусть пользователь увидит «Злато», а не отладочный
+        // идентификатор.
+        val raw = if (lang == "en") EN[key] ?: RU[key] ?: key else RU[key] ?: key
         return if (args.isEmpty()) raw else raw.format(*args)
     }
 
@@ -87,6 +91,11 @@ object Strings {
         "registry.personas.empty.hint" to "Поговори с Дельцами — типажи откроются после закрытия дел",
         "registry.personas.openedCount" to "Открыто %d из %d типажей",
         "registry.personas.lockedHint" to "Ещё %d типажей скрыто — инвестируй в новые дела",
+
+        // Вести с ярмарки
+        "news.title" to "Вести с ярмарки",
+        "news.empty.title" to "Вестей пока нет",
+        "news.empty.hint" to "Нажми «Следующий день» — дела начнут посылать вести",
 
         // Отношения
         "rel.title" to "Отношения с дельцами",
@@ -331,6 +340,11 @@ object Strings {
         "registry.personas.empty.hint" to "Talk to merchants — archetypes appear after closing deals",
         "registry.personas.openedCount" to "Opened %d of %d archetypes",
         "registry.personas.lockedHint" to "%d archetypes still hidden — invest in new ventures",
+
+        // Fair news
+        "news.title" to "Fair news",
+        "news.empty.title" to "No news yet",
+        "news.empty.hint" to "Press «Next day» — ventures will start sending updates",
 
         // Relationships
         "rel.title" to "Merchant relations",

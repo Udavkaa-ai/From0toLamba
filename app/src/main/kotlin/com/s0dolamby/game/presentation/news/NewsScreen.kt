@@ -33,6 +33,7 @@ import com.s0dolamby.game.domain.model.*
 import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
+import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.Error
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.Success
@@ -57,11 +58,11 @@ fun NewsScreen(
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text("✦", color = FairyGold, fontSize = 12.sp)
-                        Text("Вести с ярмарки", fontWeight = FontWeight.Bold)
+                        Text(Strings.t("news.title"), fontWeight = FontWeight.Bold)
                         Text("✦", color = FairyGold, fontSize = 12.sp)
                     }
                 },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Назад") } },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, Strings.t("btn.back")) } },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         }
@@ -81,13 +82,13 @@ fun NewsScreen(
                         ) {
                             Text("✦", color = FairyGold.copy(alpha = 0.4f), fontSize = 28.sp)
                             Text(
-                                "Вестей пока нет",
+                                Strings.t("news.empty.title"),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = Color.White,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
-                                "Нажми «Следующий день» — дела начнут посылать вести",
+                                Strings.t("news.empty.hint"),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color.White.copy(alpha = 0.65f)
                             )
