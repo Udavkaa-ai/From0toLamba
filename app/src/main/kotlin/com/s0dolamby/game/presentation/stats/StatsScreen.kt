@@ -97,11 +97,11 @@ fun StatsScreen(
                         Text("✦", color = FairyGold, fontSize = 12.sp)
                     }
                 },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Назад") } },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, Strings.t("btn.back")) } },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 actions = {
                     TextButton(onClick = onRegistryClick) {
-                        Text("Летопись", color = FairyGold)
+                        Text(Strings.t("stats.letopis.action"), color = FairyGold)
                     }
                 }
             )
@@ -181,8 +181,8 @@ private fun HallOfFameCard(state: GameState?, closed: List<com.s0dolamby.game.do
                     archetypeName(arch), FairyGold)
             }
             if (streak > 0) {
-                HallRow("🔥", Strings.t("stats.hof.streak"), "$streak дн.",
-                    "Каждый день увеличивает дневную награду", FairyGold)
+                HallRow("🔥", Strings.t("stats.hof.streak"), Strings.t("stats.streak.daysShort", streak),
+                    Strings.t("stats.streak.body"), FairyGold)
             }
         }
     }
@@ -320,16 +320,16 @@ private fun AchievementsCard(unlocked: Set<String>) {
 private data class RankTier(
     val rankName: String,
     val emoji: String,
-    val displayName: String,
-    val requirement: String
+    val displayNameKey: String,
+    val requirementKey: String
 )
 
 private val rankTiers = listOf(
-    RankTier("NEWBIE",       "🐣", "Скоморох",  "Начало пути — взято 0 дел"),
-    RankTier("AMBASSADOR",   "📣", "Купец",      "Взято ≥ 5 дел"),
-    RankTier("ANALYST",      "🔍", "Мудрец",     "Взято ≥ 20 дел"),
-    RankTier("SHARK",        "🦈", "Боярин",     "Взято ≥ 50 дел"),
-    RankTier("LAMBO_SENSEI", "👑", "Князь",      "Взято ≥ 100 дел"),
+    RankTier("NEWBIE",       "🐣", "rank.skomoroh", "stats.rank.req.NEWBIE"),
+    RankTier("AMBASSADOR",   "📣", "rank.kupec",    "stats.rank.req.AMBASSADOR"),
+    RankTier("ANALYST",      "🔍", "rank.mudrec",   "stats.rank.req.ANALYST"),
+    RankTier("SHARK",        "🦈", "rank.boyarin",  "stats.rank.req.SHARK"),
+    RankTier("LAMBO_SENSEI", "👑", "rank.knyaz",    "stats.rank.req.LAMBO_SENSEI"),
 )
 
 @Composable
@@ -356,23 +356,23 @@ private fun RankCard(state: GameState?) {
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.weight(1f)) {
                 Text(
-                    "Чин",
+                    Strings.t("stats.chin"),
                     style = MaterialTheme.typography.labelSmall,
                     color = FairyGold.copy(alpha = 0.7f)
                 )
                 Text(
-                    state?.investorRank?.displayName ?: "—",
+                    state?.investorRank?.let { Strings.t(rankTiers.first { t -> t.rankName == it.name }.displayNameKey) } ?: "—",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
                 Text(
-                    "День ${state?.currentDay ?: 1} • Стрик ${state?.dayStreak ?: 0} дн.",
+                    Strings.t("stats.dayStreak", state?.currentDay ?: 1, state?.dayStreak ?: 0),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White.copy(alpha = 0.6f)
                 )
                 Text(
-                    "Баланс: %.0f г".format(state?.balance ?: 0.0),
+                    Strings.t("stats.balance.short", formatGroshes(state?.balance ?: 0.0)),
                     style = MaterialTheme.typography.bodySmall,
                     color = FairyGold.copy(alpha = 0.7f)
                 )
@@ -384,7 +384,7 @@ private fun RankCard(state: GameState?) {
                 Text(currentEmoji, style = MaterialTheme.typography.displaySmall)
                 Icon(
                     Icons.Default.ExpandMore,
-                    contentDescription = if (expanded) "Свернуть" else "Развернуть иерархию чинов",
+                    contentDescription = if (expanded) Strings.t("stats.rank.collapse") else Strings.t("stats.rank.expand"),
                     tint = FairyGold.copy(alpha = 0.6f),
                     modifier = Modifier.size(20.dp).rotate(chevronRotation)
                 )
@@ -424,7 +424,7 @@ private fun RankCard(state: GameState?) {
                         )
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                tier.displayName,
+                                Strings.t(tier.displayNameKey),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
                                 color = when {
@@ -434,7 +434,7 @@ private fun RankCard(state: GameState?) {
                                 }
                             )
                             Text(
-                                tier.requirement,
+                                Strings.t(tier.requirementKey),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = Color.White.copy(alpha = if (isCurrent) 0.8f else 0.4f)
                             )
@@ -445,7 +445,7 @@ private fun RankCard(state: GameState?) {
                                 shape = RoundedCornerShape(4.dp)
                             ) {
                                 Text(
-                                    "сейчас",
+                                    Strings.t("stats.rank.now"),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = FairyGold,
                                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -476,7 +476,7 @@ private fun BalanceChartCard(state: GameState?) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "Ведомость казны",
+                Strings.t("stats.balance.ledger"),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
@@ -510,7 +510,7 @@ private fun BalanceChartCard(state: GameState?) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("📊", style = MaterialTheme.typography.displaySmall)
                     Text(
-                        "Пройди несколько дней —\nведомость появится здесь",
+                        Strings.t("stats.balance.placeholder"),
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.6f)
                     )
@@ -525,13 +525,13 @@ private fun BalanceChartCard(state: GameState?) {
                 modifier = Modifier.fillMaxWidth().height(160.dp)
             )
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("День 1", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
-                Text("День $n", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
+                Text(Strings.t("stats.balance.day1"), style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
+                Text(Strings.t("detail.day", n), style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
             }
             // Legend
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                LegendDot(color = FairyGold, label = "Казна")
-                LegendDot(color = Color(0xFF6B4FCB), label = "Вложено")
+                LegendDot(color = FairyGold, label = Strings.t("stats.balance.legend.treasury"))
+                LegendDot(color = Color(0xFF6B4FCB), label = Strings.t("stats.balance.legend.invested"))
             }
         }
     }
@@ -645,7 +645,7 @@ private fun FinancialStats(state: GameState?) {
     val roiPositive = roi >= 0
 
     FairyCard(modifier = Modifier.fillMaxWidth()) {
-        Text("Злато", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+        Text(Strings.t("stats.gold.title"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
 
         Surface(
             color = if (roiPositive) Success.copy(alpha = 0.15f) else Error.copy(alpha = 0.15f),
@@ -667,9 +667,9 @@ private fun FinancialStats(state: GameState?) {
         }
 
         HorizontalDivider(color = Color.White.copy(alpha = 0.10f))
-        StatRow("Баланс", formatGroshes(state?.balance ?: 0.0))
-        StatRow("Всего вложено", formatGroshes(state?.totalInvested ?: 0.0))
-        StatRow("Всего получено", formatGroshes(state?.totalReturned ?: 0.0))
+        StatRow(Strings.t("stats.gold.balance"), formatGroshes(state?.balance ?: 0.0))
+        StatRow(Strings.t("stats.gold.invested"), formatGroshes(state?.totalInvested ?: 0.0))
+        StatRow(Strings.t("stats.gold.received"), formatGroshes(state?.totalReturned ?: 0.0))
     }
 }
 
@@ -684,7 +684,7 @@ private fun ScamStats(state: GameState?) {
 
     FairyCard(modifier = Modifier.fillMaxWidth()) {
         Text(
-            "Распознавание обманщиков",
+            Strings.t("stats.scam.title"),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = Color.White
@@ -692,7 +692,7 @@ private fun ScamStats(state: GameState?) {
 
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Точность", style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.7f))
+                Text(Strings.t("stats.scam.accuracy"), style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.7f))
                 Text(
                     "%.0f%%".format(accuracy * 100),
                     style = MaterialTheme.typography.bodyMedium,
@@ -718,8 +718,8 @@ private fun ScamStats(state: GameState?) {
 
         HorizontalDivider(color = Color.White.copy(alpha = 0.10f))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            ScamStatBox(label = "Распознано", value = "$detected", color = Success, modifier = Modifier.weight(1f))
-            ScamStatBox(label = "Пропущено", value = "$missed", color = Error, modifier = Modifier.weight(1f))
+            ScamStatBox(label = Strings.t("stats.scam.detected"), value = "$detected", color = Success, modifier = Modifier.weight(1f))
+            ScamStatBox(label = Strings.t("stats.scam.missed"), value = "$missed", color = Error, modifier = Modifier.weight(1f))
         }
     }
 }
@@ -757,7 +757,7 @@ private fun LogCard(onShowLog: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            "Логи",
+            Strings.t("stats.log.title"),
             style = MaterialTheme.typography.labelSmall,
             color = Color.White.copy(alpha = 0.25f)
         )
@@ -766,7 +766,7 @@ private fun LogCard(onShowLog: () -> Unit) {
             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
         ) {
             Text(
-                "просмотр",
+                Strings.t("stats.log.view"),
                 style = MaterialTheme.typography.labelSmall,
                 color = Color.White.copy(alpha = 0.25f)
             )
@@ -776,7 +776,7 @@ private fun LogCard(onShowLog: () -> Unit) {
             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
         ) {
             Text(
-                "поделиться",
+                Strings.t("stats.log.share"),
                 style = MaterialTheme.typography.labelSmall,
                 color = Color.White.copy(alpha = 0.25f)
             )
@@ -793,7 +793,7 @@ private fun LogDialog(onDismiss: () -> Unit) {
     var copied by remember { mutableStateOf(false) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Журнал приложения") },
+        title = { Text(Strings.t("stats.log.dialog")) },
         text = {
             Box(modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp)) {
                 Text(
@@ -807,12 +807,12 @@ private fun LogDialog(onDismiss: () -> Unit) {
                 )
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Закрыть") } },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(Strings.t("stats.log.close")) } },
         dismissButton = {
             TextButton(onClick = {
                 clipboard.setText(AnnotatedString(log))
                 copied = true
-            }) { Text(if (copied) "Скопировано ✓" else "Копировать") }
+            }) { Text(if (copied) Strings.t("stats.log.copied") else Strings.t("stats.log.copy")) }
         }
     )
 }
