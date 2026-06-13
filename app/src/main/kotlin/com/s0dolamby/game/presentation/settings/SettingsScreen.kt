@@ -63,7 +63,7 @@ fun SettingsScreen(
                         }
                     },
                     navigationIcon = {
-                        IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Назад") }
+                        IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, Strings.t("btn.back")) }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
                 )
