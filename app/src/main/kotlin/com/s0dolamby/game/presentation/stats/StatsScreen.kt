@@ -58,10 +58,15 @@ import javax.inject.Inject
 
 @HiltViewModel
 class StatsViewModel @Inject constructor(
-    gameStateRepository: GameStateRepository
+    gameStateRepository: GameStateRepository,
+    projectRepository: com.s0dolamby.game.domain.repository.ProjectRepository
 ) : ViewModel() {
     val gameState = gameStateRepository.observeGameState()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    /** Снимок закрытых дел — для зала славы (лучшая сделка / худшая потеря). */
+    val closedProjects = projectRepository.getClosedProjects()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -72,6 +77,7 @@ fun StatsScreen(
     viewModel: StatsViewModel = hiltViewModel()
 ) {
     val state by viewModel.gameState.collectAsState()
+    val closed by viewModel.closedProjects.collectAsState()
 
     ScreenBackground(R.drawable.stats_bg) {
     Scaffold(
@@ -110,6 +116,8 @@ fun StatsScreen(
             item { BalanceChartCard(state = state) }
             item { FinancialStats(state = state) }
             item { OrnamentDivider() }
+            item { HallOfFameCard(state = state, closed = closed) }
+            item { OrnamentDivider() }
             item { AchievementsCard(unlocked = state?.unlockedAchievements ?: emptySet()) }
             item { OrnamentDivider() }
             item { ScamStats(state = state) }
@@ -121,6 +129,106 @@ fun StatsScreen(
         }
     }
     } // ScreenBackground
+}
+
+// ─── Зал славы — лучшая сделка / худшая потеря / лучшая связь ────────────────
+
+@Composable
+private fun HallOfFameCard(state: GameState?, closed: List<com.s0dolamby.game.domain.model.Project>) {
+    val closedWithMoney = closed.filter { it.investedAmountRubles > 0 }
+    val bestDeal = closedWithMoney.maxByOrNull {
+        it.currentValueRubles - it.investedAmountRubles
+    }
+    val worstDeal = closedWithMoney.minByOrNull {
+        it.currentValueRubles - it.investedAmountRubles
+    }
+    val bestTie = state?.tieLevels?.maxByOrNull { it.value }
+    val streak = state?.loginStreak ?: 0
+
+    FairyCard(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            "🏆 Зал славы",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = Color.White
+        )
+        Spacer(Modifier.height(6.dp))
+        if (closedWithMoney.isEmpty() && (bestTie?.value ?: 0) == 0 && streak == 0) {
+            Text(
+                "Закрой первое дело и заведи связь — здесь появятся твои достижения.",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.White.copy(alpha = 0.55f)
+            )
+        } else {
+            bestDeal?.let { p ->
+                val profit = p.currentValueRubles - p.investedAmountRubles
+                HallRow(
+                    icon = "🥇",
+                    title = "Лучшая сделка",
+                    value = "%+.0f г".format(profit),
+                    body = "${p.claimedName} · ${p.developerName}",
+                    color = Success
+                )
+            }
+            worstDeal?.let { p ->
+                val loss = p.currentValueRubles - p.investedAmountRubles
+                if (loss < 0) {
+                    HallRow(
+                        icon = "💸",
+                        title = "Худшая потеря",
+                        value = "%+.0f г".format(loss),
+                        body = "${p.claimedName} · ${p.developerName}",
+                        color = Error
+                    )
+                }
+            }
+            bestTie?.takeIf { it.value > 0 }?.let { entry ->
+                val (arch, level) = entry
+                HallRow(
+                    icon = "🤝",
+                    title = "Близкий товарищ",
+                    value = "$level / 10",
+                    body = archetypeName(arch),
+                    color = FairyGold
+                )
+            }
+            if (streak > 0) {
+                HallRow(
+                    icon = "🔥",
+                    title = "Серия на ярмарке",
+                    value = "$streak дн.",
+                    body = "Каждый день увеличивает дневную награду",
+                    color = FairyGold
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun HallRow(icon: String, title: String, value: String, body: String, color: Color) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text(icon, fontSize = 20.sp)
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyMedium, color = Color.White, fontWeight = FontWeight.SemiBold)
+            Text(body, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.55f))
+        }
+        Text(value, style = MaterialTheme.typography.titleSmall, color = color, fontWeight = FontWeight.Bold)
+    }
+}
+
+private fun archetypeName(arch: com.s0dolamby.game.domain.model.PersonaArchetype): String = when (arch) {
+    com.s0dolamby.game.domain.model.PersonaArchetype.BURATINO -> "🪆 Буратино"
+    com.s0dolamby.game.domain.model.PersonaArchetype.BOYARIN -> "👑 Боярин"
+    com.s0dolamby.game.domain.model.PersonaArchetype.KOLOBOK -> "🤗 Колобок"
+    com.s0dolamby.game.domain.model.PersonaArchetype.KOSCHEI -> "💀 Кощей"
+    com.s0dolamby.game.domain.model.PersonaArchetype.ZOLUSHKA -> "👠 Золушка"
+    com.s0dolamby.game.domain.model.PersonaArchetype.BABA_YAGA -> "🧙 Баба-Яга"
+    com.s0dolamby.game.domain.model.PersonaArchetype.IVAN_DURAK -> "🃏 Иван-дурак"
 }
 
 // ─── Подвиги ─────────────────────────────────────────────────────────────────
