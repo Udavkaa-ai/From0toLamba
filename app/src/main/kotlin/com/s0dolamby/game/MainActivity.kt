@@ -7,8 +7,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.lifecycleScope
+import androidx.compose.runtime.CompositionLocalProvider
 import com.s0dolamby.game.domain.model.ThemeMode
 import com.s0dolamby.game.domain.repository.SettingsRepository
+import com.s0dolamby.game.presentation.common.i18n.LocalLanguage
 import com.s0dolamby.game.presentation.common.theme.From0toLambaTheme
 import com.s0dolamby.game.presentation.navigation.NavGraph
 import dagger.hilt.android.AndroidEntryPoint
@@ -25,13 +27,14 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val themeModeFlow = settingsRepository.observeSettings()
-            .map { it.themeMode }
-            .stateIn(lifecycleScope, SharingStarted.Eagerly, ThemeMode.DARK_FAIRY)
+        val settingsFlow = settingsRepository.observeSettings()
+            .stateIn(lifecycleScope, SharingStarted.Eagerly, com.s0dolamby.game.domain.model.AppSettings())
         setContent {
-            val theme by themeModeFlow.collectAsState()
-            From0toLambaTheme(themeMode = theme) {
-                NavGraph()
+            val settings by settingsFlow.collectAsState()
+            From0toLambaTheme(themeMode = settings.themeMode) {
+                CompositionLocalProvider(LocalLanguage provides settings.language) {
+                    NavGraph()
+                }
             }
         }
     }

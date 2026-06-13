@@ -48,6 +48,7 @@ import com.s0dolamby.game.domain.model.Project
 import com.s0dolamby.game.presentation.common.components.CardCornerOrnaments
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.components.SparklesOverlay
+import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
 import com.s0dolamby.game.presentation.common.theme.Error
 import com.s0dolamby.game.presentation.common.theme.FairyGold
@@ -174,7 +175,7 @@ fun HomeScreen(
                 val active = gameState?.activeProjects ?: emptyList()
                 if (active.isNotEmpty()) {
                     item {
-                        SectionTitle("✦ Активные дела (${active.size})")
+                        SectionTitle(Strings.t("home.section.active", active.size))
                     }
                     itemsIndexed(active) { index, project ->
                         var visible by remember(project.id) { mutableStateOf(false) }
@@ -205,7 +206,7 @@ fun HomeScreen(
                 if (inbox.isNotEmpty()) {
                     item {
                         Spacer(Modifier.height(4.dp))
-                        SectionTitle("✦ Входящие грамоты (${inbox.size})")
+                        SectionTitle(Strings.t("home.section.inbox", inbox.size))
                     }
                     item {
                         InboxPromoCard(onClick = onInboxClick)
@@ -271,15 +272,19 @@ private fun HomeHeader(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                "Из грязи в князи",
+                Strings.t("home.title"),
                 fontSize = 28.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = FairyGold
             )
             Spacer(Modifier.height(4.dp))
-            val nickPrefix = if (nickname.isNotBlank()) "$nickname · " else ""
+            val inner = if (nickname.isNotBlank()) {
+                Strings.t("home.subtitle.nickedDay", nickname, day, rank)
+            } else {
+                Strings.t("home.subtitle.day", day, rank)
+            }
             Text(
-                "✦ ${nickPrefix}День $day · $rank ✦",
+                Strings.t("home.subtitle", inner),
                 fontSize = 12.sp,
                 color = Color.White.copy(alpha = 0.55f)
             )
@@ -385,7 +390,7 @@ private fun BalanceCard(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    "Свободные гроши",
+                    Strings.t("home.balance.free"),
                     color = Color.White.copy(alpha = 0.6f),
                     fontSize = 12.sp
                 )
@@ -410,26 +415,10 @@ private fun BalanceCard(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceAround
                 ) {
-                    MetricColumn(
-                        label = "Вложено",
-                        value = "%.0f г".format(invested),
-                        color = Color.White
-                    )
-                    MetricColumn(
-                        label = "Получено",
-                        value = "%.0f г".format(returned),
-                        color = Color.White
-                    )
-                    MetricColumn(
-                        label = "Итог",
-                        value = "%+.1f%%".format(roi),
-                        color = if (roi >= 0) Success else Error
-                    )
-                    MetricColumn(
-                        label = "Дел взято",
-                        value = "$dealsTaken",
-                        color = Color.White
-                    )
+                    MetricColumn(Strings.t("home.metric.invested"), "%.0f г".format(invested), Color.White)
+                    MetricColumn(Strings.t("home.metric.received"), "%.0f г".format(returned), Color.White)
+                    MetricColumn(Strings.t("home.metric.total"), "%+.1f%%".format(roi), if (roi >= 0) Success else Error)
+                    MetricColumn(Strings.t("home.metric.dealsTaken"), "$dealsTaken", Color.White)
                 }
             }
             CardCornerOrnaments(modifier = Modifier.matchParentSize())
@@ -470,7 +459,7 @@ private fun MerchantRelationsCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        "🤝  Отношения с дельцами",
+                        Strings.t("home.relations.title"),
                         color = FairyGold,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold
@@ -581,7 +570,7 @@ private fun LetopisChip(count: Int, onClick: () -> Unit) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text("📖", fontSize = 18.sp)
-                Text("Летопись", color = FairyGold, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                Text(Strings.t("home.letopis"), color = FairyGold, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                 Text("($count)", color = Color.White.copy(alpha = 0.5f), fontSize = 13.sp)
             }
         }
@@ -736,12 +725,12 @@ private fun InboxPromoCard(onClick: () -> Unit) {
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    "Новые предложения ждут тебя",
+                    Strings.t("home.inboxPromo"),
                     color = Color.White,
                     fontSize = 14.sp
                 )
                 Text(
-                    "Открой и поговори с хозяевами →",
+                    Strings.t("home.inboxPromo.sub"),
                     color = Color.White.copy(alpha = 0.55f),
                     fontSize = 12.sp,
                     modifier = Modifier.padding(top = 4.dp)
@@ -782,13 +771,13 @@ private fun EmptyHomeCard(onInboxClick: () -> Unit) {
             ) {
                 Text("✦", color = FairyGold.copy(alpha = 0.4f), fontSize = 28.sp)
                 Text(
-                    "Казна пуста",
+                    Strings.t("home.inbox.empty"),
                     color = Color.White,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    "Открой Грамоты — там ждут новые дельцы. Поговори с каждым и реши, достойно ли дело твоих грошей.",
+                    Strings.t("home.inbox.empty.hint"),
                     color = Color.White.copy(alpha = 0.65f),
                     fontSize = 13.sp
                 )
@@ -796,7 +785,7 @@ private fun EmptyHomeCard(onInboxClick: () -> Unit) {
                     onClick = onInboxClick,
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
                     border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f))
-                ) { Text("Открыть грамоты") }
+                ) { Text(Strings.t("home.inbox.openCharters")) }
             }
         }
     }
@@ -858,7 +847,7 @@ private fun AdvanceDayButton(isLoading: Boolean, onClick: () -> Unit) {
                     )
                 }
             } else {
-                Text("🌅  Следующий день", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                Text(Strings.t("home.nextDay"), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
             }
         }
     }

@@ -21,6 +21,7 @@ import com.s0dolamby.game.domain.today.TodayRewards
 import com.s0dolamby.game.presentation.common.components.CoinShowerOverlay
 import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
+import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.NightBlue
@@ -84,7 +85,7 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Text("✦", color = FairyGold, fontSize = 12.sp)
-                            Text("Сегодня", fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(Strings.t("today.title"), fontWeight = FontWeight.Bold, color = Color.White)
                             Text("✦", color = FairyGold, fontSize = 12.sp)
                         }
                     },
@@ -99,7 +100,7 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
             ) {
                 item {
                     Text(
-                        "Дневной ритуал, награды за серию и купеческий рейтинг",
+                        Strings.t("today.subtitle"),
                         color = Color.White.copy(alpha = 0.65f),
                         fontSize = 12.sp,
                         textAlign = TextAlign.Center,
@@ -115,7 +116,7 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text("Ты на ярмарке", color = Color.White.copy(alpha = 0.65f), fontSize = 13.sp)
+                            Text(Strings.t("today.youAtFair"), color = Color.White.copy(alpha = 0.65f), fontSize = 13.sp)
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -129,7 +130,7 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                                 )
                             }
                             Text(
-                                if (streak == 1) "день подряд" else "дней подряд",
+                                Strings.t(if (streak == 1) "today.dayOne" else "today.dayMany"),
                                 color = Color.White.copy(alpha = 0.65f),
                                 fontSize = 13.sp
                             )
@@ -141,7 +142,7 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                                     modifier = Modifier.fillMaxWidth(),
                                     colors = ButtonDefaults.buttonColors(containerColor = FairyGold)
                                 ) {
-                                    Text("🎁  Забрать $todayReward г", color = NightBlue, fontWeight = FontWeight.Bold)
+                                    Text(Strings.t("today.claim", todayReward), color = NightBlue, fontWeight = FontWeight.Bold)
                                 }
                                 if (milestoneBonus > 0) {
                                     Text(
@@ -168,7 +169,7 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Text(
-                                        "✅ Награда сегодня уже забрана",
+                                        Strings.t("today.claimed"),
                                         color = Success,
                                         fontSize = 13.sp,
                                         textAlign = TextAlign.Center,
@@ -178,7 +179,7 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                                     )
                                 }
                                 Text(
-                                    "Возвращайся завтра — серия не оборвётся, если зайдёшь до конца следующего дня.",
+                                    Strings.t("today.claimed.hint"),
                                     color = Color.White.copy(alpha = 0.45f),
                                     fontSize = 11.sp,
                                     textAlign = TextAlign.Center
@@ -191,7 +192,7 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                 // Лестница серии
                 item {
                     FairyCard(modifier = Modifier.fillMaxWidth()) {
-                        Text("Лестница серии", color = FairyGold, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                        Text(Strings.t("today.ladder"), color = FairyGold, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
                         Spacer(Modifier.height(10.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),

@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.s0dolamby.game.domain.model.PersonaArchetype
 import com.s0dolamby.game.presentation.common.components.FairyCard
+import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.NightBlue
@@ -68,13 +69,13 @@ fun RelationshipsScreen(
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Text("✦", color = FairyGold, fontSize = 12.sp)
-                            Text("Отношения с дельцами", fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(Strings.t("rel.title"), fontWeight = FontWeight.Bold, color = Color.White)
                             Text("✦", color = FairyGold, fontSize = 12.sp)
                         }
                     },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
-                            Icon(Icons.Default.ArrowBack, "Назад", tint = Color.White)
+                            Icon(Icons.Default.ArrowBack, Strings.t("btn.back"), tint = Color.White)
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
@@ -89,8 +90,7 @@ fun RelationshipsScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    "Уровни связи (0..${ui.maxLevel}) растут от закрытия дел дельца в плюс. " +
-                        "Жетоны — мини-валюта архетипа: позже можно будет пропустить мини-игру.",
+                    Strings.t("rel.subtitle", ui.maxLevel),
                     color = Color.White.copy(alpha = 0.65f),
                     fontSize = 12.sp
                 )
@@ -102,20 +102,20 @@ fun RelationshipsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
-                            Text("🎯 Сумма связей", color = Color.White.copy(alpha = 0.65f), fontSize = 12.sp)
+                            Text(Strings.t("rel.sumTies"), color = Color.White.copy(alpha = 0.65f), fontSize = 12.sp)
                             Text("${ui.tiesTotal}", color = FairyGold, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
                             if (ui.seenCount > 0) {
                                 Text(
-                                    "Знаком с ${ui.seenCount} из ${ui.entries.size} типажей",
+                                    Strings.t("rel.knownOf", ui.seenCount, ui.entries.size),
                                     color = Color.White.copy(alpha = 0.5f),
                                     fontSize = 11.sp
                                 )
                             }
                         }
                         Column(horizontalAlignment = Alignment.End) {
-                            Text("Бонус за уровень", color = Color.White.copy(alpha = 0.65f), fontSize = 12.sp)
+                            Text(Strings.t("rel.bonusPerLevel"), color = Color.White.copy(alpha = 0.65f), fontSize = 12.sp)
                             Text(
-                                "+${ui.bonusPercentPerLevel}% / день",
+                                Strings.t("rel.bonusPerDay", ui.bonusPercentPerLevel),
                                 color = FairyGold,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.SemiBold

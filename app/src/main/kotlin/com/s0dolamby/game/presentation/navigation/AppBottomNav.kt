@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.Error
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 
@@ -37,11 +38,11 @@ fun AppBottomNav(
             .border(width = 1.dp, color = FairyGold.copy(alpha = 0.15f), shape = RoundedCornerShape(0.dp))
             .padding(top = 6.dp, bottom = 8.dp)
     ) {
-        BottomNavItem("🏠", "Главная", current == AppTab.HOME, onHomeClick, 0, Modifier.weight(1f))
-        BottomNavItem("📜", "Грамоты", current == AppTab.INBOX, onInboxClick, pendingInboxCount, Modifier.weight(1f))
-        BottomNavItem("💰", "Казна", current == AppTab.PORTFOLIO, onPortfolioClick, 0, Modifier.weight(1f))
-        BottomNavItem("📊", "Успехи", current == AppTab.STATS, onStatsClick, 0, Modifier.weight(1f))
-        BottomNavItem("🔥", "Сегодня", current == AppTab.TODAY, onTodayClick, 0, Modifier.weight(1f))
+        BottomNavItem("🏠", Strings.t("nav.home"), current == AppTab.HOME, onHomeClick, 0, Modifier.weight(1f))
+        BottomNavItem("📜", Strings.t("nav.inbox"), current == AppTab.INBOX, onInboxClick, pendingInboxCount, Modifier.weight(1f))
+        BottomNavItem("💰", Strings.t("nav.portfolio"), current == AppTab.PORTFOLIO, onPortfolioClick, 0, Modifier.weight(1f))
+        BottomNavItem("📊", Strings.t("nav.stats"), current == AppTab.STATS, onStatsClick, 0, Modifier.weight(1f))
+        BottomNavItem("🔥", Strings.t("nav.today"), current == AppTab.TODAY, onTodayClick, 0, Modifier.weight(1f))
     }
 }
 
