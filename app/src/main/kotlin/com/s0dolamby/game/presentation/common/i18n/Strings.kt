@@ -111,7 +111,31 @@ object Strings {
         "settings.reset.confirmTitle" to "Начать заново?",
         "settings.reset.confirmText" to "Все данные будут удалены. Это действие необратимо.",
         "settings.reset.confirmYes" to "Сбросить всё",
-        "settings.faq.title" to "❓ ЧАВО"
+        "settings.faq.title" to "❓ ЧАВО",
+
+        // Inbox
+        "inbox.title" to "Входящие грамоты",
+        "inbox.empty" to "Новых предложений нет",
+        "inbox.empty.hint" to "Они появятся после следующего дня",
+        "inbox.cta.minigame" to "🎲 Испытать дельца игрой →",
+        "inbox.cta.ad" to "📺  Беседа в кабаке за просмотр рекламы",
+        "inbox.investors" to "👥 %s вкладчиков",
+        "inbox.ad.title" to "📺 Беседа за просмотр рекламы",
+        "inbox.ad.body" to "Пока бесплатно — просмотр рекламы будет позже подключён через AdMob/Yandex. Сейчас просто открываем беседу с дельцом.",
+        "inbox.ad.confirm" to "Смотреть и в кабак",
+
+        // Stats
+        "stats.title" to "Успехи купца",
+        "stats.rank" to "Чин",
+        "stats.hof.title" to "🏆 Зал славы",
+        "stats.hof.empty" to "Закрой первое дело и заведи связь — здесь появятся твои достижения.",
+        "stats.hof.bestDeal" to "Лучшая сделка",
+        "stats.hof.worstLoss" to "Худшая потеря",
+        "stats.hof.closeFriend" to "Близкий товарищ",
+        "stats.hof.streak" to "Серия на ярмарке",
+        "stats.feats.header" to "🏅 Подвиги — %d из %d",
+        "stats.financial.title" to "Злато",
+        "stats.balance.title" to "Ведомость казны"
     )
 
     private val EN: Map<String, String> = mapOf(
@@ -200,6 +224,30 @@ object Strings {
         "settings.reset.confirmTitle" to "Start over?",
         "settings.reset.confirmText" to "All data will be deleted. This is irreversible.",
         "settings.reset.confirmYes" to "Reset everything",
-        "settings.faq.title" to "❓ FAQ"
+        "settings.faq.title" to "❓ FAQ",
+
+        // Inbox
+        "inbox.title" to "Incoming charters",
+        "inbox.empty" to "No new offers",
+        "inbox.empty.hint" to "They will appear after the next day",
+        "inbox.cta.minigame" to "🎲 Test the merchant with a game →",
+        "inbox.cta.ad" to "📺  Tavern talk in exchange for an ad",
+        "inbox.investors" to "👥 %s investors",
+        "inbox.ad.title" to "📺 Talk after watching an ad",
+        "inbox.ad.body" to "Free for now — ads will be wired through AdMob/Yandex later. For now we just open the chat with the merchant.",
+        "inbox.ad.confirm" to "Watch and head to the tavern",
+
+        // Stats
+        "stats.title" to "Merchant feats",
+        "stats.rank" to "Rank",
+        "stats.hof.title" to "🏆 Hall of Fame",
+        "stats.hof.empty" to "Close your first deal and forge a bond — your milestones will appear here.",
+        "stats.hof.bestDeal" to "Best deal",
+        "stats.hof.worstLoss" to "Worst loss",
+        "stats.hof.closeFriend" to "Close friend",
+        "stats.hof.streak" to "Streak at the fair",
+        "stats.feats.header" to "🏅 Feats — %d of %d",
+        "stats.financial.title" to "Gold",
+        "stats.balance.title" to "Treasury ledger"
     )
 }

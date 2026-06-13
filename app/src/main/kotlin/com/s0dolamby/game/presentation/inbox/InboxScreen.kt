@@ -31,6 +31,7 @@ import com.s0dolamby.game.domain.model.ProjectType
 import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
+import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -57,7 +58,7 @@ fun InboxScreen(
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text("✦", color = FairyGold, fontSize = 12.sp)
-                        Text("Входящие грамоты", fontWeight = FontWeight.Bold)
+                        Text(Strings.t("inbox.title"), fontWeight = FontWeight.Bold)
                         Text("✦", color = FairyGold, fontSize = 12.sp)
                     }
                 },
@@ -85,14 +86,14 @@ fun InboxScreen(
                         ) {
                             Text("📭", fontSize = 32.sp)
                             Text(
-                                "Новых предложений нет",
+                                Strings.t("inbox.empty"),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = Color.White,
                                 fontWeight = FontWeight.SemiBold,
                                 textAlign = TextAlign.Center
                             )
                             Text(
-                                "Они появятся после следующего дня",
+                                Strings.t("inbox.empty.hint"),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color.White.copy(alpha = 0.55f),
                                 textAlign = TextAlign.Center
@@ -129,21 +130,16 @@ fun InboxScreen(
     adPromptForProjectId?.let { pid ->
         AlertDialog(
             onDismissRequest = { adPromptForProjectId = null },
-            title = { Text("📺 Беседа за просмотр рекламы") },
-            text = {
-                Text(
-                    "Пока бесплатно — просмотр рекламы будет позже подключён через AdMob/Yandex. " +
-                        "Сейчас просто открываем беседу с дельцом."
-                )
-            },
+            title = { Text(Strings.t("inbox.ad.title")) },
+            text = { Text(Strings.t("inbox.ad.body")) },
             confirmButton = {
                 TextButton(onClick = {
                     adPromptForProjectId = null
                     onChatAfterAd(pid)
-                }) { Text("Смотреть и в кабак", color = FairyGold) }
+                }) { Text(Strings.t("inbox.ad.confirm"), color = FairyGold) }
             },
             dismissButton = {
-                TextButton(onClick = { adPromptForProjectId = null }) { Text("Отмена") }
+                TextButton(onClick = { adPromptForProjectId = null }) { Text(Strings.t("btn.cancel")) }
             }
         )
     }
@@ -251,7 +247,7 @@ private fun InboxProjectCard(
             onClick = onPlayMinigame
         ) {
             Text(
-                "🎲 Испытать дельца игрой →",
+                Strings.t("inbox.cta.minigame"),
                 color = FairyGold,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -273,7 +269,7 @@ private fun InboxProjectCard(
             onClick = onChatAfterAd
         ) {
             Text(
-                "📺  Беседа в кабаке за просмотр рекламы",
+                Strings.t("inbox.cta.ad"),
                 color = Color.White.copy(alpha = 0.78f),
                 fontSize = 12.sp,
                 textAlign = TextAlign.Center,

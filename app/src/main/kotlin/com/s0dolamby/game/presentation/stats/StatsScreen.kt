@@ -48,6 +48,7 @@ import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
+import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.Error
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.Success
@@ -90,7 +91,7 @@ fun StatsScreen(
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text("✦", color = FairyGold, fontSize = 12.sp)
-                        Text("Успехи купца", fontWeight = FontWeight.Bold)
+                        Text(Strings.t("stats.title"), fontWeight = FontWeight.Bold)
                         Text("✦", color = FairyGold, fontSize = 12.sp)
                     }
                 },
@@ -147,7 +148,7 @@ private fun HallOfFameCard(state: GameState?, closed: List<com.s0dolamby.game.do
 
     FairyCard(modifier = Modifier.fillMaxWidth()) {
         Text(
-            "🏆 Зал славы",
+            Strings.t("stats.hof.title"),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = Color.White
@@ -155,51 +156,31 @@ private fun HallOfFameCard(state: GameState?, closed: List<com.s0dolamby.game.do
         Spacer(Modifier.height(6.dp))
         if (closedWithMoney.isEmpty() && (bestTie?.value ?: 0) == 0 && streak == 0) {
             Text(
-                "Закрой первое дело и заведи связь — здесь появятся твои достижения.",
+                Strings.t("stats.hof.empty"),
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.White.copy(alpha = 0.55f)
             )
         } else {
             bestDeal?.let { p ->
                 val profit = p.currentValueRubles - p.investedAmountRubles
-                HallRow(
-                    icon = "🥇",
-                    title = "Лучшая сделка",
-                    value = "%+.0f г".format(profit),
-                    body = "${p.claimedName} · ${p.developerName}",
-                    color = Success
-                )
+                HallRow("🥇", Strings.t("stats.hof.bestDeal"), "%+.0f г".format(profit),
+                    "${p.claimedName} · ${p.developerName}", Success)
             }
             worstDeal?.let { p ->
                 val loss = p.currentValueRubles - p.investedAmountRubles
                 if (loss < 0) {
-                    HallRow(
-                        icon = "💸",
-                        title = "Худшая потеря",
-                        value = "%+.0f г".format(loss),
-                        body = "${p.claimedName} · ${p.developerName}",
-                        color = Error
-                    )
+                    HallRow("💸", Strings.t("stats.hof.worstLoss"), "%+.0f г".format(loss),
+                        "${p.claimedName} · ${p.developerName}", Error)
                 }
             }
             bestTie?.takeIf { it.value > 0 }?.let { entry ->
                 val (arch, level) = entry
-                HallRow(
-                    icon = "🤝",
-                    title = "Близкий товарищ",
-                    value = "$level / 10",
-                    body = archetypeName(arch),
-                    color = FairyGold
-                )
+                HallRow("🤝", Strings.t("stats.hof.closeFriend"), "$level / 10",
+                    archetypeName(arch), FairyGold)
             }
             if (streak > 0) {
-                HallRow(
-                    icon = "🔥",
-                    title = "Серия на ярмарке",
-                    value = "$streak дн.",
-                    body = "Каждый день увеличивает дневную награду",
-                    color = FairyGold
-                )
+                HallRow("🔥", Strings.t("stats.hof.streak"), "$streak дн.",
+                    "Каждый день увеличивает дневную награду", FairyGold)
             }
         }
     }
@@ -247,7 +228,7 @@ private fun AchievementsCard(unlocked: Set<String>) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "🏅 Подвиги — $totalUnlocked из $totalAll",
+                Strings.t("stats.feats.header", totalUnlocked, totalAll),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
