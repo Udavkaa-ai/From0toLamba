@@ -20,7 +20,6 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.s0dolamby.game.presentation.common.theme.FairyGold
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -62,13 +61,14 @@ fun SparklesOverlay(modifier: Modifier = Modifier) {
         ),
         label = "sparkleTime"
     )
+    val themedGold = androidx.compose.material3.MaterialTheme.colorScheme.primary
 
     Canvas(modifier = modifier) {
         sparkleParticles.forEach { p ->
             // alpha: мягкое синусоидальное мерцание
             val alpha = ((sin(time * p.speed + p.phase) + 1f) / 2f) * 0.45f
             drawCircle(
-                color = FairyGold.copy(alpha = alpha),
+                color = themedGold.copy(alpha = alpha),
                 radius = p.radius * density,
                 center = Offset(p.x * size.width, p.y * size.height)
             )
@@ -87,6 +87,7 @@ fun OrnamentDivider(
     modifier: Modifier = Modifier,
     height: Dp = 20.dp
 ) {
+    val themedGold = androidx.compose.material3.MaterialTheme.colorScheme.primary
     Canvas(
         modifier = modifier
             .fillMaxWidth()
@@ -94,7 +95,7 @@ fun OrnamentDivider(
     ) {
         val cx = size.width / 2f
         val cy = size.height / 2f
-        val gold = FairyGold
+        val gold = themedGold
 
         // Левая затухающая линия
         drawLine(
@@ -174,9 +175,10 @@ fun CardCornerOrnaments(
     cornerSize: Dp = 14.dp,
     alpha: Float = 0.35f
 ) {
+    val themedGold = androidx.compose.material3.MaterialTheme.colorScheme.primary
     Canvas(modifier = modifier) {
         val cs = cornerSize.toPx()
-        val gold = FairyGold.copy(alpha = alpha)
+        val gold = themedGold.copy(alpha = alpha)
         val stroke = 1.2.dp.toPx()
 
         // Четыре угла — L-образные штрихи
@@ -201,7 +203,7 @@ fun CardCornerOrnaments(
             Offset(0f, size.height),
             Offset(size.width, size.height)
         ).forEach { corner ->
-            drawDiamond(corner, d, d, FairyGold.copy(alpha = alpha + 0.15f))
+            drawDiamond(corner, d, d, themedGold.copy(alpha = alpha + 0.15f))
         }
     }
 }

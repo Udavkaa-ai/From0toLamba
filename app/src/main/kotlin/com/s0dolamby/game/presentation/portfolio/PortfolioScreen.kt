@@ -32,6 +32,7 @@ import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
 import com.s0dolamby.game.presentation.common.format.formatGroshes
 import com.s0dolamby.game.presentation.common.format.formatGroshesSigned
+import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.data.logging.AppLogger
 import com.s0dolamby.game.presentation.common.theme.Error
 import com.s0dolamby.game.presentation.common.theme.FairyGold
@@ -90,11 +91,11 @@ fun PortfolioScreen(
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text("✦", color = FairyGold, fontSize = 12.sp)
-                        Text("Казна", fontWeight = FontWeight.Bold)
+                        Text(Strings.t("portfolio.title"), fontWeight = FontWeight.Bold)
                         Text("✦", color = FairyGold, fontSize = 12.sp)
                     }
                 },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Назад") } },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, Strings.t("btn.back")) } },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         }
@@ -114,13 +115,13 @@ fun PortfolioScreen(
                         ) {
                             Text("✦", color = FairyGold.copy(alpha = 0.4f), fontSize = 28.sp)
                             Text(
-                                "Казна пуста",
+                                Strings.t("portfolio.empty.title"),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = Color.White,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
-                                "Поговори с Дельцами во Входящих грамотах и вложи гроши",
+                                Strings.t("portfolio.empty.hint"),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color.White.copy(alpha = 0.65f)
                             )
@@ -133,7 +134,7 @@ fun PortfolioScreen(
                     OrnamentDivider()
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        "Текущие вложения",
+                        Strings.t("portfolio.section.active"),
                         style = MaterialTheme.typography.titleMedium,
                         color = FairyGold.copy(alpha = 0.85f),
                         fontWeight = FontWeight.SemiBold
@@ -157,7 +158,7 @@ fun PortfolioScreen(
                     OrnamentDivider()
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        "Летопись сделок",
+                        Strings.t("portfolio.section.closed"),
                         style = MaterialTheme.typography.titleMedium,
                         color = FairyGold.copy(alpha = 0.85f),
                         fontWeight = FontWeight.SemiBold
@@ -174,8 +175,8 @@ fun PortfolioScreen(
     activeSheet?.let { sheet ->
         when (sheet.type) {
             SheetType.ADD_FUNDS -> FundsBottomSheet(
-                title = "Довложить в проект",
-                confirmLabel = "Довложить",
+                title = Strings.t("portfolio.addSheet.title"),
+                confirmLabel = Strings.t("portfolio.addSheet.confirm"),
                 maxAmount = null,
                 freeBalance = freeBalance,
                 onDismiss = { activeSheet = null },
@@ -249,9 +250,9 @@ private fun PortfolioProjectCard(
             Column(horizontalAlignment = Alignment.End) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     if (project.isWithdrawalLocked) {
-                        Icon(Icons.Default.Lock, "Вывод заблокирован", tint = Warning, modifier = Modifier.size(14.dp))
+                        Icon(Icons.Default.Lock, Strings.t("portfolio.card.locked"), tint = Warning, modifier = Modifier.size(14.dp))
                     }
-                    Text("Вложено", color = Color.White.copy(alpha = 0.55f), fontSize = 10.sp)
+                    Text(Strings.t("portfolio.card.invested"), color = Color.White.copy(alpha = 0.55f), fontSize = 10.sp)
                 }
                 Text(
                     formatGroshes(project.investedAmountRubles),
@@ -278,7 +279,7 @@ private fun PortfolioProjectCard(
         if (project.apyHistory.size >= 2 || project.userCountHistory.size >= 2) {
             Spacer(Modifier.height(8.dp))
             Text(
-                "История стоимости",
+                Strings.t("portfolio.card.history"),
                 style = MaterialTheme.typography.labelSmall,
                 color = Color.White.copy(alpha = 0.5f)
             )
@@ -290,7 +291,7 @@ private fun PortfolioProjectCard(
             )
             if (project.currentUserCount > 0) {
                 Text(
-                    "👥 ${formatCountShort(project.currentUserCount)} вкладчиков",
+                    Strings.t("portfolio.card.investors", formatCountShort(project.currentUserCount)),
                     color = Color.White.copy(alpha = 0.55f),
                     fontSize = 11.sp,
                     modifier = Modifier.padding(top = 2.dp)
@@ -301,7 +302,7 @@ private fun PortfolioProjectCard(
         if (project.isWithdrawalLocked) {
             Surface(color = Warning.copy(alpha = 0.15f), shape = MaterialTheme.shapes.small) {
                 Text(
-                    "🔒 Вывод заблокирован — проект испытывает трудности",
+                    Strings.t("portfolio.card.locked"),
                     style = MaterialTheme.typography.labelSmall,
                     color = Warning,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -322,7 +323,7 @@ private fun PortfolioProjectCard(
                     disabledContainerColor = FairyGold.copy(alpha = 0.35f)
                 ),
                 contentPadding = PaddingValues(vertical = 6.dp)
-            ) { Text("Довложить", fontSize = 12.sp, fontWeight = FontWeight.SemiBold) }
+            ) { Text(Strings.t("portfolio.btn.addFunds"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold) }
             OutlinedButton(
                 onClick = onWithdraw,
                 modifier = Modifier.weight(1f),
@@ -330,7 +331,7 @@ private fun PortfolioProjectCard(
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
                 border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f)),
                 contentPadding = PaddingValues(vertical = 6.dp)
-            ) { Text("Вывести часть", fontSize = 12.sp) }
+            ) { Text(Strings.t("portfolio.btn.withdrawPart"), fontSize = 12.sp) }
             OutlinedButton(
                 onClick = onExit,
                 modifier = Modifier.weight(1f),
@@ -338,11 +339,11 @@ private fun PortfolioProjectCard(
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Error),
                 border = androidx.compose.foundation.BorderStroke(1.dp, Error.copy(alpha = 0.5f)),
                 contentPadding = PaddingValues(vertical = 6.dp)
-            ) { Text("Покинуть", fontSize = 12.sp) }
+            ) { Text(Strings.t("portfolio.btn.leave"), fontSize = 12.sp) }
         }
         if (hasFee) {
             Text(
-                "ⓘ Комиссия 25% с каждого вывода",
+                Strings.t("portfolio.card.fee"),
                 color = Color.White.copy(alpha = 0.45f),
                 fontSize = 10.sp
             )
@@ -434,7 +435,7 @@ private fun FundsBottomSheet(
                     shape = MaterialTheme.shapes.small
                 ) {
                     Text(
-                        "Свободно: ${formatRubles(freeBalance)}",
+                        Strings.t("portfolio.addSheet.free", formatRubles(freeBalance)),
                         style = MaterialTheme.typography.labelMedium,
                         color = FairyGold,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
@@ -444,7 +445,7 @@ private fun FundsBottomSheet(
             OutlinedTextField(
                 value = amountText,
                 onValueChange = { amountText = it.filter { c -> c.isDigit() || c == '.' } },
-                label = { Text("Сумма в грошах") },
+                label = { Text(Strings.t("portfolio.addSheet.amountLabel")) },
                 suffix = { Text("г") },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -488,17 +489,17 @@ private fun WithdrawBottomSheet(
     AppLogger.i("Portfolio", "AlertDialog about to compose: effectiveMax=$effectiveMax isLongTerm=$isLongTerm hasFee=$hasFee")
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Вывести из дела") },
+        title = { Text(Strings.t("portfolio.withdraw.title")) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 when {
                     isLongTerm -> Text(
-                        "⚠ Лимит: не более 25%% от вложенного за раз (%.0f г)".format(effectiveMax),
+                        Strings.t("portfolio.withdraw.warnLong", effectiveMax),
                         style = MaterialTheme.typography.bodySmall,
                         color = Warning
                     )
                     hasFee -> Text(
-                        "⚠ Комиссия за срочный вывод — 25%. Получишь 75% от суммы.",
+                        Strings.t("portfolio.withdraw.warnFee"),
                         style = MaterialTheme.typography.bodySmall,
                         color = Error
                     )
@@ -506,19 +507,19 @@ private fun WithdrawBottomSheet(
                 OutlinedTextField(
                     value = amountText,
                     onValueChange = { amountText = it.filter { c -> c.isDigit() || c == '.' } },
-                    label = { Text("Сумма в грошах") },
+                    label = { Text(Strings.t("portfolio.addSheet.amountLabel")) },
                     suffix = { Text("г") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
                 Text(
-                    "Доступно: %.0f г • Лимит: %.0f г".format(project.currentValueRubles, effectiveMax),
+                    Strings.t("portfolio.withdraw.availLimit", project.currentValueRubles, effectiveMax),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 if (hasFee && amount != null && amount >= 5.0) {
                     Text(
-                        "Получишь на руки: %.0f г".format(amount * 0.75),
+                        Strings.t("portfolio.withdraw.netGain", amount * 0.75),
                         style = MaterialTheme.typography.bodySmall,
                         color = FairyGold,
                         fontWeight = FontWeight.Medium
@@ -531,10 +532,10 @@ private fun WithdrawBottomSheet(
                 onClick = { amount?.let { onConfirm(it) } },
                 enabled = isValid,
                 colors = ButtonDefaults.buttonColors(containerColor = FairyGold, contentColor = Color(0xFF1A0A00))
-            ) { Text("Вывести", fontWeight = FontWeight.SemiBold) }
+            ) { Text(Strings.t("portfolio.withdraw.confirm"), fontWeight = FontWeight.SemiBold) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Отмена") }
+            TextButton(onClick = onDismiss) { Text(Strings.t("btn.cancel")) }
         }
     )
 }
@@ -548,7 +549,7 @@ private fun ClosedProjectCard(project: Project, onClick: () -> Unit) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(project.claimedName, style = MaterialTheme.typography.titleMedium, color = Color.White, fontWeight = FontWeight.Bold)
                 Text(
-                    project.closureReason ?: "Закрыто",
+                    project.closureReason ?: Strings.t("portfolio.closed.fallback"),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White.copy(alpha = 0.6f)
                 )

@@ -135,7 +135,47 @@ object Strings {
         "stats.hof.streak" to "Серия на ярмарке",
         "stats.feats.header" to "🏅 Подвиги — %d из %d",
         "stats.financial.title" to "Злато",
-        "stats.balance.title" to "Ведомость казны"
+        "stats.balance.title" to "Ведомость казны",
+
+        // Казна (портфолио)
+        "portfolio.title" to "Казна",
+        "portfolio.empty.title" to "Казна пуста",
+        "portfolio.empty.hint" to "Поговори с Дельцами во Входящих грамотах и вложи гроши",
+        "portfolio.section.active" to "Текущие вложения",
+        "portfolio.section.closed" to "Летопись сделок",
+        "portfolio.card.invested" to "Вложено",
+        "portfolio.card.history" to "История стоимости",
+        "portfolio.card.investors" to "👥 %s вкладчиков",
+        "portfolio.card.locked" to "🔒 Вывод заблокирован — проект испытывает трудности",
+        "portfolio.btn.addFunds" to "Довложить",
+        "portfolio.btn.withdrawPart" to "Вывести часть",
+        "portfolio.btn.leave" to "Покинуть",
+        "portfolio.card.fee" to "ⓘ Комиссия 25% с каждого вывода",
+        "portfolio.addSheet.title" to "Довложить в проект",
+        "portfolio.addSheet.confirm" to "Довложить",
+        "portfolio.addSheet.free" to "Свободно: %s",
+        "portfolio.addSheet.amountLabel" to "Сумма в грошах",
+        "portfolio.withdraw.title" to "Вывести из дела",
+        "portfolio.withdraw.confirm" to "Вывести",
+        "portfolio.withdraw.warnLong" to "⚠ Лимит: не более 25%% от вложенного за раз (%.0f г)",
+        "portfolio.withdraw.warnFee" to "⚠ Комиссия за срочный вывод — 25%. Получишь 75% от суммы.",
+        "portfolio.withdraw.netGain" to "Получишь на руки: %.0f г",
+        "portfolio.withdraw.availLimit" to "Доступно: %.0f г • Лимит: %.0f г",
+        "portfolio.closed.fallback" to "Закрыто",
+
+        // Подробности дела (ProjectDetail)
+        "detail.tab.about" to "О деле",
+        "detail.tab.news" to "Новости",
+        "detail.tab.chat" to "Беседа",
+        "detail.section.metrics" to "Показатели",
+        "detail.section.story" to "Описание",
+        "detail.metric.invested" to "Вложено",
+        "detail.metric.current" to "Сейчас стоит",
+        "detail.metric.pnl" to "Прибыль",
+        "detail.metric.apy" to "Посул (APY)",
+        "detail.metric.days" to "Дней в деле",
+        "detail.news.empty" to "Пока вестей нет",
+        "detail.btn.openChat" to "Открыть беседу"
     )
 
     private val EN: Map<String, String> = mapOf(
@@ -248,6 +288,46 @@ object Strings {
         "stats.hof.streak" to "Streak at the fair",
         "stats.feats.header" to "🏅 Feats — %d of %d",
         "stats.financial.title" to "Gold",
-        "stats.balance.title" to "Treasury ledger"
+        "stats.balance.title" to "Treasury ledger",
+
+        // Treasury (portfolio)
+        "portfolio.title" to "Treasury",
+        "portfolio.empty.title" to "Treasury is empty",
+        "portfolio.empty.hint" to "Talk to merchants in the Charters and invest some coins",
+        "portfolio.section.active" to "Active investments",
+        "portfolio.section.closed" to "Deal chronicle",
+        "portfolio.card.invested" to "Invested",
+        "portfolio.card.history" to "Value history",
+        "portfolio.card.investors" to "👥 %s investors",
+        "portfolio.card.locked" to "🔒 Withdrawals locked — the project is in trouble",
+        "portfolio.btn.addFunds" to "Add funds",
+        "portfolio.btn.withdrawPart" to "Withdraw part",
+        "portfolio.btn.leave" to "Leave",
+        "portfolio.card.fee" to "ⓘ 25% fee on every withdrawal",
+        "portfolio.addSheet.title" to "Add to the venture",
+        "portfolio.addSheet.confirm" to "Add",
+        "portfolio.addSheet.free" to "Free: %s",
+        "portfolio.addSheet.amountLabel" to "Amount in coins",
+        "portfolio.withdraw.title" to "Withdraw from the venture",
+        "portfolio.withdraw.confirm" to "Withdraw",
+        "portfolio.withdraw.warnLong" to "⚠ Limit: at most 25%% of invested per withdrawal (%.0f c)",
+        "portfolio.withdraw.warnFee" to "⚠ Early-exit fee 25%. You receive 75% of the amount.",
+        "portfolio.withdraw.netGain" to "You receive: %.0f c",
+        "portfolio.withdraw.availLimit" to "Available: %.0f c • Limit: %.0f c",
+        "portfolio.closed.fallback" to "Closed",
+
+        // Project detail
+        "detail.tab.about" to "About",
+        "detail.tab.news" to "News",
+        "detail.tab.chat" to "Chat",
+        "detail.section.metrics" to "Metrics",
+        "detail.section.story" to "Description",
+        "detail.metric.invested" to "Invested",
+        "detail.metric.current" to "Current value",
+        "detail.metric.pnl" to "Profit",
+        "detail.metric.apy" to "Claimed APY",
+        "detail.metric.days" to "Days in venture",
+        "detail.news.empty" to "No news yet",
+        "detail.btn.openChat" to "Open chat"
     )
 }
