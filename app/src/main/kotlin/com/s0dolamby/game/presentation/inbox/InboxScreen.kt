@@ -67,7 +67,7 @@ fun InboxScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, "Назад")
+                        Icon(Icons.Default.ArrowBack, Strings.t("btn.back"))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
@@ -199,7 +199,7 @@ private fun InboxProjectCard(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    project.type.displayWithEmoji(),
+                    project.type.displayWithEmojiI18n(),
                     color = Color.White.copy(alpha = 0.55f),
                     fontSize = 11.sp,
                     modifier = Modifier.padding(top = 2.dp)
@@ -212,7 +212,7 @@ private fun InboxProjectCard(
                 border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.4f))
             ) {
                 Text(
-                    "${project.claimedAPY.toInt()}% посул",
+                    Strings.t("inbox.apy", project.claimedAPY.toInt()),
                     color = FairyGold,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
@@ -243,7 +243,7 @@ private fun InboxProjectCard(
                 fontSize = 11.sp
             )
             Text(
-                "👥 ${formatCount(project.claimedUserCount)} вкладчиков",
+                Strings.t("inbox.investors", formatCount(project.claimedUserCount)),
                 color = Color.White.copy(alpha = 0.55f),
                 fontSize = 11.sp
             )
@@ -255,8 +255,8 @@ private fun InboxProjectCard(
         // и подсказывает результат. Альтернативную «беседу за рекламу»
         // прячем — она была обходным путём.
         val mainText = when {
-            perfect -> "✨ Идеал — подробности раскрыты, к беседе"
-            unlocked -> "💰 Можно вкладываться — к беседе"
+            perfect -> Strings.t("inbox.cta.perfect")
+            unlocked -> Strings.t("inbox.cta.unlocked")
             else -> Strings.t("inbox.cta.minigame")
         }
         Surface(
@@ -303,12 +303,14 @@ private fun InboxProjectCard(
     }
 }
 
-private fun ProjectType.displayWithEmoji(): String = when (this) {
-    ProjectType.CARD_GAME -> "🃏 Азартная игра"
-    ProjectType.TREASURE_HUNT -> "🗺 Поиск клада"
-    ProjectType.POTION_BREW -> "🧪 Зелейное дело"
-    ProjectType.GUILD_SCHEME -> "⚙ Артель"
-    ProjectType.HONEST_TRADE -> "🤝 Честная торговля"
+@Composable
+@androidx.compose.runtime.ReadOnlyComposable
+private fun ProjectType.displayWithEmojiI18n(): String = when (this) {
+    ProjectType.CARD_GAME -> Strings.t("type.cardGame")
+    ProjectType.TREASURE_HUNT -> Strings.t("type.treasureHunt")
+    ProjectType.POTION_BREW -> Strings.t("type.potionBrew")
+    ProjectType.GUILD_SCHEME -> Strings.t("type.guildScheme")
+    ProjectType.HONEST_TRADE -> Strings.t("type.honestTrade")
 }
 
 private fun formatCount(count: Int): String = when {

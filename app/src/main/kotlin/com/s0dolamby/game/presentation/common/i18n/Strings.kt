@@ -123,6 +123,14 @@ object Strings {
         "inbox.ad.title" to "📺 Беседа за просмотр рекламы",
         "inbox.ad.body" to "Пока бесплатно — просмотр рекламы будет позже подключён через AdMob/Yandex. Сейчас просто открываем беседу с дельцом.",
         "inbox.ad.confirm" to "Смотреть и в кабак",
+        "inbox.cta.perfect" to "✨ Идеал — подробности раскрыты, к беседе",
+        "inbox.cta.unlocked" to "💰 Можно вкладываться — к беседе",
+        "inbox.apy" to "%d%% посул",
+        "type.cardGame" to "🃏 Азартная игра",
+        "type.treasureHunt" to "🗺 Поиск клада",
+        "type.potionBrew" to "🧪 Зелейное дело",
+        "type.guildScheme" to "⚙ Артель",
+        "type.honestTrade" to "🤝 Честная торговля",
 
         // Stats
         "stats.title" to "Успехи купца",
@@ -303,6 +311,14 @@ object Strings {
         "inbox.ad.title" to "📺 Talk after watching an ad",
         "inbox.ad.body" to "Free for now — ads will be wired through AdMob/Yandex later. For now we just open the chat with the merchant.",
         "inbox.ad.confirm" to "Watch and head to the tavern",
+        "inbox.cta.perfect" to "✨ Perfect — details unlocked, to the chat",
+        "inbox.cta.unlocked" to "💰 Ready to invest — to the chat",
+        "inbox.apy" to "%d%% claimed APY",
+        "type.cardGame" to "🃏 Card game",
+        "type.treasureHunt" to "🗺 Treasure hunt",
+        "type.potionBrew" to "🧪 Potion brewing",
+        "type.guildScheme" to "⚙ Guild scheme",
+        "type.honestTrade" to "🤝 Honest trade",
 
         // Stats
         "stats.title" to "Merchant feats",
