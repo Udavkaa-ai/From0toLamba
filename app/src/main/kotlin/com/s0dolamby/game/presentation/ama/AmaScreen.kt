@@ -51,6 +51,7 @@ import com.s0dolamby.game.presentation.common.theme.Warning
 import com.s0dolamby.game.presentation.common.theme.Error as ErrorColor
 import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
+import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.NightBlue
@@ -175,12 +176,12 @@ fun AmaScreen(
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 CircularProgressIndicator(color = FairyGold, strokeWidth = 3.dp)
                 Text(
-                    "Делец заходит в кабак…",
+                    Strings.t("ama.loading.title"),
                     color = Color.White.copy(alpha = 0.7f),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    "Хозяин дела готовится к беседе",
+                    Strings.t("ama.loading.body"),
                     color = Color.White.copy(alpha = 0.45f),
                     style = MaterialTheme.typography.labelSmall
                 )
@@ -189,7 +190,7 @@ fun AmaScreen(
                 onClick = onBack,
                 modifier = Modifier.align(Alignment.TopStart).padding(top = 24.dp, start = 8.dp)
             ) {
-                Icon(Icons.Default.ArrowBack, "Назад", tint = Color.White.copy(alpha = 0.7f))
+                Icon(Icons.Default.ArrowBack, Strings.t("btn.back"), tint = Color.White.copy(alpha = 0.7f))
             }
         }
         return
@@ -218,12 +219,12 @@ fun AmaScreen(
                 title = {
                     Column {
                         Text(
-                            uiState.project?.developerName ?: "Беседа",
+                            uiState.project?.developerName ?: Strings.t("ama.title.fallback"),
                             color = Color.White,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            "«${uiState.project?.claimedName}» • вопрос $questionCount/${GameConfig.AMA_MAX_QUESTIONS}",
+                            Strings.t("ama.subtitle", uiState.project?.claimedName ?: "", questionCount, GameConfig.AMA_MAX_QUESTIONS),
                             style = MaterialTheme.typography.labelSmall,
                             color = FairyGold.copy(alpha = 0.8f)
                         )
@@ -231,14 +232,14 @@ fun AmaScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, "Назад", tint = Color.White)
+                        Icon(Icons.Default.ArrowBack, Strings.t("btn.back"), tint = Color.White)
                     }
                 },
                 actions = {
                     if (!sessionEnded) {
                         TextButton(onClick = viewModel::requestInvest) {
                             Text(
-                                if (uiState.minigameUnlocked) "Вложить" else "🎲 Испытать",
+                                if (uiState.minigameUnlocked) Strings.t("ama.btn.invest") else Strings.t("ama.btn.test"),
                                 color = FairyGold, fontWeight = FontWeight.SemiBold
                             )
                         }
@@ -277,7 +278,7 @@ fun AmaScreen(
                             value = inputText,
                             onValueChange = { inputText = it },
                             modifier = Modifier.weight(1f),
-                            placeholder = { Text("Задайте вопрос...", color = Color.White.copy(alpha = 0.4f)) },
+                            placeholder = { Text(Strings.t("ama.placeholder"), color = Color.White.copy(alpha = 0.4f)) },
                             maxLines = 3,
                             enabled = !uiState.isSending && !sessionEnded,
                             shape = RoundedCornerShape(20.dp),
@@ -335,7 +336,7 @@ fun AmaScreen(
                                 } else {
                                     Icon(
                                         Icons.Default.Send,
-                                        "Отправить",
+                                        Strings.t("ama.send"),
                                         tint = if (inputText.isNotBlank()) NightBlue else Color.White.copy(0.4f)
                                     )
                                 }
@@ -549,7 +550,7 @@ private fun RevealedDetailsCard(project: Project) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Text("✨", fontSize = 18.sp)
             Text(
-                "Раскрытые сведения",
+                Strings.t("ama.reveal.title"),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = FairyGold
@@ -557,22 +558,22 @@ private fun RevealedDetailsCard(project: Project) {
         }
         Spacer(Modifier.height(4.dp))
         Text(
-            "Делец проболтался после идеала. Цифры — реальные.",
+            Strings.t("ama.reveal.subtitle"),
             style = MaterialTheme.typography.labelSmall,
             color = Color.White.copy(alpha = 0.55f)
         )
         OrnamentDivider()
-        DetailRow("Тип дела", typeText, Color.White)
-        DetailRow("Заявленный посул (APY)", "${project.claimedAPY.toInt()}% / год", Color.White.copy(alpha = 0.7f))
+        DetailRow(Strings.t("ama.reveal.type"), typeText, Color.White)
+        DetailRow(Strings.t("ama.reveal.apy"), "${project.claimedAPY.toInt()}% / год", Color.White.copy(alpha = 0.7f))
         DetailRow(
-            "Реальный дневной доход",
+            Strings.t("ama.reveal.realApy"),
             if (project.realDailyYieldRubles <= 0.0) "0 (мошенник)" else "%.2f%% от вложенного".format(realDailyPercent),
             if (project.realDailyYieldRubles <= 0.0) ErrorColor else Success
         )
-        DetailRow("Подноготная", fateText, fateColor)
+        DetailRow(Strings.t("ama.reveal.fate"), fateText, fateColor)
         if (project.daysUntilCollapse != null) {
             DetailRow(
-                "Дней до развязки",
+                Strings.t("ama.reveal.daysToFinale"),
                 "${project.daysUntilCollapse}",
                 if (project.daysUntilCollapse < 7) ErrorColor else Color.White.copy(alpha = 0.7f)
             )
@@ -597,20 +598,20 @@ private fun WelcomeMessage(projectName: String, devName: String) {
     FairyCard(modifier = Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("✦", color = FairyGold, fontSize = 16.sp)
-            Text("Начало беседы", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = FairyGold)
+            Text(Strings.t("ama.start.title"), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = FairyGold)
             Text("✦", color = FairyGold, fontSize = 16.sp)
         }
         Spacer(Modifier.height(6.dp))
         OrnamentDivider()
         Spacer(Modifier.height(8.dp))
         Text(
-            "Тебя ждёт Делец, хозяин дела «$projectName».\nЗовут его: $devName",
+            Strings.t("ama.start.subtitle", projectName, devName),
             style = MaterialTheme.typography.bodyMedium,
             color = Color.White
         )
         Spacer(Modifier.height(4.dp))
         Text(
-            "У тебя ${GameConfig.AMA_MAX_QUESTIONS} вопросов — узнай правду и реши, стоит ли вкладывать гроши.",
+            Strings.t("ama.start.hint", GameConfig.AMA_MAX_QUESTIONS),
             style = MaterialTheme.typography.bodySmall,
             color = Color.White.copy(alpha = 0.65f)
         )
@@ -625,10 +626,10 @@ private fun SessionEndBanner(
     FairyCard(modifier = Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("✦", color = FairyGold, fontSize = 16.sp)
-            Text("Беседа окончена", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(Strings.t("ama.end.title"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
         }
         Text(
-            "Что делаешь дальше?",
+            Strings.t("ama.end.body"),
             style = MaterialTheme.typography.bodySmall,
             color = Color.White.copy(alpha = 0.7f)
         )
@@ -638,14 +639,14 @@ private fun SessionEndBanner(
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(containerColor = FairyGold)
         ) {
-            Text("💰 Вложить гроши", color = NightBlue, fontWeight = FontWeight.Bold)
+            Text("💰 ${Strings.t("ama.invest.title")}", color = NightBlue, fontWeight = FontWeight.Bold)
         }
         OutlinedButton(
             onClick = onBack,
             modifier = Modifier.fillMaxWidth(),
             border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f))
         ) {
-            Text("Уйти", color = FairyGold)
+            Text(Strings.t("ama.btn.leave"), color = FairyGold)
         }
     }
 }
@@ -673,13 +674,13 @@ private fun InvestBottomSheet(freeBalance: Double, onDismiss: () -> Unit, onInve
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Вложить гроши", style = MaterialTheme.typography.titleLarge)
+                Text(Strings.t("ama.invest.title"), style = MaterialTheme.typography.titleLarge)
                 Surface(
                     color = FairyGold.copy(alpha = 0.15f),
                     shape = MaterialTheme.shapes.small
                 ) {
                     Text(
-                        "Свободно: ${formatRubles(freeBalance)}",
+                        Strings.t("ama.invest.free", formatRubles(freeBalance)),
                         style = MaterialTheme.typography.labelMedium,
                         color = FairyGold,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
@@ -689,12 +690,12 @@ private fun InvestBottomSheet(freeBalance: Double, onDismiss: () -> Unit, onInve
             OutlinedTextField(
                 value = amountText,
                 onValueChange = { amountText = it.filter { c -> c.isDigit() || c == '.' } },
-                label = { Text("Сумма в грошах") },
+                label = { Text(Strings.t("ama.invest.amount")) },
                 suffix = { Text("г") },
                 modifier = Modifier.fillMaxWidth()
             )
             Text(
-                "Минимум 5 г",
+                Strings.t("ama.invest.minimum"),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -703,7 +704,7 @@ private fun InvestBottomSheet(freeBalance: Double, onDismiss: () -> Unit, onInve
                 enabled = amount != null && amount >= 5.0,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Вложить")
+                Text(Strings.t("ama.invest.confirm"))
             }
         }
     }
