@@ -149,22 +149,22 @@ fun HomeScreen(
                 }
 
                 // Плитка «Отношения с дельцами» — 7 архетипов, тап → отдельный экран.
+                val seenArchetypes = gameState?.let { s ->
+                    com.s0dolamby.game.domain.model.PersonaArchetype.values()
+                        .count { (s.tieLevels[it] ?: 0) > 0 || (s.archetypeTokens[it] ?: 0) > 0 }
+                } ?: 0
                 item {
-                    val seen = gameState?.let { s ->
-                        com.s0dolamby.game.domain.model.PersonaArchetype.values()
-                            .count { (s.tieLevels[it] ?: 0) > 0 || (s.archetypeTokens[it] ?: 0) > 0 }
-                    } ?: 0
                     MerchantRelationsCard(
-                        seenArchetypeCount = seen,
+                        seenArchetypeCount = seenArchetypes,
                         archetypeTokens = gameState?.archetypeTokens ?: emptyMap(),
                         onClick = onRelationshipsClick
                     )
                 }
 
-                // Кнопка «Летопись (N)» — крупная, под отношениями (как в TG).
+                // Кнопка «Летопись (N)» — N = число встреченных типажей.
                 item {
                     LetopisChip(
-                        count = 0,  // TODO Phase 2: открытые типажи Летописи
+                        count = seenArchetypes,
                         onClick = onRegistryClick
                     )
                 }

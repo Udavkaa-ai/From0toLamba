@@ -5,6 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.s0dolamby.game.BuildConfig
 import com.s0dolamby.game.R
 import com.s0dolamby.game.domain.model.TEXT_MODEL_OPTIONS
 import com.s0dolamby.game.presentation.common.components.FairyCard
@@ -38,6 +40,7 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showResetDialog by remember { mutableStateOf(false) }
+    var showFaqDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.resetDone) {
         if (uiState.resetDone) {
@@ -210,6 +213,113 @@ fun SettingsScreen(
 
                 OrnamentDivider()
 
+                // ── Язык + тема (готовится) ────────────────────────────
+                FairyCard(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        "Язык и тема",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = FairyGold,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text(
+                                "🌐 Язык интерфейса",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.White.copy(alpha = 0.9f)
+                            )
+                            Text(
+                                "Русский · английский в работе",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White.copy(alpha = 0.45f)
+                            )
+                        }
+                        AssistChip(
+                            onClick = { },
+                            enabled = false,
+                            label = { Text("RU", fontWeight = FontWeight.SemiBold) },
+                            colors = AssistChipDefaults.assistChipColors(
+                                disabledContainerColor = FairyGold.copy(alpha = 0.18f),
+                                disabledLabelColor = FairyGold
+                            )
+                        )
+                    }
+                    Spacer(Modifier.height(10.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text(
+                                "🎨 Тема",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.White.copy(alpha = 0.9f)
+                            )
+                            Text(
+                                "«Тёмная фиолетовая» · светлая ярмарка в работе",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White.copy(alpha = 0.45f)
+                            )
+                        }
+                        AssistChip(
+                            onClick = { },
+                            enabled = false,
+                            label = { Text("🌙 Тёмная", fontWeight = FontWeight.SemiBold) },
+                            colors = AssistChipDefaults.assistChipColors(
+                                disabledContainerColor = FairyGold.copy(alpha = 0.18f),
+                                disabledLabelColor = FairyGold
+                            )
+                        )
+                    }
+                }
+
+                OrnamentDivider()
+
+                // ── ЧАВО + версия ─────────────────────────────────────
+                FairyCard(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text("О приложении", style = MaterialTheme.typography.titleMedium, color = FairyGold, fontWeight = FontWeight.SemiBold)
+                            Text(
+                                "Версия ${BuildConfig.VERSION_NAME} · код ${BuildConfig.VERSION_CODE}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White.copy(alpha = 0.5f)
+                            )
+                        }
+                        IconButton(onClick = { showFaqDialog = true }) {
+                            Icon(Icons.Default.Info, "ЧАВО", tint = FairyGold)
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "«Из грязи в князи» — симулятор купца-инвестора в сказочной Руси. " +
+                            "Игра — для удовольствия. AI-беседы оплачиваются через OpenRouter.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.65f)
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = { showFaqDialog = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.4f))
+                    ) {
+                        Text("❓ ЧАВО — частые вопросы", fontWeight = FontWeight.SemiBold)
+                    }
+                }
+
+                OrnamentDivider()
+
                 // ── Сброс игры ─────────────────────────────────────────
                 FairyCard(modifier = Modifier.fillMaxWidth()) {
                     Text(
@@ -256,5 +366,47 @@ fun SettingsScreen(
                 TextButton(onClick = { showResetDialog = false }) { Text("Отмена") }
             }
         )
+    }
+
+    if (showFaqDialog) {
+        AlertDialog(
+            onDismissRequest = { showFaqDialog = false },
+            title = { Text("❓ ЧАВО") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    FaqEntry(
+                        q = "Что за гроши?",
+                        a = "Внутриигровая валюта. Реальных денег не стоит и нигде не торгуется."
+                    )
+                    FaqEntry(
+                        q = "Откуда берётся ответ дельца?",
+                        a = "AI-модель из OpenRouter (по умолчанию DeepSeek v4 Flash). Ключ передаётся из секретов CI и сохраняется в local.properties. На устройстве хранится только баланс игры."
+                    )
+                    FaqEntry(
+                        q = "Что даёт связь с дельцом?",
+                        a = "Каждый закрытый в плюс деал даёт +1 уровень связи (cap 10) и +1 жетон архетипа. Жетон можно потратить, чтобы пропустить мини-игру."
+                    )
+                    FaqEntry(
+                        q = "Как растёт стрик «Сегодня»?",
+                        a = "Каждый календарный день (МСК) на вкладке «🔥 Сегодня» серия растёт +1. Если пропустишь день — серия сбрасывается на 1."
+                    )
+                    FaqEntry(
+                        q = "Можно ли восстановить прогресс после Сброса?",
+                        a = "Нет — данные хранятся локально в Room-БД, после сброса безвозвратно удаляются."
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showFaqDialog = false }) { Text("Понятно", color = FairyGold) }
+            }
+        )
+    }
+}
+
+@Composable
+private fun FaqEntry(q: String, a: String) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(q, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+        Text(a, style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.75f))
     }
 }
