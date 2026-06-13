@@ -72,8 +72,11 @@ private val InvestorRank.congratsText: String get() = when (this) {
     InvestorRank.LAMBO_SENSEI -> "Князь! Сотню дел разобрал — имя твоё вписано в Летопись."
 }
 
+// Палитра фейерверка не зависит от темы — на тёмном overlay везде
+// читаются одинаково. Хардкодим, чтобы не тащить @Composable-геттер
+// в top-level инициализацию.
 private val burstColors = listOf(
-    FairyGold,
+    Color(0xFFFFB800),  // FairyGold константой
     Color(0xFFFF4444),
     Color(0xFF44FF88),
     Color(0xFF44AAFF),

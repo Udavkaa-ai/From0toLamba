@@ -4,7 +4,11 @@ data class AppSettings(
     val textModel: String = DEFAULT_TEXT_MODEL,
     val imageGenerationEnabled: Boolean = false,
     /** Прозвище игрока — показывается на главной и в Зале славы. Пусто = «Гость». */
-    val nickname: String = ""
+    val nickname: String = "",
+    /** Активная тема (тёмная фиолетовая или тёплая ярмарка). */
+    val themeMode: ThemeMode = ThemeMode.DARK_FAIRY,
+    /** Язык интерфейса: "ru" / "en". */
+    val language: String = "ru"
 )
 
 data class ModelOption(val label: String, val modelId: String)

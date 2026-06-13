@@ -10,5 +10,9 @@ data class SettingsEntity(
     val textModel: String = DEFAULT_TEXT_MODEL,
     val imageGenerationEnabled: Boolean = false,
     @androidx.room.ColumnInfo(defaultValue = "''")
-    val nickname: String = ""
+    val nickname: String = "",
+    @androidx.room.ColumnInfo(defaultValue = "'DARK_FAIRY'")
+    val themeMode: String = "DARK_FAIRY",
+    @androidx.room.ColumnInfo(defaultValue = "'ru'")
+    val language: String = "ru"
 )

@@ -48,6 +48,18 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.updateSettings(updated) }
     }
 
+    fun setThemeMode(mode: com.s0dolamby.game.domain.model.ThemeMode) {
+        val updated = _uiState.value.settings.copy(themeMode = mode)
+        _uiState.value = _uiState.value.copy(settings = updated)
+        viewModelScope.launch { settingsRepository.updateSettings(updated) }
+    }
+
+    fun setLanguage(lang: String) {
+        val updated = _uiState.value.settings.copy(language = lang)
+        _uiState.value = _uiState.value.copy(settings = updated)
+        viewModelScope.launch { settingsRepository.updateSettings(updated) }
+    }
+
     // setImageGenerationEnabled удалён — обложки теперь из стока, переключать нечего.
 
     fun resetGame() {

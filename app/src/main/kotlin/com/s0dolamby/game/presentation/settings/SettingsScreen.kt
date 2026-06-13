@@ -246,7 +246,7 @@ fun SettingsScreen(
 
                 OrnamentDivider()
 
-                // ── Язык + тема (готовится) ────────────────────────────
+                // ── Язык и тема ────────────────────────────────────────
                 FairyCard(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         "Язык и тема",
@@ -254,61 +254,51 @@ fun SettingsScreen(
                         color = FairyGold,
                         fontWeight = FontWeight.SemiBold
                     )
-                    Spacer(Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column {
-                            Text(
-                                "🌐 Язык интерфейса",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color.White.copy(alpha = 0.9f)
-                            )
-                            Text(
-                                "Русский · английский в работе",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Color.White.copy(alpha = 0.45f)
-                            )
-                        }
-                        AssistChip(
-                            onClick = { },
-                            enabled = false,
-                            label = { Text("RU", fontWeight = FontWeight.SemiBold) },
-                            colors = AssistChipDefaults.assistChipColors(
-                                disabledContainerColor = FairyGold.copy(alpha = 0.18f),
-                                disabledLabelColor = FairyGold
-                            )
-                        )
-                    }
                     Spacer(Modifier.height(10.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column {
-                            Text(
-                                "🎨 Тема",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color.White.copy(alpha = 0.9f)
-                            )
-                            Text(
-                                "«Тёмная фиолетовая» · светлая ярмарка в работе",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Color.White.copy(alpha = 0.45f)
+                    Text(
+                        "🌐 Язык интерфейса",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White.copy(alpha = 0.9f)
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                        listOf("ru" to "Русский", "en" to "English").forEach { (code, label) ->
+                            val selected = uiState.settings.language == code
+                            FilterChip(
+                                selected = selected,
+                                onClick = { viewModel.setLanguage(code) },
+                                label = { Text(label) },
+                                modifier = Modifier.weight(1f),
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = FairyGold.copy(alpha = 0.22f),
+                                    selectedLabelColor = FairyGold,
+                                    labelColor = Color.White.copy(alpha = 0.7f)
+                                )
                             )
                         }
-                        AssistChip(
-                            onClick = { },
-                            enabled = false,
-                            label = { Text("🌙 Тёмная", fontWeight = FontWeight.SemiBold) },
-                            colors = AssistChipDefaults.assistChipColors(
-                                disabledContainerColor = FairyGold.copy(alpha = 0.18f),
-                                disabledLabelColor = FairyGold
+                    }
+                    Spacer(Modifier.height(14.dp))
+                    Text(
+                        "🎨 Тема",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White.copy(alpha = 0.9f)
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                        com.s0dolamby.game.domain.model.ThemeMode.entries.forEach { mode ->
+                            val selected = uiState.settings.themeMode == mode
+                            FilterChip(
+                                selected = selected,
+                                onClick = { viewModel.setThemeMode(mode) },
+                                label = { Text("${mode.emoji} ${mode.displayName}") },
+                                modifier = Modifier.weight(1f),
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = FairyGold.copy(alpha = 0.22f),
+                                    selectedLabelColor = FairyGold,
+                                    labelColor = Color.White.copy(alpha = 0.7f)
+                                )
                             )
-                        )
+                        }
                     }
                 }
 

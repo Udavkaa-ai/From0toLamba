@@ -24,7 +24,8 @@ import com.s0dolamby.game.data.db.entity.*
     // (отношения с дельцами + жетоны архетипов).
     // v15: добавлен unlockedAchievementsJson в game_state (каталог подвигов).
     // v16: добавлен nickname в settings (прозвище игрока на главной).
-    version = 16,
+    // v17: добавлены themeMode + language в settings (две темы + i18n RU/EN).
+    version = 17,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

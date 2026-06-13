@@ -1,30 +1,42 @@
 package com.s0dolamby.game.presentation.common.theme
 
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
+import com.s0dolamby.game.domain.model.ThemeMode
 
-private val DarkColorScheme = darkColorScheme(
-    primary = TonBlue,
-    onPrimary = Color.White,
-    primaryContainer = TonBlueDark,
-    secondary = Accent,
+private fun colorSchemeFor(palette: AppPalette) = darkColorScheme(
+    primary = palette.fairyGold,
+    onPrimary = Color(0xFF1A0A00),
+    primaryContainer = palette.enchantedPurple,
+    secondary = palette.accent,
     onSecondary = Color.White,
     secondaryContainer = AccentLight,
-    background = Background,
-    surface = Surface,
+    background = palette.nightBlue,
+    surface = palette.enchantedPurple,
     surfaceVariant = SurfaceVariant,
     onBackground = OnSurface,
     onSurface = OnSurface,
     onSurfaceVariant = OnSurfaceVariant,
-    error = Error
+    error = palette.error
 )
 
 @Composable
-fun From0toLambaTheme(content: @Composable () -> Unit) {
-    MaterialTheme(
-        colorScheme = DarkColorScheme,
-        typography = Typography,
-        content = content
-    )
+fun From0toLambaTheme(
+    themeMode: ThemeMode = ThemeMode.DARK_FAIRY,
+    content: @Composable () -> Unit
+) {
+    val palette = when (themeMode) {
+        ThemeMode.DARK_FAIRY -> DarkFairyPalette
+        ThemeMode.WARM_FAIRY -> WarmFairyPalette
+    }
+    CompositionLocalProvider(LocalAppPalette provides palette) {
+        MaterialTheme(
+            colorScheme = colorSchemeFor(palette),
+            typography = Typography,
+            content = content
+        )
+    }
 }
