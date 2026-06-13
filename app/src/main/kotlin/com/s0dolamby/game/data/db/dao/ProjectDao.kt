@@ -24,6 +24,9 @@ interface ProjectDao {
     @Query("SELECT * FROM projects WHERE isClosed = 1")
     fun observeClosedProjects(): Flow<List<ProjectEntity>>
 
+    @Query("SELECT * FROM projects WHERE isClosed = 1")
+    suspend fun getClosedProjects(): List<ProjectEntity>
+
     @Query("SELECT * FROM projects WHERE id = :id")
     suspend fun getById(id: String): ProjectEntity?
 

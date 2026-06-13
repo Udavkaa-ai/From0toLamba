@@ -27,4 +27,10 @@ interface GameStateRepository {
      * При profitable=true +1 уровень связи (cap 10) и +1 жетон архетипа.
      */
     suspend fun awardArchetypeProgress(archetype: com.s0dolamby.game.domain.model.PersonaArchetype, profitable: Boolean)
+    /**
+     * Перебрать каталог [com.s0dolamby.game.domain.achievements.AchievementCatalog]
+     * и разблокировать те, чьи условия теперь выполнены. Возвращает список
+     * только что разблокированных подвигов (пустой, если ничего не изменилось).
+     */
+    suspend fun recomputeAchievements(): List<com.s0dolamby.game.domain.achievements.Achievement>
 }

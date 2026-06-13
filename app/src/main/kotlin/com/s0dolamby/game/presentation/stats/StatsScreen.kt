@@ -41,6 +41,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.s0dolamby.game.R
 import com.s0dolamby.game.data.logging.AppLogger
+import com.s0dolamby.game.domain.achievements.AchievementCatalog
+import com.s0dolamby.game.domain.achievements.AchievementCategory
 import com.s0dolamby.game.domain.model.GameState
 import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.s0dolamby.game.presentation.common.components.FairyCard
@@ -108,6 +110,8 @@ fun StatsScreen(
             item { BalanceChartCard(state = state) }
             item { FinancialStats(state = state) }
             item { OrnamentDivider() }
+            item { AchievementsCard(unlocked = state?.unlockedAchievements ?: emptySet()) }
+            item { OrnamentDivider() }
             item { ScamStats(state = state) }
             item { LogCard(onShowLog = { showLog = true }) }
         }
@@ -117,6 +121,107 @@ fun StatsScreen(
         }
     }
     } // ScreenBackground
+}
+
+// ─── Подвиги ─────────────────────────────────────────────────────────────────
+
+@Composable
+private fun AchievementsCard(unlocked: Set<String>) {
+    var expandedCategory by remember { mutableStateOf<AchievementCategory?>(null) }
+    val byCategory = remember { AchievementCatalog.ALL.groupBy { it.category } }
+    val totalUnlocked = AchievementCatalog.ALL.count { it.id in unlocked }
+    val totalAll = AchievementCatalog.ALL.size
+
+    FairyCard(modifier = Modifier.fillMaxWidth().animateContentSize()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "🏅 Подвиги — $totalUnlocked из $totalAll",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+            LinearProgressIndicator(
+                progress = { if (totalAll == 0) 0f else totalUnlocked.toFloat() / totalAll },
+                modifier = Modifier.width(90.dp).height(6.dp),
+                color = FairyGold,
+                trackColor = Color.White.copy(alpha = 0.1f)
+            )
+        }
+        Spacer(Modifier.height(6.dp))
+        AchievementCategory.values().forEach { cat ->
+            val items = byCategory[cat].orEmpty()
+            val catUnlocked = items.count { it.id in unlocked }
+            val isExpanded = expandedCategory == cat
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expandedCategory = if (isExpanded) null else cat }
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(cat.icon, fontSize = 16.sp)
+                    Text(
+                        cat.title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White
+                    )
+                }
+                Text(
+                    "$catUnlocked / ${items.size}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (catUnlocked == items.size && items.isNotEmpty()) Success else FairyGold.copy(alpha = 0.7f),
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = expandVertically(tween(220)) + fadeIn(tween(180)),
+                exit = shrinkVertically(tween(180)) + fadeOut(tween(120))
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(bottom = 8.dp)) {
+                    items.forEach { ach ->
+                        val isUnlocked = ach.id in unlocked
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.Top,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Text(
+                                if (isUnlocked) ach.emoji else "🔒",
+                                fontSize = 18.sp
+                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    ach.title,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = if (isUnlocked) Color.White else Color.White.copy(alpha = 0.5f),
+                                    fontWeight = if (isUnlocked) FontWeight.SemiBold else FontWeight.Normal
+                                )
+                                Text(
+                                    ach.description,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Color.White.copy(alpha = if (isUnlocked) 0.7f else 0.4f)
+                                )
+                            }
+                            if (isUnlocked) {
+                                Text("✓", color = Success, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+            HorizontalDivider(color = FairyGold.copy(alpha = 0.08f))
+        }
+    }
 }
 
 // ─── Rank card ────────────────────────────────────────────────────────────────

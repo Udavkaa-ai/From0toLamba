@@ -27,6 +27,7 @@ class ExitProjectUseCase @Inject constructor(
             archetype = project.personaArchetype,
             profitable = returned > project.investedAmountRubles
         )
+        gameStateRepository.recomputeAchievements()
 
         returned
     }

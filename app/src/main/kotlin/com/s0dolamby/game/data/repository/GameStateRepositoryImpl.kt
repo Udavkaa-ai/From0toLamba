@@ -10,6 +10,8 @@ import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.s0dolamby.game.data.db.entity.toDomain
+import com.s0dolamby.game.domain.achievements.Achievement
+import com.s0dolamby.game.domain.achievements.AchievementCatalog
 import com.s0dolamby.game.domain.model.PersonaArchetype
 import com.s0dolamby.game.domain.today.TodayRewards
 import kotlinx.coroutines.flow.Flow
@@ -41,6 +43,10 @@ class GameStateRepositoryImpl @Inject constructor(
     private fun serializeArchetypeMap(map: Map<PersonaArchetype, Int>): String =
         gson.toJson(map.mapKeys { it.key.name })
 
+    private fun parseStringSet(json: String): Set<String> = runCatching {
+        gson.fromJson(json, Array<String>::class.java).toSet()
+    }.getOrDefault(emptySet())
+
     override fun observeGameState(): Flow<GameState> =
         combine(
             playerDao.observeGameState(),
@@ -69,7 +75,8 @@ class GameStateRepositoryImpl @Inject constructor(
                 lastSeenDay = state.lastSeenDay,
                 lastDailyClaim = state.lastDailyClaim,
                 tieLevels = parseArchetypeMap(state.tieLevelsJson),
-                archetypeTokens = parseArchetypeMap(state.archetypeTokensJson)
+                archetypeTokens = parseArchetypeMap(state.archetypeTokensJson),
+                unlockedAchievements = parseStringSet(state.unlockedAchievementsJson)
             )
         }
 
@@ -94,7 +101,8 @@ class GameStateRepositoryImpl @Inject constructor(
             lastSeenDay = state.lastSeenDay,
             lastDailyClaim = state.lastDailyClaim,
             tieLevels = parseArchetypeMap(state.tieLevelsJson),
-            archetypeTokens = parseArchetypeMap(state.archetypeTokensJson)
+            archetypeTokens = parseArchetypeMap(state.archetypeTokensJson),
+            unlockedAchievements = parseStringSet(state.unlockedAchievementsJson)
         )
     }
 
@@ -130,6 +138,28 @@ class GameStateRepositoryImpl @Inject constructor(
             loginStreak = newStreak,
             lastSeenDay = TodayRewards.todayKey()
         ))
+    }
+
+    override suspend fun recomputeAchievements(): List<Achievement> {
+        val entity = playerDao.getGameState() ?: return emptyList()
+        val state = getGameState()
+        val flat = projectDao.getActiveProjects().map { it.toDomain(gson) } +
+            projectDao.getClosedProjects().map { it.toDomain(gson) }
+        val already = parseStringSet(entity.unlockedAchievementsJson).toMutableSet()
+        val newlyUnlocked = mutableListOf<Achievement>()
+        AchievementCatalog.ALL.forEach { ach ->
+            if (ach.id in already) return@forEach
+            if (ach.condition(state, flat)) {
+                already += ach.id
+                newlyUnlocked += ach
+            }
+        }
+        if (newlyUnlocked.isNotEmpty()) {
+            playerDao.update(entity.copy(
+                unlockedAchievementsJson = gson.toJson(already.toList())
+            ))
+        }
+        return newlyUnlocked
     }
 
     override suspend fun awardArchetypeProgress(archetype: PersonaArchetype, profitable: Boolean) {

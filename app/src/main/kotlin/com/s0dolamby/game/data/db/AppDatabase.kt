@@ -22,7 +22,8 @@ import com.s0dolamby.game.data.db.entity.*
     // intuitionScore/isIntuitionEvaluated удалены из всех таблиц.
     // v14: добавлены tieLevelsJson / archetypeTokensJson в game_state
     // (отношения с дельцами + жетоны архетипов).
-    version = 14,
+    // v15: добавлен unlockedAchievementsJson в game_state (каталог подвигов).
+    version = 15,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

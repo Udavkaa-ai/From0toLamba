@@ -40,7 +40,9 @@ data class GameState(
     /** Уровень связи с архетипом дельца (0..[MAX_TIE_LEVEL]). */
     val tieLevels: Map<PersonaArchetype, Int> = emptyMap(),
     /** Баланс жетонов архетипа — мини-валюта на пропуск мини-игр и т.п. */
-    val archetypeTokens: Map<PersonaArchetype, Int> = emptyMap()
+    val archetypeTokens: Map<PersonaArchetype, Int> = emptyMap(),
+    /** ID разблокированных подвигов (Achievement.id). */
+    val unlockedAchievements: Set<String> = emptySet()
 ) {
     companion object {
         const val MAX_TIE_LEVEL = 10

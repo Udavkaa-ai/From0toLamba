@@ -152,6 +152,7 @@ class AdvanceDayUseCase @Inject constructor(
         gameStateRepository.appendInvestedSnapshot(totalActiveValue)
         gameStateRepository.advanceDay()
         gameStateRepository.updateRankIfNeeded()
+        gameStateRepository.recomputeAchievements()
 
         // ── Подсчёт распознанных мошенников ──────────────────────────────────
         // Игрок "распознал" скам если: поговорил (≥1 вопрос в AMA) и отказался вкладывать.

@@ -43,5 +43,6 @@ class InvestUseCase @Inject constructor(
         if (isFirstInvestment) {
             gameStateRepository.updateRankIfNeeded()
         }
+        gameStateRepository.recomputeAchievements()
     }
 }

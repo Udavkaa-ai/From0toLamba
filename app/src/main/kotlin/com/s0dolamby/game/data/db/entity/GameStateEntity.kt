@@ -34,6 +34,9 @@ data class GameStateEntity(
     // Map<PersonaArchetype, Int> — текущий баланс жетонов архетипа.
     @androidx.room.ColumnInfo(defaultValue = "{}")
     val archetypeTokensJson: String = "{}",
+    // Список разблокированных подвигов — Set<Achievement.id> сериализован как JSON-массив строк.
+    @androidx.room.ColumnInfo(defaultValue = "[]")
+    val unlockedAchievementsJson: String = "[]",
     // Жетоны на пропуск 2ч-таймера «Следующий день».
     @androidx.room.ColumnInfo(defaultValue = "0")
     val timerSkipTokens: Int = 0,
