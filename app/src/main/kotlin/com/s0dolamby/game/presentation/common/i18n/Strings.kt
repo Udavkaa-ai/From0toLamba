@@ -67,6 +67,7 @@ object Strings {
         "today.ladder" to "Лестница серии",
         "today.leaderboard" to "👑 Купеческий рейтинг",
         "today.soon" to "скоро",
+        "today.leaderboard.hint" to "Здесь появятся вкладки «Злато» и «Связи» с топом купцов по общему состоянию и сумме отношений.",
 
         // Отношения
         "rel.title" to "Отношения с дельцами",
@@ -291,6 +292,7 @@ object Strings {
         "today.ladder" to "Streak ladder",
         "today.leaderboard" to "👑 Merchant ranking",
         "today.soon" to "soon",
+        "today.leaderboard.hint" to "Tabs «Gold» and «Bonds» will appear here — top merchants by total wealth and total bond strength.",
 
         // Relationships
         "rel.title" to "Merchant relations",

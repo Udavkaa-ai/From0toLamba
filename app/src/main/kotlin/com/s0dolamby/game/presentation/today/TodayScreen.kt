@@ -214,12 +214,12 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("👑 Купеческий рейтинг", color = FairyGold, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                            Text("скоро", color = Color.White.copy(alpha = 0.4f), fontSize = 11.sp)
+                            Text(Strings.t("today.leaderboard"), color = FairyGold, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                            Text(Strings.t("today.soon"), color = Color.White.copy(alpha = 0.4f), fontSize = 11.sp)
                         }
                         Spacer(Modifier.height(8.dp))
                         Text(
-                            "Здесь появятся вкладки «Злато» и «Связи» с топом купцов по общему состоянию и сумме отношений.",
+                            Strings.t("today.leaderboard.hint"),
                             color = Color.White.copy(alpha = 0.6f),
                             fontSize = 12.sp
                         )
