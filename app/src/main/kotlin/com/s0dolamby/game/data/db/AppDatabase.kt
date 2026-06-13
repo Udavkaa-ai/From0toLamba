@@ -13,7 +13,8 @@ import com.s0dolamby.game.data.db.entity.*
         AmaMessageEntity::class,
         UpdateEntity::class,
         PostMortemEntity::class,
-        SettingsEntity::class
+        SettingsEntity::class,
+        MinigameUnlockEntity::class
     ],
     // Phase 1 (Android port → server-first): кэш публичных полей tg/server.
     // Расширены GameStateEntity, ProjectEntity, AmaSessionEntity, UpdateEntity.
@@ -25,7 +26,10 @@ import com.s0dolamby.game.data.db.entity.*
     // v15: добавлен unlockedAchievementsJson в game_state (каталог подвигов).
     // v16: добавлен nickname в settings (прозвище игрока на главной).
     // v17: добавлены themeMode + language в settings (две темы + i18n RU/EN).
-    version = 17,
+    // v18: добавлена таблица minigame_unlock — результаты мини-игр переживают
+    // ребут процесса, иначе после passing-перехода обратно к Inbox игроку
+    // снова предлагают мини-игру.
+    version = 18,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -34,4 +38,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun amaDao(): AmaDao
     abstract fun updateDao(): UpdateDao
     abstract fun settingsDao(): SettingsDao
+    abstract fun minigameUnlockDao(): MinigameUnlockDao
 }

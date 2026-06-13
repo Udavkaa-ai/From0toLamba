@@ -27,4 +27,5 @@ object DatabaseModule {
     @Provides fun provideAmaDao(db: AppDatabase): AmaDao = db.amaDao()
     @Provides fun provideUpdateDao(db: AppDatabase): UpdateDao = db.updateDao()
     @Provides fun provideSettingsDao(db: AppDatabase): SettingsDao = db.settingsDao()
+    @Provides fun provideMinigameUnlockDao(db: AppDatabase): MinigameUnlockDao = db.minigameUnlockDao()
 }
