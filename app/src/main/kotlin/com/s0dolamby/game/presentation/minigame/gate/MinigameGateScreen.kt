@@ -72,7 +72,9 @@ class MinigameGateViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             if (gameStateRepository.spendArchetypeToken(archetype)) {
-                store.record(projectId, MinigameOutcome(isWin = true, isPerfect = false))
+                // isWin = errorCount <= 1 && !timeoutReached. Делаем «победу
+                // не-идеал»: errorCount = 1, timeoutReached = false.
+                store.record(projectId, MinigameOutcome(errorCount = 1, timeoutReached = false))
                 onSuccess()
             } else {
                 onFailure()
