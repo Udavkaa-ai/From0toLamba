@@ -152,15 +152,7 @@ private fun ArchetypeCell(entry: ArchetypeEntry, maxLevel: Int) {
         PersonaArchetype.BABA_YAGA -> "🧙"
         PersonaArchetype.IVAN_DURAK -> "🃏"
     }
-    val name = when (archetype) {
-        PersonaArchetype.BURATINO -> "Буратино"
-        PersonaArchetype.BOYARIN -> "Боярин"
-        PersonaArchetype.KOLOBOK -> "Колобок"
-        PersonaArchetype.KOSCHEI -> "Кощей"
-        PersonaArchetype.ZOLUSHKA -> "Золушка"
-        PersonaArchetype.BABA_YAGA -> "Баба-Яга"
-        PersonaArchetype.IVAN_DURAK -> "Иван-дурак"
-    }
+    val name = Strings.t("persona.${archetype.name}")
     val seen = entry.seen
 
     Box(

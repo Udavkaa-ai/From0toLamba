@@ -326,7 +326,7 @@ private fun PostMortemCard(project: Project, postMortem: PostMortemReport?, isGe
                     Text(Strings.t("detail.postmortem.archetype"), style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
-                        project.personaArchetype.displayName,   // fixed: use Russian display name
+                        Strings.t("persona.${project.personaArchetype.name}"),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )

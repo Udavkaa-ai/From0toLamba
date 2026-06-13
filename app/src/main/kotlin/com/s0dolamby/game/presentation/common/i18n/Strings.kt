@@ -69,6 +69,15 @@ object Strings {
         "today.soon" to "скоро",
         "today.leaderboard.hint" to "Здесь появятся вкладки «Злато» и «Связи» с топом купцов по общему состоянию и сумме отношений.",
 
+        // Архетипы
+        "persona.BURATINO" to "Буратино",
+        "persona.BOYARIN" to "Боярин",
+        "persona.KOLOBOK" to "Колобок",
+        "persona.KOSCHEI" to "Кощей",
+        "persona.ZOLUSHKA" to "Золушка",
+        "persona.BABA_YAGA" to "Баба-Яга",
+        "persona.IVAN_DURAK" to "Иван-дурак",
+
         // Отношения
         "rel.title" to "Отношения с дельцами",
         "rel.subtitle" to "Уровни связи (0..%d) растут от закрытия дел дельца в плюс. Жетоны — мини-валюта архетипа: позже можно будет пропустить мини-игру.",
@@ -293,6 +302,15 @@ object Strings {
         "today.leaderboard" to "👑 Merchant ranking",
         "today.soon" to "soon",
         "today.leaderboard.hint" to "Tabs «Gold» and «Bonds» will appear here — top merchants by total wealth and total bond strength.",
+
+        // Archetypes (transliterated Russian fairytale names)
+        "persona.BURATINO" to "Buratino",
+        "persona.BOYARIN" to "Boyarin",
+        "persona.KOLOBOK" to "Kolobok",
+        "persona.KOSCHEI" to "Koschei",
+        "persona.ZOLUSHKA" to "Zolushka",
+        "persona.BABA_YAGA" to "Baba Yaga",
+        "persona.IVAN_DURAK" to "Ivan the Fool",
 
         // Relationships
         "rel.title" to "Merchant relations",

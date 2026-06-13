@@ -204,14 +204,19 @@ private fun HallRow(icon: String, title: String, value: String, body: String, co
     }
 }
 
-private fun archetypeName(arch: com.s0dolamby.game.domain.model.PersonaArchetype): String = when (arch) {
-    com.s0dolamby.game.domain.model.PersonaArchetype.BURATINO -> "🪆 Буратино"
-    com.s0dolamby.game.domain.model.PersonaArchetype.BOYARIN -> "👑 Боярин"
-    com.s0dolamby.game.domain.model.PersonaArchetype.KOLOBOK -> "🤗 Колобок"
-    com.s0dolamby.game.domain.model.PersonaArchetype.KOSCHEI -> "💀 Кощей"
-    com.s0dolamby.game.domain.model.PersonaArchetype.ZOLUSHKA -> "👠 Золушка"
-    com.s0dolamby.game.domain.model.PersonaArchetype.BABA_YAGA -> "🧙 Баба-Яга"
-    com.s0dolamby.game.domain.model.PersonaArchetype.IVAN_DURAK -> "🃏 Иван-дурак"
+@Composable
+@androidx.compose.runtime.ReadOnlyComposable
+private fun archetypeName(arch: com.s0dolamby.game.domain.model.PersonaArchetype): String {
+    val emoji = when (arch) {
+        com.s0dolamby.game.domain.model.PersonaArchetype.BURATINO -> "🪆"
+        com.s0dolamby.game.domain.model.PersonaArchetype.BOYARIN -> "👑"
+        com.s0dolamby.game.domain.model.PersonaArchetype.KOLOBOK -> "🤗"
+        com.s0dolamby.game.domain.model.PersonaArchetype.KOSCHEI -> "💀"
+        com.s0dolamby.game.domain.model.PersonaArchetype.ZOLUSHKA -> "👠"
+        com.s0dolamby.game.domain.model.PersonaArchetype.BABA_YAGA -> "🧙"
+        com.s0dolamby.game.domain.model.PersonaArchetype.IVAN_DURAK -> "🃏"
+    }
+    return "$emoji ${Strings.t("persona.${arch.name}")}"
 }
 
 // ─── Подвиги ─────────────────────────────────────────────────────────────────
