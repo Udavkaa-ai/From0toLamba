@@ -1,8 +1,17 @@
 package com.s0dolamby.game.presentation.portfolio
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
+import com.s0dolamby.game.presentation.common.components.rememberBannerUrl
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Lock
@@ -196,43 +205,101 @@ private fun PortfolioProjectCard(
     onWithdraw: () -> Unit
 ) {
     val pnl = project.currentValueRubles - project.investedAmountRubles
+    val profitPercent = if (project.investedAmountRubles > 0) {
+        (project.currentValueRubles - project.investedAmountRubles) / project.investedAmountRubles * 100.0
+    } else 0.0
+    val hasFee = project.type == ProjectType.CARD_GAME || project.type == ProjectType.TREASURE_HUNT
+    val bannerUrl = rememberBannerUrl(project.personaArchetype, project.type, project.id)
 
     FairyCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+        // Баннер дела — full-width картинка как в TG.
+        if (bannerUrl != null) {
+            AsyncImage(
+                model = bannerUrl,
+                contentDescription = project.claimedName,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp)
+                    .clip(RoundedCornerShape(10.dp))
+            )
+            Spacer(Modifier.height(10.dp))
+        }
+        // Заголовок + текущая стоимость / профит%
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top
         ) {
-            Text(project.claimedName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                if (project.isWithdrawalLocked) {
-                    Icon(Icons.Default.Lock, contentDescription = "Вывод заблокирован",
-                        tint = Warning, modifier = Modifier.size(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    project.claimedName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = FairyGold
+                )
+                Text(
+                    "${project.developerName} · ${project.daysSinceJoined} дн.",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color.White.copy(alpha = 0.55f)
+                )
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (project.isWithdrawalLocked) {
+                        Icon(Icons.Default.Lock, "Вывод заблокирован", tint = Warning, modifier = Modifier.size(14.dp))
+                    }
+                    Text("Вложено", color = Color.White.copy(alpha = 0.55f), fontSize = 10.sp)
                 }
                 Text(
+                    "%.0f г".format(project.investedAmountRubles),
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 12.sp
+                )
+                Text(
                     "%.0f г".format(project.currentValueRubles),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = if (pnl >= 0) Success else Error,
+                    color = FairyGold,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
+                )
+                Text(
+                    "%+.1f%%".format(profitPercent),
+                    color = if (pnl >= 0) Success else Error,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
         }
-        Text(
-            "Вложено: %.0f г • День ${project.daysSinceJoined}".format(project.investedAmountRubles),
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color.White.copy(alpha = 0.6f)
-        )
-        Text(
-            "П&У: %+.0f г".format(pnl),
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (pnl >= 0) Success else Error,
-            fontWeight = FontWeight.Medium
-        )
+
+        // Спарклайн стоимости (через apyHistory как прокси) — рисуем
+        // только если есть ≥2 точек истории.
+        if (project.apyHistory.size >= 2 || project.userCountHistory.size >= 2) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                "История стоимости",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.White.copy(alpha = 0.5f)
+            )
+            Spacer(Modifier.height(4.dp))
+            DualSparkline(
+                primary = project.apyHistory.map { it.toFloat() },
+                secondary = project.userCountHistory.map { it.toFloat() },
+                modifier = Modifier.fillMaxWidth().height(54.dp)
+            )
+            if (project.currentUserCount > 0) {
+                Text(
+                    "👥 ${formatCountShort(project.currentUserCount)} вкладчиков",
+                    color = Color.White.copy(alpha = 0.55f),
+                    fontSize = 11.sp,
+                    modifier = Modifier.padding(top = 2.dp)
+                )
+            }
+        }
 
         if (project.isWithdrawalLocked) {
             Surface(color = Warning.copy(alpha = 0.15f), shape = MaterialTheme.shapes.small) {
                 Text(
-                    "Вывод заблокирован — проект испытывает трудности",
+                    "🔒 Вывод заблокирован — проект испытывает трудности",
                     style = MaterialTheme.typography.labelSmall,
                     color = Warning,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -241,30 +308,91 @@ private fun PortfolioProjectCard(
         }
 
         Spacer(Modifier.height(4.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(
+        // Три кнопки одной плиткой как в TG: Довложить / Вывести часть / Покинуть.
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+            Button(
                 onClick = onAddFunds,
                 modifier = Modifier.weight(1f),
                 enabled = !project.isWithdrawalLocked,
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
-                border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.4f))
-            ) { Text("Довложить") }
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = FairyGold,
+                    contentColor = Color(0xFF1A0A00),
+                    disabledContainerColor = FairyGold.copy(alpha = 0.35f)
+                ),
+                contentPadding = PaddingValues(vertical = 6.dp)
+            ) { Text("Довложить", fontSize = 12.sp, fontWeight = FontWeight.SemiBold) }
             OutlinedButton(
                 onClick = onWithdraw,
                 modifier = Modifier.weight(1f),
                 enabled = !project.isWithdrawalLocked,
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
-                border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.4f))
-            ) { Text("Вывести") }
+                border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f)),
+                contentPadding = PaddingValues(vertical = 6.dp)
+            ) { Text("Вывести часть", fontSize = 12.sp) }
+            OutlinedButton(
+                onClick = onExit,
+                modifier = Modifier.weight(1f),
+                enabled = !project.isWithdrawalLocked,
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Error),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Error.copy(alpha = 0.5f)),
+                contentPadding = PaddingValues(vertical = 6.dp)
+            ) { Text("Покинуть", fontSize = 12.sp) }
         }
-        OutlinedButton(
-            onClick = onExit,
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !project.isWithdrawalLocked,
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = Error),
-            border = androidx.compose.foundation.BorderStroke(1.dp, Error.copy(alpha = 0.4f))
-        ) { Text("Покинуть дело") }
+        if (hasFee) {
+            Text(
+                "ⓘ Комиссия 25% с каждого вывода",
+                color = Color.White.copy(alpha = 0.45f),
+                fontSize = 10.sp
+            )
+        }
     }
+}
+
+@Composable
+private fun DualSparkline(
+    primary: List<Float>,
+    secondary: List<Float>,
+    modifier: Modifier = Modifier
+) {
+    val primaryNorm = primary.normalize()
+    val secondaryNorm = secondary.normalize()
+    val primaryColor = Success
+    val secondaryColor = FairyGold.copy(alpha = 0.6f)
+    Canvas(modifier = modifier) {
+        if (primaryNorm.size >= 2) drawPolyline(primaryNorm, primaryColor, dashed = false)
+        if (secondaryNorm.size >= 2) drawPolyline(secondaryNorm, secondaryColor, dashed = true)
+    }
+}
+
+private fun List<Float>.normalize(): List<Float> {
+    if (isEmpty()) return emptyList()
+    val mn = minOrNull()!!
+    val mx = maxOrNull()!!
+    val range = (mx - mn).takeIf { it > 0.0001f } ?: 1f
+    return map { (it - mn) / range }
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawPolyline(
+    values: List<Float>,
+    color: Color,
+    dashed: Boolean
+) {
+    val path = Path()
+    values.forEachIndexed { i, v ->
+        val x = i.toFloat() / (values.size - 1) * size.width
+        val y = (1f - v) * size.height
+        if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+    }
+    val pathEffect = if (dashed) {
+        androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(8f, 8f))
+    } else null
+    drawPath(path, color, style = Stroke(width = 2.5.dp.toPx(), pathEffect = pathEffect))
+}
+
+private fun formatCountShort(count: Int): String = when {
+    count >= 1_000_000 -> "%.1fM".format(count / 1_000_000.0)
+    count >= 1_000 -> "%.1fk".format(count / 1_000.0)
+    else -> "$count"
 }
 
 private fun formatRubles(amount: Double): String = when {
