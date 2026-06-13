@@ -26,6 +26,7 @@ import com.s0dolamby.game.domain.repository.AmaRepository
 import com.s0dolamby.game.domain.repository.ProjectRepository
 import com.s0dolamby.game.domain.repository.UpdateRepository
 import com.s0dolamby.game.presentation.common.components.ProjectBannerImage
+import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.Error
 import com.s0dolamby.game.presentation.common.theme.Success
 import com.s0dolamby.game.presentation.common.theme.Warning
@@ -102,8 +103,8 @@ fun ProjectDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(project?.claimedName ?: "Проект") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Назад") } }
+                title = { Text(project?.claimedName ?: Strings.t("detail.title.fallback")) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, Strings.t("btn.back")) } }
             )
         }
     ) { padding ->
@@ -143,7 +144,7 @@ fun ProjectDetailScreen(
 
             if (uiState.updates.isNotEmpty()) {
                 item {
-                    Text("История вестей", style = MaterialTheme.typography.titleMedium)
+                    Text(Strings.t("detail.section.history"), style = MaterialTheme.typography.titleMedium)
                 }
                 items(uiState.updates.reversed()) { update ->
                     UpdateHistoryItem(update = update)
@@ -157,7 +158,7 @@ fun ProjectDetailScreen(
 private fun DynamicsCard(project: Project) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Динамика", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(Strings.t("detail.section.dynamics"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
 
             if (project.userCountHistory.size >= 2) {
                 val first = project.userCountHistory.first()
@@ -165,9 +166,9 @@ private fun DynamicsCard(project: Project) {
                 val delta = last - first
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically) {
-                    Text("Пользователи", style = MaterialTheme.typography.bodyMedium,
+                    Text(Strings.t("detail.dyn.users"), style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("%+d за период".format(delta), style = MaterialTheme.typography.labelSmall,
+                    Text(Strings.t("detail.dyn.usersDelta", delta), style = MaterialTheme.typography.labelSmall,
                         color = if (delta >= 0) Success else Error)
                 }
                 SparklineChart(
@@ -181,9 +182,9 @@ private fun DynamicsCard(project: Project) {
                 val avgApy = project.apyHistory.average().toFloat()
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically) {
-                    Text("Доходность в день", style = MaterialTheme.typography.bodyMedium,
+                    Text(Strings.t("detail.dyn.dailyYield"), style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("~%.2f%% / день".format(avgApy), style = MaterialTheme.typography.labelSmall,
+                    Text(Strings.t("detail.dyn.dailyYieldVal", avgApy), style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary)
                 }
                 SparklineChart(
@@ -236,7 +237,7 @@ private fun ProjectInfoCard(project: Project) {
             ) {
                 Column {
                     Text(project.claimedName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Text("от ${project.developerName}", style = MaterialTheme.typography.bodyMedium,
+                    Text(Strings.t("detail.info.byOwner", project.developerName), style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Surface(
@@ -252,7 +253,7 @@ private fun ProjectInfoCard(project: Project) {
             }
             Text(project.description, style = MaterialTheme.typography.bodyMedium)
             Divider()
-            Text("Дорожная карта", style = MaterialTheme.typography.labelSmall,
+            Text(Strings.t("detail.info.roadmap"), style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
             project.roadmap.forEachIndexed { index, milestone ->
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -272,23 +273,23 @@ private fun LiveStatsCard(project: Project, onManageClick: (() -> Unit)?) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically) {
-                Text("Нынешнее положение", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(Strings.t("detail.section.live"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 if (project.isWithdrawalLocked) {
                     Row(verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         Icon(Icons.Default.Lock, null, tint = Warning, modifier = Modifier.size(14.dp))
-                        Text("Вывод закрыт", style = MaterialTheme.typography.labelSmall, color = Warning)
+                        Text(Strings.t("detail.withdrawal.closed"), style = MaterialTheme.typography.labelSmall, color = Warning)
                     }
                 }
             }
-            StatRow("Вложено", com.s0dolamby.game.presentation.common.format.formatGroshes(project.investedAmountRubles))
-            StatRow("Текущая стоимость", com.s0dolamby.game.presentation.common.format.formatGroshes(project.currentValueRubles))
-            StatRow("П&У", "%+.0f г".format(pnl), color = if (pnl >= 0) Success else Error)
-            StatRow("Дней в деле", "${project.daysSinceJoined}")
-            StatRow("Посул (APY)", "${project.claimedAPY.toInt()}%")
-            StatRow("Участников (заявлено)", formatCount(project.claimedUserCount))
+            StatRow(Strings.t("detail.stat.invested"), com.s0dolamby.game.presentation.common.format.formatGroshes(project.investedAmountRubles))
+            StatRow(Strings.t("detail.stat.current"), com.s0dolamby.game.presentation.common.format.formatGroshes(project.currentValueRubles))
+            StatRow(Strings.t("detail.stat.pnl"), "%+.0f г".format(pnl), color = if (pnl >= 0) Success else Error)
+            StatRow(Strings.t("detail.stat.days"), "${project.daysSinceJoined}")
+            StatRow(Strings.t("detail.stat.apy"), "${project.claimedAPY.toInt()}%")
+            StatRow(Strings.t("detail.stat.usersClaimed"), formatCount(project.claimedUserCount))
             if (project.currentUserCount > 0) {
-                StatRow("Участников (сейчас)", formatCount(project.currentUserCount))
+                StatRow(Strings.t("detail.stat.usersNow"), formatCount(project.currentUserCount))
             }
             if (onManageClick != null && project.investedAmountRubles > 0) {
                 Spacer(Modifier.height(4.dp))
@@ -297,11 +298,11 @@ private fun LiveStatsCard(project: Project, onManageClick: (() -> Unit)?) {
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !project.isWithdrawalLocked
                 ) {
-                    Text("Распорядиться вложением →")
+                    Text(Strings.t("detail.btn.manage"))
                 }
                 if (project.isWithdrawalLocked) {
                     Text(
-                        "Вывод и пополнение временно недоступны",
+                        Strings.t("detail.withdrawal.tempUnavail"),
                         style = MaterialTheme.typography.labelSmall,
                         color = Warning
                     )
@@ -318,11 +319,11 @@ private fun PostMortemCard(project: Project, postMortem: PostMortemReport?, isGe
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Итог — Разбор дела", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(Strings.t("detail.postmortem.title"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
 
             Surface(color = MaterialTheme.colorScheme.surface, shape = MaterialTheme.shapes.medium) {
                 Column(modifier = Modifier.padding(12.dp)) {
-                    Text("Архетип хозяина", style = MaterialTheme.typography.labelSmall,
+                    Text(Strings.t("detail.postmortem.archetype"), style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
                         project.personaArchetype.displayName,   // fixed: use Russian display name
@@ -334,7 +335,7 @@ private fun PostMortemCard(project: Project, postMortem: PostMortemReport?, isGe
 
             Surface(color = MaterialTheme.colorScheme.surface, shape = MaterialTheme.shapes.medium) {
                 Column(modifier = Modifier.padding(12.dp)) {
-                    Text("Судьба дела", style = MaterialTheme.typography.labelSmall,
+                    Text(Strings.t("detail.postmortem.fate"), style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
                         project.fate.displayName,
@@ -346,7 +347,7 @@ private fun PostMortemCard(project: Project, postMortem: PostMortemReport?, isGe
             }
 
             Divider()
-            Text("Разбор старца-наставника", style = MaterialTheme.typography.labelSmall,
+            Text(Strings.t("detail.postmortem.analysis"), style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
             when {
                 postMortem != null -> Text(postMortem.analysis, style = MaterialTheme.typography.bodyMedium)
@@ -359,13 +360,13 @@ private fun PostMortemCard(project: Project, postMortem: PostMortemReport?, isGe
                         strokeWidth = 2.dp
                     )
                     Text(
-                        "Старец размышляет о сделке…",
+                        Strings.t("detail.postmortem.thinking"),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 else -> Text(
-                    "Разбор пока не доступен (проверь связь с OpenRouter и попробуй вернуться).",
+                    Strings.t("detail.postmortem.unavailable"),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -383,7 +384,7 @@ private fun UpdateHistoryItem(update: DailyUpdate) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(update.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                Text("День ${update.day}", style = MaterialTheme.typography.labelSmall,
+                Text(Strings.t("detail.day", update.day), style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Text(update.body, style = MaterialTheme.typography.bodyMedium,
