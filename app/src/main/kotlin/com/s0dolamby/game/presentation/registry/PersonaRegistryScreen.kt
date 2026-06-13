@@ -33,7 +33,9 @@ data class PersonaEntry(
     val archetype: PersonaArchetype,
     val encountered: Boolean,
     val timesIdentified: Int,
-    val projectsClosed: Int
+    val projectsClosed: Int,
+    val tieLevel: Int = 0,
+    val tokens: Int = 0
 )
 
 data class RegistryUiState(
@@ -44,25 +46,31 @@ data class RegistryUiState(
 
 @HiltViewModel
 class PersonaRegistryViewModel @Inject constructor(
-    private val projectRepository: ProjectRepository
+    private val projectRepository: ProjectRepository,
+    private val gameStateRepository: com.s0dolamby.game.domain.repository.GameStateRepository
 ) : ViewModel() {
 
     val uiState: StateFlow<RegistryUiState> = combine(
         projectRepository.getClosedProjects(),
-        projectRepository.getActiveProjects()
-    ) { closed, active ->
+        projectRepository.getActiveProjects(),
+        gameStateRepository.observeGameState()
+    ) { closed, active, state ->
         // Архетип открывается, когда дело закрылось с вложенными грошами
-        // (либо живёт сейчас как активное).
+        // (либо живёт сейчас как активное), либо когда есть связь/жетон.
         val unlockedClosed = closed.filter { it.investedAmountRubles > 0 }
         val allUnlocked = (unlockedClosed + active).distinctBy { it.id }
 
         val personas = PersonaArchetype.values().map { archetype ->
             val projects = allUnlocked.filter { it.personaArchetype == archetype }
+            val tie = state.tieLevels[archetype] ?: 0
+            val tokens = state.archetypeTokens[archetype] ?: 0
             PersonaEntry(
                 archetype = archetype,
-                encountered = projects.isNotEmpty(),
+                encountered = projects.isNotEmpty() || tie > 0 || tokens > 0,
                 timesIdentified = 0,
-                projectsClosed = unlockedClosed.count { it.personaArchetype == archetype }
+                projectsClosed = unlockedClosed.count { it.personaArchetype == archetype },
+                tieLevel = tie,
+                tokens = tokens
             )
         }
 
@@ -238,12 +246,33 @@ private fun PersonaCard(entry: PersonaEntry) {
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White.copy(alpha = 0.65f)
                 )
-                if (entry.projectsClosed > 0) {
-                    Text(
-                        "Встречено дел: ${entry.projectsClosed}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = FairyGold.copy(alpha = 0.7f)
-                    )
+                Row(
+                    modifier = Modifier.padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (entry.tieLevel > 0) {
+                        Text(
+                            "🤝 ${entry.tieLevel}/10",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = FairyGold,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    if (entry.tokens > 0) {
+                        Text(
+                            "🪙 ${entry.tokens}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = FairyGold
+                        )
+                    }
+                    if (entry.projectsClosed > 0) {
+                        Text(
+                            "📜 ${entry.projectsClosed}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White.copy(alpha = 0.6f)
+                        )
+                    }
                 }
             }
         }
