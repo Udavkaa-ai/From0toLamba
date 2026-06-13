@@ -275,7 +275,10 @@ private fun HomeHeader(
                 Strings.t("home.title"),
                 fontSize = 28.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = FairyGold
+                // primary — переключаемый акцент темы; в DARK_FAIRY = FairyGold,
+                // в WARM_FAIRY = более светлый медовый. Делает переключатель
+                // тем визуально заметным на главной.
+                color = MaterialTheme.colorScheme.primary
             )
             Spacer(Modifier.height(4.dp))
             val inner = if (nickname.isNotBlank()) {
@@ -377,8 +380,10 @@ private fun BalanceCard(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            EnchantedPurple.copy(alpha = 0.88f),
-                            NightBlue.copy(alpha = 0.95f)
+                            // primaryContainer = EnchantedPurple в DARK, warm wood в WARM
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.88f),
+                            // background = NightBlue в DARK, deep chocolate в WARM
+                            MaterialTheme.colorScheme.background.copy(alpha = 0.95f)
                         )
                     )
                 )
@@ -405,7 +410,7 @@ private fun BalanceCard(
                 ) { text ->
                     Text(
                         text,
-                        color = FairyGold,
+                        color = MaterialTheme.colorScheme.primary,
                         fontSize = 36.sp,
                         fontWeight = FontWeight.ExtraBold
                     )
@@ -446,8 +451,8 @@ private fun MerchantRelationsCard(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            EnchantedPurple.copy(alpha = 0.88f),
-                            NightBlue.copy(alpha = 0.95f)
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.88f),
+                            MaterialTheme.colorScheme.background.copy(alpha = 0.95f)
                         )
                     )
                 )
@@ -631,8 +636,8 @@ private fun ActiveProjectCardCompact(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            EnchantedPurple.copy(alpha = 0.88f),
-                            NightBlue.copy(alpha = 0.95f)
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.88f),
+                            MaterialTheme.colorScheme.background.copy(alpha = 0.95f)
                         )
                     )
                 )
@@ -717,8 +722,8 @@ private fun InboxPromoCard(onClick: () -> Unit) {
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            EnchantedPurple.copy(alpha = 0.88f),
-                            NightBlue.copy(alpha = 0.95f)
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.88f),
+                            MaterialTheme.colorScheme.background.copy(alpha = 0.95f)
                         )
                     )
                 )
