@@ -8,5 +8,7 @@ import com.s0dolamby.game.domain.model.DEFAULT_TEXT_MODEL
 data class SettingsEntity(
     @PrimaryKey val id: Int = 1,
     val textModel: String = DEFAULT_TEXT_MODEL,
-    val imageGenerationEnabled: Boolean = false
+    val imageGenerationEnabled: Boolean = false,
+    @androidx.room.ColumnInfo(defaultValue = "''")
+    val nickname: String = ""
 )

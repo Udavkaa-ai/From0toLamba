@@ -14,15 +14,31 @@ class SettingsRepositoryImpl @Inject constructor(
         val entity = settingsDao.getSettings() ?: return AppSettings()
         return AppSettings(
             textModel = entity.textModel,
-            imageGenerationEnabled = entity.imageGenerationEnabled
+            imageGenerationEnabled = entity.imageGenerationEnabled,
+            nickname = entity.nickname
         )
     }
+
+    override fun observeSettings(): kotlinx.coroutines.flow.Flow<AppSettings> =
+        kotlinx.coroutines.flow.flow {
+            settingsDao.observeSettings().collect { entity ->
+                emit(
+                    if (entity == null) AppSettings()
+                    else AppSettings(
+                        textModel = entity.textModel,
+                        imageGenerationEnabled = entity.imageGenerationEnabled,
+                        nickname = entity.nickname
+                    )
+                )
+            }
+        }
 
     override suspend fun updateSettings(settings: AppSettings) {
         settingsDao.upsert(
             SettingsEntity(
                 textModel = settings.textModel,
-                imageGenerationEnabled = settings.imageGenerationEnabled
+                imageGenerationEnabled = settings.imageGenerationEnabled,
+                nickname = settings.nickname.take(20).trim()
             )
         )
     }

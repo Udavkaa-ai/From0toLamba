@@ -6,6 +6,7 @@ import com.s0dolamby.game.domain.model.DailyUpdate
 import com.s0dolamby.game.domain.model.GameState
 import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.s0dolamby.game.domain.repository.ProjectRepository
+import com.s0dolamby.game.domain.repository.SettingsRepository
 import com.s0dolamby.game.domain.usecase.AdvanceDayUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -16,11 +17,17 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val gameStateRepository: GameStateRepository,
     private val projectRepository: ProjectRepository,
-    private val advanceDayUseCase: AdvanceDayUseCase
+    private val advanceDayUseCase: AdvanceDayUseCase,
+    settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     val gameState: StateFlow<GameState?> = gameStateRepository.observeGameState()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    /** Прозвище игрока — для шапки главной (по умолчанию «Гость»). */
+    val nickname: StateFlow<String> = settingsRepository.observeSettings()
+        .map { it.nickname }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "")
 
     /** Кумулятивное «Дел взято» — активные + закрытые с инвестицией. */
     val dealsTakenCount: StateFlow<Int> = combine(

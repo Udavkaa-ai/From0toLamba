@@ -11,6 +11,9 @@ interface SettingsDao {
     @Query("SELECT * FROM settings WHERE id = 1")
     suspend fun getSettings(): SettingsEntity?
 
+    @Query("SELECT * FROM settings WHERE id = 1")
+    fun observeSettings(): kotlinx.coroutines.flow.Flow<SettingsEntity?>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(settings: SettingsEntity)
 }

@@ -2,7 +2,9 @@ package com.s0dolamby.game.domain.model
 
 data class AppSettings(
     val textModel: String = DEFAULT_TEXT_MODEL,
-    val imageGenerationEnabled: Boolean = false
+    val imageGenerationEnabled: Boolean = false,
+    /** Прозвище игрока — показывается на главной и в Зале славы. Пусто = «Гость». */
+    val nickname: String = ""
 )
 
 data class ModelOption(val label: String, val modelId: String)

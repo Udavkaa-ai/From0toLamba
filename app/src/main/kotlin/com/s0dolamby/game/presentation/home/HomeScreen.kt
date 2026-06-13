@@ -86,6 +86,7 @@ fun HomeScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val pendingUpdateCards by viewModel.pendingUpdateCards.collectAsState()
     val dealsTaken by viewModel.dealsTakenCount.collectAsState()
+    val nickname by viewModel.nickname.collectAsState()
 
     Box(modifier = Modifier.fillMaxSize()) {
         // ── фон + оверлей + искры ──────────────────────────────────────────
@@ -130,6 +131,7 @@ fun HomeScreen(
                     HomeHeader(
                         day = gameState?.currentDay ?: 1,
                         rank = gameState?.investorRank?.displayName ?: "Скоморох",
+                        nickname = nickname,
                         onSettingsClick = onSettingsClick
                     )
                 }
@@ -260,6 +262,7 @@ fun HomeScreen(
 private fun HomeHeader(
     day: Int,
     rank: String,
+    nickname: String,
     onSettingsClick: () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxWidth()) {
@@ -274,8 +277,9 @@ private fun HomeHeader(
                 color = FairyGold
             )
             Spacer(Modifier.height(4.dp))
+            val nickPrefix = if (nickname.isNotBlank()) "$nickname · " else ""
             Text(
-                "✦ День $day · $rank ✦",
+                "✦ ${nickPrefix}День $day · $rank ✦",
                 fontSize = 12.sp,
                 color = Color.White.copy(alpha = 0.55f)
             )

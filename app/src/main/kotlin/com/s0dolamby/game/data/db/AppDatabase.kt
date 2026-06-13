@@ -23,7 +23,8 @@ import com.s0dolamby.game.data.db.entity.*
     // v14: добавлены tieLevelsJson / archetypeTokensJson в game_state
     // (отношения с дельцами + жетоны архетипов).
     // v15: добавлен unlockedAchievementsJson в game_state (каталог подвигов).
-    version = 15,
+    // v16: добавлен nickname в settings (прозвище игрока на главной).
+    version = 16,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

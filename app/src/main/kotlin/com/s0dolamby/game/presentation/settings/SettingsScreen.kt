@@ -85,6 +85,39 @@ fun SettingsScreen(
             ) {
                 Spacer(Modifier.height(4.dp))
 
+                // ── Прозвище игрока ────────────────────────────────────
+                FairyCard(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        "🧑‍🎤 Прозвище купца",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = FairyGold,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        "Покажем в шапке главной и в Зале славы. До 20 знаков.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.6f)
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    OutlinedTextField(
+                        value = uiState.settings.nickname,
+                        onValueChange = viewModel::setNickname,
+                        singleLine = true,
+                        placeholder = { Text("Гость") },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = FairyGold,
+                            unfocusedBorderColor = FairyGold.copy(alpha = 0.3f),
+                            cursorColor = FairyGold,
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedContainerColor = Color.White.copy(alpha = 0.05f),
+                            unfocusedContainerColor = Color.White.copy(alpha = 0.03f)
+                        )
+                    )
+                }
+
                 // ── Модель текста ──────────────────────────────────────
                 FairyCard(modifier = Modifier.fillMaxWidth()) {
                     Text(
