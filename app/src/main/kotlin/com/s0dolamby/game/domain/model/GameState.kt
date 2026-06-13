@@ -30,5 +30,11 @@ data class GameState(
     val isOnboardingComplete: Boolean = false,
     val balanceHistory: List<Double> = emptyList(),
     val investedHistory: List<Double> = emptyList(),
-    val pendingRankUp: InvestorRank? = null
+    val pendingRankUp: InvestorRank? = null,
+    /** Ежедневный стрик (растёт +1 каждый день, когда юзер заходит). */
+    val loginStreak: Int = 0,
+    /** YYYY-MM-DD MSK — день когда стрик обновлялся в последний раз. */
+    val lastSeenDay: String? = null,
+    /** YYYY-MM-DD MSK — день последней забранной ежедневной награды. */
+    val lastDailyClaim: String? = null
 )

@@ -16,6 +16,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.s0dolamby.game.domain.today.TodayRewards
 import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
@@ -23,18 +25,33 @@ import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.NightBlue
 import com.s0dolamby.game.presentation.common.theme.Success
 
-/** Лестница серии — пороги бонусов как в TG todayService. */
-private val MILESTONES = listOf(3 to 50, 5 to 70, 7 to 100, 10 to 150, 15 to 300, 20 to 500, 30 to 1000)
+/** Лестница серии — пороги бонусов из TG todayService. */
+private val MILESTONES = TodayRewards.MILESTONES.toList().sortedBy { it.first }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TodayScreen() {
-    // Phase 1 — заглушка с правильной структурой. Логика стрика + claim
-    // подключается отдельным коммитом (TodayService + GameState поля
-    // loginStreak/lastDailyClaim уже частично в БД).
-    val streak = 0
-    val canClaim = false
-    val todayReward = 30
+fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
+    val ui by viewModel.uiState.collectAsState()
+    val streak = ui.loginStreak
+    val canClaim = ui.canClaim
+    val todayReward = ui.todayReward
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Сообщаем игроку, что награда забрана.
+    val claimed = ui.claimedTodayReward
+    LaunchedEffect(claimed) {
+        if (claimed != null) {
+            snackbarHostState.showSnackbar("🎁 +$claimed г — награда дня")
+            viewModel.clearClaimedReward()
+        }
+    }
+    val error = ui.error
+    LaunchedEffect(error) {
+        if (error != null) {
+            snackbarHostState.showSnackbar(error)
+            viewModel.clearError()
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize().background(NightBlue)) {
         Box(
@@ -53,6 +70,7 @@ fun TodayScreen() {
 
         Scaffold(
             containerColor = Color.Transparent,
+            snackbarHost = { SnackbarHost(snackbarHostState) },
             topBar = {
                 TopAppBar(
                     title = {
@@ -112,12 +130,31 @@ fun TodayScreen() {
                             )
                             OrnamentDivider()
                             if (canClaim) {
+                                val milestoneBonus = TodayRewards.milestoneBonus(streak)
                                 Button(
-                                    onClick = { /* TODO Phase 2: claim */ },
+                                    onClick = viewModel::claim,
                                     modifier = Modifier.fillMaxWidth(),
                                     colors = ButtonDefaults.buttonColors(containerColor = FairyGold)
                                 ) {
                                     Text("🎁  Забрать $todayReward г", color = NightBlue, fontWeight = FontWeight.Bold)
+                                }
+                                if (milestoneBonus > 0) {
+                                    Text(
+                                        "🎉 +$milestoneBonus г бонус за серию $streak дней",
+                                        color = FairyGold,
+                                        fontSize = 11.sp,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                                val nextMilestone = MILESTONES.firstOrNull { it.first > streak }
+                                if (nextMilestone != null) {
+                                    Text(
+                                        "До следующей вешки (день ${nextMilestone.first}, +${nextMilestone.second} г) — " +
+                                            "${nextMilestone.first - streak} дн.",
+                                        color = Color.White.copy(alpha = 0.5f),
+                                        fontSize = 11.sp,
+                                        textAlign = TextAlign.Center
+                                    )
                                 }
                             } else {
                                 Surface(
@@ -126,7 +163,7 @@ fun TodayScreen() {
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Text(
-                                        "Награда сегодня уже забрана",
+                                        "✅ Награда сегодня уже забрана",
                                         color = Success,
                                         fontSize = 13.sp,
                                         textAlign = TextAlign.Center,
@@ -135,13 +172,13 @@ fun TodayScreen() {
                                             .padding(vertical = 10.dp)
                                     )
                                 }
+                                Text(
+                                    "Возвращайся завтра — серия не оборвётся, если зайдёшь до конца следующего дня.",
+                                    color = Color.White.copy(alpha = 0.45f),
+                                    fontSize = 11.sp,
+                                    textAlign = TextAlign.Center
+                                )
                             }
-                            Text(
-                                "Логика стрика и наград подключится отдельным шагом.",
-                                color = Color.White.copy(alpha = 0.4f),
-                                fontSize = 11.sp,
-                                textAlign = TextAlign.Center
-                            )
                         }
                     }
                 }

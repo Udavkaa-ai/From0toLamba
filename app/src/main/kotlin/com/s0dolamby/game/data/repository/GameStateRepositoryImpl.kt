@@ -9,6 +9,7 @@ import com.s0dolamby.game.domain.repository.GameConfig
 import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.google.gson.Gson
 import com.s0dolamby.game.data.db.entity.toDomain
+import com.s0dolamby.game.domain.today.TodayRewards
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -50,7 +51,10 @@ class GameStateRepositoryImpl @Inject constructor(
                 investedHistory = parseDoubleHistory(state.investedHistory),
                 pendingRankUp = state.pendingRankUp?.let {
                     runCatching { InvestorRank.valueOf(it) }.getOrNull()
-                }
+                },
+                loginStreak = state.loginStreak,
+                lastSeenDay = state.lastSeenDay,
+                lastDailyClaim = state.lastDailyClaim
             )
         }
 
@@ -70,7 +74,10 @@ class GameStateRepositoryImpl @Inject constructor(
             dayStreak = state.dayStreak,
             isOnboardingComplete = state.isOnboardingComplete,
             balanceHistory = parseBalanceHistory(state.balanceHistory),
-            investedHistory = parseDoubleHistory(state.investedHistory)
+            investedHistory = parseDoubleHistory(state.investedHistory),
+            loginStreak = state.loginStreak,
+            lastSeenDay = state.lastSeenDay,
+            lastDailyClaim = state.lastDailyClaim
         )
     }
 
@@ -97,6 +104,33 @@ class GameStateRepositoryImpl @Inject constructor(
     }
 
     override suspend fun clearRankUpNotification() = playerDao.clearRankUpNotification()
+
+    override suspend fun ensureDailyVisit() {
+        val state = playerDao.getGameState() ?: return
+        val (newStreak, wasFirstVisit) = TodayRewards.computeOnVisit(state.lastSeenDay, state.loginStreak)
+        if (!wasFirstVisit) return
+        playerDao.update(state.copy(
+            loginStreak = newStreak,
+            lastSeenDay = TodayRewards.todayKey()
+        ))
+    }
+
+    override suspend fun claimDailyReward(): Result<Int> = runCatching {
+        val state = playerDao.getGameState() ?: error("GameState не инициализирован")
+        val today = TodayRewards.todayKey()
+        if (state.lastDailyClaim == today) error("Награда сегодня уже забрана")
+        // Сначала зафиксируем стрик за сегодня (на случай если игрок миновал
+        // tab «Сегодня» и сразу жмёт claim из push-уведомления в будущем).
+        val (streakNow, _) = TodayRewards.computeOnVisit(state.lastSeenDay, state.loginStreak)
+        val reward = TodayRewards.totalReward(streakNow)
+        playerDao.update(state.copy(
+            balance = state.balance + reward,
+            loginStreak = streakNow,
+            lastSeenDay = today,
+            lastDailyClaim = today
+        ))
+        reward
+    }
 
     override suspend fun updateBalance(newBalance: Double) =
         playerDao.updateBalance(newBalance)

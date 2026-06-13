@@ -18,4 +18,8 @@ interface GameStateRepository {
     suspend fun appendInvestedSnapshot(invested: Double)
     suspend fun updateRankIfNeeded()
     suspend fun clearRankUpNotification()
+    /** Обновить стрик + lastSeenDay при заходе на «Сегодня». No-op, если уже было сегодня. */
+    suspend fun ensureDailyVisit()
+    /** Забрать ежедневную награду. Возвращает сумму в грошах или ошибку «уже забрана». */
+    suspend fun claimDailyReward(): Result<Int>
 }
