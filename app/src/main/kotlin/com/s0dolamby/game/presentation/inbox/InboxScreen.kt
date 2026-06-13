@@ -42,9 +42,12 @@ fun InboxScreen(
     onPlayMinigame: (archetypeName: String, projectId: String) -> Unit,
     /** Альтернативный — «беседа за рекламу» (пока бесплатно, потом rewarded ad). */
     onChatAfterAd: (projectId: String) -> Unit,
+    /** Прямой проход в AMA — для уже пройденной мини-игры. */
+    onContinueToAma: (projectId: String) -> Unit = {},
     viewModel: InboxViewModel = hiltViewModel()
 ) {
     val projects by viewModel.inboxProjects.collectAsState()
+    val unlocks by viewModel.unlockOutcomes.collectAsState()
     var adPromptForProjectId by remember { mutableStateOf<String?>(null) }
 
     ScreenBackground(R.drawable.inbox_bg) {
@@ -115,10 +118,18 @@ fun InboxScreen(
                         initialOffsetY = { it / 2 }
                     ) + fadeIn(tween(280))
                 ) {
+                    val unlock = unlocks[project.id]
                     InboxProjectCard(
                         project = project,
+                        unlocked = unlock?.isWin == true,
+                        perfect = unlock?.isPerfect == true,
                         onPlayMinigame = {
-                            onPlayMinigame(project.personaArchetype.name, project.id)
+                            if (unlock?.isWin == true) {
+                                // Уже сыграно — сразу в беседу, мини-игру повторно не предлагаем.
+                                onContinueToAma(project.id)
+                            } else {
+                                onPlayMinigame(project.personaArchetype.name, project.id)
+                            }
                         },
                         onChatAfterAd = { adPromptForProjectId = project.id }
                     )
@@ -150,6 +161,8 @@ fun InboxScreen(
 @Composable
 private fun InboxProjectCard(
     project: Project,
+    unlocked: Boolean = false,
+    perfect: Boolean = false,
     onPlayMinigame: () -> Unit,
     onChatAfterAd: () -> Unit
 ) {
@@ -238,7 +251,14 @@ private fun InboxProjectCard(
 
         Spacer(Modifier.height(10.dp))
 
-        // Основная CTA — мини-игра дельца (золотая, на всю ширину)
+        // Если мини-игра уже пройдена — главная CTA меняется на «Вложить»
+        // и подсказывает результат. Альтернативную «беседу за рекламу»
+        // прячем — она была обходным путём.
+        val mainText = when {
+            perfect -> "✨ Идеал — подробности раскрыты, к беседе"
+            unlocked -> "💰 Можно вкладываться — к беседе"
+            else -> Strings.t("inbox.cta.minigame")
+        }
         Surface(
             modifier = Modifier.fillMaxWidth(),
             color = FairyGold.copy(alpha = 0.18f),
@@ -247,7 +267,7 @@ private fun InboxProjectCard(
             onClick = onPlayMinigame
         ) {
             Text(
-                Strings.t("inbox.cta.minigame"),
+                mainText,
                 color = FairyGold,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -257,26 +277,28 @@ private fun InboxProjectCard(
                     .padding(vertical = 10.dp)
             )
         }
-        Spacer(Modifier.height(6.dp))
-        // Альтернатива — беседа за просмотр рекламы (rewarded ad)
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            color = Color.White.copy(alpha = 0.06f),
-            shape = MaterialTheme.shapes.small,
-            border = androidx.compose.foundation.BorderStroke(
-                1.dp, Color.White.copy(alpha = 0.20f)
-            ),
-            onClick = onChatAfterAd
-        ) {
-            Text(
-                Strings.t("inbox.cta.ad"),
-                color = Color.White.copy(alpha = 0.78f),
-                fontSize = 12.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 9.dp)
-            )
+        if (!unlocked) {
+            Spacer(Modifier.height(6.dp))
+            // Альтернатива — беседа за просмотр рекламы (rewarded ad)
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = Color.White.copy(alpha = 0.06f),
+                shape = MaterialTheme.shapes.small,
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp, Color.White.copy(alpha = 0.20f)
+                ),
+                onClick = onChatAfterAd
+            ) {
+                Text(
+                    Strings.t("inbox.cta.ad"),
+                    color = Color.White.copy(alpha = 0.78f),
+                    fontSize = 12.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 9.dp)
+                )
+            }
         }
     }
 }

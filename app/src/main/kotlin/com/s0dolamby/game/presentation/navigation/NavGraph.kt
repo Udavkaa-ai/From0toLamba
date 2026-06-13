@@ -194,6 +194,10 @@ fun NavGraph() {
                     // Альтернативный вход: «реклама» (пока заглушка) → Ama без unlock.
                     // Игрок может поговорить, но кнопка инвеста по-прежнему «🎲 Испытать».
                     navController.navigate(Screen.Ama.createRoute(projectId))
+                },
+                onContinueToAma = { projectId ->
+                    // Мини-игра уже пройдена — пускаем сразу в беседу.
+                    navController.navigate(Screen.Ama.createRoute(projectId))
                 }
             )
         }
