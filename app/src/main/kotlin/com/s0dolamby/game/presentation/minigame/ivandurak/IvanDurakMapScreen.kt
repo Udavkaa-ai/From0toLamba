@@ -174,11 +174,11 @@ fun IvanDurakMapScreen(
         if (stage == MinigameStage.RESULT) {
             Spacer(Modifier.height(20.dp))
             Text(
-                "Поймано карт: $caught из $TOTAL_ROUNDS",
+                Strings.t("minigame.ivanCard.caughtTotal", caught, TOTAL_ROUNDS),
                 color = Color.White, fontSize = 14.sp
             )
             Text(
-                "Ошибок (не та карта или зевнул): $errors",
+                Strings.t("minigame.ivanCard.errorsLine", errors),
                 color = Color.White.copy(alpha = 0.7f), fontSize = 13.sp
             )
         }

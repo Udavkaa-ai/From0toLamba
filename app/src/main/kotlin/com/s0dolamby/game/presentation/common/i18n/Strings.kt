@@ -299,6 +299,8 @@ object Strings {
         "minigame.ivanCard.tagline" to "Иван кидает карту — найди такую же у себя!",
         "minigame.ivanCard.score" to "Поймано %d  ·  ошибок %d",
         "minigame.ivanCard.yourHand" to "Твоя рука:",
+        "minigame.ivanCard.caughtTotal" to "Поймано карт: %d из %d",
+        "minigame.ivanCard.errorsLine" to "Ошибок (не та карта или зевнул): %d",
 
         // Котёл Бабы-Яги
         "minigame.cauldron.memorize" to "Запомни рецепт · %d шагов",
@@ -883,6 +885,8 @@ object Strings {
         "minigame.ivanCard.tagline" to "Ivan throws a card — find the same one in your hand!",
         "minigame.ivanCard.score" to "Caught %d  ·  misses %d",
         "minigame.ivanCard.yourHand" to "Your hand:",
+        "minigame.ivanCard.caughtTotal" to "Cards caught: %d of %d",
+        "minigame.ivanCard.errorsLine" to "Mistakes (wrong card or missed): %d",
 
         // Baba Yaga's Cauldron
         "minigame.cauldron.memorize" to "Memorize the recipe · %d steps",
