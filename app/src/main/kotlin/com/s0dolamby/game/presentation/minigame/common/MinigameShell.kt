@@ -322,16 +322,16 @@ private fun ResultOverlay(
                 else -> "❌"
             }
             val title = when {
-                outcome.isPerfect -> "Идеально!"
-                outcome.isWin -> "Хорошо"
-                outcome.timeoutReached -> "Не успел"
-                else -> "Промах"
+                outcome.isPerfect -> Strings.t("minigame.result.perfect.title")
+                outcome.isWin -> Strings.t("minigame.result.win.title")
+                outcome.timeoutReached -> Strings.t("minigame.result.timeout.title")
+                else -> Strings.t("minigame.result.miss.title")
             }
             val body = when {
-                outcome.isPerfect -> "Все детали разглядел — даже хозяин удивился."
-                outcome.isWin -> "Один промах простителен. Получи свою долю."
-                outcome.timeoutReached -> "Время вышло, делец укатился."
-                else -> "Слишком много ошибок. Дельца просто так не возьмёшь."
+                outcome.isPerfect -> Strings.t("minigame.result.perfect.body")
+                outcome.isWin -> Strings.t("minigame.result.win.body")
+                outcome.timeoutReached -> Strings.t("minigame.result.timeout.body")
+                else -> Strings.t("minigame.result.miss.body")
             }
             Text(emoji, fontSize = 48.sp)
             Spacer(Modifier.height(8.dp))
@@ -355,7 +355,7 @@ private fun ResultOverlay(
                     )
                 ) {
                     Text(
-                        "🪙  Жетон ${archetype.displayLabel()}",
+                        Strings.t("minigame.result.tokenAward", Strings.t("persona.${archetype.name}")),
                         color = style.primary,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -365,7 +365,7 @@ private fun ResultOverlay(
             } else if (!outcome.isWin) {
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    "Тут позже появится «Смотреть рекламу — обойти»",
+                    Strings.t("minigame.result.adComing"),
                     color = Color.White.copy(alpha = 0.45f),
                     fontSize = 11.sp,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -379,8 +379,8 @@ private fun ResultOverlay(
                         containerColor = style.primary,
                         contentColor = Color(0xFF1A0A00)
                     )
-                ) { Text("Ещё раз", fontWeight = FontWeight.SemiBold) }
-                OutlinedButton(onClick = onClose) { Text("Закрыть") }
+                ) { Text(Strings.t("minigame.btn.again"), fontWeight = FontWeight.SemiBold) }
+                OutlinedButton(onClick = onClose) { Text(Strings.t("minigame.btn.close")) }
             }
         }
     }

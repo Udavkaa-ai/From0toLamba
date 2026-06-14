@@ -29,6 +29,7 @@ import androidx.lifecycle.viewModelScope
 import com.s0dolamby.game.data.minigame.MinigameUnlockStore
 import com.s0dolamby.game.domain.model.PersonaArchetype
 import com.s0dolamby.game.domain.repository.GameStateRepository
+import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.NightBlue
@@ -199,16 +200,14 @@ private fun IntroChoiceScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                "🤝  Знакомый делец",
+                Strings.t("gate.intro.title"),
                 color = FairyGold,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                "У тебя есть жетон $short — ${tokenCount} шт. " +
-                    "Можно сыграть в его мини-игру или заплатить 1 жетон, " +
-                    "чтобы дельца уважить и сразу подойти к делу.",
+                Strings.t("gate.intro.body", short, tokenCount),
                 color = Color.White.copy(alpha = 0.85f),
                 fontSize = 13.sp,
                 lineHeight = 18.sp,
@@ -221,18 +220,18 @@ private fun IntroChoiceScreen(
                 colors = ButtonDefaults.buttonColors(containerColor = FairyGold, contentColor = NightBlue),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("🪙  Заплатить 1 жетон $short", fontWeight = FontWeight.SemiBold)
+                Text(Strings.t("gate.intro.payToken", short), fontWeight = FontWeight.SemiBold)
             }
             Spacer(Modifier.height(8.dp))
             OutlinedButton(
                 onClick = onPlayMinigame,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("🎲  Сыграть в мини-игру", color = FairyGold)
+                Text(Strings.t("gate.intro.playGame"), color = FairyGold)
             }
             Spacer(Modifier.height(8.dp))
             OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
-                Text("Назад", color = Color.White.copy(alpha = 0.7f))
+                Text(Strings.t("btn.back"), color = Color.White.copy(alpha = 0.7f))
             }
         }
     }
@@ -247,18 +246,14 @@ private fun GateResultScreen(
     onPlayAgain: () -> Unit
 ) {
     val title = when {
-        outcome.isPerfect -> "✨ Идеально"
-        outcome.isWin -> "✓ Можно вкладываться"
-        else -> "✗ Дельца раскусить не вышло"
+        outcome.isPerfect -> Strings.t("gate.result.perfect.title")
+        outcome.isWin -> Strings.t("gate.result.win.title")
+        else -> Strings.t("gate.result.lose.title")
     }
     val body = when {
-        outcome.isPerfect ->
-            "Делец восхищён — раскрыл тебе и посул, и тип дела. " +
-                "Жетон ${archetype.shortName()} в копилку."
-        outcome.isWin ->
-            "Делец позволяет вложиться, но карт не раскрывает. Решай по чуйке."
-        else ->
-            "Делец отказывает в сделке. Тут позже появится «Смотреть рекламу — обойти»."
+        outcome.isPerfect -> Strings.t("gate.result.perfect.body", archetype.shortName())
+        outcome.isWin -> Strings.t("gate.result.win.body")
+        else -> Strings.t("gate.result.lose.body")
     }
     Box(
         modifier = Modifier
@@ -301,7 +296,7 @@ private fun GateResultScreen(
                         containerColor = FairyGold,
                         contentColor = NightBlue
                     )
-                ) { Text("Вложить гроши", fontWeight = FontWeight.SemiBold) }
+                ) { Text(Strings.t("gate.btn.investNow"), fontWeight = FontWeight.SemiBold) }
                 Spacer(Modifier.height(8.dp))
             } else {
                 Button(
@@ -310,20 +305,15 @@ private fun GateResultScreen(
                         containerColor = FairyGold,
                         contentColor = NightBlue
                     )
-                ) { Text("Сыграть ещё раз", fontWeight = FontWeight.SemiBold) }
+                ) { Text(Strings.t("gate.btn.playAgain"), fontWeight = FontWeight.SemiBold) }
                 Spacer(Modifier.height(8.dp))
             }
-            OutlinedButton(onClick = onBack) { Text("Назад") }
+            OutlinedButton(onClick = onBack) { Text(Strings.t("btn.back")) }
         }
     }
 }
 
-private fun PersonaArchetype.shortName(): String = when (this) {
-    PersonaArchetype.BURATINO -> "Буратино"
-    PersonaArchetype.BOYARIN -> "Боярина"
-    PersonaArchetype.KOSCHEI -> "Кощея"
-    PersonaArchetype.KOLOBOK -> "Колобка"
-    PersonaArchetype.ZOLUSHKA -> "Золушки"
-    PersonaArchetype.BABA_YAGA -> "Бабы-Яги"
-    PersonaArchetype.IVAN_DURAK -> "Ивана"
-}
+@Composable
+@androidx.compose.runtime.ReadOnlyComposable
+private fun PersonaArchetype.shortName(): String =
+    Strings.t("gate.shortName.${this.name}")
