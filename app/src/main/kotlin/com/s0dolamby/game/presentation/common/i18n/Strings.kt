@@ -320,6 +320,18 @@ object Strings {
         "loading.18" to "Кузнец кует новые монеты...",
         "loading.19" to "Странник шепчет страшные слухи...",
 
+        // Онбординг — 4 шага
+        "onboarding.step1.title" to "Добро пожаловать!",
+        "onboarding.step1.body" to "Ты — прохожий с пустым кошелём. Вокруг — дельцы с предложениями вложить гроши в их дела.\n\nБольшинство из них — мошенники. Твоя задача — научиться отличать честное дело от обмана и приумножить своё состояние.",
+        "onboarding.step2.title" to "Беседа с Дельцом",
+        "onboarding.step2.body" to "Прежде чем вложить гроши, поговори с Дельцом — хозяином дела.\n\nУ тебя до 10 вопросов. Делец знает судьбу своего дела заранее, но скрывает это. Читай между строк — ищи красные флаги и противоречия.",
+        "onboarding.step3.title" to "Как растёт купеческий чин",
+        "onboarding.step3.body" to "Чин — мера опыта на торговой ярмарке. Растёт по числу принятых дел:\n\n🐣 Скоморох — взято 0 дел\n📣 Купец — взято ≥ 5 дел\n🔍 Мудрец — взято ≥ 20 дел\n🦈 Боярин — взято ≥ 50 дел\n👑 Князь — взято ≥ 100 дел",
+        "onboarding.step4.title" to "Первый заработок!",
+        "onboarding.step4.body" to "За участие в первой беседе тебе выплачивается %d грошей — вне зависимости от того, вложил ли ты их.\n\nВпереди десятки дел. Каждый Делец обещает золотые горы. Приумножай казну и иди к чину Царя!",
+        "onboarding.btn.next" to "Далее  ✦",
+        "onboarding.btn.start" to "Войти в кабак  ✦",
+
         // Отношения
         "rel.title" to "Отношения с дельцами",
         "rel.subtitle" to "Уровни связи (0..%d) растут от закрытия дел дельца в плюс. Жетоны — мини-валюта архетипа: позже можно будет пропустить мини-игру.",
@@ -789,6 +801,18 @@ object Strings {
         "loading.17" to "Merchants haggle on the square...",
         "loading.18" to "The blacksmith forges new coins...",
         "loading.19" to "A wanderer whispers terrible rumors...",
+
+        // Onboarding — 4 steps
+        "onboarding.step1.title" to "Welcome!",
+        "onboarding.step1.body" to "You're a passerby with an empty purse. All around — merchants with offers to invest in their ventures.\n\nMost of them are scammers. Your job is to learn to tell an honest venture from a swindle and grow your wealth.",
+        "onboarding.step2.title" to "Chatting with a merchant",
+        "onboarding.step2.body" to "Before investing coins, talk to the merchant — the venture owner.\n\nYou have up to 10 questions. The merchant knows the fate of his venture in advance but hides it. Read between the lines — look for red flags and contradictions.",
+        "onboarding.step3.title" to "How the merchant rank grows",
+        "onboarding.step3.body" to "Your rank measures your experience at the trade fair. It grows with the number of ventures you take:\n\n🐣 Jester — 0 deals taken\n📣 Merchant — ≥ 5 deals taken\n🔍 Sage — ≥ 20 deals taken\n🦈 Boyar — ≥ 50 deals taken\n👑 Prince — ≥ 100 deals taken",
+        "onboarding.step4.title" to "Your first earnings!",
+        "onboarding.step4.body" to "For taking part in your first chat you receive %d coins — whether or not you actually invest them.\n\nDozens of ventures await. Every merchant promises golden mountains. Grow your treasury and climb to the rank of Tsar!",
+        "onboarding.btn.next" to "Next  ✦",
+        "onboarding.btn.start" to "Enter the tavern  ✦",
 
         // Relationships
         "rel.title" to "Merchant relations",

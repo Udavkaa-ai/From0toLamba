@@ -31,6 +31,7 @@ import com.s0dolamby.game.domain.usecase.InvestUseCase
 import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
+import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
@@ -75,23 +76,23 @@ fun OnboardingScreen(
 
     val steps = listOf(
         OnboardingStep(
-            title = "Добро пожаловать!",
-            body = "Ты — прохожий с пустым кошелём. Вокруг — дельцы с предложениями вложить гроши в их дела.\n\nБольшинство из них — мошенники. Твоя задача — научиться отличать честное дело от обмана и приумножить своё состояние.",
+            title = Strings.t("onboarding.step1.title"),
+            body = Strings.t("onboarding.step1.body"),
             emoji = "🍺"
         ),
         OnboardingStep(
-            title = "Беседа с Дельцом",
-            body = "Прежде чем вложить гроши, поговори с Дельцом — хозяином дела.\n\nУ тебя до 10 вопросов. Делец знает судьбу своего дела заранее, но скрывает это. Читай между строк — ищи красные флаги и противоречия.",
+            title = Strings.t("onboarding.step2.title"),
+            body = Strings.t("onboarding.step2.body"),
             emoji = "💬"
         ),
         OnboardingStep(
-            title = "Как растёт купеческий чин",
-            body = "Чин — мера опыта на торговой ярмарке. Растёт по числу принятых дел:\n\n🐣 Скоморох — взято 0 дел\n📣 Купец — взято ≥ 5 дел\n🔍 Мудрец — взято ≥ 20 дел\n🦈 Боярин — взято ≥ 50 дел\n👑 Князь — взято ≥ 100 дел",
+            title = Strings.t("onboarding.step3.title"),
+            body = Strings.t("onboarding.step3.body"),
             emoji = "🏆"
         ),
         OnboardingStep(
-            title = "Первый заработок!",
-            body = "За участие в первой беседе тебе выплачивается ${GameConfig.ONBOARDING_BONUS_RUBLES.toInt()} грошей — вне зависимости от того, вложил ли ты их.\n\nВпереди десятки дел. Каждый Делец обещает золотые горы. Приумножай казну и иди к чину Царя!",
+            title = Strings.t("onboarding.step4.title"),
+            body = Strings.t("onboarding.step4.body", GameConfig.ONBOARDING_BONUS_RUBLES.toInt()),
             emoji = "🎉"
         )
     )
@@ -223,7 +224,7 @@ fun OnboardingScreen(
                         Spacer(Modifier.width(8.dp))
                     }
                     Text(
-                        if (step < steps.size - 1) "Далее  ✦" else "Войти в кабак  ✦",
+                        if (step < steps.size - 1) Strings.t("onboarding.btn.next") else Strings.t("onboarding.btn.start"),
                         fontWeight = FontWeight.SemiBold
                     )
                 }
