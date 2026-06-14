@@ -804,7 +804,7 @@ private fun AdvanceDayButton(isLoading: Boolean, onClick: () -> Unit) {
         if (isLoading) {
             while (true) {
                 delay(2000)
-                phraseIndex = (phraseIndex + 1) % loadingPhrases.size
+                phraseIndex = (phraseIndex + 1) % LOADING_PHRASE_COUNT
             }
         }
     }
@@ -845,7 +845,7 @@ private fun AdvanceDayButton(isLoading: Boolean, onClick: () -> Unit) {
                     label = "loadingPhrase"
                 ) { idx ->
                     Text(
-                        loadingPhrases[idx],
+                        Strings.t("loading.$idx"),
                         fontSize = 13.sp,
                         color = FairyGold.copy(alpha = 0.75f)
                     )
@@ -1048,25 +1048,4 @@ private fun String.cleanRedFlag(): String =
         .trimEnd('.')
         .let { if (!it.endsWith('.') && !it.endsWith('!')) "$it." else it }
 
-private val loadingPhrases = listOf(
-    "Домовой пересчитывает монеты в казне...",
-    "Жар-Птица летит с новостями с ярмарки...",
-    "Кот учёный обходит дуб кругом...",
-    "Кощей прячет свои гроши в игле...",
-    "Баба Яга читает книгу учёта...",
-    "Колобок катится за новым вкладчиком...",
-    "Водяной замораживает чужие гроши...",
-    "Зеркальце ищет честных хозяев...",
-    "Хитрая лиса считает долги в кабаке...",
-    "Буратино закапывает монеты на Поле Чудес...",
-    "Иван ищет третью попытку...",
-    "Боярин составляет пышную грамоту...",
-    "Карабас гарантирует выплаты лично...",
-    "Леший путает следы должников...",
-    "Мудрый старец разбирает кейс...",
-    "Глашатай кричит о новом деле...",
-    "Стражники допрашивают хозяина...",
-    "Купцы торгуются на площади...",
-    "Кузнец кует новые монеты...",
-    "Странник шепчет страшные слухи..."
-)
+private const val LOADING_PHRASE_COUNT = 20
