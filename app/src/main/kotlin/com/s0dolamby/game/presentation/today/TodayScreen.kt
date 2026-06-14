@@ -43,14 +43,15 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
     val claimed = ui.claimedTodayReward
     LaunchedEffect(claimed) {
         if (claimed != null) {
-            snackbarHostState.showSnackbar("🎁 +$claimed г — награда дня")
+            snackbarHostState.showSnackbar(Strings.t("today.snack.claimSuccess", claimed))
             viewModel.clearClaimedReward()
         }
     }
     val error = ui.error
+    val errorFallback = Strings.t("today.snack.claimError")
     LaunchedEffect(error) {
         if (error != null) {
-            snackbarHostState.showSnackbar(error)
+            snackbarHostState.showSnackbar(error.ifBlank { errorFallback })
             viewModel.clearError()
         }
     }
@@ -155,8 +156,7 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                                 val nextMilestone = MILESTONES.firstOrNull { it.first > streak }
                                 if (nextMilestone != null) {
                                     Text(
-                                        "До следующей вешки (день ${nextMilestone.first}, +${nextMilestone.second} г) — " +
-                                            "${nextMilestone.first - streak} дн.",
+                                        Strings.t("today.nextMilestone", nextMilestone.first, nextMilestone.second, nextMilestone.first - streak),
                                         color = Color.White.copy(alpha = 0.5f),
                                         fontSize = 11.sp,
                                         textAlign = TextAlign.Center

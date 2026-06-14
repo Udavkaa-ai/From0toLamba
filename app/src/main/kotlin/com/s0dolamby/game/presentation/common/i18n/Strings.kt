@@ -72,6 +72,9 @@ object Strings {
         "today.leaderboard" to "👑 Купеческий рейтинг",
         "today.soon" to "скоро",
         "today.leaderboard.hint" to "Здесь появятся вкладки «Злато» и «Связи» с топом купцов по общему состоянию и сумме отношений.",
+        "today.nextMilestone" to "До следующей вешки (день %d, +%d г) — %d дн.",
+        "today.snack.claimError" to "Не удалось забрать награду",
+        "today.snack.claimSuccess" to "🎁 +%d г — награда дня",
 
         // Архетипы
         "persona.BURATINO" to "Буратино",
@@ -572,6 +575,9 @@ object Strings {
         "today.leaderboard" to "👑 Merchant ranking",
         "today.soon" to "soon",
         "today.leaderboard.hint" to "Tabs «Gold» and «Bonds» will appear here — top merchants by total wealth and total bond strength.",
+        "today.nextMilestone" to "Next milestone (day %d, +%d c) — %d d.",
+        "today.snack.claimError" to "Couldn't claim the reward",
+        "today.snack.claimSuccess" to "🎁 +%d c — daily reward",
 
         // Archetypes (transliterated Russian fairytale names)
         "persona.BURATINO" to "Buratino",

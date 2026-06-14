@@ -50,7 +50,10 @@ class TodayViewModel @Inject constructor(
         viewModelScope.launch {
             gameStateRepository.claimDailyReward()
                 .onSuccess { reward -> _claimedTodayReward.value = reward }
-                .onFailure { err -> _error.value = err.message ?: "Не удалось забрать награду" }
+                // Пустая строка — сигнал «дефолтная ошибка, бери из словаря».
+                // Использовать i18n-ключ напрямую в ViewModel нельзя — там нет
+                // Compose-контекста; экран превратит "" → Strings.t(...).
+                .onFailure { err -> _error.value = err.message ?: "" }
         }
     }
 
