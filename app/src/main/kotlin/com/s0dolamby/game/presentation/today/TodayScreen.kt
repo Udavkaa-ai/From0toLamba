@@ -41,9 +41,10 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
 
     // Сообщаем игроку, что награда забрана.
     val claimed = ui.claimedTodayReward
+    val claimedMessage = claimed?.let { Strings.t("today.snack.claimSuccess", it) }
     LaunchedEffect(claimed) {
-        if (claimed != null) {
-            snackbarHostState.showSnackbar(Strings.t("today.snack.claimSuccess", claimed))
+        if (claimed != null && claimedMessage != null) {
+            snackbarHostState.showSnackbar(claimedMessage)
             viewModel.clearClaimedReward()
         }
     }
