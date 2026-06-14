@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.s0dolamby.game.domain.model.PersonaArchetype
+import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.minigame.common.ArchetypePalette
 import com.s0dolamby.game.presentation.minigame.common.MinigameOutcome
 import com.s0dolamby.game.presentation.minigame.common.MinigameShell
@@ -128,7 +129,7 @@ fun IvanDurakMapScreen(
 
     MinigameShell(
         archetype = PersonaArchetype.IVAN_DURAK,
-        gameTitle = "Подкинь карту",
+        gameTitle = Strings.t("minigame.title.ivanCard"),
         stage = stage,
         secondsLeft = if (stage == MinigameStage.RESULT) null else (TOTAL_ROUNDS - roundIdx),
         outcome = outcome,

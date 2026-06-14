@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.s0dolamby.game.domain.model.PersonaArchetype
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
+import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.NightBlue
 import com.s0dolamby.game.presentation.minigame.common.MinigameOutcome
@@ -323,7 +324,7 @@ fun GoldenKeyScreen(
 
     MinigameShell(
         archetype = PersonaArchetype.BURATINO,
-        gameTitle = "Золотой ключик",
+        gameTitle = Strings.t("minigame.title.goldenKey"),
         stage = stage,
         secondsLeft = secondsLeft,
         outcome = outcome,

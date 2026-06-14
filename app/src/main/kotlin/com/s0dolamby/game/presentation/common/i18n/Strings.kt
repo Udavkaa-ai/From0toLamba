@@ -275,6 +275,15 @@ object Strings {
         "minigame.btn.again" to "Ещё раз",
         "minigame.btn.close" to "Закрыть",
 
+        // Заголовки мини-игр (по архетипу хозяина)
+        "minigame.title.goldenKey" to "Золотой ключик",
+        "minigame.title.charter" to "Купеческая грамота",
+        "minigame.title.cauldron" to "Котёл Бабы-Яги",
+        "minigame.title.nora" to "Нора-нора-нора",
+        "minigame.title.memory" to "Цепь Кощея",
+        "minigame.title.coins" to "Перебери зерно",
+        "minigame.title.ivanCard" to "Подкинь карту",
+
         // Отношения
         "rel.title" to "Отношения с дельцами",
         "rel.subtitle" to "Уровни связи (0..%d) растут от закрытия дел дельца в плюс. Жетоны — мини-валюта архетипа: позже можно будет пропустить мини-игру.",
@@ -699,6 +708,15 @@ object Strings {
         "minigame.result.adComing" to "A «Watch ad — skip» option will appear here later",
         "minigame.btn.again" to "Again",
         "minigame.btn.close" to "Close",
+
+        // Minigame titles
+        "minigame.title.goldenKey" to "Golden Key",
+        "minigame.title.charter" to "Merchant's Charter",
+        "minigame.title.cauldron" to "Baba Yaga's Cauldron",
+        "minigame.title.nora" to "Burrow, Burrow, Burrow",
+        "minigame.title.memory" to "Koschei's Chain",
+        "minigame.title.coins" to "Sort the Grain",
+        "minigame.title.ivanCard" to "Match the Card",
 
         // Relationships
         "rel.title" to "Merchant relations",

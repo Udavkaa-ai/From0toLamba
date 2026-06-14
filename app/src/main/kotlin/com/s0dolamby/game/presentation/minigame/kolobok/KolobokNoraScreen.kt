@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.s0dolamby.game.domain.model.PersonaArchetype
+import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.minigame.common.ArchetypePalette
 import com.s0dolamby.game.presentation.minigame.common.MinigameOutcome
 import com.s0dolamby.game.presentation.minigame.common.MinigameShell
@@ -146,7 +147,7 @@ fun KolobokNoraScreen(
 
     MinigameShell(
         archetype = PersonaArchetype.KOLOBOK,
-        gameTitle = "Нора-нора-нора",
+        gameTitle = Strings.t("minigame.title.nora"),
         stage = stage,
         secondsLeft = if (stage == MinigameStage.RESULT) null else (TOTAL_ATTEMPTS - attemptIdx),
         outcome = outcome,

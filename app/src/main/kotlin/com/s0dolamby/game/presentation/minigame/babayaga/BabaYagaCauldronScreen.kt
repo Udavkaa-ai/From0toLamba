@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.s0dolamby.game.domain.model.PersonaArchetype
+import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.minigame.common.ArchetypePalette
 import com.s0dolamby.game.presentation.minigame.common.MinigameOutcome
 import com.s0dolamby.game.presentation.minigame.common.MinigameShell
@@ -130,7 +131,7 @@ fun BabaYagaCauldronScreen(
 
     MinigameShell(
         archetype = PersonaArchetype.BABA_YAGA,
-        gameTitle = "Котёл Бабы-Яги",
+        gameTitle = Strings.t("minigame.title.cauldron"),
         stage = stage,
         secondsLeft = if (stage == MinigameStage.RESULT) null else secondsLeft.coerceAtLeast(0),
         outcome = outcome,
