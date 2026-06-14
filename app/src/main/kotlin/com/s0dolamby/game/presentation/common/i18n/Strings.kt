@@ -352,6 +352,24 @@ object Strings {
         "arch.IVAN_DURAK.win" to "Молодец! У тебя с первого раза получилось.",
         "arch.IVAN_DURAK.lose" to "Не расстраивайся, я тоже с третьего раза догадался.",
 
+        // ЧАВО / Мини-вики — заголовки 13 статей + шапка
+        "wiki.toc.title" to "Мини-вики",
+        "wiki.toc.hint" to "Тыкни на статью или перейди по ссылке внутри текста.",
+        "wiki.related" to "Связанные статьи:",
+        "wiki.article.OVERVIEW" to "О чём игра?",
+        "wiki.article.CURRENCY" to "Гроши",
+        "wiki.article.MERCHANTS" to "Дельцы и архетипы",
+        "wiki.article.FATES" to "Судьбы дел",
+        "wiki.article.RELATIONS" to "Связи и жетоны",
+        "wiki.article.MINIGAMES" to "Мини-игры",
+        "wiki.article.AMA" to "Беседа с дельцом",
+        "wiki.article.ACHIEVEMENTS" to "Подвиги",
+        "wiki.article.STREAK" to "Стрик и серия",
+        "wiki.article.RANK" to "Купеческий чин",
+        "wiki.article.PORTFOLIO" to "Казна и вывод",
+        "wiki.article.AI" to "Откуда ответы дельцов",
+        "wiki.article.RESET" to "Сброс прогресса",
+
         // Плашка-приветствие при смене дня
         "daybreak.title" to "Утро дня %d",
         "daybreak.subtitle" to "Глашатай разносит вести с ярмарки",
@@ -917,6 +935,24 @@ object Strings {
         "arch.IVAN_DURAK.tagline" to "I'm trying for the third time. How am I doing?",
         "arch.IVAN_DURAK.win" to "Well done! You got it on the first try.",
         "arch.IVAN_DURAK.lose" to "Don't worry — I figured it out on the third try too.",
+
+        // Mini-wiki — 13 article titles + chrome
+        "wiki.toc.title" to "Mini-wiki",
+        "wiki.toc.hint" to "Tap an article or follow a link inside the text.",
+        "wiki.related" to "Related articles:",
+        "wiki.article.OVERVIEW" to "What's the game about?",
+        "wiki.article.CURRENCY" to "Coins",
+        "wiki.article.MERCHANTS" to "Merchants and archetypes",
+        "wiki.article.FATES" to "Venture fates",
+        "wiki.article.RELATIONS" to "Bonds and tokens",
+        "wiki.article.MINIGAMES" to "Mini-games",
+        "wiki.article.AMA" to "Chatting with a merchant",
+        "wiki.article.ACHIEVEMENTS" to "Feats",
+        "wiki.article.STREAK" to "Streaks and combos",
+        "wiki.article.RANK" to "Merchant rank",
+        "wiki.article.PORTFOLIO" to "Treasury and withdrawal",
+        "wiki.article.AI" to "Where merchant answers come from",
+        "wiki.article.RESET" to "Resetting progress",
 
         // Day-break greeting
         "daybreak.title" to "Morning of day %d",

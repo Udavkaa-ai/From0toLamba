@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 
 // ─── Каталог статей мини-вики ────────────────────────────────────────────────
@@ -219,7 +220,7 @@ fun FaqWikiSheet(onDismiss: () -> Unit) {
                 }
                 Text("📚", fontSize = 22.sp)
                 Text(
-                    if (current == null) "Мини-вики" else current!!.title,
+                    if (current == null) Strings.t("wiki.toc.title") else Strings.t("wiki.article.${current!!.name}"),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = FairyGold
@@ -241,7 +242,7 @@ fun FaqWikiSheet(onDismiss: () -> Unit) {
 @Composable
 private fun WikiToc(onSelect: (WikiArticle) -> Unit) {
     Text(
-        "Тыкни на статью или перейди по ссылке внутри текста.",
+        Strings.t("wiki.toc.hint"),
         style = MaterialTheme.typography.labelMedium,
         color = Color.Gray
     )
@@ -261,7 +262,7 @@ private fun WikiToc(onSelect: (WikiArticle) -> Unit) {
                 Text(article.emoji, fontSize = 18.sp)
                 Spacer(Modifier.width(10.dp))
                 Text(
-                    article.title,
+                    Strings.t("wiki.article.${article.name}"),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f)
@@ -310,7 +311,7 @@ private fun WikiArticleView(article: WikiArticle, onNavigate: (WikiArticle) -> U
     )
     Spacer(Modifier.height(16.dp))
     Text(
-        "Связанные статьи:",
+        Strings.t("wiki.related"),
         style = MaterialTheme.typography.labelSmall,
         color = Color.Gray
     )
@@ -323,7 +324,7 @@ private fun WikiArticleView(article: WikiArticle, onNavigate: (WikiArticle) -> U
         related.forEach { other ->
             AssistChip(
                 onClick = { onNavigate(other) },
-                label = { Text("${other.emoji} ${other.title}", fontSize = 11.sp) },
+                label = { Text("${other.emoji} ${Strings.t("wiki.article.${other.name}")}", fontSize = 11.sp) },
                 colors = AssistChipDefaults.assistChipColors(
                     containerColor = FairyGold.copy(alpha = 0.15f),
                     labelColor = FairyGold
