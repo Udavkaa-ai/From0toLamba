@@ -367,7 +367,7 @@ private fun MemorizeStage(key: GoldenKey, onReady: () -> Unit) {
     val swingY = (kotlin.math.sin(etalonSwingPhase * 2 * Math.PI) * 38f).toFloat()
     val swingZ = (kotlin.math.sin(etalonSwingPhase * 4 * Math.PI) * 6f).toFloat()
     Text(
-        "Запомни эталонный ключ",
+        Strings.t("minigame.goldenKey.memorize"),
         color = Color.White.copy(alpha = 0.85f), fontSize = 14.sp
     )
     Spacer(Modifier.height(16.dp))
@@ -394,7 +394,7 @@ private fun MemorizeStage(key: GoldenKey, onReady: () -> Unit) {
     }
     Spacer(Modifier.height(16.dp))
     Text(
-        "5 признаков: форма · цвет · зубчики · узор · кисточка",
+        Strings.t("minigame.goldenKey.features"),
         color = Color.White.copy(alpha = 0.65f), fontSize = 12.sp
     )
     Spacer(Modifier.height(20.dp))
@@ -402,7 +402,7 @@ private fun MemorizeStage(key: GoldenKey, onReady: () -> Unit) {
         onClick = onReady,
         colors = ButtonDefaults.buttonColors(containerColor = FairyGold, contentColor = NightBlue)
     ) {
-        Text("Запомнил", fontWeight = FontWeight.SemiBold)
+        Text(Strings.t("minigame.goldenKey.ready"), fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -415,7 +415,7 @@ private fun ChooseStage(options: List<GoldenKey>, onPick: (Int) -> Unit) {
         label = "swingPhase"
     )
     Text(
-        "Найди тот же среди ${options.size} ключей",
+        Strings.t("minigame.goldenKey.pick", options.size),
         color = Color.White.copy(alpha = 0.85f), fontSize = 14.sp
     )
     Spacer(Modifier.height(10.dp))
@@ -448,14 +448,14 @@ private fun ChooseStage(options: List<GoldenKey>, onPick: (Int) -> Unit) {
 private fun ResultPreview(correct: GoldenKey, picked: GoldenKey?) {
     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("Эталон", color = FairyGold, fontSize = 11.sp)
+            Text(Strings.t("minigame.goldenKey.etalon"), color = FairyGold, fontSize = 11.sp)
             Spacer(Modifier.height(4.dp))
             KeyCard(key = correct, highlight = true, size = 110.dp)
         }
         if (picked != null) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    "Твой выбор",
+                    Strings.t("minigame.goldenKey.yourChoice"),
                     color = if (picked == correct) FairyGold else Color(0xFFFF8A65),
                     fontSize = 11.sp
                 )

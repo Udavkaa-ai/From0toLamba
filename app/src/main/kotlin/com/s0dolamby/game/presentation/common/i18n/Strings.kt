@@ -287,6 +287,28 @@ object Strings {
         "minigame.title.coins" to "Перебери зерно",
         "minigame.title.ivanCard" to "Подкинь карту",
 
+        // Этапы Золотого ключика (Buratino)
+        "minigame.goldenKey.memorize" to "Запомни эталонный ключ",
+        "minigame.goldenKey.features" to "5 признаков: форма · цвет · зубчики · узор · кисточка",
+        "minigame.goldenKey.ready" to "Запомнил",
+        "minigame.goldenKey.pick" to "Найди тот же среди %d ключей",
+        "minigame.goldenKey.etalon" to "Эталон",
+        "minigame.goldenKey.yourChoice" to "Твой выбор",
+
+        // Подкинь карту (Ivan-Дурак)
+        "minigame.ivanCard.tagline" to "Иван кидает карту — найди такую же у себя!",
+        "minigame.ivanCard.score" to "Поймано %d  ·  ошибок %d",
+        "minigame.ivanCard.yourHand" to "Твоя рука:",
+
+        // Котёл Бабы-Яги
+        "minigame.cauldron.memorize" to "Запомни рецепт · %d шагов",
+        "minigame.cauldron.input" to "Свари по памяти (%d / %d)",
+        "minigame.cauldron.brewed.ok" to "сварено идеально",
+        "minigame.cauldron.brewed.err" to "сварено с ошибками",
+        "minigame.cauldron.brewedHeader" to "Зелье %s",
+        "minigame.cauldron.misses" to "Промахов: %d из %d",
+        "minigame.cauldron.recipeWas" to "Рецепт был:",
+
         // Плашка-приветствие при смене дня
         "daybreak.title" to "Утро дня %d",
         "daybreak.subtitle" to "Глашатай разносит вести с ярмарки",
@@ -787,6 +809,28 @@ object Strings {
         "minigame.title.memory" to "Koschei's Chain",
         "minigame.title.coins" to "Sort the Grain",
         "minigame.title.ivanCard" to "Match the Card",
+
+        // Golden Key stages (Buratino)
+        "minigame.goldenKey.memorize" to "Memorize the reference key",
+        "minigame.goldenKey.features" to "5 traits: shape · color · teeth · pattern · tassel",
+        "minigame.goldenKey.ready" to "Ready",
+        "minigame.goldenKey.pick" to "Find the match among %d keys",
+        "minigame.goldenKey.etalon" to "Reference",
+        "minigame.goldenKey.yourChoice" to "Your pick",
+
+        // Match the Card (Ivan)
+        "minigame.ivanCard.tagline" to "Ivan throws a card — find the same one in your hand!",
+        "minigame.ivanCard.score" to "Caught %d  ·  misses %d",
+        "minigame.ivanCard.yourHand" to "Your hand:",
+
+        // Baba Yaga's Cauldron
+        "minigame.cauldron.memorize" to "Memorize the recipe · %d steps",
+        "minigame.cauldron.input" to "Brew it from memory (%d / %d)",
+        "minigame.cauldron.brewed.ok" to "brewed perfectly",
+        "minigame.cauldron.brewed.err" to "brewed with mistakes",
+        "minigame.cauldron.brewedHeader" to "Potion %s",
+        "minigame.cauldron.misses" to "Misses: %d of %d",
+        "minigame.cauldron.recipeWas" to "The recipe was:",
 
         // Day-break greeting
         "daybreak.title" to "Morning of day %d",

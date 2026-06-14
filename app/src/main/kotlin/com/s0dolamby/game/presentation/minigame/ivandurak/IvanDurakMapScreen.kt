@@ -140,12 +140,12 @@ fun IvanDurakMapScreen(
     ) {
         if (stage == MinigameStage.PLAY) {
             Text(
-                "Иван кидает карту — найди такую же у себя!",
+                Strings.t("minigame.ivanCard.tagline"),
                 color = Color.White.copy(alpha = 0.85f), fontSize = 14.sp
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                "Поймано $caught  ·  ошибок $errors",
+                Strings.t("minigame.ivanCard.score", caught, errors),
                 color = ArchetypePalette[PersonaArchetype.IVAN_DURAK].primary,
                 fontSize = 12.sp
             )
@@ -163,7 +163,7 @@ fun IvanDurakMapScreen(
 
             Spacer(Modifier.height(12.dp))
             Text(
-                "Твоя рука:",
+                Strings.t("minigame.ivanCard.yourHand"),
                 color = Color.White.copy(alpha = 0.6f),
                 fontSize = 12.sp
             )

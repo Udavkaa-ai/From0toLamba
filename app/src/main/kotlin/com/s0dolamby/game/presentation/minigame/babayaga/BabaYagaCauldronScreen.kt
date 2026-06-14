@@ -161,16 +161,20 @@ fun BabaYagaCauldronScreen(
         if (stage == MinigameStage.RESULT) {
             Spacer(Modifier.height(20.dp))
             Text(
-                "Зелье ${if (errors == 0) "сварено идеально" else "сварено с ошибками"}",
+                Strings.t(
+                    "minigame.cauldron.brewedHeader",
+                    if (errors == 0) Strings.t("minigame.cauldron.brewed.ok")
+                    else Strings.t("minigame.cauldron.brewed.err")
+                ),
                 color = Color.White, fontSize = 14.sp
             )
             Text(
-                "Промахов: $errors из ${sequence.size}",
+                Strings.t("minigame.cauldron.misses", errors, sequence.size),
                 color = Color.White.copy(alpha = 0.7f), fontSize = 13.sp
             )
             Spacer(Modifier.height(12.dp))
             Text(
-                "Рецепт был:",
+                Strings.t("minigame.cauldron.recipeWas"),
                 color = ArchetypePalette[PersonaArchetype.BABA_YAGA].primary,
                 fontSize = 12.sp
             )
@@ -192,8 +196,8 @@ fun BabaYagaCauldronScreen(
 private fun HeaderHint(phase: Phase, sequenceSize: Int, input: Int) {
     Text(
         when (phase) {
-            Phase.SHOWCASE -> "Запомни рецепт · $sequenceSize шагов"
-            Phase.INPUT -> "Свари по памяти ($input / $sequenceSize)"
+            Phase.SHOWCASE -> Strings.t("minigame.cauldron.memorize", sequenceSize)
+            Phase.INPUT -> Strings.t("minigame.cauldron.input", input, sequenceSize)
         },
         color = Color.White.copy(alpha = 0.85f), fontSize = 14.sp
     )
