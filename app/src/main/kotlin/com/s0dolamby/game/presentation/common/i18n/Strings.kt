@@ -339,6 +339,15 @@ object Strings {
         "portfolio.snack.error" to "Ошибка: %s",
         "portfolio.snack.crash" to "Крэш: %s",
 
+        // Snackbar в Беседе (вложение + сетевые ошибки AI-провайдера)
+        "ama.snack.invested" to "Вложено %s",
+        "ama.err.401" to "Ключ OpenRouter отклонён (401). Ключ невалиден или отозван — нужен новый на openrouter.ai/keys",
+        "ama.err.402" to "На ключе OpenRouter закончились средства (402)",
+        "ama.err.429" to "OpenRouter перегружен или лимит запросов (429) — попробуй через минуту",
+        "ama.err.offline" to "Нет связи с OpenRouter — проверь интернет",
+        "ama.err.unknown" to "Неизвестная ошибка беседы",
+        "ama.err.unknownWith" to "Неизвестная ошибка беседы: %s",
+
         // Отношения
         "rel.title" to "Отношения с дельцами",
         "rel.subtitle" to "Уровни связи (0..%d) растут от закрытия дел дельца в плюс. Жетоны — мини-валюта архетипа: позже можно будет пропустить мини-игру.",
@@ -827,6 +836,15 @@ object Strings {
         "portfolio.snack.withdrawn" to "Withdrawn %s",
         "portfolio.snack.error" to "Error: %s",
         "portfolio.snack.crash" to "Crash: %s",
+
+        // Chat snackbar (invest + AI provider errors)
+        "ama.snack.invested" to "Invested %s",
+        "ama.err.401" to "OpenRouter key rejected (401). Key is invalid or revoked — get a new one at openrouter.ai/keys",
+        "ama.err.402" to "OpenRouter key has no credit left (402)",
+        "ama.err.429" to "OpenRouter is overloaded or rate-limited (429) — try again in a minute",
+        "ama.err.offline" to "No connection to OpenRouter — check your internet",
+        "ama.err.unknown" to "Unknown chat error",
+        "ama.err.unknownWith" to "Unknown chat error: %s",
 
         // Relationships
         "rel.title" to "Merchant relations",

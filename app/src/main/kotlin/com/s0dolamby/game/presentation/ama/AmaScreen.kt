@@ -51,6 +51,7 @@ import com.s0dolamby.game.presentation.common.theme.Warning
 import com.s0dolamby.game.presentation.common.theme.Error as ErrorColor
 import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
+import com.s0dolamby.game.presentation.common.format.formatGroshes
 import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
 import com.s0dolamby.game.presentation.common.theme.FairyGold
@@ -397,16 +398,26 @@ fun AmaScreen(
 
     // Error snackbar
     uiState.error?.let { error ->
+        val msg = when (error) {
+            AmaError.KeyInvalid -> Strings.t("ama.err.401")
+            AmaError.NoCredit -> Strings.t("ama.err.402")
+            AmaError.Throttled -> Strings.t("ama.err.429")
+            AmaError.Offline -> Strings.t("ama.err.offline")
+            is AmaError.Unknown ->
+                if (error.raw.isBlank()) Strings.t("ama.err.unknown")
+                else Strings.t("ama.err.unknownWith", error.raw)
+        }
         LaunchedEffect(error) {
-            snackbarHostState.showSnackbar(message = error, duration = SnackbarDuration.Short)
+            snackbarHostState.showSnackbar(message = msg, duration = SnackbarDuration.Short)
             viewModel.clearError()
         }
     }
 
     // Invest result: show snackbar then close screen
-    uiState.investResult?.let { result ->
-        LaunchedEffect(result) {
-            snackbarHostState.showSnackbar(message = result, duration = SnackbarDuration.Short)
+    uiState.investedAmount?.let { amount ->
+        val msg = Strings.t("ama.snack.invested", formatGroshes(amount))
+        LaunchedEffect(amount) {
+            snackbarHostState.showSnackbar(message = msg, duration = SnackbarDuration.Short)
             viewModel.clearInvestResult()
             onBack()
         }

@@ -19,14 +19,26 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * Структурированная ошибка беседы — модель не пишет русский текст
+ * руками, экран превращает в i18n-строку через Strings.t(ama.err.*).
+ */
+sealed class AmaError {
+    object KeyInvalid : AmaError()
+    object NoCredit : AmaError()
+    object Throttled : AmaError()
+    object Offline : AmaError()
+    data class Unknown(val raw: String) : AmaError()
+}
+
 data class AmaUiState(
     val project: Project? = null,
     val session: AmaSession? = null,
     val isLoading: Boolean = false,
     val isSending: Boolean = false,
-    val error: String? = null,
+    val error: AmaError? = null,
     val showInvestSheet: Boolean = false,
-    val investResult: String? = null,
+    val investedAmount: Double? = null,
     val freeBalance: Double = 0.0,
     /** Уже пройдена мини-игра этого дела (любой не-проигрыш). */
     val minigameUnlocked: Boolean = false,
@@ -90,7 +102,7 @@ class AmaViewModel @Inject constructor(
                 ) }
                 observeSession(session.id)
             }.onFailure {
-                _uiState.update { s -> s.copy(isLoading = false, error = it.message) }
+                _uiState.update { s -> s.copy(isLoading = false, error = it.toAmaError()) }
             }
         }
     }
@@ -108,25 +120,20 @@ class AmaViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isSending = true) }
             sendAmaMessageUseCase(sessionId, text)
-                .onFailure { err -> _uiState.update { it.copy(error = err.toUserMessage()) } }
+                .onFailure { err -> _uiState.update { it.copy(error = err.toAmaError()) } }
             _uiState.update { it.copy(isSending = false) }
         }
     }
 
-    /** Переводим сетевые/HTTP-ошибки в понятный игроку текст. */
-    private fun Throwable.toUserMessage(): String {
+    /** Классификация сетевой/HTTP-ошибки в структурированный AmaError. */
+    private fun Throwable.toAmaError(): AmaError {
         val msg = message.orEmpty()
         return when {
-            msg.contains("401") ->
-                "Ключ OpenRouter отклонён (401). Ключ невалиден или отозван — " +
-                    "нужен новый на openrouter.ai/keys"
-            msg.contains("402") ->
-                "На ключе OpenRouter закончились средства (402)"
-            msg.contains("429") ->
-                "OpenRouter перегружен или лимит запросов (429) — попробуй через минуту"
-            msg.contains("Unable to resolve host") || msg.contains("timeout") ->
-                "Нет связи с OpenRouter — проверь интернет"
-            else -> msg.ifBlank { "Неизвестная ошибка беседы" }
+            msg.contains("401") -> AmaError.KeyInvalid
+            msg.contains("402") -> AmaError.NoCredit
+            msg.contains("429") -> AmaError.Throttled
+            msg.contains("Unable to resolve host") || msg.contains("timeout") -> AmaError.Offline
+            else -> AmaError.Unknown(msg)
         }
     }
 
@@ -157,15 +164,15 @@ class AmaViewModel @Inject constructor(
                 .onSuccess {
                     _uiState.update { it.copy(
                         showInvestSheet = false,
-                        investResult = "Вложено %.0f г".format(amountRubles)
+                        investedAmount = amountRubles
                     ) }
                 }
                 .onFailure { err ->
-                    _uiState.update { it.copy(error = err.message) }
+                    _uiState.update { it.copy(error = err.toAmaError()) }
                 }
         }
     }
 
     fun clearError() = _uiState.update { it.copy(error = null) }
-    fun clearInvestResult() = _uiState.update { it.copy(investResult = null) }
+    fun clearInvestResult() = _uiState.update { it.copy(investedAmount = null) }
 }
