@@ -309,6 +309,26 @@ object Strings {
         "minigame.cauldron.misses" to "Промахов: %d из %d",
         "minigame.cauldron.recipeWas" to "Рецепт был:",
 
+        // Цепь Кощея (шесть звеньев)
+        "minigame.koschei.kind.OAK" to "Дуб",
+        "minigame.koschei.kind.CHEST" to "Ларец",
+        "minigame.koschei.kind.HARE" to "Заяц",
+        "minigame.koschei.kind.DUCK" to "Утка",
+        "minigame.koschei.kind.EGG" to "Яйцо",
+        "minigame.koschei.kind.NEEDLE" to "Игла",
+
+        // Перебери зерно (Zolushka)
+        "minigame.coins.rounds" to "Раундов сыграно: %d / %d",
+        "minigame.coins.errors" to "Ошибок: %d",
+        "minigame.coins.round" to "Раунд %d из %d",
+        "minigame.coins.hint.first" to "Запоминай · %d зёрнышка",
+        "minigame.coins.hint.next" to "Начало то же + 2 новых · всего %d",
+        "minigame.coins.input" to "Перебери (%d / %d)",
+        "minigame.coins.WHEAT" to "пшеница",
+        "minigame.coins.LENTIL" to "чечевица",
+        "minigame.coins.ACORN" to "жёлудь",
+        "minigame.coins.POMEGRANATE" to "вишня",
+
         // Плашка-приветствие при смене дня
         "daybreak.title" to "Утро дня %d",
         "daybreak.subtitle" to "Глашатай разносит вести с ярмарки",
@@ -831,6 +851,26 @@ object Strings {
         "minigame.cauldron.brewedHeader" to "Potion %s",
         "minigame.cauldron.misses" to "Misses: %d of %d",
         "minigame.cauldron.recipeWas" to "The recipe was:",
+
+        // Koschei's Chain (six links)
+        "minigame.koschei.kind.OAK" to "Oak",
+        "minigame.koschei.kind.CHEST" to "Chest",
+        "minigame.koschei.kind.HARE" to "Hare",
+        "minigame.koschei.kind.DUCK" to "Duck",
+        "minigame.koschei.kind.EGG" to "Egg",
+        "minigame.koschei.kind.NEEDLE" to "Needle",
+
+        // Sort the Grain (Zolushka)
+        "minigame.coins.rounds" to "Rounds played: %d / %d",
+        "minigame.coins.errors" to "Mistakes: %d",
+        "minigame.coins.round" to "Round %d of %d",
+        "minigame.coins.hint.first" to "Memorize · %d grains",
+        "minigame.coins.hint.next" to "Same start + 2 new · %d total",
+        "minigame.coins.input" to "Sort (%d / %d)",
+        "minigame.coins.WHEAT" to "wheat",
+        "minigame.coins.LENTIL" to "lentil",
+        "minigame.coins.ACORN" to "acorn",
+        "minigame.coins.POMEGRANATE" to "cherry",
 
         // Day-break greeting
         "daybreak.title" to "Morning of day %d",

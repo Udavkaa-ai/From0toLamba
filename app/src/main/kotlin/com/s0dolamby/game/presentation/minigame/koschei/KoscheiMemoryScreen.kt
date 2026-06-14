@@ -197,15 +197,15 @@ private fun ScoreLine(pairsFound: Int, attempts: Int) {
 
 @Composable
 private fun ChainHint() {
-    val labels = listOf("Дуб", "Ларец", "Заяц", "Утка", "Яйцо", "Игла")
+    val labelKeys = listOf("OAK", "CHEST", "HARE", "DUCK", "EGG", "NEEDLE")
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        labels.forEachIndexed { idx, label ->
+        labelKeys.forEachIndexed { idx, key ->
             Text(
-                label,
+                Strings.t("minigame.koschei.kind.$key"),
                 color = Color.White.copy(alpha = 0.45f),
                 fontSize = 10.sp
             )
-            if (idx < labels.size - 1) {
+            if (idx < labelKeys.size - 1) {
                 Text(
                     "→",
                     color = ArchetypePalette[PersonaArchetype.KOSCHEI].primary.copy(alpha = 0.6f),
@@ -309,7 +309,7 @@ private fun CardFace(card: Card) {
             drawKoscheiKind(card.kind, center, sz * 0.4f)
         }
         Text(
-            card.kind.label,
+            Strings.t("minigame.koschei.kind.${card.kind.name}"),
             color = if (card.isMatched) ArchetypePalette[PersonaArchetype.KOSCHEI].primary
             else Color.White.copy(alpha = 0.75f),
             fontSize = 10.sp,

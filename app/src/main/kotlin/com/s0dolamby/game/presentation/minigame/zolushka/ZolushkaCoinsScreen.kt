@@ -161,11 +161,11 @@ fun ZolushkaCoinsScreen(
         if (stage == MinigameStage.RESULT) {
             Spacer(Modifier.height(20.dp))
             Text(
-                "Раундов сыграно: $round / $TOTAL_ROUNDS",
+                Strings.t("minigame.coins.rounds", round, TOTAL_ROUNDS),
                 color = Color.White.copy(alpha = 0.7f), fontSize = 13.sp
             )
             Text(
-                "Ошибок: $errors",
+                Strings.t("minigame.coins.errors", errors),
                 color = Color.White.copy(alpha = 0.7f), fontSize = 13.sp
             )
         }
@@ -176,16 +176,16 @@ fun ZolushkaCoinsScreen(
 private fun RoundCounter(round: Int, total: Int, sequenceSize: Int, input: Int, phase: Phase) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            "Раунд $round из $total",
+            Strings.t("minigame.coins.round", round, total),
             color = ArchetypePalette[PersonaArchetype.ZOLUSHKA].primary,
             fontSize = 13.sp, fontWeight = FontWeight.SemiBold
         )
         Spacer(Modifier.height(4.dp))
         val text = when (phase) {
             Phase.SHOWCASE ->
-                if (round == 1) "Запоминай · $sequenceSize зёрнышка"
-                else "Начало то же + 2 новых · всего $sequenceSize"
-            Phase.INPUT -> "Перебери ($input / $sequenceSize)"
+                if (round == 1) Strings.t("minigame.coins.hint.first", sequenceSize)
+                else Strings.t("minigame.coins.hint.next", sequenceSize)
+            Phase.INPUT -> Strings.t("minigame.coins.input", input, sequenceSize)
         }
         Text(text, color = Color.White.copy(alpha = 0.75f), fontSize = 13.sp)
     }
@@ -316,7 +316,7 @@ private fun GrainTile(
             drawGrainEmblem(grain, center, sz * 0.52f, lit, alpha)
         }
         Text(
-            grain.label,
+            Strings.t("minigame.coins.${grain.name}"),
             color = if (lit) Color(0xFF2A0F1A) else Color.White.copy(alpha = 0.6f),
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
