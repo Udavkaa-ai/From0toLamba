@@ -60,20 +60,27 @@ fun PortfolioScreen(
     // Sheet state hoisted outside LazyColumn to avoid ModalBottomSheet-in-LazyColumn crash
     var activeSheet by remember { mutableStateOf<ActiveSheet?>(null) }
 
-    // Show last crash from log on screen open (diagnostic only)
+    // Show last crash from log on screen open (diagnostic only).
+    val crashPrefix = Strings.t("portfolio.snack.crash", "")
     LaunchedEffect(Unit) {
         val log = AppLogger.readLog()
         val lastCrash = log.substringAfterLast("CRASH/UncaughtException:", "").trim()
         if (lastCrash.isNotEmpty()) {
             snackbarHostState.showSnackbar(
-                "Крэш: " + lastCrash.take(120),
+                crashPrefix + lastCrash.take(120),
                 duration = SnackbarDuration.Indefinite
             )
         }
     }
 
-    actionResult?.let { msg ->
-        LaunchedEffect(msg) {
+    actionResult?.let { result ->
+        val msg = when (result) {
+            is PortfolioActionResult.Received -> Strings.t("portfolio.snack.received", formatGroshes(result.amount))
+            is PortfolioActionResult.AddedFunds -> Strings.t("portfolio.snack.added", formatGroshes(result.amount))
+            is PortfolioActionResult.Withdrawn -> Strings.t("portfolio.snack.withdrawn", formatGroshes(result.amount))
+            is PortfolioActionResult.Failure -> Strings.t("portfolio.snack.error", result.message)
+        }
+        LaunchedEffect(result) {
             snackbarHostState.showSnackbar(msg, duration = SnackbarDuration.Short)
             viewModel.clearActionResult()
         }

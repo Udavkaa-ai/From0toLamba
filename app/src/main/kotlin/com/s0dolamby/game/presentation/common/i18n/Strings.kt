@@ -332,6 +332,13 @@ object Strings {
         "onboarding.btn.next" to "Далее  ✦",
         "onboarding.btn.start" to "Войти в кабак  ✦",
 
+        // Snackbar в Казне после действий
+        "portfolio.snack.received" to "Получено %s",
+        "portfolio.snack.added" to "Довложено %s",
+        "portfolio.snack.withdrawn" to "Выведено %s",
+        "portfolio.snack.error" to "Ошибка: %s",
+        "portfolio.snack.crash" to "Крэш: %s",
+
         // Отношения
         "rel.title" to "Отношения с дельцами",
         "rel.subtitle" to "Уровни связи (0..%d) растут от закрытия дел дельца в плюс. Жетоны — мини-валюта архетипа: позже можно будет пропустить мини-игру.",
@@ -813,6 +820,13 @@ object Strings {
         "onboarding.step4.body" to "For taking part in your first chat you receive %d coins — whether or not you actually invest them.\n\nDozens of ventures await. Every merchant promises golden mountains. Grow your treasury and climb to the rank of Tsar!",
         "onboarding.btn.next" to "Next  ✦",
         "onboarding.btn.start" to "Enter the tavern  ✦",
+
+        // Treasury snackbar after actions
+        "portfolio.snack.received" to "Received %s",
+        "portfolio.snack.added" to "Topped up by %s",
+        "portfolio.snack.withdrawn" to "Withdrawn %s",
+        "portfolio.snack.error" to "Error: %s",
+        "portfolio.snack.crash" to "Crash: %s",
 
         // Relationships
         "rel.title" to "Merchant relations",

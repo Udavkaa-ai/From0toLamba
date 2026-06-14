@@ -15,6 +15,18 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * Полу-структурированный результат действия — модель не знает про
+ * Compose/i18n, она отдаёт «что произошло и сколько грошей»; экран
+ * превращает в локализованную snackbar-строку через Strings.t.
+ */
+sealed class PortfolioActionResult {
+    data class Received(val amount: Double) : PortfolioActionResult()
+    data class AddedFunds(val amount: Double) : PortfolioActionResult()
+    data class Withdrawn(val amount: Double) : PortfolioActionResult()
+    data class Failure(val message: String) : PortfolioActionResult()
+}
+
 @HiltViewModel
 class PortfolioViewModel @Inject constructor(
     private val projectRepository: ProjectRepository,
@@ -35,34 +47,34 @@ class PortfolioViewModel @Inject constructor(
         .map { list -> list.filter { it.closureReason != "Предложение не принято" } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    private val _actionResult = MutableStateFlow<String?>(null)
-    val actionResult: StateFlow<String?> = _actionResult.asStateFlow()
+    private val _actionResult = MutableStateFlow<PortfolioActionResult?>(null)
+    val actionResult: StateFlow<PortfolioActionResult?> = _actionResult.asStateFlow()
 
     fun exitProject(projectId: String) {
         viewModelScope.launch {
             exitProjectUseCase(projectId)
-                .onSuccess { returned -> _actionResult.value = "Получено %.0f г".format(returned) }
-                .onFailure { _actionResult.value = "Ошибка: ${it.message}" }
+                .onSuccess { returned -> _actionResult.value = PortfolioActionResult.Received(returned) }
+                .onFailure { _actionResult.value = PortfolioActionResult.Failure(it.message ?: "") }
         }
     }
 
     fun addFunds(projectId: String, amountRubles: Double) {
         viewModelScope.launch {
             investUseCase(projectId, amountRubles)
-                .onSuccess { _actionResult.value = "Довложено %.0f г".format(amountRubles) }
-                .onFailure { _actionResult.value = "Ошибка: ${it.message}" }
+                .onSuccess { _actionResult.value = PortfolioActionResult.AddedFunds(amountRubles) }
+                .onFailure { _actionResult.value = PortfolioActionResult.Failure(it.message ?: "") }
         }
     }
 
     fun partialWithdraw(projectId: String, amountRubles: Double) {
         val handler = CoroutineExceptionHandler { _, e ->
-            _actionResult.value = "Ошибка: ${e.message}"
+            _actionResult.value = PortfolioActionResult.Failure(e.message ?: "")
         }
         viewModelScope.launch(handler) {
             runCatching { partialWithdrawUseCase(projectId, amountRubles) }
                 .getOrElse { Result.failure(it) }
-                .onSuccess { amount -> _actionResult.value = "Выведено %.0f г".format(amount) }
-                .onFailure { _actionResult.value = "Ошибка: ${it.message}" }
+                .onSuccess { amount -> _actionResult.value = PortfolioActionResult.Withdrawn(amount) }
+                .onFailure { _actionResult.value = PortfolioActionResult.Failure(it.message ?: "") }
         }
     }
 
