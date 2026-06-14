@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.NightBlue
@@ -66,14 +67,14 @@ fun DayBreakOverlay(currentDay: Int) {
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        "Утро дня $currentDay",
+                        Strings.t("daybreak.title", currentDay),
                         color = FairyGold,
                         fontSize = 22.sp,
                         fontWeight = FontWeight.ExtraBold,
                         textAlign = TextAlign.Center
                     )
                     Text(
-                        "Глашатай разносит вести с ярмарки",
+                        Strings.t("daybreak.subtitle"),
                         color = Color.White.copy(alpha = 0.7f),
                         fontSize = 12.sp,
                         fontStyle = FontStyle.Italic

@@ -284,6 +284,20 @@ object Strings {
         "minigame.title.coins" to "Перебери зерно",
         "minigame.title.ivanCard" to "Подкинь карту",
 
+        // Плашка-приветствие при смене дня
+        "daybreak.title" to "Утро дня %d",
+        "daybreak.subtitle" to "Глашатай разносит вести с ярмарки",
+
+        // Онбординг (карточки на главной у нового игрока)
+        "intro.howToPlay.title" to "Как играть",
+        "intro.howToPlay.body" to "Каждый день в «Грамотах» появляются новые предложения от дельцов. Большинство — обман. Твоя задача — разобраться кто есть кто.",
+        "intro.minigame.title" to "Испытание дельца",
+        "intro.minigame.body" to "Перед инвестом — мини-игра по архетипу хозяина. Прошёл — открывается «Вложить». Можно зайти и через беседу за просмотр рекламы.",
+        "intro.chat.title" to "Беседа",
+        "intro.chat.body" to "Задай до 10 вопросов хозяину дела. Честный отвечает одинаково, лжец путается. Слушай внимательно.",
+        "intro.invest.title" to "Вложения",
+        "intro.invest.body" to "Вложи гроши → они растут каждый день. Потерял — не беда, учись на ошибках. Начни с малого.",
+
         // Отношения
         "rel.title" to "Отношения с дельцами",
         "rel.subtitle" to "Уровни связи (0..%d) растут от закрытия дел дельца в плюс. Жетоны — мини-валюта архетипа: позже можно будет пропустить мини-игру.",
@@ -339,8 +353,8 @@ object Strings {
         "inbox.ad.title" to "📺 Беседа за просмотр рекламы",
         "inbox.ad.body" to "Пока бесплатно — просмотр рекламы будет позже подключён через AdMob/Yandex. Сейчас просто открываем беседу с дельцом.",
         "inbox.ad.confirm" to "Смотреть и в кабак",
-        "inbox.cta.perfect" to "✨ Идеал — подробности раскрыты, к беседе",
-        "inbox.cta.unlocked" to "💰 Можно вкладываться — к беседе",
+        "inbox.cta.perfect" to "✨ Идеал — тип и посул раскрыты, к беседе",
+        "inbox.cta.unlocked" to "💰 Тип дела раскрыт — к беседе",
         "inbox.apy" to "%d%% посул",
         "type.cardGame" to "🃏 Азартная игра",
         "type.treasureHunt" to "🗺 Поиск клада",
@@ -718,6 +732,20 @@ object Strings {
         "minigame.title.coins" to "Sort the Grain",
         "minigame.title.ivanCard" to "Match the Card",
 
+        // Day-break greeting
+        "daybreak.title" to "Morning of day %d",
+        "daybreak.subtitle" to "The herald spreads news from the fair",
+
+        // Onboarding cards on Home for new players
+        "intro.howToPlay.title" to "How to play",
+        "intro.howToPlay.body" to "Each day new merchant offers appear in «Charters». Most are scams. Your job is to figure out who's who.",
+        "intro.minigame.title" to "Testing the merchant",
+        "intro.minigame.body" to "Before investing — a mini-game based on the owner's archetype. Pass it and «Invest» unlocks. You can also enter the chat by watching an ad.",
+        "intro.chat.title" to "Chat",
+        "intro.chat.body" to "Ask the venture owner up to 10 questions. An honest one answers consistently, a liar contradicts himself. Listen carefully.",
+        "intro.invest.title" to "Investments",
+        "intro.invest.body" to "Invest coins → they grow every day. Lost money? No big deal — learn from the mistakes. Start small.",
+
         // Relationships
         "rel.title" to "Merchant relations",
         "rel.subtitle" to "Bond levels (0..%d) grow from closing the merchant's ventures in profit. Tokens are the archetype's mini-currency: later you'll be able to skip their mini-game.",
@@ -773,8 +801,8 @@ object Strings {
         "inbox.ad.title" to "📺 Talk after watching an ad",
         "inbox.ad.body" to "Free for now — ads will be wired through AdMob/Yandex later. For now we just open the chat with the merchant.",
         "inbox.ad.confirm" to "Watch and head to the tavern",
-        "inbox.cta.perfect" to "✨ Perfect — details unlocked, to the chat",
-        "inbox.cta.unlocked" to "💰 Ready to invest — to the chat",
+        "inbox.cta.perfect" to "✨ Perfect — type and APY revealed, to the chat",
+        "inbox.cta.unlocked" to "💰 Venture type revealed — to the chat",
         "inbox.apy" to "%d%% claimed APY",
         "type.cardGame" to "🃏 Card game",
         "type.treasureHunt" to "🗺 Treasure hunt",

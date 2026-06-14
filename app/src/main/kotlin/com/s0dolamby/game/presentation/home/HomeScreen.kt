@@ -61,17 +61,13 @@ import com.s0dolamby.game.presentation.common.theme.Warning
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-private data class IntroCard(val icon: String, val title: String, val text: String)
+private data class IntroCard(val icon: String, val titleKey: String, val textKey: String)
 
 private val INTRO_CARDS = listOf(
-    IntroCard("📜", "Как играть",
-        "Каждый день в «Грамотах» появляются новые предложения от дельцов. Большинство — обман. Твоя задача — разобраться кто есть кто."),
-    IntroCard("🎲", "Испытание дельца",
-        "Перед инвестом — мини-игра по архетипу хозяина. Прошёл — открывается «Вложить». Можно зайти и через беседу за просмотр рекламы."),
-    IntroCard("💬", "Беседа",
-        "Задай до 10 вопросов хозяину дела. Честный отвечает одинаково, лжец путается. Слушай внимательно."),
-    IntroCard("💰", "Вложения",
-        "Вложи гроши → они растут каждый день. Потерял — не беда, учись на ошибках. Начни с малого.")
+    IntroCard("📜", "intro.howToPlay.title", "intro.howToPlay.body"),
+    IntroCard("🎲", "intro.minigame.title", "intro.minigame.body"),
+    IntroCard("💬", "intro.chat.title", "intro.chat.body"),
+    IntroCard("💰", "intro.invest.title", "intro.invest.body")
 )
 
 @Composable
@@ -366,7 +362,7 @@ private fun IntroCardsRow() {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(card.icon, fontSize = 16.sp)
                     Text(
-                        card.title,
+                        Strings.t(card.titleKey),
                         color = FairyGold,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold
@@ -374,7 +370,7 @@ private fun IntroCardsRow() {
                 }
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    card.text,
+                    Strings.t(card.textKey),
                     color = Color.White.copy(alpha = 0.75f),
                     fontSize = 11.sp,
                     lineHeight = 15.sp
