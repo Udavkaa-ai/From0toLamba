@@ -162,8 +162,8 @@ fun MinigameShell(
             ) {
                 ArchetypeHeader(
                     style = style,
-                    archetypeLabel = archetype.displayLabel(),
-                    line = headerLine(style, stage, outcome)
+                    archetypeLabel = Strings.t("persona.${archetype.name}"),
+                    line = headerLine(archetype, style, stage, outcome)
                 )
 
                 if (secondsLeft != null && stage != MinigameStage.RESULT) {
@@ -242,15 +242,23 @@ private fun ArchetypeHeader(
     }
 }
 
+@Composable
+@androidx.compose.runtime.ReadOnlyComposable
 private fun headerLine(
-    style: ArchetypeStyle,
+    archetype: PersonaArchetype,
+    @Suppress("UNUSED_PARAMETER") style: ArchetypeStyle,
     stage: MinigameStage,
     outcome: MinigameOutcome?
-): String = when (stage) {
-    MinigameStage.MEMORIZE, MinigameStage.PLAY -> style.tagline
-    MinigameStage.RESULT -> outcome?.let {
-        if (it.isWin) style.winPhrase else style.losePhrase
-    } ?: style.tagline
+): String {
+    val key = when (stage) {
+        MinigameStage.MEMORIZE, MinigameStage.PLAY -> "tagline"
+        MinigameStage.RESULT -> when {
+            outcome == null -> "tagline"
+            outcome.isWin -> "win"
+            else -> "lose"
+        }
+    }
+    return Strings.t("arch.${archetype.name}.$key")
 }
 
 private fun PersonaArchetype.displayLabel(): String = when (this) {
