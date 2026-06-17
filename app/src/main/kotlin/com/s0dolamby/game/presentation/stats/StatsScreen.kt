@@ -155,14 +155,14 @@ private fun HallOfFameCard(state: GameState?, closed: List<com.s0dolamby.game.do
             Strings.t("stats.hof.title"),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = Color.White
+            color = LocalContentColor.current
         )
         Spacer(Modifier.height(6.dp))
         if (closedWithMoney.isEmpty() && (bestTie?.value ?: 0) == 0 && streak == 0) {
             Text(
                 Strings.t("stats.hof.empty"),
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.White.copy(alpha = 0.55f)
+                color = LocalContentColor.current.copy(alpha = 0.55f)
             )
         } else {
             bestDeal?.let { p ->
@@ -199,8 +199,8 @@ private fun HallRow(icon: String, title: String, value: String, body: String, co
     ) {
         Text(icon, fontSize = 20.sp)
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyMedium, color = Color.White, fontWeight = FontWeight.SemiBold)
-            Text(body, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.55f))
+            Text(title, style = MaterialTheme.typography.bodyMedium, color = LocalContentColor.current, fontWeight = FontWeight.SemiBold)
+            Text(body, style = MaterialTheme.typography.labelSmall, color = LocalContentColor.current.copy(alpha = 0.55f))
         }
         Text(value, style = MaterialTheme.typography.titleSmall, color = color, fontWeight = FontWeight.Bold)
     }
@@ -240,7 +240,7 @@ private fun AchievementsCard(unlocked: Set<String>) {
                 Strings.t("stats.feats.header", totalUnlocked, totalAll),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = LocalContentColor.current
             )
             LinearProgressIndicator(
                 progress = { if (totalAll == 0) 0f else totalUnlocked.toFloat() / totalAll },
@@ -270,7 +270,7 @@ private fun AchievementsCard(unlocked: Set<String>) {
                     Text(
                         cat.localizedTitle(),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White
+                        color = LocalContentColor.current
                     )
                 }
                 Text(
@@ -307,7 +307,7 @@ private fun AchievementsCard(unlocked: Set<String>) {
                                 Text(
                                     ach.localizedDescription(),
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = Color.White.copy(alpha = if (isUnlocked) 0.7f else 0.4f)
+                                    color = LocalContentColor.current.copy(alpha = if (isUnlocked) 0.7f else 0.4f)
                                 )
                             }
                             if (isUnlocked) {
@@ -371,12 +371,12 @@ private fun RankCard(state: GameState?) {
                     state?.investorRank?.let { Strings.t(rankTiers.first { t -> t.rankName == it.name }.displayNameKey) } ?: "—",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = LocalContentColor.current
                 )
                 Text(
                     Strings.t("stats.dayStreak", state?.currentDay ?: 1, state?.dayStreak ?: 0),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.6f)
+                    color = LocalContentColor.current.copy(alpha = 0.6f)
                 )
                 Text(
                     Strings.t("stats.balance.short", formatGroshes(state?.balance ?: 0.0)),
@@ -443,7 +443,7 @@ private fun RankCard(state: GameState?) {
                             Text(
                                 Strings.t(tier.requirementKey),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = Color.White.copy(alpha = if (isCurrent) 0.8f else 0.4f)
+                                color = LocalContentColor.current.copy(alpha = if (isCurrent) 0.8f else 0.4f)
                             )
                         }
                         if (isCurrent) {
@@ -486,7 +486,7 @@ private fun BalanceChartCard(state: GameState?) {
                 Strings.t("stats.balance.ledger"),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = LocalContentColor.current
             )
             if (hasBoth) {
                 val totalFirst = freeHistory[freeHistory.size - n] + investedHistory[investedHistory.size - n]
@@ -519,7 +519,7 @@ private fun BalanceChartCard(state: GameState?) {
                     Text(
                         Strings.t("stats.balance.placeholder"),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.6f)
+                        color = LocalContentColor.current.copy(alpha = 0.6f)
                     )
                 }
             }
@@ -532,8 +532,8 @@ private fun BalanceChartCard(state: GameState?) {
                 modifier = Modifier.fillMaxWidth().height(160.dp)
             )
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(Strings.t("stats.balance.day1"), style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
-                Text(Strings.t("detail.day", n), style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
+                Text(Strings.t("stats.balance.day1"), style = MaterialTheme.typography.labelSmall, color = LocalContentColor.current.copy(alpha = 0.5f))
+                Text(Strings.t("detail.day", n), style = MaterialTheme.typography.labelSmall, color = LocalContentColor.current.copy(alpha = 0.5f))
             }
             // Legend
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -548,7 +548,7 @@ private fun BalanceChartCard(state: GameState?) {
 private fun LegendDot(color: Color, label: String) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         Box(modifier = Modifier.size(8.dp).background(color, shape = RoundedCornerShape(2.dp)))
-        Text(label, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f))
+        Text(label, style = MaterialTheme.typography.labelSmall, color = LocalContentColor.current.copy(alpha = 0.6f))
     }
 }
 
@@ -582,7 +582,7 @@ private fun StackedBarChart(
                     text = fmtRub(value),
                     style = MaterialTheme.typography.labelSmall,
                     fontSize = 9.sp,
-                    color = Color.White.copy(alpha = 0.45f),
+                    color = LocalContentColor.current.copy(alpha = 0.45f),
                     modifier = Modifier.align(
                         when (idx) {
                             0    -> Alignment.TopEnd
@@ -652,7 +652,7 @@ private fun FinancialStats(state: GameState?) {
     val roiPositive = roi >= 0
 
     FairyCard(modifier = Modifier.fillMaxWidth()) {
-        Text(Strings.t("stats.gold.title"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+        Text(Strings.t("stats.gold.title"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = LocalContentColor.current)
 
         Surface(
             color = if (roiPositive) Success.copy(alpha = 0.15f) else Error.copy(alpha = 0.15f),
@@ -673,7 +673,7 @@ private fun FinancialStats(state: GameState?) {
             }
         }
 
-        HorizontalDivider(color = Color.White.copy(alpha = 0.10f))
+        HorizontalDivider(color = LocalContentColor.current.copy(alpha = 0.10f))
         StatRow(Strings.t("stats.gold.balance"), formatGroshes(state?.balance ?: 0.0))
         StatRow(Strings.t("stats.gold.invested"), formatGroshes(state?.totalInvested ?: 0.0))
         StatRow(Strings.t("stats.gold.received"), formatGroshes(state?.totalReturned ?: 0.0))
@@ -694,12 +694,12 @@ private fun ScamStats(state: GameState?) {
             Strings.t("stats.scam.title"),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = Color.White
+            color = LocalContentColor.current
         )
 
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(Strings.t("stats.scam.accuracy"), style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.7f))
+                Text(Strings.t("stats.scam.accuracy"), style = MaterialTheme.typography.bodyMedium, color = LocalContentColor.current.copy(alpha = 0.7f))
                 Text(
                     "%.0f%%".format(accuracy * 100),
                     style = MaterialTheme.typography.bodyMedium,
@@ -723,7 +723,7 @@ private fun ScamStats(state: GameState?) {
             )
         }
 
-        HorizontalDivider(color = Color.White.copy(alpha = 0.10f))
+        HorizontalDivider(color = LocalContentColor.current.copy(alpha = 0.10f))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             ScamStatBox(label = Strings.t("stats.scam.detected"), value = "$detected", color = Success, modifier = Modifier.weight(1f))
             ScamStatBox(label = Strings.t("stats.scam.missed"), value = "$missed", color = Error, modifier = Modifier.weight(1f))
@@ -740,7 +740,7 @@ private fun ScamStatBox(label: String, value: String, color: Color, modifier: Mo
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(value, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = color)
-            Text(label, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f))
+            Text(label, style = MaterialTheme.typography.labelSmall, color = LocalContentColor.current.copy(alpha = 0.6f))
         }
     }
 }
@@ -748,8 +748,8 @@ private fun ScamStatBox(label: String, value: String, color: Color, modifier: Mo
 @Composable
 private fun StatRow(label: String, value: String) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.6f))
-        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = Color.White)
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = LocalContentColor.current.copy(alpha = 0.6f))
+        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = LocalContentColor.current)
     }
 }
 
@@ -766,7 +766,7 @@ private fun LogCard(onShowLog: () -> Unit) {
         Text(
             Strings.t("stats.log.title"),
             style = MaterialTheme.typography.labelSmall,
-            color = Color.White.copy(alpha = 0.25f)
+            color = LocalContentColor.current.copy(alpha = 0.25f)
         )
         TextButton(
             onClick = onShowLog,
@@ -775,7 +775,7 @@ private fun LogCard(onShowLog: () -> Unit) {
             Text(
                 Strings.t("stats.log.view"),
                 style = MaterialTheme.typography.labelSmall,
-                color = Color.White.copy(alpha = 0.25f)
+                color = LocalContentColor.current.copy(alpha = 0.25f)
             )
         }
         TextButton(
@@ -785,7 +785,7 @@ private fun LogCard(onShowLog: () -> Unit) {
             Text(
                 Strings.t("stats.log.share"),
                 style = MaterialTheme.typography.labelSmall,
-                color = Color.White.copy(alpha = 0.25f)
+                color = LocalContentColor.current.copy(alpha = 0.25f)
             )
         }
     }

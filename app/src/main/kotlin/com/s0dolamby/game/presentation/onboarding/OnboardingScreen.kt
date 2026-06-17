@@ -177,7 +177,7 @@ fun OnboardingScreen(
                                 style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center,
-                                color = Color.White
+                                color = LocalContentColor.current
                             )
                         }
 
@@ -196,7 +196,7 @@ fun OnboardingScreen(
                                 Text(
                                     current.body,
                                     style = MaterialTheme.typography.bodyLarge,
-                                    color = Color.White.copy(alpha = 0.9f)
+                                    color = LocalContentColor.current.copy(alpha = 0.9f)
                                 )
                             }
                         }

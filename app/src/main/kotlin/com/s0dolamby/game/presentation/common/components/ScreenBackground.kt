@@ -14,15 +14,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.s0dolamby.game.domain.model.ThemeMode
-import com.s0dolamby.game.presentation.common.theme.LocalThemeMode
+import com.s0dolamby.game.presentation.common.theme.LocalAppPalette
 
 @Composable
 fun ScreenBackground(
     @DrawableRes imageRes: Int,
     content: @Composable () -> Unit
 ) {
-    val themeMode = LocalThemeMode.current
+    val palette = LocalAppPalette.current
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(imageRes),
@@ -31,25 +30,17 @@ fun ScreenBackground(
             modifier = Modifier.fillMaxSize()
         )
         // Темо-зависимый градиентный оверлей.
-        // DARK_FAIRY: фиолетово-чернильный, как ночь.
-        // WARM_FAIRY: тёплый янтарно-карамельный — фон будто облит
-        // ярмарочным мёдом, картинка просвечивает желтоватым тоном.
-        val gradient = when (themeMode) {
-            ThemeMode.DARK_FAIRY -> Brush.verticalGradient(
-                colorStops = arrayOf(
-                    0f to Color(0xD9060412),
-                    0.4f to Color(0xBF0A0818),
-                    1f to Color(0xF0060412)
-                )
+        //   DARK: тёмная фиолетово-чернильная ночь (картинка глушится).
+        //   WARM: лёгкий тёплый ореол + виньетка по краям. Тело градиента
+        //         почти прозрачное — картинка bg должна просвечивать
+        //         золотистым «полуднем на ярмарке», а не глушиться шоколадом.
+        val gradient = Brush.verticalGradient(
+            colorStops = arrayOf(
+                0f to palette.screenBgTop,
+                0.4f to palette.screenBgMid,
+                1f to palette.screenBgBottom
             )
-            ThemeMode.WARM_FAIRY -> Brush.verticalGradient(
-                colorStops = arrayOf(
-                    0f to Color(0xCC2B1A0C),     // верх — тёплое какао
-                    0.4f to Color(0xB36E4322),   // мидл — янтарь
-                    1f to Color(0xE52B1A0C)      // низ — снова какао
-                )
-            )
-        }
+        )
         Box(
             modifier = Modifier
                 .fillMaxSize()

@@ -87,7 +87,7 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Text("✦", color = FairyGold, fontSize = 12.sp)
-                            Text(Strings.t("today.title"), fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(Strings.t("today.title"), fontWeight = FontWeight.Bold, color = LocalContentColor.current)
                             Text("✦", color = FairyGold, fontSize = 12.sp)
                         }
                     },
@@ -103,7 +103,7 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                 item {
                     Text(
                         Strings.t("today.subtitle"),
-                        color = Color.White.copy(alpha = 0.65f),
+                        color = LocalContentColor.current.copy(alpha = 0.65f),
                         fontSize = 12.sp,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
@@ -118,7 +118,7 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text(Strings.t("today.youAtFair"), color = Color.White.copy(alpha = 0.65f), fontSize = 13.sp)
+                            Text(Strings.t("today.youAtFair"), color = LocalContentColor.current.copy(alpha = 0.65f), fontSize = 13.sp)
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -133,7 +133,7 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                             }
                             Text(
                                 Strings.t(if (streak == 1) "today.dayOne" else "today.dayMany"),
-                                color = Color.White.copy(alpha = 0.65f),
+                                color = LocalContentColor.current.copy(alpha = 0.65f),
                                 fontSize = 13.sp
                             )
                             OrnamentDivider()
@@ -158,7 +158,7 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                                 if (nextMilestone != null) {
                                     Text(
                                         Strings.t("today.nextMilestone", nextMilestone.first, nextMilestone.second, nextMilestone.first - streak),
-                                        color = Color.White.copy(alpha = 0.5f),
+                                        color = LocalContentColor.current.copy(alpha = 0.5f),
                                         fontSize = 11.sp,
                                         textAlign = TextAlign.Center
                                     )
@@ -181,7 +181,7 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                                 }
                                 Text(
                                     Strings.t("today.claimed.hint"),
-                                    color = Color.White.copy(alpha = 0.45f),
+                                    color = LocalContentColor.current.copy(alpha = 0.45f),
                                     fontSize = 11.sp,
                                     textAlign = TextAlign.Center
                                 )
@@ -216,12 +216,12 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(Strings.t("today.leaderboard"), color = FairyGold, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                            Text(Strings.t("today.soon"), color = Color.White.copy(alpha = 0.4f), fontSize = 11.sp)
+                            Text(Strings.t("today.soon"), color = LocalContentColor.current.copy(alpha = 0.4f), fontSize = 11.sp)
                         }
                         Spacer(Modifier.height(8.dp))
                         Text(
                             Strings.t("today.leaderboard.hint"),
-                            color = Color.White.copy(alpha = 0.6f),
+                            color = LocalContentColor.current.copy(alpha = 0.6f),
                             fontSize = 12.sp
                         )
                     }
@@ -256,7 +256,7 @@ private fun MilestoneCell(day: Int, bonus: Int, passed: Boolean) {
             )
             Text(
                 "+$bonus г",
-                color = Color.White.copy(alpha = 0.55f),
+                color = LocalContentColor.current.copy(alpha = 0.55f),
                 fontSize = 9.sp
             )
         }

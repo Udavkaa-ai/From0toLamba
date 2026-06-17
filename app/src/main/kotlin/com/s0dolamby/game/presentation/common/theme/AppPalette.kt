@@ -5,16 +5,17 @@ import androidx.compose.ui.graphics.Color
 import com.s0dolamby.game.domain.model.ThemeMode
 
 /**
- * Палитра, через которую все экраны получают свои цвета. Меняем через
- * [LocalAppPalette] провайдер в [From0toLambaTheme], и все @Composable-
- * геттеры [FairyGold] / [EnchantedPurple] / [NightBlue] начнут отдавать
- * новые значения без ручной правки call-сайтов.
+ * Палитра, через которую все экраны получают свои цвета.
  *
- * Текущие две темы — оба «тёмные», просто в разных гаммах:
- *  - DARK_FAIRY: фиолетово-сапфировая, как было.
- *  - WARM_FAIRY: карамельно-сепиевая «ярмарка вечером».
- * Контрастность `Color.White`-текста сохраняется в обеих — поэтому
- * 200+ хитов хардкода Color.White не приходится переписывать.
+ * Две темы концептуально РАЗНЫЕ, не просто перекрашенные:
+ *  - DARK_FAIRY: фиолетово-сапфировая ночь. Карточки ТЁМНЫЕ, текст БЕЛЫЙ.
+ *  - WARM_FAIRY: «сказочно-русская ярмарка». Фон — медовое дерево, но
+ *    КАРТОЧКИ-СВИТКИ светлые пергаментные, текст — тёмная сепия.
+ *
+ * Поэтому каждая палитра несёт свои `cardTop/Mid/Bottom` и `onCard*`-цвета.
+ * FairyCard читает их из [LocalAppPalette] (а LocalContentColor —
+ * провайдится в onCard, чтобы Text-ы без явного `color =` подхватывали
+ * правильный по теме).
  */
 data class AppPalette(
     val fairyGold: Color,
@@ -24,7 +25,23 @@ data class AppPalette(
     val error: Color,
     val warning: Color,
     val accent: Color,
-    val ranks: RankPalette
+    val ranks: RankPalette,
+    // Градиент поверхности карточки (top → bottom).
+    val cardTop: Color,
+    val cardMid: Color,
+    val cardBottom: Color,
+    // Рамки карточки.
+    val cardBorder: Color,
+    val cardBorderBright: Color,
+    // Цвета текста на карточке — белый на тёмной, тёмная сепия на пергаменте.
+    val onCard: Color,
+    val onCardSecondary: Color,
+    val onCardMuted: Color,
+    // Фон экрана: тёмный градиент над bg-картинкой в DARK, тёплый янтарный
+    // ореол + виньетка в WARM (картинка bg должна просвечивать).
+    val screenBgTop: Color,
+    val screenBgMid: Color,
+    val screenBgBottom: Color
 )
 
 data class RankPalette(
@@ -49,18 +66,43 @@ val DarkFairyPalette = AppPalette(
     error = Color(0xFFFF5252),
     warning = Color(0xFFFFC107),
     accent = Color(0xFF7B5EA7),
-    ranks = SharedRankPalette
+    ranks = SharedRankPalette,
+    cardTop = Color(0xE02A1960),                    // EnchantedPurple, 88%
+    cardMid = Color(0xEB22104A),                    // глубокий фиолет, 92%
+    cardBottom = Color(0xF50D1735),                 // NightBlue, 96%
+    cardBorder = Color(0x1FFFB800),                 // золото 12%
+    cardBorderBright = Color(0x59FFB800),           // золото 35%
+    onCard = Color(0xFFFFFFFF),
+    onCardSecondary = Color(0xB3FFFFFF),            // 70%
+    onCardMuted = Color(0x73FFFFFF),                // 45%
+    screenBgTop = Color(0xD9060412),
+    screenBgMid = Color(0xBF0A0818),
+    screenBgBottom = Color(0xF0060412)
 )
 
 val WarmFairyPalette = AppPalette(
-    fairyGold = Color(0xFFFFD66B),                  // светлее, чтобы выделяться на коричневом фоне
-    enchantedPurple = Color(0xFF6E4322),            // тёплое дерево вместо фиолета
-    nightBlue = Color(0xFF2B1A0C),                  // глубокий шоколад вместо ночной синевы
-    success = Color(0xFF50C878),
-    error = Color(0xFFE34234),
-    warning = Color(0xFFFFA72E),
+    fairyGold = Color(0xFFFFB800),
+    enchantedPurple = Color(0xFF6E4422),            // дуб медового тона
+    nightBlue = Color(0xFF3A1F0A),                  // глубокое дерево
+    success = Color(0xFF2E8B57),                    // изумруд (на светлом нужен темнее)
+    error = Color(0xFFB02828),                      // карминовая печать
+    warning = Color(0xFFC58000),                    // тёплый янтарь
     accent = Color(0xFFD4A017),
-    ranks = SharedRankPalette
+    ranks = SharedRankPalette,
+    // Пергамент: светлая бумага под рукой — карточка ВЫПРЫГИВАЕТ из тёмного дерева.
+    cardTop = Color(0xFCF5E6C3),                    // светлый пергамент
+    cardMid = Color(0xFFE8D5A8),                    // основной пергамент
+    cardBottom = Color(0xFFD9C28A),                 // плотный пергамент снизу
+    cardBorder = Color(0xD9784C24),                 // тёмная деревянная рамка
+    cardBorderBright = Color(0xFFD4A03C),           // золотой кант (активная)
+    onCard = Color(0xFF1A0E04),                     // почти чёрная сепия — главный текст
+    onCardSecondary = Color(0xEB1A0E04),            // 92%
+    onCardMuted = Color(0xC71A0E04),                // 78%
+    // Тёплый янтарный ореол + виньетка по краям — bg-картинка должна
+    // просвечивать («ярмарка в золотое полуденное время»).
+    screenBgTop = Color(0x385A3818),                // 22%
+    screenBgMid = Color(0x255A3818),                // 14%
+    screenBgBottom = Color(0x59523418)              // 35%
 )
 
 val LocalAppPalette = compositionLocalOf { DarkFairyPalette }

@@ -185,13 +185,13 @@ private fun PersonasTab(uiState: RegistryUiState) {
                         Text(
                             Strings.t("registry.personas.empty.title"),
                             style = MaterialTheme.typography.titleMedium,
-                            color = Color.White,
+                            color = LocalContentColor.current,
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
                             Strings.t("registry.personas.empty.hint"),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White.copy(alpha = 0.65f)
+                            color = LocalContentColor.current.copy(alpha = 0.65f)
                         )
                     }
                 }
@@ -214,7 +214,7 @@ private fun PersonasTab(uiState: RegistryUiState) {
                     Text(
                         Strings.t("registry.personas.lockedHint", uiState.lockedCount),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.65f)
+                        color = LocalContentColor.current.copy(alpha = 0.65f)
                     )
                 }
             }
@@ -236,12 +236,12 @@ private fun PersonaCard(entry: PersonaEntry) {
                     Strings.t("persona.${entry.archetype.name}"),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = LocalContentColor.current
                 )
                 Text(
                     Strings.t("persona.${entry.archetype.name}.desc"),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.65f)
+                    color = LocalContentColor.current.copy(alpha = 0.65f)
                 )
                 Row(
                     modifier = Modifier.padding(top = 4.dp),
@@ -267,7 +267,7 @@ private fun PersonaCard(entry: PersonaEntry) {
                         Text(
                             "📜 ${entry.projectsClosed}",
                             style = MaterialTheme.typography.labelSmall,
-                            color = Color.White.copy(alpha = 0.6f)
+                            color = LocalContentColor.current.copy(alpha = 0.6f)
                         )
                     }
                 }
@@ -289,7 +289,7 @@ private fun ProjectTypesTab(types: List<ProjectType>) {
                     Text(
                         Strings.t("registry.types.empty"),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.65f)
+                        color = LocalContentColor.current.copy(alpha = 0.65f)
                     )
                 }
             }
@@ -311,8 +311,8 @@ private fun ProjectTypeCard(type: ProjectType) {
         ProjectType.HONEST_TRADE -> Triple("type.honestTrade", "type.HONEST_TRADE.desc", "risk.moderate")
     }
     FairyCard(modifier = Modifier.fillMaxWidth()) {
-        Text(Strings.t(titleKey), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
-        Text(Strings.t(descKey), style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.7f))
+        Text(Strings.t(titleKey), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = LocalContentColor.current)
+        Text(Strings.t(descKey), style = MaterialTheme.typography.bodyMedium, color = LocalContentColor.current.copy(alpha = 0.7f))
         Text(
             Strings.t("registry.types.risk", Strings.t(riskKey)),
             style = MaterialTheme.typography.labelSmall,
@@ -348,7 +348,7 @@ private fun GlossaryCard(title: String, body: String) {
     FairyCard(modifier = Modifier.fillMaxWidth()) {
         Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = FairyGold)
         Spacer(Modifier.height(4.dp))
-        Text(body, style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.8f))
+        Text(body, style = MaterialTheme.typography.bodyMedium, color = LocalContentColor.current.copy(alpha = 0.8f))
     }
 }
 

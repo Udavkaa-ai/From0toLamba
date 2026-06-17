@@ -310,7 +310,7 @@ private fun HomeHeader(
             Text(
                 Strings.t("home.subtitle", inner),
                 fontSize = 12.sp,
-                color = Color.White.copy(alpha = 0.55f)
+                color = LocalContentColor.current.copy(alpha = 0.55f)
             )
         }
         IconButton(
@@ -338,6 +338,7 @@ private fun IntroCardsRow() {
             .horizontalScroll(scrollState),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        val palette = com.s0dolamby.game.presentation.common.theme.LocalAppPalette.current
         INTRO_CARDS.forEach { card ->
             Column(
                 modifier = Modifier
@@ -345,10 +346,7 @@ private fun IntroCardsRow() {
                     .height(120.dp)
                     .background(
                         Brush.linearGradient(
-                            colors = listOf(
-                                EnchantedPurple.copy(alpha = 0.88f),
-                                NightBlue.copy(alpha = 0.95f)
-                            )
+                            colors = listOf(palette.cardTop, palette.cardBottom)
                         ),
                         shape = RoundedCornerShape(14.dp)
                     )
@@ -371,7 +369,7 @@ private fun IntroCardsRow() {
                 Spacer(Modifier.height(4.dp))
                 Text(
                     Strings.t(card.textKey),
-                    color = Color.White.copy(alpha = 0.75f),
+                    color = palette.onCardSecondary,
                     fontSize = 11.sp,
                     lineHeight = 15.sp
                 )
@@ -417,7 +415,7 @@ private fun BalanceCard(
             ) {
                 Text(
                     Strings.t("home.balance.free"),
-                    color = Color.White.copy(alpha = 0.6f),
+                    color = LocalContentColor.current.copy(alpha = 0.6f),
                     fontSize = 12.sp
                 )
                 Spacer(Modifier.height(4.dp))
@@ -575,7 +573,7 @@ private fun LetopisChip(count: Int, onClick: () -> Unit) {
             ) {
                 Text("📖", fontSize = 18.sp)
                 Text(Strings.t("home.letopis"), color = FairyGold, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                Text("($count)", color = Color.White.copy(alpha = 0.5f), fontSize = 13.sp)
+                Text("($count)", color = LocalContentColor.current.copy(alpha = 0.5f), fontSize = 13.sp)
             }
         }
     }
@@ -586,7 +584,7 @@ private fun MetricColumn(label: String, value: String, color: Color) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             label,
-            color = Color.White.copy(alpha = 0.5f),
+            color = LocalContentColor.current.copy(alpha = 0.5f),
             fontSize = 11.sp
         )
         Spacer(Modifier.height(2.dp))
@@ -650,13 +648,13 @@ private fun ActiveProjectCardCompact(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             project.claimedName,
-                            color = Color.White,
+                            color = LocalContentColor.current,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
                             "${project.developerName} · ${project.daysSinceJoined} дн.",
-                            color = Color.White.copy(alpha = 0.55f),
+                            color = LocalContentColor.current.copy(alpha = 0.55f),
                             fontSize = 11.sp,
                             modifier = Modifier.padding(top = 2.dp)
                         )
@@ -730,12 +728,12 @@ private fun InboxPromoCard(onClick: () -> Unit) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
                     Strings.t("home.inboxPromo"),
-                    color = Color.White,
+                    color = LocalContentColor.current,
                     fontSize = 14.sp
                 )
                 Text(
                     Strings.t("home.inboxPromo.sub"),
-                    color = Color.White.copy(alpha = 0.55f),
+                    color = LocalContentColor.current.copy(alpha = 0.55f),
                     fontSize = 12.sp,
                     modifier = Modifier.padding(top = 4.dp)
                 )
@@ -776,13 +774,13 @@ private fun EmptyHomeCard(onInboxClick: () -> Unit) {
                 Text("✦", color = FairyGold.copy(alpha = 0.4f), fontSize = 28.sp)
                 Text(
                     Strings.t("home.inbox.empty"),
-                    color = Color.White,
+                    color = LocalContentColor.current,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
                     Strings.t("home.inbox.empty.hint"),
-                    color = Color.White.copy(alpha = 0.65f),
+                    color = LocalContentColor.current.copy(alpha = 0.65f),
                     fontSize = 13.sp
                 )
                 OutlinedButton(
@@ -918,7 +916,7 @@ private fun UpdateCardDeck(
                 .padding(horizontal = 40.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("← пропустить", color = Color.White.copy(alpha = 0.5f), fontSize = 10.sp)
+            Text("← пропустить", color = LocalContentColor.current.copy(alpha = 0.5f), fontSize = 10.sp)
             Text("к делу →", color = FairyGold.copy(alpha = 0.7f), fontSize = 10.sp)
         }
     }
@@ -992,12 +990,12 @@ private fun SwipeableUpdateCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(update.projectName, color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp)
-                Text("День ${update.day}", color = Color.White.copy(alpha = 0.5f), fontSize = 10.sp)
+                Text(update.projectName, color = LocalContentColor.current.copy(alpha = 0.7f), fontSize = 11.sp)
+                Text("День ${update.day}", color = LocalContentColor.current.copy(alpha = 0.5f), fontSize = 10.sp)
             }
 
-            Text(update.title, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-            Text(update.body, color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp)
+            Text(update.title, color = LocalContentColor.current, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            Text(update.body, color = LocalContentColor.current.copy(alpha = 0.85f), fontSize = 13.sp)
 
             when (update.payoutStatus) {
                 PayoutStatus.DELAYED -> Surface(

@@ -70,7 +70,7 @@ fun RelationshipsScreen(
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Text("✦", color = FairyGold, fontSize = 12.sp)
-                            Text(Strings.t("rel.title"), fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(Strings.t("rel.title"), fontWeight = FontWeight.Bold, color = LocalContentColor.current)
                             Text("✦", color = FairyGold, fontSize = 12.sp)
                         }
                     },
@@ -92,7 +92,7 @@ fun RelationshipsScreen(
             ) {
                 Text(
                     Strings.t("rel.subtitle", ui.maxLevel),
-                    color = Color.White.copy(alpha = 0.65f),
+                    color = LocalContentColor.current.copy(alpha = 0.65f),
                     fontSize = 12.sp
                 )
 
@@ -103,18 +103,18 @@ fun RelationshipsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
-                            Text(Strings.t("rel.sumTies"), color = Color.White.copy(alpha = 0.65f), fontSize = 12.sp)
+                            Text(Strings.t("rel.sumTies"), color = LocalContentColor.current.copy(alpha = 0.65f), fontSize = 12.sp)
                             Text("${ui.tiesTotal}", color = FairyGold, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
                             if (ui.seenCount > 0) {
                                 Text(
                                     Strings.t("rel.knownOf", ui.seenCount, ui.entries.size),
-                                    color = Color.White.copy(alpha = 0.5f),
+                                    color = LocalContentColor.current.copy(alpha = 0.5f),
                                     fontSize = 11.sp
                                 )
                             }
                         }
                         Column(horizontalAlignment = Alignment.End) {
-                            Text(Strings.t("rel.bonusPerLevel"), color = Color.White.copy(alpha = 0.65f), fontSize = 12.sp)
+                            Text(Strings.t("rel.bonusPerLevel"), color = LocalContentColor.current.copy(alpha = 0.65f), fontSize = 12.sp)
                             Text(
                                 Strings.t("rel.bonusPerDay", ui.bonusPercentPerLevel),
                                 color = FairyGold,
@@ -196,7 +196,7 @@ private fun ArchetypeCell(entry: ArchetypeEntry, maxLevel: Int) {
             }
             Text(
                 if (seen) name else "?",
-                color = Color.White.copy(alpha = if (seen) 0.9f else 0.4f),
+                color = LocalContentColor.current.copy(alpha = if (seen) 0.9f else 0.4f),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center
@@ -207,7 +207,7 @@ private fun ArchetypeCell(entry: ArchetypeEntry, maxLevel: Int) {
             ) {
                 Text(
                     "🤝 ${entry.tieLevel}/$maxLevel",
-                    color = Color.White.copy(alpha = if (entry.tieLevel > 0) 0.85f else 0.4f),
+                    color = LocalContentColor.current.copy(alpha = if (entry.tieLevel > 0) 0.85f else 0.4f),
                     fontSize = 10.sp,
                     fontWeight = if (entry.tieLevel > 0) FontWeight.SemiBold else FontWeight.Normal
                 )

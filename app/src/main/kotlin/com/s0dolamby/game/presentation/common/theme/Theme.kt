@@ -10,6 +10,11 @@ import com.s0dolamby.game.domain.model.ThemeMode
 private fun colorSchemeFor(palette: AppPalette) = darkColorScheme(
     primary = palette.fairyGold,
     onPrimary = Color(0xFF1A0A00),
+    // primaryContainer/surface/background — для чистых Material-виджетов
+    // (BottomSheet, AlertDialog, OutlinedTextField). Они в обеих темах
+    // ТЁМНЫЕ (purple-night или brown-wood), потому что Material рисует
+    // на них белый текст; смешивать со светлым пергаментом нельзя — это
+    // только для FairyCard.cardTop/Mid/Bottom + palette.onCard.
     primaryContainer = palette.enchantedPurple,
     secondary = palette.accent,
     onSecondary = Color.White,

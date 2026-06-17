@@ -564,17 +564,17 @@ private fun RevealedDetailsCard(project: Project, perfect: Boolean) {
             if (perfect) Strings.t("ama.reveal.subtitle.perfect")
             else Strings.t("ama.reveal.subtitle.win"),
             style = MaterialTheme.typography.labelSmall,
-            color = Color.White.copy(alpha = 0.55f)
+            color = LocalContentColor.current.copy(alpha = 0.55f)
         )
         OrnamentDivider()
         // Базовый уровень (минимум 1 ошибка): только «тип дела» — игрок
         // знает чем торгует, но не знает реальную доходность и судьбу.
-        DetailRow(Strings.t("ama.reveal.type"), typeText, Color.White)
+        DetailRow(Strings.t("ama.reveal.type"), typeText, LocalContentColor.current)
         // Идеал (0 ошибок): добавляется заявленный посул (APY). Это
         // обещание дельца, а не правда — реальную доходность и судьбу
         // приходится оценивать самому в беседе.
         if (perfect) {
-            DetailRow(Strings.t("ama.reveal.apy"), "${project.claimedAPY.toInt()}% / год", Color.White.copy(alpha = 0.7f))
+            DetailRow(Strings.t("ama.reveal.apy"), "${project.claimedAPY.toInt()}% / год", LocalContentColor.current.copy(alpha = 0.7f))
         }
     }
 }
@@ -586,7 +586,7 @@ private fun DetailRow(label: String, value: String, color: Color) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.55f))
+        Text(label, style = MaterialTheme.typography.labelMedium, color = LocalContentColor.current.copy(alpha = 0.55f))
         Text(value, style = MaterialTheme.typography.bodySmall, color = color, fontWeight = FontWeight.SemiBold)
     }
 }
@@ -605,13 +605,13 @@ private fun WelcomeMessage(projectName: String, devName: String) {
         Text(
             Strings.t("ama.start.subtitle", projectName, devName),
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.White
+            color = LocalContentColor.current
         )
         Spacer(Modifier.height(4.dp))
         Text(
             Strings.t("ama.start.hint", GameConfig.AMA_MAX_QUESTIONS),
             style = MaterialTheme.typography.bodySmall,
-            color = Color.White.copy(alpha = 0.65f)
+            color = LocalContentColor.current.copy(alpha = 0.65f)
         )
     }
 }
@@ -624,12 +624,12 @@ private fun SessionEndBanner(
     FairyCard(modifier = Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("✦", color = FairyGold, fontSize = 16.sp)
-            Text(Strings.t("ama.end.title"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(Strings.t("ama.end.title"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = LocalContentColor.current)
         }
         Text(
             Strings.t("ama.end.body"),
             style = MaterialTheme.typography.bodySmall,
-            color = Color.White.copy(alpha = 0.7f)
+            color = LocalContentColor.current.copy(alpha = 0.7f)
         )
         Spacer(Modifier.height(4.dp))
         Button(

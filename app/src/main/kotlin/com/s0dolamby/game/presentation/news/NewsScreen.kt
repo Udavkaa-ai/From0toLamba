@@ -84,13 +84,13 @@ fun NewsScreen(
                             Text(
                                 Strings.t("news.empty.title"),
                                 style = MaterialTheme.typography.titleMedium,
-                                color = Color.White,
+                                color = LocalContentColor.current,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
                                 Strings.t("news.empty.hint"),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = Color.White.copy(alpha = 0.65f)
+                                color = LocalContentColor.current.copy(alpha = 0.65f)
                             )
                         }
                     }
@@ -140,7 +140,7 @@ private fun NewsCard(update: DailyUpdate) {
                 Text(
                     "День ${update.day}",
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color.White.copy(alpha = 0.5f)
+                    color = LocalContentColor.current.copy(alpha = 0.5f)
                 )
                 Icon(
                     Icons.Default.ExpandMore,
@@ -165,7 +165,7 @@ private fun NewsCard(update: DailyUpdate) {
             update.title,
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
-            color = Color.White
+            color = LocalContentColor.current
         )
 
         // ── Announcement chip (always visible) ──
@@ -198,7 +198,7 @@ private fun NewsCard(update: DailyUpdate) {
                             MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic)
                         else -> MaterialTheme.typography.bodyMedium
                     },
-                    color = Color.White.copy(alpha = 0.85f)
+                    color = LocalContentColor.current.copy(alpha = 0.85f)
                 )
 
                 // ── Payout status ──

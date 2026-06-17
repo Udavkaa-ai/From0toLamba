@@ -98,7 +98,7 @@ fun SettingsScreen(
                     Text(
                         Strings.t("settings.nickname.hint"),
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.6f)
+                        color = LocalContentColor.current.copy(alpha = 0.6f)
                     )
                     Spacer(Modifier.height(10.dp))
                     OutlinedTextField(
@@ -111,10 +111,10 @@ fun SettingsScreen(
                             focusedBorderColor = FairyGold,
                             unfocusedBorderColor = FairyGold.copy(alpha = 0.3f),
                             cursorColor = FairyGold,
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            focusedContainerColor = Color.White.copy(alpha = 0.05f),
-                            unfocusedContainerColor = Color.White.copy(alpha = 0.03f)
+                            focusedTextColor = LocalContentColor.current,
+                            unfocusedTextColor = LocalContentColor.current,
+                            focusedContainerColor = LocalContentColor.current.copy(alpha = 0.05f),
+                            unfocusedContainerColor = LocalContentColor.current.copy(alpha = 0.03f)
                         )
                     )
                 }
@@ -131,7 +131,7 @@ fun SettingsScreen(
                     Text(
                         Strings.t("settings.model.hint"),
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.6f)
+                        color = LocalContentColor.current.copy(alpha = 0.6f)
                     )
                     Spacer(Modifier.height(12.dp))
                     TEXT_MODEL_OPTIONS.forEach { option ->
@@ -144,7 +144,7 @@ fun SettingsScreen(
                                 option.label,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = if (uiState.settings.textModel == option.modelId) FairyGold
-                                        else Color.White.copy(alpha = 0.85f),
+                                        else LocalContentColor.current.copy(alpha = 0.85f),
                                 fontWeight = if (uiState.settings.textModel == option.modelId) FontWeight.SemiBold
                                              else FontWeight.Normal,
                                 modifier = Modifier.weight(1f)
@@ -154,7 +154,7 @@ fun SettingsScreen(
                                 onClick = { viewModel.setTextModel(option.modelId) },
                                 colors = RadioButtonDefaults.colors(
                                     selectedColor = FairyGold,
-                                    unselectedColor = Color.White.copy(alpha = 0.4f)
+                                    unselectedColor = LocalContentColor.current.copy(alpha = 0.4f)
                                 )
                             )
                         }
@@ -178,7 +178,7 @@ fun SettingsScreen(
                     Text(
                         Strings.t("settings.minigames.hint"),
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.65f)
+                        color = LocalContentColor.current.copy(alpha = 0.65f)
                     )
                     Spacer(Modifier.height(12.dp))
                     OutlinedButton(
@@ -259,7 +259,7 @@ fun SettingsScreen(
                     Text(
                         Strings.t("settings.lang.title"),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.9f)
+                        color = LocalContentColor.current.copy(alpha = 0.9f)
                     )
                     Spacer(Modifier.height(6.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
@@ -273,7 +273,7 @@ fun SettingsScreen(
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = FairyGold.copy(alpha = 0.22f),
                                     selectedLabelColor = FairyGold,
-                                    labelColor = Color.White.copy(alpha = 0.7f)
+                                    labelColor = LocalContentColor.current.copy(alpha = 0.7f)
                                 )
                             )
                         }
@@ -282,7 +282,7 @@ fun SettingsScreen(
                     Text(
                         Strings.t("settings.theme.title"),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.9f)
+                        color = LocalContentColor.current.copy(alpha = 0.9f)
                     )
                     Spacer(Modifier.height(6.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
@@ -296,7 +296,7 @@ fun SettingsScreen(
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = FairyGold.copy(alpha = 0.22f),
                                     selectedLabelColor = FairyGold,
-                                    labelColor = Color.White.copy(alpha = 0.7f)
+                                    labelColor = LocalContentColor.current.copy(alpha = 0.7f)
                                 )
                             )
                         }
@@ -317,7 +317,7 @@ fun SettingsScreen(
                             Text(
                                 Strings.t("settings.about.version", BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = Color.White.copy(alpha = 0.5f)
+                                color = LocalContentColor.current.copy(alpha = 0.5f)
                             )
                         }
                         IconButton(onClick = { showFaqDialog = true }) {
@@ -328,7 +328,7 @@ fun SettingsScreen(
                     Text(
                         Strings.t("settings.about.text"),
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.65f)
+                        color = LocalContentColor.current.copy(alpha = 0.65f)
                     )
                     Spacer(Modifier.height(8.dp))
                     OutlinedButton(
@@ -355,7 +355,7 @@ fun SettingsScreen(
                     Text(
                         Strings.t("settings.danger.hint"),
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.65f)
+                        color = LocalContentColor.current.copy(alpha = 0.65f)
                     )
                     Spacer(Modifier.height(12.dp))
                     OutlinedButton(

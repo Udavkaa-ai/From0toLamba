@@ -124,13 +124,13 @@ fun PortfolioScreen(
                             Text(
                                 Strings.t("portfolio.empty.title"),
                                 style = MaterialTheme.typography.titleMedium,
-                                color = Color.White,
+                                color = LocalContentColor.current,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
                                 Strings.t("portfolio.empty.hint"),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = Color.White.copy(alpha = 0.65f)
+                                color = LocalContentColor.current.copy(alpha = 0.65f)
                             )
                         }
                     }
@@ -251,7 +251,7 @@ private fun PortfolioProjectCard(
                 Text(
                     "${project.developerName} · ${project.daysSinceJoined} дн.",
                     style = MaterialTheme.typography.labelMedium,
-                    color = Color.White.copy(alpha = 0.55f)
+                    color = LocalContentColor.current.copy(alpha = 0.55f)
                 )
             }
             Column(horizontalAlignment = Alignment.End) {
@@ -259,11 +259,11 @@ private fun PortfolioProjectCard(
                     if (project.isWithdrawalLocked) {
                         Icon(Icons.Default.Lock, Strings.t("portfolio.card.locked"), tint = Warning, modifier = Modifier.size(14.dp))
                     }
-                    Text(Strings.t("portfolio.card.invested"), color = Color.White.copy(alpha = 0.55f), fontSize = 10.sp)
+                    Text(Strings.t("portfolio.card.invested"), color = LocalContentColor.current.copy(alpha = 0.55f), fontSize = 10.sp)
                 }
                 Text(
                     formatGroshes(project.investedAmountRubles),
-                    color = Color.White.copy(alpha = 0.7f),
+                    color = LocalContentColor.current.copy(alpha = 0.7f),
                     fontSize = 12.sp
                 )
                 Text(
@@ -288,7 +288,7 @@ private fun PortfolioProjectCard(
             Text(
                 Strings.t("portfolio.card.history"),
                 style = MaterialTheme.typography.labelSmall,
-                color = Color.White.copy(alpha = 0.5f)
+                color = LocalContentColor.current.copy(alpha = 0.5f)
             )
             Spacer(Modifier.height(4.dp))
             DualSparkline(
@@ -299,7 +299,7 @@ private fun PortfolioProjectCard(
             if (project.currentUserCount > 0) {
                 Text(
                     Strings.t("portfolio.card.investors", formatCountShort(project.currentUserCount)),
-                    color = Color.White.copy(alpha = 0.55f),
+                    color = LocalContentColor.current.copy(alpha = 0.55f),
                     fontSize = 11.sp,
                     modifier = Modifier.padding(top = 2.dp)
                 )
@@ -351,7 +351,7 @@ private fun PortfolioProjectCard(
         if (hasFee) {
             Text(
                 Strings.t("portfolio.card.fee"),
-                color = Color.White.copy(alpha = 0.45f),
+                color = LocalContentColor.current.copy(alpha = 0.45f),
                 fontSize = 10.sp
             )
         }
@@ -554,11 +554,11 @@ private fun ClosedProjectCard(project: Project, onClick: () -> Unit) {
     FairyCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(project.claimedName, style = MaterialTheme.typography.titleMedium, color = Color.White, fontWeight = FontWeight.Bold)
+                Text(project.claimedName, style = MaterialTheme.typography.titleMedium, color = LocalContentColor.current, fontWeight = FontWeight.Bold)
                 Text(
                     project.closureReason ?: Strings.t("portfolio.closed.fallback"),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.6f)
+                    color = LocalContentColor.current.copy(alpha = 0.6f)
                 )
             }
             Text(

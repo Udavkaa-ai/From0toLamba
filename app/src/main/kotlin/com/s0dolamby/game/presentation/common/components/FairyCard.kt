@@ -8,17 +8,25 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.s0dolamby.game.presentation.common.theme.LocalAppPalette
 
 /**
- * Карточка в стиле HomeScreen: градиентный фон
- * primaryContainer → background (по палитре активной темы) + золотые
- * угловые орнаменты. На тёплой ярмарке градиент уходит в карамельные тона.
+ * Карточка в стиле «двух тем»:
+ *  • тёмная ночь — фиолет→ночной синий, текст светлый;
+ *  • тёплая ярмарка — пергамент, текст тёмная сепия.
+ *
+ * Карточка не только красит фон, но и провайдит `LocalContentColor` с
+ * подходящим оттенком, чтобы дочерние `Text` без явного `color =`
+ * автоматически читались на правильном по теме фоне. Места, где цвет
+ * текста задан жёстко (`color = Color.White`), переезжают на
+ * `LocalContentColor.current` или на `palette.onCard*` порционно.
  */
 @Composable
 fun FairyCard(
@@ -27,19 +35,20 @@ fun FairyCard(
     innerPadding: Int = 16,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    val top = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.88f)
-    val bottom = MaterialTheme.colorScheme.background.copy(alpha = 0.95f)
+    val palette = LocalAppPalette.current
     val body: @Composable () -> Unit = {
         Box {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Brush.verticalGradient(colors = listOf(top, bottom)))
+                    .background(Brush.verticalGradient(colors = listOf(palette.cardTop, palette.cardMid, palette.cardBottom)))
             ) {
-                Column(
-                    modifier = Modifier.padding(innerPadding.dp),
-                    content = content
-                )
+                CompositionLocalProvider(LocalContentColor provides palette.onCard) {
+                    Column(
+                        modifier = Modifier.padding(innerPadding.dp),
+                        content = content
+                    )
+                }
             }
             CardCornerOrnaments(modifier = Modifier.matchParentSize())
         }

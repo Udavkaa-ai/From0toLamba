@@ -91,14 +91,14 @@ fun InboxScreen(
                             Text(
                                 Strings.t("inbox.empty"),
                                 style = MaterialTheme.typography.titleMedium,
-                                color = Color.White,
+                                color = LocalContentColor.current,
                                 fontWeight = FontWeight.SemiBold,
                                 textAlign = TextAlign.Center
                             )
                             Text(
                                 Strings.t("inbox.empty.hint"),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = Color.White.copy(alpha = 0.55f),
+                                color = LocalContentColor.current.copy(alpha = 0.55f),
                                 textAlign = TextAlign.Center
                             )
                         }
@@ -200,7 +200,7 @@ private fun InboxProjectCard(
                 )
                 Text(
                     project.type.displayWithEmojiI18n(),
-                    color = Color.White.copy(alpha = 0.55f),
+                    color = LocalContentColor.current.copy(alpha = 0.55f),
                     fontSize = 11.sp,
                     modifier = Modifier.padding(top = 2.dp)
                 )
@@ -227,7 +227,7 @@ private fun InboxProjectCard(
             project.description.take(160) + if (project.description.length > 160) "..." else "",
             style = MaterialTheme.typography.bodySmall,
             fontStyle = FontStyle.Italic,
-            color = Color.White.copy(alpha = 0.7f),
+            color = LocalContentColor.current.copy(alpha = 0.7f),
             lineHeight = 18.sp
         )
 
@@ -239,12 +239,12 @@ private fun InboxProjectCard(
         ) {
             Text(
                 "👤 ${project.developerName}",
-                color = Color.White.copy(alpha = 0.55f),
+                color = LocalContentColor.current.copy(alpha = 0.55f),
                 fontSize = 11.sp
             )
             Text(
                 Strings.t("inbox.investors", formatCount(project.claimedUserCount)),
-                color = Color.White.copy(alpha = 0.55f),
+                color = LocalContentColor.current.copy(alpha = 0.55f),
                 fontSize = 11.sp
             )
         }
@@ -282,7 +282,7 @@ private fun InboxProjectCard(
             // Альтернатива — беседа за просмотр рекламы (rewarded ad)
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                color = Color.White.copy(alpha = 0.06f),
+                color = LocalContentColor.current.copy(alpha = 0.06f),
                 shape = MaterialTheme.shapes.small,
                 border = androidx.compose.foundation.BorderStroke(
                     1.dp, Color.White.copy(alpha = 0.20f)
@@ -291,7 +291,7 @@ private fun InboxProjectCard(
             ) {
                 Text(
                     Strings.t("inbox.cta.ad"),
-                    color = Color.White.copy(alpha = 0.78f),
+                    color = LocalContentColor.current.copy(alpha = 0.78f),
                     fontSize = 12.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
