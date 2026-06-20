@@ -36,12 +36,19 @@ fun FairyCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     innerPadding: Int = 16,
+    /**
+     * Опциональная full-bleed «шапка» карточки — рисуется БЕЗ внутреннего
+     * padding, от края до края (как баннер дела в TG: 120dp картинка
+     * упирается в скруглённые углы карточки). Контент после шапки идёт в
+     * Column с обычным `innerPadding`.
+     */
+    headerContent: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val palette = LocalAppPalette.current
     val body: @Composable () -> Unit = {
         Box {
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Brush.verticalGradient(colors = listOf(palette.cardTop, palette.cardMid, palette.cardBottom)))
@@ -52,6 +59,7 @@ fun FairyCard(
                     LocalContentColorMuted provides palette.onCardMuted,
                     LocalAccentOnCard provides palette.accentOnCard
                 ) {
+                    headerContent?.invoke()
                     Column(
                         modifier = Modifier.padding(innerPadding.dp),
                         content = content

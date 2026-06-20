@@ -171,23 +171,26 @@ private fun InboxProjectCard(
 ) {
     // Тап по карточке = основной вход = мини-игра. Альтернативный вход —
     // «беседа за рекламу» — на отдельной полупрозрачной кнопке снизу.
-    FairyCard(onClick = onPlayMinigame, modifier = Modifier.fillMaxWidth()) {
-        // Обложка дела из стока (как в TG: 120dp, скруглённая).
-        // Берётся напрямую из assets через rememberBannerUrl — даже у старых дел
-        // в БД без bannerImageUrl всё равно подберётся картинка.
-        val bannerUrl = rememberBannerUrl(project.personaArchetype, project.type, project.id)
-        if (bannerUrl != null) {
-            AsyncImage(
-                model = bannerUrl,
-                contentDescription = project.claimedName,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(120.dp)
-                    .clip(MaterialTheme.shapes.medium)
-            )
-            Spacer(Modifier.height(10.dp))
-        }
+    // Обложка дела из стока (как в TG: 120dp, full-bleed от края до края).
+    // Берётся напрямую из assets через rememberBannerUrl — даже у старых дел
+    // в БД без bannerImageUrl всё равно подберётся картинка.
+    val bannerUrl = rememberBannerUrl(project.personaArchetype, project.type, project.id)
+    FairyCard(
+        onClick = onPlayMinigame,
+        modifier = Modifier.fillMaxWidth(),
+        headerContent = if (bannerUrl != null) {
+            {
+                AsyncImage(
+                    model = bannerUrl,
+                    contentDescription = project.claimedName,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                )
+            }
+        } else null
+    ) {
         // Заголовок: имя дела + тип, бейдж «N% посул» справа
         Row(
             modifier = Modifier.fillMaxWidth(),

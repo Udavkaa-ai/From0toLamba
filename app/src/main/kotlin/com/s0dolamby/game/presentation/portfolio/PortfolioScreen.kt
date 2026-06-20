@@ -224,20 +224,22 @@ private fun PortfolioProjectCard(
     val hasFee = project.type == ProjectType.CARD_GAME || project.type == ProjectType.TREASURE_HUNT
     val bannerUrl = rememberBannerUrl(project.personaArchetype, project.type, project.id)
 
-    FairyCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-        // Баннер дела — full-width картинка как в TG.
-        if (bannerUrl != null) {
-            AsyncImage(
-                model = bannerUrl,
-                contentDescription = project.claimedName,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(120.dp)
-                    .clip(RoundedCornerShape(10.dp))
-            )
-            Spacer(Modifier.height(10.dp))
-        }
+    FairyCard(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        headerContent = if (bannerUrl != null) {
+            {
+                AsyncImage(
+                    model = bannerUrl,
+                    contentDescription = project.claimedName,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                )
+            }
+        } else null
+    ) {
         // Заголовок + текущая стоимость / профит%
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -322,6 +324,13 @@ private fun PortfolioProjectCard(
 
         Spacer(Modifier.height(4.dp))
         // Три кнопки одной плиткой как в TG: Довложить / Вывести часть / Покинуть.
+        // disabledContentColor/disabledBorderColor явно ставим из палитры —
+        // у Material 3 дефолт = onSurface×0.38, что на пергаменте превращается
+        // в почти невидимый цвет. Заблокированная кнопка должна оставаться
+        // читаемой («Довложить» / «Вывести часть»), пусть и пониженной яркости.
+        val dimContent = LocalContentColor.current.copy(alpha = 0.55f)
+        val dimGold = FairyGold.copy(alpha = 0.55f)
+        val dimError = Error.copy(alpha = 0.55f)
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
             Button(
                 onClick = onAddFunds,
@@ -330,7 +339,8 @@ private fun PortfolioProjectCard(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = FairyGold,
                     contentColor = Color(0xFF1A0A00),
-                    disabledContainerColor = FairyGold.copy(alpha = 0.35f)
+                    disabledContainerColor = FairyGold.copy(alpha = 0.6f),
+                    disabledContentColor = Color(0xFF1A0A00).copy(alpha = 0.7f)
                 ),
                 contentPadding = PaddingValues(vertical = 6.dp)
             ) { Text(Strings.t("portfolio.btn.addFunds"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold) }
@@ -338,16 +348,28 @@ private fun PortfolioProjectCard(
                 onClick = onWithdraw,
                 modifier = Modifier.weight(1f),
                 enabled = !project.isWithdrawalLocked,
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = LocalContentColor.current),
-                border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.7f)),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = LocalContentColor.current,
+                    disabledContentColor = dimContent
+                ),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    if (project.isWithdrawalLocked) dimGold else FairyGold.copy(alpha = 0.7f)
+                ),
                 contentPadding = PaddingValues(vertical = 6.dp)
             ) { Text(Strings.t("portfolio.btn.withdrawPart"), fontSize = 12.sp) }
             OutlinedButton(
                 onClick = onExit,
                 modifier = Modifier.weight(1f),
                 enabled = !project.isWithdrawalLocked,
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Error),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Error.copy(alpha = 0.5f)),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = Error,
+                    disabledContentColor = dimError
+                ),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    if (project.isWithdrawalLocked) dimError else Error.copy(alpha = 0.7f)
+                ),
                 contentPadding = PaddingValues(vertical = 6.dp)
             ) { Text(Strings.t("portfolio.btn.leave"), fontSize = 12.sp) }
         }
