@@ -40,6 +40,7 @@ import com.s0dolamby.game.presentation.common.theme.Success
 import com.s0dolamby.game.presentation.common.theme.Warning
 import com.s0dolamby.game.presentation.common.theme.LocalContentColorMuted
 import com.s0dolamby.game.presentation.common.theme.LocalContentColorSecondary
+import com.s0dolamby.game.presentation.common.theme.LocalAccentOnCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,9 +60,9 @@ fun NewsScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Text("✦", color = FairyGold, fontSize = 12.sp)
+                        Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
                         Text(Strings.t("news.title"), fontWeight = FontWeight.Bold)
-                        Text("✦", color = FairyGold, fontSize = 12.sp)
+                        Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
                     }
                 },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, Strings.t("btn.back")) } },
@@ -82,7 +83,7 @@ fun NewsScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Text("✦", color = FairyGold.copy(alpha = 0.4f), fontSize = 28.sp)
+                            Text("✦", color = LocalAccentOnCard.current.copy(alpha = 0.4f), fontSize = 28.sp)
                             Text(
                                 Strings.t("news.empty.title"),
                                 style = MaterialTheme.typography.titleMedium,
@@ -159,7 +160,7 @@ private fun NewsCard(update: DailyUpdate) {
         Text(
             update.projectName,
             style = MaterialTheme.typography.labelMedium,
-            color = FairyGold,
+            color = LocalAccentOnCard.current,
             fontWeight = FontWeight.SemiBold
         )
 

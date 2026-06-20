@@ -62,6 +62,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.s0dolamby.game.presentation.common.theme.LocalContentColorMuted
 import com.s0dolamby.game.presentation.common.theme.LocalContentColorSecondary
+import com.s0dolamby.game.presentation.common.theme.LocalAccentOnCard
 
 private data class IntroCard(val icon: String, val titleKey: String, val textKey: String)
 
@@ -363,7 +364,7 @@ private fun IntroCardsRow() {
                     Text(card.icon, fontSize = 16.sp)
                     Text(
                         Strings.t(card.titleKey),
-                        color = FairyGold,
+                        color = LocalAccentOnCard.current,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -486,18 +487,18 @@ private fun MerchantRelationsCard(
                 ) {
                     Text(
                         Strings.t("home.relations.title"),
-                        color = FairyGold,
+                        color = LocalAccentOnCard.current,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold
                     )
                     Surface(
-                        color = FairyGold.copy(alpha = 0.18f),
+                        color = LocalAccentOnCard.current.copy(alpha = 0.18f),
                         shape = CircleShape,
                         border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.4f))
                     ) {
                         Text(
                             "$seenArchetypeCount / ${archetypes.size}",
-                            color = FairyGold,
+                            color = LocalAccentOnCard.current,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
@@ -570,7 +571,7 @@ private fun LetopisChip(count: Int, onClick: () -> Unit) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text("📖", fontSize = 18.sp)
-                Text(Strings.t("home.letopis"), color = FairyGold, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                Text(Strings.t("home.letopis"), color = LocalAccentOnCard.current, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                 Text("($count)", color = LocalContentColorMuted.current, fontSize = 13.sp)
             }
         }
@@ -601,7 +602,7 @@ private fun MetricColumn(label: String, value: String, color: Color) {
 private fun SectionTitle(text: String) {
     Text(
         text,
-        color = FairyGold,
+        color = LocalAccentOnCard.current,
         fontSize = 13.sp,
         fontWeight = FontWeight.SemiBold,
         modifier = Modifier.padding(start = 4.dp)
@@ -660,7 +661,7 @@ private fun ActiveProjectCardCompact(
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
                             formatGroshes(project.currentValueRubles),
-                            color = FairyGold,
+                            color = LocalAccentOnCard.current,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -684,13 +685,13 @@ private fun ActiveProjectCardCompact(
                 ) {
                     Surface(
                         modifier = Modifier.clickable { onAddInvestment() },
-                        color = FairyGold.copy(alpha = 0.12f),
+                        color = LocalAccentOnCard.current.copy(alpha = 0.12f),
                         shape = RoundedCornerShape(6.dp),
                         border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.4f))
                     ) {
                         Text(
                             "+ Довложить",
-                            color = FairyGold,
+                            color = LocalAccentOnCard.current,
                             fontSize = 11.sp,
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                         )
@@ -769,7 +770,7 @@ private fun EmptyHomeCard(onInboxClick: () -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text("✦", color = FairyGold.copy(alpha = 0.4f), fontSize = 28.sp)
+                Text("✦", color = LocalAccentOnCard.current.copy(alpha = 0.4f), fontSize = 28.sp)
                 Text(
                     Strings.t("home.inbox.empty"),
                     color = LocalContentColor.current,
@@ -781,11 +782,13 @@ private fun EmptyHomeCard(onInboxClick: () -> Unit) {
                     color = LocalContentColorMuted.current,
                     fontSize = 13.sp
                 )
-                OutlinedButton(
+                Button(
                     onClick = onInboxClick,
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f))
-                ) { Text(Strings.t("home.inbox.openCharters")) }
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = FairyGold,
+                        contentColor = Color(0xFF1A0A00)
+                    )
+                ) { Text(Strings.t("home.inbox.openCharters"), fontWeight = FontWeight.SemiBold) }
             }
         }
     }
@@ -843,7 +846,7 @@ private fun AdvanceDayButton(isLoading: Boolean, onClick: () -> Unit) {
                     Text(
                         Strings.t("loading.$idx"),
                         fontSize = 13.sp,
-                        color = FairyGold.copy(alpha = 0.75f)
+                        color = LocalAccentOnCard.current.copy(alpha = 0.75f)
                     )
                 }
             } else {
@@ -903,7 +906,7 @@ private fun UpdateCardDeck(
                 .align(Alignment.TopCenter)
                 .padding(top = 48.dp),
             style = MaterialTheme.typography.labelMedium,
-            color = FairyGold
+            color = LocalAccentOnCard.current
         )
 
         Row(
@@ -915,7 +918,7 @@ private fun UpdateCardDeck(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text("← пропустить", color = LocalContentColorMuted.current, fontSize = 10.sp)
-            Text("к делу →", color = FairyGold.copy(alpha = 0.7f), fontSize = 10.sp)
+            Text("к делу →", color = LocalAccentOnCard.current.copy(alpha = 0.7f), fontSize = 10.sp)
         }
     }
 }

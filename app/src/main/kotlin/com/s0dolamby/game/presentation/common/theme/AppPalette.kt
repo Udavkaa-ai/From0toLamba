@@ -37,6 +37,13 @@ data class AppPalette(
     val onCard: Color,
     val onCardSecondary: Color,
     val onCardMuted: Color,
+    /**
+     * Акцентный «золотой» цвет ДЛЯ ТЕКСТА на карточке: в тёмной — обычное
+     * #FFB800 (классическое золото на фиолете); в тёплой — глубокий
+     * бронзово-янтарный, чтобы заголовки/числа выделялись, но не сливались
+     * с пергаментом как обычный FairyGold.
+     */
+    val accentOnCard: Color,
     // Фон экрана: тёмный градиент над bg-картинкой в DARK, тёплый янтарный
     // ореол + виньетка в WARM (картинка bg должна просвечивать).
     val screenBgTop: Color,
@@ -75,6 +82,7 @@ val DarkFairyPalette = AppPalette(
     onCard = Color(0xFFFFFFFF),
     onCardSecondary = Color(0xB3FFFFFF),            // 70%
     onCardMuted = Color(0x73FFFFFF),                // 45%
+    accentOnCard = Color(0xFFFFB800),               // золото на тёмном фоне
     screenBgTop = Color(0xD9060412),
     screenBgMid = Color(0xBF0A0818),
     screenBgBottom = Color(0xF0060412)
@@ -98,6 +106,7 @@ val WarmFairyPalette = AppPalette(
     onCard = Color(0xFF1A0E04),                     // почти чёрная сепия — главный текст
     onCardSecondary = Color(0xEB1A0E04),            // 92%
     onCardMuted = Color(0xC71A0E04),                // 78%
+    accentOnCard = Color(0xFF8B5A00),               // тёмная бронза, читается на пергаменте
     // Тёплый янтарный ореол + виньетка по краям — bg-картинка должна
     // просвечивать («ярмарка в золотое полуденное время»).
     screenBgTop = Color(0x385A3818),                // 22%
@@ -128,4 +137,17 @@ val LocalContentColorSecondary = compositionLocalOf {
  */
 val LocalContentColorMuted = compositionLocalOf {
     androidx.compose.ui.graphics.Color(0x80FFFFFF)  // 50% white
+}
+
+/**
+ * «Золотой» акцент для текста ВНУТРИ FairyCard — в тёмной теме это
+ * #FFB800, в тёплой — глубокий бронзово-янтарный (читается на пергаменте).
+ * Используется для заголовков секций («О приложении», «Язык и тема»),
+ * чисел типа баланса или ROI, и т.п.
+ *
+ * Использовать ВМЕСТО прямого `FairyGold`/`color = FairyGold` в местах,
+ * где текст лежит на cardTop/Mid/Bottom фоне.
+ */
+val LocalAccentOnCard = compositionLocalOf {
+    androidx.compose.ui.graphics.Color(0xFFFFB800)  // классическое золото по умолчанию
 }

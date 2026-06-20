@@ -62,6 +62,7 @@ import kotlinx.coroutines.flow.*
 import javax.inject.Inject
 import com.s0dolamby.game.presentation.common.theme.LocalContentColorMuted
 import com.s0dolamby.game.presentation.common.theme.LocalContentColorSecondary
+import com.s0dolamby.game.presentation.common.theme.LocalAccentOnCard
 
 @HiltViewModel
 class StatsViewModel @Inject constructor(
@@ -96,16 +97,16 @@ fun StatsScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Text("✦", color = FairyGold, fontSize = 12.sp)
+                        Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
                         Text(Strings.t("stats.title"), fontWeight = FontWeight.Bold)
-                        Text("✦", color = FairyGold, fontSize = 12.sp)
+                        Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
                     }
                 },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, Strings.t("btn.back")) } },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 actions = {
                     TextButton(onClick = onRegistryClick) {
-                        Text(Strings.t("stats.letopis.action"), color = FairyGold)
+                        Text(Strings.t("stats.letopis.action"), color = LocalAccentOnCard.current)
                     }
                 }
             )
@@ -247,7 +248,7 @@ private fun AchievementsCard(unlocked: Set<String>) {
             LinearProgressIndicator(
                 progress = { if (totalAll == 0) 0f else totalUnlocked.toFloat() / totalAll },
                 modifier = Modifier.width(90.dp).height(6.dp),
-                color = FairyGold,
+                color = LocalAccentOnCard.current,
                 trackColor = Color.White.copy(alpha = 0.1f)
             )
         }
@@ -319,7 +320,7 @@ private fun AchievementsCard(unlocked: Set<String>) {
                     }
                 }
             }
-            HorizontalDivider(color = FairyGold.copy(alpha = 0.08f))
+            HorizontalDivider(color = LocalAccentOnCard.current.copy(alpha = 0.08f))
         }
     }
 }
@@ -367,7 +368,7 @@ private fun RankCard(state: GameState?) {
                 Text(
                     Strings.t("stats.chin"),
                     style = MaterialTheme.typography.labelSmall,
-                    color = FairyGold.copy(alpha = 0.7f)
+                    color = LocalAccentOnCard.current.copy(alpha = 0.7f)
                 )
                 Text(
                     state?.investorRank?.let { Strings.t(rankTiers.first { t -> t.rankName == it.name }.displayNameKey) } ?: "—",
@@ -383,7 +384,7 @@ private fun RankCard(state: GameState?) {
                 Text(
                     Strings.t("stats.balance.short", formatGroshes(state?.balance ?: 0.0)),
                     style = MaterialTheme.typography.bodySmall,
-                    color = FairyGold.copy(alpha = 0.7f)
+                    color = LocalAccentOnCard.current.copy(alpha = 0.7f)
                 )
             }
             Row(
@@ -394,7 +395,7 @@ private fun RankCard(state: GameState?) {
                 Icon(
                     Icons.Default.ExpandMore,
                     contentDescription = if (expanded) Strings.t("stats.rank.collapse") else Strings.t("stats.rank.expand"),
-                    tint = FairyGold.copy(alpha = 0.6f),
+                    tint = LocalAccentOnCard.current.copy(alpha = 0.6f),
                     modifier = Modifier.size(20.dp).rotate(chevronRotation)
                 )
             }
@@ -412,7 +413,7 @@ private fun RankCard(state: GameState?) {
                 verticalArrangement = Arrangement.spacedBy(0.dp)
             ) {
                 HorizontalDivider(
-                    color = FairyGold.copy(alpha = 0.2f),
+                    color = LocalAccentOnCard.current.copy(alpha = 0.2f),
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
                 rankTiers.forEach { tier ->
@@ -450,13 +451,13 @@ private fun RankCard(state: GameState?) {
                         }
                         if (isCurrent) {
                             Surface(
-                                color = FairyGold.copy(alpha = 0.18f),
+                                color = LocalAccentOnCard.current.copy(alpha = 0.18f),
                                 shape = RoundedCornerShape(4.dp)
                             ) {
                                 Text(
                                     Strings.t("stats.rank.now"),
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = FairyGold,
+                                    color = LocalAccentOnCard.current,
                                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                 )
                             }
@@ -539,7 +540,7 @@ private fun BalanceChartCard(state: GameState?) {
             }
             // Legend
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                LegendDot(color = FairyGold, label = Strings.t("stats.balance.legend.treasury"))
+                LegendDot(color = LocalAccentOnCard.current, label = Strings.t("stats.balance.legend.treasury"))
                 LegendDot(color = Color(0xFF6B4FCB), label = Strings.t("stats.balance.legend.invested"))
             }
         }

@@ -29,6 +29,7 @@ import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.NightBlue
 import com.s0dolamby.game.presentation.common.theme.Success
 import com.s0dolamby.game.presentation.common.theme.LocalContentColorMuted
+import com.s0dolamby.game.presentation.common.theme.LocalAccentOnCard
 
 /** Лестница серии — пороги бонусов из TG todayService. */
 private val MILESTONES = TodayRewards.MILESTONES.toList().sortedBy { it.first }
@@ -75,9 +76,9 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            Text("✦", color = FairyGold, fontSize = 12.sp)
+                            Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
                             Text(Strings.t("today.title"), fontWeight = FontWeight.Bold, color = LocalContentColor.current)
-                            Text("✦", color = FairyGold, fontSize = 12.sp)
+                            Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
@@ -117,7 +118,7 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                                     "$streak",
                                     fontSize = 56.sp,
                                     fontWeight = FontWeight.ExtraBold,
-                                    color = FairyGold
+                                    color = LocalAccentOnCard.current
                                 )
                             }
                             Text(
@@ -138,7 +139,7 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                                 if (milestoneBonus > 0) {
                                     Text(
                                         "🎉 +$milestoneBonus г бонус за серию $streak дней",
-                                        color = FairyGold,
+                                        color = LocalAccentOnCard.current,
                                         fontSize = 11.sp,
                                         textAlign = TextAlign.Center
                                     )
@@ -182,7 +183,7 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                 // Лестница серии
                 item {
                     FairyCard(modifier = Modifier.fillMaxWidth()) {
-                        Text(Strings.t("today.ladder"), color = FairyGold, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                        Text(Strings.t("today.ladder"), color = LocalAccentOnCard.current, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
                         Spacer(Modifier.height(10.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -204,7 +205,7 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(Strings.t("today.leaderboard"), color = FairyGold, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                            Text(Strings.t("today.leaderboard"), color = LocalAccentOnCard.current, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
                             Text(Strings.t("today.soon"), color = LocalContentColorMuted.current, fontSize = 11.sp)
                         }
                         Spacer(Modifier.height(8.dp))

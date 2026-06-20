@@ -33,6 +33,7 @@ import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.NightBlue
 import com.s0dolamby.game.presentation.common.theme.LocalContentColorMuted
+import com.s0dolamby.game.presentation.common.theme.LocalAccentOnCard
 
 /**
  * Экран отношений с дельцами. Сетка 7 архетипов с уровнями связи
@@ -70,9 +71,9 @@ fun RelationshipsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            Text("✦", color = FairyGold, fontSize = 12.sp)
+                            Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
                             Text(Strings.t("rel.title"), fontWeight = FontWeight.Bold, color = LocalContentColor.current)
-                            Text("✦", color = FairyGold, fontSize = 12.sp)
+                            Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
                         }
                     },
                     navigationIcon = {
@@ -105,7 +106,7 @@ fun RelationshipsScreen(
                     ) {
                         Column {
                             Text(Strings.t("rel.sumTies"), color = LocalContentColorMuted.current, fontSize = 12.sp)
-                            Text("${ui.tiesTotal}", color = FairyGold, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
+                            Text("${ui.tiesTotal}", color = LocalAccentOnCard.current, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
                             if (ui.seenCount > 0) {
                                 Text(
                                     Strings.t("rel.knownOf", ui.seenCount, ui.entries.size),
@@ -118,7 +119,7 @@ fun RelationshipsScreen(
                             Text(Strings.t("rel.bonusPerLevel"), color = LocalContentColorMuted.current, fontSize = 12.sp)
                             Text(
                                 Strings.t("rel.bonusPerDay", ui.bonusPercentPerLevel),
-                                color = FairyGold,
+                                color = LocalAccentOnCard.current,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -215,7 +216,7 @@ private fun ArchetypeCell(entry: ArchetypeEntry, maxLevel: Int) {
             }
             Text(
                 "🪙 ${entry.tokens}",
-                color = FairyGold.copy(alpha = if (entry.tokens > 0) 0.85f else 0.35f),
+                color = LocalAccentOnCard.current.copy(alpha = if (entry.tokens > 0) 0.85f else 0.35f),
                 fontSize = 10.sp,
                 fontWeight = if (entry.tokens > 0) FontWeight.SemiBold else FontWeight.Normal
             )

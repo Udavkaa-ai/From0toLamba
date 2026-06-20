@@ -58,6 +58,7 @@ import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.NightBlue
 import com.s0dolamby.game.presentation.common.theme.LocalContentColorMuted
 import com.s0dolamby.game.presentation.common.theme.LocalContentColorSecondary
+import com.s0dolamby.game.presentation.common.theme.LocalAccentOnCard
 
 // ─── Background selection ─────────────────────────────────────────────────────
 
@@ -177,7 +178,7 @@ fun AmaScreen(
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                CircularProgressIndicator(color = FairyGold, strokeWidth = 3.dp)
+                CircularProgressIndicator(color = LocalAccentOnCard.current, strokeWidth = 3.dp)
                 Text(
                     Strings.t("ama.loading.title"),
                     color = Color.White.copy(alpha = 0.7f),
@@ -229,7 +230,7 @@ fun AmaScreen(
                         Text(
                             Strings.t("ama.subtitle", uiState.project?.claimedName ?: "", questionCount, GameConfig.AMA_MAX_QUESTIONS),
                             style = MaterialTheme.typography.labelSmall,
-                            color = FairyGold.copy(alpha = 0.8f)
+                            color = LocalAccentOnCard.current.copy(alpha = 0.8f)
                         )
                     }
                 },
@@ -243,7 +244,7 @@ fun AmaScreen(
                         TextButton(onClick = viewModel::requestInvest) {
                             Text(
                                 if (uiState.minigameUnlocked) Strings.t("ama.btn.invest") else Strings.t("ama.btn.test"),
-                                color = FairyGold, fontWeight = FontWeight.SemiBold
+                                color = LocalAccentOnCard.current, fontWeight = FontWeight.SemiBold
                             )
                         }
                     }
@@ -334,7 +335,7 @@ fun AmaScreen(
                                     CircularProgressIndicator(
                                         modifier = Modifier.size(20.dp),
                                         strokeWidth = 2.dp,
-                                        color = FairyGold
+                                        color = LocalAccentOnCard.current
                                     )
                                 } else {
                                     Icon(
@@ -470,7 +471,7 @@ private fun TemplateChip(question: String, onClick: (String) -> Unit) {
             Text(
                 question.take(36).let { if (question.length > 36) "$it…" else it },
                 style = MaterialTheme.typography.labelSmall,
-                color = FairyGold.copy(alpha = 0.9f)
+                color = LocalAccentOnCard.current.copy(alpha = 0.9f)
             )
         },
         border = SuggestionChipDefaults.suggestionChipBorder(
@@ -559,7 +560,7 @@ private fun RevealedDetailsCard(project: Project, perfect: Boolean) {
                 Strings.t("ama.reveal.title"),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = FairyGold
+                color = LocalAccentOnCard.current
             )
         }
         Spacer(Modifier.height(4.dp))
@@ -598,9 +599,9 @@ private fun DetailRow(label: String, value: String, color: Color) {
 private fun WelcomeMessage(projectName: String, devName: String) {
     FairyCard(modifier = Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("✦", color = FairyGold, fontSize = 16.sp)
-            Text(Strings.t("ama.start.title"), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = FairyGold)
-            Text("✦", color = FairyGold, fontSize = 16.sp)
+            Text("✦", color = LocalAccentOnCard.current, fontSize = 16.sp)
+            Text(Strings.t("ama.start.title"), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = LocalAccentOnCard.current)
+            Text("✦", color = LocalAccentOnCard.current, fontSize = 16.sp)
         }
         Spacer(Modifier.height(6.dp))
         OrnamentDivider()
@@ -626,7 +627,7 @@ private fun SessionEndBanner(
 ) {
     FairyCard(modifier = Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("✦", color = FairyGold, fontSize = 16.sp)
+            Text("✦", color = LocalAccentOnCard.current, fontSize = 16.sp)
             Text(Strings.t("ama.end.title"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = LocalContentColor.current)
         }
         Text(
@@ -647,7 +648,7 @@ private fun SessionEndBanner(
             modifier = Modifier.fillMaxWidth(),
             border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f))
         ) {
-            Text(Strings.t("ama.btn.leave"), color = FairyGold)
+            Text(Strings.t("ama.btn.leave"), color = LocalAccentOnCard.current)
         }
     }
 }
@@ -683,13 +684,13 @@ private fun InvestBottomSheet(freeBalance: Double, onDismiss: () -> Unit, onInve
             ) {
                 Text(Strings.t("ama.invest.title"), style = MaterialTheme.typography.titleLarge)
                 Surface(
-                    color = FairyGold.copy(alpha = 0.15f),
+                    color = LocalAccentOnCard.current.copy(alpha = 0.15f),
                     shape = MaterialTheme.shapes.small
                 ) {
                     Text(
                         Strings.t("ama.invest.free", formatRubles(freeBalance)),
                         style = MaterialTheme.typography.labelMedium,
-                        color = FairyGold,
+                        color = LocalAccentOnCard.current,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                     )
                 }

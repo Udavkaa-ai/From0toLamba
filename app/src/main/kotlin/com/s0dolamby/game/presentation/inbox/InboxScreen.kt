@@ -35,6 +35,7 @@ import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.LocalContentColorMuted
 import com.s0dolamby.game.presentation.common.theme.LocalContentColorSecondary
+import com.s0dolamby.game.presentation.common.theme.LocalAccentOnCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,9 +63,9 @@ fun InboxScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Text("✦", color = FairyGold, fontSize = 12.sp)
+                        Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
                         Text(Strings.t("inbox.title"), fontWeight = FontWeight.Bold)
-                        Text("✦", color = FairyGold, fontSize = 12.sp)
+                        Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
                     }
                 },
                 navigationIcon = {
@@ -149,7 +150,7 @@ fun InboxScreen(
                 TextButton(onClick = {
                     adPromptForProjectId = null
                     onChatAfterAd(pid)
-                }) { Text(Strings.t("inbox.ad.confirm"), color = FairyGold) }
+                }) { Text(Strings.t("inbox.ad.confirm"), color = LocalAccentOnCard.current) }
             },
             dismissButton = {
                 TextButton(onClick = { adPromptForProjectId = null }) { Text(Strings.t("btn.cancel")) }
@@ -196,7 +197,7 @@ private fun InboxProjectCard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     project.claimedName,
-                    color = FairyGold,
+                    color = LocalAccentOnCard.current,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -216,13 +217,13 @@ private fun InboxProjectCard(
             // про обещанный годовой прибыток только после безошибочного прохождения.
             if (perfect) {
                 Surface(
-                    color = FairyGold.copy(alpha = 0.13f),
+                    color = LocalAccentOnCard.current.copy(alpha = 0.13f),
                     shape = MaterialTheme.shapes.small,
                     border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.4f))
                 ) {
                     Text(
                         Strings.t("inbox.apy", project.claimedAPY.toInt()),
-                        color = FairyGold,
+                        color = LocalAccentOnCard.current,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -271,14 +272,14 @@ private fun InboxProjectCard(
         }
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            color = FairyGold.copy(alpha = 0.18f),
+            color = LocalAccentOnCard.current.copy(alpha = 0.18f),
             shape = MaterialTheme.shapes.small,
             border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f)),
             onClick = onPlayMinigame
         ) {
             Text(
                 mainText,
-                color = FairyGold,
+                color = LocalAccentOnCard.current,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,

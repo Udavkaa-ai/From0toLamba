@@ -31,6 +31,7 @@ import androidx.lifecycle.viewModelScope
 import com.s0dolamby.game.domain.repository.ProjectRepository
 import com.s0dolamby.game.presentation.common.theme.LocalContentColorMuted
 import com.s0dolamby.game.presentation.common.theme.LocalContentColorSecondary
+import com.s0dolamby.game.presentation.common.theme.LocalAccentOnCard
 
 data class PersonaEntry(
     val archetype: PersonaArchetype,
@@ -113,9 +114,9 @@ fun PersonaRegistryScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Text("✦", color = FairyGold, fontSize = 12.sp)
+                        Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
                         Text(Strings.t("registry.title"), fontWeight = FontWeight.Bold)
-                        Text("✦", color = FairyGold, fontSize = 12.sp)
+                        Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
                     }
                 },
                 navigationIcon = {
@@ -183,7 +184,7 @@ private fun PersonasTab(uiState: RegistryUiState) {
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("✦", color = FairyGold.copy(alpha = 0.4f), fontSize = 24.sp)
+                        Text("✦", color = LocalAccentOnCard.current.copy(alpha = 0.4f), fontSize = 24.sp)
                         Text(
                             Strings.t("registry.personas.empty.title"),
                             style = MaterialTheme.typography.titleMedium,
@@ -203,7 +204,7 @@ private fun PersonasTab(uiState: RegistryUiState) {
                 Text(
                     Strings.t("registry.personas.openedCount", uiState.personas.size, uiState.personas.size + uiState.lockedCount),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = FairyGold.copy(alpha = 0.7f)
+                    color = LocalAccentOnCard.current.copy(alpha = 0.7f)
                 )
             }
             items(uiState.personas) { entry ->
@@ -254,7 +255,7 @@ private fun PersonaCard(entry: PersonaEntry) {
                         Text(
                             "🤝 ${entry.tieLevel}/10",
                             style = MaterialTheme.typography.labelSmall,
-                            color = FairyGold,
+                            color = LocalAccentOnCard.current,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
@@ -262,7 +263,7 @@ private fun PersonaCard(entry: PersonaEntry) {
                         Text(
                             "🪙 ${entry.tokens}",
                             style = MaterialTheme.typography.labelSmall,
-                            color = FairyGold
+                            color = LocalAccentOnCard.current
                         )
                     }
                     if (entry.projectsClosed > 0) {
@@ -318,7 +319,7 @@ private fun ProjectTypeCard(type: ProjectType) {
         Text(
             Strings.t("registry.types.risk", Strings.t(riskKey)),
             style = MaterialTheme.typography.labelSmall,
-            color = FairyGold.copy(alpha = 0.7f)
+            color = LocalAccentOnCard.current.copy(alpha = 0.7f)
         )
     }
 }
@@ -348,7 +349,7 @@ private fun GlossaryTab() {
 @Composable
 private fun GlossaryCard(title: String, body: String) {
     FairyCard(modifier = Modifier.fillMaxWidth()) {
-        Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = FairyGold)
+        Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = LocalAccentOnCard.current)
         Spacer(Modifier.height(4.dp))
         Text(body, style = MaterialTheme.typography.bodyMedium, color = LocalContentColorSecondary.current)
     }

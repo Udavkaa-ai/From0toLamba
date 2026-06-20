@@ -40,6 +40,7 @@ import com.s0dolamby.game.presentation.common.theme.Success
 import com.s0dolamby.game.presentation.common.theme.Warning
 import com.s0dolamby.game.presentation.common.theme.LocalContentColorMuted
 import com.s0dolamby.game.presentation.common.theme.LocalContentColorSecondary
+import com.s0dolamby.game.presentation.common.theme.LocalAccentOnCard
 
 fun Project.displayName() = claimedName
 
@@ -99,9 +100,9 @@ fun PortfolioScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Text("✦", color = FairyGold, fontSize = 12.sp)
+                        Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
                         Text(Strings.t("portfolio.title"), fontWeight = FontWeight.Bold)
-                        Text("✦", color = FairyGold, fontSize = 12.sp)
+                        Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
                     }
                 },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, Strings.t("btn.back")) } },
@@ -122,7 +123,7 @@ fun PortfolioScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Text("✦", color = FairyGold.copy(alpha = 0.4f), fontSize = 28.sp)
+                            Text("✦", color = LocalAccentOnCard.current.copy(alpha = 0.4f), fontSize = 28.sp)
                             Text(
                                 Strings.t("portfolio.empty.title"),
                                 style = MaterialTheme.typography.titleMedium,
@@ -145,7 +146,7 @@ fun PortfolioScreen(
                     Text(
                         Strings.t("portfolio.section.active"),
                         style = MaterialTheme.typography.titleMedium,
-                        color = FairyGold.copy(alpha = 0.85f),
+                        color = LocalAccentOnCard.current.copy(alpha = 0.85f),
                         fontWeight = FontWeight.SemiBold
                     )
                 }
@@ -169,7 +170,7 @@ fun PortfolioScreen(
                     Text(
                         Strings.t("portfolio.section.closed"),
                         style = MaterialTheme.typography.titleMedium,
-                        color = FairyGold.copy(alpha = 0.85f),
+                        color = LocalAccentOnCard.current.copy(alpha = 0.85f),
                         fontWeight = FontWeight.SemiBold
                     )
                 }
@@ -248,7 +249,7 @@ private fun PortfolioProjectCard(
                     project.claimedName,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = FairyGold
+                    color = LocalAccentOnCard.current
                 )
                 Text(
                     "${project.developerName} · ${project.daysSinceJoined} дн.",
@@ -270,7 +271,7 @@ private fun PortfolioProjectCard(
                 )
                 Text(
                     formatGroshes(project.currentValueRubles),
-                    color = FairyGold,
+                    color = LocalAccentOnCard.current,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -337,8 +338,8 @@ private fun PortfolioProjectCard(
                 onClick = onWithdraw,
                 modifier = Modifier.weight(1f),
                 enabled = !project.isWithdrawalLocked,
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
-                border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f)),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = LocalContentColor.current),
+                border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.7f)),
                 contentPadding = PaddingValues(vertical = 6.dp)
             ) { Text(Strings.t("portfolio.btn.withdrawPart"), fontSize = 12.sp) }
             OutlinedButton(
@@ -446,13 +447,13 @@ private fun FundsBottomSheet(
             ) {
                 Text(title, style = MaterialTheme.typography.titleLarge)
                 Surface(
-                    color = FairyGold.copy(alpha = 0.15f),
+                    color = LocalAccentOnCard.current.copy(alpha = 0.15f),
                     shape = MaterialTheme.shapes.small
                 ) {
                     Text(
                         Strings.t("portfolio.addSheet.free", formatRubles(freeBalance)),
                         style = MaterialTheme.typography.labelMedium,
-                        color = FairyGold,
+                        color = LocalAccentOnCard.current,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                     )
                 }
@@ -540,7 +541,7 @@ private fun WithdrawBottomSheet(
                     Text(
                         Strings.t("portfolio.withdraw.netGain", amount * 0.75),
                         style = MaterialTheme.typography.bodySmall,
-                        color = FairyGold,
+                        color = LocalAccentOnCard.current,
                         fontWeight = FontWeight.Medium
                     )
                 }

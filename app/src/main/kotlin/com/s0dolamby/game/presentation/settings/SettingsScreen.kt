@@ -26,6 +26,7 @@ import com.s0dolamby.game.presentation.common.theme.Error
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.LocalContentColorMuted
 import com.s0dolamby.game.presentation.common.theme.LocalContentColorSecondary
+import com.s0dolamby.game.presentation.common.theme.LocalAccentOnCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,9 +60,9 @@ fun SettingsScreen(
                 TopAppBar(
                     title = {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text("✦", color = FairyGold, fontSize = 12.sp)
+                            Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
                             Text(Strings.t("settings.title"), fontWeight = FontWeight.Bold)
-                            Text("✦", color = FairyGold, fontSize = 12.sp)
+                            Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
                         }
                     },
                     navigationIcon = {
@@ -73,7 +74,7 @@ fun SettingsScreen(
         ) { padding ->
             if (uiState.isLoading) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = FairyGold)
+                    CircularProgressIndicator(color = LocalAccentOnCard.current)
                 }
                 return@Scaffold
             }
@@ -93,7 +94,7 @@ fun SettingsScreen(
                     Text(
                         Strings.t("settings.nickname.title"),
                         style = MaterialTheme.typography.titleMedium,
-                        color = FairyGold,
+                        color = LocalAccentOnCard.current,
                         fontWeight = FontWeight.SemiBold
                     )
                     Spacer(Modifier.height(4.dp))
@@ -126,7 +127,7 @@ fun SettingsScreen(
                     Text(
                         Strings.t("settings.model.title"),
                         style = MaterialTheme.typography.titleMedium,
-                        color = FairyGold,
+                        color = LocalAccentOnCard.current,
                         fontWeight = FontWeight.SemiBold
                     )
                     Spacer(Modifier.height(4.dp))
@@ -173,7 +174,7 @@ fun SettingsScreen(
                     Text(
                         Strings.t("settings.langTheme.title"),
                         style = MaterialTheme.typography.titleMedium,
-                        color = FairyGold,
+                        color = LocalAccentOnCard.current,
                         fontWeight = FontWeight.SemiBold
                     )
                     Spacer(Modifier.height(10.dp))
@@ -192,8 +193,8 @@ fun SettingsScreen(
                                 label = { Text(label) },
                                 modifier = Modifier.weight(1f),
                                 colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = FairyGold.copy(alpha = 0.22f),
-                                    selectedLabelColor = FairyGold,
+                                    selectedContainerColor = FairyGold,
+                                    selectedLabelColor = Color(0xFF1A0A00),
                                     labelColor = LocalContentColorSecondary.current
                                 )
                             )
@@ -215,8 +216,8 @@ fun SettingsScreen(
                                 label = { Text("${mode.emoji} ${Strings.t("theme.${mode.name}")}") },
                                 modifier = Modifier.weight(1f),
                                 colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = FairyGold.copy(alpha = 0.22f),
-                                    selectedLabelColor = FairyGold,
+                                    selectedContainerColor = FairyGold,
+                                    selectedLabelColor = Color(0xFF1A0A00),
                                     labelColor = LocalContentColorSecondary.current
                                 )
                             )
@@ -234,7 +235,7 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column {
-                            Text(Strings.t("settings.about.title"), style = MaterialTheme.typography.titleMedium, color = FairyGold, fontWeight = FontWeight.SemiBold)
+                            Text(Strings.t("settings.about.title"), style = MaterialTheme.typography.titleMedium, color = LocalAccentOnCard.current, fontWeight = FontWeight.SemiBold)
                             Text(
                                 Strings.t("settings.about.version", BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE),
                                 style = MaterialTheme.typography.labelSmall,
@@ -242,7 +243,7 @@ fun SettingsScreen(
                             )
                         }
                         IconButton(onClick = { showFaqDialog = true }) {
-                            Icon(Icons.Default.Info, Strings.t("settings.faq.title"), tint = FairyGold)
+                            Icon(Icons.Default.Info, Strings.t("settings.faq.title"), tint = LocalAccentOnCard.current)
                         }
                     }
                     Spacer(Modifier.height(8.dp))
@@ -252,11 +253,13 @@ fun SettingsScreen(
                         color = LocalContentColorMuted.current
                     )
                     Spacer(Modifier.height(8.dp))
-                    OutlinedButton(
+                    Button(
                         onClick = { showFaqDialog = true },
                         modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.4f))
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = FairyGold,
+                            contentColor = Color(0xFF1A0A00)
+                        )
                     ) {
                         Text(Strings.t("settings.about.faq"), fontWeight = FontWeight.SemiBold)
                     }
