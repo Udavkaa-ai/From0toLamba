@@ -428,7 +428,13 @@ private fun FundsBottomSheet(
     val isValid = amount != null && amount >= 5.0 && (maxAmount == null || amount <= maxAmount)
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+    val palette = com.s0dolamby.game.presentation.common.theme.LocalAppPalette.current
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = palette.cardMid,
+        contentColor = palette.onCard
+    ) {
         Column(
             modifier = Modifier.padding(horizontal = 24.dp).padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -462,7 +468,7 @@ private fun FundsBottomSheet(
                 Text(
                     "Доступно: %.0f г".format(maxAmount),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = palette.onCardMuted
                 )
             }
             Button(
@@ -482,6 +488,7 @@ private fun WithdrawBottomSheet(
     onConfirm: (Double) -> Unit
 ) {
     AppLogger.i("Portfolio", "WithdrawBottomSheet composing: type=${project.type}")
+    val palette = com.s0dolamby.game.presentation.common.theme.LocalAppPalette.current
     var amountText by remember { mutableStateOf("") }
     val amount = amountText.toDoubleOrNull()
 
@@ -498,6 +505,9 @@ private fun WithdrawBottomSheet(
     AppLogger.i("Portfolio", "AlertDialog about to compose: effectiveMax=$effectiveMax isLongTerm=$isLongTerm hasFee=$hasFee")
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = palette.cardMid,
+        titleContentColor = palette.onCard,
+        textContentColor = palette.onCard,
         title = { Text(Strings.t("portfolio.withdraw.title")) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -524,7 +534,7 @@ private fun WithdrawBottomSheet(
                 Text(
                     Strings.t("portfolio.withdraw.availLimit", project.currentValueRubles, effectiveMax),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = palette.onCardMuted
                 )
                 if (hasFee && amount != null && amount >= 5.0) {
                     Text(

@@ -521,20 +521,21 @@ private fun MessageBubble(message: AmaMessage) {
                     )
                 }
             } else {
+                val palette = com.s0dolamby.game.presentation.common.theme.LocalAppPalette.current
                 Box(
                     modifier = Modifier
                         .widthIn(max = 280.dp)
                         .background(
-                            Brush.linearGradient(listOf(EnchantedPurple.copy(0.90f), NightBlue.copy(0.95f))),
+                            Brush.linearGradient(listOf(palette.cardTop, palette.cardBottom)),
                             shape = bubbleShape
                         )
-                        .border(1.dp, FairyGold.copy(alpha = 0.18f), bubbleShape)
+                        .border(1.dp, palette.cardBorder.copy(alpha = 0.35f), bubbleShape)
                         .padding(horizontal = 14.dp, vertical = 10.dp)
                 ) {
                     Text(
                         text = message.content,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.92f)
+                        color = palette.onCard
                     )
                 }
             }
@@ -664,7 +665,13 @@ private fun InvestBottomSheet(freeBalance: Double, onDismiss: () -> Unit, onInve
     val amount = amountText.toDoubleOrNull()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+    val palette = com.s0dolamby.game.presentation.common.theme.LocalAppPalette.current
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = palette.cardMid,
+        contentColor = palette.onCard
+    ) {
         Column(
             modifier = Modifier.padding(horizontal = 24.dp).padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -697,7 +704,7 @@ private fun InvestBottomSheet(freeBalance: Double, onDismiss: () -> Unit, onInve
             Text(
                 Strings.t("ama.invest.minimum"),
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = palette.onCardMuted
             )
             Button(
                 onClick = { amount?.let { onInvest(it) } },

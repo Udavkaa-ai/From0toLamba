@@ -82,17 +82,14 @@ fun AchievementUnlockedOverlay(
                 .padding(horizontal = 24.dp)
                 .fillMaxWidth()
         ) {
+            val palette = com.s0dolamby.game.presentation.common.theme.LocalAppPalette.current
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(20.dp))
                     .background(
                         Brush.verticalGradient(
-                            listOf(
-                                EnchantedPurple,
-                                Color(0xFF1A0D40),
-                                NightBlue
-                            )
+                            listOf(palette.cardTop, palette.cardMid, palette.cardBottom)
                         )
                     )
             ) {
@@ -120,7 +117,7 @@ fun AchievementUnlockedOverlay(
                     )
                     Text(
                         top.localizedDescription(),
-                        color = Color.White.copy(alpha = 0.8f),
+                        color = palette.onCardSecondary,
                         fontSize = 13.sp,
                         textAlign = TextAlign.Center,
                         fontStyle = FontStyle.Italic
@@ -128,7 +125,7 @@ fun AchievementUnlockedOverlay(
                     OrnamentDivider()
                     Text(
                         Strings.t("ach.unlocked.tapHint") + if (queue.size > 1) Strings.t("ach.unlocked.queueMore", queue.size - 1) else "",
-                        color = Color.White.copy(alpha = 0.4f),
+                        color = palette.onCardMuted,
                         fontSize = 11.sp,
                         textAlign = TextAlign.Center
                     )

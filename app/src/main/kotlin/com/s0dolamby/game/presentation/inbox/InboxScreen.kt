@@ -200,26 +200,34 @@ private fun InboxProjectCard(
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Text(
-                    project.type.displayWithEmojiI18n(),
-                    color = LocalContentColorMuted.current,
-                    fontSize = 11.sp,
-                    modifier = Modifier.padding(top = 2.dp)
-                )
+                // Тип дела раскрываем ТОЛЬКО после успешной мини-игры (хоть
+                // с одной ошибкой). До игры — у игрока нет ни типа, ни посула.
+                if (unlocked) {
+                    Text(
+                        project.type.displayWithEmojiI18n(),
+                        color = LocalContentColorMuted.current,
+                        fontSize = 11.sp,
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+                }
             }
             Spacer(Modifier.width(8.dp))
-            Surface(
-                color = FairyGold.copy(alpha = 0.13f),
-                shape = MaterialTheme.shapes.small,
-                border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.4f))
-            ) {
-                Text(
-                    Strings.t("inbox.apy", project.claimedAPY.toInt()),
-                    color = FairyGold,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                )
+            // Заявленный посул (APY) — только при ИДЕАЛЕ. Делец сам проболтался
+            // про обещанный годовой прибыток только после безошибочного прохождения.
+            if (perfect) {
+                Surface(
+                    color = FairyGold.copy(alpha = 0.13f),
+                    shape = MaterialTheme.shapes.small,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.4f))
+                ) {
+                    Text(
+                        Strings.t("inbox.apy", project.claimedAPY.toInt()),
+                        color = FairyGold,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
             }
         }
 
