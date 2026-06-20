@@ -56,6 +56,8 @@ import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.NightBlue
+import com.s0dolamby.game.presentation.common.theme.LocalContentColorMuted
+import com.s0dolamby.game.presentation.common.theme.LocalContentColorSecondary
 
 // ─── Background selection ─────────────────────────────────────────────────────
 
@@ -564,7 +566,7 @@ private fun RevealedDetailsCard(project: Project, perfect: Boolean) {
             if (perfect) Strings.t("ama.reveal.subtitle.perfect")
             else Strings.t("ama.reveal.subtitle.win"),
             style = MaterialTheme.typography.labelSmall,
-            color = LocalContentColor.current.copy(alpha = 0.55f)
+            color = LocalContentColorMuted.current
         )
         OrnamentDivider()
         // Базовый уровень (минимум 1 ошибка): только «тип дела» — игрок
@@ -574,7 +576,7 @@ private fun RevealedDetailsCard(project: Project, perfect: Boolean) {
         // обещание дельца, а не правда — реальную доходность и судьбу
         // приходится оценивать самому в беседе.
         if (perfect) {
-            DetailRow(Strings.t("ama.reveal.apy"), "${project.claimedAPY.toInt()}% / год", LocalContentColor.current.copy(alpha = 0.7f))
+            DetailRow(Strings.t("ama.reveal.apy"), "${project.claimedAPY.toInt()}% / год", LocalContentColorSecondary.current)
         }
     }
 }
@@ -586,7 +588,7 @@ private fun DetailRow(label: String, value: String, color: Color) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, style = MaterialTheme.typography.labelMedium, color = LocalContentColor.current.copy(alpha = 0.55f))
+        Text(label, style = MaterialTheme.typography.labelMedium, color = LocalContentColorMuted.current)
         Text(value, style = MaterialTheme.typography.bodySmall, color = color, fontWeight = FontWeight.SemiBold)
     }
 }
@@ -611,7 +613,7 @@ private fun WelcomeMessage(projectName: String, devName: String) {
         Text(
             Strings.t("ama.start.hint", GameConfig.AMA_MAX_QUESTIONS),
             style = MaterialTheme.typography.bodySmall,
-            color = LocalContentColor.current.copy(alpha = 0.65f)
+            color = LocalContentColorMuted.current
         )
     }
 }
@@ -629,7 +631,7 @@ private fun SessionEndBanner(
         Text(
             Strings.t("ama.end.body"),
             style = MaterialTheme.typography.bodySmall,
-            color = LocalContentColor.current.copy(alpha = 0.7f)
+            color = LocalContentColorSecondary.current
         )
         Spacer(Modifier.height(4.dp))
         Button(

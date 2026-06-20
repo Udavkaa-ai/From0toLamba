@@ -60,6 +60,8 @@ import com.s0dolamby.game.presentation.common.theme.Warning
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import javax.inject.Inject
+import com.s0dolamby.game.presentation.common.theme.LocalContentColorMuted
+import com.s0dolamby.game.presentation.common.theme.LocalContentColorSecondary
 
 @HiltViewModel
 class StatsViewModel @Inject constructor(
@@ -162,7 +164,7 @@ private fun HallOfFameCard(state: GameState?, closed: List<com.s0dolamby.game.do
             Text(
                 Strings.t("stats.hof.empty"),
                 style = MaterialTheme.typography.bodySmall,
-                color = LocalContentColor.current.copy(alpha = 0.55f)
+                color = LocalContentColorMuted.current
             )
         } else {
             bestDeal?.let { p ->
@@ -200,7 +202,7 @@ private fun HallRow(icon: String, title: String, value: String, body: String, co
         Text(icon, fontSize = 20.sp)
         Column(modifier = Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.bodyMedium, color = LocalContentColor.current, fontWeight = FontWeight.SemiBold)
-            Text(body, style = MaterialTheme.typography.labelSmall, color = LocalContentColor.current.copy(alpha = 0.55f))
+            Text(body, style = MaterialTheme.typography.labelSmall, color = LocalContentColorMuted.current)
         }
         Text(value, style = MaterialTheme.typography.titleSmall, color = color, fontWeight = FontWeight.Bold)
     }
@@ -376,7 +378,7 @@ private fun RankCard(state: GameState?) {
                 Text(
                     Strings.t("stats.dayStreak", state?.currentDay ?: 1, state?.dayStreak ?: 0),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = LocalContentColor.current.copy(alpha = 0.6f)
+                    color = LocalContentColorMuted.current
                 )
                 Text(
                     Strings.t("stats.balance.short", formatGroshes(state?.balance ?: 0.0)),
@@ -519,7 +521,7 @@ private fun BalanceChartCard(state: GameState?) {
                     Text(
                         Strings.t("stats.balance.placeholder"),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = LocalContentColor.current.copy(alpha = 0.6f)
+                        color = LocalContentColorMuted.current
                     )
                 }
             }
@@ -532,8 +534,8 @@ private fun BalanceChartCard(state: GameState?) {
                 modifier = Modifier.fillMaxWidth().height(160.dp)
             )
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(Strings.t("stats.balance.day1"), style = MaterialTheme.typography.labelSmall, color = LocalContentColor.current.copy(alpha = 0.5f))
-                Text(Strings.t("detail.day", n), style = MaterialTheme.typography.labelSmall, color = LocalContentColor.current.copy(alpha = 0.5f))
+                Text(Strings.t("stats.balance.day1"), style = MaterialTheme.typography.labelSmall, color = LocalContentColorMuted.current)
+                Text(Strings.t("detail.day", n), style = MaterialTheme.typography.labelSmall, color = LocalContentColorMuted.current)
             }
             // Legend
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -548,7 +550,7 @@ private fun BalanceChartCard(state: GameState?) {
 private fun LegendDot(color: Color, label: String) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         Box(modifier = Modifier.size(8.dp).background(color, shape = RoundedCornerShape(2.dp)))
-        Text(label, style = MaterialTheme.typography.labelSmall, color = LocalContentColor.current.copy(alpha = 0.6f))
+        Text(label, style = MaterialTheme.typography.labelSmall, color = LocalContentColorMuted.current)
     }
 }
 
@@ -582,7 +584,7 @@ private fun StackedBarChart(
                     text = fmtRub(value),
                     style = MaterialTheme.typography.labelSmall,
                     fontSize = 9.sp,
-                    color = LocalContentColor.current.copy(alpha = 0.45f),
+                    color = LocalContentColorMuted.current,
                     modifier = Modifier.align(
                         when (idx) {
                             0    -> Alignment.TopEnd
@@ -699,7 +701,7 @@ private fun ScamStats(state: GameState?) {
 
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(Strings.t("stats.scam.accuracy"), style = MaterialTheme.typography.bodyMedium, color = LocalContentColor.current.copy(alpha = 0.7f))
+                Text(Strings.t("stats.scam.accuracy"), style = MaterialTheme.typography.bodyMedium, color = LocalContentColorSecondary.current)
                 Text(
                     "%.0f%%".format(accuracy * 100),
                     style = MaterialTheme.typography.bodyMedium,
@@ -740,7 +742,7 @@ private fun ScamStatBox(label: String, value: String, color: Color, modifier: Mo
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(value, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = color)
-            Text(label, style = MaterialTheme.typography.labelSmall, color = LocalContentColor.current.copy(alpha = 0.6f))
+            Text(label, style = MaterialTheme.typography.labelSmall, color = LocalContentColorMuted.current)
         }
     }
 }
@@ -748,7 +750,7 @@ private fun ScamStatBox(label: String, value: String, color: Color, modifier: Mo
 @Composable
 private fun StatRow(label: String, value: String) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = LocalContentColor.current.copy(alpha = 0.6f))
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = LocalContentColorMuted.current)
         Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = LocalContentColor.current)
     }
 }

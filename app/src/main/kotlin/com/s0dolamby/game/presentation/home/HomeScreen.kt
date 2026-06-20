@@ -60,6 +60,8 @@ import com.s0dolamby.game.presentation.common.theme.Success
 import com.s0dolamby.game.presentation.common.theme.Warning
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import com.s0dolamby.game.presentation.common.theme.LocalContentColorMuted
+import com.s0dolamby.game.presentation.common.theme.LocalContentColorSecondary
 
 private data class IntroCard(val icon: String, val titleKey: String, val textKey: String)
 
@@ -310,7 +312,7 @@ private fun HomeHeader(
             Text(
                 Strings.t("home.subtitle", inner),
                 fontSize = 12.sp,
-                color = LocalContentColor.current.copy(alpha = 0.55f)
+                color = LocalContentColorMuted.current
             )
         }
         IconButton(
@@ -400,9 +402,9 @@ private fun BalanceCard(
                     Brush.verticalGradient(
                         colors = listOf(
                             // primaryContainer = EnchantedPurple в DARK, warm wood в WARM
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.88f),
+                            com.s0dolamby.game.presentation.common.theme.LocalAppPalette.current.cardTop,
                             // background = NightBlue в DARK, deep chocolate в WARM
-                            MaterialTheme.colorScheme.background.copy(alpha = 0.95f)
+                            com.s0dolamby.game.presentation.common.theme.LocalAppPalette.current.cardBottom
                         )
                     )
                 )
@@ -415,7 +417,7 @@ private fun BalanceCard(
             ) {
                 Text(
                     Strings.t("home.balance.free"),
-                    color = LocalContentColor.current.copy(alpha = 0.6f),
+                    color = LocalContentColorMuted.current,
                     fontSize = 12.sp
                 )
                 Spacer(Modifier.height(4.dp))
@@ -439,10 +441,10 @@ private fun BalanceCard(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceAround
                 ) {
-                    MetricColumn(Strings.t("home.metric.invested"), formatGroshesCompact(invested), Color.White)
-                    MetricColumn(Strings.t("home.metric.received"), formatGroshesCompact(returned), Color.White)
+                    MetricColumn(Strings.t("home.metric.invested"), formatGroshesCompact(invested), LocalContentColor.current)
+                    MetricColumn(Strings.t("home.metric.received"), formatGroshesCompact(returned), LocalContentColor.current)
                     MetricColumn(Strings.t("home.metric.total"), "%+.1f%%".format(roi), if (roi >= 0) Success else Error)
-                    MetricColumn(Strings.t("home.metric.dealsTaken"), "$dealsTaken", Color.White)
+                    MetricColumn(Strings.t("home.metric.dealsTaken"), "$dealsTaken", LocalContentColor.current)
                 }
             }
             CardCornerOrnaments(modifier = Modifier.matchParentSize())
@@ -470,8 +472,8 @@ private fun MerchantRelationsCard(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.88f),
-                            MaterialTheme.colorScheme.background.copy(alpha = 0.95f)
+                            com.s0dolamby.game.presentation.common.theme.LocalAppPalette.current.cardTop,
+                            com.s0dolamby.game.presentation.common.theme.LocalAppPalette.current.cardBottom
                         )
                     )
                 )
@@ -546,6 +548,7 @@ private fun ArchetypeChip(
 
 @Composable
 private fun LetopisChip(count: Int, onClick: () -> Unit) {
+    val palette = com.s0dolamby.game.presentation.common.theme.LocalAppPalette.current
     Surface(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
@@ -556,14 +559,9 @@ private fun LetopisChip(count: Int, onClick: () -> Unit) {
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
                 .background(
-                    Brush.verticalGradient(
-                        listOf(
-                            EnchantedPurple.copy(alpha = 0.65f),
-                            NightBlue.copy(alpha = 0.85f)
-                        )
-                    )
+                    Brush.verticalGradient(listOf(palette.cardTop, palette.cardBottom))
                 )
-                .border(1.dp, FairyGold.copy(alpha = 0.35f), RoundedCornerShape(12.dp)),
+                .border(1.dp, palette.cardBorder.copy(alpha = 0.55f), RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center
         ) {
             Row(
@@ -573,7 +571,7 @@ private fun LetopisChip(count: Int, onClick: () -> Unit) {
             ) {
                 Text("📖", fontSize = 18.sp)
                 Text(Strings.t("home.letopis"), color = FairyGold, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                Text("($count)", color = LocalContentColor.current.copy(alpha = 0.5f), fontSize = 13.sp)
+                Text("($count)", color = LocalContentColorMuted.current, fontSize = 13.sp)
             }
         }
     }
@@ -584,7 +582,7 @@ private fun MetricColumn(label: String, value: String, color: Color) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             label,
-            color = LocalContentColor.current.copy(alpha = 0.5f),
+            color = LocalContentColorMuted.current,
             fontSize = 11.sp
         )
         Spacer(Modifier.height(2.dp))
@@ -633,8 +631,8 @@ private fun ActiveProjectCardCompact(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.88f),
-                            MaterialTheme.colorScheme.background.copy(alpha = 0.95f)
+                            com.s0dolamby.game.presentation.common.theme.LocalAppPalette.current.cardTop,
+                            com.s0dolamby.game.presentation.common.theme.LocalAppPalette.current.cardBottom
                         )
                     )
                 )
@@ -654,7 +652,7 @@ private fun ActiveProjectCardCompact(
                         )
                         Text(
                             "${project.developerName} · ${project.daysSinceJoined} дн.",
-                            color = LocalContentColor.current.copy(alpha = 0.55f),
+                            color = LocalContentColorMuted.current,
                             fontSize = 11.sp,
                             modifier = Modifier.padding(top = 2.dp)
                         )
@@ -719,8 +717,8 @@ private fun InboxPromoCard(onClick: () -> Unit) {
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.88f),
-                            MaterialTheme.colorScheme.background.copy(alpha = 0.95f)
+                            com.s0dolamby.game.presentation.common.theme.LocalAppPalette.current.cardTop,
+                            com.s0dolamby.game.presentation.common.theme.LocalAppPalette.current.cardBottom
                         )
                     )
                 )
@@ -733,7 +731,7 @@ private fun InboxPromoCard(onClick: () -> Unit) {
                 )
                 Text(
                     Strings.t("home.inboxPromo.sub"),
-                    color = LocalContentColor.current.copy(alpha = 0.55f),
+                    color = LocalContentColorMuted.current,
                     fontSize = 12.sp,
                     modifier = Modifier.padding(top = 4.dp)
                 )
@@ -780,7 +778,7 @@ private fun EmptyHomeCard(onInboxClick: () -> Unit) {
                 )
                 Text(
                     Strings.t("home.inbox.empty.hint"),
-                    color = LocalContentColor.current.copy(alpha = 0.65f),
+                    color = LocalContentColorMuted.current,
                     fontSize = 13.sp
                 )
                 OutlinedButton(
@@ -916,7 +914,7 @@ private fun UpdateCardDeck(
                 .padding(horizontal = 40.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("← пропустить", color = LocalContentColor.current.copy(alpha = 0.5f), fontSize = 10.sp)
+            Text("← пропустить", color = LocalContentColorMuted.current, fontSize = 10.sp)
             Text("к делу →", color = FairyGold.copy(alpha = 0.7f), fontSize = 10.sp)
         }
     }
@@ -990,12 +988,12 @@ private fun SwipeableUpdateCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(update.projectName, color = LocalContentColor.current.copy(alpha = 0.7f), fontSize = 11.sp)
-                Text("День ${update.day}", color = LocalContentColor.current.copy(alpha = 0.5f), fontSize = 10.sp)
+                Text(update.projectName, color = LocalContentColorSecondary.current, fontSize = 11.sp)
+                Text("День ${update.day}", color = LocalContentColorMuted.current, fontSize = 10.sp)
             }
 
             Text(update.title, color = LocalContentColor.current, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-            Text(update.body, color = LocalContentColor.current.copy(alpha = 0.85f), fontSize = 13.sp)
+            Text(update.body, color = LocalContentColorSecondary.current, fontSize = 13.sp)
 
             when (update.payoutStatus) {
                 PayoutStatus.DELAYED -> Surface(

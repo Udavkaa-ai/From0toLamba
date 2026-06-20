@@ -109,3 +109,23 @@ val LocalAppPalette = compositionLocalOf { DarkFairyPalette }
 
 /** Текущая тема — нужен помощникам выбора _LIGHT/_DARK ресурсов вне Material. */
 val LocalThemeMode = compositionLocalOf { ThemeMode.DARK_FAIRY }
+
+/**
+ * Цвет для второстепенного текста на карточке (под заголовком, метаданные).
+ * В DARK — белый с alpha 0.7; в WARM — тёмная сепия с alpha 0.9, иначе
+ * на пергаменте сливается с фоном.
+ *
+ * Использовать ВМЕСТО `LocalContentColor.current.copy(alpha = 0.55..0.7)`
+ * для надёжной читаемости на пергаменте.
+ */
+val LocalContentColorSecondary = compositionLocalOf {
+    androidx.compose.ui.graphics.Color(0xB3FFFFFF)  // 70% white по умолчанию
+}
+
+/**
+ * Цвет для совсем приглушённого текста — подписи, дисклеймеры, единицы.
+ * В DARK — белый с alpha 0.5; в WARM — тёмная сепия с alpha 0.75.
+ */
+val LocalContentColorMuted = compositionLocalOf {
+    androidx.compose.ui.graphics.Color(0x80FFFFFF)  // 50% white
+}

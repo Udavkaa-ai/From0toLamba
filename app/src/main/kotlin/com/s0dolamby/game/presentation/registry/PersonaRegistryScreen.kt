@@ -29,6 +29,8 @@ import javax.inject.Inject
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.s0dolamby.game.domain.repository.ProjectRepository
+import com.s0dolamby.game.presentation.common.theme.LocalContentColorMuted
+import com.s0dolamby.game.presentation.common.theme.LocalContentColorSecondary
 
 data class PersonaEntry(
     val archetype: PersonaArchetype,
@@ -191,7 +193,7 @@ private fun PersonasTab(uiState: RegistryUiState) {
                         Text(
                             Strings.t("registry.personas.empty.hint"),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = LocalContentColor.current.copy(alpha = 0.65f)
+                            color = LocalContentColorMuted.current
                         )
                     }
                 }
@@ -214,7 +216,7 @@ private fun PersonasTab(uiState: RegistryUiState) {
                     Text(
                         Strings.t("registry.personas.lockedHint", uiState.lockedCount),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = LocalContentColor.current.copy(alpha = 0.65f)
+                        color = LocalContentColorMuted.current
                     )
                 }
             }
@@ -241,7 +243,7 @@ private fun PersonaCard(entry: PersonaEntry) {
                 Text(
                     Strings.t("persona.${entry.archetype.name}.desc"),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = LocalContentColor.current.copy(alpha = 0.65f)
+                    color = LocalContentColorMuted.current
                 )
                 Row(
                     modifier = Modifier.padding(top = 4.dp),
@@ -267,7 +269,7 @@ private fun PersonaCard(entry: PersonaEntry) {
                         Text(
                             "📜 ${entry.projectsClosed}",
                             style = MaterialTheme.typography.labelSmall,
-                            color = LocalContentColor.current.copy(alpha = 0.6f)
+                            color = LocalContentColorMuted.current
                         )
                     }
                 }
@@ -289,7 +291,7 @@ private fun ProjectTypesTab(types: List<ProjectType>) {
                     Text(
                         Strings.t("registry.types.empty"),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = LocalContentColor.current.copy(alpha = 0.65f)
+                        color = LocalContentColorMuted.current
                     )
                 }
             }
@@ -312,7 +314,7 @@ private fun ProjectTypeCard(type: ProjectType) {
     }
     FairyCard(modifier = Modifier.fillMaxWidth()) {
         Text(Strings.t(titleKey), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = LocalContentColor.current)
-        Text(Strings.t(descKey), style = MaterialTheme.typography.bodyMedium, color = LocalContentColor.current.copy(alpha = 0.7f))
+        Text(Strings.t(descKey), style = MaterialTheme.typography.bodyMedium, color = LocalContentColorSecondary.current)
         Text(
             Strings.t("registry.types.risk", Strings.t(riskKey)),
             style = MaterialTheme.typography.labelSmall,
@@ -348,7 +350,7 @@ private fun GlossaryCard(title: String, body: String) {
     FairyCard(modifier = Modifier.fillMaxWidth()) {
         Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = FairyGold)
         Spacer(Modifier.height(4.dp))
-        Text(body, style = MaterialTheme.typography.bodyMedium, color = LocalContentColor.current.copy(alpha = 0.8f))
+        Text(body, style = MaterialTheme.typography.bodyMedium, color = LocalContentColorSecondary.current)
     }
 }
 

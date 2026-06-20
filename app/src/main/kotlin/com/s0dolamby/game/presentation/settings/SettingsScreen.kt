@@ -24,6 +24,8 @@ import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
 import com.s0dolamby.game.presentation.common.theme.Error
 import com.s0dolamby.game.presentation.common.theme.FairyGold
+import com.s0dolamby.game.presentation.common.theme.LocalContentColorMuted
+import com.s0dolamby.game.presentation.common.theme.LocalContentColorSecondary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -98,7 +100,7 @@ fun SettingsScreen(
                     Text(
                         Strings.t("settings.nickname.hint"),
                         style = MaterialTheme.typography.bodySmall,
-                        color = LocalContentColor.current.copy(alpha = 0.6f)
+                        color = LocalContentColorMuted.current
                     )
                     Spacer(Modifier.height(10.dp))
                     OutlinedTextField(
@@ -131,7 +133,7 @@ fun SettingsScreen(
                     Text(
                         Strings.t("settings.model.hint"),
                         style = MaterialTheme.typography.bodySmall,
-                        color = LocalContentColor.current.copy(alpha = 0.6f)
+                        color = LocalContentColorMuted.current
                     )
                     Spacer(Modifier.height(12.dp))
                     TEXT_MODEL_OPTIONS.forEach { option ->
@@ -144,7 +146,7 @@ fun SettingsScreen(
                                 option.label,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = if (uiState.settings.textModel == option.modelId) FairyGold
-                                        else LocalContentColor.current.copy(alpha = 0.85f),
+                                        else LocalContentColorSecondary.current,
                                 fontWeight = if (uiState.settings.textModel == option.modelId) FontWeight.SemiBold
                                              else FontWeight.Normal,
                                 modifier = Modifier.weight(1f)
@@ -154,7 +156,7 @@ fun SettingsScreen(
                                 onClick = { viewModel.setTextModel(option.modelId) },
                                 colors = RadioButtonDefaults.colors(
                                     selectedColor = FairyGold,
-                                    unselectedColor = LocalContentColor.current.copy(alpha = 0.4f)
+                                    unselectedColor = LocalContentColorMuted.current
                                 )
                             )
                         }
@@ -163,87 +165,6 @@ fun SettingsScreen(
 
                 // Тоггл «генерации баннеров через Pollinations» удалён —
                 // обложки теперь всегда из бандл-стока (assets/banners/).
-
-                OrnamentDivider()
-
-                // ── Мини-игры (бета) ───────────────────────────────────
-                FairyCard(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        Strings.t("settings.minigames.title"),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = FairyGold,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        Strings.t("settings.minigames.hint"),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = LocalContentColor.current.copy(alpha = 0.65f)
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    OutlinedButton(
-                        onClick = onTryGoldenKey,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f))
-                    ) {
-                        Text("🔑 Золотой ключик · Буратино", fontWeight = FontWeight.SemiBold)
-                    }
-                    Spacer(Modifier.height(6.dp))
-                    OutlinedButton(
-                        onClick = onTryKoscheiMemory,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f))
-                    ) {
-                        Text("⛓ Цепь Кощея · Кощей", fontWeight = FontWeight.SemiBold)
-                    }
-                    Spacer(Modifier.height(6.dp))
-                    OutlinedButton(
-                        onClick = onTryKolobokNora,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f))
-                    ) {
-                        Text("🕳 Нора-нора-нора · Колобок", fontWeight = FontWeight.SemiBold)
-                    }
-                    Spacer(Modifier.height(6.dp))
-                    OutlinedButton(
-                        onClick = onTryZolushkaCoins,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f))
-                    ) {
-                        Text("🌾 Перебери зерно · Золушка", fontWeight = FontWeight.SemiBold)
-                    }
-                    Spacer(Modifier.height(6.dp))
-                    OutlinedButton(
-                        onClick = onTryBabaYagaCauldron,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f))
-                    ) {
-                        Text("🧪 Котёл · Баба-Яга", fontWeight = FontWeight.SemiBold)
-                    }
-                    Spacer(Modifier.height(6.dp))
-                    OutlinedButton(
-                        onClick = onTryBoyarinCharter,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f))
-                    ) {
-                        Text("📜 Купеческая грамота · Боярин", fontWeight = FontWeight.SemiBold)
-                    }
-                    Spacer(Modifier.height(6.dp))
-                    OutlinedButton(
-                        onClick = onTryIvanDurakMap,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = FairyGold),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, FairyGold.copy(alpha = 0.5f))
-                    ) {
-                        Text("🃏 Подкинь карту · Иван-Дурак", fontWeight = FontWeight.SemiBold)
-                    }
-                }
 
                 OrnamentDivider()
 
@@ -273,7 +194,7 @@ fun SettingsScreen(
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = FairyGold.copy(alpha = 0.22f),
                                     selectedLabelColor = FairyGold,
-                                    labelColor = LocalContentColor.current.copy(alpha = 0.7f)
+                                    labelColor = LocalContentColorSecondary.current
                                 )
                             )
                         }
@@ -296,7 +217,7 @@ fun SettingsScreen(
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = FairyGold.copy(alpha = 0.22f),
                                     selectedLabelColor = FairyGold,
-                                    labelColor = LocalContentColor.current.copy(alpha = 0.7f)
+                                    labelColor = LocalContentColorSecondary.current
                                 )
                             )
                         }
@@ -317,7 +238,7 @@ fun SettingsScreen(
                             Text(
                                 Strings.t("settings.about.version", BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = LocalContentColor.current.copy(alpha = 0.5f)
+                                color = LocalContentColorMuted.current
                             )
                         }
                         IconButton(onClick = { showFaqDialog = true }) {
@@ -328,7 +249,7 @@ fun SettingsScreen(
                     Text(
                         Strings.t("settings.about.text"),
                         style = MaterialTheme.typography.bodySmall,
-                        color = LocalContentColor.current.copy(alpha = 0.65f)
+                        color = LocalContentColorMuted.current
                     )
                     Spacer(Modifier.height(8.dp))
                     OutlinedButton(
@@ -355,7 +276,7 @@ fun SettingsScreen(
                     Text(
                         Strings.t("settings.danger.hint"),
                         style = MaterialTheme.typography.bodySmall,
-                        color = LocalContentColor.current.copy(alpha = 0.65f)
+                        color = LocalContentColorMuted.current
                     )
                     Spacer(Modifier.height(12.dp))
                     OutlinedButton(

@@ -32,6 +32,7 @@ import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.NightBlue
+import com.s0dolamby.game.presentation.common.theme.LocalContentColorMuted
 
 /**
  * Экран отношений с дельцами. Сетка 7 архетипов с уровнями связи
@@ -92,7 +93,7 @@ fun RelationshipsScreen(
             ) {
                 Text(
                     Strings.t("rel.subtitle", ui.maxLevel),
-                    color = LocalContentColor.current.copy(alpha = 0.65f),
+                    color = LocalContentColorMuted.current,
                     fontSize = 12.sp
                 )
 
@@ -103,18 +104,18 @@ fun RelationshipsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
-                            Text(Strings.t("rel.sumTies"), color = LocalContentColor.current.copy(alpha = 0.65f), fontSize = 12.sp)
+                            Text(Strings.t("rel.sumTies"), color = LocalContentColorMuted.current, fontSize = 12.sp)
                             Text("${ui.tiesTotal}", color = FairyGold, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
                             if (ui.seenCount > 0) {
                                 Text(
                                     Strings.t("rel.knownOf", ui.seenCount, ui.entries.size),
-                                    color = LocalContentColor.current.copy(alpha = 0.5f),
+                                    color = LocalContentColorMuted.current,
                                     fontSize = 11.sp
                                 )
                             }
                         }
                         Column(horizontalAlignment = Alignment.End) {
-                            Text(Strings.t("rel.bonusPerLevel"), color = LocalContentColor.current.copy(alpha = 0.65f), fontSize = 12.sp)
+                            Text(Strings.t("rel.bonusPerLevel"), color = LocalContentColorMuted.current, fontSize = 12.sp)
                             Text(
                                 Strings.t("rel.bonusPerDay", ui.bonusPercentPerLevel),
                                 color = FairyGold,

@@ -38,6 +38,8 @@ import com.s0dolamby.game.presentation.common.theme.Error
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.Success
 import com.s0dolamby.game.presentation.common.theme.Warning
+import com.s0dolamby.game.presentation.common.theme.LocalContentColorMuted
+import com.s0dolamby.game.presentation.common.theme.LocalContentColorSecondary
 
 fun Project.displayName() = claimedName
 
@@ -130,7 +132,7 @@ fun PortfolioScreen(
                             Text(
                                 Strings.t("portfolio.empty.hint"),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = LocalContentColor.current.copy(alpha = 0.65f)
+                                color = LocalContentColorMuted.current
                             )
                         }
                     }
@@ -251,7 +253,7 @@ private fun PortfolioProjectCard(
                 Text(
                     "${project.developerName} · ${project.daysSinceJoined} дн.",
                     style = MaterialTheme.typography.labelMedium,
-                    color = LocalContentColor.current.copy(alpha = 0.55f)
+                    color = LocalContentColorMuted.current
                 )
             }
             Column(horizontalAlignment = Alignment.End) {
@@ -259,11 +261,11 @@ private fun PortfolioProjectCard(
                     if (project.isWithdrawalLocked) {
                         Icon(Icons.Default.Lock, Strings.t("portfolio.card.locked"), tint = Warning, modifier = Modifier.size(14.dp))
                     }
-                    Text(Strings.t("portfolio.card.invested"), color = LocalContentColor.current.copy(alpha = 0.55f), fontSize = 10.sp)
+                    Text(Strings.t("portfolio.card.invested"), color = LocalContentColorMuted.current, fontSize = 10.sp)
                 }
                 Text(
                     formatGroshes(project.investedAmountRubles),
-                    color = LocalContentColor.current.copy(alpha = 0.7f),
+                    color = LocalContentColorSecondary.current,
                     fontSize = 12.sp
                 )
                 Text(
@@ -288,7 +290,7 @@ private fun PortfolioProjectCard(
             Text(
                 Strings.t("portfolio.card.history"),
                 style = MaterialTheme.typography.labelSmall,
-                color = LocalContentColor.current.copy(alpha = 0.5f)
+                color = LocalContentColorMuted.current
             )
             Spacer(Modifier.height(4.dp))
             DualSparkline(
@@ -299,7 +301,7 @@ private fun PortfolioProjectCard(
             if (project.currentUserCount > 0) {
                 Text(
                     Strings.t("portfolio.card.investors", formatCountShort(project.currentUserCount)),
-                    color = LocalContentColor.current.copy(alpha = 0.55f),
+                    color = LocalContentColorMuted.current,
                     fontSize = 11.sp,
                     modifier = Modifier.padding(top = 2.dp)
                 )
@@ -351,7 +353,7 @@ private fun PortfolioProjectCard(
         if (hasFee) {
             Text(
                 Strings.t("portfolio.card.fee"),
-                color = LocalContentColor.current.copy(alpha = 0.45f),
+                color = LocalContentColorMuted.current,
                 fontSize = 10.sp
             )
         }
@@ -558,7 +560,7 @@ private fun ClosedProjectCard(project: Project, onClick: () -> Unit) {
                 Text(
                     project.closureReason ?: Strings.t("portfolio.closed.fallback"),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = LocalContentColor.current.copy(alpha = 0.6f)
+                    color = LocalContentColorMuted.current
                 )
             }
             Text(

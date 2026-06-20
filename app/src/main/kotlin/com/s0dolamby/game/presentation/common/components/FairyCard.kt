@@ -16,6 +16,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.s0dolamby.game.presentation.common.theme.LocalAppPalette
+import com.s0dolamby.game.presentation.common.theme.LocalContentColorMuted
+import com.s0dolamby.game.presentation.common.theme.LocalContentColorSecondary
 
 /**
  * Карточка в стиле «двух тем»:
@@ -43,7 +45,11 @@ fun FairyCard(
                     .fillMaxWidth()
                     .background(Brush.verticalGradient(colors = listOf(palette.cardTop, palette.cardMid, palette.cardBottom)))
             ) {
-                CompositionLocalProvider(LocalContentColor provides palette.onCard) {
+                CompositionLocalProvider(
+                    LocalContentColor provides palette.onCard,
+                    LocalContentColorSecondary provides palette.onCardSecondary,
+                    LocalContentColorMuted provides palette.onCardMuted
+                ) {
                     Column(
                         modifier = Modifier.padding(innerPadding.dp),
                         content = content

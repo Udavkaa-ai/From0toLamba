@@ -18,14 +18,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.s0dolamby.game.domain.today.TodayRewards
+import com.s0dolamby.game.R
 import com.s0dolamby.game.presentation.common.components.CoinShowerOverlay
 import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
+import com.s0dolamby.game.presentation.common.components.ScreenBackground
 import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.NightBlue
 import com.s0dolamby.game.presentation.common.theme.Success
+import com.s0dolamby.game.presentation.common.theme.LocalContentColorMuted
 
 /** Лестница серии — пороги бонусов из TG todayService. */
 private val MILESTONES = TodayRewards.MILESTONES.toList().sortedBy { it.first }
@@ -57,21 +60,7 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(NightBlue)) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colorStops = arrayOf(
-                            0f to Color(0xD9060412),
-                            0.4f to Color(0xBF0A0818),
-                            1f to Color(0xF0060412)
-                        )
-                    )
-                )
-        )
-
+    ScreenBackground(R.drawable.home_bg) {
         // Золотой дождь при успешном claim — seed = размер награды, чтобы
         // повторный заход в тот же день не запускал анимацию заново.
         CoinShowerOverlay(seed = ui.claimedTodayReward)
@@ -103,7 +92,7 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                 item {
                     Text(
                         Strings.t("today.subtitle"),
-                        color = LocalContentColor.current.copy(alpha = 0.65f),
+                        color = LocalContentColorMuted.current,
                         fontSize = 12.sp,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
@@ -118,7 +107,7 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text(Strings.t("today.youAtFair"), color = LocalContentColor.current.copy(alpha = 0.65f), fontSize = 13.sp)
+                            Text(Strings.t("today.youAtFair"), color = LocalContentColorMuted.current, fontSize = 13.sp)
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -133,7 +122,7 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                             }
                             Text(
                                 Strings.t(if (streak == 1) "today.dayOne" else "today.dayMany"),
-                                color = LocalContentColor.current.copy(alpha = 0.65f),
+                                color = LocalContentColorMuted.current,
                                 fontSize = 13.sp
                             )
                             OrnamentDivider()
@@ -158,7 +147,7 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                                 if (nextMilestone != null) {
                                     Text(
                                         Strings.t("today.nextMilestone", nextMilestone.first, nextMilestone.second, nextMilestone.first - streak),
-                                        color = LocalContentColor.current.copy(alpha = 0.5f),
+                                        color = LocalContentColorMuted.current,
                                         fontSize = 11.sp,
                                         textAlign = TextAlign.Center
                                     )
@@ -181,7 +170,7 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                                 }
                                 Text(
                                     Strings.t("today.claimed.hint"),
-                                    color = LocalContentColor.current.copy(alpha = 0.45f),
+                                    color = LocalContentColorMuted.current,
                                     fontSize = 11.sp,
                                     textAlign = TextAlign.Center
                                 )
@@ -216,12 +205,12 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(Strings.t("today.leaderboard"), color = FairyGold, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                            Text(Strings.t("today.soon"), color = LocalContentColor.current.copy(alpha = 0.4f), fontSize = 11.sp)
+                            Text(Strings.t("today.soon"), color = LocalContentColorMuted.current, fontSize = 11.sp)
                         }
                         Spacer(Modifier.height(8.dp))
                         Text(
                             Strings.t("today.leaderboard.hint"),
-                            color = LocalContentColor.current.copy(alpha = 0.6f),
+                            color = LocalContentColorMuted.current,
                             fontSize = 12.sp
                         )
                     }
@@ -256,7 +245,7 @@ private fun MilestoneCell(day: Int, bonus: Int, passed: Boolean) {
             )
             Text(
                 "+$bonus г",
-                color = LocalContentColor.current.copy(alpha = 0.55f),
+                color = LocalContentColorMuted.current,
                 fontSize = 9.sp
             )
         }

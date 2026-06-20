@@ -35,6 +35,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.s0dolamby.game.presentation.common.theme.LocalContentColorMuted
 
 data class ProjectDetailUiState(
     val project: Project? = null,
@@ -168,7 +169,7 @@ private fun DynamicsCard(project: Project) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically) {
                     Text(Strings.t("detail.dyn.users"), style = MaterialTheme.typography.bodyMedium,
-                        color = LocalContentColor.current.copy(alpha = 0.65f))
+                        color = LocalContentColorMuted.current)
                     Text(Strings.t("detail.dyn.usersDelta", delta), style = MaterialTheme.typography.labelSmall,
                         color = if (delta >= 0) Success else Error)
                 }
@@ -184,7 +185,7 @@ private fun DynamicsCard(project: Project) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically) {
                     Text(Strings.t("detail.dyn.dailyYield"), style = MaterialTheme.typography.bodyMedium,
-                        color = LocalContentColor.current.copy(alpha = 0.65f))
+                        color = LocalContentColorMuted.current)
                     Text(Strings.t("detail.dyn.dailyYieldVal", avgApy), style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary)
                 }
@@ -239,7 +240,7 @@ private fun ProjectInfoCard(project: Project) {
                 Column {
                     Text(project.claimedName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     Text(Strings.t("detail.info.byOwner", project.developerName), style = MaterialTheme.typography.bodyMedium,
-                        color = LocalContentColor.current.copy(alpha = 0.65f))
+                        color = LocalContentColorMuted.current)
                 }
                 Surface(
                     color = MaterialTheme.colorScheme.surfaceVariant,
@@ -255,11 +256,11 @@ private fun ProjectInfoCard(project: Project) {
             Text(project.description, style = MaterialTheme.typography.bodyMedium)
             Divider()
             Text(Strings.t("detail.info.roadmap"), style = MaterialTheme.typography.labelSmall,
-                color = LocalContentColor.current.copy(alpha = 0.65f))
+                color = LocalContentColorMuted.current)
             project.roadmap.forEachIndexed { index, milestone ->
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("${index + 1}.", style = MaterialTheme.typography.bodyMedium,
-                        color = LocalContentColor.current.copy(alpha = 0.65f))
+                        color = LocalContentColorMuted.current)
                     Text(milestone, style = MaterialTheme.typography.bodyMedium)
                 }
             }
@@ -321,7 +322,7 @@ private fun PostMortemCard(project: Project, postMortem: PostMortemReport?, isGe
 
             Column(modifier = Modifier.padding(vertical = 4.dp)) {
                 Text(Strings.t("detail.postmortem.archetype"), style = MaterialTheme.typography.labelSmall,
-                    color = LocalContentColor.current.copy(alpha = 0.65f))
+                    color = LocalContentColorMuted.current)
                 Text(
                     Strings.t("persona.${project.personaArchetype.name}"),
                     style = MaterialTheme.typography.titleMedium,
@@ -331,7 +332,7 @@ private fun PostMortemCard(project: Project, postMortem: PostMortemReport?, isGe
 
             Column(modifier = Modifier.padding(vertical = 4.dp)) {
                 Text(Strings.t("detail.postmortem.fate"), style = MaterialTheme.typography.labelSmall,
-                    color = LocalContentColor.current.copy(alpha = 0.65f))
+                    color = LocalContentColorMuted.current)
                 Text(
                     project.fate.displayName,
                     style = MaterialTheme.typography.titleMedium,
@@ -342,7 +343,7 @@ private fun PostMortemCard(project: Project, postMortem: PostMortemReport?, isGe
 
             Divider(color = LocalContentColor.current.copy(alpha = 0.15f))
             Text(Strings.t("detail.postmortem.analysis"), style = MaterialTheme.typography.labelSmall,
-                color = LocalContentColor.current.copy(alpha = 0.65f))
+                color = LocalContentColorMuted.current)
             when {
                 postMortem != null -> Text(postMortem.analysis, style = MaterialTheme.typography.bodyMedium)
                 isGenerating -> Row(
@@ -356,13 +357,13 @@ private fun PostMortemCard(project: Project, postMortem: PostMortemReport?, isGe
                     Text(
                         Strings.t("detail.postmortem.thinking"),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = LocalContentColor.current.copy(alpha = 0.65f)
+                        color = LocalContentColorMuted.current
                     )
                 }
                 else -> Text(
                     Strings.t("detail.postmortem.unavailable"),
                     style = MaterialTheme.typography.bodySmall,
-                    color = LocalContentColor.current.copy(alpha = 0.65f)
+                    color = LocalContentColorMuted.current
                 )
             }
         }
@@ -376,10 +377,10 @@ private fun UpdateHistoryItem(update: DailyUpdate) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(update.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
                 Text(Strings.t("detail.day", update.day), style = MaterialTheme.typography.labelSmall,
-                    color = LocalContentColor.current.copy(alpha = 0.65f))
+                    color = LocalContentColorMuted.current)
             }
             Text(update.body, style = MaterialTheme.typography.bodyMedium,
-                color = LocalContentColor.current.copy(alpha = 0.65f), maxLines = 3)
+                color = LocalContentColorMuted.current, maxLines = 3)
             if (update.redFlags.isNotEmpty()) {
                 update.redFlags.forEach { flag ->
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -396,7 +397,7 @@ private fun UpdateHistoryItem(update: DailyUpdate) {
 @Composable
 private fun StatRow(label: String, value: String, color: Color = LocalContentColor.current) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = LocalContentColor.current.copy(alpha = 0.65f))
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = LocalContentColorMuted.current)
         Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = color)
     }
 }
@@ -426,7 +427,7 @@ val ProjectFate.displayName: String get() = when (this) {
 val ProjectFate.color: androidx.compose.ui.graphics.Color @Composable get() = when (this) {
     ProjectFate.INSTANT_SCAM -> Error
     ProjectFate.SLOW_DRAIN -> Warning
-    ProjectFate.HONEST_FAIL -> LocalContentColor.current.copy(alpha = 0.65f)
+    ProjectFate.HONEST_FAIL -> LocalContentColorMuted.current
     ProjectFate.SURVIVOR -> Success
     ProjectFate.UNICORN -> androidx.compose.ui.graphics.Color(0xFF9933FF)
 }

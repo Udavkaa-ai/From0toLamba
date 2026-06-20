@@ -33,6 +33,8 @@ import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
 import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.FairyGold
+import com.s0dolamby.game.presentation.common.theme.LocalContentColorMuted
+import com.s0dolamby.game.presentation.common.theme.LocalContentColorSecondary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -98,7 +100,7 @@ fun InboxScreen(
                             Text(
                                 Strings.t("inbox.empty.hint"),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = LocalContentColor.current.copy(alpha = 0.55f),
+                                color = LocalContentColorMuted.current,
                                 textAlign = TextAlign.Center
                             )
                         }
@@ -200,7 +202,7 @@ private fun InboxProjectCard(
                 )
                 Text(
                     project.type.displayWithEmojiI18n(),
-                    color = LocalContentColor.current.copy(alpha = 0.55f),
+                    color = LocalContentColorMuted.current,
                     fontSize = 11.sp,
                     modifier = Modifier.padding(top = 2.dp)
                 )
@@ -227,7 +229,7 @@ private fun InboxProjectCard(
             project.description.take(160) + if (project.description.length > 160) "..." else "",
             style = MaterialTheme.typography.bodySmall,
             fontStyle = FontStyle.Italic,
-            color = LocalContentColor.current.copy(alpha = 0.7f),
+            color = LocalContentColorSecondary.current,
             lineHeight = 18.sp
         )
 
@@ -239,12 +241,12 @@ private fun InboxProjectCard(
         ) {
             Text(
                 "👤 ${project.developerName}",
-                color = LocalContentColor.current.copy(alpha = 0.55f),
+                color = LocalContentColorMuted.current,
                 fontSize = 11.sp
             )
             Text(
                 Strings.t("inbox.investors", formatCount(project.claimedUserCount)),
-                color = LocalContentColor.current.copy(alpha = 0.55f),
+                color = LocalContentColorMuted.current,
                 fontSize = 11.sp
             )
         }

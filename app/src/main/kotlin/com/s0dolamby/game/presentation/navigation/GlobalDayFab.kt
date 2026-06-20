@@ -27,9 +27,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.s0dolamby.game.domain.usecase.AdvanceDayUseCase
-import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
+import com.s0dolamby.game.presentation.common.theme.LocalAppPalette
 import com.s0dolamby.game.presentation.common.theme.FairyGold
-import com.s0dolamby.game.presentation.common.theme.NightBlue
+import com.s0dolamby.game.domain.model.ThemeMode
+import com.s0dolamby.game.presentation.common.theme.LocalThemeMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -66,6 +67,24 @@ fun GlobalDayFab(
     viewModel: GlobalDayFabViewModel = hiltViewModel()
 ) {
     val isLoading by viewModel.isLoading.collectAsState()
+    val palette = LocalAppPalette.current
+    val themeMode = LocalThemeMode.current
+    // В тёплой теме — золотой градиент (как CTA в TG fairy), в тёмной —
+    // фиолет→ночной. Текст на золоте — тёмная сепия; на фиолете — золото.
+    val gradient = when (themeMode) {
+        ThemeMode.WARM_FAIRY -> Brush.linearGradient(
+            listOf(Color(0xFFFFD660), Color(0xFFFFB800), Color(0xFFB07400))
+        )
+        ThemeMode.DARK_FAIRY -> Brush.linearGradient(listOf(palette.enchantedPurple, palette.nightBlue))
+    }
+    val borderColor = when (themeMode) {
+        ThemeMode.WARM_FAIRY -> Color(0xCC784C24)   // тёплая деревянная рамка
+        ThemeMode.DARK_FAIRY -> FairyGold.copy(alpha = 0.5f)
+    }
+    val textColor = when (themeMode) {
+        ThemeMode.WARM_FAIRY -> Color(0xFF3A2010)   // тёмная сепия на золоте
+        ThemeMode.DARK_FAIRY -> FairyGold
+    }
     AnimatedVisibility(
         visible = visible,
         enter = fadeIn() + scaleIn(initialScale = 0.85f),
@@ -77,17 +96,15 @@ fun GlobalDayFab(
                 .padding(end = 16.dp, bottom = 96.dp)
                 .shadow(12.dp, RoundedCornerShape(28.dp))
                 .clip(RoundedCornerShape(28.dp))
-                .background(
-                    Brush.linearGradient(listOf(EnchantedPurple, NightBlue))
-                )
-                .border(1.5.dp, FairyGold.copy(alpha = 0.5f), RoundedCornerShape(28.dp))
+                .background(gradient)
+                .border(1.5.dp, borderColor, RoundedCornerShape(28.dp))
                 .clickable(enabled = !isLoading) { viewModel.advanceDay() }
                 .padding(horizontal = 18.dp, vertical = 14.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 if (isLoading) "⏳  Течёт время..." else "🌅  Следующий день",
-                color = FairyGold,
+                color = textColor,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold
             )

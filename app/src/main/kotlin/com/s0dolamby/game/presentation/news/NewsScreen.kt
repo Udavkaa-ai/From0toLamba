@@ -38,6 +38,8 @@ import com.s0dolamby.game.presentation.common.theme.Error
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.Success
 import com.s0dolamby.game.presentation.common.theme.Warning
+import com.s0dolamby.game.presentation.common.theme.LocalContentColorMuted
+import com.s0dolamby.game.presentation.common.theme.LocalContentColorSecondary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,7 +92,7 @@ fun NewsScreen(
                             Text(
                                 Strings.t("news.empty.hint"),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = LocalContentColor.current.copy(alpha = 0.65f)
+                                color = LocalContentColorMuted.current
                             )
                         }
                     }
@@ -140,7 +142,7 @@ private fun NewsCard(update: DailyUpdate) {
                 Text(
                     "День ${update.day}",
                     style = MaterialTheme.typography.labelSmall,
-                    color = LocalContentColor.current.copy(alpha = 0.5f)
+                    color = LocalContentColorMuted.current
                 )
                 Icon(
                     Icons.Default.ExpandMore,
@@ -198,7 +200,7 @@ private fun NewsCard(update: DailyUpdate) {
                             MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic)
                         else -> MaterialTheme.typography.bodyMedium
                     },
-                    color = LocalContentColor.current.copy(alpha = 0.85f)
+                    color = LocalContentColorSecondary.current
                 )
 
                 // ── Payout status ──
