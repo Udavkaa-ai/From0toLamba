@@ -309,7 +309,7 @@ private fun AchievementsCard(unlocked: Set<String>) {
                                 Text(
                                     ach.localizedDescription(),
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = LocalContentColor.current.copy(alpha = if (isUnlocked) 0.7f else 0.4f)
+                                    color = if (isUnlocked) LocalContentColorSecondary.current else LocalContentColorMuted.current
                                 )
                             }
                             if (isUnlocked) {
@@ -445,7 +445,7 @@ private fun RankCard(state: GameState?) {
                             Text(
                                 Strings.t(tier.requirementKey),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = LocalContentColor.current.copy(alpha = if (isCurrent) 0.8f else 0.4f)
+                                color = if (isCurrent) LocalContentColorSecondary.current else LocalContentColorMuted.current
                             )
                         }
                         if (isCurrent) {
