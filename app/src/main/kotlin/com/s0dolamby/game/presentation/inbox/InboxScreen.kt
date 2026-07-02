@@ -52,11 +52,15 @@ fun InboxScreen(
 ) {
     val projects by viewModel.inboxProjects.collectAsState()
     val unlocks by viewModel.unlockOutcomes.collectAsState()
+    val investState by viewModel.investState.collectAsState()
+    val freeBalance by viewModel.freeBalance.collectAsState()
     var adPromptForProjectId by remember { mutableStateOf<String?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     ScreenBackground(AppBg.INBOX) {
     Scaffold(
         containerColor = Color.Transparent,
+        snackbarHost = { com.s0dolamby.game.presentation.common.components.FairySnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -127,22 +131,56 @@ fun InboxScreen(
                     val unlock = unlocks[project.id]
                     InboxProjectCard(
                         project = project,
+                        played = unlock != null,
                         unlocked = unlock?.isWin == true,
                         perfect = unlock?.isPerfect == true,
                         onPlayMinigame = {
-                            if (unlock?.isWin == true) {
-                                // Уже сыграно — сразу в беседу, мини-игру повторно не предлагаем.
-                                onContinueToAma(project.id)
+                            if (unlock != null) {
+                                // Сыграно (как угодно) — сразу к вложению, без чата.
+                                viewModel.openInvestSheet(project.id)
                             } else {
                                 onPlayMinigame(project.personaArchetype.name, project.id)
                             }
                         },
+                        onChat = { onContinueToAma(project.id) },
                         onChatAfterAd = { adPromptForProjectId = project.id }
                     )
                 }
             }
         }
     }
+    // Шит вложения прямо из грамот — в чат заходить не обязательно
+    if (investState.sheetProjectId != null) {
+        com.s0dolamby.game.presentation.common.components.InvestSheet(
+            freeBalance = freeBalance,
+            ugovorPercent = investState.ugovorPercent,
+            onDismiss = viewModel::closeInvestSheet,
+            onInvest = { amount -> viewModel.invest(amount) }
+        )
+    }
+    investState.extraSlotOfferAmount?.let { pendingAmount ->
+        com.s0dolamby.game.presentation.common.components.ExtraSlotDialog(
+            pendingAmount = pendingAmount,
+            freeBalance = freeBalance,
+            onConfirm = viewModel::investWithExtraSlot,
+            onDismiss = viewModel::dismissExtraSlotOffer
+        )
+    }
+    investState.investedAmount?.let { amount ->
+        val msg = Strings.t("ama.snack.invested", "%.0f г".format(amount))
+        LaunchedEffect(amount) {
+            snackbarHostState.showSnackbar(msg)
+            viewModel.clearInvestResult()
+        }
+    }
+    investState.error?.let { err ->
+        val msg = err.ifBlank { Strings.t("ama.err.unknown") }
+        LaunchedEffect(err) {
+            snackbarHostState.showSnackbar(msg)
+            viewModel.clearError()
+        }
+    }
+
     // Заглушка «реклама» — пока без реальных rewarded-ads. Согласие = переход в Ama.
     adPromptForProjectId?.let { pid ->
         AlertDialog(
@@ -169,9 +207,12 @@ fun InboxScreen(
 @Composable
 private fun InboxProjectCard(
     project: Project,
+    /** Мини-игра сыграна (с любым исходом) — вложение доступно. */
+    played: Boolean = false,
     unlocked: Boolean = false,
     perfect: Boolean = false,
     onPlayMinigame: () -> Unit,
+    onChat: () -> Unit = {},
     onChatAfterAd: () -> Unit
 ) {
     // Тап по карточке = основной вход = мини-игра. Альтернативный вход —
@@ -270,12 +311,13 @@ private fun InboxProjectCard(
 
         Spacer(Modifier.height(10.dp))
 
-        // Если мини-игра уже пройдена — главная CTA меняется на «Вложить»
-        // и подсказывает результат. Альтернативную «беседу за рекламу»
-        // прячем — она была обходным путём.
+        // После игры (любой исход) главная CTA — «Вложить» прямо здесь,
+        // чат опционален и вынесен на вторую кнопку с «уговором»-заманухой.
+        // Провал = второго испытания нет, вложение «вслепую».
         val mainText = when {
             perfect -> Strings.t("inbox.cta.perfect")
             unlocked -> Strings.t("inbox.cta.unlocked")
+            played -> Strings.t("inbox.cta.blind")
             else -> Strings.t("inbox.cta.minigame")
         }
         Surface(
@@ -296,8 +338,29 @@ private fun InboxProjectCard(
                     .padding(vertical = 10.dp)
             )
         }
-        if (!unlocked) {
-            Spacer(Modifier.height(6.dp))
+        Spacer(Modifier.height(6.dp))
+        if (played) {
+            // Беседа — по желанию: каждый вопрос дельцу = +1% к вложению
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = LocalContentColor.current.copy(alpha = 0.06f),
+                shape = MaterialTheme.shapes.small,
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp, LocalContentColor.current.copy(alpha = 0.20f)
+                ),
+                onClick = onChat
+            ) {
+                Text(
+                    Strings.t("inbox.cta.chat"),
+                    color = LocalContentColor.current.copy(alpha = 0.78f),
+                    fontSize = 12.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 9.dp)
+                )
+            }
+        } else {
             // Альтернатива — беседа за просмотр рекламы (rewarded ad)
             Surface(
                 modifier = Modifier.fillMaxWidth(),

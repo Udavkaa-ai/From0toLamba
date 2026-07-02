@@ -19,6 +19,9 @@ class InvestUseCaseTest {
     private val minigameStore = mockk<MinigameUnlockStore>(relaxed = true) {
         every { outcomeFor(any()) } returns null
     }
+    private val amaRepo = mockk<com.s0dolamby.game.domain.repository.AmaRepository>(relaxed = true) {
+        coEvery { getSessionByProjectId(any()) } returns null
+    }
     private lateinit var useCase: InvestUseCase
 
     private val testProject = Project(
@@ -42,7 +45,7 @@ class InvestUseCaseTest {
 
     @Before
     fun setup() {
-        useCase = InvestUseCase(gameStateRepo, projectRepo, unlockStore, minigameStore)
+        useCase = InvestUseCase(gameStateRepo, projectRepo, unlockStore, minigameStore, amaRepo)
     }
 
     @Test
@@ -113,6 +116,30 @@ class InvestUseCaseTest {
         // 2000 − 100 (вклад) − 1000 (слот) = 900
         coVerify { gameStateRepo.updateBalance(900.0) }
         coVerify { gameStateRepo.recordInvestment(100.0) }
+    }
+
+    @Test
+    fun `ugovor bonus adds question percent on top of first investment`() = runTest {
+        coEvery { gameStateRepo.getGameState() } returns testGameState
+        coEvery { projectRepo.getProjectById("p1") } returns testProject
+        coEvery { projectRepo.updateProject(any()) } just Runs
+        coEvery { gameStateRepo.updateBalance(any()) } just Runs
+        coEvery { gameStateRepo.recordInvestment(any()) } just Runs
+        coEvery { gameStateRepo.updateRankIfNeeded() } just Runs
+        coEvery { gameStateRepo.recomputeAchievements() } returns emptyList()
+        // 7 заданных вопросов = +7% сверху от дельца
+        coEvery { amaRepo.getSessionByProjectId("p1") } returns AmaSession(
+            id = "s1", projectId = "p1", messages = emptyList(), questionCount = 7
+        )
+
+        val result = useCase("p1", 100.0)
+
+        assertTrue(result.isSuccess)
+        // Списано ровно 100, а в деле лежит 107
+        coVerify { gameStateRepo.updateBalance(0.0) }
+        coVerify { projectRepo.updateProject(match {
+            it.investedAmountRubles == 100.0 && it.currentValueRubles == 107.0
+        }) }
     }
 
     @Test

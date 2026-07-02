@@ -298,11 +298,15 @@ fun NavGraph() {
                 projectId = projectId,
                 onBack = { navController.popBackStack() },
                 onContinueToInvest = {
-                    // После победы заменяем gate в стеке на AMA-беседу, где
-                    // кнопка инвеста увидит unlock в MinigameUnlockStore и
-                    // юзер сможет открыть invest-sheet тапом «Вложить».
-                    // Если был раскрыт идеал — AMA покажет панель «Раскрытые
-                    // сведения» с реальным посулом и судьбой дела.
+                    // «Вложить» после игры НЕ тащит игрока в чат (чат генерит
+                    // AI-приветствие и тратит токены) — возвращаемся туда,
+                    // откуда пришли: в грамотах карточка уже разблокирована
+                    // и открывает шит вложения, в беседе — кнопка «Вложить».
+                    navController.popBackStack()
+                },
+                onGoToChat = {
+                    // Явное желание поговорить — вот теперь стартуем AMA.
+                    // За вопросы делец добрасывает «уговор» +1%/вопрос.
                     navController.navigate(Screen.Ama.createRoute(projectId)) {
                         popUpTo(Screen.MinigameGate.route) { inclusive = true }
                     }

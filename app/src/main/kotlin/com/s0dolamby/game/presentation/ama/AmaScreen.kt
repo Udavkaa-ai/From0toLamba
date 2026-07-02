@@ -246,7 +246,7 @@ fun AmaScreen(
                     if (!sessionEnded) {
                         TextButton(onClick = viewModel::requestInvest) {
                             Text(
-                                if (uiState.minigameUnlocked) Strings.t("ama.btn.invest") else Strings.t("ama.btn.test"),
+                                if (uiState.minigamePlayed) Strings.t("ama.btn.invest") else Strings.t("ama.btn.test"),
                                 color = FairyGold, fontWeight = FontWeight.SemiBold
                             )
                         }
@@ -393,57 +393,24 @@ fun AmaScreen(
         }
     }
 
-    // Invest bottom sheet
+    // Invest bottom sheet (общий с грамотами) — с бонусом «уговора» за вопросы
     if (uiState.showInvestSheet) {
-        InvestBottomSheet(
+        com.s0dolamby.game.presentation.common.components.InvestSheet(
             freeBalance = uiState.freeBalance,
+            ugovorPercent = com.s0dolamby.game.domain.usecase.InvestUseCase
+                .ugovorPercent(uiState.session?.questionCount ?: 0),
             onDismiss = viewModel::hideInvestSheet,
             onInvest = { amount -> viewModel.invest(amount) }
         )
     }
 
-    // Все 5 слотов заняты — оффер дополнительного торгового слота (порт TG
-    // ExtraSlotModal, вариант со Stars вырезан — только за гроши).
+    // Все 5 слотов заняты — оффер дополнительного торгового слота
     uiState.extraSlotOfferAmount?.let { pendingAmount ->
-        val slotCost = com.s0dolamby.game.domain.usecase.InvestUseCase.EXTRA_SLOT_COST_RUBLES
-        val canAfford = uiState.freeBalance >= pendingAmount + slotCost
-        AlertDialog(
-            onDismissRequest = viewModel::dismissExtraSlotOffer,
-            icon = { Text("🗃️", fontSize = 40.sp) },
-            title = {
-                Text(
-                    Strings.t("extraSlot.title"),
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(Strings.t("extraSlot.body"))
-                    if (!canAfford) {
-                        Text(
-                            Strings.t("extraSlot.noBalance"),
-                            color = ErrorColor
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = viewModel::investWithExtraSlot,
-                    enabled = canAfford,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = FairyGold,
-                        contentColor = Color(0xFF1A0A00)
-                    )
-                ) { Text(Strings.t("extraSlot.buy"), fontWeight = FontWeight.SemiBold) }
-            },
-            dismissButton = {
-                TextButton(onClick = viewModel::dismissExtraSlotOffer) {
-                    Text(Strings.t("btn.cancel"))
-                }
-            }
+        com.s0dolamby.game.presentation.common.components.ExtraSlotDialog(
+            pendingAmount = pendingAmount,
+            freeBalance = uiState.freeBalance,
+            onConfirm = viewModel::investWithExtraSlot,
+            onDismiss = viewModel::dismissExtraSlotOffer
         )
     }
 
@@ -708,94 +675,3 @@ private fun SessionEndBanner(
     }
 }
 
-private fun formatRubles(amount: Double): String = when {
-    amount >= 1_000_000 -> "%.1fМ г".format(amount / 1_000_000)
-    amount >= 1_000 -> "%.1fТ г".format(amount / 1_000)
-    else -> "%.0f г".format(amount)
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun InvestBottomSheet(freeBalance: Double, onDismiss: () -> Unit, onInvest: (Double) -> Unit) {
-    var amountText by remember { mutableStateOf("") }
-    val amount = amountText.toDoubleOrNull()
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    val palette = com.s0dolamby.game.presentation.common.theme.LocalAppPalette.current
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = palette.cardMid,
-        contentColor = palette.onCard
-    ) {
-        // Шит лежит на пергаменте/фиолете карточного цвета — без провайдера
-        // LocalAccentOnCard и поле ввода брали цвета тёмной Material-схемы
-        // (золото и белый на пергаменте не читались).
-        com.s0dolamby.game.presentation.common.components.ProvideOnCardColors {
-        Column(
-            modifier = Modifier.padding(horizontal = 24.dp).padding(bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    Strings.t("ama.invest.title"),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = LocalContentColor.current
-                )
-                Surface(
-                    color = LocalAccentOnCard.current.copy(alpha = 0.15f),
-                    shape = MaterialTheme.shapes.small
-                ) {
-                    Text(
-                        Strings.t("ama.invest.free", formatRubles(freeBalance)),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = LocalAccentOnCard.current,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                    )
-                }
-            }
-            OutlinedTextField(
-                value = amountText,
-                onValueChange = { amountText = it.filter { c -> c.isDigit() || c == '.' } },
-                label = { Text(Strings.t("ama.invest.amount")) },
-                suffix = { Text("г", color = LocalContentColor.current) },
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = LocalContentColor.current,
-                    unfocusedTextColor = LocalContentColor.current,
-                    focusedBorderColor = LocalAccentOnCard.current,
-                    unfocusedBorderColor = LocalAccentOnCard.current.copy(alpha = 0.5f),
-                    cursorColor = LocalAccentOnCard.current,
-                    focusedLabelColor = LocalAccentOnCard.current,
-                    unfocusedLabelColor = LocalContentColorMuted.current,
-                    focusedContainerColor = LocalContentColor.current.copy(alpha = 0.04f),
-                    unfocusedContainerColor = LocalContentColor.current.copy(alpha = 0.02f)
-                )
-            )
-            Text(
-                Strings.t("ama.invest.minimum"),
-                style = MaterialTheme.typography.labelSmall,
-                color = LocalContentColorMuted.current
-            )
-            Button(
-                onClick = { amount?.let { onInvest(it) } },
-                enabled = amount != null && amount >= 5.0,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = FairyGold,
-                    contentColor = Color(0xFF1A0A00),
-                    disabledContainerColor = FairyGold.copy(alpha = 0.35f),
-                    disabledContentColor = Color(0xFF1A0A00).copy(alpha = 0.6f)
-                )
-            ) {
-                Text(Strings.t("ama.invest.confirm"), fontWeight = FontWeight.SemiBold)
-            }
-        }
-        } // ProvideOnCardColors
-    }
-}

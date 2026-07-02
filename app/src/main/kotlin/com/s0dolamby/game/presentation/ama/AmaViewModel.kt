@@ -41,7 +41,9 @@ data class AmaUiState(
     val showInvestSheet: Boolean = false,
     val investedAmount: Double? = null,
     val freeBalance: Double = 0.0,
-    /** Уже пройдена мини-игра этого дела (любой не-проигрыш). */
+    /** Мини-игра этого дела уже сыграна (неважно, с каким исходом) — вложение доступно. */
+    val minigamePlayed: Boolean = false,
+    /** Победа (≤1 ошибки) — раскрыт тип дела. */
     val minigameUnlocked: Boolean = false,
     val minigamePerfect: Boolean = false,
     /** Куда вести при попытке инвеста, если игра ещё не пройдена. */
@@ -87,6 +89,7 @@ class AmaViewModel @Inject constructor(
             minigameUnlockStore.outcomes.collect { map ->
                 val outcome: MinigameOutcome? = map[projectId]
                 _uiState.update { it.copy(
+                    minigamePlayed = outcome != null,
                     minigameUnlocked = outcome?.isWin == true,
                     minigamePerfect = outcome?.isPerfect == true
                 ) }
@@ -145,13 +148,14 @@ class AmaViewModel @Inject constructor(
     }
 
     /**
-     * Кнопка «Вложиться». Если мини-игра дельца ещё не пройдена — попросим
+     * Кнопка «Вложиться». Если мини-игра дельца ещё НЕ СЫГРАНА — попросим
      * UI отправить пользователя в [MinigameGate], запомнив архетип. Если
-     * пройдена — открываем sheet для ввода суммы.
+     * сыграна (даже с провалом — второго испытания делец не даёт, вложение
+     * «вслепую» разрешено) — открываем sheet для ввода суммы.
      */
     fun requestInvest() {
         val state = _uiState.value
-        if (state.minigameUnlocked) {
+        if (state.minigamePlayed) {
             _uiState.update { it.copy(showInvestSheet = true) }
         } else {
             val arch = state.project?.personaArchetype ?: return

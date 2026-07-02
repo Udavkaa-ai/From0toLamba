@@ -22,7 +22,8 @@ class InvestUseCase @Inject constructor(
     private val gameStateRepository: GameStateRepository,
     private val projectRepository: ProjectRepository,
     private val achievementUnlockStore: AchievementUnlockStore,
-    private val minigameUnlockStore: MinigameUnlockStore
+    private val minigameUnlockStore: MinigameUnlockStore,
+    private val amaRepository: com.s0dolamby.game.domain.repository.AmaRepository
 ) {
     companion object {
         /**
@@ -37,6 +38,19 @@ class InvestUseCase @Inject constructor(
 
         /** Сверх обычного лимита можно открыть максимум 5 слотов (TG: MAX_EXTRA_SLOTS). */
         const val MAX_EXTRA_SLOTS = 5
+
+        /**
+         * «Уговор» — награда за беседу с дельцом: каждый заданный в AMA вопрос
+         * добавляет +1% сверху к ПЕРВОМУ вложению (делец добрасывает от себя),
+         * максимум +10% за все 10 вопросов. Это и есть причина тратить время
+         * (и — позже — рекламу) на разговор.
+         */
+        const val UGOVOR_BONUS_PER_QUESTION = 0.01
+        const val UGOVOR_MAX_QUESTIONS = 10
+
+        /** Процент уговора (0..10) по числу заданных вопросов. */
+        fun ugovorPercent(questionCount: Int): Int =
+            questionCount.coerceIn(0, UGOVOR_MAX_QUESTIONS)
     }
 
     suspend operator fun invoke(
@@ -75,9 +89,18 @@ class InvestUseCase @Inject constructor(
         val isFirstInvestment = !project.isActive
         // Сдвиг судьбы за идеал — только на ПЕРВОМ вложении.
         val shifted = if (isFirstInvestment) maybeShiftFate(project) else project
+        // «Уговор»: за каждый заданный дельцу вопрос он добрасывает +1% сверху
+        // к первому вложению (max +10%). Списывается с игрока только amount.
+        val ugovorBonus = if (isFirstInvestment) {
+            val questions = amaRepository.getSessionByProjectId(projectId)?.questionCount ?: 0
+            amountRubles * ugovorPercent(questions) * UGOVOR_BONUS_PER_QUESTION
+        } else 0.0
+        if (ugovorBonus > 0) {
+            AppLogger.i("InvestUseCase", "Ugovor bonus +$ugovorBonus on ${project.claimedName}")
+        }
         val updated = shifted.copy(
             investedAmountRubles = shifted.investedAmountRubles + amountRubles,
-            currentValueRubles = shifted.currentValueRubles + amountRubles,
+            currentValueRubles = shifted.currentValueRubles + amountRubles + ugovorBonus,
             isActive = true
         )
         projectRepository.updateProject(updated)

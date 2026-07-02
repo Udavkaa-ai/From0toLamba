@@ -101,23 +101,25 @@ fun MinigameGateScreen(
     projectId: String,
     onBack: () -> Unit,
     onContinueToInvest: () -> Unit,
+    onGoToChat: () -> Unit = {},
     viewModel: MinigameGateViewModel = hiltViewModel()
 ) {
     val tokens by viewModel.archetypeTokens.collectAsState()
     val tokenCount = tokens[archetype] ?: 0
     val previousOutcome = viewModel.storedOutcome(projectId)
 
-    // Если игра уже была пройдена — сразу к экрану результата.
-    // Иначе: есть жетон → выбор, нет жетона → сразу в игру.
+    // Если игра уже была сыграна — С ЛЮБЫМ исходом — сразу к экрану
+    // результата: делец второго испытания не даёт (после провала инфу
+    // можно добирать только в беседе). Иначе: жетон → выбор, нет → игра.
     var phase by remember(projectId) {
         mutableStateOf(when {
-            previousOutcome?.isWin == true -> GatePhase.FINISHED
+            previousOutcome != null -> GatePhase.FINISHED
             tokenCount > 0 -> GatePhase.INTRO
             else -> GatePhase.PLAYING
         })
     }
     var finished by remember(projectId) {
-        mutableStateOf<MinigameOutcome?>(previousOutcome?.takeIf { it.isWin })
+        mutableStateOf<MinigameOutcome?>(previousOutcome)
     }
 
     val handleOutcome: (MinigameOutcome) -> Unit = remember(projectId) {
@@ -168,10 +170,7 @@ fun MinigameGateScreen(
                 archetype = archetype,
                 onBack = onBack,
                 onContinueToInvest = onContinueToInvest,
-                onPlayAgain = {
-                    finished = null
-                    phase = GatePhase.PLAYING
-                }
+                onGoToChat = onGoToChat
             )
         }
     }
@@ -243,7 +242,7 @@ private fun GateResultScreen(
     archetype: PersonaArchetype,
     onBack: () -> Unit,
     onContinueToInvest: () -> Unit,
-    onPlayAgain: () -> Unit
+    onGoToChat: () -> Unit
 ) {
     val title = when {
         outcome.isPerfect -> Strings.t("gate.result.perfect.title")
@@ -289,26 +288,34 @@ private fun GateResultScreen(
                 modifier = Modifier.widthIn(max = 260.dp)
             )
             Spacer(Modifier.height(22.dp))
-            if (outcome.isWin) {
-                Button(
-                    onClick = onContinueToInvest,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = FairyGold,
-                        contentColor = NightBlue
-                    )
-                ) { Text(Strings.t("gate.btn.investNow"), fontWeight = FontWeight.SemiBold) }
-                Spacer(Modifier.height(8.dp))
-            } else {
-                Button(
-                    onClick = onPlayAgain,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = FairyGold,
-                        contentColor = NightBlue
-                    )
-                ) { Text(Strings.t("gate.btn.playAgain"), fontWeight = FontWeight.SemiBold) }
-                Spacer(Modifier.height(8.dp))
+            // Ретрая после провала НЕТ — делец второго испытания не даёт.
+            // Вложиться можно всегда (после провала — вслепую), а беседа
+            // остаётся способом выведать инфу и заработать «уговор».
+            Button(
+                onClick = onContinueToInvest,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = FairyGold,
+                    contentColor = NightBlue
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    if (outcome.isWin) Strings.t("gate.btn.investNow")
+                    else Strings.t("gate.btn.investBlind"),
+                    fontWeight = FontWeight.SemiBold
+                )
             }
-            OutlinedButton(onClick = onBack) { Text(Strings.t("btn.back")) }
+            Spacer(Modifier.height(8.dp))
+            OutlinedButton(
+                onClick = onGoToChat,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(Strings.t("gate.btn.chat"), color = FairyGold)
+            }
+            Spacer(Modifier.height(8.dp))
+            OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
+                Text(Strings.t("btn.back"), color = Color.White.copy(alpha = 0.7f))
+            }
         }
     }
 }
