@@ -48,6 +48,7 @@ import com.s0dolamby.game.domain.model.Project
 import com.s0dolamby.game.presentation.common.components.CardCornerOrnaments
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.components.PersonaAvatar
+import com.s0dolamby.game.presentation.common.components.ProvideOnCardColors
 import com.s0dolamby.game.presentation.common.components.SparklesOverlay
 import com.s0dolamby.game.presentation.common.format.formatGroshes
 import com.s0dolamby.game.presentation.common.format.formatGroshesCompact
@@ -61,7 +62,6 @@ import com.s0dolamby.game.presentation.common.theme.Warning
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.s0dolamby.game.presentation.common.theme.LocalContentColorMuted
-import com.s0dolamby.game.presentation.common.theme.LocalContentColorSecondary
 import com.s0dolamby.game.presentation.common.theme.LocalAccentOnCard
 
 private data class IntroCard(val icon: String, val titleKey: String, val textKey: String)
@@ -91,45 +91,12 @@ fun HomeScreen(
     val dealsTaken by viewModel.dealsTakenCount.collectAsState()
     val nickname by viewModel.nickname.collectAsState()
 
+    // Единый темозависимый фон (HOME_01 / HOME_01_LIGHT + оверлей из палитры)
+    // — как у всех остальных экранов, никаких локальных градиентов.
+    com.s0dolamby.game.presentation.common.components.ScreenBackground(
+        com.s0dolamby.game.presentation.common.components.AppBg.HOME
+    ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        // ── фон + оверлей + искры ──────────────────────────────────────────
-        androidx.compose.foundation.Image(
-            painter = painterResource(id = R.drawable.home_bg),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
-        // Темо-зависимый оверлей. Для WARM_FAIRY вместо фиолетовой ночи
-        // — тёплая ярмарочная карамель.
-        val themeMode = com.s0dolamby.game.presentation.common.theme.LocalThemeMode.current
-        val overlayBrush = if (themeMode == com.s0dolamby.game.domain.model.ThemeMode.WARM_FAIRY) {
-            Brush.verticalGradient(
-                colorStops = arrayOf(
-                    0f to Color(0xCC2B1A0C),
-                    0.4f to Color(0xB36E4322),
-                    1f to Color(0xE52B1A0C)
-                )
-            )
-        } else {
-            Brush.verticalGradient(
-                colorStops = arrayOf(
-                    0f to Color(0xD9060412),
-                    0.4f to Color(0xBF0A0818),
-                    1f to Color(0xF0060412)
-                )
-            )
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(overlayBrush)
-        )
-        SparklesOverlay(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(320.dp)
-        )
-
         Scaffold(
             containerColor = Color.Transparent
         ) { padding ->
@@ -282,6 +249,7 @@ fun HomeScreen(
         // Ярмарочная сцена на время advance-day — маскирует генерацию новых дел
         com.s0dolamby.game.presentation.common.components.DayTransitionOverlay(visible = isLoading)
     }
+    } // ScreenBackground
 }
 
 // ─── Header (TG-стиль: центральный заголовок + шестерёнка справа) ─────────
@@ -316,7 +284,9 @@ private fun HomeHeader(
             Text(
                 Strings.t("home.subtitle", inner),
                 fontSize = 12.sp,
-                color = LocalContentColorMuted.current
+                // Текст лежит на фоне экрана (тёмный в обеих темах) —
+                // фиксированный светлый, а не карточная локаль.
+                color = Color.White.copy(alpha = 0.75f)
             )
         }
         IconButton(
@@ -363,22 +333,27 @@ private fun IntroCardsRow() {
                     )
                     .padding(14.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(card.icon, fontSize = 16.sp)
+                // Кастомная карточка на palette.cardTop/Bottom-градиенте —
+                // без провайдера LocalAccentOnCard возвращал бы дефолтное
+                // золото, которое сливается с пергаментом тёплой темы.
+                ProvideOnCardColors {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(card.icon, fontSize = 16.sp)
+                        Text(
+                            Strings.t(card.titleKey),
+                            color = LocalAccentOnCard.current,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Spacer(Modifier.height(4.dp))
                     Text(
-                        Strings.t(card.titleKey),
-                        color = LocalAccentOnCard.current,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold
+                        Strings.t(card.textKey),
+                        color = palette.onCardSecondary,
+                        fontSize = 11.sp,
+                        lineHeight = 15.sp
                     )
                 }
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    Strings.t(card.textKey),
-                    color = palette.onCardSecondary,
-                    fontSize = 11.sp,
-                    lineHeight = 15.sp
-                )
             }
         }
     }
@@ -869,7 +844,9 @@ private fun AdvanceDayButton(isLoading: Boolean, onClick: () -> Unit) {
                     Text(
                         Strings.t("loading.$idx"),
                         fontSize = 13.sp,
-                        color = LocalAccentOnCard.current.copy(alpha = 0.75f)
+                        // Кнопка всегда на фиксированном тёмном градиенте —
+                        // фиксированное золото, а не карточная локаль.
+                        color = FairyGold.copy(alpha = 0.75f)
                     )
                 }
             } else {
@@ -923,13 +900,15 @@ private fun UpdateCardDeck(
             onSwipeRight = { onOpenProject(current) }
         )
 
+        // Оверлей лежит на фиксированном тёмном скриме в обеих темах —
+        // фиксированные светлые цвета, не карточные локали.
         Text(
             "📜 Вести дня ${1} / ${remaining}",
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(top = 48.dp),
             style = MaterialTheme.typography.labelMedium,
-            color = LocalAccentOnCard.current
+            color = FairyGold
         )
 
         Row(
@@ -940,8 +919,8 @@ private fun UpdateCardDeck(
                 .padding(horizontal = 40.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("← пропустить", color = LocalContentColorMuted.current, fontSize = 10.sp)
-            Text("к делу →", color = LocalAccentOnCard.current.copy(alpha = 0.7f), fontSize = 10.sp)
+            Text("← пропустить", color = Color.White.copy(alpha = 0.75f), fontSize = 10.sp)
+            Text("к делу →", color = FairyGold.copy(alpha = 0.7f), fontSize = 10.sp)
         }
     }
 }
@@ -1014,12 +993,14 @@ private fun SwipeableUpdateCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(update.projectName, color = LocalContentColorSecondary.current, fontSize = 11.sp)
-                Text("День ${update.day}", color = LocalContentColorMuted.current, fontSize = 10.sp)
+                // Карточка на фиксированном тёмном градиенте (не palette.card*) —
+                // фиксированный светлый текст в обеих темах.
+                Text(update.projectName, color = Color.White.copy(alpha = 0.75f), fontSize = 11.sp)
+                Text("День ${update.day}", color = Color.White.copy(alpha = 0.7f), fontSize = 10.sp)
             }
 
-            Text(update.title, color = LocalContentColor.current, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-            Text(update.body, color = LocalContentColorSecondary.current, fontSize = 13.sp)
+            Text(update.title, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            Text(update.body, color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp)
 
             when (update.payoutStatus) {
                 PayoutStatus.DELAYED -> Surface(

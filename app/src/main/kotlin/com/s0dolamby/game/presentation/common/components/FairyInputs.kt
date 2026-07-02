@@ -22,6 +22,8 @@ fun fairyOnCardTextFieldColors(): TextFieldColors {
         cursorColor = palette.accentOnCard,
         focusedLabelColor = palette.accentOnCard,
         unfocusedLabelColor = palette.onCardMuted,
+        focusedPlaceholderColor = palette.onCardMuted,
+        unfocusedPlaceholderColor = palette.onCardMuted,
         focusedContainerColor = palette.onCard.copy(alpha = 0.04f),
         unfocusedContainerColor = palette.onCard.copy(alpha = 0.02f)
     )

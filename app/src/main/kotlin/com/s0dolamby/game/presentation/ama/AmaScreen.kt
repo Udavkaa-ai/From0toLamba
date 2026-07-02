@@ -51,6 +51,7 @@ import com.s0dolamby.game.presentation.common.theme.Warning
 import com.s0dolamby.game.presentation.common.theme.Error as ErrorColor
 import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
+import com.s0dolamby.game.presentation.common.components.ProvideOnCardColors
 import com.s0dolamby.game.presentation.common.format.formatGroshes
 import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
@@ -178,7 +179,9 @@ fun AmaScreen(
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                CircularProgressIndicator(color = LocalAccentOnCard.current, strokeWidth = 3.dp)
+                // Фон здесь фиксированный тёмный (NightBlue) в обеих темах —
+                // цвета тоже фиксированные светлые, не из карточных локалей.
+                CircularProgressIndicator(color = FairyGold, strokeWidth = 3.dp)
                 Text(
                     Strings.t("ama.loading.title"),
                     color = Color.White.copy(alpha = 0.7f),
@@ -186,7 +189,7 @@ fun AmaScreen(
                 )
                 Text(
                     Strings.t("ama.loading.body"),
-                    color = Color.White.copy(alpha = 0.45f),
+                    color = Color.White.copy(alpha = 0.6f),
                     style = MaterialTheme.typography.labelSmall
                 )
             }
@@ -230,7 +233,7 @@ fun AmaScreen(
                         Text(
                             Strings.t("ama.subtitle", uiState.project?.claimedName ?: "", questionCount, GameConfig.AMA_MAX_QUESTIONS),
                             style = MaterialTheme.typography.labelSmall,
-                            color = LocalAccentOnCard.current.copy(alpha = 0.8f)
+                            color = FairyGold.copy(alpha = 0.8f)
                         )
                     }
                 },
@@ -244,7 +247,7 @@ fun AmaScreen(
                         TextButton(onClick = viewModel::requestInvest) {
                             Text(
                                 if (uiState.minigameUnlocked) Strings.t("ama.btn.invest") else Strings.t("ama.btn.test"),
-                                color = LocalAccentOnCard.current, fontWeight = FontWeight.SemiBold
+                                color = FairyGold, fontWeight = FontWeight.SemiBold
                             )
                         }
                     }
@@ -282,7 +285,7 @@ fun AmaScreen(
                             value = inputText,
                             onValueChange = { inputText = it },
                             modifier = Modifier.weight(1f),
-                            placeholder = { Text(Strings.t("ama.placeholder"), color = Color.White.copy(alpha = 0.4f)) },
+                            placeholder = { Text(Strings.t("ama.placeholder"), color = Color.White.copy(alpha = 0.6f)) },
                             maxLines = 3,
                             enabled = !uiState.isSending && !sessionEnded,
                             shape = RoundedCornerShape(20.dp),
@@ -335,7 +338,7 @@ fun AmaScreen(
                                     CircularProgressIndicator(
                                         modifier = Modifier.size(20.dp),
                                         strokeWidth = 2.dp,
-                                        color = LocalAccentOnCard.current
+                                        color = FairyGold
                                     )
                                 } else {
                                     Icon(
@@ -516,7 +519,9 @@ private fun TemplateChip(question: String, onClick: (String) -> Unit) {
             Text(
                 question.take(36).let { if (question.length > 36) "$it…" else it },
                 style = MaterialTheme.typography.labelSmall,
-                color = LocalAccentOnCard.current.copy(alpha = 0.9f)
+                // Чипы лежат на тёмном скриме экрана в обеих темах —
+                // фиксированное золото, а не карточная локаль.
+                color = FairyGold.copy(alpha = 0.9f)
             )
         },
         border = SuggestionChipDefaults.suggestionChipBorder(
@@ -562,7 +567,8 @@ private fun MessageBubble(message: AmaMessage) {
                     Text(
                         text = message.content,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = NightBlue,
+                        // На золотом фоне — фиксированный тёмный текст.
+                        color = Color(0xFF1A0A00),
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -578,11 +584,15 @@ private fun MessageBubble(message: AmaMessage) {
                         .border(1.dp, palette.cardBorder.copy(alpha = 0.35f), bubbleShape)
                         .padding(horizontal = 14.dp, vertical = 10.dp)
                 ) {
-                    Text(
-                        text = message.content,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = palette.onCard
-                    )
+                    // Фон баббла — карточный (palette.cardTop/Bottom):
+                    // текст через карточные локали.
+                    ProvideOnCardColors {
+                        Text(
+                            text = message.content,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = LocalContentColor.current
+                        )
+                    }
                 }
             }
         }

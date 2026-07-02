@@ -33,11 +33,11 @@ import com.s0dolamby.game.data.achievements.AchievementUnlockStore
 import com.s0dolamby.game.domain.achievements.Achievement
 import com.s0dolamby.game.presentation.common.components.CardCornerOrnaments
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
+import com.s0dolamby.game.presentation.common.components.ProvideOnCardColors
 import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.i18n.localizedDescription
 import com.s0dolamby.game.presentation.common.i18n.localizedTitle
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
-import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.NightBlue
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -104,10 +104,14 @@ fun AchievementUnlockedOverlay(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    // Карточка на palette.cardTop/Mid/Bottom-градиенте — провайдим
+                    // карточные локали, чтобы LoreBlock (и любой текст без явного
+                    // цвета) читались и на пергаменте тёплой темы.
+                    ProvideOnCardColors {
                     Text(
                         Strings.t("ach.unlocked.banner"),
                         style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
-                        color = FairyGold.copy(alpha = 0.7f),
+                        color = palette.accentOnCard.copy(alpha = 0.7f),
                         fontStyle = FontStyle.Italic,
                         letterSpacing = 1.5.sp,
                         textAlign = TextAlign.Center
@@ -116,7 +120,7 @@ fun AchievementUnlockedOverlay(
                     Text(top.emoji, fontSize = 64.sp)
                     Text(
                         top.localizedTitle(),
-                        color = FairyGold,
+                        color = palette.accentOnCard,
                         fontSize = 22.sp,
                         fontWeight = FontWeight.ExtraBold,
                         textAlign = TextAlign.Center
@@ -140,6 +144,7 @@ fun AchievementUnlockedOverlay(
                         fontSize = 11.sp,
                         textAlign = TextAlign.Center
                     )
+                    } // ProvideOnCardColors
                 }
             }
             CardCornerOrnaments(
