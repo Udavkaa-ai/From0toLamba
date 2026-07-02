@@ -12,6 +12,12 @@ import com.s0dolamby.game.domain.repository.ProjectRepository
 import javax.inject.Inject
 import kotlin.random.Random
 
+/**
+ * Все 5 обычных слотов заняты — UI ловит и предлагает купить
+ * дополнительный торговый слот за [InvestUseCase.EXTRA_SLOT_COST_RUBLES].
+ */
+class MaxProjectsReachedException : Exception("MAX_PROJECTS_REACHED")
+
 class InvestUseCase @Inject constructor(
     private val gameStateRepository: GameStateRepository,
     private val projectRepository: ProjectRepository,
@@ -25,9 +31,19 @@ class InvestUseCase @Inject constructor(
          * первого вложения. «Госпожа удача улыбнулась» — игрок не знает наверняка.
          */
         const val PERFECT_GAME_UNICORN_BONUS = 0.05
+
+        /** Цена дополнительного торгового слота (TG: EXTRA_SLOT_COST_GROSHY). */
+        const val EXTRA_SLOT_COST_RUBLES = 1000.0
+
+        /** Сверх обычного лимита можно открыть максимум 5 слотов (TG: MAX_EXTRA_SLOTS). */
+        const val MAX_EXTRA_SLOTS = 5
     }
 
-    suspend operator fun invoke(projectId: String, amountRubles: Double): Result<Unit> = runCatching {
+    suspend operator fun invoke(
+        projectId: String,
+        amountRubles: Double,
+        buyExtraSlot: Boolean = false
+    ): Result<Unit> = runCatching {
         require(amountRubles >= GameConfig.MIN_INVESTMENT_RUBLES) {
             "Минимальный вклад ${GameConfig.MIN_INVESTMENT_RUBLES.toInt()} г"
         }
@@ -41,10 +57,18 @@ class InvestUseCase @Inject constructor(
         val project = projectRepository.getProjectById(projectId)
             ?: error("Дело не найдено")
 
-        if (!project.isActive) {
-            require(state.activeProjects.size < GameConfig.MAX_ACTIVE_PROJECTS) {
-                "Не более ${GameConfig.MAX_ACTIVE_PROJECTS} активных дел"
+        // Порт TG InvestService: при заполненных 5 слотах можно вложиться
+        // сверх лимита, купив дополнительный слот за 1000 г (max +5).
+        var slotCost = 0.0
+        if (!project.isActive && state.activeProjects.size >= GameConfig.MAX_ACTIVE_PROJECTS) {
+            if (!buyExtraSlot) throw MaxProjectsReachedException()
+            require(state.activeProjects.size < GameConfig.MAX_ACTIVE_PROJECTS + MAX_EXTRA_SLOTS) {
+                "Достигнут лимит $MAX_EXTRA_SLOTS дополнительных дел"
             }
+            require(state.balance >= amountRubles + EXTRA_SLOT_COST_RUBLES) {
+                "Недостаточно грошей для слота"
+            }
+            slotCost = EXTRA_SLOT_COST_RUBLES
         }
         require(!project.isWithdrawalLocked) { "Довложение невозможно — деньги заморожены" }
 
@@ -57,7 +81,7 @@ class InvestUseCase @Inject constructor(
             isActive = true
         )
         projectRepository.updateProject(updated)
-        gameStateRepository.updateBalance(state.balance - amountRubles)
+        gameStateRepository.updateBalance(state.balance - amountRubles - slotCost)
         gameStateRepository.recordInvestment(amountRubles)
 
         if (isFirstInvestment) {

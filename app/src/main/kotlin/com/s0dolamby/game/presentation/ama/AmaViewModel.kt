@@ -11,6 +11,7 @@ import com.s0dolamby.game.domain.repository.AmaRepository
 import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.s0dolamby.game.domain.repository.ProjectRepository
 import com.s0dolamby.game.domain.usecase.InvestUseCase
+import com.s0dolamby.game.domain.usecase.MaxProjectsReachedException
 import com.s0dolamby.game.domain.usecase.SendAmaMessageUseCase
 import com.s0dolamby.game.domain.usecase.StartAmaSessionUseCase
 import com.s0dolamby.game.presentation.minigame.common.MinigameOutcome
@@ -44,7 +45,12 @@ data class AmaUiState(
     val minigameUnlocked: Boolean = false,
     val minigamePerfect: Boolean = false,
     /** Куда вести при попытке инвеста, если игра ещё не пройдена. */
-    val pendingMinigameArchetype: PersonaArchetype? = null
+    val pendingMinigameArchetype: PersonaArchetype? = null,
+    /**
+     * Все 5 слотов заняты — предлагаем купить дополнительный за 1000 г.
+     * Значение = сумма отложенного вклада, null = оффер не показан.
+     */
+    val extraSlotOfferAmount: Double? = null
 )
 
 @HiltViewModel
@@ -159,21 +165,39 @@ class AmaViewModel @Inject constructor(
     fun showInvestSheet() = _uiState.update { it.copy(showInvestSheet = true) }
     fun hideInvestSheet() = _uiState.update { it.copy(showInvestSheet = false) }
 
-    fun invest(amountRubles: Double) {
+    fun invest(amountRubles: Double, buyExtraSlot: Boolean = false) {
         viewModelScope.launch {
-            investUseCase(projectId, amountRubles)
+            investUseCase(projectId, amountRubles, buyExtraSlot)
                 .onSuccess {
                     soundEngine.play(com.s0dolamby.game.data.sound.SoundName.INVEST)
                     _uiState.update { it.copy(
                         showInvestSheet = false,
-                        investedAmount = amountRubles
+                        investedAmount = amountRubles,
+                        extraSlotOfferAmount = null
                     ) }
                 }
                 .onFailure { err ->
-                    _uiState.update { it.copy(error = err.toAmaError()) }
+                    if (err is MaxProjectsReachedException) {
+                        // Слоты кончились — вместо ошибки предлагаем купить
+                        // дополнительный (порт TG ExtraSlotModal).
+                        _uiState.update { it.copy(
+                            showInvestSheet = false,
+                            extraSlotOfferAmount = amountRubles
+                        ) }
+                    } else {
+                        _uiState.update { it.copy(error = err.toAmaError()) }
+                    }
                 }
         }
     }
+
+    /** Кнопка «Открыть слот · 1000 г» в оффере дополнительного слота. */
+    fun investWithExtraSlot() {
+        val amount = _uiState.value.extraSlotOfferAmount ?: return
+        invest(amount, buyExtraSlot = true)
+    }
+
+    fun dismissExtraSlotOffer() = _uiState.update { it.copy(extraSlotOfferAmount = null) }
 
     fun clearError() = _uiState.update { it.copy(error = null) }
     fun clearInvestResult() = _uiState.update { it.copy(investedAmount = null) }

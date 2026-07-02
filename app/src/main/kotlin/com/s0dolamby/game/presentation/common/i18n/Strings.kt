@@ -401,6 +401,10 @@ object Strings {
         "daybreak.subtitle" to "Глашатай разносит вести с ярмарки",
         "daytransition.title" to "На ярмарке светает…",
         "daytransition.subtitle" to "Гости съезжаются, купцы товар раскладывают — ищешь, куда вложиться сегодня.",
+        "extraSlot.title" to "Все 5 дел заняты",
+        "extraSlot.body" to "Можно открыть дополнительный торговый слот — он позволит вложиться в это дело сверх обычного лимита. После закрытия дела слот исчезнет.",
+        "extraSlot.buy" to "Открыть слот · 1000 г",
+        "extraSlot.noBalance" to "Недостаточно грошей для слота",
 
         // Онбординг (карточки на главной у нового игрока)
         "intro.howToPlay.title" to "Как играть",
@@ -1017,6 +1021,10 @@ object Strings {
         "daybreak.subtitle" to "The herald spreads news from the fair",
         "daytransition.title" to "Dawn over the fair…",
         "daytransition.subtitle" to "Guests are arriving, merchants laying out their wares — where will you invest today?",
+        "extraSlot.title" to "All 5 slots are taken",
+        "extraSlot.body" to "You can open an extra trading slot — it lets you invest in this venture beyond the usual limit. The slot disappears once the venture closes.",
+        "extraSlot.buy" to "Open slot · 1000 k",
+        "extraSlot.noBalance" to "Not enough kopecks for the slot",
 
         // Onboarding cards on Home for new players
         "intro.howToPlay.title" to "How to play",

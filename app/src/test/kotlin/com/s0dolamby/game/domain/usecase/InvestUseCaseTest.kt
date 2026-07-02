@@ -90,5 +90,42 @@ class InvestUseCaseTest {
 
         val result = useCase("p1", 5.0)
         assertTrue(result.isFailure)
+        assertTrue(result.exceptionOrNull() is MaxProjectsReachedException)
+    }
+
+    @Test
+    fun `buying extra slot charges 1000 groshy on top of investment`() = runTest {
+        val fullState = testGameState.copy(
+            balance = 2000.0,
+            activeProjects = List(5) { testProject.copy(id = "p$it") }
+        )
+        coEvery { gameStateRepo.getGameState() } returns fullState
+        coEvery { projectRepo.getProjectById("p1") } returns testProject
+        coEvery { projectRepo.updateProject(any()) } just Runs
+        coEvery { gameStateRepo.updateBalance(any()) } just Runs
+        coEvery { gameStateRepo.recordInvestment(any()) } just Runs
+        coEvery { gameStateRepo.updateRankIfNeeded() } just Runs
+        coEvery { gameStateRepo.recomputeAchievements() } returns emptyList()
+
+        val result = useCase("p1", 100.0, buyExtraSlot = true)
+
+        assertTrue(result.isSuccess)
+        // 2000 − 100 (вклад) − 1000 (слот) = 900
+        coVerify { gameStateRepo.updateBalance(900.0) }
+        coVerify { gameStateRepo.recordInvestment(100.0) }
+    }
+
+    @Test
+    fun `extra slot rejected when balance cannot cover slot cost`() = runTest {
+        val fullState = testGameState.copy(
+            balance = 500.0,
+            activeProjects = List(5) { testProject.copy(id = "p$it") }
+        )
+        coEvery { gameStateRepo.getGameState() } returns fullState
+        coEvery { projectRepo.getProjectById("p1") } returns testProject
+
+        val result = useCase("p1", 100.0, buyExtraSlot = true)
+        assertTrue(result.isFailure)
+        assertTrue(result.exceptionOrNull()?.message?.contains("слота") == true)
     }
 }

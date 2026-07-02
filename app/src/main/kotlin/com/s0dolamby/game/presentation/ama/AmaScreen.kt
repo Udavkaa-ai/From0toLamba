@@ -399,6 +399,51 @@ fun AmaScreen(
         )
     }
 
+    // Все 5 слотов заняты — оффер дополнительного торгового слота (порт TG
+    // ExtraSlotModal, вариант со Stars вырезан — только за гроши).
+    uiState.extraSlotOfferAmount?.let { pendingAmount ->
+        val slotCost = com.s0dolamby.game.domain.usecase.InvestUseCase.EXTRA_SLOT_COST_RUBLES
+        val canAfford = uiState.freeBalance >= pendingAmount + slotCost
+        AlertDialog(
+            onDismissRequest = viewModel::dismissExtraSlotOffer,
+            icon = { Text("🗃️", fontSize = 40.sp) },
+            title = {
+                Text(
+                    Strings.t("extraSlot.title"),
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(Strings.t("extraSlot.body"))
+                    if (!canAfford) {
+                        Text(
+                            Strings.t("extraSlot.noBalance"),
+                            color = ErrorColor
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = viewModel::investWithExtraSlot,
+                    enabled = canAfford,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = FairyGold,
+                        contentColor = Color(0xFF1A0A00)
+                    )
+                ) { Text(Strings.t("extraSlot.buy"), fontWeight = FontWeight.SemiBold) }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::dismissExtraSlotOffer) {
+                    Text(Strings.t("btn.cancel"))
+                }
+            }
+        )
+    }
+
     // Error snackbar
     uiState.error?.let { error ->
         val msg = when (error) {
