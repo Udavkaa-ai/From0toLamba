@@ -32,6 +32,10 @@ import com.s0dolamby.game.domain.repository.ProjectRepository
 import com.s0dolamby.game.presentation.common.theme.LocalContentColorMuted
 import com.s0dolamby.game.presentation.common.theme.LocalContentColorSecondary
 import com.s0dolamby.game.presentation.common.theme.LocalAccentOnCard
+import androidx.compose.foundation.clickable
+import com.s0dolamby.game.domain.achievements.RevealKind
+import com.s0dolamby.game.domain.achievements.RevealTopic
+import com.s0dolamby.game.presentation.achievements.LoreBlock
 
 data class PersonaEntry(
     val archetype: PersonaArchetype,
@@ -227,9 +231,13 @@ private fun PersonasTab(uiState: RegistryUiState) {
 
 @Composable
 private fun PersonaCard(entry: PersonaEntry) {
+    // Тап раскрывает запись летописи о личине (та же, что в подвигах)
+    var expanded by remember(entry.archetype) { mutableStateOf(false) }
     FairyCard(modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { expanded = !expanded },
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -276,6 +284,12 @@ private fun PersonaCard(entry: PersonaEntry) {
                 }
             }
         }
+        androidx.compose.animation.AnimatedVisibility(visible = expanded) {
+            Column {
+                Spacer(Modifier.height(10.dp))
+                LoreBlock(RevealTopic(RevealKind.ARCHETYPE, entry.archetype.name))
+            }
+        }
     }
 }
 
@@ -313,14 +327,24 @@ private fun ProjectTypeCard(type: ProjectType) {
         ProjectType.GUILD_SCHEME -> Triple("type.guildScheme", "type.GUILD_SCHEME.desc", "risk.high")
         ProjectType.HONEST_TRADE -> Triple("type.honestTrade", "type.HONEST_TRADE.desc", "risk.moderate")
     }
+    // Тап раскрывает запись летописи о породе дела
+    var expanded by remember(type) { mutableStateOf(false) }
     FairyCard(modifier = Modifier.fillMaxWidth()) {
-        Text(Strings.t(titleKey), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = LocalContentColor.current)
-        Text(Strings.t(descKey), style = MaterialTheme.typography.bodyMedium, color = LocalContentColorSecondary.current)
-        Text(
-            Strings.t("registry.types.risk", Strings.t(riskKey)),
-            style = MaterialTheme.typography.labelSmall,
-            color = LocalAccentOnCard.current.copy(alpha = 0.7f)
-        )
+        Column(modifier = Modifier.clickable { expanded = !expanded }) {
+            Text(Strings.t(titleKey), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = LocalContentColor.current)
+            Text(Strings.t(descKey), style = MaterialTheme.typography.bodyMedium, color = LocalContentColorSecondary.current)
+            Text(
+                Strings.t("registry.types.risk", Strings.t(riskKey)),
+                style = MaterialTheme.typography.labelSmall,
+                color = LocalAccentOnCard.current.copy(alpha = 0.7f)
+            )
+        }
+        androidx.compose.animation.AnimatedVisibility(visible = expanded) {
+            Column {
+                Spacer(Modifier.height(10.dp))
+                LoreBlock(RevealTopic(RevealKind.TYPE, type.name))
+            }
+        }
     }
 }
 
