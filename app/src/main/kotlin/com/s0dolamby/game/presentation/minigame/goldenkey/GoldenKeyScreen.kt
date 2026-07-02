@@ -6,7 +6,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -266,16 +268,29 @@ private fun DrawScope.drawKey(key: GoldenKey, sizePx: Float) {
 
 // ─── экран ───────────────────────────────────────────────────────────────────
 
+/** Число несовпавших деталей: 0 = идеал, 1 = победа с помаркой, ≥2 = провал. */
+internal fun mismatchCount(built: GoldenKey, correct: GoldenKey): Int {
+    var errors = 0
+    if (built.bowlShape != correct.bowlShape) errors++
+    if (built.color != correct.color) errors++
+    if (built.teethCount != correct.teethCount) errors++
+    if (built.stemPattern != correct.stemPattern) errors++
+    if (built.hasTassel != correct.hasTassel) errors++
+    return errors
+}
+
 @Composable
 fun GoldenKeyScreen(
     onBack: () -> Unit,
     onComplete: ((MinigameOutcome) -> Unit)? = null
 ) {
     var seed by remember { mutableStateOf(System.currentTimeMillis().toString()) }
-    val (correct, options) = remember(seed) { buildRound(seed) }
+    val correct = remember(seed) { randomKey(SeedRng(seed)) }
 
     var stage by remember(seed) { mutableStateOf(MinigameStage.MEMORIZE) }
-    var pickedIndex by remember(seed) { mutableStateOf(-1) }
+    // Стартовая заготовка конструктора — случайная, чтобы нельзя было
+    // просто нажать «Отлить», ничего не вспоминая.
+    var built by remember(seed) { mutableStateOf(randomKey(SeedRng("$seed-blank"))) }
     var memorizeLeft by remember(seed) { mutableStateOf(MEMORIZE_SECONDS) }
     var chooseLeft by remember(seed) { mutableStateOf(CHOOSE_SECONDS) }
     var timedOut by remember(seed) { mutableStateOf(false) }
@@ -297,14 +312,13 @@ fun GoldenKeyScreen(
         }
     }
 
+    // Ошибки = сколько деталей собрано не так. Раньше «не тот ключ из 9»
+    // давал errorCount=1 → isWin → тип дела раскрывался даже за промах.
     val outcome: MinigameOutcome? = if (stage == MinigameStage.RESULT) {
-        val picked = options.getOrNull(pickedIndex)
-        val errors = when {
-            timedOut -> 2
-            picked == correct -> 0
-            else -> 1
-        }
-        MinigameOutcome(errorCount = errors, timeoutReached = timedOut)
+        MinigameOutcome(
+            errorCount = mismatchCount(built, correct),
+            timeoutReached = timedOut
+        )
     } else null
 
     val secondsLeft = when (stage) {
@@ -317,7 +331,6 @@ fun GoldenKeyScreen(
         seed = System.currentTimeMillis().toString()
         memorizeLeft = MEMORIZE_SECONDS
         chooseLeft = CHOOSE_SECONDS
-        pickedIndex = -1
         timedOut = false
         stage = MinigameStage.MEMORIZE
     }
@@ -338,11 +351,12 @@ fun GoldenKeyScreen(
                 key = correct,
                 onReady = { stage = MinigameStage.PLAY }
             )
-            MinigameStage.PLAY -> ChooseStage(options) { idx ->
-                pickedIndex = idx
-                stage = MinigameStage.RESULT
-            }
-            MinigameStage.RESULT -> ResultPreview(correct, options.getOrNull(pickedIndex))
+            MinigameStage.PLAY -> AssembleStage(
+                built = built,
+                onChange = { built = it },
+                onCast = { stage = MinigameStage.RESULT }
+            )
+            MinigameStage.RESULT -> ResultPreview(correct, built)
         }
     }
 }
@@ -406,62 +420,254 @@ private fun MemorizeStage(key: GoldenKey, onReady: () -> Unit) {
     }
 }
 
+// ─── конструктор ключа ────────────────────────────────────────────────────
+
+/**
+ * Сборка ключа «как в мастерской»: пять рядов деталей (головка, металл,
+ * бороздки, узор, кисточка), сверху — живое превью собираемого ключа.
+ */
 @Composable
-private fun ChooseStage(options: List<GoldenKey>, onPick: (Int) -> Unit) {
-    val infinite = rememberInfiniteTransition(label = "key-swing")
-    val swingPhase by infinite.animateFloat(
-        initialValue = 0f, targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(3200, easing = LinearEasing)),
-        label = "swingPhase"
-    )
-    Text(
-        Strings.t("minigame.goldenKey.pick", options.size),
-        color = Color.White.copy(alpha = 0.85f), fontSize = 14.sp
-    )
-    Spacer(Modifier.height(10.dp))
-    val cols = 3
-    val cellSize = 100.dp
-    val gap = 8.dp
-    Column(verticalArrangement = Arrangement.spacedBy(gap)) {
-        options.chunked(cols).forEachIndexed { rowIdx, rowKeys ->
-            Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
-                rowKeys.forEachIndexed { colIdx, key ->
-                    val idx = rowIdx * cols + colIdx
-                    // Каждый ключ покачивается в 3D со своей фазой —
-                    // амплитуда ±30°, ключ всегда читаем (не встаёт ребром)
-                    val phase = (swingPhase + idx * 0.13f) % 1f
-                    val rotY = (kotlin.math.sin(phase * 2 * Math.PI) * 30f).toFloat()
-                    KeyCard(
-                        key = key,
-                        highlight = false,
-                        size = cellSize,
-                        rotationYDeg = rotY,
-                        onClick = { onPick(idx) }
+private fun AssembleStage(
+    built: GoldenKey,
+    onChange: (GoldenKey) -> Unit,
+    onCast: () -> Unit
+) {
+    val scroll = rememberScrollState()
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(scroll),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            Strings.t("minigame.goldenKey.assemble"),
+            color = Color.White.copy(alpha = 0.85f), fontSize = 14.sp
+        )
+        Spacer(Modifier.height(8.dp))
+
+        // Живое превью собираемого ключа
+        Box(
+            modifier = Modifier
+                .size(width = 150.dp, height = 130.dp)
+                .clip(RoundedCornerShape(18.dp))
+                .background(
+                    Brush.verticalGradient(
+                        listOf(EnchantedPurple.copy(alpha = 0.85f), NightBlue.copy(alpha = 0.95f))
                     )
+                )
+                .border(1.dp, FairyGold.copy(alpha = 0.4f), RoundedCornerShape(18.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                drawKey(built, sizePx = this.size.minDimension * 0.8f)
+            }
+        }
+        Spacer(Modifier.height(10.dp))
+
+        PartRow(Strings.t("minigame.goldenKey.part.bowl"), SHAPES, built.bowlShape,
+            onPick = { onChange(built.copy(bowlShape = it)) }) { shape, color ->
+            drawBowlIcon(shape, color)
+        }
+        PartRow(Strings.t("minigame.goldenKey.part.metal"), COLORS, built.color,
+            onPick = { onChange(built.copy(color = it)) }) { metal, _ ->
+            drawMetalIcon(metal)
+        }
+        PartRow(Strings.t("minigame.goldenKey.part.teeth"), TEETH, built.teethCount,
+            onPick = { onChange(built.copy(teethCount = it)) }) { count, color ->
+            drawTeethIcon(count, color)
+        }
+        PartRow(Strings.t("minigame.goldenKey.part.pattern"), PATTERNS, built.stemPattern,
+            onPick = { onChange(built.copy(stemPattern = it)) }) { pattern, color ->
+            drawPatternIcon(pattern, color)
+        }
+        PartRow(Strings.t("minigame.goldenKey.part.tassel"), listOf(true, false), built.hasTassel,
+            onPick = { onChange(built.copy(hasTassel = it)) }) { tassel, color ->
+            drawTasselIcon(tassel, color)
+        }
+
+        Spacer(Modifier.height(12.dp))
+        Button(
+            onClick = onCast,
+            colors = ButtonDefaults.buttonColors(containerColor = FairyGold, contentColor = NightBlue)
+        ) {
+            Text(Strings.t("minigame.goldenKey.cast"), fontWeight = FontWeight.SemiBold)
+        }
+        Spacer(Modifier.height(8.dp))
+    }
+}
+
+/** Ряд выбора одной детали: подпись + чипы с мини-рисунком варианта. */
+@Composable
+private fun <T> PartRow(
+    label: String,
+    options: List<T>,
+    selected: T,
+    onPick: (T) -> Unit,
+    iconFor: DrawScope.(T, Color) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 3.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            label,
+            color = Color.White.copy(alpha = 0.7f),
+            fontSize = 12.sp,
+            modifier = Modifier.width(84.dp)
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            options.forEach { option ->
+                val isSelected = option == selected
+                Box(
+                    modifier = Modifier
+                        .size(46.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(
+                            if (isSelected) FairyGold.copy(alpha = 0.22f)
+                            else Color.White.copy(alpha = 0.06f)
+                        )
+                        .border(
+                            if (isSelected) 2.dp else 1.dp,
+                            if (isSelected) FairyGold else Color.White.copy(alpha = 0.2f),
+                            RoundedCornerShape(10.dp)
+                        )
+                        .clickable { onPick(option) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        iconFor(option, if (isSelected) FairyGold else Color.White.copy(alpha = 0.75f))
+                    }
                 }
             }
         }
     }
 }
 
+// ─── мини-иконки деталей ────────────────────────────────────────────────────
+
+private fun DrawScope.drawBowlIcon(shape: BowlShape, color: Color) {
+    val c = Offset(size.width / 2f, size.height / 2f)
+    val r = size.minDimension * 0.28f
+    val stroke = Stroke(width = size.minDimension * 0.07f)
+    when (shape) {
+        BowlShape.ROUND -> drawCircle(color, radius = r, center = c, style = stroke)
+        BowlShape.SQUARE -> drawRect(color,
+            topLeft = Offset(c.x - r, c.y - r), size = Size(r * 2, r * 2), style = stroke)
+        BowlShape.OVAL -> drawOval(color,
+            topLeft = Offset(c.x - r * 1.25f, c.y - r * 0.75f),
+            size = Size(r * 2.5f, r * 1.5f), style = stroke)
+    }
+}
+
+private fun DrawScope.drawMetalIcon(metal: KeyColor) {
+    val c = Offset(size.width / 2f, size.height / 2f)
+    drawCircle(
+        Brush.radialGradient(
+            colors = listOf(metal.light, metal.dark),
+            center = Offset(c.x - size.minDimension * 0.1f, c.y - size.minDimension * 0.1f),
+            radius = size.minDimension * 0.45f
+        ),
+        radius = size.minDimension * 0.3f,
+        center = c
+    )
+}
+
+private fun DrawScope.drawTeethIcon(count: Int, color: Color) {
+    val startX = size.width * 0.3f
+    val w = size.width * 0.4f
+    val gap = size.height * 0.16f
+    val firstY = size.height / 2f - gap * (count - 1) / 2f
+    for (i in 0 until count) {
+        drawLine(color,
+            start = Offset(startX, firstY + i * gap),
+            end = Offset(startX + w, firstY + i * gap),
+            strokeWidth = size.minDimension * 0.07f)
+    }
+}
+
+private fun DrawScope.drawPatternIcon(pattern: StemPattern, color: Color) {
+    val cx = size.width / 2f
+    val top = size.height * 0.22f
+    val bottom = size.height * 0.78f
+    // стержень
+    drawLine(color.copy(alpha = 0.5f), Offset(cx, top), Offset(cx, bottom),
+        strokeWidth = size.minDimension * 0.16f)
+    when (pattern) {
+        StemPattern.SMOOTH -> Unit
+        StemPattern.DOTTED -> for (i in 0..2) {
+            val y = top + (bottom - top) * (i + 0.5f) / 3f
+            drawCircle(color, radius = size.minDimension * 0.05f, center = Offset(cx, y))
+        }
+        StemPattern.STRIPED -> for (i in 1..3) {
+            val y = top + (bottom - top) * i / 4f
+            drawLine(color,
+                start = Offset(cx - size.width * 0.14f, y),
+                end = Offset(cx + size.width * 0.14f, y),
+                strokeWidth = size.minDimension * 0.05f)
+        }
+    }
+}
+
+private fun DrawScope.drawTasselIcon(hasTassel: Boolean, color: Color) {
+    val cx = size.width / 2f
+    if (!hasTassel) {
+        // «без кисточки» — перечёркнутый кружок
+        val r = size.minDimension * 0.22f
+        val c = Offset(cx, size.height / 2f)
+        drawCircle(color.copy(alpha = 0.55f), radius = r, center = c,
+            style = Stroke(width = size.minDimension * 0.055f))
+        drawLine(color.copy(alpha = 0.55f),
+            start = Offset(c.x - r * 0.7f, c.y - r * 0.7f),
+            end = Offset(c.x + r * 0.7f, c.y + r * 0.7f),
+            strokeWidth = size.minDimension * 0.055f)
+        return
+    }
+    val topY = size.height * 0.2f
+    val knotY = size.height * 0.45f
+    drawLine(color, Offset(cx, topY), Offset(cx, knotY), strokeWidth = size.minDimension * 0.06f)
+    drawOval(Color(0xFF7B1818),
+        topLeft = Offset(cx - size.width * 0.12f, knotY - size.height * 0.04f),
+        size = Size(size.width * 0.24f, size.height * 0.1f))
+    for (i in 0..3) {
+        val sx = cx - size.width * 0.09f + size.width * 0.06f * i
+        drawLine(Color(0xFFCC1F1F),
+            start = Offset(sx, knotY + size.height * 0.06f),
+            end = Offset(sx + size.width * 0.015f, size.height * 0.8f),
+            strokeWidth = size.minDimension * 0.05f)
+    }
+}
+
 @Composable
 private fun ResultPreview(correct: GoldenKey, picked: GoldenKey?) {
-    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(Strings.t("minigame.goldenKey.etalon"), color = FairyGold, fontSize = 11.sp)
-            Spacer(Modifier.height(4.dp))
-            KeyCard(key = correct, highlight = true, size = 110.dp)
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(Strings.t("minigame.goldenKey.etalon"), color = FairyGold, fontSize = 11.sp)
+                Spacer(Modifier.height(4.dp))
+                KeyCard(key = correct, highlight = true, size = 110.dp)
+            }
+            if (picked != null) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        Strings.t("minigame.goldenKey.yourChoice"),
+                        color = if (picked == correct) FairyGold else Color(0xFFFF8A65),
+                        fontSize = 11.sp
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    KeyCard(key = picked, highlight = picked == correct, size = 110.dp)
+                }
+            }
         }
         if (picked != null) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    Strings.t("minigame.goldenKey.yourChoice"),
-                    color = if (picked == correct) FairyGold else Color(0xFFFF8A65),
-                    fontSize = 11.sp
-                )
-                Spacer(Modifier.height(4.dp))
-                KeyCard(key = picked, highlight = picked == correct, size = 110.dp)
-            }
+            Spacer(Modifier.height(8.dp))
+            val matched = 5 - mismatchCount(picked, correct)
+            Text(
+                Strings.t("minigame.goldenKey.match", matched),
+                color = Color.White.copy(alpha = 0.8f),
+                fontSize = 12.sp
+            )
         }
     }
 }
@@ -502,5 +708,6 @@ private fun KeyCard(
 }
 
 private const val MEMORIZE_SECONDS = 15
-private const val CHOOSE_SECONDS = 20
+// Сборка из пяти деталей дольше, чем тап по готовому ключу
+private const val CHOOSE_SECONDS = 35
 private const val OPTIONS_COUNT = 9

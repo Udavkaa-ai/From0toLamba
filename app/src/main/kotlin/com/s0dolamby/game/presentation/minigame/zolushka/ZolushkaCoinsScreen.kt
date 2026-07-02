@@ -68,10 +68,19 @@ fun ZolushkaCoinsScreen(
     var sequence by remember(seed) { mutableStateOf(master.take(prefixLen(1))) }
     var phase by remember(seed) { mutableStateOf(Phase.SHOWCASE) }
     var litGrain by remember(seed) { mutableStateOf<Grain?>(null) }
+    // Вспышка-отклик на тап игрока: (зерно, правильно ли). Гаснет сама.
+    var tapFlash by remember(seed) { mutableStateOf<Pair<Grain, Boolean>?>(null) }
     var playerInput by remember(seed) { mutableStateOf(emptyList<Grain>()) }
     var errors by remember(seed) { mutableStateOf(0) }
     var stage by remember(seed) { mutableStateOf(MinigameStage.MEMORIZE) }
     var secondsLeft by remember(seed) { mutableStateOf(0) }
+
+    LaunchedEffect(tapFlash) {
+        if (tapFlash != null) {
+            delay(TAP_FLASH_MS)
+            tapFlash = null
+        }
+    }
 
     LaunchedEffect(seed, round, phase) {
         if (phase == Phase.SHOWCASE) {
@@ -111,6 +120,8 @@ fun ZolushkaCoinsScreen(
         val expected = sequence.getOrNull(playerInput.size) ?: return
         val newInput = playerInput + grain
         playerInput = newInput
+        // Отклик на каждый тап — золотая вспышка / красная тряска
+        tapFlash = grain to (grain == expected)
         if (grain != expected) errors += 1
         if (newInput.size == sequence.size) {
             if (round >= TOTAL_ROUNDS) {
@@ -131,6 +142,7 @@ fun ZolushkaCoinsScreen(
         playerInput = emptyList()
         errors = 0
         litGrain = null
+        tapFlash = null
         stage = MinigameStage.MEMORIZE
     }
 
@@ -149,7 +161,12 @@ fun ZolushkaCoinsScreen(
             RoundCounter(round = round, total = TOTAL_ROUNDS, sequenceSize = sequence.size,
                 input = playerInput.size, phase = phase)
             Spacer(Modifier.height(16.dp))
-            GrainGrid(litGrain = litGrain, enabled = phase == Phase.INPUT, onTap = ::handleTap)
+            GrainGrid(
+                litGrain = litGrain,
+                tapFlash = tapFlash,
+                enabled = phase == Phase.INPUT,
+                onTap = ::handleTap
+            )
             Spacer(Modifier.height(10.dp))
             ProgressBar(
                 color = ArchetypePalette[PersonaArchetype.ZOLUSHKA].primary,
@@ -192,7 +209,12 @@ private fun RoundCounter(round: Int, total: Int, sequenceSize: Int, input: Int, 
 }
 
 @Composable
-private fun ColumnScope.GrainGrid(litGrain: Grain?, enabled: Boolean, onTap: (Grain) -> Unit) {
+private fun ColumnScope.GrainGrid(
+    litGrain: Grain?,
+    tapFlash: Pair<Grain, Boolean>?,
+    enabled: Boolean,
+    onTap: (Grain) -> Unit
+) {
     val infinite = rememberInfiniteTransition(label = "grain-glow")
     val glow by infinite.animateFloat(
         initialValue = 0.7f, targetValue = 1.0f,
@@ -224,11 +246,15 @@ private fun ColumnScope.GrainGrid(litGrain: Grain?, enabled: Boolean, onTap: (Gr
             Box(Modifier.weight(1f).fillMaxHeight()) {
                 GrainTile(Grain.WHEAT, lit = litGrain == Grain.WHEAT, enabled = enabled,
                     glow = if (litGrain == Grain.WHEAT) glow else 0f,
+                    flashGood = tapFlash?.first == Grain.WHEAT && tapFlash.second,
+                    flashBad = tapFlash?.first == Grain.WHEAT && !tapFlash.second,
                     idleBreath = idleBreath, onTap = onTap)
             }
             Box(Modifier.weight(1f).fillMaxHeight()) {
                 GrainTile(Grain.LENTIL, lit = litGrain == Grain.LENTIL, enabled = enabled,
                     glow = if (litGrain == Grain.LENTIL) glow else 0f,
+                    flashGood = tapFlash?.first == Grain.LENTIL && tapFlash.second,
+                    flashBad = tapFlash?.first == Grain.LENTIL && !tapFlash.second,
                     idleBreath = idleBreath, onTap = onTap)
             }
         }
@@ -239,11 +265,15 @@ private fun ColumnScope.GrainGrid(litGrain: Grain?, enabled: Boolean, onTap: (Gr
             Box(Modifier.weight(1f).fillMaxHeight()) {
                 GrainTile(Grain.ACORN, lit = litGrain == Grain.ACORN, enabled = enabled,
                     glow = if (litGrain == Grain.ACORN) glow else 0f,
+                    flashGood = tapFlash?.first == Grain.ACORN && tapFlash.second,
+                    flashBad = tapFlash?.first == Grain.ACORN && !tapFlash.second,
                     idleBreath = idleBreath, onTap = onTap)
             }
             Box(Modifier.weight(1f).fillMaxHeight()) {
                 GrainTile(Grain.POMEGRANATE, lit = litGrain == Grain.POMEGRANATE, enabled = enabled,
                     glow = if (litGrain == Grain.POMEGRANATE) glow else 0f,
+                    flashGood = tapFlash?.first == Grain.POMEGRANATE && tapFlash.second,
+                    flashBad = tapFlash?.first == Grain.POMEGRANATE && !tapFlash.second,
                     idleBreath = idleBreath, onTap = onTap)
             }
         }
@@ -256,15 +286,31 @@ private fun GrainTile(
     lit: Boolean,
     enabled: Boolean,
     glow: Float,
+    /** Отклик на тап игрока: верное зерно — золотая вспышка… */
+    flashGood: Boolean = false,
+    /** …ошибка — красная вспышка с тряской. */
+    flashBad: Boolean = false,
     idleBreath: Float,
     onTap: (Grain) -> Unit
 ) {
+    val active = lit || flashGood || flashBad
     val tap = remember { Animatable(1f) }
-    LaunchedEffect(lit) {
-        if (lit) {
+    LaunchedEffect(lit, flashGood) {
+        if (lit || flashGood) {
             tap.snapTo(0.90f)
             tap.animateTo(1.06f, spring(dampingRatio = Spring.DampingRatioMediumBouncy))
             tap.animateTo(1f, tween(180))
+        }
+    }
+    // Тряска при ошибке — резкие рывки по горизонтали
+    val shakeX = remember { Animatable(0f) }
+    LaunchedEffect(flashBad) {
+        if (flashBad) {
+            repeat(3) {
+                shakeX.animateTo(14f, tween(40))
+                shakeX.animateTo(-14f, tween(40))
+            }
+            shakeX.animateTo(0f, tween(50))
         }
     }
     // Покачивание зажжённой клетки + дыхание в покое
@@ -276,25 +322,34 @@ private fun GrainTile(
         ),
         label = "wiggle"
     )
-    val scale = tap.value * (if (lit) 1.04f else idleBreath)
-    val alpha = if (lit) 1f else 0.7f
+    val scale = tap.value * (if (active) 1.04f else idleBreath)
+    val alpha = if (active) 1f else 0.7f
+
+    val bgColors = when {
+        flashBad -> listOf(Color(0xFFFFCDD2), Color(0xFF7B1212))
+        active -> listOf(Color(0xFFFFE0E6), grain.seedColor)
+        else -> listOf(Color(0xFF3A1F2A), Color(0xFF1A0F18))
+    }
+    val borderColor = when {
+        flashBad -> Color(0xFFFF5252)
+        active -> grain.glowColor
+        else -> Color.White.copy(alpha = 0.15f)
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .scale(scale)
-            .graphicsLayer { rotationZ = if (lit) wiggle else 0f }
-            .shadow(if (lit) 18.dp else 4.dp, RoundedCornerShape(28.dp))
+            .graphicsLayer {
+                rotationZ = if (active) wiggle else 0f
+                translationX = shakeX.value
+            }
+            .shadow(if (active) 18.dp else 4.dp, RoundedCornerShape(28.dp))
             .clip(RoundedCornerShape(28.dp))
-            .background(
-                Brush.radialGradient(
-                    colors = if (lit) listOf(Color(0xFFFFE0E6), grain.seedColor)
-                    else listOf(Color(0xFF3A1F2A), Color(0xFF1A0F18))
-                )
-            )
+            .background(Brush.radialGradient(colors = bgColors))
             .border(
-                width = if (lit) 3.dp else 1.dp,
-                color = if (lit) grain.glowColor else Color.White.copy(alpha = 0.15f),
+                width = if (active) 3.dp else 1.dp,
+                color = borderColor,
                 shape = RoundedCornerShape(28.dp)
             )
             .let { if (enabled) it.clickable { onTap(grain) } else it },
@@ -303,21 +358,33 @@ private fun GrainTile(
         Canvas(modifier = Modifier.fillMaxSize()) {
             val sz = this.size.minDimension
             val center = Offset(this.size.width / 2f, this.size.height / 2f)
-            if (lit) {
+            if (lit || flashGood) {
                 drawSparkleHalo(
                     center = center,
                     radius = sz * 0.42f,
                     count = 6,
                     sparkleSize = 9f,
                     color = grain.glowColor,
-                    intensity = glow
+                    intensity = if (flashGood) 1f else glow
                 )
             }
-            drawGrainEmblem(grain, center, sz * 0.52f, lit, alpha)
+            if (flashBad) {
+                // Красный «крест» ошибки поверх зерна
+                val r = sz * 0.3f
+                drawLine(Color(0xFFFF5252).copy(alpha = 0.85f),
+                    start = Offset(center.x - r, center.y - r),
+                    end = Offset(center.x + r, center.y + r),
+                    strokeWidth = sz * 0.05f)
+                drawLine(Color(0xFFFF5252).copy(alpha = 0.85f),
+                    start = Offset(center.x + r, center.y - r),
+                    end = Offset(center.x - r, center.y + r),
+                    strokeWidth = sz * 0.05f)
+            }
+            drawGrainEmblem(grain, center, sz * 0.52f, active, alpha)
         }
         Text(
             Strings.t("minigame.coins.${grain.name}"),
-            color = if (lit) Color(0xFF2A0F1A) else Color.White.copy(alpha = 0.6f),
+            color = if (active) Color(0xFF2A0F1A) else Color.White.copy(alpha = 0.6f),
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(bottom = 10.dp).align(Alignment.BottomCenter)
@@ -464,4 +531,5 @@ private const val SEQUENCE_LEN_STEP = 2
 private const val MASTER_LENGTH = SEQUENCE_LEN_BASE + (TOTAL_ROUNDS - 1) * SEQUENCE_LEN_STEP  // 7
 private const val SHOWCASE_LIT_MS = 600L
 private const val SHOWCASE_GAP_MS = 250L
+private const val TAP_FLASH_MS = 320L
 private const val INPUT_SECONDS = 14
