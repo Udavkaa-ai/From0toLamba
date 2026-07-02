@@ -49,6 +49,8 @@ import com.s0dolamby.game.domain.model.GameState
 import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
+import com.s0dolamby.game.presentation.common.components.ProvideOnCardColors
+import com.s0dolamby.game.presentation.common.components.AppBg
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
 import com.s0dolamby.game.presentation.common.format.formatGroshes
 import com.s0dolamby.game.presentation.common.format.formatGroshesSigned
@@ -62,6 +64,7 @@ import com.s0dolamby.game.presentation.common.theme.Warning
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import javax.inject.Inject
+import com.s0dolamby.game.presentation.common.theme.LocalAppPalette
 import com.s0dolamby.game.presentation.common.theme.LocalContentColorMuted
 import com.s0dolamby.game.presentation.common.theme.LocalContentColorSecondary
 import com.s0dolamby.game.presentation.common.theme.LocalAccentOnCard
@@ -89,7 +92,7 @@ fun StatsScreen(
     val state by viewModel.gameState.collectAsState()
     val closed by viewModel.closedProjects.collectAsState()
 
-    ScreenBackground(R.drawable.stats_bg) {
+    ScreenBackground(AppBg.STATS) {
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
@@ -99,16 +102,18 @@ fun StatsScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
+                        // TopAppBar лежит на тёмном фоне экрана в обеих темах —
+                        // фиксированное золото, не карточная локаль.
+                        Text("✦", color = FairyGold, fontSize = 12.sp)
                         Text(Strings.t("stats.title"), fontWeight = FontWeight.Bold)
-                        Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
+                        Text("✦", color = FairyGold, fontSize = 12.sp)
                     }
                 },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, Strings.t("btn.back")) } },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 actions = {
                     TextButton(onClick = onRegistryClick) {
-                        Text(Strings.t("stats.letopis.action"), color = LocalAccentOnCard.current)
+                        Text(Strings.t("stats.letopis.action"), color = FairyGold)
                     }
                 }
             )
@@ -185,11 +190,11 @@ private fun HallOfFameCard(state: GameState?, closed: List<com.s0dolamby.game.do
             bestTie?.takeIf { it.value > 0 }?.let { entry ->
                 val (arch, level) = entry
                 HallRow("🤝", Strings.t("stats.hof.closeFriend"), "$level / 10",
-                    archetypeName(arch), FairyGold)
+                    archetypeName(arch), LocalAccentOnCard.current)
             }
             if (streak > 0) {
                 HallRow("🔥", Strings.t("stats.hof.streak"), Strings.t("stats.streak.daysShort", streak),
-                    Strings.t("stats.streak.body"), FairyGold)
+                    Strings.t("stats.streak.body"), LocalAccentOnCard.current)
             }
         }
     }
@@ -252,7 +257,7 @@ private fun AchievementsCard(unlocked: Set<String>) {
                 progress = { if (totalAll == 0) 0f else totalUnlocked.toFloat() / totalAll },
                 modifier = Modifier.width(90.dp).height(6.dp),
                 color = LocalAccentOnCard.current,
-                trackColor = Color.White.copy(alpha = 0.1f)
+                trackColor = LocalContentColor.current.copy(alpha = 0.1f)
             )
         }
         Spacer(Modifier.height(6.dp))
@@ -282,7 +287,7 @@ private fun AchievementsCard(unlocked: Set<String>) {
                 Text(
                     "$catUnlocked / ${items.size}",
                     style = MaterialTheme.typography.labelMedium,
-                    color = if (catUnlocked == items.size && items.isNotEmpty()) Success else FairyGold.copy(alpha = 0.7f),
+                    color = if (catUnlocked == items.size && items.isNotEmpty()) Success else LocalAccentOnCard.current.copy(alpha = 0.7f),
                     fontWeight = FontWeight.SemiBold
                 )
             }
@@ -309,7 +314,7 @@ private fun AchievementsCard(unlocked: Set<String>) {
                                 Text(
                                     ach.localizedTitle(),
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = if (isUnlocked) Color.White else Color.White.copy(alpha = 0.5f),
+                                    color = if (isUnlocked) LocalContentColor.current else LocalContentColorMuted.current,
                                     fontWeight = if (isUnlocked) FontWeight.SemiBold else FontWeight.Normal
                                 )
                                 Text(
@@ -349,8 +354,16 @@ private fun AchievementDetailDialog(
     isUnlocked: Boolean,
     onDismiss: () -> Unit
 ) {
+    // Карточный (пергаментный в тёплой теме) фон + on-card локали, иначе
+    // LoreBlock внутри дефолтного тёмного диалога в тёплой теме давал
+    // тёмную сепию на тёмном.
+    val palette = LocalAppPalette.current
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = palette.cardMid,
+        iconContentColor = palette.onCard,
+        titleContentColor = palette.onCard,
+        textContentColor = palette.onCard,
         icon = { Text(if (isUnlocked) achievement.emoji else "🔒", fontSize = 44.sp) },
         title = {
             Text(
@@ -361,37 +374,39 @@ private fun AchievementDetailDialog(
             )
         },
         text = {
-            Column(
-                modifier = Modifier.verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                if (isUnlocked) {
+            ProvideOnCardColors {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    if (isUnlocked) {
+                        Text(
+                            Strings.t("ach.detail.done"),
+                            color = Success,
+                            style = MaterialTheme.typography.labelMedium,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    } else {
+                        Text(
+                            Strings.t("ach.detail.how"),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = LocalContentColorMuted.current
+                        )
+                    }
                     Text(
-                        Strings.t("ach.detail.done"),
-                        color = Success,
-                        style = MaterialTheme.typography.labelMedium,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        achievement.localizedDescription(),
+                        style = MaterialTheme.typography.bodyMedium
                     )
-                } else {
-                    Text(
-                        Strings.t("ach.detail.how"),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = LocalContentColorMuted.current
-                    )
-                }
-                Text(
-                    achievement.localizedDescription(),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                // Летопись раскрывается только после получения подвига
-                if (isUnlocked) {
-                    achievement.revealTopic?.let { LoreBlock(it) }
+                    // Летопись раскрывается только после получения подвига
+                    if (isUnlocked) {
+                        achievement.revealTopic?.let { LoreBlock(it) }
+                    }
                 }
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text(Strings.t("btn.gotIt")) }
+            TextButton(onClick = onDismiss) { Text(Strings.t("btn.gotIt"), color = palette.accentOnCard) }
         }
     )
 }
@@ -509,9 +524,9 @@ private fun RankCard(state: GameState?) {
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
                                 color = when {
-                                    isCurrent -> FairyGold
-                                    isPast    -> Color.White.copy(alpha = 0.45f)
-                                    else      -> Color.White.copy(alpha = 0.75f)
+                                    isCurrent -> LocalAccentOnCard.current
+                                    isPast    -> LocalContentColorMuted.current
+                                    else      -> LocalContentColorSecondary.current
                                 }
                             )
                             Text(
@@ -634,8 +649,11 @@ private fun StackedBarChart(
 ) {
     val totals = freeHistory.zip(investedHistory).map { (f, i) -> f + i }
     val maxTotal = totals.max().coerceAtLeast(1.0)
-    val barColor = FairyGold
+    // График лежит на карточном фоне (пергамент в тёплой теме) —
+    // цвета столбцов и сетки берём из on-card локалей.
+    val barColor = LocalAccentOnCard.current
     val investedColor = Color(0xFF6B4FCB)
+    val gridColor = LocalContentColor.current.copy(alpha = 0.06f)
 
     // Format compact ruble label: 1 234 → "1.2к", 500 → "500"
     fun fmtRub(v: Double): String = when {
@@ -679,7 +697,6 @@ private fun StackedBarChart(
             val barWidth = (w / n * 0.65f)
             val gap = w / n
 
-            val gridColor = Color.White.copy(alpha = 0.06f)
             for (i in 0..2) {
                 val y = padTop + chartH / 2 * i
                 drawLine(gridColor, Offset(0f, y), Offset(w, y), strokeWidth = 1f)
@@ -793,7 +810,7 @@ private fun ScamStats(state: GameState?) {
                     accuracy >= 0.4f -> Warning
                     else -> Error
                 },
-                trackColor = Color.White.copy(alpha = 0.10f)
+                trackColor = LocalContentColor.current.copy(alpha = 0.10f)
             )
         }
 
@@ -837,10 +854,12 @@ private fun LogCard(onShowLog: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // Ряд лежит прямо на тёмном фоне экрана — фиксированный светлый,
+        // alpha не ниже 0.6, иначе не читается.
         Text(
             Strings.t("stats.log.title"),
             style = MaterialTheme.typography.labelSmall,
-            color = LocalContentColor.current.copy(alpha = 0.25f)
+            color = Color.White.copy(alpha = 0.6f)
         )
         TextButton(
             onClick = onShowLog,
@@ -849,7 +868,7 @@ private fun LogCard(onShowLog: () -> Unit) {
             Text(
                 Strings.t("stats.log.view"),
                 style = MaterialTheme.typography.labelSmall,
-                color = LocalContentColor.current.copy(alpha = 0.25f)
+                color = Color.White.copy(alpha = 0.6f)
             )
         }
         TextButton(
@@ -859,7 +878,7 @@ private fun LogCard(onShowLog: () -> Unit) {
             Text(
                 Strings.t("stats.log.share"),
                 style = MaterialTheme.typography.labelSmall,
-                color = LocalContentColor.current.copy(alpha = 0.25f)
+                color = Color.White.copy(alpha = 0.6f)
             )
         }
     }

@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.s0dolamby.game.R
+import com.s0dolamby.game.presentation.common.components.AppBg
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
 import com.s0dolamby.game.presentation.common.theme.FairyGold
@@ -26,7 +27,7 @@ import com.s0dolamby.game.presentation.common.theme.NightBlue
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LeaderboardScreen(onBack: () -> Unit) {
-    ScreenBackground(R.drawable.home_bg) {
+    ScreenBackground(AppBg.LEADERBOARD) {
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
@@ -122,7 +123,7 @@ fun LeaderboardScreen(onBack: () -> Unit) {
                 Spacer(Modifier.height(24.dp))
                 Text(
                     "Свой локальный счёт — на вкладке «Успехи»",
-                    color = Color.White.copy(alpha = 0.5f),
+                    color = Color.White.copy(alpha = 0.75f),
                     fontSize = 12.sp
                 )
             }

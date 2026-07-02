@@ -32,6 +32,7 @@ import com.s0dolamby.game.R
 import com.s0dolamby.game.domain.model.*
 import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
+import com.s0dolamby.game.presentation.common.components.AppBg
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
 import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.Error
@@ -50,7 +51,7 @@ fun NewsScreen(
 ) {
     val updates by viewModel.updates.collectAsState()
 
-    ScreenBackground(R.drawable.news_bg) {
+    ScreenBackground(AppBg.NEWS) {
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
@@ -60,9 +61,11 @@ fun NewsScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
+                        // TopAppBar лежит на тёмном фоне экрана в обеих темах —
+                        // фиксированное золото, не карточная локаль.
+                        Text("✦", color = FairyGold, fontSize = 12.sp)
                         Text(Strings.t("news.title"), fontWeight = FontWeight.Bold)
-                        Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
+                        Text("✦", color = FairyGold, fontSize = 12.sp)
                     }
                 },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, Strings.t("btn.back")) } },
@@ -83,7 +86,7 @@ fun NewsScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Text("✦", color = LocalAccentOnCard.current.copy(alpha = 0.4f), fontSize = 28.sp)
+                            Text("✦", color = LocalAccentOnCard.current.copy(alpha = 0.6f), fontSize = 28.sp)
                             Text(
                                 Strings.t("news.empty.title"),
                                 style = MaterialTheme.typography.titleMedium,
@@ -148,7 +151,7 @@ private fun NewsCard(update: DailyUpdate) {
                 Icon(
                     Icons.Default.ExpandMore,
                     contentDescription = null,
-                    tint = Color.White.copy(alpha = 0.35f),
+                    tint = LocalContentColorMuted.current,
                     modifier = Modifier.size(16.dp).rotate(chevronRotation)
                 )
             }
@@ -251,16 +254,19 @@ private fun NewsCard(update: DailyUpdate) {
 
 @Composable
 private fun SourceBadge(source: NewsSource) {
+    // Бейдж лежит на карточном фоне — нейтральные/золотые цвета берём из
+    // on-card локалей (белый на пергаменте тёплой темы не читается).
     val (bg, fg) = when (source) {
         NewsSource.GUARD_WARNING -> Error.copy(alpha = 0.20f) to Error
-        NewsSource.MYSTERIOUS_TRAVELER -> Color.White.copy(alpha = 0.08f) to Color.White.copy(alpha = 0.7f)
+        NewsSource.MYSTERIOUS_TRAVELER ->
+            LocalContentColor.current.copy(alpha = 0.08f) to LocalContentColorSecondary.current
         NewsSource.ROYAL_DECREE, NewsSource.CHRONICLE ->
-            FairyGold.copy(alpha = 0.15f) to FairyGold
+            LocalAccentOnCard.current.copy(alpha = 0.15f) to LocalAccentOnCard.current
         NewsSource.MERCHANT_NOTICE ->
-            Color.White.copy(alpha = 0.10f) to Color.White.copy(alpha = 0.8f)
+            LocalContentColor.current.copy(alpha = 0.10f) to LocalContentColorSecondary.current
         NewsSource.TAVERN_RUMOR, NewsSource.MARKET_SQUARE ->
             Warning.copy(alpha = 0.15f) to Warning
-        else -> Color.White.copy(alpha = 0.08f) to Color.White.copy(alpha = 0.6f)
+        else -> LocalContentColor.current.copy(alpha = 0.08f) to LocalContentColorMuted.current
     }
     Surface(color = bg, shape = RoundedCornerShape(12.dp)) {
         Text(
@@ -307,8 +313,10 @@ private val AnnouncementType.displayText: String get() = when (this) {
     AnnouncementType.HACK -> "💀 Взлом"
 }
 
-private val AnnouncementType.chipColors: Pair<Color, Color> get() {
-    val gold = FairyGold
+// Чип лежит на карточном фоне — «золото» берём из LocalAccentOnCard,
+// поэтому геттер composable.
+private val AnnouncementType.chipColors: Pair<Color, Color> @Composable get() {
+    val gold = LocalAccentOnCard.current
     return when (this) {
         AnnouncementType.LISTING -> gold.copy(alpha = 0.20f) to gold
         AnnouncementType.VIP_COLLAB -> Color(0xFF9C27B0).copy(alpha = 0.20f) to Color(0xFFCE93D8)

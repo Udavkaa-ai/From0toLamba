@@ -19,6 +19,7 @@ import com.s0dolamby.game.domain.model.PersonaArchetype
 import com.s0dolamby.game.domain.model.ProjectType
 import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.PersonaAvatar
+import com.s0dolamby.game.presentation.common.components.AppBg
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
 import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.FairyGold
@@ -108,7 +109,7 @@ fun PersonaRegistryScreen(
         Strings.t("registry.tab.glossary")
     )
 
-    ScreenBackground(R.drawable.registry_bg) {
+    ScreenBackground(AppBg.REGISTRY) {
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
@@ -118,9 +119,11 @@ fun PersonaRegistryScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
+                        // TopAppBar лежит на тёмном фоне экрана в обеих темах —
+                        // фиксированное золото, не карточная локаль.
+                        Text("✦", color = FairyGold, fontSize = 12.sp)
                         Text(Strings.t("registry.title"), fontWeight = FontWeight.Bold)
-                        Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
+                        Text("✦", color = FairyGold, fontSize = 12.sp)
                     }
                 },
                 navigationIcon = {
@@ -188,7 +191,7 @@ private fun PersonasTab(uiState: RegistryUiState) {
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("✦", color = LocalAccentOnCard.current.copy(alpha = 0.4f), fontSize = 24.sp)
+                        Text("✦", color = LocalAccentOnCard.current.copy(alpha = 0.6f), fontSize = 24.sp)
                         Text(
                             Strings.t("registry.personas.empty.title"),
                             style = MaterialTheme.typography.titleMedium,
@@ -205,10 +208,11 @@ private fun PersonasTab(uiState: RegistryUiState) {
             }
         } else {
             item {
+                // Подпись прямо на тёмном фоне экрана — фиксированное золото.
                 Text(
                     Strings.t("registry.personas.openedCount", uiState.personas.size, uiState.personas.size + uiState.lockedCount),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = LocalAccentOnCard.current.copy(alpha = 0.7f)
+                    color = FairyGold.copy(alpha = 0.7f)
                 )
             }
             items(uiState.personas) { entry ->

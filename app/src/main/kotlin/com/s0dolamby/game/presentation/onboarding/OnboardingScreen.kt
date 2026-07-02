@@ -172,12 +172,14 @@ fun OnboardingScreen(
                             visible = titleVisible,
                             enter = fadeIn(tween(280))
                         ) {
+                            // Заголовок лежит прямо на тёмном фоне экрана —
+                            // фиксированный светлый в обеих темах.
                             Text(
                                 current.title,
                                 style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center,
-                                color = LocalContentColor.current
+                                color = Color.White
                             )
                         }
 

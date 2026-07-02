@@ -19,8 +19,10 @@ import com.s0dolamby.game.BuildConfig
 import com.s0dolamby.game.R
 import com.s0dolamby.game.domain.model.TEXT_MODEL_OPTIONS
 import com.s0dolamby.game.presentation.common.components.FairyCard
+import com.s0dolamby.game.presentation.common.components.fairyOnCardTextFieldColors
 import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
+import com.s0dolamby.game.presentation.common.components.AppBg
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
 import com.s0dolamby.game.presentation.common.theme.Error
 import com.s0dolamby.game.presentation.common.theme.FairyGold
@@ -53,16 +55,18 @@ fun SettingsScreen(
         }
     }
 
-    ScreenBackground(R.drawable.home_bg) {
+    ScreenBackground(AppBg.SETTINGS) {
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
                 TopAppBar(
                     title = {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
+                            // TopAppBar лежит на тёмном фоне экрана в обеих
+                            // темах — фиксированное золото, не карточная локаль.
+                            Text("✦", color = FairyGold, fontSize = 12.sp)
                             Text(Strings.t("settings.title"), fontWeight = FontWeight.Bold)
-                            Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
+                            Text("✦", color = FairyGold, fontSize = 12.sp)
                         }
                     },
                     navigationIcon = {
@@ -74,7 +78,7 @@ fun SettingsScreen(
         ) { padding ->
             if (uiState.isLoading) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = LocalAccentOnCard.current)
+                    CircularProgressIndicator(color = FairyGold)
                 }
                 return@Scaffold
             }
@@ -110,15 +114,7 @@ fun SettingsScreen(
                         singleLine = true,
                         placeholder = { Text(Strings.t("settings.nickname.placeholder")) },
                         modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = FairyGold,
-                            unfocusedBorderColor = FairyGold.copy(alpha = 0.3f),
-                            cursorColor = FairyGold,
-                            focusedTextColor = LocalContentColor.current,
-                            unfocusedTextColor = LocalContentColor.current,
-                            focusedContainerColor = LocalContentColor.current.copy(alpha = 0.05f),
-                            unfocusedContainerColor = LocalContentColor.current.copy(alpha = 0.03f)
-                        )
+                        colors = fairyOnCardTextFieldColors()
                     )
                 }
 
@@ -146,7 +142,7 @@ fun SettingsScreen(
                             Text(
                                 option.label,
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = if (uiState.settings.textModel == option.modelId) FairyGold
+                                color = if (uiState.settings.textModel == option.modelId) LocalAccentOnCard.current
                                         else LocalContentColorSecondary.current,
                                 fontWeight = if (uiState.settings.textModel == option.modelId) FontWeight.SemiBold
                                              else FontWeight.Normal,
@@ -156,7 +152,7 @@ fun SettingsScreen(
                                 selected = uiState.settings.textModel == option.modelId,
                                 onClick = { viewModel.setTextModel(option.modelId) },
                                 colors = RadioButtonDefaults.colors(
-                                    selectedColor = FairyGold,
+                                    selectedColor = LocalAccentOnCard.current,
                                     unselectedColor = LocalContentColorMuted.current
                                 )
                             )

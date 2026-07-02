@@ -22,6 +22,7 @@ import com.s0dolamby.game.R
 import com.s0dolamby.game.presentation.common.components.CoinShowerOverlay
 import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
+import com.s0dolamby.game.presentation.common.components.AppBg
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
 import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
@@ -61,7 +62,7 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
         }
     }
 
-    ScreenBackground(R.drawable.home_bg) {
+    ScreenBackground(AppBg.TAVERN) {
         // Золотой дождь при успешном claim — seed = размер награды, чтобы
         // повторный заход в тот же день не запускал анимацию заново.
         CoinShowerOverlay(seed = ui.claimedTodayReward)
@@ -76,9 +77,11 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
-                            Text(Strings.t("today.title"), fontWeight = FontWeight.Bold, color = LocalContentColor.current)
-                            Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
+                            // TopAppBar лежит на тёмном фоне экрана в обеих
+                            // темах — фиксированные светлые, не карточные локали.
+                            Text("✦", color = FairyGold, fontSize = 12.sp)
+                            Text(Strings.t("today.title"), fontWeight = FontWeight.Bold, color = Color.White)
+                            Text("✦", color = FairyGold, fontSize = 12.sp)
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
@@ -91,9 +94,10 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
+                    // Подпись прямо на тёмном фоне экрана — фиксированный светлый.
                     Text(
                         Strings.t("today.subtitle"),
-                        color = LocalContentColorMuted.current,
+                        color = Color.White.copy(alpha = 0.75f),
                         fontSize = 12.sp,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
@@ -240,7 +244,7 @@ private fun MilestoneCell(day: Int, bonus: Int, passed: Boolean) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 if (passed) "✓" else "$day",
-                color = if (passed) Success else Color.White.copy(alpha = 0.85f),
+                color = if (passed) Success else LocalContentColor.current,
                 fontSize = if (passed) 18.sp else 16.sp,
                 fontWeight = FontWeight.Bold
             )

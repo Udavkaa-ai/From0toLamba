@@ -241,10 +241,11 @@ fun FaqWikiSheet(onDismiss: () -> Unit) {
 
 @Composable
 private fun WikiToc(onSelect: (WikiArticle) -> Unit) {
+    // Шит рисуется на тёмном surface в обеих темах — фиксированный светлый.
     Text(
         Strings.t("wiki.toc.hint"),
         style = MaterialTheme.typography.labelMedium,
-        color = Color.Gray
+        color = Color.White.copy(alpha = 0.7f)
     )
     Spacer(Modifier.height(8.dp))
     WikiArticle.entries.forEach { article ->
@@ -313,7 +314,7 @@ private fun WikiArticleView(article: WikiArticle, onNavigate: (WikiArticle) -> U
     Text(
         Strings.t("wiki.related"),
         style = MaterialTheme.typography.labelSmall,
-        color = Color.Gray
+        color = Color.White.copy(alpha = 0.7f)
     )
     Spacer(Modifier.height(4.dp))
     Row(
