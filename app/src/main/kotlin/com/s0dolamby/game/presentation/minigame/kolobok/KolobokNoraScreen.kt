@@ -32,6 +32,7 @@ import com.s0dolamby.game.presentation.minigame.common.MinigameShell
 import com.s0dolamby.game.presentation.minigame.common.MinigameStage
 import com.s0dolamby.game.presentation.minigame.common.drawSparkle
 import kotlinx.coroutines.delay
+import kotlin.math.sin
 import kotlin.random.Random
 
 // ─── кто выскакивает из норы ────────────────────────────────────────────
@@ -278,12 +279,19 @@ private fun NoraSlot(
             )
         }
 
-        // Гость
+        // Гость — все морды рисуются Canvas'ом (свои спрайты, не эмодзи):
+        // моргают и шевелят ушами, пока торчат из норы
         if (guestScale.value > 0.02f && guest != null) {
+            val faceInfinite = rememberInfiniteTransition(label = "face-live")
+            val facePhase by faceInfinite.animateFloat(
+                initialValue = 0f, targetValue = 1f,
+                animationSpec = infiniteRepeatable(tween(2200, easing = LinearEasing)),
+                label = "facePhase"
+            )
             Box(
                 modifier = Modifier
-                    .fillMaxSize(0.62f)
-                    .offset(y = (-14).dp)
+                    .fillMaxSize(0.82f)
+                    .offset(y = (-16).dp)
                     .graphicsLayer {
                         scaleX = guestScale.value
                         scaleY = guestScale.value
@@ -292,12 +300,14 @@ private fun NoraSlot(
                     },
                 contentAlignment = Alignment.Center
             ) {
-                if (guest == NoraGuest.KOLOBOK) {
-                    Canvas(modifier = Modifier.fillMaxSize()) {
-                        drawKolobok(this.size.width, this.size.height)
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    when (guest) {
+                        NoraGuest.KOLOBOK -> drawKolobok(this.size.width, this.size.height)
+                        NoraGuest.HARE -> drawHareFace(facePhase)
+                        NoraGuest.WOLF -> drawWolfFace(facePhase)
+                        NoraGuest.BEAR -> drawBearFace(facePhase)
+                        NoraGuest.FOX -> drawFoxFace(facePhase)
                     }
-                } else {
-                    Text(guest.emoji, fontSize = 38.sp)
                 }
             }
         }
@@ -325,6 +335,194 @@ private fun NoraSlot(
             }
         }
     }
+}
+
+// ─── Морды зверей (рисованные «спрайты» с морганием и живыми ушами) ────────
+
+/** Глаза открыты почти всегда; на ~12% цикла — моргание. */
+private fun blinkOpen(phase: Float): Boolean = (phase % 1f) > 0.12f
+
+/** Пара глаз: открытые кружки со зрачками или закрытые дуги-чёрточки. */
+private fun DrawScope.drawEyes(
+    cx: Float, cy: Float, dx: Float, r: Float,
+    open: Boolean, iris: Color = Color.White, pupil: Color = Color(0xFF1A1A1A)
+) {
+    for (side in listOf(-1, 1)) {
+        val ex = cx + side * dx
+        if (open) {
+            drawCircle(iris, radius = r, center = Offset(ex, cy))
+            drawCircle(pupil, radius = r * 0.55f, center = Offset(ex, cy + r * 0.1f))
+            drawCircle(Color.White, radius = r * 0.18f, center = Offset(ex - r * 0.25f, cy - r * 0.25f))
+        } else {
+            drawLine(pupil, Offset(ex - r, cy), Offset(ex + r, cy), strokeWidth = r * 0.5f)
+        }
+    }
+}
+
+private fun DrawScope.drawHareFace(phase: Float) {
+    val w = size.width; val h = size.height
+    val cx = w / 2f; val cy = h * 0.62f
+    val r = minOf(w, h) * 0.30f
+    val fur = Color(0xFFBDC7CE)
+    val furDark = Color(0xFF8E9AA3)
+    // Уши — длинные, покачиваются в противофазе
+    val wob = sin(phase * 2 * Math.PI).toFloat() * 6f
+    for (side in listOf(-1, 1)) {
+        val baseX = cx + side * r * 0.45f
+        val tip = Offset(baseX + side * wob, cy - r * 2.3f + side * wob * 0.4f)
+        val ear = Path().apply {
+            moveTo(baseX - r * 0.22f, cy - r * 0.6f)
+            quadraticBezierTo(tip.x - r * 0.2f, tip.y, tip.x, tip.y)
+            quadraticBezierTo(tip.x + r * 0.25f, tip.y + r * 0.4f, baseX + r * 0.25f, cy - r * 0.55f)
+            close()
+        }
+        drawPath(ear, fur)
+        drawOval(Color(0xFFF3C0CC),
+            topLeft = Offset(baseX - r * 0.1f + side * wob * 0.6f, cy - r * 1.9f),
+            size = Size(r * 0.28f, r * 1.1f))
+    }
+    // Голова
+    drawCircle(fur, radius = r, center = Offset(cx, cy))
+    drawCircle(furDark.copy(alpha = 0.25f), radius = r, center = Offset(cx, cy),
+        style = Stroke(width = r * 0.06f))
+    // Щёки
+    drawCircle(Color.White.copy(alpha = 0.8f), radius = r * 0.34f, center = Offset(cx - r * 0.3f, cy + r * 0.35f))
+    drawCircle(Color.White.copy(alpha = 0.8f), radius = r * 0.34f, center = Offset(cx + r * 0.3f, cy + r * 0.35f))
+    drawEyes(cx, cy - r * 0.15f, r * 0.4f, r * 0.16f, blinkOpen(phase))
+    // Нос + зубы
+    drawCircle(Color(0xFFE58BA0), radius = r * 0.12f, center = Offset(cx, cy + r * 0.22f))
+    drawRect(Color.White,
+        topLeft = Offset(cx - r * 0.12f, cy + r * 0.38f),
+        size = Size(r * 0.24f, r * 0.28f))
+    drawLine(furDark, Offset(cx, cy + r * 0.38f), Offset(cx, cy + r * 0.66f), strokeWidth = r * 0.04f)
+}
+
+private fun DrawScope.drawWolfFace(phase: Float) {
+    val w = size.width; val h = size.height
+    val cx = w / 2f; val cy = h * 0.58f
+    val r = minOf(w, h) * 0.34f
+    val fur = Color(0xFF6E7B86)
+    val furDark = Color(0xFF46525C)
+    // Уши-треугольники, чуть подрагивают
+    val twitch = (sin(phase * 4 * Math.PI).toFloat() * 3f)
+    for (side in listOf(-1, 1)) {
+        val ear = Path().apply {
+            moveTo(cx + side * r * 0.35f, cy - r * 0.55f)
+            lineTo(cx + side * (r * 1.05f + twitch), cy - r * 1.45f - twitch)
+            lineTo(cx + side * r * 0.95f, cy - r * 0.3f)
+            close()
+        }
+        drawPath(ear, furDark)
+    }
+    // Голова
+    drawCircle(fur, radius = r, center = Offset(cx, cy))
+    // Светлая вытянутая морда
+    drawOval(Color(0xFFB9C2C9),
+        topLeft = Offset(cx - r * 0.5f, cy - r * 0.05f),
+        size = Size(r, r * 1.0f))
+    // Злые глаза — наклонные веки
+    drawEyes(cx, cy - r * 0.28f, r * 0.45f, r * 0.17f, blinkOpen(phase), iris = Color(0xFFFFD54F))
+    for (side in listOf(-1, 1)) {
+        drawLine(furDark,
+            Offset(cx + side * r * 0.2f, cy - r * 0.55f),
+            Offset(cx + side * r * 0.7f, cy - r * 0.38f),
+            strokeWidth = r * 0.1f)
+    }
+    // Нос и пасть (приоткрывается по фазе)
+    drawCircle(Color(0xFF22272B), radius = r * 0.14f, center = Offset(cx, cy + r * 0.28f))
+    val jaw = (sin(phase * 2 * Math.PI).toFloat() * 0.5f + 0.5f) * r * 0.16f
+    drawLine(furDark, Offset(cx, cy + r * 0.4f), Offset(cx, cy + r * 0.6f + jaw), strokeWidth = r * 0.05f)
+    val mouth = Path().apply {
+        moveTo(cx - r * 0.32f, cy + r * 0.55f)
+        quadraticBezierTo(cx, cy + r * 0.72f + jaw, cx + r * 0.32f, cy + r * 0.55f)
+    }
+    drawPath(mouth, furDark, style = Stroke(width = r * 0.05f))
+    // Клыки
+    for (side in listOf(-1, 1)) {
+        val fx = cx + side * r * 0.2f
+        val fang = Path().apply {
+            moveTo(fx - r * 0.05f, cy + r * 0.58f)
+            lineTo(fx, cy + r * 0.78f + jaw * 0.6f)
+            lineTo(fx + r * 0.05f, cy + r * 0.58f)
+            close()
+        }
+        drawPath(fang, Color.White)
+    }
+}
+
+private fun DrawScope.drawBearFace(phase: Float) {
+    val w = size.width; val h = size.height
+    val cx = w / 2f; val cy = h * 0.6f
+    val r = minOf(w, h) * 0.36f
+    val fur = Color(0xFF8A5A2B)
+    val furDark = Color(0xFF5D3A17)
+    // Круглые уши, слегка «дышат»
+    val earPulse = 1f + sin(phase * 2 * Math.PI).toFloat() * 0.04f
+    for (side in listOf(-1, 1)) {
+        drawCircle(fur, radius = r * 0.4f * earPulse,
+            center = Offset(cx + side * r * 0.7f, cy - r * 0.75f))
+        drawCircle(Color(0xFFC49A6C), radius = r * 0.22f * earPulse,
+            center = Offset(cx + side * r * 0.7f, cy - r * 0.75f))
+    }
+    drawCircle(fur, radius = r, center = Offset(cx, cy))
+    // Светлая морда
+    drawOval(Color(0xFFD9B98C),
+        topLeft = Offset(cx - r * 0.45f, cy + r * 0.02f),
+        size = Size(r * 0.9f, r * 0.72f))
+    drawEyes(cx, cy - r * 0.22f, r * 0.4f, r * 0.14f, blinkOpen(phase + 0.4f))
+    drawCircle(furDark, radius = r * 0.15f, center = Offset(cx, cy + r * 0.22f))
+    val mouth = Path().apply {
+        moveTo(cx - r * 0.2f, cy + r * 0.5f)
+        quadraticBezierTo(cx, cy + r * 0.62f, cx + r * 0.2f, cy + r * 0.5f)
+    }
+    drawPath(mouth, furDark, style = Stroke(width = r * 0.05f))
+}
+
+private fun DrawScope.drawFoxFace(phase: Float) {
+    val w = size.width; val h = size.height
+    val cx = w / 2f; val cy = h * 0.6f
+    val r = minOf(w, h) * 0.33f
+    val fur = Color(0xFFE2842E)
+    val furDark = Color(0xFFA85312)
+    // Острые уши с тёмными кончиками, подёргиваются по очереди
+    for (side in listOf(-1, 1)) {
+        val tw = if (side < 0) sin(phase * 2 * Math.PI).toFloat() * 4f
+                 else sin((phase + 0.5f) * 2 * Math.PI).toFloat() * 4f
+        val ear = Path().apply {
+            moveTo(cx + side * r * 0.3f, cy - r * 0.55f)
+            lineTo(cx + side * (r * 1.0f + tw), cy - r * 1.55f - tw)
+            lineTo(cx + side * r * 1.0f, cy - r * 0.25f)
+            close()
+        }
+        drawPath(ear, fur)
+        val tip = Path().apply {
+            moveTo(cx + side * (r * 0.75f + tw * 0.7f), cy - r * 1.15f)
+            lineTo(cx + side * (r * 1.0f + tw), cy - r * 1.55f - tw)
+            lineTo(cx + side * r * 1.0f, cy - r * 0.95f)
+            close()
+        }
+        drawPath(tip, furDark)
+    }
+    // Голова с острыми белыми щеками
+    drawCircle(fur, radius = r, center = Offset(cx, cy))
+    for (side in listOf(-1, 1)) {
+        val cheek = Path().apply {
+            moveTo(cx + side * r * 0.15f, cy + r * 0.1f)
+            lineTo(cx + side * r * 1.05f, cy + r * 0.15f)
+            lineTo(cx + side * r * 0.25f, cy + r * 0.85f)
+            close()
+        }
+        drawPath(cheek, Color(0xFFF6EDE2))
+    }
+    // Хитрые прищуренные глаза
+    drawEyes(cx, cy - r * 0.2f, r * 0.42f, r * 0.15f, blinkOpen(phase + 0.2f), iris = Color(0xFFFFC94D))
+    // Нос на кончике мордочки
+    drawCircle(Color(0xFF3A2413), radius = r * 0.12f, center = Offset(cx, cy + r * 0.42f))
+    val smile = Path().apply {
+        moveTo(cx - r * 0.25f, cy + r * 0.55f)
+        quadraticBezierTo(cx, cy + r * 0.68f, cx + r * 0.25f, cy + r * 0.55f)
+    }
+    drawPath(smile, furDark, style = Stroke(width = r * 0.045f))
 }
 
 private fun DrawScope.drawKolobok(w: Float, h: Float) {

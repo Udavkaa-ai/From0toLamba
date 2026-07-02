@@ -30,7 +30,10 @@ import com.s0dolamby.game.presentation.minigame.common.ArchetypePalette
 import com.s0dolamby.game.presentation.minigame.common.MinigameOutcome
 import com.s0dolamby.game.presentation.minigame.common.MinigameShell
 import com.s0dolamby.game.presentation.minigame.common.MinigameStage
+import androidx.compose.ui.graphics.graphicsLayer
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
 
@@ -67,6 +70,17 @@ fun BabaYagaCauldronScreen(
     var secondsLeft by remember(seed) { mutableStateOf(0) }
     var splashTrigger by remember(seed) { mutableStateOf(0) }     // увеличивается при добавлении ингредиента
     var splashTone by remember(seed) { mutableStateOf(SplashTone.NEUTRAL) }
+    // Что сейчас летит в котёл (для анимации падения)
+    var fallingIngredient by remember(seed) { mutableStateOf<Ingredient?>(null) }
+    // Финал откладываем, чтобы последний бросок успел долететь и плеснуть
+    var pendingFinish by remember(seed) { mutableStateOf(false) }
+
+    LaunchedEffect(pendingFinish) {
+        if (pendingFinish) {
+            delay(900)
+            stage = MinigameStage.RESULT
+        }
+    }
 
     LaunchedEffect(seed, phase) {
         if (phase == Phase.SHOWCASE) {
@@ -76,6 +90,7 @@ fun BabaYagaCauldronScreen(
             sequence.forEach { ing ->
                 highlightedIngredient = ing
                 splashTone = SplashTone.NEUTRAL
+                fallingIngredient = ing
                 splashTrigger += 1
                 delay(SHOWCASE_LIT_MS)
                 highlightedIngredient = null
@@ -107,9 +122,11 @@ fun BabaYagaCauldronScreen(
 
     fun handleTap(ing: Ingredient) {
         if (phase != Phase.INPUT) return
+        if (pendingFinish) return
         val expected = sequence.getOrNull(playerInput.size) ?: return
         playerInput = playerInput + ing
         highlightedIngredient = ing
+        fallingIngredient = ing
         splashTrigger += 1
         if (ing == expected) {
             splashTone = SplashTone.GOOD
@@ -118,7 +135,8 @@ fun BabaYagaCauldronScreen(
             errors += 1
         }
         if (playerInput.size == sequence.size) {
-            stage = MinigameStage.RESULT
+            // Даём последнему ингредиенту долететь и плеснуть
+            pendingFinish = true
         } else {
             // Полка пересаживается после каждого броска в котёл
             shelfOrder = shelfOrder.shuffled()
@@ -135,6 +153,8 @@ fun BabaYagaCauldronScreen(
         highlightedIngredient = null
         splashTrigger = 0
         splashTone = SplashTone.NEUTRAL
+        fallingIngredient = null
+        pendingFinish = false
         stage = MinigameStage.MEMORIZE
     }
 
@@ -159,7 +179,11 @@ fun BabaYagaCauldronScreen(
                 onTap = ::handleTap
             )
             Spacer(Modifier.height(8.dp))
-            CauldronView(splashTrigger = splashTrigger, tone = splashTone)
+            CauldronView(
+                splashTrigger = splashTrigger,
+                tone = splashTone,
+                falling = fallingIngredient
+            )
             Spacer(Modifier.height(8.dp))
             SeqProgress(
                 color = ArchetypePalette[PersonaArchetype.BABA_YAGA].primary,
@@ -281,9 +305,13 @@ private enum class SplashTone { NEUTRAL, GOOD, BAD }
 private data class Bubble(val xPct: Float, val ySeed: Long, val r: Float, val drift: Float)
 
 @Composable
-private fun CauldronView(splashTrigger: Int, tone: SplashTone) {
+private fun CauldronView(splashTrigger: Int, tone: SplashTone, falling: Ingredient? = null) {
     val cauldronShake = remember { Animatable(0f) }
     val flashAlpha = remember { Animatable(0f) }
+    // Падение ингредиента с полки в котёл (0 → 1)
+    val fall = remember { Animatable(1f) }
+    // Прогресс эффекта после плюха: пузырь (GOOD) или брызги (BAD)
+    val burst = remember { Animatable(0f) }
     val flashColor by remember {
         derivedStateOf {
             when (tone) {
@@ -293,18 +321,34 @@ private fun CauldronView(splashTrigger: Int, tone: SplashTone) {
             }
         }
     }
+    // Направления брызг жижи при ошибке — свои на каждый бросок
+    val badDrops = remember(splashTrigger) {
+        List(9) {
+            Triple(
+                (Random.nextFloat() - 0.5f) * 2.4f,       // vx
+                -(0.8f + Random.nextFloat() * 1.4f),      // vy вверх
+                3.5f + Random.nextFloat() * 4.5f          // радиус капли
+            )
+        }
+    }
 
+    // Хронометраж броска: падение → плюх (тряска+вспышка) → пузырь/брызги
     LaunchedEffect(splashTrigger) {
         if (splashTrigger == 0) return@LaunchedEffect
-        cauldronShake.snapTo(0f)
-        cauldronShake.animateTo(8f, tween(60))
-        cauldronShake.animateTo(-6f, tween(80))
-        cauldronShake.animateTo(0f, tween(120))
-    }
-    LaunchedEffect(splashTrigger, tone) {
-        if (splashTrigger == 0) return@LaunchedEffect
-        flashAlpha.snapTo(0.7f)
-        flashAlpha.animateTo(0f, tween(700))
+        burst.snapTo(0f)
+        fall.snapTo(0f)
+        fall.animateTo(1f, tween(FALL_MS, easing = FastOutLinearInEasing))
+        launch {
+            cauldronShake.snapTo(0f)
+            cauldronShake.animateTo(8f, tween(60))
+            cauldronShake.animateTo(-6f, tween(80))
+            cauldronShake.animateTo(0f, tween(120))
+        }
+        launch {
+            flashAlpha.snapTo(0.7f)
+            flashAlpha.animateTo(0f, tween(700))
+        }
+        burst.animateTo(1f, tween(650, easing = LinearEasing))
     }
 
     // Поток времени для пузырей и огня
@@ -491,6 +535,99 @@ private fun CauldronView(splashTrigger: Int, tone: SplashTone) {
                     size = Size(w * 0.50f, h * 0.10f)
                 )
             }
+
+            // ── Эффекты после плюха ─────────────────────────────────────
+            val t = burst.value
+            if (t > 0f && t < 1f) {
+                val brewCenterX = w / 2f
+                when (tone) {
+                    SplashTone.GOOD -> {
+                        // Зелёный пузырь всплывает над котлом и лопается
+                        val rise = t.coerceAtMost(0.75f) / 0.75f
+                        val bubbleY = brewTopY - rise * h * 0.30f
+                        val bubbleR = w * (0.05f + 0.09f * rise)
+                        if (t < 0.75f) {
+                            drawCircle(
+                                Color(0xFF8BC34A).copy(alpha = 0.85f),
+                                radius = bubbleR,
+                                center = Offset(brewCenterX, bubbleY)
+                            )
+                            drawCircle(
+                                Color(0xFFDCEDC8).copy(alpha = 0.9f),
+                                radius = bubbleR * 0.3f,
+                                center = Offset(brewCenterX - bubbleR * 0.35f, bubbleY - bubbleR * 0.35f)
+                            )
+                        } else {
+                            // Лопнул: расширяющееся кольцо + разлетающиеся капельки
+                            val pop = (t - 0.75f) / 0.25f
+                            val popY = brewTopY - h * 0.30f
+                            drawCircle(
+                                Color(0xFFAED581).copy(alpha = (1f - pop) * 0.9f),
+                                radius = bubbleR * (1f + pop * 1.6f),
+                                center = Offset(brewCenterX, popY),
+                                style = Stroke(width = w * 0.015f * (1f - pop * 0.5f))
+                            )
+                            for (i in 0 until 6) {
+                                val a = Math.PI * 2 * i / 6
+                                drawCircle(
+                                    Color(0xFFC5E1A5).copy(alpha = 1f - pop),
+                                    radius = w * 0.012f,
+                                    center = Offset(
+                                        brewCenterX + (bubbleR * (1.2f + pop * 2f) * cos(a)).toFloat(),
+                                        popY + (bubbleR * (1.2f + pop * 2f) * sin(a)).toFloat()
+                                    )
+                                )
+                            }
+                        }
+                    }
+                    SplashTone.BAD -> {
+                        // Взрыв в котле: брызги багровой жижи разлетаются по параболам
+                        badDrops.forEach { (vx, vy, dropR) ->
+                            val dx = vx * t * w * 0.45f
+                            val dy = vy * t * h * 0.5f + t * t * h * 0.9f
+                            val px = brewCenterX + dx
+                            val py = brewTopY + dy
+                            if (py < h) {
+                                drawCircle(
+                                    Color(0xFF8E24AA).copy(alpha = (1f - t) * 0.95f),
+                                    radius = dropR * (1f - t * 0.4f),
+                                    center = Offset(px, py)
+                                )
+                                drawCircle(
+                                    Color(0xFFCE93D8).copy(alpha = (1f - t) * 0.6f),
+                                    radius = dropR * 0.4f,
+                                    center = Offset(px - dropR * 0.2f, py - dropR * 0.2f)
+                                )
+                            }
+                        }
+                        // Тёмная клякса на самом вареве
+                        drawOval(
+                            Color(0xFF6A1B9A).copy(alpha = (1f - t) * 0.7f),
+                            topLeft = Offset(w * 0.32f, brewTopY - h * 0.02f),
+                            size = Size(w * 0.36f, h * 0.08f)
+                        )
+                    }
+                    SplashTone.NEUTRAL -> Unit
+                }
+            }
+        }
+
+        // Падающий ингредиент — эмодзи летит с полки в котёл, вращаясь
+        if (falling != null && fall.value < 1f) {
+            Text(
+                falling.emoji,
+                fontSize = 30.sp,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .graphicsLayer {
+                        val p = fall.value
+                        // Лёгкая дуга: чуть вбок и вниз с ускорением
+                        translationX = (p - 0.5f) * 30f
+                        translationY = p * p * 260f
+                        rotationZ = p * 260f
+                        alpha = if (p > 0.92f) (1f - p) * 12f else 1f
+                    }
+            )
         }
     }
 }
@@ -533,4 +670,5 @@ private fun generateRecipe(seed: Long): List<Ingredient> {
 private const val RECIPE_LENGTH = 4
 private const val SHOWCASE_LIT_MS = 650L
 private const val SHOWCASE_GAP_MS = 300L
+private const val FALL_MS = 380
 private const val INPUT_SECONDS = 14
