@@ -68,7 +68,7 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
 
         Scaffold(
             containerColor = Color.Transparent,
-            snackbarHost = { SnackbarHost(snackbarHostState) },
+            snackbarHost = { com.s0dolamby.game.presentation.common.components.FairySnackbarHost(snackbarHostState) },
             topBar = {
                 TopAppBar(
                     title = {

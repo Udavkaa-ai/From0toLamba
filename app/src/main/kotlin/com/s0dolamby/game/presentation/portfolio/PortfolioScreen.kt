@@ -92,7 +92,7 @@ fun PortfolioScreen(
     ScreenBackground(R.drawable.portfolio_bg) {
     Scaffold(
         containerColor = Color.Transparent,
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { com.s0dolamby.game.presentation.common.components.FairySnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
