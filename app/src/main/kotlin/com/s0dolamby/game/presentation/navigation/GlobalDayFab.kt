@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.s0dolamby.game.data.sound.SoundEngine
+import com.s0dolamby.game.data.sound.SoundName
 import com.s0dolamby.game.domain.usecase.AdvanceDayUseCase
 import com.s0dolamby.game.presentation.common.theme.LocalAppPalette
 import com.s0dolamby.game.presentation.common.theme.FairyGold
@@ -40,7 +42,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class GlobalDayFabViewModel @Inject constructor(
-    private val advanceDayUseCase: AdvanceDayUseCase
+    private val advanceDayUseCase: AdvanceDayUseCase,
+    private val soundEngine: SoundEngine
 ) : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -49,6 +52,7 @@ class GlobalDayFabViewModel @Inject constructor(
         if (_isLoading.value) return
         viewModelScope.launch {
             _isLoading.value = true
+            soundEngine.play(SoundName.DAY)
             advanceDayUseCase()
             _isLoading.value = false
         }

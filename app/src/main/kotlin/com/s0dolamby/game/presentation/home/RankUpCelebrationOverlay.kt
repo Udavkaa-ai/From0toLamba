@@ -22,8 +22,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.s0dolamby.game.data.sound.SoundName
 import com.s0dolamby.game.domain.model.InvestorRank
 import com.s0dolamby.game.presentation.common.components.CardCornerOrnaments
+import com.s0dolamby.game.presentation.common.sound.LocalSoundEngine
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
@@ -97,6 +99,12 @@ fun RankUpCelebrationOverlay(
     onDismiss: () -> Unit
 ) {
     val particles = remember { mutableStateListOf<FireworkParticle>() }
+    val soundEngine = LocalSoundEngine.current
+
+    // Фанфары при появлении поздравления — один раз на показ
+    LaunchedEffect(rank) {
+        soundEngine.play(SoundName.RANKUP)
+    }
 
     // Particle animation loop
     LaunchedEffect(Unit) {

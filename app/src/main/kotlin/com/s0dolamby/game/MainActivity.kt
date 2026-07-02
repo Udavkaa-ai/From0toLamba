@@ -11,28 +11,37 @@ import androidx.compose.runtime.CompositionLocalProvider
 import com.s0dolamby.game.domain.model.ThemeMode
 import com.s0dolamby.game.domain.repository.SettingsRepository
 import com.s0dolamby.game.presentation.common.i18n.LocalLanguage
+import com.s0dolamby.game.presentation.common.sound.LocalSoundEngine
 import com.s0dolamby.game.presentation.common.theme.From0toLambaTheme
 import com.s0dolamby.game.presentation.navigation.NavGraph
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     @Inject lateinit var settingsRepository: SettingsRepository
+    @Inject lateinit var soundEngine: com.s0dolamby.game.data.sound.SoundEngine
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val settingsFlow = settingsRepository.observeSettings()
             .stateIn(lifecycleScope, SharingStarted.Eagerly, com.s0dolamby.game.domain.model.AppSettings())
+        // SoundEngine — singleton вне Compose; синхронизируем mute с настройками.
+        lifecycleScope.launch {
+            settingsFlow.collect { soundEngine.muted = !it.soundEnabled }
+        }
         setContent {
             val settings by settingsFlow.collectAsState()
             From0toLambaTheme(themeMode = settings.themeMode) {
-                CompositionLocalProvider(LocalLanguage provides settings.language) {
+                CompositionLocalProvider(
+                    LocalLanguage provides settings.language,
+                    LocalSoundEngine provides soundEngine
+                ) {
                     NavGraph()
                 }
             }

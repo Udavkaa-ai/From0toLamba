@@ -8,7 +8,9 @@ data class AppSettings(
     /** Активная тема (тёмная фиолетовая или тёплая ярмарка). */
     val themeMode: ThemeMode = ThemeMode.DARK_FAIRY,
     /** Язык интерфейса: "ru" / "en". */
-    val language: String = "ru"
+    val language: String = "ru",
+    /** Звуковые эффекты (щелчки, колокольчики, шелест пергамента). */
+    val soundEnabled: Boolean = true
 )
 
 data class ModelOption(val label: String, val modelId: String)

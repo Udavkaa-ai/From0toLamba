@@ -27,8 +27,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.s0dolamby.game.data.sound.SoundName
 import com.s0dolamby.game.domain.model.PersonaArchetype
 import com.s0dolamby.game.presentation.common.i18n.Strings
+import com.s0dolamby.game.presentation.common.sound.LocalSoundEngine
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.NightBlue
 
@@ -72,10 +74,12 @@ fun MinigameShell(
     content: @Composable ColumnScope.() -> Unit
 ) {
     val style = ArchetypePalette[archetype]
+    val soundEngine = LocalSoundEngine.current
 
     // Уведомляем верхний уровень о завершении игры — один раз
     LaunchedEffect(stage, outcome) {
         if (stage == MinigameStage.RESULT && outcome != null) {
+            soundEngine.play(if (outcome.isWin) SoundName.WIN else SoundName.LOSE)
             onComplete?.invoke(outcome)
         }
     }

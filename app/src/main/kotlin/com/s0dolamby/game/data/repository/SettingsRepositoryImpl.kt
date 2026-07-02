@@ -20,7 +20,8 @@ class SettingsRepositoryImpl @Inject constructor(
                 imageGenerationEnabled = settings.imageGenerationEnabled,
                 nickname = settings.nickname.take(20).trim(),
                 themeMode = settings.themeMode.name,
-                language = settings.language
+                language = settings.language,
+                soundEnabled = settings.soundEnabled
             )
         )
     }
@@ -39,6 +40,7 @@ class SettingsRepositoryImpl @Inject constructor(
             imageGenerationEnabled = imageGenerationEnabled,
             nickname = nickname,
             themeMode = ThemeMode.fromName(themeMode),
-            language = language.ifBlank { "ru" }
+            language = language.ifBlank { "ru" },
+            soundEnabled = soundEnabled
         )
 }

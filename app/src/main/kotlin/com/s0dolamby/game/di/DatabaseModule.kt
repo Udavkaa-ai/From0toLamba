@@ -36,6 +36,13 @@ private val MIGRATION_17_18 = object : Migration(17, 18) {
     }
 }
 
+/** Аддитивная миграция v18 → v19: колонка soundEnabled в settings. */
+private val MIGRATION_18_19 = object : Migration(18, 19) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `settings` ADD COLUMN `soundEnabled` INTEGER NOT NULL DEFAULT 1")
+    }
+}
+
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
@@ -44,7 +51,7 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
         Room.databaseBuilder(context, AppDatabase::class.java, "game_database")
-            .addMigrations(MIGRATION_17_18)
+            .addMigrations(MIGRATION_17_18, MIGRATION_18_19)
             .fallbackToDestructiveMigration()
             .build()
 

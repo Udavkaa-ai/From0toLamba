@@ -214,6 +214,29 @@ class AdvanceDayUseCase @Inject constructor(
                             .onSuccess { generatedUpdates.add(it) }
                             .onFailure { e -> AppLogger.e("AdvanceDayUseCase", "Update failed: ${e.message}") }
                     }
+
+                    // ── «Все вкладчики разбежались» (порт TG abandon-closure) ────
+                    // Если после кривой жизненного цикла и события народ ушёл в 0,
+                    // дело рушится независимо от daysUntilCollapse: возвращается
+                    // доля по lossRange судьбы.
+                    if (updatedProject.currentUserCount <= 0 && updatedProject.investedAmountRubles > 0) {
+                        val cfg = com.s0dolamby.game.domain.config.FateConfig.params.getValue(updatedProject.fate)
+                        val abandonLoss = cfg.lossRange.start +
+                            Random.nextDouble() * (cfg.lossRange.endInclusive - cfg.lossRange.start)
+                        val returned = updatedProject.currentValueRubles * (1 - abandonLoss)
+                        balanceDelta += returned
+                        gameStateRepository.recordReturn(returned)
+                        projectRepository.closeProject(
+                            updatedProject.id,
+                            "Все вкладчики разбежались — дело рухнуло",
+                            returned
+                        )
+                        gameStateRepository.awardArchetypeProgress(
+                            updatedProject.personaArchetype,
+                            profitable = returned > updatedProject.investedAmountRubles
+                        )
+                        AppLogger.i("AdvanceDayUseCase", "Abandoned: ${updatedProject.claimedName}, returned=$returned")
+                    }
                 }
             }
         }
@@ -277,18 +300,45 @@ class AdvanceDayUseCase @Inject constructor(
 
     // ─── Вспомогательные ──────────────────────────────────────────────────────
 
+    /**
+     * Кривая вкладчиков по фазе жизни дела (порт TG AdvanceDayService):
+     *  - INSTANT_SCAM: ровный рост до самого исчезновения — скам не палится;
+     *  - SLOW_DRAIN: рост первые 50%, потом плавный отток;
+     *  - HONEST_FAIL: резкий рост первые 30%, потом сильный спад;
+     *  - SURVIVOR: рост → плато → лёгкое снижение;
+     *  - UNICORN: рост → плато → резкий взлёт в конце.
+     * Цифры дельт TG умножены ×10 масштабно к нашим userCount (у TG
+     * счётчики в сотнях, у нас в тысячах).
+     */
+    private fun lifecycleUserDelta(project: Project): Int {
+        val totalLife = project.daysSinceJoined + (project.daysUntilCollapse ?: 0)
+        val progress = if (totalLife > 0) project.daysSinceJoined.toFloat() / totalLife else 0f
+        return when (project.fate) {
+            ProjectFate.INSTANT_SCAM -> Random.nextInt(30, 181)
+            ProjectFate.SLOW_DRAIN ->
+                if (progress < 0.5f) Random.nextInt(20, 101) else -Random.nextInt(20, 101)
+            ProjectFate.HONEST_FAIL ->
+                if (progress < 0.3f) Random.nextInt(150, 301) else -Random.nextInt(150, 351)
+            ProjectFate.SURVIVOR -> when {
+                progress < 0.3f -> Random.nextInt(20, 81)
+                progress < 0.7f -> Random.nextInt(-30, 31)
+                else -> -Random.nextInt(20, 51)
+            }
+            ProjectFate.UNICORN -> when {
+                progress < 0.4f -> Random.nextInt(20, 81)
+                progress < 0.7f -> Random.nextInt(-20, 51)
+                else -> Random.nextInt(200, 501)
+            }
+        }
+    }
+
     private fun updateHistories(
         project: Project,
         dailyYield: Double
     ): Pair<List<Int>, List<Float>> {
-        val userDelta = when (project.fate) {
-            ProjectFate.INSTANT_SCAM -> Random.nextInt(-5000, -500)
-            ProjectFate.SLOW_DRAIN -> Random.nextInt(-2000, 500)
-            ProjectFate.HONEST_FAIL -> Random.nextInt(-1000, 1000)
-            ProjectFate.SURVIVOR -> Random.nextInt(-500, 2000)
-            ProjectFate.UNICORN -> Random.nextInt(500, 10000)
-        }
-        val newUserCount = maxOf(100, project.currentUserCount + userDelta)
+        val userDelta = lifecycleUserDelta(project)
+        // 0 разрешён — «все вкладчики разбежались» закрывает дело в вызывающем коде.
+        val newUserCount = maxOf(0, project.currentUserCount + userDelta)
         val newUserHistory = (project.userCountHistory + newUserCount).takeLast(30)
 
         val effectiveDailyAPYPct = if (project.investedAmountRubles > 0) {

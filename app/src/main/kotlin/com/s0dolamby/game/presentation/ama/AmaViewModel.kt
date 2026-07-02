@@ -56,6 +56,7 @@ class AmaViewModel @Inject constructor(
     private val amaRepository: AmaRepository,
     private val gameStateRepository: GameStateRepository,
     private val minigameUnlockStore: MinigameUnlockStore,
+    private val soundEngine: com.s0dolamby.game.data.sound.SoundEngine,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -162,6 +163,7 @@ class AmaViewModel @Inject constructor(
         viewModelScope.launch {
             investUseCase(projectId, amountRubles)
                 .onSuccess {
+                    soundEngine.play(com.s0dolamby.game.data.sound.SoundName.INVEST)
                     _uiState.update { it.copy(
                         showInvestSheet = false,
                         investedAmount = amountRubles

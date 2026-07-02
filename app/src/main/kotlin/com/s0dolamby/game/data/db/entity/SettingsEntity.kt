@@ -14,5 +14,8 @@ data class SettingsEntity(
     @androidx.room.ColumnInfo(defaultValue = "'DARK_FAIRY'")
     val themeMode: String = "DARK_FAIRY",
     @androidx.room.ColumnInfo(defaultValue = "'ru'")
-    val language: String = "ru"
+    val language: String = "ru",
+    // Звуковые эффекты (SoundEngine): true = включены.
+    @androidx.room.ColumnInfo(defaultValue = "1")
+    val soundEnabled: Boolean = true
 )

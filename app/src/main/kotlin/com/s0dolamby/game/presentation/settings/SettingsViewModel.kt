@@ -3,6 +3,8 @@ package com.s0dolamby.game.presentation.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.s0dolamby.game.data.db.AppDatabase
+import com.s0dolamby.game.data.sound.SoundEngine
+import com.s0dolamby.game.data.sound.SoundName
 import com.s0dolamby.game.domain.model.AppSettings
 import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.s0dolamby.game.domain.repository.SettingsRepository
@@ -23,6 +25,7 @@ data class SettingsUiState(
 class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val gameStateRepository: GameStateRepository,
+    private val soundEngine: SoundEngine,
     private val db: AppDatabase
 ) : ViewModel() {
 
@@ -58,6 +61,15 @@ class SettingsViewModel @Inject constructor(
         val updated = _uiState.value.settings.copy(language = lang)
         _uiState.value = _uiState.value.copy(settings = updated)
         viewModelScope.launch { settingsRepository.updateSettings(updated) }
+    }
+
+    fun setSoundEnabled(enabled: Boolean) {
+        val updated = _uiState.value.settings.copy(soundEnabled = enabled)
+        _uiState.value = _uiState.value.copy(settings = updated)
+        viewModelScope.launch { settingsRepository.updateSettings(updated) }
+        // Мгновенный отклик + демонстрация звука при включении.
+        soundEngine.muted = !enabled
+        if (enabled) soundEngine.play(SoundName.TAP)
     }
 
     // setImageGenerationEnabled удалён — обложки теперь из стока, переключать нечего.

@@ -29,7 +29,8 @@ import com.s0dolamby.game.data.db.entity.*
     // v18: добавлена таблица minigame_unlock — результаты мини-игр переживают
     // ребут процесса, иначе после passing-перехода обратно к Inbox игроку
     // снова предлагают мини-игру.
-    version = 18,
+    // v19: добавлен soundEnabled в settings (звуковые эффекты SoundEngine).
+    version = 19,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
