@@ -33,7 +33,8 @@ class PortfolioViewModel @Inject constructor(
     private val gameStateRepository: GameStateRepository,
     private val exitProjectUseCase: ExitProjectUseCase,
     private val investUseCase: InvestUseCase,
-    private val partialWithdrawUseCase: PartialWithdrawUseCase
+    private val partialWithdrawUseCase: PartialWithdrawUseCase,
+    private val soundEngine: com.s0dolamby.game.data.sound.SoundEngine
 ) : ViewModel() {
 
     val freeBalance: StateFlow<Double> = gameStateRepository.observeGameState()
@@ -52,8 +53,17 @@ class PortfolioViewModel @Inject constructor(
 
     fun exitProject(projectId: String) {
         viewModelScope.launch {
+            // Вложенное запоминаем ДО выхода — после closeProject уже не сравнить
+            val invested = projectRepository.getProjectById(projectId)?.investedAmountRubles ?: 0.0
             exitProjectUseCase(projectId)
-                .onSuccess { returned -> _actionResult.value = PortfolioActionResult.Received(returned) }
+                .onSuccess { returned ->
+                    // Как в TG HomePage: перезвон при выходе в плюс, стук — в минус
+                    soundEngine.play(
+                        if (returned >= invested) com.s0dolamby.game.data.sound.SoundName.WIN
+                        else com.s0dolamby.game.data.sound.SoundName.LOSE
+                    )
+                    _actionResult.value = PortfolioActionResult.Received(returned)
+                }
                 .onFailure { _actionResult.value = PortfolioActionResult.Failure(it.message ?: "") }
         }
     }
@@ -61,7 +71,10 @@ class PortfolioViewModel @Inject constructor(
     fun addFunds(projectId: String, amountRubles: Double) {
         viewModelScope.launch {
             investUseCase(projectId, amountRubles)
-                .onSuccess { _actionResult.value = PortfolioActionResult.AddedFunds(amountRubles) }
+                .onSuccess {
+                    soundEngine.play(com.s0dolamby.game.data.sound.SoundName.INVEST)
+                    _actionResult.value = PortfolioActionResult.AddedFunds(amountRubles)
+                }
                 .onFailure { _actionResult.value = PortfolioActionResult.Failure(it.message ?: "") }
         }
     }

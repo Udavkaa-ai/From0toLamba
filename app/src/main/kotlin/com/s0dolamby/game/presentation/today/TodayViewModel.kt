@@ -19,7 +19,8 @@ data class TodayUiState(
 
 @HiltViewModel
 class TodayViewModel @Inject constructor(
-    private val gameStateRepository: GameStateRepository
+    private val gameStateRepository: GameStateRepository,
+    private val soundEngine: com.s0dolamby.game.data.sound.SoundEngine
 ) : ViewModel() {
 
     private val _claimedTodayReward = MutableStateFlow<Int?>(null)
@@ -49,7 +50,11 @@ class TodayViewModel @Inject constructor(
     fun claim() {
         viewModelScope.launch {
             gameStateRepository.claimDailyReward()
-                .onSuccess { reward -> _claimedTodayReward.value = reward }
+                .onSuccess { reward ->
+                    // Монета падает на стол — как playSound('invest') в TG TodayPage
+                    soundEngine.play(com.s0dolamby.game.data.sound.SoundName.INVEST)
+                    _claimedTodayReward.value = reward
+                }
                 // Пустая строка — сигнал «дефолтная ошибка, бери из словаря».
                 // Использовать i18n-ключ напрямую в ViewModel нельзя — там нет
                 // Compose-контекста; экран превратит "" → Strings.t(...).
