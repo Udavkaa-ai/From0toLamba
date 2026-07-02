@@ -1,6 +1,9 @@
 package com.s0dolamby.game.presentation.portfolio
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,11 +15,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -162,72 +170,199 @@ private fun DynamicsCard(project: Project) {
     FairyCard(modifier = Modifier.fillMaxWidth()) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(Strings.t("detail.section.dynamics"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(
+                Strings.t("chart.tapHint"),
+                style = MaterialTheme.typography.labelSmall,
+                color = LocalContentColorMuted.current
+            )
+
+            // История хранит последние 30 дней — первый видимый день кривой
+            val historyStartDay = { size: Int -> (project.daysSinceJoined - size + 1).coerceAtLeast(1) }
 
             if (project.userCountHistory.size >= 2) {
                 val first = project.userCountHistory.first()
                 val last = project.userCountHistory.last()
                 val delta = last - first
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically) {
-                    Text(Strings.t("detail.dyn.users"), style = MaterialTheme.typography.bodyMedium,
-                        color = LocalContentColorMuted.current)
-                    Text(Strings.t("detail.dyn.usersDelta", delta), style = MaterialTheme.typography.labelSmall,
-                        color = if (delta >= 0) Success else Error)
-                }
                 SparklineChart(
                     values = project.userCountHistory.map { it.toFloat() },
                     color = if (delta >= 0) Success else Error,
-                    modifier = Modifier.fillMaxWidth().height(60.dp)
+                    legend = Strings.t("detail.dyn.users"),
+                    trailing = Strings.t("detail.dyn.usersDelta", delta),
+                    trailingColor = if (delta >= 0) Success else Error,
+                    startDay = historyStartDay(project.userCountHistory.size),
+                    valueFormatter = { "%,.0f".format(it) },
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
 
             if (project.apyHistory.size >= 2) {
                 val avgApy = project.apyHistory.average().toFloat()
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically) {
-                    Text(Strings.t("detail.dyn.dailyYield"), style = MaterialTheme.typography.bodyMedium,
-                        color = LocalContentColorMuted.current)
-                    // Текст на карточке: colorScheme.primary — золото и на
-                    // пергаменте тёплой темы не читается, берём акцент-локаль.
-                    Text(Strings.t("detail.dyn.dailyYieldVal", avgApy), style = MaterialTheme.typography.labelSmall,
-                        color = LocalAccentOnCard.current)
-                }
                 SparklineChart(
                     values = project.apyHistory,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.fillMaxWidth().height(60.dp)
+                    color = LocalAccentOnCard.current,
+                    legend = Strings.t("detail.dyn.dailyYield"),
+                    trailing = Strings.t("detail.dyn.dailyYieldVal", avgApy),
+                    trailingColor = LocalAccentOnCard.current,
+                    startDay = historyStartDay(project.apyHistory.size),
+                    valueFormatter = { "%.1f%%".format(it) },
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
     }
 }
 
+/**
+ * График с легендой, подписями осей и интерактивом: тап или ведение пальцем
+ * по полотну подсвечивает точку и показывает «день N · значение».
+ */
 @Composable
 private fun SparklineChart(
     values: List<Float>,
     color: Color,
+    legend: String,
+    trailing: String,
+    trailingColor: Color,
+    startDay: Int,
+    valueFormatter: (Float) -> String,
     modifier: Modifier = Modifier
 ) {
     if (values.size < 2) return
-    Canvas(modifier = modifier) {
-        val min = values.min()
-        val max = values.max()
-        val range = (max - min).coerceAtLeast(0.0001f)
-        val path = Path()
-        values.forEachIndexed { i, v ->
-            val x = i.toFloat() / (values.size - 1) * size.width
-            val y = (1f - (v - min) / range) * size.height
-            if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+    var selectedIdx by remember(values) { mutableStateOf<Int?>(null) }
+    val textMeasurer = androidx.compose.ui.text.rememberTextMeasurer()
+    val axisLabelColor = LocalContentColorMuted.current
+    val axisLabelStyle = androidx.compose.ui.text.TextStyle(
+        fontSize = 9.sp,
+        color = axisLabelColor
+    )
+    val bubbleTextStyle = androidx.compose.ui.text.TextStyle(
+        fontSize = 11.sp,
+        color = Color.White,
+        fontWeight = FontWeight.SemiBold
+    )
+    val min = values.min()
+    val max = values.max()
+    // Шаблон плашки — Strings.t только из composable-скоупа, не из Canvas
+    val pointTemplate = Strings.t("chart.point")
+
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        // Легенда: цветной маркер + подпись ряда, справа — сводка
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .background(color, MaterialTheme.shapes.extraSmall)
+                )
+                Text(legend, style = MaterialTheme.typography.bodyMedium, color = LocalContentColorMuted.current)
+            }
+            Text(trailing, style = MaterialTheme.typography.labelSmall, color = trailingColor)
         }
-        drawPath(path, color, style = Stroke(width = 2.dp.toPx()))
-        // Fill under the line
-        val fillPath = Path().apply {
-            addPath(path)
-            lineTo(size.width, size.height)
-            lineTo(0f, size.height)
-            close()
+
+        Canvas(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(84.dp)
+                .pointerInput(values) {
+                    // Тап — выбрать/снять точку
+                    detectTapGestures { offset ->
+                        val idx = ((offset.x / size.width) * (values.size - 1)).toInt()
+                            .coerceIn(0, values.size - 1)
+                        selectedIdx = if (selectedIdx == idx) null else idx
+                    }
+                }
+                .pointerInput(values) {
+                    // Ведение пальцем — скраббинг по точкам
+                    detectHorizontalDragGestures { change, _ ->
+                        val idx = ((change.position.x / size.width) * (values.size - 1)).toInt()
+                            .coerceIn(0, values.size - 1)
+                        selectedIdx = idx
+                    }
+                }
+        ) {
+            val range = (max - min).coerceAtLeast(0.0001f)
+            fun xAt(i: Int) = i.toFloat() / (values.size - 1) * size.width
+            fun yAt(v: Float) = (1f - (v - min) / range) * size.height
+
+            // Сетка: верхняя/средняя/нижняя направляющие
+            val gridColor = axisLabelColor.copy(alpha = 0.15f)
+            for (frac in listOf(0f, 0.5f, 1f)) {
+                val y = size.height * frac
+                drawLine(gridColor, Offset(0f, y), Offset(size.width, y), strokeWidth = 1f)
+            }
+
+            val path = Path()
+            values.forEachIndexed { i, v ->
+                if (i == 0) path.moveTo(xAt(i), yAt(v)) else path.lineTo(xAt(i), yAt(v))
+            }
+            drawPath(path, color, style = Stroke(width = 2.dp.toPx()))
+            val fillPath = Path().apply {
+                addPath(path)
+                lineTo(size.width, size.height)
+                lineTo(0f, size.height)
+                close()
+            }
+            drawPath(fillPath, color.copy(alpha = 0.15f))
+
+            // Подписи оси Y: max сверху, min снизу (размерность из formatter'а)
+            drawText(
+                textMeasurer.measure(valueFormatter(max), axisLabelStyle),
+                topLeft = Offset(2.dp.toPx(), 1.dp.toPx())
+            )
+            drawText(
+                textMeasurer.measure(valueFormatter(min), axisLabelStyle),
+                topLeft = Offset(2.dp.toPx(), size.height - 12.sp.toPx())
+            )
+
+            // Выбранная точка: вертикаль + маркер + плашка «день N · значение»
+            selectedIdx?.let { idx ->
+                val px = xAt(idx)
+                val py = yAt(values[idx])
+                drawLine(
+                    color.copy(alpha = 0.6f),
+                    Offset(px, 0f), Offset(px, size.height),
+                    strokeWidth = 1.5f
+                )
+                drawCircle(color, radius = 4.dp.toPx(), center = Offset(px, py))
+                drawCircle(Color.White, radius = 2.dp.toPx(), center = Offset(px, py))
+
+                val label = pointTemplate.format(startDay + idx, valueFormatter(values[idx]))
+                val measured = textMeasurer.measure(label, bubbleTextStyle)
+                val pad = 6.dp.toPx()
+                val bw = measured.size.width + pad * 2
+                val bh = measured.size.height + pad
+                val bx = (px - bw / 2f).coerceIn(0f, size.width - bw)
+                val by = (py - bh - 8.dp.toPx()).coerceAtLeast(0f)
+                drawRoundRect(
+                    Color(0xE6060412),
+                    topLeft = Offset(bx, by),
+                    size = androidx.compose.ui.geometry.Size(bw, bh),
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(6.dp.toPx())
+                )
+                drawText(measured, topLeft = Offset(bx + pad, by + pad / 2f))
+            }
         }
-        drawPath(fillPath, color.copy(alpha = 0.15f))
+
+        // Ось X: диапазон дней
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                Strings.t("chart.day", startDay),
+                style = MaterialTheme.typography.labelSmall,
+                color = LocalContentColorMuted.current
+            )
+            Text(
+                Strings.t("chart.day", startDay + values.size - 1),
+                style = MaterialTheme.typography.labelSmall,
+                color = LocalContentColorMuted.current
+            )
+        }
     }
 }
 

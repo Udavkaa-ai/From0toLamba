@@ -401,6 +401,9 @@ object Strings {
         // Плашка-приветствие при смене дня
         "daybreak.title" to "Утро дня %d",
         "daybreak.subtitle" to "Глашатай разносит вести с ярмарки",
+        "chart.tapHint" to "Тапни или проведи по графику — покажу точное значение",
+        "chart.day" to "день %d",
+        "chart.point" to "день %d · %s",
         "daynews.counter" to "📜 Вести дня · осталось %d",
         "daynews.hint.left" to "← смахни влево — закрыть",
         "daynews.hint.right" to "смахни вправо — к делу →",
@@ -1032,6 +1035,9 @@ object Strings {
         // Day-break greeting
         "daybreak.title" to "Morning of day %d",
         "daybreak.subtitle" to "The herald spreads news from the fair",
+        "chart.tapHint" to "Tap or drag on a chart to see the exact value",
+        "chart.day" to "day %d",
+        "chart.point" to "day %d · %s",
         "daynews.counter" to "📜 News of the day · %d left",
         "daynews.hint.left" to "← swipe left — dismiss",
         "daynews.hint.right" to "swipe right — to the venture →",
