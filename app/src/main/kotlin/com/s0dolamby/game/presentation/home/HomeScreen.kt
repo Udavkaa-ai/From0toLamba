@@ -851,3 +851,6 @@ private fun roi(state: com.s0dolamby.game.domain.model.GameState?): Double {
     if (state == null || state.totalInvested <= 0) return 0.0
     return (state.totalReturned - state.totalInvested) / state.totalInvested * 100.0
 }
+
+// Число фраз loading.0..loading.N-1 в словаре — крутятся на кнопке дня
+private const val LOADING_PHRASE_COUNT = 20
