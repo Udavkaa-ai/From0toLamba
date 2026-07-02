@@ -7,7 +7,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -94,7 +96,11 @@ fun AchievementUnlockedOverlay(
                     )
             ) {
                 Column(
-                    modifier = Modifier.fillMaxWidth().padding(28.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        // Летопись у справочных подвигов длинная — на малых экранах скроллим
+                        .verticalScroll(rememberScrollState())
+                        .padding(28.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -122,6 +128,11 @@ fun AchievementUnlockedOverlay(
                         textAlign = TextAlign.Center,
                         fontStyle = FontStyle.Italic
                     )
+                    // Справочный подвиг — раскрываем запись летописи о породе/личине/судьбе
+                    top.revealTopic?.let { topic ->
+                        Spacer(Modifier.height(4.dp))
+                        LoreBlock(topic)
+                    }
                     OrnamentDivider()
                     Text(
                         Strings.t("ach.unlocked.tapHint") + if (queue.size > 1) Strings.t("ach.unlocked.queueMore", queue.size - 1) else "",

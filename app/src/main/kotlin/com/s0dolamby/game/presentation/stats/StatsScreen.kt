@@ -41,8 +41,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.s0dolamby.game.R
 import com.s0dolamby.game.data.logging.AppLogger
+import com.s0dolamby.game.domain.achievements.Achievement
 import com.s0dolamby.game.domain.achievements.AchievementCatalog
 import com.s0dolamby.game.domain.achievements.AchievementCategory
+import com.s0dolamby.game.presentation.achievements.LoreBlock
 import com.s0dolamby.game.domain.model.GameState
 import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.s0dolamby.game.presentation.common.components.FairyCard
@@ -229,6 +231,7 @@ private fun archetypeName(arch: com.s0dolamby.game.domain.model.PersonaArchetype
 @Composable
 private fun AchievementsCard(unlocked: Set<String>) {
     var expandedCategory by remember { mutableStateOf<AchievementCategory?>(null) }
+    var openedAchievement by remember { mutableStateOf<Achievement?>(null) }
     val byCategory = remember { AchievementCatalog.ALL.groupBy { it.category } }
     val totalUnlocked = AchievementCatalog.ALL.count { it.id in unlocked }
     val totalAll = AchievementCatalog.ALL.size
@@ -292,7 +295,9 @@ private fun AchievementsCard(unlocked: Set<String>) {
                     items.forEach { ach ->
                         val isUnlocked = ach.id in unlocked
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { openedAchievement = ach },
                             verticalAlignment = Alignment.Top,
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
@@ -323,6 +328,72 @@ private fun AchievementsCard(unlocked: Set<String>) {
             HorizontalDivider(color = LocalAccentOnCard.current.copy(alpha = 0.08f))
         }
     }
+
+    openedAchievement?.let { ach ->
+        AchievementDetailDialog(
+            achievement = ach,
+            isUnlocked = ach.id in unlocked,
+            onDismiss = { openedAchievement = null }
+        )
+    }
+}
+
+/**
+ * Детали подвига: условие получения, а для справочных подвигов
+ * (Achievement.revealTopic) после разблокировки — запись летописи
+ * о породе дела / личине хозяина / судьбе (как модалка в TG StatsPage).
+ */
+@Composable
+private fun AchievementDetailDialog(
+    achievement: Achievement,
+    isUnlocked: Boolean,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = { Text(if (isUnlocked) achievement.emoji else "🔒", fontSize = 44.sp) },
+        title = {
+            Text(
+                achievement.localizedTitle(),
+                fontWeight = FontWeight.Bold,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                if (isUnlocked) {
+                    Text(
+                        Strings.t("ach.detail.done"),
+                        color = Success,
+                        style = MaterialTheme.typography.labelMedium,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                } else {
+                    Text(
+                        Strings.t("ach.detail.how"),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = LocalContentColorMuted.current
+                    )
+                }
+                Text(
+                    achievement.localizedDescription(),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                // Летопись раскрывается только после получения подвига
+                if (isUnlocked) {
+                    achievement.revealTopic?.let { LoreBlock(it) }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text(Strings.t("btn.gotIt")) }
+        }
+    )
 }
 
 // ─── Rank card ────────────────────────────────────────────────────────────────

@@ -11,8 +11,9 @@ import com.s0dolamby.game.domain.model.ProjectType
  * repository.GameStateRepository.recomputeAchievements] после каждой
  * значимой операции (advance-day, invest, exit).
  *
- * Каталог сознательно сделан компактным — 28 подвигов покрывают все
- * 6 категорий из TG. Расширять можно добавляя записи в ALL.
+ * Каталог покрывает все 6 категорий из TG. Справочные подвиги
+ * (bestiary.type/archetype/fate) несут [RevealTopic] — при разблокировке
+ * открывают игроку запись «летописи» о породе/личине/судьбе.
  */
 object AchievementCatalog {
 
@@ -179,8 +180,49 @@ object AchievementCatalog {
                 category = AchievementCategory.BESTIARY,
                 title = "Знакомец: $name",
                 description = "Встретил архетип «$name»",
-                emoji = emoji
+                emoji = emoji,
+                revealTopic = RevealTopic(RevealKind.ARCHETYPE, arch.name)
             ) { _, p -> p.any { it.personaArchetype == arch && (it.investedAmountRubles > 0 || it.isClosed) } })
+        }
+
+        // ─── 🗂️ Бестиарий: породы дел — раскрывают запись летописи ──────────
+        val typeMeta = mapOf(
+            ProjectType.CARD_GAME to Triple("🎴", "Картёжный стол", "Закрой дело с породой «Азартная игра»"),
+            ProjectType.TREASURE_HUNT to Triple("🗺️", "Тропой кладоискателя", "Закрой дело с породой «Поиск клада»"),
+            ProjectType.POTION_BREW to Triple("🧪", "Котёл зельевара", "Закрой дело с породой «Зелейное дело»"),
+            ProjectType.GUILD_SCHEME to Triple("⚙️", "Артельный подмастерье", "Закрой дело с породой «Артель»"),
+            ProjectType.HONEST_TRADE to Triple("🤝", "Ряды ярмарочные", "Закрой дело с породой «Честная торговля»")
+        )
+        typeMeta.forEach { (type, meta) ->
+            val (emoji, title, desc) = meta
+            add(Achievement(
+                id = "bestiary.type.${type.name.lowercase()}",
+                category = AchievementCategory.BESTIARY,
+                title = title,
+                description = desc,
+                emoji = emoji,
+                revealTopic = RevealTopic(RevealKind.TYPE, type.name)
+            ) { _, p -> p.any { it.type == type && it.isClosed && it.investedAmountRubles > 0 } })
+        }
+
+        // ─── 🗂️ Бестиарий: судьбы дел — раскрывают запись летописи ──────────
+        val fateMeta = mapOf(
+            ProjectFate.INSTANT_SCAM to Triple("💀", "Укус вора", "Переживи внезапное бегство хозяина с казной"),
+            ProjectFate.SLOW_DRAIN to Triple("🌫️", "Тихий закат", "Увидь как дело медленно истлевает"),
+            ProjectFate.HONEST_FAIL to Triple("😔", "Без удачи, но с честью", "Столкнись с честным провалом"),
+            ProjectFate.SURVIVOR to Triple("⚓", "Крепкий якорь", "Доведи дело-долгожителя до достойного закрытия"),
+            ProjectFate.UNICORN to Triple("🔥", "Поймал Жар-птицу за хвост", "Застань редчайшее дело, которое приумножает гроши в разы")
+        )
+        fateMeta.forEach { (fate, meta) ->
+            val (emoji, title, desc) = meta
+            add(Achievement(
+                id = "bestiary.fate.${fate.name.lowercase()}",
+                category = AchievementCategory.BESTIARY,
+                title = title,
+                description = desc,
+                emoji = emoji,
+                revealTopic = RevealTopic(RevealKind.FATE, fate.name)
+            ) { _, p -> p.any { it.fate == fate && it.isClosed && it.investedAmountRubles > 0 } })
         }
         add(Achievement(
             id = "bestiary.all_fates",

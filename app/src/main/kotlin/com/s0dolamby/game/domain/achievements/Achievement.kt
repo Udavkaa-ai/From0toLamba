@@ -13,6 +13,16 @@ enum class AchievementCategory(val title: String, val icon: String) {
     BESTIARY("Бестиарий", "🗂️")
 }
 
+/** Что раскрывает справочный подвиг: породу дела, личину хозяина или судьбу. */
+enum class RevealKind { TYPE, ARCHETYPE, FATE }
+
+/**
+ * Ссылка подвига на запись «летописи» — справочника пород/личин/судеб.
+ * [id] — имя соответствующего enum'а (ProjectType / PersonaArchetype /
+ * ProjectFate). Текст самой записи живёт в i18n (LoreI18n).
+ */
+data class RevealTopic(val kind: RevealKind, val id: String)
+
 /**
  * Одна запись из каталога подвигов. condition вызывается с актуальным
  * GameState и плоским списком всех проектов (active + closed).
@@ -26,6 +36,7 @@ data class Achievement(
     val title: String,
     val description: String,
     val emoji: String,
+    val revealTopic: RevealTopic? = null,
     val condition: (GameState, List<Project>) -> Boolean
 )
 
