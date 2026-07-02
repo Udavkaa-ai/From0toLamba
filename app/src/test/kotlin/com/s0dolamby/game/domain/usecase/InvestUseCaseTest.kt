@@ -1,6 +1,7 @@
 package com.s0dolamby.game.domain.usecase
 
 import com.s0dolamby.game.data.achievements.AchievementUnlockStore
+import com.s0dolamby.game.data.minigame.MinigameUnlockStore
 import com.s0dolamby.game.domain.model.*
 import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.s0dolamby.game.domain.repository.ProjectRepository
@@ -15,6 +16,9 @@ class InvestUseCaseTest {
     private val gameStateRepo = mockk<GameStateRepository>()
     private val projectRepo = mockk<ProjectRepository>()
     private val unlockStore = mockk<AchievementUnlockStore>(relaxed = true)
+    private val minigameStore = mockk<MinigameUnlockStore>(relaxed = true) {
+        every { outcomeFor(any()) } returns null
+    }
     private lateinit var useCase: InvestUseCase
 
     private val testProject = Project(
@@ -38,7 +42,7 @@ class InvestUseCaseTest {
 
     @Before
     fun setup() {
-        useCase = InvestUseCase(gameStateRepo, projectRepo, unlockStore)
+        useCase = InvestUseCase(gameStateRepo, projectRepo, unlockStore, minigameStore)
     }
 
     @Test

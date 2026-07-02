@@ -11,6 +11,8 @@ data class DailyUpdate(
     val payoutStatus: PayoutStatus,
     val announcement: AnnouncementType?,
     val redFlags: List<String>,
+    /** Род случайного события из каталога RandomEvents (null = обычная весть). */
+    val eventKind: DailyEventKind? = null,
     val timestamp: Long = System.currentTimeMillis()
 )
 

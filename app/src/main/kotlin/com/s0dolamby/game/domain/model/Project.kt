@@ -54,6 +54,13 @@ data class Project(
 
     // Динамическое состояние (обновляется каждый день)
     val isWithdrawalLocked: Boolean = false,
+    /**
+     * Выпало «предложение, от которого нельзя отказаться» (см. MafiaOffers).
+     * Прибыльному SURVIVOR/UNICORN за 2-3 дня до автозакрытия с шансом 60%
+     * прилетает угроза: выйди руками — заберёшь всё; дотянешь до
+     * автозакрытия — получишь только 50%.
+     */
+    val mafiaOfferIssued: Boolean = false,
     val currentUserCount: Int = 0,
     val userCountHistory: List<Int> = emptyList(),
     val apyHistory: List<Float> = emptyList()

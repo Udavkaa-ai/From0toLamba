@@ -37,6 +37,7 @@ fun UpdateEntity.toDomain(gson: com.google.gson.Gson) = DailyUpdate(
     payoutStatus = PayoutStatus.valueOf(payoutStatus),
     announcement = announcement?.let { AnnouncementType.valueOf(it) },
     redFlags = gson.fromJson(redFlags, Array<String>::class.java).toList(),
+    eventKind = eventKind?.let { com.s0dolamby.game.domain.model.DailyEventKind.valueOf(it) },
     timestamp = timestamp
 )
 
@@ -51,5 +52,6 @@ fun DailyUpdate.toEntity(gson: com.google.gson.Gson) = UpdateEntity(
     payoutStatus = payoutStatus.name,
     announcement = announcement?.name,
     redFlags = gson.toJson(redFlags),
+    eventKind = eventKind?.name,
     timestamp = timestamp
 )

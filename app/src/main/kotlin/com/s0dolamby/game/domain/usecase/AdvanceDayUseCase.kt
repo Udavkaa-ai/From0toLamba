@@ -2,13 +2,20 @@ package com.s0dolamby.game.domain.usecase
 
 import com.s0dolamby.game.data.achievements.AchievementUnlockStore
 import com.s0dolamby.game.data.logging.AppLogger
-import com.s0dolamby.game.domain.model.AnnouncementType
+import com.s0dolamby.game.domain.events.EventKind
+import com.s0dolamby.game.domain.events.MafiaOffers
+import com.s0dolamby.game.domain.events.RandomEvents
+import com.s0dolamby.game.domain.model.DailyEventKind
 import com.s0dolamby.game.domain.model.DailyUpdate
+import com.s0dolamby.game.domain.model.GameState
+import com.s0dolamby.game.domain.model.PayoutStatus
 import com.s0dolamby.game.domain.model.Project
 import com.s0dolamby.game.domain.model.ProjectFate
 import com.s0dolamby.game.domain.repository.AmaRepository
 import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.s0dolamby.game.domain.repository.ProjectRepository
+import com.s0dolamby.game.domain.repository.UpdateRepository
+import java.util.UUID
 import javax.inject.Inject
 import kotlin.random.Random
 
@@ -16,6 +23,7 @@ class AdvanceDayUseCase @Inject constructor(
     private val gameStateRepository: GameStateRepository,
     private val projectRepository: ProjectRepository,
     private val amaRepository: AmaRepository,
+    private val updateRepository: UpdateRepository,
     private val generateProjectUseCase: GenerateProjectUseCase,
     private val generateDailyUpdatesUseCase: GenerateDailyUpdatesUseCase,
     private val achievementUnlockStore: AchievementUnlockStore
@@ -23,8 +31,8 @@ class AdvanceDayUseCase @Inject constructor(
     // Каждый игровой день засчитывается как 10 реальных — держит прогресс интересным
     private val YIELD_MULTIPLIER = 10.0
 
-    // 10% шанс случайного события на проект в день
-    private val EVENT_CHANCE = 0.10f
+    /** Бонус к дневной доходности за уровень связи с архетипом (+1%/уровень, макс +10%). */
+    private val TIE_BONUS_PER_LEVEL = 0.01
 
     suspend operator fun invoke(): Result<List<DailyUpdate>> = runCatching {
         val state = gameStateRepository.getGameState()
@@ -93,16 +101,27 @@ class AdvanceDayUseCase @Inject constructor(
                     }
                 }
 
-                // Обычный крах (не скам-судьбы) — HONEST_FAIL не считается пропущенным мошенником
+                // Обычный крах (не скам-судьбы).
+                // Прибыльное SURVIVOR/UNICORN с выданным мафия-офером, которое игрок
+                // дотянул до автозакрытия — принудительный выкуп: возвращается лишь 50%.
                 newDaysUntilCollapse != null && newDaysUntilCollapse <= 0 -> {
-                    val lossPercent = when (project.fate) {
-                        ProjectFate.HONEST_FAIL -> Random.nextDouble(0.10, 0.40)
+                    val isProfitable = project.currentValueRubles > project.investedAmountRubles
+                    val mafiaForced = isProfitable && project.mafiaOfferIssued &&
+                        (project.fate == ProjectFate.SURVIVOR || project.fate == ProjectFate.UNICORN)
+                    val lossPercent = when {
+                        mafiaForced -> 1 - MafiaOffers.FORCED_CLOSURE_RETURN_PERCENT
+                        project.fate == ProjectFate.HONEST_FAIL -> Random.nextDouble(0.10, 0.40)
                         else -> 0.0
+                    }
+                    val closureReason = if (mafiaForced) {
+                        MafiaOffers.pick(project.id).closure
+                    } else {
+                        buildClosureReason(project.fate)
                     }
                     val returned = project.currentValueRubles * (1 - lossPercent)
                     balanceDelta += returned
                     gameStateRepository.recordReturn(returned)
-                    projectRepository.closeProject(project.id, buildClosureReason(project.fate), returned)
+                    projectRepository.closeProject(project.id, closureReason, returned)
                     // Только INSTANT_SCAM/SLOW_DRAIN с вложениями = пропущенный мошенник
                     gameStateRepository.awardArchetypeProgress(
                         project.personaArchetype,
@@ -112,7 +131,11 @@ class AdvanceDayUseCase @Inject constructor(
 
                 // Обычный день — начисляем доход внутри проекта, возможно случайное событие
                 else -> {
-                    val dailyYield = project.investedAmountRubles * project.realDailyYieldRubles * YIELD_MULTIPLIER
+                    // Доходность = базовая × 10 (игровой день) + бонус за связь с
+                    // дельцом-архетипом (+1% за уровень, макс +10% в день) — как в TG.
+                    val tieBonus = tieBonusFor(state, project)
+                    val dailyYield = project.investedAmountRubles *
+                        (project.realDailyYieldRubles + tieBonus) * YIELD_MULTIPLIER
                     // Доход прирастает в currentValueRubles, не в свободном балансе
                     val (newHistory, newApyHistory) = updateHistories(project, dailyYield)
                     var updatedProject = project.copy(
@@ -125,18 +148,67 @@ class AdvanceDayUseCase @Inject constructor(
                     )
                     projectRepository.updateProject(updatedProject)
 
-                    // ── Случайное событие ──────────────────────────────────────
-                    val event = rollEvent(updatedProject)
-                    if (event != null) {
-                        val result = applyEvent(updatedProject, event)
-                        // Событие меняет currentValueRubles проекта, а не свободный баланс
-                        projectRepository.updateProject(result.project)
-                        updatedProject = result.project
-                        AppLogger.i("AdvanceDayUseCase", "Event $event on ${project.claimedName}, delta=${result.balanceDelta}")
+                    // ── «Предложение, от которого нельзя отказаться» ────────────
+                    // Прибыльному SURVIVOR/UNICORN за 2-3 дня до автозакрытия с
+                    // шансом 60% прилетает мафия-угроза. Она вытесняет случайное
+                    // событие этого дня (двух драм в один день не бывает).
+                    val inMafiaWindow = newDaysUntilCollapse in MafiaOffers.OFFER_DAYS_BEFORE &&
+                        (project.fate == ProjectFate.SURVIVOR || project.fate == ProjectFate.UNICORN) &&
+                        updatedProject.currentValueRubles > updatedProject.investedAmountRubles &&
+                        updatedProject.investedAmountRubles > 0 &&
+                        !project.mafiaOfferIssued
+                    if (inMafiaWindow && Random.nextDouble() < MafiaOffers.OFFER_CHANCE) {
+                        updatedProject = updatedProject.copy(mafiaOfferIssued = true)
+                        projectRepository.updateProject(updatedProject)
+                        val offer = MafiaOffers.pick(project.id)
+                        val update = DailyUpdate(
+                            id = UUID.randomUUID().toString(),
+                            projectId = updatedProject.id,
+                            projectName = updatedProject.claimedName,
+                            day = updatedProject.daysSinceJoined,
+                            title = "Предложение, от которого нельзя отказаться",
+                            body = MafiaOffers.renderWarning(offer, updatedProject.claimedName),
+                            userCountDelta = 0,
+                            payoutStatus = PayoutStatus.NORMAL,
+                            announcement = null,
+                            redFlags = emptyList(),
+                            eventKind = DailyEventKind.NEGATIVE
+                        )
+                        updateRepository.saveUpdate(update)
+                        generatedUpdates.add(update)
+                        AppLogger.i("AdvanceDayUseCase", "Mafia offer '${offer.id}' issued to ${project.claimedName}")
+                        continue
+                    }
 
-                        generateDailyUpdatesUseCase(updatedProject, event)
-                            .onSuccess { generatedUpdates.add(it) }
-                            .onFailure { e -> AppLogger.e("AdvanceDayUseCase", "Event update failed: ${e.message}") }
+                    // ── Случайное событие из каталога (порт TG randomEvents) ────
+                    // Шанс 20-35%, INSTANT_SCAM получает только позитив/нейтраль,
+                    // fateBias утраивает вес подходящих событий.
+                    val event = RandomEvents.pick(updatedProject.type, updatedProject.fate)
+                    if (event != null) {
+                        val (newValue, delta) = RandomEvents.applyEffect(event, updatedProject.currentValueRubles)
+                        updatedProject = updatedProject.copy(currentValueRubles = newValue)
+                        projectRepository.updateProject(updatedProject)
+                        AppLogger.i("AdvanceDayUseCase", "Event ${event.id} on ${project.claimedName}, delta=$delta")
+
+                        val update = DailyUpdate(
+                            id = UUID.randomUUID().toString(),
+                            projectId = updatedProject.id,
+                            projectName = updatedProject.claimedName,
+                            day = updatedProject.daysSinceJoined,
+                            title = event.title,
+                            body = RandomEvents.renderBody(event, updatedProject.claimedName, delta),
+                            userCountDelta = eventUserDelta(event.kind, updatedProject.currentUserCount),
+                            payoutStatus = PayoutStatus.NORMAL,
+                            announcement = null,
+                            redFlags = emptyList(),
+                            eventKind = when (event.kind) {
+                                EventKind.POSITIVE -> DailyEventKind.POSITIVE
+                                EventKind.NEGATIVE -> DailyEventKind.NEGATIVE
+                                EventKind.NEUTRAL -> DailyEventKind.NEUTRAL
+                            }
+                        )
+                        updateRepository.saveUpdate(update)
+                        generatedUpdates.add(update)
                     } else {
                         generateDailyUpdatesUseCase(updatedProject)
                             .onSuccess { generatedUpdates.add(it) }
@@ -188,104 +260,19 @@ class AdvanceDayUseCase @Inject constructor(
         generatedUpdates
     }
 
-    // ─── Система случайных событий ────────────────────────────────────────────
+    // ─── Вспомогательные события ─────────────────────────────────────────────
 
-    private fun rollEvent(project: Project): AnnouncementType? {
-        if (Random.nextFloat() > EVENT_CHANCE) return null
-        val candidates = when (project.fate) {
-            ProjectFate.INSTANT_SCAM -> listOf(
-                AnnouncementType.CRIMINAL_CASE, AnnouncementType.CRIMINAL_CASE,
-                AnnouncementType.HACK, AnnouncementType.BAD_RUMOR
-            )
-            ProjectFate.SLOW_DRAIN -> listOf(
-                AnnouncementType.BAD_RUMOR, AnnouncementType.BAD_RUMOR,
-                AnnouncementType.HACK, AnnouncementType.CRIMINAL_CASE
-            )
-            ProjectFate.UNICORN -> listOf(
-                AnnouncementType.LISTING, AnnouncementType.LISTING,
-                AnnouncementType.VIP_COLLAB, AnnouncementType.VIP_COLLAB,
-                AnnouncementType.BAD_RUMOR
-            )
-            ProjectFate.SURVIVOR -> listOf(
-                AnnouncementType.VIP_COLLAB, AnnouncementType.LISTING,
-                AnnouncementType.BAD_RUMOR, AnnouncementType.BAD_RUMOR
-            )
-            ProjectFate.HONEST_FAIL -> listOf(
-                AnnouncementType.BAD_RUMOR, AnnouncementType.VIP_COLLAB,
-                AnnouncementType.HACK, AnnouncementType.CRIMINAL_CASE
-            )
-        }
-        return candidates.random()
+    /** Бонус к дневной доходности за уровень связи с архетипом дела (+1%/уровень). */
+    private fun tieBonusFor(state: GameState, project: Project): Double {
+        val level = state.tieLevels[project.personaArchetype] ?: 0
+        return level.coerceIn(0, GameState.MAX_TIE_LEVEL) * TIE_BONUS_PER_LEVEL
     }
 
-    private data class EventResult(val project: Project, val balanceDelta: Double)
-
-    private fun applyEvent(project: Project, event: AnnouncementType): EventResult {
-        return when (event) {
-            AnnouncementType.LISTING -> {
-                val multiplier = Random.nextDouble(1.5, 4.0)
-                val gain = project.investedAmountRubles * (multiplier - 1)
-                EventResult(
-                    project = project.copy(
-                        currentValueRubles = project.currentValueRubles * multiplier,
-                        currentUserCount = project.currentUserCount + Random.nextInt(5000, 50000),
-                        daysUntilCollapse = project.daysUntilCollapse?.let { it + Random.nextInt(5, 15) }
-                    ),
-                    balanceDelta = gain
-                )
-            }
-            AnnouncementType.VIP_COLLAB -> {
-                val gain = project.investedAmountRubles * Random.nextDouble(0.10, 0.35)
-                EventResult(
-                    project = project.copy(
-                        currentValueRubles = project.currentValueRubles * Random.nextDouble(1.10, 1.40),
-                        currentUserCount = project.currentUserCount + Random.nextInt(2000, 15000)
-                    ),
-                    balanceDelta = gain
-                )
-            }
-            AnnouncementType.BAD_RUMOR -> {
-                val loss = project.investedAmountRubles * Random.nextDouble(0.05, 0.20)
-                EventResult(
-                    project = project.copy(
-                        currentValueRubles = maxOf(0.0, project.currentValueRubles - loss),
-                        currentUserCount = maxOf(100, project.currentUserCount - Random.nextInt(2000, 10000))
-                    ),
-                    balanceDelta = -loss
-                )
-            }
-            AnnouncementType.CRIMINAL_CASE -> {
-                val loss = project.investedAmountRubles * Random.nextDouble(0.20, 0.60)
-                val newCollapse = project.daysUntilCollapse
-                    ?.let { minOf(it, Random.nextInt(2, 5)) }
-                    ?: Random.nextInt(2, 5)
-                EventResult(
-                    project = project.copy(
-                        currentValueRubles = maxOf(0.0, project.currentValueRubles - loss),
-                        currentUserCount = maxOf(100, project.currentUserCount - Random.nextInt(10000, 50000)),
-                        isWithdrawalLocked = true,
-                        daysUntilCollapse = newCollapse
-                    ),
-                    balanceDelta = -loss
-                )
-            }
-            AnnouncementType.HACK -> {
-                val loss = project.investedAmountRubles * Random.nextDouble(0.15, 0.45)
-                val newCollapse = project.daysUntilCollapse
-                    ?.let { minOf(it, Random.nextInt(3, 7)) }
-                    ?: Random.nextInt(3, 7)
-                EventResult(
-                    project = project.copy(
-                        currentValueRubles = maxOf(0.0, project.currentValueRubles - loss),
-                        currentUserCount = maxOf(100, project.currentUserCount - Random.nextInt(3000, 20000)),
-                        isWithdrawalLocked = true,
-                        daysUntilCollapse = newCollapse
-                    ),
-                    balanceDelta = -loss
-                )
-            }
-            else -> EventResult(project = project, balanceDelta = 0.0)
-        }
+    /** Дельта вкладчиков после события — позитив ~+3-5%, негатив ~−3-7%. */
+    private fun eventUserDelta(kind: EventKind, currentUserCount: Int): Int = when (kind) {
+        EventKind.POSITIVE -> (currentUserCount * Random.nextDouble(0.03, 0.05)).toInt()
+        EventKind.NEGATIVE -> -(currentUserCount * Random.nextDouble(0.03, 0.07)).toInt()
+        EventKind.NEUTRAL -> 0
     }
 
     // ─── Вспомогательные ──────────────────────────────────────────────────────
