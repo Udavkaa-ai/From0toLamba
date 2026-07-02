@@ -10,7 +10,9 @@ data class AppSettings(
     /** Язык интерфейса: "ru" / "en". */
     val language: String = "ru",
     /** Звуковые эффекты (щелчки, колокольчики, шелест пергамента). */
-    val soundEnabled: Boolean = true
+    val soundEnabled: Boolean = true,
+    /** Фоновая музыка (сказочная тема по кругу). */
+    val musicEnabled: Boolean = true
 )
 
 data class ModelOption(val label: String, val modelId: String)

@@ -17,5 +17,8 @@ data class SettingsEntity(
     val language: String = "ru",
     // Звуковые эффекты (SoundEngine): true = включены.
     @androidx.room.ColumnInfo(defaultValue = "1")
-    val soundEnabled: Boolean = true
+    val soundEnabled: Boolean = true,
+    // Фоновая музыка (MusicEngine): true = играет.
+    @androidx.room.ColumnInfo(defaultValue = "1")
+    val musicEnabled: Boolean = true
 )

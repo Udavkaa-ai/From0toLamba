@@ -21,7 +21,8 @@ class SettingsRepositoryImpl @Inject constructor(
                 nickname = settings.nickname.take(20).trim(),
                 themeMode = settings.themeMode.name,
                 language = settings.language,
-                soundEnabled = settings.soundEnabled
+                soundEnabled = settings.soundEnabled,
+                musicEnabled = settings.musicEnabled
             )
         )
     }
@@ -41,6 +42,7 @@ class SettingsRepositoryImpl @Inject constructor(
             nickname = nickname,
             themeMode = ThemeMode.fromName(themeMode),
             language = language.ifBlank { "ru" },
-            soundEnabled = soundEnabled
+            soundEnabled = soundEnabled,
+            musicEnabled = musicEnabled
         )
 }

@@ -252,6 +252,35 @@ fun SettingsScreen(
                             )
                         )
                     }
+                    Spacer(Modifier.height(10.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                Strings.t("settings.music.title"),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = LocalContentColor.current.copy(alpha = 0.9f)
+                            )
+                            Text(
+                                Strings.t("settings.music.hint"),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = LocalContentColorMuted.current
+                            )
+                        }
+                        Switch(
+                            checked = uiState.settings.musicEnabled,
+                            onCheckedChange = viewModel::setMusicEnabled,
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color(0xFF1A0A00),
+                                checkedTrackColor = FairyGold,
+                                uncheckedThumbColor = LocalContentColorMuted.current,
+                                uncheckedTrackColor = LocalContentColor.current.copy(alpha = 0.1f)
+                            )
+                        )
+                    }
                 }
 
                 OrnamentDivider()

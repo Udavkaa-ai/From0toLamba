@@ -3,6 +3,7 @@ package com.s0dolamby.game.presentation.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.s0dolamby.game.data.db.AppDatabase
+import com.s0dolamby.game.data.sound.MusicEngine
 import com.s0dolamby.game.data.sound.SoundEngine
 import com.s0dolamby.game.data.sound.SoundName
 import com.s0dolamby.game.domain.model.AppSettings
@@ -26,6 +27,7 @@ class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val gameStateRepository: GameStateRepository,
     private val soundEngine: SoundEngine,
+    private val musicEngine: MusicEngine,
     private val db: AppDatabase
 ) : ViewModel() {
 
@@ -70,6 +72,15 @@ class SettingsViewModel @Inject constructor(
         // Мгновенный отклик + демонстрация звука при включении.
         soundEngine.muted = !enabled
         if (enabled) soundEngine.play(SoundName.TAP)
+    }
+
+    fun setMusicEnabled(enabled: Boolean) {
+        val updated = _uiState.value.settings.copy(musicEnabled = enabled)
+        _uiState.value = _uiState.value.copy(settings = updated)
+        viewModelScope.launch { settingsRepository.updateSettings(updated) }
+        // Room-флоу донесёт до MusicEngine через MainActivity, но включаем
+        // сразу — чтобы тема заиграла без задержки на запись в БД.
+        musicEngine.setEnabled(enabled)
     }
 
     // setImageGenerationEnabled удалён — обложки теперь из стока, переключать нечего.

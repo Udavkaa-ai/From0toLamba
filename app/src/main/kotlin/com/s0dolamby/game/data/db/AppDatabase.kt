@@ -30,7 +30,8 @@ import com.s0dolamby.game.data.db.entity.*
     // ребут процесса, иначе после passing-перехода обратно к Inbox игроку
     // снова предлагают мини-игру.
     // v19: добавлен soundEnabled в settings (звуковые эффекты SoundEngine).
-    version = 19,
+    // v20: добавлен musicEnabled в settings (фоновая музыка MusicEngine).
+    version = 20,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

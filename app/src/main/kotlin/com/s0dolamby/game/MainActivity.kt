@@ -25,15 +25,19 @@ class MainActivity : ComponentActivity() {
 
     @Inject lateinit var settingsRepository: SettingsRepository
     @Inject lateinit var soundEngine: com.s0dolamby.game.data.sound.SoundEngine
+    @Inject lateinit var musicEngine: com.s0dolamby.game.data.sound.MusicEngine
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val settingsFlow = settingsRepository.observeSettings()
             .stateIn(lifecycleScope, SharingStarted.Eagerly, com.s0dolamby.game.domain.model.AppSettings())
-        // SoundEngine — singleton вне Compose; синхронизируем mute с настройками.
+        // Sound/Music — singleton'ы вне Compose; синхронизируем с настройками.
         lifecycleScope.launch {
-            settingsFlow.collect { soundEngine.muted = !it.soundEnabled }
+            settingsFlow.collect {
+                soundEngine.muted = !it.soundEnabled
+                musicEngine.setEnabled(it.musicEnabled)
+            }
         }
         setContent {
             val settings by settingsFlow.collectAsState()
@@ -46,5 +50,22 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        musicEngine.onForeground()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // Сворачивание/блокировка экрана — глушим фоновую тему (как в TG
+        // при visibilitychange).
+        musicEngine.onBackground()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (isFinishing) musicEngine.release()
     }
 }
