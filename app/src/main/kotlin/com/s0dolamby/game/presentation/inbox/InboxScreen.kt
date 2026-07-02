@@ -30,6 +30,7 @@ import com.s0dolamby.game.domain.model.Project
 import com.s0dolamby.game.domain.model.ProjectType
 import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
+import com.s0dolamby.game.presentation.common.components.AppBg
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
 import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.FairyGold
@@ -53,7 +54,7 @@ fun InboxScreen(
     val unlocks by viewModel.unlockOutcomes.collectAsState()
     var adPromptForProjectId by remember { mutableStateOf<String?>(null) }
 
-    ScreenBackground(R.drawable.inbox_bg) {
+    ScreenBackground(AppBg.INBOX) {
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
@@ -63,9 +64,11 @@ fun InboxScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
+                        // TopAppBar лежит на тёмном фоне экрана в ОБЕИХ темах —
+                        // фиксированное золото, не карточная локаль.
+                        Text("✦", color = FairyGold, fontSize = 12.sp)
                         Text(Strings.t("inbox.title"), fontWeight = FontWeight.Bold)
-                        Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
+                        Text("✦", color = FairyGold, fontSize = 12.sp)
                     }
                 },
                 navigationIcon = {
@@ -150,7 +153,9 @@ fun InboxScreen(
                 TextButton(onClick = {
                     adPromptForProjectId = null
                     onChatAfterAd(pid)
-                }) { Text(Strings.t("inbox.ad.confirm"), color = LocalAccentOnCard.current) }
+                    // Дефолтный AlertDialog — тёмный Material-surface в обеих
+                    // темах: фиксированное золото, не карточная локаль.
+                }) { Text(Strings.t("inbox.ad.confirm"), color = FairyGold) }
             },
             dismissButton = {
                 TextButton(onClick = { adPromptForProjectId = null }) { Text(Strings.t("btn.cancel")) }
@@ -299,7 +304,9 @@ private fun InboxProjectCard(
                 color = LocalContentColor.current.copy(alpha = 0.06f),
                 shape = MaterialTheme.shapes.small,
                 border = androidx.compose.foundation.BorderStroke(
-                    1.dp, Color.White.copy(alpha = 0.20f)
+                    // На пергаменте тёплой темы белая рамка невидима —
+                    // берём цвет контента карточки.
+                    1.dp, LocalContentColor.current.copy(alpha = 0.20f)
                 ),
                 onClick = onChatAfterAd
             ) {

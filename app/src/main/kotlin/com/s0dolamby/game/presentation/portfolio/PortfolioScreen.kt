@@ -29,6 +29,7 @@ import com.s0dolamby.game.R
 import com.s0dolamby.game.domain.model.Project
 import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
+import com.s0dolamby.game.presentation.common.components.AppBg
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
 import com.s0dolamby.game.presentation.common.format.formatGroshes
 import com.s0dolamby.game.presentation.common.format.formatGroshesSigned
@@ -89,7 +90,7 @@ fun PortfolioScreen(
         }
     }
 
-    ScreenBackground(R.drawable.portfolio_bg) {
+    ScreenBackground(AppBg.PORTFOLIO) {
     Scaffold(
         containerColor = Color.Transparent,
         snackbarHost = { com.s0dolamby.game.presentation.common.components.FairySnackbarHost(snackbarHostState) },
@@ -100,9 +101,11 @@ fun PortfolioScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
+                        // TopAppBar лежит на тёмном фоне экрана в ОБЕИХ темах —
+                        // фиксированное золото, не карточная локаль.
+                        Text("✦", color = FairyGold, fontSize = 12.sp)
                         Text(Strings.t("portfolio.title"), fontWeight = FontWeight.Bold)
-                        Text("✦", color = LocalAccentOnCard.current, fontSize = 12.sp)
+                        Text("✦", color = FairyGold, fontSize = 12.sp)
                     }
                 },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, Strings.t("btn.back")) } },
@@ -123,7 +126,7 @@ fun PortfolioScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Text("✦", color = LocalAccentOnCard.current.copy(alpha = 0.4f), fontSize = 28.sp)
+                            Text("✦", color = LocalAccentOnCard.current.copy(alpha = 0.6f), fontSize = 28.sp)
                             Text(
                                 Strings.t("portfolio.empty.title"),
                                 style = MaterialTheme.typography.titleMedium,
@@ -143,10 +146,12 @@ fun PortfolioScreen(
                 item {
                     OrnamentDivider()
                     Spacer(Modifier.height(4.dp))
+                    // Заголовок секции лежит прямо на тёмном фоне экрана —
+                    // фиксированное золото, не карточная локаль.
                     Text(
                         Strings.t("portfolio.section.active"),
                         style = MaterialTheme.typography.titleMedium,
-                        color = LocalAccentOnCard.current.copy(alpha = 0.85f),
+                        color = FairyGold.copy(alpha = 0.85f),
                         fontWeight = FontWeight.SemiBold
                     )
                 }
@@ -170,7 +175,7 @@ fun PortfolioScreen(
                     Text(
                         Strings.t("portfolio.section.closed"),
                         style = MaterialTheme.typography.titleMedium,
-                        color = LocalAccentOnCard.current.copy(alpha = 0.85f),
+                        color = FairyGold.copy(alpha = 0.85f),
                         fontWeight = FontWeight.SemiBold
                     )
                 }

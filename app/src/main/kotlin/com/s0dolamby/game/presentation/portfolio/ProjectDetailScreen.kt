@@ -35,6 +35,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.s0dolamby.game.presentation.common.theme.LocalAccentOnCard
 import com.s0dolamby.game.presentation.common.theme.LocalContentColorMuted
 
 data class ProjectDetailUiState(
@@ -186,8 +187,10 @@ private fun DynamicsCard(project: Project) {
                     verticalAlignment = Alignment.CenterVertically) {
                     Text(Strings.t("detail.dyn.dailyYield"), style = MaterialTheme.typography.bodyMedium,
                         color = LocalContentColorMuted.current)
+                    // Текст на карточке: colorScheme.primary — золото и на
+                    // пергаменте тёплой темы не читается, берём акцент-локаль.
                     Text(Strings.t("detail.dyn.dailyYieldVal", avgApy), style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary)
+                        color = LocalAccentOnCard.current)
                 }
                 SparklineChart(
                     values = project.apyHistory,
@@ -246,9 +249,13 @@ private fun ProjectInfoCard(project: Project) {
                     color = MaterialTheme.colorScheme.surfaceVariant,
                     shape = MaterialTheme.shapes.small
                 ) {
+                    // surfaceVariant ТЁМНЫЙ в обеих темах — без явного цвета
+                    // текст наследовал onCard (тёмная сепия в тёплой теме)
+                    // и пропадал на тёмном чипе.
                     Text(
                         project.type.displayName,
                         style = MaterialTheme.typography.labelSmall,
+                        color = Color.White,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
