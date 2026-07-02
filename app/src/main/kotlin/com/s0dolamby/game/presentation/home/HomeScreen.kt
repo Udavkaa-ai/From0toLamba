@@ -278,6 +278,9 @@ fun HomeScreen(
                 onDismiss = viewModel::clearRankUpNotification
             )
         }
+
+        // Ярмарочная сцена на время advance-day — маскирует генерацию новых дел
+        com.s0dolamby.game.presentation.common.components.DayTransitionOverlay(visible = isLoading)
     }
 }
 
@@ -422,21 +425,14 @@ private fun BalanceCard(
                     fontSize = 12.sp
                 )
                 Spacer(Modifier.height(4.dp))
-                AnimatedContent(
-                    targetState = formatGroshes(balance),
-                    transitionSpec = {
-                        slideInVertically(tween(350)) { it } + fadeIn(tween(250)) togetherWith
-                            slideOutVertically(tween(250)) { -it } + fadeOut(tween(200))
-                    },
-                    label = "balance_counter"
-                ) { text ->
-                    Text(
-                        text,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontSize = 36.sp,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-                }
+                // Плавный перебор цифр от старого баланса к новому — как CountUp в TG
+                val animatedBalance by com.s0dolamby.game.presentation.common.components.rememberCountUp(balance)
+                Text(
+                    formatGroshes(animatedBalance),
+                    color = MaterialTheme.colorScheme.primary,
+                    fontSize = 36.sp,
+                    fontWeight = FontWeight.ExtraBold
+                )
                 OrnamentDivider()
                 Row(
                     modifier = Modifier.fillMaxWidth(),

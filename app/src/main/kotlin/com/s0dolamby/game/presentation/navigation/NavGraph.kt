@@ -18,6 +18,7 @@ import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.s0dolamby.game.presentation.achievements.AchievementUnlockedOverlay
 import com.s0dolamby.game.presentation.ama.AmaScreen
 import com.s0dolamby.game.presentation.common.components.DayBreakOverlay
+import com.s0dolamby.game.presentation.common.components.DayTransitionOverlay
 import com.s0dolamby.game.presentation.home.HomeScreen
 import com.s0dolamby.game.presentation.inbox.InboxScreen
 import com.s0dolamby.game.presentation.leaderboard.LeaderboardScreen
@@ -320,9 +321,12 @@ fun NavGraph() {
     } // NavHost end
 
         // Глобальная плавающая «🌅 Следующий день» — поверх всех «обычных» экранов
+        val dayFabViewModel: GlobalDayFabViewModel = hiltViewModel()
+        val dayAdvancing by dayFabViewModel.isLoading.collectAsState()
         GlobalDayFab(
             visible = showGlobalFab,
-            modifier = Modifier.align(Alignment.BottomEnd)
+            modifier = Modifier.align(Alignment.BottomEnd),
+            viewModel = dayFabViewModel
         )
 
         // BottomNav поверх контента на 5 табовых экранах (как в TG).
@@ -346,5 +350,9 @@ fun NavGraph() {
 
         // Плашка «🌅 Утро дня N» при переходе дня — глобально.
         if (currentDay > 0) DayBreakOverlay(currentDay)
+
+        // Ярмарочная сцена на время advance-day через глобальную кнопку
+        // (на главной свой оверлей — HomeScreen). Маскирует генерацию дел.
+        DayTransitionOverlay(visible = dayAdvancing)
     } // outer Box end
 }

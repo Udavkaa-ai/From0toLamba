@@ -18,6 +18,7 @@ class HomeViewModel @Inject constructor(
     private val gameStateRepository: GameStateRepository,
     private val projectRepository: ProjectRepository,
     private val advanceDayUseCase: AdvanceDayUseCase,
+    private val soundEngine: com.s0dolamby.game.data.sound.SoundEngine,
     settingsRepository: SettingsRepository
 ) : ViewModel() {
 
@@ -52,6 +53,7 @@ class HomeViewModel @Inject constructor(
     fun advanceDay() {
         viewModelScope.launch {
             _isLoading.value = true
+            soundEngine.play(com.s0dolamby.game.data.sound.SoundName.DAY)
             advanceDayUseCase().onSuccess { updates ->
                 _pendingUpdateCards.value = updates
             }

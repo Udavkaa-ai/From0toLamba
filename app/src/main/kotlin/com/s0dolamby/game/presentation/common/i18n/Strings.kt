@@ -399,6 +399,8 @@ object Strings {
         // Плашка-приветствие при смене дня
         "daybreak.title" to "Утро дня %d",
         "daybreak.subtitle" to "Глашатай разносит вести с ярмарки",
+        "daytransition.title" to "На ярмарке светает…",
+        "daytransition.subtitle" to "Гости съезжаются, купцы товар раскладывают — ищешь, куда вложиться сегодня.",
 
         // Онбординг (карточки на главной у нового игрока)
         "intro.howToPlay.title" to "Как играть",
@@ -1011,6 +1013,8 @@ object Strings {
         // Day-break greeting
         "daybreak.title" to "Morning of day %d",
         "daybreak.subtitle" to "The herald spreads news from the fair",
+        "daytransition.title" to "Dawn over the fair…",
+        "daytransition.subtitle" to "Guests are arriving, merchants laying out their wares — where will you invest today?",
 
         // Onboarding cards on Home for new players
         "intro.howToPlay.title" to "How to play",
