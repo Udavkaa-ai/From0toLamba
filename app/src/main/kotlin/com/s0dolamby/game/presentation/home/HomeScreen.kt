@@ -605,7 +605,7 @@ private fun SectionTitle(text: String) {
     )
 }
 
-// ─── Active project card (TG-компактный стиль, без баннера) ──────────────
+// ─── Active project card (TG-стиль: узкий баннер + компактный низ) ────────
 
 @Composable
 private fun ActiveProjectCardCompact(
@@ -634,6 +634,20 @@ private fun ActiveProjectCardCompact(
                     )
                 )
         ) {
+            Column {
+            // Узкая полоса-обложка сверху — как на активных делах в TG
+            com.s0dolamby.game.presentation.common.components.rememberBannerUrl(
+                project.personaArchetype, project.type, project.id
+            )?.let { url ->
+                coil.compose.AsyncImage(
+                    model = url,
+                    contentDescription = null,
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(96.dp)
+                )
+            }
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -694,6 +708,7 @@ private fun ActiveProjectCardCompact(
                     }
                 }
             }
+            } // Column (banner + content)
             CardCornerOrnaments(modifier = Modifier.matchParentSize())
         }
     }

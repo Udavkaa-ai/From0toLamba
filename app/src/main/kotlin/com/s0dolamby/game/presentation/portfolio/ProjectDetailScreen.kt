@@ -320,25 +320,68 @@ private fun PostMortemCard(project: Project, postMortem: PostMortemReport?, isGe
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(Strings.t("detail.postmortem.title"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
 
-            Column(modifier = Modifier.padding(vertical = 4.dp)) {
-                Text(Strings.t("detail.postmortem.archetype"), style = MaterialTheme.typography.labelSmall,
-                    color = LocalContentColorMuted.current)
-                Text(
-                    Strings.t("persona.${project.personaArchetype.name}"),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+            // Раскрытие личины — с портретом дельца и приметами из летописи,
+            // чтобы игрок учился распознавать архетип в следующих делах
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                com.s0dolamby.game.presentation.common.components.PersonaAvatar(
+                    archetype = project.personaArchetype,
+                    size = 52.dp
                 )
+                Column {
+                    Text(Strings.t("detail.postmortem.archetype"), style = MaterialTheme.typography.labelSmall,
+                        color = LocalContentColorMuted.current)
+                    Text(
+                        Strings.t("persona.${project.personaArchetype.name}"),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+            com.s0dolamby.game.presentation.common.i18n.loreFor(
+                com.s0dolamby.game.domain.achievements.RevealTopic(
+                    com.s0dolamby.game.domain.achievements.RevealKind.ARCHETYPE,
+                    project.personaArchetype.name
+                )
+            )?.let { lore ->
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    lore.hints.forEach { hint ->
+                        Text(
+                            "• $hint",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = LocalContentColorMuted.current
+                        )
+                    }
+                }
             }
 
-            Column(modifier = Modifier.padding(vertical = 4.dp)) {
-                Text(Strings.t("detail.postmortem.fate"), style = MaterialTheme.typography.labelSmall,
-                    color = LocalContentColorMuted.current)
-                Text(
-                    project.fate.displayName,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = project.fate.color,
-                    fontWeight = FontWeight.Bold
-                )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                    Text(Strings.t("detail.postmortem.fate"), style = MaterialTheme.typography.labelSmall,
+                        color = LocalContentColorMuted.current)
+                    Text(
+                        project.fate.displayName,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = project.fate.color,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Column(modifier = Modifier.padding(vertical = 4.dp), horizontalAlignment = Alignment.End) {
+                    Text(Strings.t("detail.postmortem.pnl"), style = MaterialTheme.typography.labelSmall,
+                        color = LocalContentColorMuted.current)
+                    val pnl = project.currentValueRubles - project.investedAmountRubles
+                    Text(
+                        com.s0dolamby.game.presentation.common.format.formatGroshesSigned(pnl),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = if (pnl >= 0) Success else Error,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
 
             Divider(color = LocalContentColor.current.copy(alpha = 0.15f))
