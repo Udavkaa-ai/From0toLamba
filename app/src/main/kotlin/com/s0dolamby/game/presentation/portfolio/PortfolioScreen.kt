@@ -458,6 +458,9 @@ private fun FundsBottomSheet(
         containerColor = palette.cardMid,
         contentColor = palette.onCard
     ) {
+        // Без провайдера LocalAccentOnCard оставался дефолтным золотом —
+        // на пергаменте тёплой темы чип «Свободно» и поле не читались.
+        com.s0dolamby.game.presentation.common.components.ProvideOnCardColors {
         Column(
             modifier = Modifier.padding(horizontal = 24.dp).padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -467,7 +470,7 @@ private fun FundsBottomSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(title, style = MaterialTheme.typography.titleLarge)
+                Text(title, style = MaterialTheme.typography.titleLarge, color = LocalContentColor.current)
                 Surface(
                     color = LocalAccentOnCard.current.copy(alpha = 0.15f),
                     shape = MaterialTheme.shapes.small
@@ -476,6 +479,7 @@ private fun FundsBottomSheet(
                         Strings.t("portfolio.addSheet.free", formatRubles(freeBalance)),
                         style = MaterialTheme.typography.labelMedium,
                         color = LocalAccentOnCard.current,
+                        fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                     )
                 }
@@ -484,8 +488,9 @@ private fun FundsBottomSheet(
                 value = amountText,
                 onValueChange = { amountText = it.filter { c -> c.isDigit() || c == '.' } },
                 label = { Text(Strings.t("portfolio.addSheet.amountLabel")) },
-                suffix = { Text("г") },
-                modifier = Modifier.fillMaxWidth()
+                suffix = { Text("г", color = LocalContentColor.current) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = com.s0dolamby.game.presentation.common.components.fairyOnCardTextFieldColors()
             )
             if (maxAmount != null) {
                 Text(
@@ -498,9 +503,15 @@ private fun FundsBottomSheet(
                 onClick = { amount?.let { onConfirm(it) } },
                 enabled = isValid,
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = FairyGold, contentColor = Color(0xFF1A0A00))
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = FairyGold,
+                    contentColor = Color(0xFF1A0A00),
+                    disabledContainerColor = FairyGold.copy(alpha = 0.35f),
+                    disabledContentColor = Color(0xFF1A0A00).copy(alpha = 0.6f)
+                )
             ) { Text(confirmLabel, fontWeight = FontWeight.SemiBold) }
         }
+        } // ProvideOnCardColors
     }
 }
 
@@ -550,9 +561,10 @@ private fun WithdrawBottomSheet(
                     value = amountText,
                     onValueChange = { amountText = it.filter { c -> c.isDigit() || c == '.' } },
                     label = { Text(Strings.t("portfolio.addSheet.amountLabel")) },
-                    suffix = { Text("г") },
+                    suffix = { Text("г", color = palette.onCard) },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = com.s0dolamby.game.presentation.common.components.fairyOnCardTextFieldColors()
                 )
                 Text(
                     Strings.t("portfolio.withdraw.availLimit", project.currentValueRubles, effectiveMax),
@@ -563,7 +575,8 @@ private fun WithdrawBottomSheet(
                     Text(
                         Strings.t("portfolio.withdraw.netGain", amount * 0.75),
                         style = MaterialTheme.typography.bodySmall,
-                        color = LocalAccentOnCard.current,
+                        // Диалог на карточном фоне — акцент из палитры, не из локали
+                        color = palette.accentOnCard,
                         fontWeight = FontWeight.Medium
                     )
                 }

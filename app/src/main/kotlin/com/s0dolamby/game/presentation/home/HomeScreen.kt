@@ -413,6 +413,7 @@ private fun BalanceCard(
                     )
                 )
         ) {
+            com.s0dolamby.game.presentation.common.components.ProvideOnCardColors {
             Column(
                 modifier = Modifier
                     .padding(20.dp)
@@ -444,6 +445,7 @@ private fun BalanceCard(
                     MetricColumn(Strings.t("home.metric.dealsTaken"), "$dealsTaken", LocalContentColor.current)
                 }
             }
+            } // ProvideOnCardColors
             CardCornerOrnaments(modifier = Modifier.matchParentSize())
         }
     }
@@ -475,6 +477,7 @@ private fun MerchantRelationsCard(
                     )
                 )
         ) {
+            com.s0dolamby.game.presentation.common.components.ProvideOnCardColors {
             Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -510,6 +513,7 @@ private fun MerchantRelationsCard(
                     }
                 }
             }
+            } // ProvideOnCardColors
             CardCornerOrnaments(modifier = Modifier.matchParentSize())
         }
     }
@@ -561,14 +565,16 @@ private fun LetopisChip(count: Int, onClick: () -> Unit) {
                 .border(1.dp, palette.cardBorder.copy(alpha = 0.55f), RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center
         ) {
-            Row(
-                modifier = Modifier.padding(vertical = 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text("📖", fontSize = 18.sp)
-                Text(Strings.t("home.letopis"), color = LocalAccentOnCard.current, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                Text("($count)", color = LocalContentColorMuted.current, fontSize = 13.sp)
+            com.s0dolamby.game.presentation.common.components.ProvideOnCardColors {
+                Row(
+                    modifier = Modifier.padding(vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("📖", fontSize = 18.sp)
+                    Text(Strings.t("home.letopis"), color = LocalAccentOnCard.current, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    Text("($count)", color = LocalContentColorMuted.current, fontSize = 13.sp)
+                }
             }
         }
     }
@@ -634,6 +640,7 @@ private fun ActiveProjectCardCompact(
                     )
                 )
         ) {
+            com.s0dolamby.game.presentation.common.components.ProvideOnCardColors {
             Column {
             // Узкая полоса-обложка сверху — как на активных делах в TG
             com.s0dolamby.game.presentation.common.components.rememberBannerUrl(
@@ -709,6 +716,7 @@ private fun ActiveProjectCardCompact(
                 }
             }
             } // Column (banner + content)
+            } // ProvideOnCardColors
             CardCornerOrnaments(modifier = Modifier.matchParentSize())
         }
     }
@@ -735,18 +743,20 @@ private fun InboxPromoCard(onClick: () -> Unit) {
                     )
                 )
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    Strings.t("home.inboxPromo"),
-                    color = LocalContentColor.current,
-                    fontSize = 14.sp
-                )
-                Text(
-                    Strings.t("home.inboxPromo.sub"),
-                    color = LocalContentColorMuted.current,
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
+            com.s0dolamby.game.presentation.common.components.ProvideOnCardColors {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        Strings.t("home.inboxPromo"),
+                        color = LocalContentColor.current,
+                        fontSize = 14.sp
+                    )
+                    Text(
+                        Strings.t("home.inboxPromo.sub"),
+                        color = LocalContentColorMuted.current,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
             }
             CardCornerOrnaments(modifier = Modifier.matchParentSize())
         }
@@ -781,16 +791,18 @@ private fun EmptyHomeCard(onInboxClick: () -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text("✦", color = LocalAccentOnCard.current.copy(alpha = 0.4f), fontSize = 28.sp)
+                // Фон этой карточки всегда тёмно-фиолетовый (обе темы) —
+                // цвета фиксированные светлые, не из onCard-локалей
+                Text("✦", color = FairyGold.copy(alpha = 0.5f), fontSize = 28.sp)
                 Text(
                     Strings.t("home.inbox.empty"),
-                    color = LocalContentColor.current,
+                    color = Color.White,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
                     Strings.t("home.inbox.empty.hint"),
-                    color = LocalContentColorMuted.current,
+                    color = Color.White.copy(alpha = 0.7f),
                     fontSize = 13.sp
                 )
                 Button(

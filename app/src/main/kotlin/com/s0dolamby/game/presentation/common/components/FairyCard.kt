@@ -31,6 +31,25 @@ import com.s0dolamby.game.presentation.common.theme.LocalContentColorSecondary
  * текста задан жёстко (`color = Color.White`), переезжают на
  * `LocalContentColor.current` или на `palette.onCard*` порционно.
  */
+/**
+ * Провайдит те же цветовые локали, что и [FairyCard] — для КАСТОМНЫХ
+ * карточек (свой Card/Box с palette.cardTop-градиентом), которые не
+ * используют FairyCard напрямую. Без этого `LocalContentColorMuted` и
+ * прочие возвращают дефолтный полупрозрачный белый: на пергаменте тёплой
+ * темы текст исчезает, на тёмной — едва виден.
+ */
+@Composable
+fun ProvideOnCardColors(content: @Composable () -> Unit) {
+    val palette = LocalAppPalette.current
+    CompositionLocalProvider(
+        LocalContentColor provides palette.onCard,
+        LocalContentColorSecondary provides palette.onCardSecondary,
+        LocalContentColorMuted provides palette.onCardMuted,
+        LocalAccentOnCard provides palette.accentOnCard,
+        content = content
+    )
+}
+
 @Composable
 fun FairyCard(
     modifier: Modifier = Modifier,
@@ -53,12 +72,7 @@ fun FairyCard(
                     .fillMaxWidth()
                     .background(Brush.verticalGradient(colors = listOf(palette.cardTop, palette.cardMid, palette.cardBottom)))
             ) {
-                CompositionLocalProvider(
-                    LocalContentColor provides palette.onCard,
-                    LocalContentColorSecondary provides palette.onCardSecondary,
-                    LocalContentColorMuted provides palette.onCardMuted,
-                    LocalAccentOnCard provides palette.accentOnCard
-                ) {
+                ProvideOnCardColors {
                     headerContent?.invoke()
                     Column(
                         modifier = Modifier.padding(innerPadding.dp),

@@ -718,6 +718,10 @@ private fun InvestBottomSheet(freeBalance: Double, onDismiss: () -> Unit, onInve
         containerColor = palette.cardMid,
         contentColor = palette.onCard
     ) {
+        // Шит лежит на пергаменте/фиолете карточного цвета — без провайдера
+        // LocalAccentOnCard и поле ввода брали цвета тёмной Material-схемы
+        // (золото и белый на пергаменте не читались).
+        com.s0dolamby.game.presentation.common.components.ProvideOnCardColors {
         Column(
             modifier = Modifier.padding(horizontal = 24.dp).padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -727,7 +731,11 @@ private fun InvestBottomSheet(freeBalance: Double, onDismiss: () -> Unit, onInve
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(Strings.t("ama.invest.title"), style = MaterialTheme.typography.titleLarge)
+                Text(
+                    Strings.t("ama.invest.title"),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = LocalContentColor.current
+                )
                 Surface(
                     color = LocalAccentOnCard.current.copy(alpha = 0.15f),
                     shape = MaterialTheme.shapes.small
@@ -736,6 +744,7 @@ private fun InvestBottomSheet(freeBalance: Double, onDismiss: () -> Unit, onInve
                         Strings.t("ama.invest.free", formatRubles(freeBalance)),
                         style = MaterialTheme.typography.labelMedium,
                         color = LocalAccentOnCard.current,
+                        fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                     )
                 }
@@ -744,21 +753,39 @@ private fun InvestBottomSheet(freeBalance: Double, onDismiss: () -> Unit, onInve
                 value = amountText,
                 onValueChange = { amountText = it.filter { c -> c.isDigit() || c == '.' } },
                 label = { Text(Strings.t("ama.invest.amount")) },
-                suffix = { Text("г") },
-                modifier = Modifier.fillMaxWidth()
+                suffix = { Text("г", color = LocalContentColor.current) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = LocalContentColor.current,
+                    unfocusedTextColor = LocalContentColor.current,
+                    focusedBorderColor = LocalAccentOnCard.current,
+                    unfocusedBorderColor = LocalAccentOnCard.current.copy(alpha = 0.5f),
+                    cursorColor = LocalAccentOnCard.current,
+                    focusedLabelColor = LocalAccentOnCard.current,
+                    unfocusedLabelColor = LocalContentColorMuted.current,
+                    focusedContainerColor = LocalContentColor.current.copy(alpha = 0.04f),
+                    unfocusedContainerColor = LocalContentColor.current.copy(alpha = 0.02f)
+                )
             )
             Text(
                 Strings.t("ama.invest.minimum"),
                 style = MaterialTheme.typography.labelSmall,
-                color = palette.onCardMuted
+                color = LocalContentColorMuted.current
             )
             Button(
                 onClick = { amount?.let { onInvest(it) } },
                 enabled = amount != null && amount >= 5.0,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = FairyGold,
+                    contentColor = Color(0xFF1A0A00),
+                    disabledContainerColor = FairyGold.copy(alpha = 0.35f),
+                    disabledContentColor = Color(0xFF1A0A00).copy(alpha = 0.6f)
+                )
             ) {
-                Text(Strings.t("ama.invest.confirm"))
+                Text(Strings.t("ama.invest.confirm"), fontWeight = FontWeight.SemiBold)
             }
         }
+        } // ProvideOnCardColors
     }
 }

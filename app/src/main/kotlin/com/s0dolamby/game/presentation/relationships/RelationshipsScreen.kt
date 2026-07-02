@@ -94,7 +94,8 @@ fun RelationshipsScreen(
             ) {
                 Text(
                     Strings.t("rel.subtitle", ui.maxLevel),
-                    color = LocalContentColorMuted.current,
+                    // На тёмном фоне экрана (обе темы) — фиксированный светлый
+                    color = Color.White.copy(alpha = 0.78f),
                     fontSize = 12.sp
                 )
 
@@ -196,9 +197,11 @@ private fun ArchetypeCell(entry: ArchetypeEntry, maxLevel: Int) {
                     Text(emoji, fontSize = 26.sp)
                 }
             }
+            // Фон плитки всегда тёмно-фиолетовый (обе темы) — цвета фиксированные
+            // светлые. Старые alpha 0.35–0.4 у незнакомых типажей были нечитаемы.
             Text(
                 if (seen) name else "?",
-                color = LocalContentColor.current.copy(alpha = if (seen) 0.9f else 0.4f),
+                color = Color.White.copy(alpha = if (seen) 0.95f else 0.7f),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center
@@ -209,14 +212,14 @@ private fun ArchetypeCell(entry: ArchetypeEntry, maxLevel: Int) {
             ) {
                 Text(
                     "🤝 ${entry.tieLevel}/$maxLevel",
-                    color = LocalContentColor.current.copy(alpha = if (entry.tieLevel > 0) 0.85f else 0.4f),
+                    color = Color.White.copy(alpha = if (entry.tieLevel > 0) 0.9f else 0.65f),
                     fontSize = 10.sp,
                     fontWeight = if (entry.tieLevel > 0) FontWeight.SemiBold else FontWeight.Normal
                 )
             }
             Text(
                 "🪙 ${entry.tokens}",
-                color = LocalAccentOnCard.current.copy(alpha = if (entry.tokens > 0) 0.85f else 0.35f),
+                color = FairyGold.copy(alpha = if (entry.tokens > 0) 0.95f else 0.6f),
                 fontSize = 10.sp,
                 fontWeight = if (entry.tokens > 0) FontWeight.SemiBold else FontWeight.Normal
             )
