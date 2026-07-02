@@ -56,6 +56,9 @@ fun BabaYagaCauldronScreen(
 ) {
     var seed by remember { mutableStateOf(System.currentTimeMillis()) }
     var sequence by remember(seed) { mutableStateOf(generateRecipe(seed)) }
+    // Раскладка полки: после КАЖДОГО выбора ингредиенты пересаживаются —
+    // запоминать надо сами ингредиенты, а не их места на полке.
+    var shelfOrder by remember(seed) { mutableStateOf(ALL_INGREDIENTS) }
     var phase by remember(seed) { mutableStateOf(Phase.SHOWCASE) }
     var highlightedIngredient by remember(seed) { mutableStateOf<Ingredient?>(null) }
     var playerInput by remember(seed) { mutableStateOf(emptyList<Ingredient>()) }
@@ -82,6 +85,8 @@ fun BabaYagaCauldronScreen(
             stage = MinigameStage.PLAY
             secondsLeft = INPUT_SECONDS
             playerInput = emptyList()
+            // К началу ввода полка уже перемешана — позиции из показа не помогут
+            shelfOrder = shelfOrder.shuffled()
         }
     }
 
@@ -114,12 +119,16 @@ fun BabaYagaCauldronScreen(
         }
         if (playerInput.size == sequence.size) {
             stage = MinigameStage.RESULT
+        } else {
+            // Полка пересаживается после каждого броска в котёл
+            shelfOrder = shelfOrder.shuffled()
         }
     }
 
     fun restart() {
         seed = System.currentTimeMillis()
         sequence = generateRecipe(seed)
+        shelfOrder = ALL_INGREDIENTS
         phase = Phase.SHOWCASE
         playerInput = emptyList()
         errors = 0
@@ -144,6 +153,7 @@ fun BabaYagaCauldronScreen(
             HeaderHint(phase = phase, sequenceSize = sequence.size, input = playerInput.size)
             Spacer(Modifier.height(8.dp))
             IngredientRow(
+                order = shelfOrder,
                 highlight = highlightedIngredient,
                 enabled = phase == Phase.INPUT,
                 onTap = ::handleTap
@@ -205,21 +215,26 @@ private fun HeaderHint(phase: Phase, sequenceSize: Int, input: Int) {
 
 @Composable
 private fun IngredientRow(
+    order: List<Ingredient>,
     highlight: Ingredient?,
     enabled: Boolean,
     onTap: (Ingredient) -> Unit
 ) {
+    // Кнопки растянуты на всю ширину (weight) — фиксированные 48dp были
+    // мелковаты для тапа. Порядок задаётся снаружи и перемешивается.
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        ALL_INGREDIENTS.forEach { ing ->
-            IngredientButton(
-                ingredient = ing,
-                isHighlighted = highlight == ing,
-                enabled = enabled,
-                onTap = onTap
-            )
+        order.forEach { ing ->
+            Box(modifier = Modifier.weight(1f)) {
+                IngredientButton(
+                    ingredient = ing,
+                    isHighlighted = highlight == ing,
+                    enabled = enabled,
+                    onTap = onTap
+                )
+            }
         }
     }
 }
@@ -246,7 +261,8 @@ private fun IngredientButton(
 
     Box(
         modifier = Modifier
-            .size(48.dp)
+            .fillMaxWidth()
+            .aspectRatio(1f)
             .scale(scale.value)
             .clip(CircleShape)
             .background(bgColor)
@@ -254,7 +270,7 @@ private fun IngredientButton(
             .let { if (enabled) it.clickable { onTap(ingredient) } else it },
         contentAlignment = Alignment.Center
     ) {
-        Text(ingredient.emoji, fontSize = 26.sp)
+        Text(ingredient.emoji, fontSize = 32.sp)
     }
 }
 

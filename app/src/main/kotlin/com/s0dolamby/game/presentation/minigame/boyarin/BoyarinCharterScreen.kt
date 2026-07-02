@@ -50,16 +50,20 @@ private enum class Emblem { STAR, CROSS, CROWN }
  * Печать. Цвет/эмблема/кольца у ВСЕХ печатей поля одинаковые (как у эталона) —
  * подделка выдаёт себя только освещением воска:
  * - [lightAngleDeg] — откуда падает свет (куда смещён центр градиента и блик).
- *   У эталона 225° (верх-лево). У подделок свет повёрнут на 90/180/270°.
+ *   У эталона угол СЛУЧАЙНЫЙ на каждую игру (8 направлений) — раньше свет
+ *   всегда падал сверху-слева и подделки узнавались на автомате.
  * - [inverted] — у подделки light/dark в градиенте поменяны местами
  *   (воск «выпуклый» наоборот — вдавленный).
+ * - [glintStrength] — яркость блика: у части подделок воск «затёрт»,
+ *   блик заметно тусклее эталонного.
  */
 private data class Seal(
     val wax: WaxColor,
     val emblem: Emblem,
     val doubleRing: Boolean,
-    val lightAngleDeg: Float = ETALON_LIGHT_ANGLE,
-    val inverted: Boolean = false
+    val lightAngleDeg: Float = 225f,
+    val inverted: Boolean = false,
+    val glintStrength: Float = 1f
 )
 
 private data class SealCell(
@@ -69,13 +73,20 @@ private data class SealCell(
 )
 
 private fun forgeOf(real: Seal, rng: Random): Seal {
-    return if (rng.nextBoolean()) {
-        // Свет повёрнут на 90/180/270°
-        val delta = listOf(90f, 180f, 270f).random(rng)
-        real.copy(lightAngleDeg = (real.lightAngleDeg + delta) % 360f)
-    } else {
-        // Градиент инвертирован: светлый центр → тёмный центр
-        real.copy(inverted = true)
+    return when (rng.nextInt(3)) {
+        0 -> {
+            // Свет повёрнут: ±45..135° — небольшие повороты ловятся труднее
+            val delta = listOf(-135f, -90f, -45f, 45f, 90f, 135f).random(rng)
+            real.copy(lightAngleDeg = (real.lightAngleDeg + delta + 360f) % 360f)
+        }
+        1 -> {
+            // Градиент инвертирован: воск «вдавленный», а не выпуклый
+            real.copy(inverted = true)
+        }
+        else -> {
+            // Затёртый воск: блик вдвое тусклее эталонного
+            real.copy(glintStrength = 0.35f)
+        }
     }
 }
 
@@ -84,7 +95,10 @@ private fun buildField(seed: Long): Pair<Seal, List<SealCell>> {
     val etalon = Seal(
         wax = WaxColor.values().let { it[rng.nextInt(it.size)] },
         emblem = Emblem.values().let { it[rng.nextInt(it.size)] },
-        doubleRing = rng.nextBoolean()
+        doubleRing = rng.nextBoolean(),
+        // Свет каждой игры падает с новой стороны — запоминать надо ИМЕННО
+        // эту печать, а не привычный шаблон «блик сверху-слева»
+        lightAngleDeg = rng.nextInt(8) * 45f
     )
     val cells = mutableListOf<SealCell>()
     repeat(TOTAL_SEALS - FORGED_COUNT) { cells += SealCell(etalon, isForged = false) }
@@ -209,7 +223,7 @@ fun BoyarinCharterScreen(
             }
             Spacer(Modifier.height(16.dp))
             Text(
-                "Свет падает сверху-слева, воск выпуклый.\nУ подделок блик сдвинут или воск вдавлен.",
+                "Запомни, С КАКОЙ СТОРОНЫ блик и какой он яркости.\nУ подделок блик сдвинут, потускнел или воск вдавлен.",
                 color = Color.White.copy(alpha = 0.75f),
                 fontSize = 13.sp, lineHeight = 19.sp,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -421,10 +435,10 @@ private fun DrawScope.drawSeal(seal: Seal, center: Offset, radius: Float) {
         }
     }
 
-    // Блик на воске — со стороны источника света
+    // Блик на воске — со стороны источника света; у «затёртых» подделок тусклее
     val glintRad = Math.toRadians(seal.lightAngleDeg.toDouble())
     drawCircle(
-        Color.White.copy(alpha = 0.32f),
+        Color.White.copy(alpha = 0.32f * seal.glintStrength),
         radius = radius * 0.13f,
         center = Offset(
             center.x + (radius * 0.55f * cos(glintRad)).toFloat(),
@@ -438,4 +452,3 @@ private const val TOTAL_SEALS = 24
 private const val FORGED_COUNT = 8
 private const val MEMORIZE_S = 6
 private const val TIME_BUDGET_S = 45
-private const val ETALON_LIGHT_ANGLE = 225f   // свет сверху-слева

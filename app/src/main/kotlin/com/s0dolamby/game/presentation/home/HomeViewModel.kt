@@ -19,6 +19,7 @@ class HomeViewModel @Inject constructor(
     private val projectRepository: ProjectRepository,
     private val advanceDayUseCase: AdvanceDayUseCase,
     private val soundEngine: com.s0dolamby.game.data.sound.SoundEngine,
+    private val dayNewsStore: com.s0dolamby.game.data.news.DayNewsStore,
     settingsRepository: SettingsRepository
 ) : ViewModel() {
 
@@ -41,9 +42,6 @@ class HomeViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    private val _pendingUpdateCards = MutableStateFlow<List<DailyUpdate>>(emptyList())
-    val pendingUpdateCards: StateFlow<List<DailyUpdate>> = _pendingUpdateCards.asStateFlow()
-
     init {
         viewModelScope.launch {
             gameStateRepository.initializeGameState()
@@ -55,14 +53,11 @@ class HomeViewModel @Inject constructor(
             _isLoading.value = true
             soundEngine.play(com.s0dolamby.game.data.sound.SoundName.DAY)
             advanceDayUseCase().onSuccess { updates ->
-                _pendingUpdateCards.value = updates
+                // Колода вестей глобальная (NavGraph) — кладём в общий store
+                dayNewsStore.push(updates)
             }
             _isLoading.value = false
         }
-    }
-
-    fun dismissUpdateCard(update: DailyUpdate) {
-        _pendingUpdateCards.update { cards -> cards.filter { it.id != update.id } }
     }
 
     fun clearRankUpNotification() {

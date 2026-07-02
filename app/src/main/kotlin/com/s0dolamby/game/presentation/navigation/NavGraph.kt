@@ -355,6 +355,20 @@ fun NavGraph() {
         // Плашка «🌅 Утро дня N» при переходе дня — глобально.
         if (currentDay > 0) DayBreakOverlay(currentDay)
 
+        // Свайп-колода «Вестей дня» — глобально, с какого бы экрана ни
+        // нажали «Следующий день» (раньше показывалась только на главной).
+        val pendingNews by dayFabViewModel.pendingNews.collectAsState()
+        if (pendingNews.isNotEmpty()) {
+            com.s0dolamby.game.presentation.common.components.DayNewsDeck(
+                updates = pendingNews,
+                onDismiss = dayFabViewModel::dismissNews,
+                onOpenProject = { update ->
+                    dayFabViewModel.dismissNews(update)
+                    navController.navigate(Screen.ProjectDetail.createRoute(update.projectId))
+                }
+            )
+        }
+
         // Ярмарочная сцена на время advance-day через глобальную кнопку
         // (на главной свой оверлей — HomeScreen). Маскирует генерацию дел.
         DayTransitionOverlay(visible = dayAdvancing)

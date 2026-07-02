@@ -87,7 +87,6 @@ fun HomeScreen(
 ) {
     val gameState by viewModel.gameState.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
-    val pendingUpdateCards by viewModel.pendingUpdateCards.collectAsState()
     val dealsTaken by viewModel.dealsTakenCount.collectAsState()
     val nickname by viewModel.nickname.collectAsState()
 
@@ -208,10 +207,10 @@ fun HomeScreen(
                     item { EmptyHomeCard(onInboxClick = onInboxClick) }
                 }
 
-                // На главной кнопка остаётся обычной (внутри LazyColumn) — она
-                // дёргает HomeViewModel.advanceDay() и подбирает pendingUpdateCards
-                // для свайп-стопки. Глобальная FAB прячется на маршруте Home,
-                // чтобы не дублировать UI.
+                // На главной кнопка остаётся обычной (внутри LazyColumn) —
+                // вести после advance-day уходят в глобальный DayNewsStore
+                // и рисуются колодой на уровне NavGraph. Глобальная FAB
+                // прячется на маршруте Home, чтобы не дублировать UI.
                 item {
                     Spacer(Modifier.height(4.dp))
                     AdvanceDayButton(
@@ -221,22 +220,6 @@ fun HomeScreen(
                 }
 
             }
-        }
-
-        // ── Daily update cards overlay ─────────────────────────────────────
-        AnimatedVisibility(
-            visible = pendingUpdateCards.isNotEmpty(),
-            enter = fadeIn(tween(300)),
-            exit = fadeOut(tween(200))
-        ) {
-            UpdateCardDeck(
-                updates = pendingUpdateCards,
-                onDismiss = { update -> viewModel.dismissUpdateCard(update) },
-                onOpenProject = { update ->
-                    viewModel.dismissUpdateCard(update)
-                    onProjectClick(update.projectId)
-                }
-            )
         }
 
         gameState?.pendingRankUp?.let { rank ->
@@ -858,180 +841,6 @@ private fun AdvanceDayButton(isLoading: Boolean, onClick: () -> Unit) {
 
 // ─── BottomNav вынесен в presentation/navigation/AppBottomNav.kt ──────────
 
-// ─── Update card deck (TG DayNewsOverlay стиль) ──────────────────────────
-
-@Composable
-private fun UpdateCardDeck(
-    updates: List<DailyUpdate>,
-    onDismiss: (DailyUpdate) -> Unit,
-    onOpenProject: (DailyUpdate) -> Unit
-) {
-    val current = updates.firstOrNull() ?: return
-    val remaining = updates.size
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xE1060412))
-    ) {
-        if (remaining > 1) {
-            Card(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .fillMaxWidth()
-                    .padding(horizontal = 36.dp)
-                    .offset(y = 8.dp),
-            ) { Box(Modifier.height(40.dp)) }
-        }
-        if (remaining > 2) {
-            Card(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .fillMaxWidth()
-                    .padding(horizontal = 48.dp)
-                    .offset(y = 16.dp),
-            ) { Box(Modifier.height(40.dp)) }
-        }
-
-        SwipeableUpdateCard(
-            update = current,
-            modifier = Modifier.align(Alignment.Center),
-            onSwipeLeft = { onDismiss(current) },
-            onSwipeRight = { onOpenProject(current) }
-        )
-
-        // Оверлей лежит на фиксированном тёмном скриме в обеих темах —
-        // фиксированные светлые цвета, не карточные локали.
-        Text(
-            "📜 Вести дня ${1} / ${remaining}",
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 48.dp),
-            style = MaterialTheme.typography.labelMedium,
-            color = FairyGold
-        )
-
-        Row(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 48.dp)
-                .fillMaxWidth()
-                .padding(horizontal = 40.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text("← пропустить", color = Color.White.copy(alpha = 0.75f), fontSize = 10.sp)
-            Text("к делу →", color = FairyGold.copy(alpha = 0.7f), fontSize = 10.sp)
-        }
-    }
-}
-
-@Composable
-private fun SwipeableUpdateCard(
-    update: DailyUpdate,
-    modifier: Modifier = Modifier,
-    onSwipeLeft: () -> Unit,
-    onSwipeRight: () -> Unit
-) {
-    val coroutineScope = rememberCoroutineScope()
-    val density = LocalDensity.current
-    val screenWidthPx = with(density) { 380.dp.toPx() }
-    val swipeThreshold = with(density) { 100.dp.toPx() }
-
-    val offsetX = remember(update.id) { Animatable(0f) }
-    val rotation = remember(update.id) { Animatable(0f) }
-
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp)
-            .graphicsLayer {
-                translationX = offsetX.value
-                rotationZ = rotation.value
-            }
-            .clip(RoundedCornerShape(16.dp))
-            .background(
-                Brush.linearGradient(
-                    listOf(Color(0xFF2A1960), NightBlue)
-                )
-            )
-            .border(1.dp, FairyGold.copy(alpha = 0.35f), RoundedCornerShape(16.dp))
-            .pointerInput(update.id) {
-                detectHorizontalDragGestures(
-                    onDragEnd = {
-                        coroutineScope.launch {
-                            when {
-                                offsetX.value > swipeThreshold -> {
-                                    launch { offsetX.animateTo(screenWidthPx * 1.5f, tween(250)) }
-                                    onSwipeRight()
-                                }
-                                offsetX.value < -swipeThreshold -> {
-                                    launch { offsetX.animateTo(-screenWidthPx * 1.5f, tween(250)) }
-                                    onSwipeLeft()
-                                }
-                                else -> {
-                                    launch { offsetX.animateTo(0f, spring()) }
-                                    launch { rotation.animateTo(0f, spring()) }
-                                }
-                            }
-                        }
-                    },
-                    onHorizontalDrag = { _, dragAmount ->
-                        coroutineScope.launch {
-                            offsetX.snapTo(offsetX.value + dragAmount)
-                            rotation.snapTo(offsetX.value / screenWidthPx * 12f)
-                        }
-                    }
-                )
-            }
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Карточка на фиксированном тёмном градиенте (не palette.card*) —
-                // фиксированный светлый текст в обеих темах.
-                Text(update.projectName, color = Color.White.copy(alpha = 0.75f), fontSize = 11.sp)
-                Text("День ${update.day}", color = Color.White.copy(alpha = 0.7f), fontSize = 10.sp)
-            }
-
-            Text(update.title, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-            Text(update.body, color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp)
-
-            when (update.payoutStatus) {
-                PayoutStatus.DELAYED -> Surface(
-                    color = Error.copy(alpha = 0.15f),
-                    shape = MaterialTheme.shapes.small
-                ) {
-                    Text("⚠ Выплаты задержаны", color = Error, fontSize = 11.sp,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
-                }
-                PayoutStatus.BOOSTED -> Surface(
-                    color = Success.copy(alpha = 0.15f),
-                    shape = MaterialTheme.shapes.small
-                ) {
-                    Text("↑ Выплаты ускорены", color = Success, fontSize = 11.sp,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
-                }
-                else -> Unit
-            }
-
-            if (update.redFlags.isNotEmpty()) {
-                update.redFlags.take(2).forEach { flag ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Icon(Icons.Default.Warning, null, tint = Warning, modifier = Modifier.size(14.dp))
-                        Text(flag.cleanRedFlag(), color = Warning, fontSize = 11.sp)
-                    }
-                }
-            }
-        }
-    }
-}
-
 // ─── helpers ─────────────────────────────────────────────────────────────
 
 private fun totalWealth(state: com.s0dolamby.game.domain.model.GameState?): Double =
@@ -1042,13 +851,3 @@ private fun roi(state: com.s0dolamby.game.domain.model.GameState?): Double {
     if (state == null || state.totalInvested <= 0) return 0.0
     return (state.totalReturned - state.totalInvested) / state.totalInvested * 100.0
 }
-
-private fun String.cleanRedFlag(): String =
-    replace('_', ' ')
-        .replace(Regex("([a-z])([A-Z])"), "$1 $2")
-        .lowercase()
-        .replaceFirstChar { it.uppercaseChar() }
-        .trimEnd('.')
-        .let { if (!it.endsWith('.') && !it.endsWith('!')) "$it." else it }
-
-private const val LOADING_PHRASE_COUNT = 20

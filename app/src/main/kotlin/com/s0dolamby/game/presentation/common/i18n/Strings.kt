@@ -401,6 +401,10 @@ object Strings {
         // Плашка-приветствие при смене дня
         "daybreak.title" to "Утро дня %d",
         "daybreak.subtitle" to "Глашатай разносит вести с ярмарки",
+        "daynews.counter" to "📜 Вести дня · осталось %d",
+        "daynews.hint.left" to "← смахни влево — закрыть",
+        "daynews.hint.right" to "смахни вправо — к делу →",
+        "daynews.hint.swipe" to "Свайп по карточке в любую сторону",
         "daytransition.title" to "На ярмарке светает…",
         "daytransition.subtitle" to "Гости съезжаются, купцы товар раскладывают — ищешь, куда вложиться сегодня.",
         "extraSlot.title" to "Все 5 дел заняты",
@@ -1028,6 +1032,10 @@ object Strings {
         // Day-break greeting
         "daybreak.title" to "Morning of day %d",
         "daybreak.subtitle" to "The herald spreads news from the fair",
+        "daynews.counter" to "📜 News of the day · %d left",
+        "daynews.hint.left" to "← swipe left — dismiss",
+        "daynews.hint.right" to "swipe right — to the venture →",
+        "daynews.hint.swipe" to "Swipe the card either way",
         "daytransition.title" to "Dawn over the fair…",
         "daytransition.subtitle" to "Guests are arriving, merchants laying out their wares — where will you invest today?",
         "extraSlot.title" to "All 5 slots are taken",

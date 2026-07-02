@@ -43,19 +43,29 @@ import javax.inject.Inject
 @HiltViewModel
 class GlobalDayFabViewModel @Inject constructor(
     private val advanceDayUseCase: AdvanceDayUseCase,
-    private val soundEngine: SoundEngine
+    private val soundEngine: SoundEngine,
+    private val dayNewsStore: com.s0dolamby.game.data.news.DayNewsStore
 ) : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    /** Очередь «Вестей дня» — колода рисуется в NavGraph поверх любого экрана. */
+    val pendingNews = dayNewsStore.pending
 
     fun advanceDay() {
         if (_isLoading.value) return
         viewModelScope.launch {
             _isLoading.value = true
             soundEngine.play(SoundName.DAY)
-            advanceDayUseCase()
+            advanceDayUseCase().onSuccess { updates ->
+                dayNewsStore.push(updates)
+            }
             _isLoading.value = false
         }
+    }
+
+    fun dismissNews(update: com.s0dolamby.game.domain.model.DailyUpdate) {
+        dayNewsStore.dismiss(update)
     }
 }
 
