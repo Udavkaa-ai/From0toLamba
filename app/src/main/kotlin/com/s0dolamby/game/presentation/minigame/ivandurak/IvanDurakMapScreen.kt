@@ -28,13 +28,16 @@ import com.s0dolamby.game.presentation.minigame.common.MinigameStage
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
-// ─── сказочная колода ───────────────────────────────────────────────────
+// ─── колода ─────────────────────────────────────────────────────────────
+// Классические масти ♠♥♦♣ вместо сказочных (⚔️🪙🏺🌿): тестировщики
+// путались в незнакомых картинках, а 36-карточная колода 6…Т — это же
+// обычный «дурак», привычные масти читаются мгновенно.
 
-private enum class Suit(val emoji: String, val tint: Color) {
-    SWORDS("⚔️", Color(0xFF90A4AE)),
-    COINS("🪙", Color(0xFFFFD54F)),
-    CUPS("🏺", Color(0xFFB39DDB)),
-    WANDS("🌿", Color(0xFF81C784))
+private enum class Suit(val symbol: String, val tint: Color) {
+    SPADES("♠", Color(0xFF263238)),
+    HEARTS("♥", Color(0xFFC62828)),
+    DIAMONDS("♦", Color(0xFFC62828)),
+    CLUBS("♣", Color(0xFF263238))
 }
 
 private val RANKS = listOf("6", "7", "8", "9", "10", "В", "Д", "К", "Т")
@@ -276,8 +279,8 @@ private fun HandRow(hand: List<PlayCard>, enabled: Boolean, onTap: (PlayCard) ->
             ) {
                 CardFace(
                     card = card,
-                    width = null, height = 92.dp,
-                    rankSize = 14.sp, suitSize = 24.sp,
+                    width = null, height = 104.dp,
+                    rankSize = 16.sp, suitSize = 30.sp,
                     dimmed = !enabled
                 )
             }
@@ -308,17 +311,28 @@ private fun CardFace(
         .graphicsLayer { alpha = if (dimmed) 0.55f else 1f }
 
     Box(modifier = base) {
-        Text(
-            card.rank,
-            color = Color(0xFF3E2723),
-            fontSize = rankSize,
-            fontWeight = FontWeight.Bold,
+        // Классический угол: номинал + масть одним цветом, как на настоящей карте
+        Column(
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(start = 6.dp, top = 2.dp)
-        )
+        ) {
+            Text(
+                card.rank,
+                color = card.suit.tint,
+                fontSize = rankSize,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                card.suit.symbol,
+                color = card.suit.tint,
+                fontSize = rankSize,
+                lineHeight = rankSize
+            )
+        }
         Text(
-            card.suit.emoji,
+            card.suit.symbol,
+            color = card.suit.tint,
             fontSize = suitSize,
             modifier = Modifier.align(Alignment.Center)
         )

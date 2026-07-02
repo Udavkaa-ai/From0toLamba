@@ -235,13 +235,26 @@ private fun ArchetypeHeader(
             )
         }
         Column(modifier = Modifier.weight(1f)) {
+            // Тень — иначе на светлых архетипных вуалях (Золушка, Колобок)
+            // надписи сливались с фоном
+            val legibleShadow = androidx.compose.ui.graphics.Shadow(
+                color = Color.Black.copy(alpha = 0.85f),
+                blurRadius = 6f
+            )
             Text(
                 archetypeLabel,
                 color = style.primary,
                 fontSize = 13.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                style = LocalTextStyle.current.copy(shadow = legibleShadow)
             )
-            Text(line, color = Color.White, fontSize = 14.sp, lineHeight = 18.sp)
+            Text(
+                line,
+                color = Color.White,
+                fontSize = 14.sp,
+                lineHeight = 18.sp,
+                style = LocalTextStyle.current.copy(shadow = legibleShadow)
+            )
         }
     }
 }

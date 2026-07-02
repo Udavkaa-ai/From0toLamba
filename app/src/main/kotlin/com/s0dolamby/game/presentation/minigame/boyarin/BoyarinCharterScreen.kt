@@ -108,15 +108,30 @@ fun BoyarinCharterScreen(
     val cells = remember(seed) { mutableStateListOf<SealCell>().apply { addAll(initialCells) } }
     var foundCount by remember(seed) { mutableStateOf(0) }
     var errors by remember(seed) { mutableStateOf(0) }
-    var stage by remember(seed) { mutableStateOf(MinigameStage.PLAY) }
+    // Сначала — фаза запоминания: эталон крупно, потом прячется.
+    // Раньше образец висел перед глазами всю игру и сравнение было
+    // механическим — тестировщики жаловались, что слишком просто.
+    var stage by remember(seed) { mutableStateOf(MinigameStage.MEMORIZE) }
+    var memorizeLeft by remember(seed) { mutableStateOf(MEMORIZE_S) }
     var secondsLeft by remember(seed) { mutableStateOf(TIME_BUDGET_S) }
     var wrongFlashIdx by remember(seed) { mutableStateOf(-1) }
 
-    LaunchedEffect(seed) {
-        while (secondsLeft > 0 && stage == MinigameStage.PLAY) {
-            delay(1000); secondsLeft -= 1
+    LaunchedEffect(seed, stage) {
+        when (stage) {
+            MinigameStage.MEMORIZE -> {
+                while (memorizeLeft > 0 && stage == MinigameStage.MEMORIZE) {
+                    delay(1000); memorizeLeft -= 1
+                }
+                if (stage == MinigameStage.MEMORIZE) stage = MinigameStage.PLAY
+            }
+            MinigameStage.PLAY -> {
+                while (secondsLeft > 0 && stage == MinigameStage.PLAY) {
+                    delay(1000); secondsLeft -= 1
+                }
+                if (stage == MinigameStage.PLAY) stage = MinigameStage.RESULT
+            }
+            else -> Unit
         }
-        if (stage == MinigameStage.PLAY) stage = MinigameStage.RESULT
     }
 
     LaunchedEffect(wrongFlashIdx) {
@@ -149,44 +164,76 @@ fun BoyarinCharterScreen(
         seed = System.currentTimeMillis()
         foundCount = 0
         errors = 0
+        memorizeLeft = MEMORIZE_S
         secondsLeft = TIME_BUDGET_S
         wrongFlashIdx = -1
-        stage = MinigameStage.PLAY
+        stage = MinigameStage.MEMORIZE
     }
 
     MinigameShell(
         archetype = PersonaArchetype.BOYARIN,
         gameTitle = Strings.t("minigame.title.charter"),
         stage = stage,
-        secondsLeft = if (stage == MinigameStage.RESULT) null else secondsLeft.coerceAtLeast(0),
+        secondsLeft = when (stage) {
+            MinigameStage.MEMORIZE -> memorizeLeft.coerceAtLeast(0)
+            MinigameStage.PLAY -> secondsLeft.coerceAtLeast(0)
+            MinigameStage.RESULT -> null
+        },
         outcome = outcome,
         onBack = onBack,
         onAgain = { restart() },
         onClose = onBack,
         onComplete = onComplete
     ) {
+        if (stage == MinigameStage.MEMORIZE) {
+            // Фаза запоминания — эталон крупно, потом исчезает
+            Spacer(Modifier.height(8.dp))
+            Text(
+                "Запомни подлинную печать — блик и объём воска",
+                color = ArchetypePalette[PersonaArchetype.BOYARIN].primary,
+                fontSize = 14.sp, fontWeight = FontWeight.SemiBold
+            )
+            Spacer(Modifier.height(16.dp))
+            Box(
+                modifier = Modifier
+                    .size(160.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF2A1840).copy(alpha = 0.85f))
+                    .border(3.dp, ArchetypePalette[PersonaArchetype.BOYARIN].primary, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Canvas(modifier = Modifier.fillMaxSize().padding(14.dp)) {
+                    drawSeal(etalon, Offset(this.size.width / 2f, this.size.height / 2f),
+                        this.size.minDimension / 2f * 0.92f)
+                }
+            }
+            Spacer(Modifier.height(16.dp))
+            Text(
+                "Свет падает сверху-слева, воск выпуклый.\nУ подделок блик сдвинут или воск вдавлен.",
+                color = Color.White.copy(alpha = 0.75f),
+                fontSize = 13.sp, lineHeight = 19.sp,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+            Spacer(Modifier.height(18.dp))
+            Button(
+                onClick = { stage = MinigameStage.PLAY },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ArchetypePalette[PersonaArchetype.BOYARIN].primary,
+                    contentColor = Color(0xFF1A0A00)
+                )
+            ) {
+                Text("Запомнил — к грамотам", fontWeight = FontWeight.SemiBold)
+            }
+        }
         if (stage == MinigameStage.PLAY) {
-            // Эталон + счёт
+            // Эталон спрятан — ищем подделки по памяти
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFF2A1840).copy(alpha = 0.8f))
-                        .border(2.dp, ArchetypePalette[PersonaArchetype.BOYARIN].primary, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Canvas(modifier = Modifier.fillMaxSize().padding(6.dp)) {
-                        drawSeal(etalon, Offset(this.size.width / 2f, this.size.height / 2f),
-                            this.size.minDimension / 2f * 0.92f)
-                    }
-                }
                 Column {
                     Text(
-                        "Подлинная печать · следи за бликом",
+                        "Печать в памяти — ищи, где блик врёт",
                         color = ArchetypePalette[PersonaArchetype.BOYARIN].primary,
                         fontSize = 12.sp, fontWeight = FontWeight.SemiBold
                     )
@@ -389,5 +436,6 @@ private fun DrawScope.drawSeal(seal: Seal, center: Offset, radius: Float) {
 private const val GRID_COLS = 4
 private const val TOTAL_SEALS = 24
 private const val FORGED_COUNT = 8
+private const val MEMORIZE_S = 6
 private const val TIME_BUDGET_S = 45
 private const val ETALON_LIGHT_ANGLE = 225f   // свет сверху-слева

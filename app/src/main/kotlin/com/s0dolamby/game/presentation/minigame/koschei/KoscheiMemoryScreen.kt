@@ -218,13 +218,20 @@ private fun ChainHint() {
 
 @Composable
 private fun CardGrid(cards: List<Card>, onTap: (Int) -> Unit) {
+    // Карты растягиваются на всю ширину экрана (weight) — фиксированные
+    // 96×116 тестировщикам были мелковаты
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         for (row in 0 until GRID_ROWS) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 for (col in 0 until GRID_COLS) {
                     val idx = row * GRID_COLS + col
                     val card = cards[idx]
-                    CardView(card = card, onClick = { onTap(idx) })
+                    Box(modifier = Modifier.weight(1f)) {
+                        CardView(card = card, onClick = { onTap(idx) })
+                    }
                 }
             }
         }
@@ -253,7 +260,8 @@ private fun CardView(card: Card, onClick: () -> Unit) {
 
     Box(
         modifier = Modifier
-            .size(width = 96.dp, height = 116.dp)
+            .fillMaxWidth()
+            .aspectRatio(96f / 116f)
             .scale(matchedScale.value)
             .shadow(if (card.isFaceUp) 8.dp else 4.dp, RoundedCornerShape(14.dp))
             .clip(RoundedCornerShape(14.dp))
@@ -311,8 +319,8 @@ private fun CardFace(card: Card) {
         Text(
             Strings.t("minigame.koschei.kind.${card.kind.name}"),
             color = if (card.isMatched) ArchetypePalette[PersonaArchetype.KOSCHEI].primary
-            else Color.White.copy(alpha = 0.75f),
-            fontSize = 10.sp,
+            else Color.White.copy(alpha = 0.85f),
+            fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier
                 .align(Alignment.BottomCenter)

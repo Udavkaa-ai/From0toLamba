@@ -367,9 +367,13 @@ private fun DrawScope.drawKolobok(w: Float, h: Float) {
 private const val GRID_ROWS = 3
 private const val GRID_COLS = 3
 private const val NORA_COUNT = GRID_ROWS * GRID_COLS
-private const val TOTAL_ATTEMPTS = 10
-private const val KOLOBOK_PROBABILITY = 0.30
-private const val WAIT_MIN_MS = 350L
-private const val WAIT_MAX_MS = 1000L
-private const val REACTION_WINDOW_MS = 1000L
-private const val FEEDBACK_MS = 360L
+private const val TOTAL_ATTEMPTS = 12
+
+// Тайминги подогнаны под темп TG-версии (спавн каждые ~0.75с, гость виден
+// ~0.9с): пауза между гостями короткая, окно реакции узкое, фидбек мгновенный.
+// Тестировщики жаловались, что старые (350–1000/1000/360) ощущались вязко.
+private const val KOLOBOK_PROBABILITY = 0.32
+private const val WAIT_MIN_MS = 150L
+private const val WAIT_MAX_MS = 450L
+private const val REACTION_WINDOW_MS = 850L
+private const val FEEDBACK_MS = 220L
