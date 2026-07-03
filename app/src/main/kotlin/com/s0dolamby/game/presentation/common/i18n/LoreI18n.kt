@@ -246,15 +246,15 @@ private val FATE_LORE_RU = mapOf(
         emoji = "⚓",
         name = "Выжил",
         title = "Настоящее дело-долгожитель",
-        description = "Редкая удача для купца. Дело живёт 15–30 дней, стабильно даёт 1.5–7.5% в день. Закрывается по истечении срока — обычно дело перекупают столичные купцы или гильдия, и вкладчикам честно выплачивают прибыль. Такие дела — основа капитала.",
-        hints = listOf("Доход 1.5–7.5% в день", "Живёт 15–30 дней, закрывается с прибылью")
+        description = "Редкая удача для купца. Дело живёт 15–30 дней, стабильно даёт 1–5% в день — за срок набегает 20–150% сверху вложенного. Закрывается по истечении срока — обычно дело перекупают столичные купцы или гильдия, и вкладчикам честно выплачивают прибыль. Такие дела — основа капитала.",
+        hints = listOf("Доход 1–5% в день, за жизнь — 20–150% сверху", "Живёт 15–30 дней, закрывается с прибылью")
     ),
     "UNICORN" to LoreEntry(
         emoji = "🔥",
         name = "Жар-птица за хвост",
         title = "Поймал Жар-птицу",
-        description = "Один случай из двадцати. Дело приносит 10–50% в день двадцать-тридцать дней подряд. Закроется передачей столичным купцам или самому государю — и вкладчики получают иксы. Поймать Жар-птицу за хвост — главная мечта купца; но подделок под неё в кабаках хватает: ловят перо, а в руке — куриное.",
-        hints = listOf("Доход 10–50% в день", "Живёт 20–30 дней, уходит к столичным купцам")
+        description = "Один случай из двадцати. Дело приносит 10–16% в день двадцать-тридцать дней подряд — до +500% за всю жизнь, потолок купеческой удачи. Закроется передачей столичным купцам или самому государю — и вкладчики получают иксы. Поймать Жар-птицу за хвост — главная мечта купца; но подделок под неё в кабаках хватает: ловят перо, а в руке — куриное.",
+        hints = listOf("Доход 10–16% в день, до +500% за жизнь", "Живёт 20–30 дней, уходит к столичным купцам")
     )
 )
 
@@ -284,14 +284,14 @@ private val FATE_LORE_EN = mapOf(
         emoji = "⚓",
         name = "Survived",
         title = "A true long-lived venture",
-        description = "Rare luck for a merchant. The venture lives 15–30 days, steadily yielding 1.5–7.5% per day. Closes at the end of its term — usually bought out by capital merchants or the guild, and investors are honestly paid their profit. These ventures are the foundation of capital.",
-        hints = listOf("Return 1.5–7.5% per day", "Lives 15–30 days, closes with profit")
+        description = "Rare luck for a merchant. The venture lives 15–30 days, steadily yielding 1–5% per day — 20–150% on top over its lifetime. Closes at the end of its term — usually bought out by capital merchants or the guild, and investors are honestly paid their profit. These ventures are the foundation of capital.",
+        hints = listOf("Return 1–5% per day, 20–150% on top over a lifetime", "Lives 15–30 days, closes with profit")
     ),
     "UNICORN" to LoreEntry(
         emoji = "🔥",
         name = "Caught the Firebird",
         title = "Caught the Firebird by the tail",
-        description = "One in twenty chances. The venture yields 10–50% per day for twenty to thirty days running. It closes with a handover to capital merchants or the sovereign himself — and investors receive multiples. Catching the Firebird by the tail is every merchant's dream; but there are plenty of imitations in the taverns: they catch a feather, and find a chicken's in their hand.",
-        hints = listOf("Return 10–50% per day", "Lives 20–30 days, handed over to capital merchants")
+        description = "One in twenty chances. The venture yields 10–16% per day for twenty to thirty days running — up to +500% over its lifetime, the ceiling of merchant luck. It closes with a handover to capital merchants or the sovereign himself — and investors receive multiples. Catching the Firebird by the tail is every merchant's dream; but there are plenty of imitations in the taverns: they catch a feather, and find a chicken's in their hand.",
+        hints = listOf("Return 10–16% per day, up to +500% per lifetime", "Lives 20–30 days, handed over to capital merchants")
     )
 )

@@ -264,7 +264,7 @@ object Strings {
         "glossary.lock.title" to "Блокировка вывода",
         "glossary.lock.body" to "Когда хозяин дела начинает скамить, вывод средств может быть заблокирован.\nЭто означает: он перестал выплачивать и ищет выход.\n\nЕсть небольшой шанс (~20%), что дело «восстановится» и вывод откроется снова — это происходит, когда скамеру нужно привлечь новые деньги.\n\nЕсли вывод не открылся — жди закрытия и частичного возврата средств.",
         "glossary.fates.title" to "Судьбы дел",
-        "glossary.fates.body" to "• Мгновенный скам — закрывается на 1–3 день, потеря 80–100%\n• Медленный слив — живёт 1–3 недели, потеря 30–70%\n• Честный провал — хозяин старался, экономика не взлетела, потеря 10–40%\n• Выживший — долгосрочный, стабильный небольшой доход\n• Единорог — редкость, реальный рост и доходность до 10% в день",
+        "glossary.fates.body" to "• Мгновенный скам — манит 8–20% в день, закрывается на 2–5 день, потеря 80–100%\n• Медленный слив — живёт 1–3 недели, потеря 30–70%\n• Честный провал — хозяин старался, экономика не взлетела, потеря 10–40%\n• Выживший — долгожитель, 20–150% сверху за срок жизни\n• Жар-птица — редкость: до +500% за 20–30 дней, потолок игры",
 
         // Шлюз мини-игры (MinigameGateScreen)
         "gate.intro.title" to "🤝  Знакомый делец",
@@ -955,7 +955,7 @@ object Strings {
         "glossary.lock.title" to "Withdrawal lock",
         "glossary.lock.body" to "When a venture's owner starts scamming, withdrawals can be locked.\nThis means: he's stopped paying out and is looking for an exit.\n\nThere's a small (~20%) chance the venture «recovers» and withdrawals reopen — this happens when the scammer needs fresh deposits.\n\nIf withdrawals don't reopen — expect closure and a partial refund.",
         "glossary.fates.title" to "Venture fates",
-        "glossary.fates.body" to "• Instant scam — closes on day 1–3, loss 80–100%\n• Slow drain — lives 1–3 weeks, loss 30–70%\n• Honest fail — the owner tried, the economy didn't take off, loss 10–40%\n• Survivor — long-term, steady small income\n• Unicorn — rare, real growth and yield up to 10% per day",
+        "glossary.fates.body" to "• Instant scam — lures with 8–20% a day, closes on day 2–5, loss 80–100%\n• Slow drain — lives 1–3 weeks, loss 30–70%\n• Honest fail — the owner tried, the economy didn't take off, loss 10–40%\n• Survivor — long-lived, 20–150% on top over its lifetime\n• Firebird — rare: up to +500% over 20–30 days, the game's ceiling",
 
         // Minigame gate
         "gate.intro.title" to "🤝  Familiar merchant",
