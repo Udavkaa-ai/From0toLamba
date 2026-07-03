@@ -28,6 +28,9 @@ class SettingsViewModel @Inject constructor(
     private val gameStateRepository: GameStateRepository,
     private val soundEngine: SoundEngine,
     private val musicEngine: MusicEngine,
+    private val minigameUnlockStore: com.s0dolamby.game.data.minigame.MinigameUnlockStore,
+    private val achievementUnlockStore: com.s0dolamby.game.data.achievements.AchievementUnlockStore,
+    private val dayNewsStore: com.s0dolamby.game.data.news.DayNewsStore,
     private val db: AppDatabase
 ) : ViewModel() {
 
@@ -87,7 +90,16 @@ class SettingsViewModel @Inject constructor(
 
     fun resetGame() {
         viewModelScope.launch {
-            db.clearAllTables()
+            // clearAllTables НЕЛЬЗЯ звать на главном потоке — Room кидает
+            // IllegalStateException и приложение падает (баг «сброс крашит»).
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                db.clearAllTables()
+            }
+            // In-memory синглтоны переживают чистку БД — сбрасываем явно,
+            // иначе старые unlock'и/вести/поздравления доживают до ребута.
+            minigameUnlockStore.clearAll()
+            achievementUnlockStore.clearAll()
+            dayNewsStore.clear()
             gameStateRepository.initializeGameState()
             _uiState.value = _uiState.value.copy(resetDone = true)
         }

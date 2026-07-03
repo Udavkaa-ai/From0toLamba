@@ -31,4 +31,9 @@ class AchievementUnlockStore @Inject constructor() {
     fun pop() {
         _queue.update { it.drop(1) }
     }
+
+    /** Полный сброс при «Начать заново» — старые поздравления не нужны. */
+    fun clearAll() {
+        _queue.value = emptyList()
+    }
 }

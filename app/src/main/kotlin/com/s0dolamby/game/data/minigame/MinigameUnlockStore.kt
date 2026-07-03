@@ -62,6 +62,15 @@ class MinigameUnlockStore @Inject constructor(
         scope.launch { dao.delete(projectId) }
     }
 
+    /**
+     * Полный сброс (кнопка «Начать заново»). Таблицу Room к этому моменту
+     * уже стёр db.clearAllTables() — чистим только in-memory снапшот,
+     * иначе старые unlock'и переживают сброс до перезапуска процесса.
+     */
+    fun clearAll() {
+        _outcomes.value = emptyMap()
+    }
+
     private fun MinigameUnlockEntity.toOutcome() = MinigameOutcome(
         errorCount = errorCount,
         timeoutReached = timeoutReached
