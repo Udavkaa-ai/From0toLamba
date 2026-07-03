@@ -347,17 +347,13 @@ fun SechenieOverlay(
                     }
                 }
 
-                // Живой процент под пальцем / подсказка / результат раунда
-                when {
-                    phase == RoundPhase.MEASURE && dragFrac != null -> Text(
-                        "%.1f%%".format(dragFrac!! * 100f),
-                        color = FairyGold, fontSize = 15.sp, fontWeight = FontWeight.Bold
-                    )
-                    phase == RoundPhase.MEASURE -> Text(
+                // Никаких цифр под пальцем — глазомер работает вслепую,
+                // процент раскрывается только после отпускания
+                if (phase == RoundPhase.MEASURE) {
+                    Text(
                         Strings.t("sechenie.hint"),
                         color = Color.White.copy(alpha = 0.55f), fontSize = 12.sp
                     )
-                    else -> Unit
                 }
 
                 if (phase == RoundPhase.RESULT && resultShown) {
