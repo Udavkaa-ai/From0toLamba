@@ -707,7 +707,8 @@ private fun KeyCard(
     }
 }
 
-private const val MEMORIZE_SECONDS = 15
+// 15с на запоминание 5 деталей — слишком вольготно
+private const val MEMORIZE_SECONDS = 8
 // Сборка из пяти деталей дольше, чем тап по готовому ключу
-private const val CHOOSE_SECONDS = 35
+private const val CHOOSE_SECONDS = 30
 private const val OPTIONS_COUNT = 9

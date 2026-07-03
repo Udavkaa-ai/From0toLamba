@@ -341,7 +341,7 @@ private fun CardFace(
 
 private const val HAND_SIZE = 6
 private const val TOTAL_ROUNDS = 8
-private const val REACTION_WINDOW_MS = 2200L
-private const val PAUSE_MIN_MS = 450L
-private const val PAUSE_MAX_MS = 1100L
-private const val FLASH_MS = 420L
+private const val REACTION_WINDOW_MS = 1400L
+private const val PAUSE_MIN_MS = 350L
+private const val PAUSE_MAX_MS = 800L
+private const val FLASH_MS = 300L

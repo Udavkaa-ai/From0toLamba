@@ -58,8 +58,10 @@ private data class Card(
 private const val GRID_ROWS = 4
 private const val GRID_COLS = 3
 private const val PAIR_COUNT = (GRID_ROWS * GRID_COLS) / 2
-private const val MISMATCH_HIDE_MS = 950L
-private const val TIME_BUDGET_S = 60
+private const val MISMATCH_HIDE_MS = 650L
+// 60с позволяло перевернуть каждую карту по 6 раз — память не нужна.
+// 25с хватает на ~12 осмысленных пар переворотов.
+private const val TIME_BUDGET_S = 25
 
 @Composable
 fun KoscheiMemoryScreen(

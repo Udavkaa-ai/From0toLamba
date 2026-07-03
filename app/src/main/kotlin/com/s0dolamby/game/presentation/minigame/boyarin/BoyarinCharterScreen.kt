@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,18 +45,19 @@ private enum class WaxColor(val light: Color, val dark: Color) {
     AMBER(Color(0xFFF9A825), Color(0xFF8A5E00))
 }
 
-private enum class Emblem { STAR, CROSS, CROWN }
+private enum class Emblem { STAR, CROSS, CROWN, SUN, LILY }
 
 /**
- * Печать. Цвет/эмблема/кольца у ВСЕХ печатей поля одинаковые (как у эталона) —
- * подделка выдаёт себя только освещением воска:
- * - [lightAngleDeg] — откуда падает свет (куда смещён центр градиента и блик).
- *   У эталона угол СЛУЧАЙНЫЙ на каждую игру (8 направлений) — раньше свет
- *   всегда падал сверху-слева и подделки узнавались на автомате.
- * - [inverted] — у подделки light/dark в градиенте поменяны местами
- *   (воск «выпуклый» наоборот — вдавленный).
- * - [glintStrength] — яркость блика: у части подделок воск «затёрт»,
- *   блик заметно тусклее эталонного.
+ * Печать v2. У КАЖДОЙ печати поля свой случайный контур воска ([blobSeed]) —
+ * легитимный «шум», по которому подделку не определить. Подделка отличается
+ * ОДНИМ тонким признаком от эталона:
+ *  - [lightAngleDeg] — свет повёрнут на ±30–60° (не 90+, ловить труднее);
+ *  - [inverted] — воск «вдавлен» (редкий, самый заметный признак);
+ *  - [glintStrength] — блик слегка затёрт (0.55 против 1.0);
+ *  - [emblemScale] — эмблема чуть меньше/больше (0.82 / 1.18);
+ *  - [ringWeight] — оттиск кольца тоньше/жирнее (0.6 / 1.5);
+ *  - [emblemTiltDeg] — эмблема слегка повёрнута (±14°);
+ *  - [hueShift] — воск чуть теплее/холоднее оттенком (±1).
  */
 private data class Seal(
     val wax: WaxColor,
@@ -63,7 +65,12 @@ private data class Seal(
     val doubleRing: Boolean,
     val lightAngleDeg: Float = 225f,
     val inverted: Boolean = false,
-    val glintStrength: Float = 1f
+    val glintStrength: Float = 1f,
+    val emblemScale: Float = 1f,
+    val ringWeight: Float = 1f,
+    val emblemTiltDeg: Float = 0f,
+    val hueShift: Float = 0f,
+    val blobSeed: Int = 0
 )
 
 private data class SealCell(
@@ -73,41 +80,44 @@ private data class SealCell(
 )
 
 private fun forgeOf(real: Seal, rng: Random): Seal {
-    return when (rng.nextInt(3)) {
+    return when (rng.nextInt(7)) {
         0 -> {
-            // Свет повёрнут: ±45..135° — небольшие повороты ловятся труднее
-            val delta = listOf(-135f, -90f, -45f, 45f, 90f, 135f).random(rng)
+            val delta = (30f + rng.nextFloat() * 30f) * (if (rng.nextBoolean()) 1 else -1)
             real.copy(lightAngleDeg = (real.lightAngleDeg + delta + 360f) % 360f)
         }
-        1 -> {
-            // Градиент инвертирован: воск «вдавленный», а не выпуклый
-            real.copy(inverted = true)
-        }
-        else -> {
-            // Затёртый воск: блик вдвое тусклее эталонного
-            real.copy(glintStrength = 0.35f)
-        }
+        1 -> real.copy(inverted = true)
+        2 -> real.copy(glintStrength = 0.55f)
+        3 -> real.copy(emblemScale = if (rng.nextBoolean()) 0.82f else 1.18f)
+        4 -> real.copy(ringWeight = if (rng.nextBoolean()) 0.6f else 1.5f)
+        5 -> real.copy(emblemTiltDeg = (if (rng.nextBoolean()) 1 else -1) * 14f)
+        else -> real.copy(hueShift = if (rng.nextBoolean()) 1f else -1f)
     }
 }
 
-private fun buildField(seed: Long): Pair<Seal, List<SealCell>> {
+private fun buildField(seed: Long): Triple<Seal, List<SealCell>, Int> {
     val rng = Random(seed)
     val etalon = Seal(
         wax = WaxColor.values().let { it[rng.nextInt(it.size)] },
         emblem = Emblem.values().let { it[rng.nextInt(it.size)] },
         doubleRing = rng.nextBoolean(),
-        // Свет каждой игры падает с новой стороны — запоминать надо ИМЕННО
-        // эту печать, а не привычный шаблон «блик сверху-слева»
-        lightAngleDeg = rng.nextInt(8) * 45f
+        // Свет каждой игры падает с новой стороны
+        lightAngleDeg = rng.nextInt(8) * 45f,
+        blobSeed = rng.nextInt()
     )
+    // Подделок мало и КАЖДЫЙ РАЗ разное количество — пересчитывать
+    // по шаблону «всегда 8» больше не выйдет
+    val forgedCount = rng.nextInt(FORGED_MIN, FORGED_MAX + 1)
     val cells = mutableListOf<SealCell>()
-    repeat(TOTAL_SEALS - FORGED_COUNT) { cells += SealCell(etalon, isForged = false) }
-    repeat(FORGED_COUNT) {
+    repeat(TOTAL_SEALS - forgedCount) {
+        // Контур воска у каждой печати свой — легитимный шум
+        cells += SealCell(etalon.copy(blobSeed = rng.nextInt()), isForged = false)
+    }
+    repeat(forgedCount) {
         var forged: Seal
         do { forged = forgeOf(etalon, rng) } while (forged == etalon)
-        cells += SealCell(forged, isForged = true)
+        cells += SealCell(forged.copy(blobSeed = rng.nextInt()), isForged = true)
     }
-    return etalon to cells.shuffled(rng)
+    return Triple(etalon, cells.shuffled(rng), forgedCount)
 }
 
 // ─── экран ──────────────────────────────────────────────────────────────
@@ -118,7 +128,7 @@ fun BoyarinCharterScreen(
     onComplete: ((MinigameOutcome) -> Unit)? = null
 ) {
     var seed by remember { mutableStateOf(System.currentTimeMillis()) }
-    val (etalon, initialCells) = remember(seed) { buildField(seed) }
+    val (etalon, initialCells, forgedTotal) = remember(seed) { buildField(seed) }
     val cells = remember(seed) { mutableStateListOf<SealCell>().apply { addAll(initialCells) } }
     var foundCount by remember(seed) { mutableStateOf(0) }
     var errors by remember(seed) { mutableStateOf(0) }
@@ -156,7 +166,7 @@ fun BoyarinCharterScreen(
     }
 
     val outcome: MinigameOutcome? = if (stage == MinigameStage.RESULT) {
-        val timeout = foundCount < FORGED_COUNT
+        val timeout = foundCount < forgedTotal
         MinigameOutcome(errorCount = errors, timeoutReached = timeout && errors == 0)
     } else null
 
@@ -167,7 +177,7 @@ fun BoyarinCharterScreen(
         if (cell.isForged) {
             cells[idx] = cell.copy(found = true)
             foundCount += 1
-            if (foundCount == FORGED_COUNT) stage = MinigameStage.RESULT
+            if (foundCount == forgedTotal) stage = MinigameStage.RESULT
         } else {
             errors += 1
             wrongFlashIdx = idx
@@ -223,7 +233,7 @@ fun BoyarinCharterScreen(
             }
             Spacer(Modifier.height(16.dp))
             Text(
-                "Запомни, С КАКОЙ СТОРОНЫ блик и какой он яркости.\nУ подделок блик сдвинут, потускнел или воск вдавлен.",
+                "Запомни печать ЦЕЛИКОМ: сторону и яркость блика, размер и наклон герба, толщину кольца, оттенок воска.\nПодделка врёт ровно в одном — а контур воска у всех печатей разный, он не в счёт.",
                 color = Color.White.copy(alpha = 0.75f),
                 fontSize = 13.sp, lineHeight = 19.sp,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -247,12 +257,12 @@ fun BoyarinCharterScreen(
             ) {
                 Column {
                     Text(
-                        "Печать в памяти — ищи, где блик врёт",
+                        "Печать в памяти — ищи, что «не так», подделка врёт в одном",
                         color = ArchetypePalette[PersonaArchetype.BOYARIN].primary,
                         fontSize = 12.sp, fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        "Подделок найдено: $foundCount / $FORGED_COUNT",
+                        "Подделок найдено: $foundCount / $forgedTotal",
                         color = Color.White.copy(alpha = 0.8f), fontSize = 13.sp
                     )
                     Text(
@@ -286,7 +296,7 @@ fun BoyarinCharterScreen(
         if (stage == MinigameStage.RESULT) {
             Spacer(Modifier.height(20.dp))
             Text(
-                "Найдено подделок: $foundCount из $FORGED_COUNT",
+                "Найдено подделок: $foundCount из $forgedTotal",
                 color = Color.White, fontSize = 14.sp
             )
             Text(
@@ -341,10 +351,30 @@ private fun SealCellView(cell: SealCell, wrongFlash: Boolean, onClick: () -> Uni
 
 // ─── рисование печати ──────────────────────────────────────────────────
 
+/** Лёгкий сдвиг оттенка воска: + теплее (янтарь), − холоднее (сталь). */
+private fun shifted(color: Color, hueShift: Float): Color {
+    if (hueShift == 0f) return color
+    val target = if (hueShift > 0) Color(0xFFFFB74D) else Color(0xFF90A4AE)
+    val t = 0.16f * kotlin.math.abs(hueShift)
+    return Color(
+        red = color.red + (target.red - color.red) * t,
+        green = color.green + (target.green - color.green) * t,
+        blue = color.blue + (target.blue - color.blue) * t,
+        alpha = color.alpha
+    )
+}
+
 private fun DrawScope.drawSeal(seal: Seal, center: Offset, radius: Float) {
     // Инверсия меняет местами light/dark — воск выглядит «вдавленным»
-    val light = if (seal.inverted) seal.wax.dark else seal.wax.light
-    val dark = if (seal.inverted) seal.wax.light else seal.wax.dark
+    val baseLight = shifted(seal.wax.light, seal.hueShift)
+    val baseDark = shifted(seal.wax.dark, seal.hueShift)
+    val light = if (seal.inverted) baseDark else baseLight
+    val dark = if (seal.inverted) baseLight else baseDark
+    val mid = Color(
+        red = (light.red + dark.red) / 2f,
+        green = (light.green + dark.green) / 2f,
+        blue = (light.blue + dark.blue) / 2f
+    )
 
     // Точка, откуда падает свет — определяет центр градиента и позицию блика
     val lightRad = Math.toRadians(seal.lightAngleDeg.toDouble())
@@ -353,102 +383,184 @@ private fun DrawScope.drawSeal(seal: Seal, center: Offset, radius: Float) {
         center.y + (radius * 0.30f * sin(lightRad)).toFloat()
     )
 
-    // Восковая клякса — волнистый край из 12 лепестков
+    // Восковая клякса: у каждой печати СВОЙ неровный контур (blobSeed) —
+    // 14 лепестков со случайным «расплывом». Это шум, не признак подделки.
+    val blobRng = Random(seal.blobSeed)
+    val petals = 14
+    val wobbles = FloatArray(petals + 1) { 0.84f + blobRng.nextFloat() * 0.18f }
+    wobbles[petals] = wobbles[0]
     val blobPath = Path().apply {
-        val petals = 12
         for (i in 0..petals) {
             val a = Math.PI * 2 * i / petals
-            val wobble = if (i % 2 == 0) 1f else 0.88f
-            val x = center.x + (radius * wobble * cos(a)).toFloat()
-            val y = center.y + (radius * wobble * sin(a)).toFloat()
+            val w = wobbles[i]
+            val x = center.x + (radius * w * cos(a)).toFloat()
+            val y = center.y + (radius * w * sin(a)).toFloat()
             if (i == 0) moveTo(x, y) else lineTo(x, y)
         }
         close()
     }
+    // Тень кляксы — воск лежит на грамоте
+    drawPath(blobPath, color = Color.Black.copy(alpha = 0.35f),
+        style = Stroke(width = radius * 0.10f))
+    // Трёхстопный градиент — воск выглядит объёмнее
     drawPath(
         blobPath,
         brush = Brush.radialGradient(
-            colors = listOf(light, dark),
+            colors = listOf(light, mid, dark),
             center = lightOffset,
             radius = radius * 1.5f
         )
     )
 
-    // Внешнее кольцо оттиска
-    drawCircle(
-        dark.copy(alpha = 0.9f),
-        radius = radius * 0.72f,
-        center = center,
-        style = Stroke(width = radius * 0.07f)
-    )
-    // Второе кольцо (признак doubleRing)
-    if (seal.doubleRing) {
+    // Тиснёный обод: мелкие зубчики по краю оттиска
+    val teethR = radius * 0.80f
+    for (i in 0 until 24) {
+        val a = Math.PI * 2 * i / 24
         drawCircle(
-            dark.copy(alpha = 0.7f),
-            radius = radius * 0.58f,
-            center = center,
-            style = Stroke(width = radius * 0.045f)
+            dark.copy(alpha = 0.5f),
+            radius = radius * 0.028f,
+            center = Offset(
+                center.x + (teethR * cos(a)).toFloat(),
+                center.y + (teethR * sin(a)).toFloat()
+            )
         )
     }
 
-    // Эмблема в центре
+    // Кольца оттиска — толщина зависит от ringWeight (признак подделки)
+    drawCircle(
+        dark.copy(alpha = 0.9f),
+        radius = radius * 0.70f,
+        center = center,
+        style = Stroke(width = radius * 0.06f * seal.ringWeight)
+    )
+    if (seal.doubleRing) {
+        drawCircle(
+            dark.copy(alpha = 0.7f),
+            radius = radius * 0.57f,
+            center = center,
+            style = Stroke(width = radius * 0.04f * seal.ringWeight)
+        )
+    }
+
+    // Эмблема в центре — с наклоном и масштабом (тонкие признаки подделки)
     val emblemColor = dark.copy(alpha = 0.95f)
-    when (seal.emblem) {
-        Emblem.STAR -> {
-            val starPath = Path().apply {
-                for (i in 0 until 10) {
-                    val angle = Math.PI * i / 5 - Math.PI / 2
-                    val r = if (i % 2 == 0) radius * 0.42f else radius * 0.18f
-                    val x = center.x + (r * cos(angle)).toFloat()
-                    val y = center.y + (r * sin(angle)).toFloat()
-                    if (i == 0) moveTo(x, y) else lineTo(x, y)
+    val er = radius * seal.emblemScale
+    withTransform({
+        rotate(seal.emblemTiltDeg, pivot = center)
+    }) {
+        when (seal.emblem) {
+            Emblem.STAR -> {
+                val starPath = Path().apply {
+                    for (i in 0 until 10) {
+                        val angle = Math.PI * i / 5 - Math.PI / 2
+                        val r = if (i % 2 == 0) er * 0.42f else er * 0.18f
+                        val x = center.x + (r * cos(angle)).toFloat()
+                        val y = center.y + (r * sin(angle)).toFloat()
+                        if (i == 0) moveTo(x, y) else lineTo(x, y)
+                    }
+                    close()
                 }
-                close()
+                drawPath(starPath, color = emblemColor)
             }
-            drawPath(starPath, color = emblemColor)
-        }
-        Emblem.CROSS -> {
-            val arm = radius * 0.40f
-            val thick = radius * 0.13f
-            drawRect(emblemColor,
-                topLeft = Offset(center.x - thick / 2f, center.y - arm),
-                size = androidx.compose.ui.geometry.Size(thick, arm * 2))
-            drawRect(emblemColor,
-                topLeft = Offset(center.x - arm, center.y - thick / 2f),
-                size = androidx.compose.ui.geometry.Size(arm * 2, thick))
-        }
-        Emblem.CROWN -> {
-            val crownPath = Path().apply {
-                val baseY = center.y + radius * 0.22f
-                val topY = center.y - radius * 0.30f
-                val halfW = radius * 0.38f
-                moveTo(center.x - halfW, baseY)
-                lineTo(center.x - halfW, topY + radius * 0.18f)
-                lineTo(center.x - halfW * 0.45f, baseY - radius * 0.18f)
-                lineTo(center.x, topY)
-                lineTo(center.x + halfW * 0.45f, baseY - radius * 0.18f)
-                lineTo(center.x + halfW, topY + radius * 0.18f)
-                lineTo(center.x + halfW, baseY)
-                close()
+            Emblem.CROSS -> {
+                val arm = er * 0.40f
+                val thick = er * 0.13f
+                drawRect(emblemColor,
+                    topLeft = Offset(center.x - thick / 2f, center.y - arm),
+                    size = androidx.compose.ui.geometry.Size(thick, arm * 2))
+                drawRect(emblemColor,
+                    topLeft = Offset(center.x - arm, center.y - thick / 2f),
+                    size = androidx.compose.ui.geometry.Size(arm * 2, thick))
             }
-            drawPath(crownPath, color = emblemColor)
+            Emblem.CROWN -> {
+                val crownPath = Path().apply {
+                    val baseY = center.y + er * 0.22f
+                    val topY = center.y - er * 0.30f
+                    val halfW = er * 0.38f
+                    moveTo(center.x - halfW, baseY)
+                    lineTo(center.x - halfW, topY + er * 0.18f)
+                    lineTo(center.x - halfW * 0.45f, baseY - er * 0.18f)
+                    lineTo(center.x, topY)
+                    lineTo(center.x + halfW * 0.45f, baseY - er * 0.18f)
+                    lineTo(center.x + halfW, topY + er * 0.18f)
+                    lineTo(center.x + halfW, baseY)
+                    close()
+                }
+                drawPath(crownPath, color = emblemColor)
+            }
+            Emblem.SUN -> {
+                // Солнце: диск + 8 лучей
+                drawCircle(emblemColor, radius = er * 0.20f, center = center)
+                for (i in 0 until 8) {
+                    val a = Math.PI * 2 * i / 8
+                    drawLine(
+                        emblemColor,
+                        start = Offset(
+                            center.x + (er * 0.27f * cos(a)).toFloat(),
+                            center.y + (er * 0.27f * sin(a)).toFloat()
+                        ),
+                        end = Offset(
+                            center.x + (er * 0.43f * cos(a)).toFloat(),
+                            center.y + (er * 0.43f * sin(a)).toFloat()
+                        ),
+                        strokeWidth = er * 0.06f
+                    )
+                }
+            }
+            Emblem.LILY -> {
+                // Трилистник-лилия: три лепестка-капли из центра
+                for (i in 0 until 3) {
+                    val a = Math.PI * 2 * i / 3 - Math.PI / 2
+                    val tipX = center.x + (er * 0.42f * cos(a)).toFloat()
+                    val tipY = center.y + (er * 0.42f * sin(a)).toFloat()
+                    val perp = a + Math.PI / 2
+                    val w = er * 0.14f
+                    val petal = Path().apply {
+                        moveTo(center.x, center.y)
+                        quadraticBezierTo(
+                            center.x + (w * cos(perp)).toFloat() + (er * 0.2f * cos(a)).toFloat(),
+                            center.y + (w * sin(perp)).toFloat() + (er * 0.2f * sin(a)).toFloat(),
+                            tipX, tipY
+                        )
+                        quadraticBezierTo(
+                            center.x - (w * cos(perp)).toFloat() + (er * 0.2f * cos(a)).toFloat(),
+                            center.y - (w * sin(perp)).toFloat() + (er * 0.2f * sin(a)).toFloat(),
+                            center.x, center.y
+                        )
+                        close()
+                    }
+                    drawPath(petal, color = emblemColor)
+                }
+                drawCircle(emblemColor, radius = er * 0.08f, center = center)
+            }
         }
     }
 
-    // Блик на воске — со стороны источника света; у «затёртых» подделок тусклее
+    // Двойной блик со стороны света: основной + малый спутник.
+    // У «затёртых» подделок оба тусклее (glintStrength).
     val glintRad = Math.toRadians(seal.lightAngleDeg.toDouble())
+    val gx = center.x + (radius * 0.55f * cos(glintRad)).toFloat()
+    val gy = center.y + (radius * 0.55f * sin(glintRad)).toFloat()
     drawCircle(
-        Color.White.copy(alpha = 0.32f * seal.glintStrength),
+        Color.White.copy(alpha = 0.34f * seal.glintStrength),
         radius = radius * 0.13f,
+        center = Offset(gx, gy)
+    )
+    drawCircle(
+        Color.White.copy(alpha = 0.22f * seal.glintStrength),
+        radius = radius * 0.06f,
         center = Offset(
-            center.x + (radius * 0.55f * cos(glintRad)).toFloat(),
-            center.y + (radius * 0.55f * sin(glintRad)).toFloat()
+            center.x + (radius * 0.38f * cos(glintRad + 0.5)).toFloat(),
+            center.y + (radius * 0.38f * sin(glintRad + 0.5)).toFloat()
         )
     )
 }
 
 private const val GRID_COLS = 4
-private const val TOTAL_SEALS = 24
-private const val FORGED_COUNT = 8
+// Поле меньше (печати крупнее), подделок мало и разное число каждый раз
+private const val TOTAL_SEALS = 20
+private const val FORGED_MIN = 3
+private const val FORGED_MAX = 6
 private const val MEMORIZE_S = 6
-private const val TIME_BUDGET_S = 45
+// 45с хватало на перебор всех печатей — теперь времени впритык
+private const val TIME_BUDGET_S = 30
