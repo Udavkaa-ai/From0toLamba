@@ -131,11 +131,12 @@ fun ZorkiySchyotOverlay(
         phase = Phase.DONE
     }
 
-    // 5 секунд на каждое следующее число; успел — таймер перезапускается
-    LaunchedEffect(next, phase) {
+    // ЕДИНЫЙ таймер на всю игру: 5 секунд на все десять чисел.
+    // Жизнь жестока — победа тут редкая и оттого сладкая.
+    LaunchedEffect(phase) {
         if (phase == Phase.PLAY) {
             timer.snapTo(1f)
-            timer.animateTo(0f, tween(SECONDS_PER_NUMBER * 1000, easing = LinearEasing))
+            timer.animateTo(0f, tween(TOTAL_SECONDS * 1000, easing = LinearEasing))
             // Дошли до нуля без прерывания — время вышло
             if (phase == Phase.PLAY) finish(timedOut = true)
         }
@@ -352,4 +353,4 @@ fun ZorkiySchyotOverlay(
 
 private data class Quad(val a: String, val b: String, val c: String, val d: Color)
 
-private const val SECONDS_PER_NUMBER = 5
+private const val TOTAL_SECONDS = 5
