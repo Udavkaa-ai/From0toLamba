@@ -353,4 +353,4 @@ fun ZorkiySchyotOverlay(
 
 private data class Quad(val a: String, val b: String, val c: String, val d: Color)
 
-private const val TOTAL_SECONDS = 5
+private const val TOTAL_SECONDS = 10

@@ -61,10 +61,10 @@ class GlobalDayFabViewModel @Inject constructor(
     /** Вести, на которые уже отреагировали «Сечением». */
     val reactedNewsIds = dayNewsStore.reactedIds
 
-    /** id активных дел — реакция и довложение доступны только по ним. */
-    val activeProjectIds: StateFlow<Set<String>> = projectRepository.getActiveProjects()
-        .map { list -> list.map { it.id }.toSet() }
-        .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000), emptySet())
+    /** Активные дела целиком — из их экономики строятся задания «Сечения». */
+    val activeProjects: StateFlow<List<com.s0dolamby.game.domain.model.Project>> =
+        projectRepository.getActiveProjects()
+            .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000), emptyList())
 
     val freeBalance: StateFlow<Double> = gameStateRepository.observeGameState()
         .map { it.balance }

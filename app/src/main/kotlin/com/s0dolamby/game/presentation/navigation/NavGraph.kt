@@ -364,7 +364,8 @@ fun NavGraph() {
         // нажали «Следующий день» (раньше показывалась только на главной).
         val pendingNews by dayFabViewModel.pendingNews.collectAsState()
         val reactedNews by dayFabViewModel.reactedNewsIds.collectAsState()
-        val activeIds by dayFabViewModel.activeProjectIds.collectAsState()
+        val activeProjects by dayFabViewModel.activeProjects.collectAsState()
+        val activeIds = remember(activeProjects) { activeProjects.map { it.id }.toSet() }
         // Весть, на которую реагируем «Сечением» (позитив) прямо сейчас
         var sechenieFor by remember { mutableStateOf<com.s0dolamby.game.domain.model.DailyUpdate?>(null) }
         // Тревожная весть, от которой отбиваемся «Зорким счётом»
@@ -392,10 +393,16 @@ fun NavGraph() {
             )
         }
 
-        // Игра «Сечение» — реакция на важную весть (одна попытка на весть)
+        // Игра «Сечение» — реакция на важную весть (одна попытка на весть).
+        // Задания серии строятся из ЭКОНОМИКИ дела: доля вложений, прирост,
+        // вес события из вести.
         sechenieFor?.let { update ->
+            val project = activeProjects.find { it.id == update.projectId }
+            val tasks = com.s0dolamby.game.presentation.minigame.sechenie
+                .buildSechenieTasks(project, update)
             com.s0dolamby.game.presentation.minigame.sechenie.SechenieOverlay(
                 projectName = update.projectName,
+                tasks = tasks,
                 onInvestWithBonus = { bonus ->
                     dayFabViewModel.markReacted(update.id)
                     sechenieFor = null
