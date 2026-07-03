@@ -49,6 +49,8 @@ fun InvestSheet(
     freeBalance: Double,
     /** Процент уговора 0..10 — от числа заданных дельцу вопросов. */
     ugovorPercent: Int = 0,
+    /** Своя бонус-строка (например реакция «Сечением») — заменяет уговор. */
+    bonusText: String? = null,
     onDismiss: () -> Unit,
     onInvest: (Double) -> Unit
 ) {
@@ -99,16 +101,21 @@ fun InvestSheet(
                 modifier = Modifier.fillMaxWidth(),
                 colors = fairyOnCardTextFieldColors()
             )
-            // «Уговор» — если игрок беседовал с дельцом, тот добрасывает сверху
-            if (ugovorPercent > 0) {
-                Text(
+            // Бонус-строка: своя (реакция «Сечением») либо «уговор» за беседу
+            when {
+                bonusText != null -> Text(
+                    bonusText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Success,
+                    fontWeight = FontWeight.SemiBold
+                )
+                ugovorPercent > 0 -> Text(
                     Strings.t("invest.ugovor.active", ugovorPercent),
                     style = MaterialTheme.typography.bodySmall,
                     color = Success,
                     fontWeight = FontWeight.SemiBold
                 )
-            } else {
-                Text(
+                else -> Text(
                     Strings.t("invest.ugovor.hint"),
                     style = MaterialTheme.typography.labelSmall,
                     color = LocalContentColorMuted.current

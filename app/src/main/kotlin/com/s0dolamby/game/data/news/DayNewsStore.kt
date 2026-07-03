@@ -19,6 +19,10 @@ class DayNewsStore @Inject constructor() {
     private val _pending = MutableStateFlow<List<DailyUpdate>>(emptyList())
     val pending: StateFlow<List<DailyUpdate>> = _pending.asStateFlow()
 
+    /** Вести, на которые игрок уже отреагировал «Сечением» — по одной реакции. */
+    private val _reactedIds = MutableStateFlow<Set<String>>(emptySet())
+    val reactedIds: StateFlow<Set<String>> = _reactedIds.asStateFlow()
+
     fun push(updates: List<DailyUpdate>) {
         if (updates.isNotEmpty()) _pending.update { it + updates }
     }
@@ -27,7 +31,12 @@ class DayNewsStore @Inject constructor() {
         _pending.update { list -> list.filter { it.id != update.id } }
     }
 
+    fun markReacted(updateId: String) {
+        _reactedIds.update { it + updateId }
+    }
+
     fun clear() {
         _pending.value = emptyList()
+        _reactedIds.value = emptySet()
     }
 }

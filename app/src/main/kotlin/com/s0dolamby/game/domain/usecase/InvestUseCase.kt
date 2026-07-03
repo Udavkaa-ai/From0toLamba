@@ -56,7 +56,12 @@ class InvestUseCase @Inject constructor(
     suspend operator fun invoke(
         projectId: String,
         amountRubles: Double,
-        buyExtraSlot: Boolean = false
+        buyExtraSlot: Boolean = false,
+        /**
+         * Бонус за реакцию на весть (игра «Сечение»): +N% сверху к этому
+         * вложению — делец добрасывает за меткий глаз. 0 = без бонуса.
+         */
+        reactionBonusPercent: Int = 0
     ): Result<Unit> = runCatching {
         require(amountRubles >= GameConfig.MIN_INVESTMENT_RUBLES) {
             "Минимальный вклад ${GameConfig.MIN_INVESTMENT_RUBLES.toInt()} г"
@@ -95,12 +100,15 @@ class InvestUseCase @Inject constructor(
             val questions = amaRepository.getSessionByProjectId(projectId)?.questionCount ?: 0
             amountRubles * ugovorPercent(questions) * UGOVOR_BONUS_PER_QUESTION
         } else 0.0
-        if (ugovorBonus > 0) {
-            AppLogger.i("InvestUseCase", "Ugovor bonus +$ugovorBonus on ${project.claimedName}")
+        // Бонус за реакцию на весть — работает и для довложений
+        val reactionBonus = amountRubles * reactionBonusPercent.coerceIn(0, 10) / 100.0
+        if (ugovorBonus > 0 || reactionBonus > 0) {
+            AppLogger.i("InvestUseCase",
+                "Bonuses on ${project.claimedName}: ugovor=$ugovorBonus reaction=$reactionBonus")
         }
         val updated = shifted.copy(
             investedAmountRubles = shifted.investedAmountRubles + amountRubles,
-            currentValueRubles = shifted.currentValueRubles + amountRubles + ugovorBonus,
+            currentValueRubles = shifted.currentValueRubles + amountRubles + ugovorBonus + reactionBonus,
             isActive = true
         )
         projectRepository.updateProject(updated)

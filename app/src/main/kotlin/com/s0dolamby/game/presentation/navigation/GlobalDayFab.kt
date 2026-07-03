@@ -37,6 +37,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -44,13 +46,32 @@ import javax.inject.Inject
 class GlobalDayFabViewModel @Inject constructor(
     private val advanceDayUseCase: AdvanceDayUseCase,
     private val soundEngine: SoundEngine,
-    private val dayNewsStore: com.s0dolamby.game.data.news.DayNewsStore
+    private val dayNewsStore: com.s0dolamby.game.data.news.DayNewsStore,
+    private val investUseCase: com.s0dolamby.game.domain.usecase.InvestUseCase,
+    projectRepository: com.s0dolamby.game.domain.repository.ProjectRepository,
+    gameStateRepository: com.s0dolamby.game.domain.repository.GameStateRepository
 ) : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     /** Очередь «Вестей дня» — колода рисуется в NavGraph поверх любого экрана. */
     val pendingNews = dayNewsStore.pending
+
+    /** Вести, на которые уже отреагировали «Сечением». */
+    val reactedNewsIds = dayNewsStore.reactedIds
+
+    /** id активных дел — реакция и довложение доступны только по ним. */
+    val activeProjectIds: StateFlow<Set<String>> = projectRepository.getActiveProjects()
+        .map { list -> list.map { it.id }.toSet() }
+        .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000), emptySet())
+
+    val freeBalance: StateFlow<Double> = gameStateRepository.observeGameState()
+        .map { it.balance }
+        .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000), 0.0)
+
+    /** Результат довложения по реакции — для снэкбара/ошибки в UI. */
+    private val _reactionInvestResult = MutableStateFlow<String?>(null)
+    val reactionInvestResult: StateFlow<String?> = _reactionInvestResult.asStateFlow()
 
     fun advanceDay() {
         if (_isLoading.value) return
@@ -67,6 +88,22 @@ class GlobalDayFabViewModel @Inject constructor(
     fun dismissNews(update: com.s0dolamby.game.domain.model.DailyUpdate) {
         dayNewsStore.dismiss(update)
     }
+
+    fun markReacted(updateId: String) = dayNewsStore.markReacted(updateId)
+
+    /** Довложение с бонусом за меткое «Сечение». */
+    fun investWithReactionBonus(projectId: String, amount: Double, bonusPercent: Int) {
+        viewModelScope.launch {
+            investUseCase(projectId, amount, reactionBonusPercent = bonusPercent)
+                .onSuccess {
+                    soundEngine.play(SoundName.INVEST)
+                    _reactionInvestResult.value = "ok:$amount"
+                }
+                .onFailure { _reactionInvestResult.value = "err:${it.message.orEmpty()}" }
+        }
+    }
+
+    fun clearReactionInvestResult() { _reactionInvestResult.value = null }
 }
 
 /**

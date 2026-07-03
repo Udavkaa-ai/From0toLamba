@@ -59,7 +59,12 @@ import kotlinx.coroutines.launch
 fun DayNewsDeck(
     updates: List<DailyUpdate>,
     onDismiss: (DailyUpdate) -> Unit,
-    onOpenProject: (DailyUpdate) -> Unit
+    onOpenProject: (DailyUpdate) -> Unit,
+    /** Активные дела — реакция «Сечением» доступна только по ним. */
+    activeProjectIds: Set<String> = emptySet(),
+    /** Вести, на которые уже отреагировали (одна реакция на весть). */
+    reactedIds: Set<String> = emptySet(),
+    onReact: (DailyUpdate) -> Unit = {}
 ) {
     val current = updates.firstOrNull() ?: return
     val remaining = updates.size
@@ -97,6 +102,10 @@ fun DayNewsDeck(
         SwipeableUpdateCard(
             update = current,
             modifier = Modifier.align(Alignment.Center),
+            canReact = current.eventKind != null &&
+                current.projectId in activeProjectIds &&
+                current.id !in reactedIds,
+            onReact = { onReact(current) },
             onSwipeLeft = { onDismiss(current) },
             onSwipeRight = { onOpenProject(current) }
         )
@@ -142,6 +151,8 @@ fun DayNewsDeck(
 private fun SwipeableUpdateCard(
     update: DailyUpdate,
     modifier: Modifier = Modifier,
+    canReact: Boolean = false,
+    onReact: () -> Unit = {},
     onSwipeLeft: () -> Unit,
     onSwipeRight: () -> Unit
 ) {
@@ -152,6 +163,13 @@ private fun SwipeableUpdateCard(
 
     val offsetX = remember(update.id) { Animatable(0f) }
     val rotation = remember(update.id) { Animatable(0f) }
+
+    // Важные вести подсвечиваются рамкой по роду события
+    val accentBorder = when (update.eventKind) {
+        com.s0dolamby.game.domain.model.DailyEventKind.POSITIVE -> Success.copy(alpha = 0.8f)
+        com.s0dolamby.game.domain.model.DailyEventKind.NEGATIVE -> Error.copy(alpha = 0.8f)
+        else -> FairyGold.copy(alpha = 0.35f)
+    }
 
     Box(
         modifier = modifier
@@ -167,7 +185,11 @@ private fun SwipeableUpdateCard(
                     listOf(Color(0xFF2A1960), NightBlue)
                 )
             )
-            .border(1.dp, FairyGold.copy(alpha = 0.35f), RoundedCornerShape(16.dp))
+            .border(
+                if (update.eventKind != null) 2.dp else 1.dp,
+                accentBorder,
+                RoundedCornerShape(16.dp)
+            )
             .pointerInput(update.id) {
                 detectHorizontalDragGestures(
                     onDragEnd = {
@@ -212,6 +234,27 @@ private fun SwipeableUpdateCard(
                 Text("День ${update.day}", color = Color.White.copy(alpha = 0.7f), fontSize = 10.sp)
             }
 
+            // Бейдж важного события — сразу видно, на что смотреть
+            when (update.eventKind) {
+                com.s0dolamby.game.domain.model.DailyEventKind.POSITIVE -> Surface(
+                    color = Success.copy(alpha = 0.18f),
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Text(Strings.t("daynews.badge.positive"), color = Success,
+                        fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
+                }
+                com.s0dolamby.game.domain.model.DailyEventKind.NEGATIVE -> Surface(
+                    color = Error.copy(alpha = 0.18f),
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Text(Strings.t("daynews.badge.negative"), color = Error,
+                        fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
+                }
+                else -> Unit
+            }
+
             Text(update.title, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             Text(update.body, color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp)
 
@@ -239,6 +282,29 @@ private fun SwipeableUpdateCard(
                         Icon(Icons.Default.Warning, null, tint = Warning, modifier = Modifier.size(14.dp))
                         Text(flag.cleanRedFlag(), color = Warning, fontSize = 11.sp)
                     }
+                }
+            }
+
+            // Реакция на важную весть: игра «Сечение» → бонус к довложению
+            if (canReact) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(FairyGold.copy(alpha = 0.16f))
+                        .border(1.dp, FairyGold.copy(alpha = 0.55f), RoundedCornerShape(10.dp))
+                        .clickable { onReact() }
+                ) {
+                    Text(
+                        Strings.t("daynews.react"),
+                        color = FairyGold,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 9.dp),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
                 }
             }
         }

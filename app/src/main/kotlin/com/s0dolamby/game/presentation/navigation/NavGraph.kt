@@ -1,8 +1,13 @@
 package com.s0dolamby.game.presentation.navigation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.*
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
+import com.s0dolamby.game.presentation.common.i18n.Strings
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -358,6 +363,13 @@ fun NavGraph() {
         // Свайп-колода «Вестей дня» — глобально, с какого бы экрана ни
         // нажали «Следующий день» (раньше показывалась только на главной).
         val pendingNews by dayFabViewModel.pendingNews.collectAsState()
+        val reactedNews by dayFabViewModel.reactedNewsIds.collectAsState()
+        val activeIds by dayFabViewModel.activeProjectIds.collectAsState()
+        // Весть, на которую реагируем «Сечением» прямо сейчас
+        var sechenieFor by remember { mutableStateOf<com.s0dolamby.game.domain.model.DailyUpdate?>(null) }
+        // Выигранный бонус → шит довложения (весть, бонус%)
+        var reactionInvest by remember { mutableStateOf<Pair<com.s0dolamby.game.domain.model.DailyUpdate, Int>?>(null) }
+
         if (pendingNews.isNotEmpty()) {
             com.s0dolamby.game.presentation.common.components.DayNewsDeck(
                 updates = pendingNews,
@@ -365,8 +377,67 @@ fun NavGraph() {
                 onOpenProject = { update ->
                     dayFabViewModel.dismissNews(update)
                     navController.navigate(Screen.ProjectDetail.createRoute(update.projectId))
+                },
+                activeProjectIds = activeIds,
+                reactedIds = reactedNews,
+                onReact = { update -> sechenieFor = update }
+            )
+        }
+
+        // Игра «Сечение» — реакция на важную весть (одна попытка на весть)
+        sechenieFor?.let { update ->
+            com.s0dolamby.game.presentation.minigame.sechenie.SechenieOverlay(
+                projectName = update.projectName,
+                onInvestWithBonus = { bonus ->
+                    dayFabViewModel.markReacted(update.id)
+                    sechenieFor = null
+                    reactionInvest = update to bonus
+                },
+                onClose = {
+                    dayFabViewModel.markReacted(update.id)
+                    sechenieFor = null
                 }
             )
+        }
+
+        // Шит довложения с бонусом за меткий глаз
+        reactionInvest?.let { (update, bonus) ->
+            val freeBalance by dayFabViewModel.freeBalance.collectAsState()
+            com.s0dolamby.game.presentation.common.components.InvestSheet(
+                freeBalance = freeBalance,
+                bonusText = Strings.t("sechenie.investLine", bonus, update.projectName),
+                onDismiss = { reactionInvest = null },
+                onInvest = { amount ->
+                    dayFabViewModel.investWithReactionBonus(update.projectId, amount, bonus)
+                    reactionInvest = null
+                }
+            )
+        }
+
+        // Снэкбар-результат довложения по реакции показываем плашкой DayBreak-стиля
+        val reactionResult by dayFabViewModel.reactionInvestResult.collectAsState()
+        reactionResult?.let { res ->
+            LaunchedEffect(res) {
+                kotlinx.coroutines.delay(2000)
+                dayFabViewModel.clearReactionInvestResult()
+            }
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+                Box(
+                    modifier = Modifier
+                        .padding(top = 80.dp)
+                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(14.dp))
+                        .background(androidx.compose.ui.graphics.Color(0xF01A0F3F))
+                        .padding(horizontal = 18.dp, vertical = 12.dp)
+                ) {
+                    val ok = res.startsWith("ok:")
+                    androidx.compose.material3.Text(
+                        if (ok) Strings.t("sechenie.snack.invested", res.removePrefix("ok:").toDoubleOrNull() ?: 0.0)
+                        else res.removePrefix("err:").ifBlank { Strings.t("ama.err.unknown") },
+                        color = if (ok) com.s0dolamby.game.presentation.common.theme.Success
+                        else com.s0dolamby.game.presentation.common.theme.Error
+                    )
+                }
+            }
         }
 
         // Ярмарочная сцена на время advance-day через глобальную кнопку
