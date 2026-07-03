@@ -31,6 +31,7 @@ import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.components.AppBg
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
+import com.s0dolamby.game.presentation.common.components.WobblyEmoji
 import com.s0dolamby.game.presentation.common.format.formatGroshes
 import com.s0dolamby.game.presentation.common.format.formatGroshesSigned
 import com.s0dolamby.game.presentation.common.i18n.Strings
@@ -126,7 +127,7 @@ fun PortfolioScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Text("✦", color = LocalAccentOnCard.current.copy(alpha = 0.6f), fontSize = 28.sp)
+                            WobblyEmoji("✦", color = LocalAccentOnCard.current.copy(alpha = 0.6f), fontSize = 28.sp)
                             Text(
                                 Strings.t("portfolio.empty.title"),
                                 style = MaterialTheme.typography.titleMedium,

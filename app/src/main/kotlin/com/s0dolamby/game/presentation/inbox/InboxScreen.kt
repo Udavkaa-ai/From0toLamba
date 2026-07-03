@@ -32,6 +32,7 @@ import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.components.AppBg
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
+import com.s0dolamby.game.presentation.common.components.WobblyEmoji
 import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.LocalContentColorMuted
@@ -97,7 +98,7 @@ fun InboxScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Text("📭", fontSize = 32.sp)
+                            WobblyEmoji("📭", fontSize = 32.sp)
                             Text(
                                 Strings.t("inbox.empty"),
                                 style = MaterialTheme.typography.titleMedium,

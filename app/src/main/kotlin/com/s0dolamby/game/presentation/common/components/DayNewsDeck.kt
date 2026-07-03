@@ -1,6 +1,12 @@
 package com.s0dolamby.game.presentation.common.components
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -18,6 +24,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
@@ -27,11 +34,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -164,10 +175,28 @@ private fun SwipeableUpdateCard(
     val offsetX = remember(update.id) { Animatable(0f) }
     val rotation = remember(update.id) { Animatable(0f) }
 
-    // Важные вести подсвечиваются рамкой по роду события
+    // Влетание новой вести: пружинный «выпрыг» из глубины с лёгким доворотом
+    val enter = remember(update.id) { Animatable(0f) }
+    LaunchedEffect(update.id) {
+        enter.snapTo(0f)
+        enter.animateTo(1f, spring(dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMediumLow))
+    }
+
+    // Пульс для тревожных вестей и мерцание искр на выгодных
+    val infinite = rememberInfiniteTransition(label = "news-live")
+    val pulse by infinite.animateFloat(
+        initialValue = 0.45f, targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            tween(900, easing = FastOutSlowInEasing), repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulse"
+    )
+
+    // Важные вести подсвечиваются рамкой по роду события; негатив пульсирует
     val accentBorder = when (update.eventKind) {
         com.s0dolamby.game.domain.model.DailyEventKind.POSITIVE -> Success.copy(alpha = 0.8f)
-        com.s0dolamby.game.domain.model.DailyEventKind.NEGATIVE -> Error.copy(alpha = 0.8f)
+        com.s0dolamby.game.domain.model.DailyEventKind.NEGATIVE -> Error.copy(alpha = 0.4f + 0.5f * pulse)
         else -> FairyGold.copy(alpha = 0.35f)
     }
 
@@ -177,7 +206,11 @@ private fun SwipeableUpdateCard(
             .padding(horizontal = 24.dp)
             .graphicsLayer {
                 translationX = offsetX.value
-                rotationZ = rotation.value
+                rotationZ = rotation.value + (1f - enter.value) * -3f
+                val s = 0.85f + 0.15f * enter.value
+                scaleX = s
+                scaleY = s
+                alpha = enter.value.coerceIn(0f, 1f)
             }
             .clip(RoundedCornerShape(16.dp))
             .background(
@@ -219,19 +252,60 @@ private fun SwipeableUpdateCard(
                 )
             }
     ) {
+        // Выгодные вести искрятся золотом — сразу видно «сорви момент»
+        if (update.eventKind == com.s0dolamby.game.domain.model.DailyEventKind.POSITIVE) {
+            SparklesOverlay(Modifier.matchParentSize())
+        }
         Column(
             modifier = Modifier.padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            // Шапка-свиток: источник вести (глашатай/кабак/указ…) слева,
+            // восковая печать с номером дня справа
+            val source = update.computedSource()
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Карточка на фиксированном тёмном градиенте (не palette.card*) —
-                // фиксированный светлый текст в обеих темах.
-                Text(update.projectName, color = Color.White.copy(alpha = 0.75f), fontSize = 11.sp)
-                Text("День ${update.day}", color = Color.White.copy(alpha = 0.7f), fontSize = 10.sp)
+                Surface(
+                    color = Color.White.copy(alpha = 0.08f),
+                    shape = RoundedCornerShape(20.dp),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp, FairyGold.copy(alpha = 0.25f)
+                    )
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(5.dp),
+                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 3.dp)
+                    ) {
+                        Text(source.emoji, fontSize = 12.sp)
+                        Text(source.label, color = FairyGold.copy(alpha = 0.85f), fontSize = 10.sp)
+                    }
+                }
+                DayWaxSeal(day = update.day)
+            }
+
+            // Живой эмодзи события + заголовок и имя дела
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                WobblyEmoji(
+                    emoji = when (update.eventKind) {
+                        com.s0dolamby.game.domain.model.DailyEventKind.POSITIVE -> "✨"
+                        com.s0dolamby.game.domain.model.DailyEventKind.NEGATIVE -> "🌩️"
+                        com.s0dolamby.game.domain.model.DailyEventKind.NEUTRAL -> "🔮"
+                        null -> source.emoji
+                    },
+                    fontSize = 34.sp,
+                    amplitudeDeg = 8f
+                )
+                Column {
+                    Text(update.title, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                    Text(update.projectName, color = Color.White.copy(alpha = 0.6f), fontSize = 11.sp)
+                }
             }
 
             // Бейдж важного события — сразу видно, на что смотреть
@@ -255,7 +329,6 @@ private fun SwipeableUpdateCard(
                 else -> Unit
             }
 
-            Text(update.title, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             Text(update.body, color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp)
 
             when (update.payoutStatus) {
@@ -310,6 +383,72 @@ private fun SwipeableUpdateCard(
                     )
                 }
             }
+        }
+        // Тонкие угловые ромбы — грамота, а не диалоговое окно
+        CardCornerOrnaments(Modifier.matchParentSize().padding(6.dp))
+    }
+}
+
+/**
+ * Сургучная печать с номером дня — как на грамоте. Рисуется кодом:
+ * багровый воск (радиальный градиент), тёмная кромка, точечный кант
+ * и блик — никаких ассетов.
+ */
+@Composable
+private fun DayWaxSeal(day: Int) {
+    Box(
+        modifier = Modifier
+            .size(46.dp)
+            .clip(CircleShape)
+            .background(
+                Brush.radialGradient(
+                    colors = listOf(
+                        Color(0xFFE05353),
+                        Color(0xFFB22A2A),
+                        Color(0xFF6E0F0F)
+                    )
+                )
+            )
+            .border(2.dp, Color(0xFF4E0A0A), CircleShape)
+            .drawBehind {
+                // Точечный кант, как оттиск матрицы по воску
+                val r = size.minDimension / 2f
+                val dotR = r * 0.055f
+                val ringR = r * 0.78f
+                repeat(16) { i ->
+                    val a = i / 16f * 2f * Math.PI.toFloat()
+                    drawCircle(
+                        color = Color(0xFF4E0A0A).copy(alpha = 0.55f),
+                        radius = dotR,
+                        center = Offset(
+                            center.x + ringR * kotlin.math.cos(a),
+                            center.y + ringR * kotlin.math.sin(a)
+                        )
+                    )
+                }
+                // Блик сверху-слева — воск слегка глянцевый
+                drawCircle(
+                    color = Color.White.copy(alpha = 0.20f),
+                    radius = r * 0.22f,
+                    center = Offset(center.x - r * 0.38f, center.y - r * 0.42f)
+                )
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                Strings.t("daynews.seal.day"),
+                color = Color.White.copy(alpha = 0.75f),
+                fontSize = 7.sp,
+                lineHeight = 8.sp
+            )
+            Text(
+                "$day",
+                color = Color.White,
+                fontSize = 14.sp,
+                lineHeight = 15.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }

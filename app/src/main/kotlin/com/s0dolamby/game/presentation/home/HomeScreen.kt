@@ -50,6 +50,7 @@ import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.components.PersonaAvatar
 import com.s0dolamby.game.presentation.common.components.ProvideOnCardColors
 import com.s0dolamby.game.presentation.common.components.SparklesOverlay
+import com.s0dolamby.game.presentation.common.components.WobblyEmoji
 import com.s0dolamby.game.presentation.common.format.formatGroshes
 import com.s0dolamby.game.presentation.common.format.formatGroshesCompact
 import com.s0dolamby.game.presentation.common.i18n.Strings
@@ -529,7 +530,7 @@ private fun LetopisChip(count: Int, onClick: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("📖", fontSize = 18.sp)
+                    WobblyEmoji("📖", fontSize = 18.sp, amplitudeDeg = 5f, periodMs = 2000)
                     Text(Strings.t("home.letopis"), color = LocalAccentOnCard.current, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                     Text("($count)", color = LocalContentColorMuted.current, fontSize = 13.sp)
                 }
@@ -702,18 +703,25 @@ private fun InboxPromoCard(onClick: () -> Unit) {
                 )
         ) {
             com.s0dolamby.game.presentation.common.components.ProvideOnCardColors {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        Strings.t("home.inboxPromo"),
-                        color = LocalContentColor.current,
-                        fontSize = 14.sp
-                    )
-                    Text(
-                        Strings.t("home.inboxPromo.sub"),
-                        color = LocalContentColorMuted.current,
-                        fontSize = 12.sp,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    WobblyEmoji("📜", fontSize = 28.sp)
+                    Column {
+                        Text(
+                            Strings.t("home.inboxPromo"),
+                            color = LocalContentColor.current,
+                            fontSize = 14.sp
+                        )
+                        Text(
+                            Strings.t("home.inboxPromo.sub"),
+                            color = LocalContentColorMuted.current,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
                 }
             }
             CardCornerOrnaments(modifier = Modifier.matchParentSize())
@@ -751,7 +759,7 @@ private fun EmptyHomeCard(onInboxClick: () -> Unit) {
             ) {
                 // Фон этой карточки всегда тёмно-фиолетовый (обе темы) —
                 // цвета фиксированные светлые, не из onCard-локалей
-                Text("✦", color = FairyGold.copy(alpha = 0.5f), fontSize = 28.sp)
+                WobblyEmoji("✦", color = FairyGold.copy(alpha = 0.5f), fontSize = 28.sp)
                 Text(
                     Strings.t("home.inbox.empty"),
                     color = Color.White,
@@ -833,7 +841,13 @@ private fun AdvanceDayButton(isLoading: Boolean, onClick: () -> Unit) {
                     )
                 }
             } else {
-                Text(Strings.t("home.nextDay"), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    WobblyEmoji("🌅", fontSize = 16.sp, amplitudeDeg = 5f, periodMs = 2200)
+                    Text(Strings.t("home.nextDay"), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                }
             }
         }
     }
