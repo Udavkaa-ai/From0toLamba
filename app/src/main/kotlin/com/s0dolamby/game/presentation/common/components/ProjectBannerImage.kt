@@ -101,7 +101,7 @@ fun ProjectBannerImage(
         },
         modifier = modifier
             .fillMaxWidth()
-            .height(180.dp)
+            .aspectRatio(1408f / 768f)
             .clip(shape)
     )
 }
@@ -115,7 +115,7 @@ private fun BannerPlaceholder(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(180.dp)
+            .aspectRatio(1408f / 768f)
             .clip(shape)
             .background(MaterialTheme.colorScheme.surfaceVariant),
         contentAlignment = Alignment.Center

@@ -240,7 +240,7 @@ private fun PortfolioProjectCard(
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(120.dp)
+                        .aspectRatio(1408f / 768f)  // родная пропорция баннера, без обрезки
                 )
             }
         } else null

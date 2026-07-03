@@ -310,8 +310,16 @@ private fun GateResultScreen(
                 onClick = onGoToChat,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(Strings.t("gate.btn.chat"), color = FairyGold)
+                Text(Strings.t("gate.btn.chat"), color = FairyGold, maxLines = 1)
             }
+            // Подпись про уговор — отдельной строкой, чтобы кнопка не переносилась
+            Text(
+                Strings.t("gate.chat.hint"),
+                color = Color.White.copy(alpha = 0.6f),
+                fontSize = 11.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 4.dp)
+            )
             Spacer(Modifier.height(8.dp))
             OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
                 Text(Strings.t("btn.back"), color = Color.White.copy(alpha = 0.7f))
