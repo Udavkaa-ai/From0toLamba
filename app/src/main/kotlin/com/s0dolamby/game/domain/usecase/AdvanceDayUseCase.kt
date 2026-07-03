@@ -133,8 +133,10 @@ class AdvanceDayUseCase @Inject constructor(
                 else -> {
                     // Доходность = базовая × 10 (игровой день) + бонус за связь с
                     // дельцом-архетипом (+1% за уровень, макс +10% в день) — как в TG.
+                    // Заморозка после проигрыша в «Зорком счёте» обнуляет день.
+                    val frozen = project.yieldFreezeDays > 0
                     val tieBonus = tieBonusFor(state, project)
-                    val dailyYield = project.investedAmountRubles *
+                    val dailyYield = if (frozen) 0.0 else project.investedAmountRubles *
                         (project.realDailyYieldRubles + tieBonus) * YIELD_MULTIPLIER
                     // Доход прирастает в currentValueRubles, не в свободном балансе
                     val (newHistory, newApyHistory) = updateHistories(project, dailyYield)
@@ -142,6 +144,7 @@ class AdvanceDayUseCase @Inject constructor(
                         daysSinceJoined = project.daysSinceJoined + 1,
                         daysUntilCollapse = newDaysUntilCollapse,
                         currentValueRubles = project.currentValueRubles + dailyYield,
+                        yieldFreezeDays = (project.yieldFreezeDays - 1).coerceAtLeast(0),
                         currentUserCount = newHistory.lastOrNull() ?: project.currentUserCount,
                         userCountHistory = newHistory,
                         apyHistory = newApyHistory
@@ -205,7 +208,10 @@ class AdvanceDayUseCase @Inject constructor(
                                 EventKind.POSITIVE -> DailyEventKind.POSITIVE
                                 EventKind.NEGATIVE -> DailyEventKind.NEGATIVE
                                 EventKind.NEUTRAL -> DailyEventKind.NEUTRAL
-                            }
+                            },
+                            // Урон/прибыток события — «Зоркий счёт» возвращает
+                            // половину урона при победе
+                            eventDeltaRubles = delta
                         )
                         updateRepository.saveUpdate(update)
                         generatedUpdates.add(update)

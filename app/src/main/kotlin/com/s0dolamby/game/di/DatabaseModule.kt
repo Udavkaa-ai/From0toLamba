@@ -50,6 +50,14 @@ private val MIGRATION_19_20 = object : Migration(19, 20) {
     }
 }
 
+/** Аддитивная миграция v20 → v21: поля «Зоркого счёта». */
+private val MIGRATION_20_21 = object : Migration(20, 21) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `daily_updates` ADD COLUMN `eventDeltaRubles` REAL NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE `projects` ADD COLUMN `yieldFreezeDays` INTEGER NOT NULL DEFAULT 0")
+    }
+}
+
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
@@ -58,7 +66,7 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
         Room.databaseBuilder(context, AppDatabase::class.java, "game_database")
-            .addMigrations(MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20)
+            .addMigrations(MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21)
             .fallbackToDestructiveMigration()
             .build()
 

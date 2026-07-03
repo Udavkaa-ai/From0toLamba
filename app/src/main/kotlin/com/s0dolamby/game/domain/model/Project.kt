@@ -61,6 +61,11 @@ data class Project(
      * автозакрытия — получишь только 50%.
      */
     val mafiaOfferIssued: Boolean = false,
+    /**
+     * Дней без начислений — штраф за проигрыш в «Зорком счёте» (реакция
+     * на тревожную весть). Каждый advance-day списывает по одному.
+     */
+    val yieldFreezeDays: Int = 0,
     val currentUserCount: Int = 0,
     val userCountHistory: List<Int> = emptyList(),
     val apyHistory: List<Float> = emptyList()

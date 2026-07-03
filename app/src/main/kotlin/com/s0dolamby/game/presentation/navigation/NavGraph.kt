@@ -365,8 +365,10 @@ fun NavGraph() {
         val pendingNews by dayFabViewModel.pendingNews.collectAsState()
         val reactedNews by dayFabViewModel.reactedNewsIds.collectAsState()
         val activeIds by dayFabViewModel.activeProjectIds.collectAsState()
-        // Весть, на которую реагируем «Сечением» прямо сейчас
+        // Весть, на которую реагируем «Сечением» (позитив) прямо сейчас
         var sechenieFor by remember { mutableStateOf<com.s0dolamby.game.domain.model.DailyUpdate?>(null) }
+        // Тревожная весть, от которой отбиваемся «Зорким счётом»
+        var zorkiyFor by remember { mutableStateOf<com.s0dolamby.game.domain.model.DailyUpdate?>(null) }
         // Выигранный бонус → шит довложения (весть, бонус%)
         var reactionInvest by remember { mutableStateOf<Pair<com.s0dolamby.game.domain.model.DailyUpdate, Int>?>(null) }
 
@@ -380,7 +382,13 @@ fun NavGraph() {
                 },
                 activeProjectIds = activeIds,
                 reactedIds = reactedNews,
-                onReact = { update -> sechenieFor = update }
+                onReact = { update ->
+                    if (update.eventKind == com.s0dolamby.game.domain.model.DailyEventKind.NEGATIVE) {
+                        zorkiyFor = update
+                    } else {
+                        sechenieFor = update
+                    }
+                }
             )
         }
 
@@ -396,6 +404,22 @@ fun NavGraph() {
                 onClose = {
                     dayFabViewModel.markReacted(update.id)
                     sechenieFor = null
+                }
+            )
+        }
+
+        // «Зоркий счёт» — отбиться от тревожной вести (штрафы за провал!)
+        zorkiyFor?.let { update ->
+            com.s0dolamby.game.presentation.minigame.zorkiy.ZorkiySchyotOverlay(
+                projectName = update.projectName,
+                onOutcome = { outcome ->
+                    dayFabViewModel.markReacted(update.id)
+                    dayFabViewModel.applyBadNewsOutcome(update, outcome)
+                    zorkiyFor = null
+                },
+                onRetreat = {
+                    // Отступил ДО начала игры — попытка не тратится
+                    zorkiyFor = null
                 }
             )
         }
@@ -429,11 +453,18 @@ fun NavGraph() {
                         .background(androidx.compose.ui.graphics.Color(0xF01A0F3F))
                         .padding(horizontal = 18.dp, vertical = 12.dp)
                 ) {
-                    val ok = res.startsWith("ok:")
+                    val good = res.startsWith("ok:") || res.startsWith("win:")
                     androidx.compose.material3.Text(
-                        if (ok) Strings.t("sechenie.snack.invested", res.removePrefix("ok:").toDoubleOrNull() ?: 0.0)
-                        else res.removePrefix("err:").ifBlank { Strings.t("ama.err.unknown") },
-                        color = if (ok) com.s0dolamby.game.presentation.common.theme.Success
+                        when {
+                            res.startsWith("ok:") ->
+                                Strings.t("sechenie.snack.invested", res.removePrefix("ok:").toDoubleOrNull() ?: 0.0)
+                            res.startsWith("win:") ->
+                                Strings.t("zorkiy.snack.win", res.removePrefix("win:").toDoubleOrNull() ?: 0.0)
+                            res == "freeze" -> Strings.t("zorkiy.snack.freeze")
+                            res == "lock" -> Strings.t("zorkiy.snack.lock")
+                            else -> res.removePrefix("err:").ifBlank { Strings.t("ama.err.unknown") }
+                        },
+                        color = if (good) com.s0dolamby.game.presentation.common.theme.Success
                         else com.s0dolamby.game.presentation.common.theme.Error
                     )
                 }

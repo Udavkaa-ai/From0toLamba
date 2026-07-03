@@ -31,7 +31,9 @@ import com.s0dolamby.game.data.db.entity.*
     // снова предлагают мини-игру.
     // v19: добавлен soundEnabled в settings (звуковые эффекты SoundEngine).
     // v20: добавлен musicEnabled в settings (фоновая музыка MusicEngine).
-    version = 20,
+    // v21: eventDeltaRubles в daily_updates + yieldFreezeDays в projects
+    // («Зоркий счёт» — реакция на тревожные вести).
+    version = 21,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

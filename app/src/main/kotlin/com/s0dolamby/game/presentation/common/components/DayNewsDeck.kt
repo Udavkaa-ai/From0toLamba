@@ -296,7 +296,10 @@ private fun SwipeableUpdateCard(
                         .clickable { onReact() }
                 ) {
                     Text(
-                        Strings.t("daynews.react"),
+                        // Позитив — «сорви куш» (Сечение); негатив — «отбейся» (Зоркий счёт)
+                        if (update.eventKind == com.s0dolamby.game.domain.model.DailyEventKind.NEGATIVE)
+                            Strings.t("daynews.react.bad")
+                        else Strings.t("daynews.react"),
                         color = FairyGold,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,

@@ -13,6 +13,8 @@ data class DailyUpdate(
     val redFlags: List<String>,
     /** Род случайного события из каталога RandomEvents (null = обычная весть). */
     val eventKind: DailyEventKind? = null,
+    /** Дельта события в грошах (со знаком) — для возврата урона при победе в реакции. */
+    val eventDeltaRubles: Double = 0.0,
     val timestamp: Long = System.currentTimeMillis()
 )
 

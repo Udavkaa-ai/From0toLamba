@@ -48,6 +48,7 @@ class GlobalDayFabViewModel @Inject constructor(
     private val soundEngine: SoundEngine,
     private val dayNewsStore: com.s0dolamby.game.data.news.DayNewsStore,
     private val investUseCase: com.s0dolamby.game.domain.usecase.InvestUseCase,
+    private val reactToBadNewsUseCase: com.s0dolamby.game.domain.usecase.ReactToBadNewsUseCase,
     projectRepository: com.s0dolamby.game.domain.repository.ProjectRepository,
     gameStateRepository: com.s0dolamby.game.domain.repository.GameStateRepository
 ) : ViewModel() {
@@ -98,6 +99,33 @@ class GlobalDayFabViewModel @Inject constructor(
                 .onSuccess {
                     soundEngine.play(SoundName.INVEST)
                     _reactionInvestResult.value = "ok:$amount"
+                }
+                .onFailure { _reactionInvestResult.value = "err:${it.message.orEmpty()}" }
+        }
+    }
+
+    /** Применить исход «Зоркого счёта» к делу из тревожной вести. */
+    fun applyBadNewsOutcome(
+        update: com.s0dolamby.game.domain.model.DailyUpdate,
+        outcome: com.s0dolamby.game.domain.usecase.BadNewsOutcome
+    ) {
+        viewModelScope.launch {
+            reactToBadNewsUseCase(update.projectId, update.eventDeltaRubles, outcome)
+                .onSuccess { recovered ->
+                    when (outcome) {
+                        com.s0dolamby.game.domain.usecase.BadNewsOutcome.WIN -> {
+                            soundEngine.play(SoundName.WIN)
+                            _reactionInvestResult.value = "win:$recovered"
+                        }
+                        com.s0dolamby.game.domain.usecase.BadNewsOutcome.LOSE -> {
+                            soundEngine.play(SoundName.LOSE)
+                            _reactionInvestResult.value = "freeze"
+                        }
+                        com.s0dolamby.game.domain.usecase.BadNewsOutcome.FAIL -> {
+                            soundEngine.play(SoundName.LOSE)
+                            _reactionInvestResult.value = "lock"
+                        }
+                    }
                 }
                 .onFailure { _reactionInvestResult.value = "err:${it.message.orEmpty()}" }
         }

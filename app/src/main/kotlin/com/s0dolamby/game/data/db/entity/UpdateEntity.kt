@@ -23,7 +23,11 @@ data class UpdateEntity(
     // --- Phase 1: server-first ---
     // Случайное событие (см. tg/server randomEvents.ts): NEGATIVE | POSITIVE | NEUTRAL | null.
     // null = обычная ежедневная весть.
-    val eventKind: String? = null
+    val eventKind: String? = null,
+    // Дельта события в грошах (знак сохраняется) — нужна «Зоркому счёту»,
+    // чтобы вернуть часть урона при победе.
+    @androidx.room.ColumnInfo(defaultValue = "0")
+    val eventDeltaRubles: Double = 0.0
 )
 
 fun UpdateEntity.toDomain(gson: com.google.gson.Gson) = DailyUpdate(
@@ -38,6 +42,7 @@ fun UpdateEntity.toDomain(gson: com.google.gson.Gson) = DailyUpdate(
     announcement = announcement?.let { AnnouncementType.valueOf(it) },
     redFlags = gson.fromJson(redFlags, Array<String>::class.java).toList(),
     eventKind = eventKind?.let { com.s0dolamby.game.domain.model.DailyEventKind.valueOf(it) },
+    eventDeltaRubles = eventDeltaRubles,
     timestamp = timestamp
 )
 
@@ -53,5 +58,6 @@ fun DailyUpdate.toEntity(gson: com.google.gson.Gson) = UpdateEntity(
     announcement = announcement?.name,
     redFlags = gson.toJson(redFlags),
     eventKind = eventKind?.name,
+    eventDeltaRubles = eventDeltaRubles,
     timestamp = timestamp
 )

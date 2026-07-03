@@ -59,6 +59,9 @@ data class ProjectEntity(
     // «Предложение от которого нельзя отказаться» — выдано за 2-3 дня до автозакрытия.
     @androidx.room.ColumnInfo(defaultValue = "0")
     val mafiaOfferIssued: Boolean = false,
+    // Дней без начислений — штраф за проигрыш в «Зорком счёте».
+    @androidx.room.ColumnInfo(defaultValue = "0")
+    val yieldFreezeDays: Int = 0,
     // Дело занимает дополнительный слот (купленный за extraSlotsBalance).
     @androidx.room.ColumnInfo(defaultValue = "0")
     val isExtraSlot: Boolean = false,
@@ -102,6 +105,7 @@ fun ProjectEntity.toDomain(gson: com.google.gson.Gson): Project = Project(
     bannerPromptUsed = bannerPromptUsed,
     isWithdrawalLocked = isWithdrawalLocked,
     mafiaOfferIssued = mafiaOfferIssued,
+    yieldFreezeDays = yieldFreezeDays,
     currentUserCount = currentUserCount,
     userCountHistory = gson.fromJson(userCountHistory, Array<Int>::class.java).toList(),
     apyHistory = gson.fromJson(apyHistory, Array<Float>::class.java).toList()
@@ -134,6 +138,7 @@ fun Project.toEntity(gson: com.google.gson.Gson): ProjectEntity = ProjectEntity(
     bannerPromptUsed = bannerPromptUsed,
     isWithdrawalLocked = isWithdrawalLocked,
     mafiaOfferIssued = mafiaOfferIssued,
+    yieldFreezeDays = yieldFreezeDays,
     currentUserCount = currentUserCount,
     userCountHistory = gson.toJson(userCountHistory),
     apyHistory = gson.toJson(apyHistory)
