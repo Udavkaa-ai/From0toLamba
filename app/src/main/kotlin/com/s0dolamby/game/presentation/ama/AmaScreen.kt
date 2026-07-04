@@ -385,6 +385,21 @@ fun AmaScreen(
             items(messages) { msg ->
                 MessageBubble(message = msg)
             }
+            // «Верю — не верю»: после первого вопроса (или при вложенных
+            // грошах) можно поставить на судьбу дела — ставка кормит чуйку
+            val verdictProject = uiState.project
+            if (verdictProject != null && !verdictProject.isClosed &&
+                (verdictProject.playerVerdict != null || questionCount > 0 ||
+                    verdictProject.investedAmountRubles > 0)
+            ) {
+                item {
+                    com.s0dolamby.game.presentation.common.components.VerdictCard(
+                        verdict = verdictProject.playerVerdict,
+                        canBet = true,
+                        onBet = { viewModel.recordVerdict(it) }
+                    )
+                }
+            }
             // Делец «печатает»: покачивающийся аватар + мигающие точки
             if (uiState.isSending) {
                 item { TypingBubble(archetype = uiState.project?.personaArchetype) }

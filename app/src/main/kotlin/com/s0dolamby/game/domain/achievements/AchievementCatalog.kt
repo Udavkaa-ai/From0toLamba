@@ -40,6 +40,21 @@ object AchievementCatalog {
             description = "Разобрал 50 купеческих грамот",
             emoji = "📖"
         ) { _, projects -> projects.count { it.investedAmountRubles > 0 || it.isClosed } >= 50 })
+        // «Верю — не верю» — прогнозы судьбы дела
+        add(Achievement(
+            id = "chuyka.first",
+            category = AchievementCategory.CHARTERS,
+            title = "Чуйка проснулась",
+            description = "Угадай судьбу дела наперёд в «Верю — не верю»",
+            emoji = "🔮"
+        ) { state, _ -> state.chuykaCorrect >= 1 })
+        add(Achievement(
+            id = "chuyka.streak5",
+            category = AchievementCategory.CHARTERS,
+            title = "Нюх как у волка",
+            description = "Пять верных прогнозов судьбы подряд",
+            emoji = "🐺"
+        ) { state, _ -> state.chuykaBestStreak >= 5 })
 
         // ─── ⚖️ Дела — закрытые ─────────────────────────────────────────────
         add(Achievement(

@@ -63,5 +63,17 @@ data class GameStateEntity(
     @androidx.room.ColumnInfo(defaultValue = "0")
     val marketAnnouncementSeen: Boolean = false,
     @androidx.room.ColumnInfo(defaultValue = "0")
-    val marketAnnouncementRewardClaimed: Boolean = false
+    val marketAnnouncementRewardClaimed: Boolean = false,
+
+    // «Верю — не верю» — рейтинг чуйки
+    @androidx.room.ColumnInfo(defaultValue = "0")
+    val chuykaPoints: Int = 0,
+    @androidx.room.ColumnInfo(defaultValue = "0")
+    val chuykaTotal: Int = 0,
+    @androidx.room.ColumnInfo(defaultValue = "0")
+    val chuykaCorrect: Int = 0,
+    @androidx.room.ColumnInfo(defaultValue = "0")
+    val chuykaStreak: Int = 0,
+    @androidx.room.ColumnInfo(defaultValue = "0")
+    val chuykaBestStreak: Int = 0
 )

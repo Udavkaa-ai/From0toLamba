@@ -75,7 +75,10 @@ data class ProjectEntity(
     @androidx.room.ColumnInfo(defaultValue = "0")
     val sponsorPromoVerified: Boolean = false,
     // Промокод для VIP-дела: клиент шлёт plain текст на верификацию, сервер сравнивает case-insensitive.
-    val promocode: String? = null
+    val promocode: String? = null,
+    // «Верю — не верю»: прогноз игрока (PlayerVerdict.name) и итог после закрытия.
+    val playerVerdict: String? = null,
+    val verdictCorrect: Boolean? = null
 )
 
 fun ProjectEntity.toDomain(gson: com.google.gson.Gson): Project = Project(
@@ -108,7 +111,9 @@ fun ProjectEntity.toDomain(gson: com.google.gson.Gson): Project = Project(
     yieldFreezeDays = yieldFreezeDays,
     currentUserCount = currentUserCount,
     userCountHistory = gson.fromJson(userCountHistory, Array<Int>::class.java).toList(),
-    apyHistory = gson.fromJson(apyHistory, Array<Float>::class.java).toList()
+    apyHistory = gson.fromJson(apyHistory, Array<Float>::class.java).toList(),
+    playerVerdict = playerVerdict?.let { runCatching { PlayerVerdict.valueOf(it) }.getOrNull() },
+    verdictCorrect = verdictCorrect
 )
 
 fun Project.toEntity(gson: com.google.gson.Gson): ProjectEntity = ProjectEntity(
@@ -141,5 +146,7 @@ fun Project.toEntity(gson: com.google.gson.Gson): ProjectEntity = ProjectEntity(
     yieldFreezeDays = yieldFreezeDays,
     currentUserCount = currentUserCount,
     userCountHistory = gson.toJson(userCountHistory),
-    apyHistory = gson.toJson(apyHistory)
+    apyHistory = gson.toJson(apyHistory),
+    playerVerdict = playerVerdict?.name,
+    verdictCorrect = verdictCorrect
 )

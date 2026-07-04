@@ -68,8 +68,14 @@ class ProjectDetailViewModel @Inject constructor(
     private val updateRepository: UpdateRepository,
     private val amaRepository: AmaRepository,
     private val generatePostMortemUseCase: com.s0dolamby.game.domain.usecase.GeneratePostMortemUseCase,
+    private val recordVerdictUseCase: com.s0dolamby.game.domain.usecase.RecordVerdictUseCase,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
+
+    /** «Верю — не верю»: проект в стейте обновится сам через Room-флоу. */
+    fun recordVerdict(verdict: PlayerVerdict) {
+        viewModelScope.launch { recordVerdictUseCase(projectId, verdict) }
+    }
 
     private val projectId: String = checkNotNull(savedStateHandle["projectId"])
 
@@ -156,6 +162,14 @@ fun ProjectDetailScreen(
                 }
             } else {
                 item { LiveStatsCard(project = project, onManageClick = onManageClick) }
+                // «Верю — не верю»: у вложившегося допуск к ставке всегда есть
+                item {
+                    com.s0dolamby.game.presentation.common.components.VerdictCard(
+                        verdict = project.playerVerdict,
+                        canBet = true,
+                        onBet = { viewModel.recordVerdict(it) }
+                    )
+                }
                 // Show charts only when we have enough history
                 if (project.userCountHistory.size >= 2 || project.apyHistory.size >= 2) {
                     item { DynamicsCard(project = project) }
@@ -572,7 +586,38 @@ private fun PostMortemCard(project: Project, postMortem: PostMortemReport?, isGe
             }
             }
 
-            StaggeredReveal(4) {
+            // Итог «Верю — не верю» — сверка ставки с судьбой
+            if (project.playerVerdict != null) {
+                StaggeredReveal(4) {
+                val correct = project.verdictCorrect
+                val betText = Strings.t(
+                    if (project.playerVerdict == PlayerVerdict.HONEST) "verdict.locked.honest"
+                    else "verdict.locked.scam"
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("🔮", fontSize = 16.sp)
+                    Text(
+                        when (correct) {
+                            true -> Strings.t("verdict.pm.correct", betText)
+                            false -> Strings.t("verdict.pm.wrong", betText)
+                            null -> betText
+                        },
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = when (correct) {
+                            true -> Success
+                            false -> Error
+                            null -> LocalContentColorMuted.current
+                        }
+                    )
+                }
+                }
+            }
+
+            StaggeredReveal(5) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Divider(color = LocalContentColor.current.copy(alpha = 0.15f))
             Text(Strings.t("detail.postmortem.analysis"), style = MaterialTheme.typography.labelSmall,

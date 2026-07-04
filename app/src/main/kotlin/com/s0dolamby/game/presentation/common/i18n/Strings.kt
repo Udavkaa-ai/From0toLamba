@@ -291,6 +291,26 @@ object Strings {
         "gate.shortName.BABA_YAGA" to "Бабы-Яги",
         "gate.shortName.IVAN_DURAK" to "Ивана",
 
+        // «Верю — не верю» (прогноз судьбы дела + чуйка)
+        "verdict.title" to "Верю — не верю",
+        "verdict.hint" to "Поставь на судьбу дела: угадаешь — чуйка окрепнет, промахнёшься — просядет. Ставка одна, не меняется.",
+        "verdict.hint.locked" to "Чуйка молчит — сперва расспроси дельца.",
+        "verdict.btn.honest" to "🤝 Верю — честное",
+        "verdict.btn.scam" to "🕵️ Не верю — обман",
+        "verdict.locked.honest" to "Ставка: честное дело",
+        "verdict.locked.scam" to "Ставка: обман",
+        "verdict.locked.hint" to "Итог узнаешь, когда дело закроется",
+        "verdict.pm.correct" to "%s — чуйка не подвела ✓",
+        "verdict.pm.wrong" to "%s — чуйка дала маху ✗",
+        "stats.chuyka.title" to "🔮 Чуйка",
+        "stats.chuyka.empty" to "Поставь «Верю — не верю» на дело — узнаем, чего стоит твоя чуйка.",
+        "stats.chuyka.sub" to "Точность %d%% · прогнозов %d",
+        "stats.chuyka.streak" to "Серия %d · лучшая %d",
+        "ach.chuyka.first.title" to "Чуйка проснулась",
+        "ach.chuyka.first.desc" to "Угадай судьбу дела наперёд в «Верю — не верю»",
+        "ach.chuyka.streak5.title" to "Нюх как у волка",
+        "ach.chuyka.streak5.desc" to "Пять верных прогнозов судьбы подряд",
+
         // Финал мини-игры (общая плашка MinigameShell.ResultOverlay)
         "minigame.result.perfect.title" to "Идеально!",
         "minigame.result.win.title" to "Хорошо",
@@ -983,6 +1003,26 @@ object Strings {
         "gate.shortName.ZOLUSHKA" to "Zolushka",
         "gate.shortName.BABA_YAGA" to "Baba Yaga",
         "gate.shortName.IVAN_DURAK" to "Ivan",
+
+        // Believe or Not (fate prediction + gut feeling)
+        "verdict.title" to "Believe or Not",
+        "verdict.hint" to "Bet on the venture's fate: guess right and your gut grows sharper, miss and it dulls. One bet, no changes.",
+        "verdict.hint.locked" to "Your gut is silent — question the merchant first.",
+        "verdict.btn.honest" to "🤝 Believe — honest",
+        "verdict.btn.scam" to "🕵️ Doubt — a scam",
+        "verdict.locked.honest" to "Bet: honest venture",
+        "verdict.locked.scam" to "Bet: a scam",
+        "verdict.locked.hint" to "You'll learn the outcome when the venture closes",
+        "verdict.pm.correct" to "%s — your gut was right ✓",
+        "verdict.pm.wrong" to "%s — your gut missed ✗",
+        "stats.chuyka.title" to "🔮 Gut feeling",
+        "stats.chuyka.empty" to "Place a Believe-or-Not bet on a venture — let's see what your gut is worth.",
+        "stats.chuyka.sub" to "Accuracy %d%% · %d predictions",
+        "stats.chuyka.streak" to "Streak %d · best %d",
+        "ach.chuyka.first.title" to "The gut awakens",
+        "ach.chuyka.first.desc" to "Predict a venture's fate correctly in Believe or Not",
+        "ach.chuyka.streak5.title" to "Nose of a wolf",
+        "ach.chuyka.streak5.desc" to "Five correct fate predictions in a row",
 
         // Minigame result overlay (shared MinigameShell)
         "minigame.result.perfect.title" to "Perfect!",

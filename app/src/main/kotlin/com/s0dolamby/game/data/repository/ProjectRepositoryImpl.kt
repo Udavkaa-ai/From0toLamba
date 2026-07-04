@@ -46,4 +46,15 @@ class ProjectRepositoryImpl @Inject constructor(
 
     override suspend fun getActiveProjectsTotalValue(): Double =
         dao.getActiveProjects().sumOf { it.currentValueRubles }
+
+    override suspend fun setPlayerVerdict(
+        projectId: String,
+        verdict: com.s0dolamby.game.domain.model.PlayerVerdict
+    ): Boolean = dao.setPlayerVerdict(projectId, verdict.name) > 0
+
+    override suspend fun setVerdictResolved(projectId: String, correct: Boolean) =
+        dao.setVerdictResolved(projectId, correct)
+
+    override suspend fun getUnresolvedVerdictProjects(): List<Project> =
+        dao.getUnresolvedVerdictProjects().map { it.toDomain(gson) }
 }

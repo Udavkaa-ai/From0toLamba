@@ -133,6 +133,7 @@ fun StatsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item { RankCard(state = state) }
+            item { ChuykaCard(state = state) }
             item { OrnamentDivider() }
             item { BalanceChartCard(state = state) }
             item { FinancialStats(state = state) }
@@ -433,6 +434,61 @@ private val rankTiers = listOf(
     RankTier("SHARK",        "🦈", "rank.boyarin",  "stats.rank.req.SHARK"),
     RankTier("LAMBO_SENSEI", "👑", "rank.knyaz",    "stats.rank.req.LAMBO_SENSEI"),
 )
+
+// ─── Чуйка («Верю — не верю») ────────────────────────────────────────────
+
+@Composable
+private fun ChuykaCard(state: GameState?) {
+    val total = state?.chuykaTotal ?: 0
+    FairyCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.weight(1f)) {
+                Text(
+                    Strings.t("stats.chuyka.title"),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = LocalAccentOnCard.current.copy(alpha = 0.7f)
+                )
+                if (total == 0) {
+                    Text(
+                        Strings.t("stats.chuyka.empty"),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = LocalContentColorMuted.current
+                    )
+                } else {
+                    val s = state!!
+                    Text(
+                        "${s.chuykaPoints}",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = LocalContentColor.current
+                    )
+                    Text(
+                        Strings.t(
+                            "stats.chuyka.sub",
+                            com.s0dolamby.game.domain.chuyka.ChuykaScoring
+                                .accuracyPercent(s.chuykaCorrect, s.chuykaTotal),
+                            s.chuykaTotal
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = LocalContentColorMuted.current
+                    )
+                    if (s.chuykaStreak > 1 || s.chuykaBestStreak > 1) {
+                        Text(
+                            Strings.t("stats.chuyka.streak", s.chuykaStreak, s.chuykaBestStreak),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = LocalAccentOnCard.current.copy(alpha = 0.8f)
+                        )
+                    }
+                }
+            }
+            WobblyEmoji("🔮", fontSize = 36.sp, amplitudeDeg = 5f, periodMs = 2400)
+        }
+    }
+}
 
 @Composable
 private fun RankCard(state: GameState?) {

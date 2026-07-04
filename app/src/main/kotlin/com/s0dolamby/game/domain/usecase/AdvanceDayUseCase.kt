@@ -26,6 +26,7 @@ class AdvanceDayUseCase @Inject constructor(
     private val updateRepository: UpdateRepository,
     private val generateProjectUseCase: GenerateProjectUseCase,
     private val generateDailyUpdatesUseCase: GenerateDailyUpdatesUseCase,
+    private val resolveVerdictsUseCase: ResolveVerdictsUseCase,
     private val achievementUnlockStore: AchievementUnlockStore
 ) {
     // Каждый игровой день засчитывается как 10 реальных — держит прогресс интересным
@@ -278,6 +279,11 @@ class AdvanceDayUseCase @Inject constructor(
         }
 
         projectRepository.closeAllInboxProjects()
+
+        // «Верю — не верю»: сверяем прогнозы по всем закрывшимся сегодня
+        // делам (включая пропущенные грамоты) и раздаём очки чуйки.
+        // Пересчёт подвигов выше уже прошёл — чуйка-подвиги догонят завтра.
+        generatedUpdates += resolveVerdictsUseCase()
 
         val newProjectCount = Random.nextInt(1, 4)
         repeat(newProjectCount) {

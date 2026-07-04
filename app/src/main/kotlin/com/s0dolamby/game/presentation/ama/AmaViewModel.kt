@@ -12,6 +12,7 @@ import com.s0dolamby.game.domain.repository.GameStateRepository
 import com.s0dolamby.game.domain.repository.ProjectRepository
 import com.s0dolamby.game.domain.usecase.InvestUseCase
 import com.s0dolamby.game.domain.usecase.MaxProjectsReachedException
+import com.s0dolamby.game.domain.usecase.RecordVerdictUseCase
 import com.s0dolamby.game.domain.usecase.SendAmaMessageUseCase
 import com.s0dolamby.game.domain.usecase.StartAmaSessionUseCase
 import com.s0dolamby.game.presentation.minigame.common.MinigameOutcome
@@ -60,6 +61,7 @@ class AmaViewModel @Inject constructor(
     private val startAmaSessionUseCase: StartAmaSessionUseCase,
     private val sendAmaMessageUseCase: SendAmaMessageUseCase,
     private val investUseCase: InvestUseCase,
+    private val recordVerdictUseCase: RecordVerdictUseCase,
     private val projectRepository: ProjectRepository,
     private val amaRepository: AmaRepository,
     private val gameStateRepository: GameStateRepository,
@@ -153,6 +155,16 @@ class AmaViewModel @Inject constructor(
      * сыграна (даже с провалом — второго испытания делец не даёт, вложение
      * «вслепую» разрешено) — открываем sheet для ввода суммы.
      */
+    /** «Верю — не верю»: записать прогноз и перечитать проект (замок на карточке). */
+    fun recordVerdict(verdict: com.s0dolamby.game.domain.model.PlayerVerdict) {
+        viewModelScope.launch {
+            recordVerdictUseCase(projectId, verdict)
+            val refreshed = projectRepository.getProjectById(projectId)
+            _uiState.update { it.copy(project = refreshed) }
+            soundEngine.play(com.s0dolamby.game.data.sound.SoundName.TAP)
+        }
+    }
+
     fun requestInvest() {
         val state = _uiState.value
         if (state.minigamePlayed) {

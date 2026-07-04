@@ -58,6 +58,19 @@ private val MIGRATION_20_21 = object : Migration(20, 21) {
     }
 }
 
+/** Аддитивная миграция v21 → v22: «Верю — не верю» + рейтинг чуйки. */
+private val MIGRATION_21_22 = object : Migration(21, 22) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `projects` ADD COLUMN `playerVerdict` TEXT")
+        db.execSQL("ALTER TABLE `projects` ADD COLUMN `verdictCorrect` INTEGER")
+        db.execSQL("ALTER TABLE `game_state` ADD COLUMN `chuykaPoints` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE `game_state` ADD COLUMN `chuykaTotal` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE `game_state` ADD COLUMN `chuykaCorrect` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE `game_state` ADD COLUMN `chuykaStreak` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE `game_state` ADD COLUMN `chuykaBestStreak` INTEGER NOT NULL DEFAULT 0")
+    }
+}
+
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
@@ -66,7 +79,7 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
         Room.databaseBuilder(context, AppDatabase::class.java, "game_database")
-            .addMigrations(MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21)
+            .addMigrations(MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22)
             .fallbackToDestructiveMigration()
             .build()
 

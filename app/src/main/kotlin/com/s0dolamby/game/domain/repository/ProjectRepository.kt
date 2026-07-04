@@ -15,4 +15,12 @@ interface ProjectRepository {
     suspend fun getInboxProjectsList(): List<Project>
     suspend fun closeAllInboxProjects()
     suspend fun getActiveProjectsTotalValue(): Double
+
+    // «Верю — не верю»
+    /** Записать прогноз (одна ставка на дело). true — записан, false — уже была/дело закрыто. */
+    suspend fun setPlayerVerdict(projectId: String, verdict: com.s0dolamby.game.domain.model.PlayerVerdict): Boolean
+    /** Зафиксировать итог прогноза после закрытия дела. */
+    suspend fun setVerdictResolved(projectId: String, correct: Boolean)
+    /** Закрытые дела со ставкой, ещё не сверенной с судьбой. */
+    suspend fun getUnresolvedVerdictProjects(): List<Project>
 }

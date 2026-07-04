@@ -9,7 +9,8 @@ class ExitProjectUseCase @Inject constructor(
     private val gameStateRepository: GameStateRepository,
     private val projectRepository: ProjectRepository,
     private val achievementUnlockStore: AchievementUnlockStore,
-    private val generatePostMortemUseCase: GeneratePostMortemUseCase
+    private val generatePostMortemUseCase: GeneratePostMortemUseCase,
+    private val resolveVerdictsUseCase: ResolveVerdictsUseCase
 ) {
     suspend operator fun invoke(projectId: String): Result<Double> = runCatching {
         val project = projectRepository.getProjectById(projectId)
@@ -30,6 +31,10 @@ class ExitProjectUseCase @Inject constructor(
             archetype = project.personaArchetype,
             profitable = returned > project.investedAmountRubles
         )
+        // «Верю — не верю»: при ручном выходе прогноз сверяется сразу —
+        // итог виден в разборе старца, очки чуйки начислены до пересчёта
+        // подвигов ниже.
+        resolveVerdictsUseCase()
         achievementUnlockStore.push(gameStateRepository.recomputeAchievements())
 
         // Старец пишет разбор сделки в фоне — ошибка не валит выход из дела.

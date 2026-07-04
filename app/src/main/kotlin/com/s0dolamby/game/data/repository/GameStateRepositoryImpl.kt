@@ -76,7 +76,12 @@ class GameStateRepositoryImpl @Inject constructor(
                 lastDailyClaim = state.lastDailyClaim,
                 tieLevels = parseArchetypeMap(state.tieLevelsJson),
                 archetypeTokens = parseArchetypeMap(state.archetypeTokensJson),
-                unlockedAchievements = parseStringSet(state.unlockedAchievementsJson)
+                unlockedAchievements = parseStringSet(state.unlockedAchievementsJson),
+                chuykaPoints = state.chuykaPoints,
+                chuykaTotal = state.chuykaTotal,
+                chuykaCorrect = state.chuykaCorrect,
+                chuykaStreak = state.chuykaStreak,
+                chuykaBestStreak = state.chuykaBestStreak
             )
         }
 
@@ -102,7 +107,12 @@ class GameStateRepositoryImpl @Inject constructor(
             lastDailyClaim = state.lastDailyClaim,
             tieLevels = parseArchetypeMap(state.tieLevelsJson),
             archetypeTokens = parseArchetypeMap(state.archetypeTokensJson),
-            unlockedAchievements = parseStringSet(state.unlockedAchievementsJson)
+            unlockedAchievements = parseStringSet(state.unlockedAchievementsJson),
+            chuykaPoints = state.chuykaPoints,
+            chuykaTotal = state.chuykaTotal,
+            chuykaCorrect = state.chuykaCorrect,
+            chuykaStreak = state.chuykaStreak,
+            chuykaBestStreak = state.chuykaBestStreak
         )
     }
 
@@ -216,6 +226,21 @@ class GameStateRepositoryImpl @Inject constructor(
     override suspend fun recordReturn(amountRubles: Double) {
         val state = playerDao.getGameState() ?: return
         playerDao.update(state.copy(totalReturned = state.totalReturned + amountRubles))
+    }
+
+    override suspend fun applyChuykaResult(correct: Boolean): Int {
+        val state = playerDao.getGameState() ?: return 0
+        val delta = com.s0dolamby.game.domain.chuyka.ChuykaScoring
+            .delta(correct = correct, streakBefore = state.chuykaStreak)
+        val newStreak = if (correct) state.chuykaStreak + 1 else 0
+        playerDao.update(state.copy(
+            chuykaPoints = (state.chuykaPoints + delta).coerceAtLeast(0),
+            chuykaTotal = state.chuykaTotal + 1,
+            chuykaCorrect = state.chuykaCorrect + (if (correct) 1 else 0),
+            chuykaStreak = newStreak,
+            chuykaBestStreak = maxOf(state.chuykaBestStreak, newStreak)
+        ))
+        return delta
     }
 
     override suspend fun recordScamDetected() {

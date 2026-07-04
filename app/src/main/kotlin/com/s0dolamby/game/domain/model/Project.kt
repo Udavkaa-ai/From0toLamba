@@ -18,6 +18,17 @@ enum class ProjectFate {
     // и обработкой VIP-дел (фиксированный возврат 3× за durationDays).
 }
 
+/**
+ * Прогноз игрока «Верю — не верю»: чем обернётся дело.
+ * HONEST покрывает HONEST_FAIL/SURVIVOR/UNICORN (хозяин не врал),
+ * SCAM — INSTANT_SCAM/SLOW_DRAIN (обман). Сверяется при закрытии дела.
+ */
+enum class PlayerVerdict { HONEST, SCAM }
+
+/** Судьбы-обманы — для сверки прогноза и подсчёта чуйки. */
+val ProjectFate.isScamFate: Boolean
+    get() = this == ProjectFate.INSTANT_SCAM || this == ProjectFate.SLOW_DRAIN
+
 data class Project(
     val id: String,
     val name: String,
@@ -68,5 +79,11 @@ data class Project(
     val yieldFreezeDays: Int = 0,
     val currentUserCount: Int = 0,
     val userCountHistory: List<Int> = emptyList(),
-    val apyHistory: List<Float> = emptyList()
+    val apyHistory: List<Float> = emptyList(),
+
+    // «Верю — не верю»
+    /** Прогноз игрока. null — ставка не сделана. Одна на дело, не меняется. */
+    val playerVerdict: PlayerVerdict? = null,
+    /** Итог прогноза после закрытия дела. null — ещё не разрешён. */
+    val verdictCorrect: Boolean? = null
 )

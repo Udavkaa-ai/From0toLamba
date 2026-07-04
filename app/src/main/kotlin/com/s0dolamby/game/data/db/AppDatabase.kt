@@ -33,7 +33,9 @@ import com.s0dolamby.game.data.db.entity.*
     // v20: добавлен musicEnabled в settings (фоновая музыка MusicEngine).
     // v21: eventDeltaRubles в daily_updates + yieldFreezeDays в projects
     // («Зоркий счёт» — реакция на тревожные вести).
-    version = 21,
+    // v22: «Верю — не верю» — playerVerdict/verdictCorrect в projects,
+    // chuyka*-поля рейтинга чуйки в game_state.
+    version = 22,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

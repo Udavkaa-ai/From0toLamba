@@ -38,4 +38,9 @@ interface GameStateRepository {
      * только что разблокированных подвигов (пустой, если ничего не изменилось).
      */
     suspend fun recomputeAchievements(): List<com.s0dolamby.game.domain.achievements.Achievement>
+    /**
+     * Зачесть разрешённый прогноз «Верю — не верю»: обновить очки, точность
+     * и серию чуйки. Возвращает дельту очков (положительную или отрицательную).
+     */
+    suspend fun applyChuykaResult(correct: Boolean): Int
 }

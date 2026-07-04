@@ -47,4 +47,16 @@ interface ProjectDao {
             "WHERE isActive = 1 OR (isClosed = 1 AND closureReason != 'Предложение не принято')"
     )
     suspend fun countTakenDeals(): Int
+
+    // ─── «Верю — не верю» ────────────────────────────────────────────────
+    // Ставка одна на дело: WHERE playerVerdict IS NULL защищает от перезаписи
+    // даже при гонке двух экранов.
+    @Query("UPDATE projects SET playerVerdict = :verdict WHERE id = :id AND playerVerdict IS NULL AND isClosed = 0")
+    suspend fun setPlayerVerdict(id: String, verdict: String): Int
+
+    @Query("UPDATE projects SET verdictCorrect = :correct WHERE id = :id")
+    suspend fun setVerdictResolved(id: String, correct: Boolean)
+
+    @Query("SELECT * FROM projects WHERE playerVerdict IS NOT NULL AND verdictCorrect IS NULL AND isClosed = 1")
+    suspend fun getUnresolvedVerdictProjects(): List<ProjectEntity>
 }

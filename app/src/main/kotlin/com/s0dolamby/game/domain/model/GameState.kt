@@ -42,7 +42,19 @@ data class GameState(
     /** Баланс жетонов архетипа — мини-валюта на пропуск мини-игр и т.п. */
     val archetypeTokens: Map<PersonaArchetype, Int> = emptyMap(),
     /** ID разблокированных подвигов (Achievement.id). */
-    val unlockedAchievements: Set<String> = emptySet()
+    val unlockedAchievements: Set<String> = emptySet(),
+
+    // «Верю — не верю» — рейтинг чуйки
+    /** Очки чуйки (не опускаются ниже 0). */
+    val chuykaPoints: Int = 0,
+    /** Всего разрешённых прогнозов. */
+    val chuykaTotal: Int = 0,
+    /** Из них верных. */
+    val chuykaCorrect: Int = 0,
+    /** Текущая серия верных прогнозов подряд. */
+    val chuykaStreak: Int = 0,
+    /** Лучшая серия за игру. */
+    val chuykaBestStreak: Int = 0
 ) {
     companion object {
         const val MAX_TIE_LEVEL = 10
