@@ -37,10 +37,18 @@ MOBILE_APP_KEY=8f3c1a9e5d7b204c6e18af93b2705d4c9a1e6f80b3d5278c4e91a6f0d2b7c3e5
 
 1. **Railway → сервис From0toLamba → Variables** — переменная
    `MOBILE_APP_KEY` со значением ключа.
-2. **`app/local.properties`** на машине, где собираешь APK — строка
-   `MOBILE_APP_KEY=<тот же ключ>` (файл в .gitignore, в репо не попадает).
+2. **Где собираешь APK:**
+   - **Сборка на GitHub Actions (основной путь):** GitHub → репозиторий →
+     Settings → Secrets and variables → **Actions** → New repository secret
+     → Name `MOBILE_APP_KEY`, Secret — твой ключ. Workflow сам подставит
+     его в сборку. (Старый секрет `OPENROUTER_API_KEY` можно удалить —
+     больше не нужен. Опциональный секрет `MOBILE_PROXY_URL` — только если
+     сервер на другом домене.)
+   - **Локальная сборка:** строка `MOBILE_APP_KEY=<тот же ключ>` в
+     `app/local.properties` (файл в .gitignore).
 
-Значения должны совпадать: сервер сверяет присланный APK ключ с этим.
+Значения в Railway и в GitHub Secrets должны совпадать буква-в-букву:
+сервер сверяет присланный из APK ключ с тем, что в env.
 
 Прочие переменные Railway уже есть (не трогаем):
 ```
