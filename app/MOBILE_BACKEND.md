@@ -17,15 +17,32 @@ Android APK ──X-App-Key──> Railway (from0tolamba-production)
   ключ OpenRouter при этом не трогается.
 - `OPENROUTER_API_KEY` — только на сервере, в APK его нет.
 
-## Railway → Variables (сервис From0toLamba)
+## MOBILE_APP_KEY — как выглядит и где взять
 
-Добавить одну новую переменную к уже существующим:
+Это просто длинная случайная строка (32+ символов, латиница+цифры).
+Сгенерировать любым из способов:
 
+```bash
+openssl rand -hex 32
+# или
+python3 -c "import secrets; print(secrets.token_hex(32))"
 ```
-MOBILE_APP_KEY   <любая длинная случайная строка>
+
+Пример (НЕ используй этот, сгенерируй свой):
+```
+MOBILE_APP_KEY=8f3c1a9e5d7b204c6e18af93b2705d4c9a1e6f80b3d5278c4e91a6f0d2b7c3e5
 ```
 
-Уже должны быть (не трогаем):
+Один и тот же ключ вписывается в ДВА места:
+
+1. **Railway → сервис From0toLamba → Variables** — переменная
+   `MOBILE_APP_KEY` со значением ключа.
+2. **`app/local.properties`** на машине, где собираешь APK — строка
+   `MOBILE_APP_KEY=<тот же ключ>` (файл в .gitignore, в репо не попадает).
+
+Значения должны совпадать: сервер сверяет присланный APK ключ с этим.
+
+Прочие переменные Railway уже есть (не трогаем):
 ```
 DATABASE_URL         ${{Postgres.DATABASE_URL}}
 OPENROUTER_API_KEY   sk-or-...
@@ -47,17 +64,23 @@ MOBILE_APP_KEY=<тот же секрет, что в Railway>
 Если `MOBILE_APP_KEY` не задать — сборка соберётся, но AI и отправка
 фидбека будут получать 401 от сервера (когда на сервере ключ выставлен).
 
-## Выгрузка заметок тестеров
+## Выгрузка заметок тестеров — веб-страница (в БД лазить не надо)
 
-Railway → Postgres → Query (или `psql`):
+Открой в браузере (подставь свой MOBILE_APP_KEY):
 
-```sql
-SELECT "createdAt", nickname, type, page, "appVersion", message
-FROM "Feedback"
-ORDER BY "createdAt" DESC;
+```
+https://from0tolamba-production.up.railway.app/admin/feedback?key=ТВОЙ_КЛЮЧ
 ```
 
-Экспорт в CSV — кнопкой в Railway Data-вкладке или `\copy` из psql.
+Страница показывает все заметки лентой: тип (🐞 баг / 💡 идея / ❓ вопрос),
+автор, экран-источник, версия, время и текст. Наверху — фильтр по типу и
+кнопка **⬇ CSV** для выгрузки в таблицу.
 
-`type` = `BUG` | `SUGGESTION` | `QUESTION`; `page` — маршрут экрана, с
-которого отправлено (`home`, `portfolio`, `ama/...` и т.п.).
+Прямая ссылка на CSV:
+```
+.../admin/feedback?key=ТВОЙ_КЛЮЧ&format=csv
+```
+
+Доступ закрыт тем же `MOBILE_APP_KEY` — без правильного `?key=` страница
+отдаёт 401. (Запасной путь — SQL в Railway → Postgres:
+`SELECT * FROM "Feedback" ORDER BY "createdAt" DESC;`.)

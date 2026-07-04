@@ -108,4 +108,71 @@ export async function mobileRoutes(app: FastifyInstance) {
     })
     return { ok: true }
   })
+
+  // GET /admin/feedback?key=...&type=BUG — веб-выгрузка заметок тестеров.
+  // Доступ по тому же MOBILE_APP_KEY в query (?key=...). Фильтр по типу
+  // необязателен. &format=csv отдаёт CSV-файл.
+  app.get('/admin/feedback', async (request, reply) => {
+    const q = request.query as { key?: string; type?: string; format?: string }
+    const expected = process.env.MOBILE_APP_KEY
+    if (expected && q.key !== expected) {
+      return reply.status(401).type('text/plain').send('Invalid key')
+    }
+    const where = q.type && ['BUG', 'SUGGESTION', 'QUESTION'].includes(q.type)
+      ? { type: q.type }
+      : {}
+    const rows = await prisma.feedback.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: 1000,
+    })
+
+    if (q.format === 'csv') {
+      const esc = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`
+      const header = 'createdAt,type,nickname,page,appVersion,message'
+      const body = rows.map((r) =>
+        [r.createdAt.toISOString(), r.type, r.nickname, r.page, r.appVersion, r.message].map(esc).join(',')
+      ).join('\n')
+      return reply.type('text/csv; charset=utf-8')
+        .header('Content-Disposition', 'attachment; filename="feedback.csv"')
+        .send(header + '\n' + body)
+    }
+
+    return reply.type('text/html; charset=utf-8').send(renderFeedbackPage(rows, q.type, q.key ?? ''))
+  })
+}
+
+function renderFeedbackPage(rows: any[], activeType: string | undefined, key: string): string {
+  const badge = (t: string) => {
+    const c = t === 'BUG' ? '#e05353' : t === 'SUGGESTION' ? '#4caf50' : '#8ab4f8'
+    const label = t === 'BUG' ? '🐞 Баг' : t === 'SUGGESTION' ? '💡 Идея' : '❓ Вопрос'
+    return `<span style="background:${c}22;color:${c};border:1px solid ${c}66;border-radius:10px;padding:2px 8px;font-size:12px;white-space:nowrap">${label}</span>`
+  }
+  const esc = (v: any) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const link = (t: string, txt: string) => {
+    const active = (activeType ?? '') === t
+    const href = `/admin/feedback?key=${encodeURIComponent(key)}${t ? `&type=${t}` : ''}`
+    return `<a href="${href}" style="padding:6px 12px;border-radius:8px;text-decoration:none;${active ? 'background:#ffb800;color:#1a0a00' : 'background:#241a3a;color:#ffb800'}">${txt}</a>`
+  }
+  const items = rows.map((r) => `
+    <div style="background:#1c142e;border:1px solid #3a2a5a;border-radius:12px;padding:14px 16px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:6px">
+        ${badge(r.type)}
+        <span style="color:#8c86a0;font-size:12px">${esc(r.nickname || 'аноним')} · ${esc(r.page || '—')} · v${esc(r.appVersion || '?')} · ${new Date(r.createdAt).toLocaleString('ru-RU')}</span>
+      </div>
+      <div style="color:#eee;font-size:15px;line-height:1.4;white-space:pre-wrap">${esc(r.message)}</div>
+    </div>`).join('')
+
+  return `<!doctype html><html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Заметки тестеров</title></head>
+<body style="margin:0;background:#0d0a18;color:#eee;font-family:system-ui,sans-serif">
+<div style="max-width:820px;margin:0 auto;padding:20px 16px 60px">
+  <h1 style="color:#ffb800;font-size:22px">🐞 Заметки тестеров <span style="color:#8c86a0;font-size:15px;font-weight:400">(${rows.length})</span></h1>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 20px">
+    ${link('', 'Все')} ${link('BUG', '🐞 Баги')} ${link('SUGGESTION', '💡 Идеи')} ${link('QUESTION', '❓ Вопросы')}
+    <a href="/admin/feedback?key=${encodeURIComponent(key)}${activeType ? `&type=${activeType}` : ''}&format=csv" style="padding:6px 12px;border-radius:8px;text-decoration:none;background:#241a3a;color:#4caf50;margin-left:auto">⬇ CSV</a>
+  </div>
+  ${items || '<p style="color:#8c86a0">Пока пусто.</p>'}
+</div></body></html>`
 }

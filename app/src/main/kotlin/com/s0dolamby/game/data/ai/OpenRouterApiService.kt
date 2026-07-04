@@ -6,7 +6,7 @@ import retrofit2.http.Header
 import retrofit2.http.POST
 
 /**
- * Клиент нашего Railway-прокси (tg/server, /api/mobile/*): тело запроса
+ * Клиент нашего Railway-прокси (tg/server, роуты api/mobile): тело запроса
  * и ответа повторяют формат OpenRouter chat/completions, но ключ
  * OpenRouter живёт на сервере — в APK только лёгкий X-App-Key допуска.
  */
