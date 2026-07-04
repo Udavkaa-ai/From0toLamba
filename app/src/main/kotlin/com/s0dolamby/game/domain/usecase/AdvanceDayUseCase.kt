@@ -62,7 +62,17 @@ class AdvanceDayUseCase @Inject constructor(
                         apyHistory = newApyHistory
                     ))
                     generateDailyUpdatesUseCase(project)
-                        .onSuccess { generatedUpdates.add(it) }
+                        .onSuccess { upd ->
+                            // Весть о заморозке вывода — реагируемая: «Зоркий
+                            // счёт» без единой ошибки откроет окно вывода
+                            // «в последний момент», неудача оставит замок.
+                            val lockNews = upd.copy(
+                                eventKind = DailyEventKind.NEGATIVE,
+                                payoutStatus = PayoutStatus.DELAYED
+                            )
+                            updateRepository.saveUpdate(lockNews)
+                            generatedUpdates.add(lockNews)
+                        }
                         .onFailure { e -> AppLogger.e("AdvanceDayUseCase", "Update failed: ${e.message}") }
                 }
 

@@ -58,13 +58,14 @@ import kotlin.random.Random
 /**
  * «Зоркий счёт» — реакция на ТРЕВОЖНУЮ весть: в квадрате вразнобой, под
  * разными углами и разного размера, разбросаны числа 1–10 и буквы-помехи.
- * Тапай числа ПО ПОРЯДКУ, на каждое следующее — 5 секунд.
+ * Тапай числа ПО ПОРЯДКУ, общий таймер — 10 секунд.
  *
  * Ставки (игра добровольная):
- *  - WIN  (все 10, ≤1 ошибки)  → возврат половины урона события;
- *  - LOSE (все 10 с 2+ ошибками, или время вышло на ≥5 найденных)
- *         → заморозка начислений на 2–3 дня;
- *  - FAIL (время вышло, найдено <5) → вывод заперт до закрытия дела.
+ *  - обычная весть: WIN (все 10, ≤1 ошибки) → возврат половины урона;
+ *    иначе → заморозка начислений на 2–3 дня. Вывод не блокируется.
+ *  - весть о заморозке вывода (isLockNews): WIN только БЕЗ ошибок —
+ *    успел к сундукам, вывод открывается; иначе условие вести просто
+ *    остаётся в силе.
  */
 
 private data class FieldItem(
@@ -109,6 +110,8 @@ private enum class Phase { INTRO, PLAY, DONE }
 @Composable
 fun ZorkiySchyotOverlay(
     projectName: String,
+    /** Весть о заморозке вывода: победа без ошибок открывает окно вывода. */
+    isLockNews: Boolean = false,
     onOutcome: (BadNewsOutcome) -> Unit,
     onRetreat: () -> Unit
 ) {
@@ -122,8 +125,11 @@ fun ZorkiySchyotOverlay(
 
     fun finish(timedOut: Boolean) {
         val found = next - 1
+        // У вести о заморозке вывода планка выше: WIN только без единой
+        // ошибки — «в последний момент» прощает лишь безупречных.
+        val winErrorCap = if (isLockNews) 0 else 1
         outcome = when {
-            !timedOut && errors <= 1 -> BadNewsOutcome.WIN
+            !timedOut && errors <= winErrorCap -> BadNewsOutcome.WIN
             !timedOut -> BadNewsOutcome.LOSE
             found >= 5 -> BadNewsOutcome.LOSE
             else -> BadNewsOutcome.FAIL
@@ -208,7 +214,7 @@ fun ZorkiySchyotOverlay(
                     )
                     Spacer(Modifier.height(10.dp))
                     Text(
-                        Strings.t("zorkiy.stakes"),
+                        Strings.t(if (isLockNews) "zorkiy.stakes.lock" else "zorkiy.stakes"),
                         color = ErrorColor.copy(alpha = 0.9f),
                         fontSize = 12.sp, lineHeight = 18.sp,
                         textAlign = TextAlign.Center
@@ -314,10 +320,15 @@ fun ZorkiySchyotOverlay(
 
                 Phase.DONE -> {
                     val o = outcome ?: BadNewsOutcome.FAIL
-                    val (emoji, titleKey, bodyKey, color) = when (o) {
-                        BadNewsOutcome.WIN -> Quad("🛡️", "zorkiy.win.title", "zorkiy.win.body", Success)
-                        BadNewsOutcome.LOSE -> Quad("🥶", "zorkiy.lose.title", "zorkiy.lose.body", Color(0xFFFFB74D))
-                        BadNewsOutcome.FAIL -> Quad("🔒", "zorkiy.fail.title", "zorkiy.fail.body", ErrorColor)
+                    val (emoji, titleKey, bodyKey, color) = when {
+                        isLockNews && o == BadNewsOutcome.WIN ->
+                            Quad("🗝️", "zorkiy.unlock.title", "zorkiy.unlock.body", Success)
+                        isLockNews ->
+                            Quad("🔒", "zorkiy.lockstay.title", "zorkiy.lockstay.body", ErrorColor)
+                        o == BadNewsOutcome.WIN ->
+                            Quad("🛡️", "zorkiy.win.title", "zorkiy.win.body", Success)
+                        else ->
+                            Quad("🥶", "zorkiy.lose.title", "zorkiy.lose.body", Color(0xFFFFB74D))
                     }
                     Text(emoji, fontSize = 44.sp)
                     Spacer(Modifier.height(6.dp))

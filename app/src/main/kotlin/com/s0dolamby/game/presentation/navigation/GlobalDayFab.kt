@@ -111,19 +111,23 @@ class GlobalDayFabViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             reactToBadNewsUseCase(update.projectId, update.eventDeltaRubles, outcome)
-                .onSuccess { recovered ->
-                    when (outcome) {
-                        com.s0dolamby.game.domain.usecase.BadNewsOutcome.WIN -> {
+                .onSuccess { effect ->
+                    when (effect) {
+                        is com.s0dolamby.game.domain.usecase.BadNewsEffect.Recovered -> {
                             soundEngine.play(SoundName.WIN)
-                            _reactionInvestResult.value = "win:$recovered"
+                            _reactionInvestResult.value = "win:${effect.amountRubles}"
                         }
-                        com.s0dolamby.game.domain.usecase.BadNewsOutcome.LOSE -> {
+                        is com.s0dolamby.game.domain.usecase.BadNewsEffect.Frozen -> {
                             soundEngine.play(SoundName.LOSE)
                             _reactionInvestResult.value = "freeze"
                         }
-                        com.s0dolamby.game.domain.usecase.BadNewsOutcome.FAIL -> {
+                        com.s0dolamby.game.domain.usecase.BadNewsEffect.Unlocked -> {
+                            soundEngine.play(SoundName.WIN)
+                            _reactionInvestResult.value = "unlocked"
+                        }
+                        com.s0dolamby.game.domain.usecase.BadNewsEffect.LockStays -> {
                             soundEngine.play(SoundName.LOSE)
-                            _reactionInvestResult.value = "lock"
+                            _reactionInvestResult.value = "lockstay"
                         }
                     }
                 }

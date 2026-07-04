@@ -6,57 +6,75 @@ import javax.inject.Inject
 import kotlin.math.abs
 import kotlin.random.Random
 
-/** Исход «Зоркого счёта» — реакции на тревожную весть. */
+/** Игровой результат «Зоркого счёта» (что показала сама мини-игра). */
 enum class BadNewsOutcome {
-    /** Все числа найдены, ≤1 ошибки — беда отбита, возврат половины урона. */
+    /** Все числа найдены чисто (для вести о заморозке — вообще без ошибок). */
     WIN,
-    /** Дошёл, но с помарками (2+ ошибки) или почти успел — паника: заморозка начислений. */
+    /** Дошёл с помарками или почти успел. */
     LOSE,
-    /** Совсем не собрался (найдено меньше половины) — вывод заперт до закрытия. */
+    /** Совсем не собрался (найдено меньше половины). */
     FAIL
 }
 
+/** Применённое последствие — для снэкбара и звука. */
+sealed class BadNewsEffect {
+    /** Обычный негатив, победа: половина урона вернулась в дело. */
+    data class Recovered(val amountRubles: Double) : BadNewsEffect()
+    /** Обычный негатив, неудача: заморозка начислений. */
+    data class Frozen(val days: Int) : BadNewsEffect()
+    /** Весть о заморозке вывода, чистая победа: успел — вывод открыт. */
+    object Unlocked : BadNewsEffect()
+    /** Весть о заморозке вывода, неудача: условие вести просто действует. */
+    object LockStays : BadNewsEffect()
+}
+
 /**
- * Применяет исход реакции на негативную весть к делу:
- *  - WIN: возвращает 50% урона события в стоимость дела;
- *  - LOSE: заморозка начислений на 2–3 дня;
- *  - FAIL: блокировка вывода до закрытия дела.
+ * Применяет исход «Зоркого счёта» к делу.
+ *
+ * Обычная тревожная весть (урон события):
+ *  - WIN → возврат 50% урона; иначе → заморозка начислений на 2–3 дня.
+ *  Блокировки вывода за проигрыш БОЛЬШЕ НЕТ — это был перебор.
+ *
+ * Весть о заморозке вывода (дело уже с isWithdrawalLocked):
+ *  - WIN (без ошибок) → вывод открывается: окно «вывести в последний момент»;
+ *  - иначе → ничего не добавляется, условие вести просто остаётся в силе.
  */
 class ReactToBadNewsUseCase @Inject constructor(
     private val projectRepository: ProjectRepository
 ) {
-    /**
-     * @param eventDeltaRubles дельта события из вести (отрицательная для урона)
-     * @return сумма возврата при WIN (для снэкбара), 0.0 иначе
-     */
     suspend operator fun invoke(
         projectId: String,
         eventDeltaRubles: Double,
         outcome: BadNewsOutcome
-    ): Result<Double> = runCatching {
+    ): Result<BadNewsEffect> = runCatching {
         val project = projectRepository.getProjectById(projectId)
             ?: error("Дело не найдено")
         if (!project.isActive) error("Дело уже закрыто")
 
-        when (outcome) {
+        if (project.isWithdrawalLocked) {
+            // Реакция на весть о заморозке вывода
+            if (outcome == BadNewsOutcome.WIN) {
+                projectRepository.updateProject(project.copy(isWithdrawalLocked = false))
+                AppLogger.i("BadNews", "UNLOCK window on ${project.claimedName}")
+                BadNewsEffect.Unlocked
+            } else {
+                AppLogger.i("BadNews", "lock stays on ${project.claimedName}")
+                BadNewsEffect.LockStays
+            }
+        } else when (outcome) {
             BadNewsOutcome.WIN -> {
                 val recovered = abs(eventDeltaRubles) * 0.5
                 projectRepository.updateProject(
                     project.copy(currentValueRubles = project.currentValueRubles + recovered)
                 )
                 AppLogger.i("BadNews", "WIN on ${project.claimedName}: +$recovered")
-                recovered
+                BadNewsEffect.Recovered(recovered)
             }
-            BadNewsOutcome.LOSE -> {
+            BadNewsOutcome.LOSE, BadNewsOutcome.FAIL -> {
                 val days = Random.nextInt(2, 4) // 2..3 дня
                 projectRepository.updateProject(project.copy(yieldFreezeDays = days))
-                AppLogger.i("BadNews", "LOSE on ${project.claimedName}: freeze $days d")
-                0.0
-            }
-            BadNewsOutcome.FAIL -> {
-                projectRepository.updateProject(project.copy(isWithdrawalLocked = true))
-                AppLogger.i("BadNews", "FAIL on ${project.claimedName}: withdrawal locked")
-                0.0
+                AppLogger.i("BadNews", "freeze on ${project.claimedName}: $days d")
+                BadNewsEffect.Frozen(days)
             }
         }
     }

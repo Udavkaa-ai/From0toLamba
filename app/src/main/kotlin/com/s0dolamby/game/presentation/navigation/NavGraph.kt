@@ -425,10 +425,15 @@ fun NavGraph() {
             )
         }
 
-        // «Зоркий счёт» — отбиться от тревожной вести (штрафы за провал!)
+        // «Зоркий счёт» — отбиться от тревожной вести. Если весть о
+        // заморозке вывода — ставка иная: чистая победа открывает окно
+        // «вывести в последний момент», неудача просто оставляет замок.
         zorkiyFor?.let { update ->
+            val isLockNews = activeProjects
+                .firstOrNull { it.id == update.projectId }?.isWithdrawalLocked == true
             com.s0dolamby.game.presentation.minigame.zorkiy.ZorkiySchyotOverlay(
                 projectName = update.projectName,
+                isLockNews = isLockNews,
                 onOutcome = { outcome ->
                     dayFabViewModel.markReacted(update.id)
                     dayFabViewModel.applyBadNewsOutcome(update, outcome)
@@ -470,7 +475,7 @@ fun NavGraph() {
                         .background(androidx.compose.ui.graphics.Color(0xF01A0F3F))
                         .padding(horizontal = 18.dp, vertical = 12.dp)
                 ) {
-                    val good = res.startsWith("ok:") || res.startsWith("win:")
+                    val good = res.startsWith("ok:") || res.startsWith("win:") || res == "unlocked"
                     androidx.compose.material3.Text(
                         when {
                             res.startsWith("ok:") ->
@@ -478,7 +483,8 @@ fun NavGraph() {
                             res.startsWith("win:") ->
                                 Strings.t("zorkiy.snack.win", res.removePrefix("win:").toDoubleOrNull() ?: 0.0)
                             res == "freeze" -> Strings.t("zorkiy.snack.freeze")
-                            res == "lock" -> Strings.t("zorkiy.snack.lock")
+                            res == "unlocked" -> Strings.t("zorkiy.snack.unlocked")
+                            res == "lockstay" -> Strings.t("zorkiy.snack.lockstay")
                             else -> res.removePrefix("err:").ifBlank { Strings.t("ama.err.unknown") }
                         },
                         color = if (good) com.s0dolamby.game.presentation.common.theme.Success
