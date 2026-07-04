@@ -32,11 +32,12 @@ const openrouter = new OpenAI({
   },
 })
 
+// Только реальные ID OpenRouter (несуществующий пробрасывается наверх и даёт
+// ошибку). Модель, которую клиент не в whitelist, заменяется на FALLBACK.
 const ALLOWED_MODELS = new Set([
-  'deepseek/deepseek-v4-flash',
   'deepseek/deepseek-chat-v3-0324',
-  'google/gemini-2.5-flash-lite-preview-09-2025',
-  'qwen/qwen3.5-flash-02-23',
+  'deepseek/deepseek-v3.2',
+  'google/gemini-3.1-flash-lite-preview',
 ])
 const FALLBACK_MODEL = 'deepseek/deepseek-chat-v3-0324'
 

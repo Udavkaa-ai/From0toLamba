@@ -131,8 +131,8 @@ object Strings {
         "ama.reveal.daysToFinale" to "Дней до развязки",
 
         // Темы (имена в селекторе)
-        "theme.DARK_FAIRY" to "Тёмная ночь",
-        "theme.WARM_FAIRY" to "Тёплая ярмарка",
+        "theme.DARK_FAIRY" to "Ночь",
+        "theme.WARM_FAIRY" to "Ярмарка",
 
         // Подвиги — категории + 28 шт. по id
         "ach.cat.CHARTERS" to "Грамоты",
@@ -898,8 +898,8 @@ object Strings {
         "ama.reveal.daysToFinale" to "Days to the finale",
 
         // Theme switcher labels
-        "theme.DARK_FAIRY" to "Dark night",
-        "theme.WARM_FAIRY" to "Warm fair",
+        "theme.DARK_FAIRY" to "Night",
+        "theme.WARM_FAIRY" to "Fair",
 
         // Feats — 6 categories + 28 entries by id
         "ach.cat.CHARTERS" to "Charters",

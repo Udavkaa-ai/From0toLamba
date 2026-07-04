@@ -17,7 +17,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.s0dolamby.game.BuildConfig
 import com.s0dolamby.game.R
-import com.s0dolamby.game.domain.model.TEXT_MODEL_OPTIONS
 import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.fairyOnCardTextFieldColors
 import com.s0dolamby.game.presentation.common.i18n.Strings
@@ -118,52 +117,13 @@ fun SettingsScreen(
                     )
                 }
 
-                // ── Модель текста ──────────────────────────────────────
-                FairyCard(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        Strings.t("settings.model.title"),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = LocalAccentOnCard.current,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        Strings.t("settings.model.hint"),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = LocalContentColorMuted.current
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    TEXT_MODEL_OPTIONS.forEach { option ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                option.label,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = if (uiState.settings.textModel == option.modelId) LocalAccentOnCard.current
-                                        else LocalContentColorSecondary.current,
-                                fontWeight = if (uiState.settings.textModel == option.modelId) FontWeight.SemiBold
-                                             else FontWeight.Normal,
-                                modifier = Modifier.weight(1f)
-                            )
-                            RadioButton(
-                                selected = uiState.settings.textModel == option.modelId,
-                                onClick = { viewModel.setTextModel(option.modelId) },
-                                colors = RadioButtonDefaults.colors(
-                                    selectedColor = LocalAccentOnCard.current,
-                                    unselectedColor = LocalContentColorMuted.current
-                                )
-                            )
-                        }
-                    }
-                }
+                // Выбор нейросети временно скрыт: модель фиксирована на
+                // сервере-прокси, игроку выбирать нечего. Настройка textModel
+                // и TEXT_MODEL_OPTIONS остались в коде — вернём карточку, когда
+                // будет смысл давать выбор.
 
                 // Тоггл «генерации баннеров через Pollinations» удалён —
                 // обложки теперь всегда из бандл-стока (assets/banners/).
-
-                OrnamentDivider()
 
                 // ── Язык и тема ────────────────────────────────────────
                 FairyCard(modifier = Modifier.fillMaxWidth()) {
@@ -209,7 +169,12 @@ fun SettingsScreen(
                             FilterChip(
                                 selected = selected,
                                 onClick = { viewModel.setThemeMode(mode) },
-                                label = { Text("${mode.emoji} ${Strings.t("theme.${mode.name}")}") },
+                                label = {
+                                    Text(
+                                        "${mode.emoji} ${Strings.t("theme.${mode.name}")}",
+                                        maxLines = 1
+                                    )
+                                },
                                 modifier = Modifier.weight(1f),
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = FairyGold,
