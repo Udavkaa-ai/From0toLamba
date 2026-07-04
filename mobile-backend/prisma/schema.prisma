@@ -1,0 +1,24 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Единственная таблица этого сервиса — заметки тестеров Android-версии.
+// Выгрузка: страница /admin/feedback?key=... или SQL.
+model Feedback {
+  id         Int      @id @default(autoincrement())
+  nickname   String?
+  type       String   // BUG | SUGGESTION | QUESTION
+  page       String?  // экран-источник (route)
+  message    String
+  appVersion String?
+  platform   String   @default("android")
+  createdAt  DateTime @default(now())
+
+  @@index([type])
+  @@index([createdAt])
+}

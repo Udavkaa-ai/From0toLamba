@@ -1,21 +1,27 @@
 # Android backend: AI-прокси и сбор фидбека
 
 Android-приложение больше НЕ носит ключ OpenRouter в APK. Вся AI-генерация
-и заметки тестеров идут через наш Railway-сервер (`tg/server`), где ключ
-живёт в переменных окружения.
+и заметки тестеров идут через **отдельный сервис `mobile-backend/`** на
+Railway — со своей маленькой Postgres, TG-сервера и его базы с игроками
+он НЕ касается.
+
+> Инструкция по развёртыванию самого сервиса — в `mobile-backend/README.md`.
+> Здесь — только про сборку APK.
 
 ## Как это устроено
 
 ```
-Android APK ──X-App-Key──> Railway (from0tolamba-production)
+Android APK ──X-App-Key──> mobile-backend (отдельный Railway-сервис)
                             ├─ POST /api/mobile/chat     → OpenRouter (серверный ключ)
-                            └─ POST /api/mobile/feedback → Postgres (таблица Feedback)
+                            └─ POST /api/mobile/feedback → своя Postgres (таблица Feedback)
 ```
 
 - `MOBILE_APP_KEY` — общий секрет допуска к прокси. Проверяется на сервере,
   зашит в APK. Скомпрометировали — меняешь его в Railway и пересобираешь APK,
   ключ OpenRouter при этом не трогается.
-- `OPENROUTER_API_KEY` — только на сервере, в APK его нет.
+- `MOBILE_PROXY_URL` — публичный домен сервиса mobile-backend (Railway
+  выдаёт свой при создании). Без него APK соберётся, но AI/фидбек не заработают.
+- `OPENROUTER_API_KEY` — только на сервере mobile-backend, в APK его нет.
 
 ## MOBILE_APP_KEY — как выглядит и где взять
 
@@ -33,51 +39,44 @@ python3 -c "import secrets; print(secrets.token_hex(32))"
 MOBILE_APP_KEY=8f3c1a9e5d7b204c6e18af93b2705d4c9a1e6f80b3d5278c4e91a6f0d2b7c3e5
 ```
 
-Один и тот же ключ вписывается в ДВА места:
+Один и тот же ключ вписывается в места:
 
-1. **Railway → сервис From0toLamba → Variables** — переменная
-   `MOBILE_APP_KEY` со значением ключа.
-2. **Где собираешь APK:**
-   - **Сборка на GitHub Actions (основной путь):** GitHub → репозиторий →
-     Settings → Secrets and variables → **Actions** → New repository secret
-     → Name `MOBILE_APP_KEY`, Secret — твой ключ. Workflow сам подставит
-     его в сборку. (Старый секрет `OPENROUTER_API_KEY` можно удалить —
-     больше не нужен. Опциональный секрет `MOBILE_PROXY_URL` — только если
-     сервер на другом домене.)
-   - **Локальная сборка:** строка `MOBILE_APP_KEY=<тот же ключ>` в
-     `app/local.properties` (файл в .gitignore).
+1. **Railway → сервис mobile-backend → Variables** — `MOBILE_APP_KEY`
+   (и там же `OPENROUTER_API_KEY`, `DATABASE_URL` своей базы — см.
+   `mobile-backend/README.md`).
+2. **Где собираешь APK — GitHub Actions (основной путь):** GitHub →
+   репозиторий → Settings → Secrets and variables → **Actions** → New
+   repository secret:
+   - `MOBILE_APP_KEY` — твой ключ (тот же, что в Railway);
+   - `MOBILE_PROXY_URL` — публичный домен сервиса mobile-backend со `/`
+     на конце (Railway → сервис → Settings → Networking).
+   Старый секрет `OPENROUTER_API_KEY` можно удалить.
+   Для локальной сборки — те же строки в `app/local.properties` (в .gitignore).
 
-Значения в Railway и в GitHub Secrets должны совпадать буква-в-букву:
-сервер сверяет присланный из APK ключ с тем, что в env.
+Значения `MOBILE_APP_KEY` в Railway и в GitHub Secrets должны совпадать
+буква-в-букву: сервер сверяет присланный из APK ключ с тем, что в env.
 
-Прочие переменные Railway уже есть (не трогаем):
-```
-DATABASE_URL         ${{Postgres.DATABASE_URL}}
-OPENROUTER_API_KEY   sk-or-...
-MINI_APP_URL         https://from0tolamba-production.up.railway.app
-```
-
-Таблица `Feedback` создастся сама при деплое (`prisma db push` в старт-скрипте).
+Таблица `Feedback` создастся сама при деплое сервиса.
 
 ## Сборка APK для тестеров
 
-В `app/local.properties` (НЕ коммитить):
+CI сам подставит `MOBILE_APP_KEY` и `MOBILE_PROXY_URL` из GitHub Secrets.
+Для локальной сборки — `app/local.properties` (НЕ коммитить):
 
 ```
 MOBILE_APP_KEY=<тот же секрет, что в Railway>
-# MOBILE_PROXY_URL по умолчанию = https://from0tolamba-production.up.railway.app/
-# переопределять нужно только если сервер на другом домене
+MOBILE_PROXY_URL=https://<домен-mobile-backend>.up.railway.app/
 ```
 
-Если `MOBILE_APP_KEY` не задать — сборка соберётся, но AI и отправка
-фидбека будут получать 401 от сервера (когда на сервере ключ выставлен).
+Если секреты не задать — APK соберётся, но AI и отправка фидбека получат
+401 (нет ключа) или не найдут сервер (нет URL).
 
 ## Выгрузка заметок тестеров — веб-страница (в БД лазить не надо)
 
-Открой в браузере (подставь свой MOBILE_APP_KEY):
+Открой в браузере (подставь домен mobile-backend и свой MOBILE_APP_KEY):
 
 ```
-https://from0tolamba-production.up.railway.app/admin/feedback?key=ТВОЙ_КЛЮЧ
+https://<домен-mobile-backend>.up.railway.app/admin/feedback?key=ТВОЙ_КЛЮЧ
 ```
 
 Страница показывает все заметки лентой: тип (🐞 баг / 💡 идея / ❓ вопрос),

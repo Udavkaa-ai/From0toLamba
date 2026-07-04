@@ -209,19 +209,3 @@ model AdRevenue {
   meta      String?  // JSON: доп. данные от рекламной сети
   recordedAt DateTime @default(now())
 }
-
-// Заметки тестеров из Android-приложения (баг/идея/вопрос).
-// Выгрузка: SELECT * FROM "Feedback" ORDER BY "createdAt" DESC;
-model Feedback {
-  id         Int      @id @default(autoincrement())
-  nickname   String?
-  type       String   // BUG | SUGGESTION | QUESTION
-  page       String?  // экран-источник (route)
-  message    String
-  appVersion String?
-  platform   String   @default("android")
-  createdAt  DateTime @default(now())
-
-  @@index([type])
-  @@index([createdAt])
-}
