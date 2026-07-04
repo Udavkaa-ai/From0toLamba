@@ -272,7 +272,7 @@ private fun WeeklyFairCard(ui: TodayUiState) {
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             com.s0dolamby.game.presentation.common.components.WobblyEmoji(
-                "🎪", fontSize = 22.sp, amplitudeDeg = 5f, periodMs = 2600
+                ui.weekModifier.emoji, fontSize = 22.sp, amplitudeDeg = 5f, periodMs = 2600
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -283,6 +283,23 @@ private fun WeeklyFairCard(ui: TodayUiState) {
                 )
                 Text(
                     Strings.t("today.week.daysLeft", ui.weekDaysLeft),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = LocalContentColorMuted.current
+                )
+            }
+        }
+        // Сезонный модификатор — чем эта неделя отличается от обычной
+        if (ui.weekModifier != com.s0dolamby.game.domain.week.WeekModifier.NONE) {
+            Spacer(Modifier.height(6.dp))
+            Column {
+                Text(
+                    Strings.t("week.mod.${ui.weekModifier.stringKey}.title"),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = LocalAccentOnCard.current
+                )
+                Text(
+                    Strings.t("week.mod.${ui.weekModifier.stringKey}.desc"),
                     style = MaterialTheme.typography.labelSmall,
                     color = LocalContentColorMuted.current
                 )

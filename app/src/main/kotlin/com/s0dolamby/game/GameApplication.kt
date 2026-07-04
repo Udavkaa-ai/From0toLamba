@@ -31,6 +31,10 @@ class GameApplication : Application(), Configuration.Provider {
         installCrashHandler()
         createNotificationChannels()
         configureCoil()
+        // Ежедневное напоминание «серия догорает» (~18:00 местного).
+        // Сам воркер молчит, если игрок уже заходил или напоминания
+        // выключены в настройках.
+        com.s0dolamby.game.data.notifications.StreakReminderWorker.schedule(this)
     }
 
     private fun configureCoil() {

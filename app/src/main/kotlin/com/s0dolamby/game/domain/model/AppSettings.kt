@@ -12,7 +12,9 @@ data class AppSettings(
     /** Звуковые эффекты (щелчки, колокольчики, шелест пергамента). */
     val soundEnabled: Boolean = true,
     /** Фоновая музыка (сказочная тема по кругу). */
-    val musicEnabled: Boolean = true
+    val musicEnabled: Boolean = true,
+    /** Напоминания: серия догорает, ярмарка ждёт. */
+    val notificationsEnabled: Boolean = true
 )
 
 data class ModelOption(val label: String, val modelId: String)

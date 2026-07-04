@@ -22,7 +22,8 @@ class SettingsRepositoryImpl @Inject constructor(
                 themeMode = settings.themeMode.name,
                 language = settings.language,
                 soundEnabled = settings.soundEnabled,
-                musicEnabled = settings.musicEnabled
+                musicEnabled = settings.musicEnabled,
+                notificationsEnabled = settings.notificationsEnabled
             )
         )
     }
@@ -43,6 +44,7 @@ class SettingsRepositoryImpl @Inject constructor(
             themeMode = ThemeMode.fromName(themeMode),
             language = language.ifBlank { "ru" },
             soundEnabled = soundEnabled,
-            musicEnabled = musicEnabled
+            musicEnabled = musicEnabled,
+            notificationsEnabled = notificationsEnabled
         )
 }

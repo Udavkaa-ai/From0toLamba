@@ -22,7 +22,10 @@ class GenerateProjectUseCase @Inject constructor(
      */
     suspend operator fun invoke(
         isOnboarding: Boolean = false,
-        rng: Random = Random.Default
+        rng: Random = Random.Default,
+        /** Сезонный модификатор «Ярмарки недели» (частота архетипов/судеб). */
+        modifier: com.s0dolamby.game.domain.week.WeekModifier =
+            com.s0dolamby.game.domain.week.WeekModifier.NONE
     ): Result<Project> = runCatching {
         // Сначала архетип РАВНОВЕРОЯТНО из всех семи, потом совместимый
         // с ним шаблон — иначе частые в compatiblePersonas дельцы (Боярин,
@@ -33,12 +36,13 @@ class GenerateProjectUseCase @Inject constructor(
             template = projectRegistry.getOnboardingTemplate()
             archetype = personaRegistry.getCompatibleArchetype(template.compatiblePersonas, rng)
         } else {
-            archetype = PersonaArchetype.values().random(rng)
+            archetype = pickArchetype(rng, modifier)
             template = projectRegistry.getRandomTemplateFor(archetype.name.lowercase(), rng)
         }
         val persona = personaRegistry.getPersona(archetype)
 
-        val fate = if (isOnboarding) ProjectFate.HONEST_FAIL else selectFate(template.fateWeights, rng)
+        val fate = if (isOnboarding) ProjectFate.HONEST_FAIL
+        else selectFate(applyFateBoost(template.fateWeights, modifier), rng)
         val daysUntilCollapse = calcDaysUntilCollapse(fate, rng)
 
         val developerName = DeveloperNameBank.all(archetype).random(rng)
@@ -73,6 +77,26 @@ class GenerateProjectUseCase @Inject constructor(
 
         projectRepository.saveProject(project)
         project
+    }
+
+    /** Равновероятный архетип; сезонный буст утраивает вес своего героя. */
+    private fun pickArchetype(
+        rng: Random,
+        modifier: com.s0dolamby.game.domain.week.WeekModifier
+    ): PersonaArchetype {
+        val boosted = modifier.archetypeBoost
+            ?: return PersonaArchetype.values().random(rng)
+        val pool = PersonaArchetype.values().toList() + listOf(boosted, boosted)
+        return pool.random(rng)
+    }
+
+    /** Сезонный буст судьбы: её вес в шаблоне удваивается. */
+    private fun applyFateBoost(
+        weights: Map<String, Int>,
+        modifier: com.s0dolamby.game.domain.week.WeekModifier
+    ): Map<String, Int> {
+        val boosted = modifier.fateBoostKey ?: return weights
+        return weights.mapValues { (key, w) -> if (key == boosted.name) w * 2 else w }
     }
 
     private fun selectFate(weights: Map<String, Int>, rng: Random): ProjectFate {

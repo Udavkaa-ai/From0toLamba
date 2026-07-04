@@ -87,6 +87,12 @@ class SettingsViewModel @Inject constructor(
         musicEngine.setEnabled(enabled)
     }
 
+    fun setNotificationsEnabled(enabled: Boolean) {
+        val updated = _uiState.value.settings.copy(notificationsEnabled = enabled)
+        _uiState.value = _uiState.value.copy(settings = updated)
+        viewModelScope.launch { settingsRepository.updateSettings(updated) }
+    }
+
     // setImageGenerationEnabled удалён — обложки теперь из стока, переключать нечего.
 
     fun resetGame() {

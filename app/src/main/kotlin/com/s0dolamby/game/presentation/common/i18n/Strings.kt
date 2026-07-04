@@ -331,6 +331,21 @@ object Strings {
         "today.week.chuyka" to "Чуйка недели",
         "today.week.chuykaVal" to "%d из %d",
         "today.week.shareBtn" to "📣 Похвастаться итогом недели",
+        // Сезонные модификаторы недели
+        "week.mod.koschei.title" to "💀 Нашествие Кощеев",
+        "week.mod.koschei.desc" to "Всю неделю на ярмарке втрое больше кощеевых контор — цифры точные, глаза холодные. Не верь красивым процентам.",
+        "week.mod.zolushka.title" to "👠 Бал Золушки",
+        "week.mod.zolushka.desc" to "Понаехали золушки со всех волостей — жалостливые истории на каждом углу. Держи сердце на замке, а кошель подальше.",
+        "week.mod.yaga.title" to "🧙 Шабаш на болоте",
+        "week.mod.yaga.desc" to "Ведуньи слетелись на ярмарку — загадки, туман и зелья втрое гуще обычного. Требуй ясности.",
+        "week.mod.firebird.title" to "🔥 Неделя Жар-птиц",
+        "week.mod.firebird.desc" to "Поговаривают, над ярмаркой видели жар-птиц — дела взрывного роста попадаются вдвое чаще. Но и пустышек никто не отменял.",
+        "week.mod.rogue.title" to "🗡 Лихая неделя",
+        "week.mod.rogue.desc" to "На тракте неспокойно: скорых обманщиков вдвое больше обычного. Спрашивай втрое строже.",
+        "week.mod.honest.title" to "🤝 Честные ряды",
+        "week.mod.honest.desc" to "Гильдия навела порядок: крепких долгожителей на ярмарке вдвое больше. Хорошая неделя для спокойных вложений.",
+        "settings.notif.title" to "🔔 Напоминания",
+        "settings.notif.hint" to "Вечером напомним, если серия дней догорает",
         "today.week.shareText" to "🏪 Ярмарка недели %d в «Из грязи в князи»\n💰 Казна за неделю: %s\n🔮 Чуйка: %d из %d\n🏆 Чин: %s\n\nГрамоты недели у всех одинаковые — а итог у каждого свой. Сможешь лучше?",
 
         // Финал мини-игры (общая плашка MinigameShell.ResultOverlay)
@@ -1070,6 +1085,21 @@ object Strings {
         "today.week.chuyka" to "Gut this week",
         "today.week.chuykaVal" to "%d of %d",
         "today.week.shareBtn" to "📣 Share this week's result",
+        // Weekly seasonal modifiers
+        "week.mod.koschei.title" to "💀 Koschei invasion",
+        "week.mod.koschei.desc" to "Three times as many Koschei outfits at the fair this week — precise numbers, cold eyes. Don't trust pretty percentages.",
+        "week.mod.zolushka.title" to "👠 Cinderella's ball",
+        "week.mod.zolushka.desc" to "Cinderellas from every county — tearful stories on every corner. Guard your heart, and your purse even more.",
+        "week.mod.yaga.title" to "🧙 Sabbath on the bog",
+        "week.mod.yaga.desc" to "The wise women flocked to the fair — riddles, fog and potions three times thicker than usual. Demand clarity.",
+        "week.mod.firebird.title" to "🔥 Week of Firebirds",
+        "week.mod.firebird.desc" to "They say firebirds were seen over the fair — explosive ventures twice as common. But the duds are still out there too.",
+        "week.mod.rogue.title" to "🗡 Rogue week",
+        "week.mod.rogue.desc" to "The roads are restless: twice as many quick swindlers about. Question everything three times harder.",
+        "week.mod.honest.title" to "🤝 Honest rows",
+        "week.mod.honest.desc" to "The guild cleaned things up: sturdy long-lived ventures are twice as common. A good week for calm investing.",
+        "settings.notif.title" to "🔔 Reminders",
+        "settings.notif.hint" to "An evening nudge when your daily streak is about to burn out",
         "today.week.shareText" to "🏪 Week %d fair in \"Rags to Riches\"\n💰 Treasury this week: %s\n🔮 Gut feeling: %d of %d\n🏆 Rank: %s\n\nEveryone gets the same charters — the outcome is yours alone. Can you do better?",
 
         // Minigame result overlay (shared MinigameShell)

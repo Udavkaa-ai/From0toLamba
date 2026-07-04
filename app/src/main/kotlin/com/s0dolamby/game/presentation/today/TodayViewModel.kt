@@ -23,7 +23,9 @@ data class TodayUiState(
     val weekGrowthPercent: Double? = null,
     val weekChuykaCorrect: Int = 0,
     val weekChuykaTotal: Int = 0,
-    val investorRank: com.s0dolamby.game.domain.model.InvestorRank? = null
+    val investorRank: com.s0dolamby.game.domain.model.InvestorRank? = null,
+    val weekModifier: com.s0dolamby.game.domain.week.WeekModifier =
+        com.s0dolamby.game.domain.week.WeekModifier.NONE
 )
 
 @HiltViewModel
@@ -57,7 +59,8 @@ class TodayViewModel @Inject constructor(
             } else null,
             weekChuykaCorrect = (state.chuykaCorrect - state.weekStartChuykaCorrect).coerceAtLeast(0),
             weekChuykaTotal = (state.chuykaTotal - state.weekStartChuykaTotal).coerceAtLeast(0),
-            investorRank = state.investorRank
+            investorRank = state.investorRank,
+            weekModifier = WeeklyFair.modifierFor(currentWeek)
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), TodayUiState())
 

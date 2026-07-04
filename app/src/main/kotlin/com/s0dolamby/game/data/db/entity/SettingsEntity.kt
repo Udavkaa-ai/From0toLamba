@@ -20,5 +20,8 @@ data class SettingsEntity(
     val soundEnabled: Boolean = true,
     // Фоновая музыка (MusicEngine): true = играет.
     @androidx.room.ColumnInfo(defaultValue = "1")
-    val musicEnabled: Boolean = true
+    val musicEnabled: Boolean = true,
+    // Напоминания (стрик догорает и т.п.): true = слать.
+    @androidx.room.ColumnInfo(defaultValue = "1")
+    val notificationsEnabled: Boolean = true
 )

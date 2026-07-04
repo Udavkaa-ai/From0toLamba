@@ -308,13 +308,14 @@ class AdvanceDayUseCase @Inject constructor(
         gameStateRepository.ensureWeeklyFair(newBalance + totalActiveValue)
         val weekAdvanceIdx = gameStateRepository.bumpWeekAdvances()
         val weekKey = com.s0dolamby.game.domain.week.WeeklyFair.weekKey()
+        val weekModifier = com.s0dolamby.game.domain.week.WeeklyFair.modifierFor(weekKey)
         val dayRng = Random(com.s0dolamby.game.domain.week.WeeklyFair.seed(weekKey, weekAdvanceIdx))
         val newProjectCount = dayRng.nextInt(1, 4)
         repeat(newProjectCount) { slot ->
             val slotRng = Random(
                 com.s0dolamby.game.domain.week.WeeklyFair.seed(weekKey, weekAdvanceIdx, slot + 1)
             )
-            generateProjectUseCase(rng = slotRng).onFailure { e ->
+            generateProjectUseCase(rng = slotRng, modifier = weekModifier).onFailure { e ->
                 AppLogger.e("AdvanceDayUseCase", "Project gen failed: ${e.message}")
             }
         }

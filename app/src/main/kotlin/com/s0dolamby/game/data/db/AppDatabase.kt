@@ -37,7 +37,8 @@ import com.s0dolamby.game.data.db.entity.*
     // chuyka*-поля рейтинга чуйки в game_state.
     // v23: «Наука старца» — scienceCardsJson (открытые карты приёмов).
     // v24: «Ярмарка недели» — weekKey/weekAdvances + снапшоты чуйки недели.
-    version = 24,
+    // v25: notificationsEnabled в settings (тумблер напоминаний).
+    version = 25,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

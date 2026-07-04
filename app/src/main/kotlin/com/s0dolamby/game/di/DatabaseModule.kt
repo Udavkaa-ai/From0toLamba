@@ -88,6 +88,13 @@ private val MIGRATION_23_24 = object : Migration(23, 24) {
     }
 }
 
+/** Аддитивная миграция v24 → v25: тумблер напоминаний в settings. */
+private val MIGRATION_24_25 = object : Migration(24, 25) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `settings` ADD COLUMN `notificationsEnabled` INTEGER NOT NULL DEFAULT 1")
+    }
+}
+
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
@@ -98,7 +105,8 @@ object DatabaseModule {
         Room.databaseBuilder(context, AppDatabase::class.java, "game_database")
             .addMigrations(
                 MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20,
-                MIGRATION_20_21, MIGRATION_21_22, MIGRATION_22_23, MIGRATION_23_24
+                MIGRATION_20_21, MIGRATION_21_22, MIGRATION_22_23, MIGRATION_23_24,
+                MIGRATION_24_25
             )
             .fallbackToDestructiveMigration()
             .build()
