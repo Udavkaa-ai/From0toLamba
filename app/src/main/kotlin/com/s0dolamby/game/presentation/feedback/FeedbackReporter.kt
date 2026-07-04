@@ -60,15 +60,29 @@ class FeedbackViewModel @Inject constructor(
     private val _state = MutableStateFlow(FeedbackSendState.IDLE)
     val state = _state.asStateFlow()
 
+    /** Причина последней ошибки — показываем прямо в попапе для диагностики. */
+    private val _errorReason = MutableStateFlow<String?>(null)
+    val errorReason = _errorReason.asStateFlow()
+
     fun send(type: FeedbackType, message: String, page: String?) {
         viewModelScope.launch {
             _state.value = FeedbackSendState.SENDING
-            val ok = sendFeedbackUseCase(type, message, page).isSuccess
-            _state.value = if (ok) FeedbackSendState.OK else FeedbackSendState.ERROR
+            val result = sendFeedbackUseCase(type, message, page)
+            if (result.isSuccess) {
+                _state.value = FeedbackSendState.OK
+            } else {
+                _errorReason.value = result.exceptionOrNull()?.let {
+                    "${it.javaClass.simpleName}: ${it.message}".take(140)
+                }
+                _state.value = FeedbackSendState.ERROR
+            }
         }
     }
 
-    fun reset() { _state.value = FeedbackSendState.IDLE }
+    fun reset() {
+        _state.value = FeedbackSendState.IDLE
+        _errorReason.value = null
+    }
 }
 
 /**
@@ -99,9 +113,11 @@ fun FeedbackReporter(
 
     if (open) {
         val sendState by viewModel.state.collectAsState()
+        val errorReason by viewModel.errorReason.collectAsState()
         FeedbackDialog(
             page = page,
             sendState = sendState,
+            errorReason = errorReason,
             onSend = { type, msg -> viewModel.send(type, msg, page) },
             onClose = {
                 open = false
@@ -115,6 +131,7 @@ fun FeedbackReporter(
 private fun FeedbackDialog(
     page: String?,
     sendState: FeedbackSendState,
+    errorReason: String?,
     onSend: (FeedbackType, String) -> Unit,
     onClose: () -> Unit
 ) {
@@ -215,6 +232,9 @@ private fun FeedbackDialog(
                     FeedbackSendState.ERROR -> {
                         Spacer(Modifier.height(6.dp))
                         Text(Strings.t("feedback.err"), color = Error, style = MaterialTheme.typography.labelMedium)
+                        errorReason?.let {
+                            Text(it, color = Error.copy(alpha = 0.75f), style = MaterialTheme.typography.labelSmall)
+                        }
                     }
                     else -> Unit
                 }

@@ -27,7 +27,7 @@ class SendFeedbackUseCase @Inject constructor(
         val text = message.trim()
         require(text.length >= 3) { "Слишком коротко — напиши хоть пару слов" }
         val nickname = settingsRepository.getSettings().nickname.ifBlank { null }
-        api.sendFeedback(
+        val ack = api.sendFeedback(
             appKey = BuildConfig.MOBILE_APP_KEY,
             request = FeedbackRequest(
                 nickname = nickname,
@@ -37,6 +37,6 @@ class SendFeedbackUseCase @Inject constructor(
                 appVersion = BuildConfig.VERSION_NAME
             )
         )
-        AppLogger.i("Feedback", "sent type=$type page=$page (${text.length} chars)")
-    }
+        AppLogger.i("Feedback", "sent type=$type page=$page ok=${ack.ok}")
+    }.onFailure { AppLogger.e("Feedback", "send failed", it) }
 }

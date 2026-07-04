@@ -22,8 +22,12 @@ interface OpenRouterApiService {
     suspend fun sendFeedback(
         @Header("X-App-Key") appKey: String,
         @Body request: FeedbackRequest
-    )
+    ): FeedbackAck
 }
+
+/** Ответ сервера на фидбек. Конкретный класс (а не Unit), чтобы Gson
+ *  парсил его тем же путём, что и ответ чата — Unit-конверсия капризна. */
+data class FeedbackAck(val ok: Boolean = false)
 
 /** Заметка тестера — падает в Postgres на Railway. */
 data class FeedbackRequest(
