@@ -1,5 +1,9 @@
 package com.s0dolamby.game.presentation.portfolio
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -13,6 +17,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -33,8 +38,10 @@ import com.s0dolamby.game.domain.model.*
 import com.s0dolamby.game.domain.repository.AmaRepository
 import com.s0dolamby.game.domain.repository.ProjectRepository
 import com.s0dolamby.game.domain.repository.UpdateRepository
+import com.s0dolamby.game.presentation.common.components.CoinConfettiOverlay
 import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.ProjectBannerImage
+import kotlinx.coroutines.delay
 import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.Error
 import com.s0dolamby.game.presentation.common.theme.Success
@@ -126,8 +133,9 @@ fun ProjectDetailScreen(
             return@Scaffold
         }
 
+        Box(Modifier.fillMaxSize().padding(padding)) {
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
+            modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -162,6 +170,18 @@ fun ProjectDetailScreen(
                 }
             }
         }
+
+        // Праздник: дело закрылось в плюс — дождь золотых монет (один раз
+        // за открытие экрана, не блокирует интерфейс)
+        val pnl = project.currentValueRubles - project.investedAmountRubles
+        var confettiDone by rememberSaveable(project.id) { mutableStateOf(false) }
+        if (project.isClosed && pnl > 0 && !confettiDone) {
+            CoinConfettiOverlay(
+                modifier = Modifier.fillMaxSize(),
+                onFinished = { confettiDone = true }
+            )
+        }
+        } // Box
     }
 }
 
@@ -456,14 +476,34 @@ private fun LiveStatsCard(project: Project, onManageClick: (() -> Unit)?) {
     }
 }
 
+/**
+ * Постепенное раскрытие секций разбора — строки «проявляются» одна за
+ * другой, как будто старец дописывает свиток на глазах у игрока.
+ */
+@Composable
+private fun StaggeredReveal(index: Int, content: @Composable () -> Unit) {
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(index * 220L)
+        visible = true
+    }
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(tween(400)) + slideInVertically(tween(400)) { it / 3 }
+    ) { content() }
+}
+
 @Composable
 private fun PostMortemCard(project: Project, postMortem: PostMortemReport?, isGenerating: Boolean = false) {
     FairyCard(modifier = Modifier.fillMaxWidth()) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            StaggeredReveal(0) {
             Text(Strings.t("detail.postmortem.title"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            }
 
             // Раскрытие личины — с портретом дельца и приметами из летописи,
             // чтобы игрок учился распознавать архетип в следующих делах
+            StaggeredReveal(1) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -482,12 +522,14 @@ private fun PostMortemCard(project: Project, postMortem: PostMortemReport?, isGe
                     )
                 }
             }
+            }
             com.s0dolamby.game.presentation.common.i18n.loreFor(
                 com.s0dolamby.game.domain.achievements.RevealTopic(
                     com.s0dolamby.game.domain.achievements.RevealKind.ARCHETYPE,
                     project.personaArchetype.name
                 )
             )?.let { lore ->
+                StaggeredReveal(2) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     lore.hints.forEach { hint ->
                         Text(
@@ -497,8 +539,10 @@ private fun PostMortemCard(project: Project, postMortem: PostMortemReport?, isGe
                         )
                     }
                 }
+                }
             }
 
+            StaggeredReveal(3) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -525,7 +569,10 @@ private fun PostMortemCard(project: Project, postMortem: PostMortemReport?, isGe
                     )
                 }
             }
+            }
 
+            StaggeredReveal(4) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Divider(color = LocalContentColor.current.copy(alpha = 0.15f))
             Text(Strings.t("detail.postmortem.analysis"), style = MaterialTheme.typography.labelSmall,
                 color = LocalContentColorMuted.current)
@@ -550,6 +597,8 @@ private fun PostMortemCard(project: Project, postMortem: PostMortemReport?, isGe
                     style = MaterialTheme.typography.bodySmall,
                     color = LocalContentColorMuted.current
                 )
+            }
+            }
             }
         }
     }

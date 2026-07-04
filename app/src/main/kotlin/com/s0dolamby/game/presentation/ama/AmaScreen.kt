@@ -51,7 +51,9 @@ import com.s0dolamby.game.presentation.common.theme.Warning
 import com.s0dolamby.game.presentation.common.theme.Error as ErrorColor
 import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
+import com.s0dolamby.game.presentation.common.components.PersonaAvatar
 import com.s0dolamby.game.presentation.common.components.ProvideOnCardColors
+import com.s0dolamby.game.presentation.common.components.WobblyBox
 import com.s0dolamby.game.presentation.common.format.formatGroshes
 import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
@@ -158,10 +160,12 @@ fun AmaScreen(
         pickSessionQuestions(uiState.session?.id)
     }
 
-    LaunchedEffect(messages.size, sessionEnded) {
+    LaunchedEffect(messages.size, sessionEnded, uiState.isSending) {
         if (messages.isNotEmpty()) {
             kotlinx.coroutines.delay(100)
-            val trailingSpacerIndex = messages.size + (if (sessionEnded) 1 else 0)
+            val trailingSpacerIndex = messages.size +
+                (if (uiState.isSending) 1 else 0) +
+                (if (sessionEnded) 1 else 0)
             listState.scrollToItem(trailingSpacerIndex)
         }
     }
@@ -381,6 +385,10 @@ fun AmaScreen(
             items(messages) { msg ->
                 MessageBubble(message = msg)
             }
+            // Делец «печатает»: покачивающийся аватар + мигающие точки
+            if (uiState.isSending) {
+                item { TypingBubble(archetype = uiState.project?.personaArchetype) }
+            }
             if (sessionEnded) {
                 item {
                     SessionEndBanner(
@@ -558,6 +566,64 @@ private fun MessageBubble(message: AmaMessage) {
                             text = message.content,
                             style = MaterialTheme.typography.bodyMedium,
                             color = LocalContentColor.current
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * «Делец подбирает слова…» — пузырь с покачивающимся аватаром и тремя
+ * переливающимися точками, пока ответ AI в пути.
+ */
+@Composable
+private fun TypingBubble(archetype: PersonaArchetype?) {
+    val palette = com.s0dolamby.game.presentation.common.theme.LocalAppPalette.current
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Bottom,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        if (archetype != null) {
+            WobblyBox(amplitudeDeg = 6f, periodMs = 1100) {
+                PersonaAvatar(archetype = archetype, size = 34.dp)
+            }
+        }
+        val bubbleShape = RoundedCornerShape(
+            topStart = 18.dp, topEnd = 18.dp, bottomStart = 4.dp, bottomEnd = 18.dp
+        )
+        Box(
+            modifier = Modifier
+                .background(
+                    Brush.linearGradient(listOf(palette.cardTop, palette.cardBottom)),
+                    shape = bubbleShape
+                )
+                .border(1.dp, palette.cardBorder.copy(alpha = 0.35f), bubbleShape)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+        ) {
+            ProvideOnCardColors {
+                val infinite = rememberInfiniteTransition(label = "typing")
+                val phase by infinite.animateFloat(
+                    initialValue = 0f,
+                    targetValue = 2f * Math.PI.toFloat(),
+                    animationSpec = infiniteRepeatable(
+                        tween(1100, easing = LinearEasing), RepeatMode.Restart
+                    ),
+                    label = "typingPhase"
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                    repeat(3) { i ->
+                        val a = 0.25f + 0.75f *
+                            ((kotlin.math.sin(phase - i * 0.9f) + 1f) / 2f)
+                        Box(
+                            modifier = Modifier
+                                .size(7.dp)
+                                .background(
+                                    LocalContentColor.current.copy(alpha = a),
+                                    shape = RoundedCornerShape(50)
+                                )
                         )
                     }
                 }

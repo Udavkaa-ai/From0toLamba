@@ -2,7 +2,12 @@ package com.s0dolamby.game.presentation.stats
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -52,6 +57,7 @@ import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.components.ProvideOnCardColors
 import com.s0dolamby.game.presentation.common.components.AppBg
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
+import com.s0dolamby.game.presentation.common.components.WobblyEmoji
 import com.s0dolamby.game.presentation.common.format.formatGroshes
 import com.s0dolamby.game.presentation.common.format.formatGroshesSigned
 import com.s0dolamby.game.presentation.common.i18n.Strings
@@ -456,11 +462,26 @@ private fun RankCard(state: GameState?) {
                     style = MaterialTheme.typography.labelSmall,
                     color = LocalAccentOnCard.current.copy(alpha = 0.7f)
                 )
+                // Золотой блик пробегает по имени чина — «мерцание титула»
+                val shimmer = rememberInfiniteTransition(label = "rank-shimmer")
+                val shimmerX by shimmer.animateFloat(
+                    initialValue = -1f, targetValue = 2f,
+                    animationSpec = infiniteRepeatable(
+                        tween(2800, easing = LinearEasing), RepeatMode.Restart
+                    ),
+                    label = "rank-shimmer-x"
+                )
+                val baseColor = LocalContentColor.current
                 Text(
                     state?.investorRank?.let { Strings.t(rankTiers.first { t -> t.rankName == it.name }.displayNameKey) } ?: "—",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = LocalContentColor.current
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                            colors = listOf(baseColor, FairyGold, baseColor),
+                            start = Offset(shimmerX * 500f, 0f),
+                            end = Offset(shimmerX * 500f + 220f, 60f)
+                        )
+                    ),
+                    fontWeight = FontWeight.Bold
                 )
                 Text(
                     Strings.t("stats.dayStreak", state?.currentDay ?: 1, state?.dayStreak ?: 0),
@@ -477,7 +498,7 @@ private fun RankCard(state: GameState?) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(currentEmoji, style = MaterialTheme.typography.displaySmall)
+                WobblyEmoji(currentEmoji, fontSize = 36.sp, amplitudeDeg = 5f, periodMs = 2000)
                 Icon(
                     Icons.Default.ExpandMore,
                     contentDescription = if (expanded) Strings.t("stats.rank.collapse") else Strings.t("stats.rank.expand"),

@@ -52,3 +52,33 @@ fun WobblyEmoji(
         }
     )
 }
+
+/**
+ * То же покачивание, но для произвольного содержимого — например,
+ * аватара-картинки дельца в чате.
+ */
+@Composable
+fun WobblyBox(
+    amplitudeDeg: Float = 5f,
+    periodMs: Int = 1400,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    val infinite = rememberInfiniteTransition(label = "wobbleBox")
+    val phase by infinite.animateFloat(
+        initialValue = -1f, targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            tween(periodMs, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "wobbleBoxPhase"
+    )
+    androidx.compose.foundation.layout.Box(
+        modifier = modifier.graphicsLayer {
+            rotationZ = phase * amplitudeDeg
+            val s = 1f + 0.02f * phase
+            scaleX = s
+            scaleY = s
+        }
+    ) { content() }
+}
