@@ -43,4 +43,12 @@ interface GameStateRepository {
      * и серию чуйки. Возвращает дельту очков (положительную или отрицательную).
      */
     suspend fun applyChuykaResult(correct: Boolean): Int
+    /**
+     * «Ярмарка недели»: если наступила новая ISO-неделя (МСК) — зафиксировать
+     * снапшоты богатства и чуйки, обнулить счётчик прожитых дней.
+     * Возвращает true, если неделя началась заново. Идемпотентна.
+     */
+    suspend fun ensureWeeklyFair(totalWealth: Double): Boolean
+    /** +1 прожитый день недели; возвращает новый индекс (сид генерации). */
+    suspend fun bumpWeekAdvances(): Int
 }

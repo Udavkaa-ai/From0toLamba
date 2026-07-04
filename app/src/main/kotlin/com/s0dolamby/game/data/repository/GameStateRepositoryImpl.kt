@@ -81,7 +81,12 @@ class GameStateRepositoryImpl @Inject constructor(
                 chuykaTotal = state.chuykaTotal,
                 chuykaCorrect = state.chuykaCorrect,
                 chuykaStreak = state.chuykaStreak,
-                chuykaBestStreak = state.chuykaBestStreak
+                chuykaBestStreak = state.chuykaBestStreak,
+                weekKey = state.weekKey,
+                weekAdvances = state.weekAdvances,
+                weekStartWealth = state.weekStartWealth,
+                weekStartChuykaCorrect = state.weekStartChuykaCorrect,
+                weekStartChuykaTotal = state.weekStartChuykaTotal
             )
         }
 
@@ -112,7 +117,12 @@ class GameStateRepositoryImpl @Inject constructor(
             chuykaTotal = state.chuykaTotal,
             chuykaCorrect = state.chuykaCorrect,
             chuykaStreak = state.chuykaStreak,
-            chuykaBestStreak = state.chuykaBestStreak
+            chuykaBestStreak = state.chuykaBestStreak,
+            weekKey = state.weekKey,
+            weekAdvances = state.weekAdvances,
+            weekStartWealth = state.weekStartWealth,
+            weekStartChuykaCorrect = state.weekStartChuykaCorrect,
+            weekStartChuykaTotal = state.weekStartChuykaTotal
         )
     }
 
@@ -226,6 +236,28 @@ class GameStateRepositoryImpl @Inject constructor(
     override suspend fun recordReturn(amountRubles: Double) {
         val state = playerDao.getGameState() ?: return
         playerDao.update(state.copy(totalReturned = state.totalReturned + amountRubles))
+    }
+
+    override suspend fun ensureWeeklyFair(totalWealth: Double): Boolean {
+        val state = playerDao.getGameState() ?: return false
+        val currentKey = com.s0dolamby.game.domain.week.WeeklyFair.weekKey()
+        if (state.weekKey == currentKey) return false
+        playerDao.update(state.copy(
+            weekKey = currentKey,
+            weekAdvances = 0,
+            weekStartWealth = totalWealth,
+            weekStartAt = System.currentTimeMillis(),
+            weekStartChuykaCorrect = state.chuykaCorrect,
+            weekStartChuykaTotal = state.chuykaTotal
+        ))
+        return true
+    }
+
+    override suspend fun bumpWeekAdvances(): Int {
+        val state = playerDao.getGameState() ?: return 0
+        val next = state.weekAdvances + 1
+        playerDao.update(state.copy(weekAdvances = next))
+        return next
     }
 
     override suspend fun applyChuykaResult(correct: Boolean): Int {

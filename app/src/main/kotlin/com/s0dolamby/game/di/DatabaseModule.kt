@@ -78,6 +78,16 @@ private val MIGRATION_22_23 = object : Migration(22, 23) {
     }
 }
 
+/** Аддитивная миграция v23 → v24: «Ярмарка недели» — недельное окно и сид. */
+private val MIGRATION_23_24 = object : Migration(23, 24) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `game_state` ADD COLUMN `weekKey` TEXT")
+        db.execSQL("ALTER TABLE `game_state` ADD COLUMN `weekAdvances` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE `game_state` ADD COLUMN `weekStartChuykaCorrect` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE `game_state` ADD COLUMN `weekStartChuykaTotal` INTEGER NOT NULL DEFAULT 0")
+    }
+}
+
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
@@ -88,7 +98,7 @@ object DatabaseModule {
         Room.databaseBuilder(context, AppDatabase::class.java, "game_database")
             .addMigrations(
                 MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20,
-                MIGRATION_20_21, MIGRATION_21_22, MIGRATION_22_23
+                MIGRATION_20_21, MIGRATION_21_22, MIGRATION_22_23, MIGRATION_23_24
             )
             .fallbackToDestructiveMigration()
             .build()

@@ -2,6 +2,7 @@ package com.s0dolamby.game.presentation.today
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -103,6 +104,9 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
+
+                // «Ярмарка недели» — соревновательное окно с общим сидом
+                item { WeeklyFairCard(ui) }
 
                 // Карточка стрика
                 item {
@@ -255,4 +259,117 @@ private fun MilestoneCell(day: Int, bonus: Int, passed: Boolean) {
             )
         }
     }
+}
+
+// ─── «Ярмарка недели» — счёт и шаринг ────────────────────────────────────
+
+@Composable
+private fun WeeklyFairCard(ui: TodayUiState) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    FairyCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            com.s0dolamby.game.presentation.common.components.WobblyEmoji(
+                "🏪", fontSize = 22.sp, amplitudeDeg = 5f, periodMs = 2600
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    Strings.t("today.week.title", ui.weekNumber),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = LocalAccentOnCard.current
+                )
+                Text(
+                    Strings.t("today.week.daysLeft", ui.weekDaysLeft),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = LocalContentColorMuted.current
+                )
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+
+        val growth = ui.weekGrowthPercent
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text(
+                    Strings.t("today.week.growth"),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = LocalContentColorMuted.current
+                )
+                Text(
+                    growth?.let { "%+.0f%%".format(it) } ?: "—",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = when {
+                        growth == null -> LocalContentColorMuted.current
+                        growth >= 0 -> Success
+                        else -> com.s0dolamby.game.presentation.common.theme.Error
+                    }
+                )
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    Strings.t("today.week.chuyka"),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = LocalContentColorMuted.current
+                )
+                Text(
+                    if (ui.weekChuykaTotal > 0)
+                        Strings.t("today.week.chuykaVal", ui.weekChuykaCorrect, ui.weekChuykaTotal)
+                    else "—",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = LocalAccentOnCard.current
+                )
+            }
+        }
+        Spacer(Modifier.height(10.dp))
+
+        // Итог недели — в мир: обычный share-текст, как решётка Wordle
+        val rankName = ui.investorRank?.let { Strings.t(rankKeyFor(it)) } ?: ""
+        val shareText = Strings.t(
+            "today.week.shareText",
+            ui.weekNumber,
+            growth?.let { "%+.0f%%".format(it) } ?: "—",
+            ui.weekChuykaCorrect, ui.weekChuykaTotal,
+            rankName
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .background(FairyGold.copy(alpha = 0.16f))
+                .border(1.dp, FairyGold.copy(alpha = 0.55f), RoundedCornerShape(10.dp))
+                .clickable {
+                    val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(android.content.Intent.EXTRA_TEXT, shareText)
+                    }
+                    context.startActivity(android.content.Intent.createChooser(intent, null))
+                }
+        ) {
+            Text(
+                Strings.t("today.week.shareBtn"),
+                color = FairyGold,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 9.dp)
+            )
+        }
+    }
+}
+
+/** Соответствие чина ключу словаря (rank.skomoroh … rank.knyaz). */
+private fun rankKeyFor(rank: com.s0dolamby.game.domain.model.InvestorRank): String = when (rank) {
+    com.s0dolamby.game.domain.model.InvestorRank.NEWBIE -> "rank.skomoroh"
+    com.s0dolamby.game.domain.model.InvestorRank.AMBASSADOR -> "rank.kupec"
+    com.s0dolamby.game.domain.model.InvestorRank.ANALYST -> "rank.mudrec"
+    com.s0dolamby.game.domain.model.InvestorRank.SHARK -> "rank.boyarin"
+    com.s0dolamby.game.domain.model.InvestorRank.LAMBO_SENSEI -> "rank.knyaz"
 }

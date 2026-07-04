@@ -16,8 +16,8 @@ class ProjectRegistry @Inject constructor(
 ) {
     private val templates: List<ProjectTemplate> by lazy { loadTemplates() }
 
-    fun getRandomTemplate(): ProjectTemplate =
-        templates.filter { it.templateId != "onboarding" }.random()
+    fun getRandomTemplate(rng: Random = Random.Default): ProjectTemplate =
+        templates.filter { it.templateId != "onboarding" }.random(rng)
 
     fun getOnboardingTemplate(): ProjectTemplate =
         templates.firstOrNull { it.type == ProjectType.HONEST_TRADE }
@@ -39,9 +39,9 @@ class ProjectRegistry @Inject constructor(
         val compatiblePersonas: List<String>,
         val fateWeights: Map<String, Int>
     ) {
-        fun buildName(): String {
-            val pattern = namePatterns.random()
-            val name = fairyTaleNames.random()
+        fun buildName(rng: Random = Random.Default): String {
+            val pattern = namePatterns.random(rng)
+            val name = fairyTaleNames.random(rng)
             return pattern
                 .replace("[Name]", name.nom)
                 .replace("[NameGen]", name.gen)

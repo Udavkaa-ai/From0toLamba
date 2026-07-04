@@ -22,12 +22,15 @@ class PersonaRegistry @Inject constructor(
         return template.toDomain()
     }
 
-    fun getCompatibleArchetype(compatibleIds: List<String>): PersonaArchetype {
+    fun getCompatibleArchetype(
+        compatibleIds: List<String>,
+        rng: kotlin.random.Random = kotlin.random.Random.Default
+    ): PersonaArchetype {
         val compatibleArchetypes = personas
             .filter { it.id in compatibleIds }
             .mapNotNull { runCatching { PersonaArchetype.valueOf(it.archetype.uppercase()) }.getOrNull() }
-        return if (compatibleArchetypes.isEmpty()) PersonaArchetype.values().random()
-        else compatibleArchetypes.random()
+        return if (compatibleArchetypes.isEmpty()) PersonaArchetype.values().random(rng)
+        else compatibleArchetypes.random(rng)
     }
 
     private fun loadPersonas(): List<PersonaTemplate> {

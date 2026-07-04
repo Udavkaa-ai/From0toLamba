@@ -36,7 +36,8 @@ import com.s0dolamby.game.data.db.entity.*
     // v22: «Верю — не верю» — playerVerdict/verdictCorrect в projects,
     // chuyka*-поля рейтинга чуйки в game_state.
     // v23: «Наука старца» — scienceCardsJson (открытые карты приёмов).
-    version = 23,
+    // v24: «Ярмарка недели» — weekKey/weekAdvances + снапшоты чуйки недели.
+    version = 24,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

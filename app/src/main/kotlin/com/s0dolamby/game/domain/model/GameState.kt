@@ -54,7 +54,18 @@ data class GameState(
     /** Текущая серия верных прогнозов подряд. */
     val chuykaStreak: Int = 0,
     /** Лучшая серия за игру. */
-    val chuykaBestStreak: Int = 0
+    val chuykaBestStreak: Int = 0,
+
+    // «Ярмарка недели»
+    /** Ключ текущей недели («2026-W27»); null — неделя ещё не начиналась. */
+    val weekKey: String? = null,
+    /** Прожито игровых дней на этой неделе. */
+    val weekAdvances: Int = 0,
+    /** Богатство (баланс + дела) на начало недели. */
+    val weekStartWealth: Double = 0.0,
+    /** Снапшот чуйки на начало недели — для счёта «чуйка за неделю». */
+    val weekStartChuykaCorrect: Int = 0,
+    val weekStartChuykaTotal: Int = 0
 ) {
     companion object {
         const val MAX_TIE_LEVEL = 10

@@ -290,9 +290,21 @@ class AdvanceDayUseCase @Inject constructor(
         // Пересчёт подвигов выше уже прошёл — чуйка-подвиги догонят завтра.
         generatedUpdates += resolveVerdictsUseCase()
 
-        val newProjectCount = Random.nextInt(1, 4)
-        repeat(newProjectCount) {
-            generateProjectUseCase().onFailure { e ->
+        // ── «Ярмарка недели»: общий сид ──────────────────────────────────
+        // Новая ISO-неделя (МСК) — снапшот богатства и чуйки для счёта.
+        // Грамоты генерируются от seed(неделя, прожитый день, слот):
+        // игроки, прожившие одинаковое число дней на одной неделе, видят
+        // одинаковые предложения — сравнение результатов честное.
+        gameStateRepository.ensureWeeklyFair(newBalance + totalActiveValue)
+        val weekAdvanceIdx = gameStateRepository.bumpWeekAdvances()
+        val weekKey = com.s0dolamby.game.domain.week.WeeklyFair.weekKey()
+        val dayRng = Random(com.s0dolamby.game.domain.week.WeeklyFair.seed(weekKey, weekAdvanceIdx))
+        val newProjectCount = dayRng.nextInt(1, 4)
+        repeat(newProjectCount) { slot ->
+            val slotRng = Random(
+                com.s0dolamby.game.domain.week.WeeklyFair.seed(weekKey, weekAdvanceIdx, slot + 1)
+            )
+            generateProjectUseCase(rng = slotRng).onFailure { e ->
                 AppLogger.e("AdvanceDayUseCase", "Project gen failed: ${e.message}")
             }
         }

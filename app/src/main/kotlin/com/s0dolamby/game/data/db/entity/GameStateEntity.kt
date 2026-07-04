@@ -79,5 +79,14 @@ data class GameStateEntity(
 
     // «Наука старца» — ID открытых карт приёмов (JSON-массив строк).
     @androidx.room.ColumnInfo(defaultValue = "[]")
-    val scienceCardsJson: String = "[]"
+    val scienceCardsJson: String = "[]",
+
+    // «Ярмарка недели» — соревновательное окно (пн–вс МСК).
+    val weekKey: String? = null,               // «2026-W27»; смена ключа = новая неделя
+    @androidx.room.ColumnInfo(defaultValue = "0")
+    val weekAdvances: Int = 0,                 // прожито дней на этой неделе (индекс сида)
+    @androidx.room.ColumnInfo(defaultValue = "0")
+    val weekStartChuykaCorrect: Int = 0,       // снапшот чуйки на начало недели
+    @androidx.room.ColumnInfo(defaultValue = "0")
+    val weekStartChuykaTotal: Int = 0
 )

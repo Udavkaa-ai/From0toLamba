@@ -324,6 +324,15 @@ object Strings {
         "science.entry.title" to "Наука старца",
         "science.entry.sub" to "Приёмы мошенников: усвоено %d из %d",
 
+        // «Ярмарка недели» — соревновательное окно
+        "today.week.title" to "Ярмарка недели %d",
+        "today.week.daysLeft" to "до закрытия рядов: %d дн. · грамоты недели у всех купцов одинаковые",
+        "today.week.growth" to "Казна за неделю",
+        "today.week.chuyka" to "Чуйка недели",
+        "today.week.chuykaVal" to "%d из %d",
+        "today.week.shareBtn" to "📣 Похвастаться итогом недели",
+        "today.week.shareText" to "🏪 Ярмарка недели %d в «Из грязи в князи»\n💰 Казна за неделю: %s\n🔮 Чуйка: %d из %d\n🏆 Чин: %s\n\nГрамоты недели у всех одинаковые — а итог у каждого свой. Сможешь лучше?",
+
         // Финал мини-игры (общая плашка MinigameShell.ResultOverlay)
         "minigame.result.perfect.title" to "Идеально!",
         "minigame.result.win.title" to "Хорошо",
@@ -1049,6 +1058,15 @@ object Strings {
         "science.unlocked.tapHint" to "Tap to continue · the scroll lives in Feats",
         "science.entry.title" to "Elder's Science",
         "science.entry.sub" to "Scam techniques: %d of %d learned",
+
+        // Weekly Fair — competitive window
+        "today.week.title" to "Fair of week %d",
+        "today.week.daysLeft" to "closes in %d d. · this week's charters are the same for every merchant",
+        "today.week.growth" to "Treasury this week",
+        "today.week.chuyka" to "Gut this week",
+        "today.week.chuykaVal" to "%d of %d",
+        "today.week.shareBtn" to "📣 Share this week's result",
+        "today.week.shareText" to "🏪 Week %d fair in \"Rags to Riches\"\n💰 Treasury this week: %s\n🔮 Gut feeling: %d of %d\n🏆 Rank: %s\n\nEveryone gets the same charters — the outcome is yours alone. Can you do better?",
 
         // Minigame result overlay (shared MinigameShell)
         "minigame.result.perfect.title" to "Perfect!",
