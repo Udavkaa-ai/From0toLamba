@@ -34,6 +34,7 @@ import com.s0dolamby.game.presentation.common.components.FairyCard
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.components.AppBg
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
+import com.s0dolamby.game.presentation.common.format.humanizeRedFlag
 import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.Error
 import com.s0dolamby.game.presentation.common.theme.FairyGold
@@ -223,7 +224,7 @@ private fun NewsCard(update: DailyUpdate) {
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(Icons.Default.Warning, null, tint = Warning, modifier = Modifier.size(14.dp))
-                                Text(flag.cleanRedFlag(), style = MaterialTheme.typography.labelSmall, color = Warning)
+                                Text(flag.humanizeRedFlag(), style = MaterialTheme.typography.labelSmall, color = Warning)
                             }
                         }
                     }
@@ -294,23 +295,15 @@ private fun StatusBanner(text: String, color: Color) {
     }
 }
 
-private fun String.cleanRedFlag(): String =
-    replace('_', ' ')
-        .replace(Regex("([a-z])([A-Z])"), "$1 $2")
-        .lowercase()
-        .replaceFirstChar { it.uppercaseChar() }
-        .trimEnd('.')
-        .let { if (!it.endsWith('.') && !it.endsWith('!')) "$it." else it }
-
 private val AnnouncementType.displayText: String get() = when (this) {
-    AnnouncementType.LISTING -> "🏦 Анонс листинга"
-    AnnouncementType.NEW_SEASON -> "🎮 Новый сезон"
-    AnnouncementType.COLLAB -> "🤝 Партнёрство"
-    AnnouncementType.AUDIT -> "🔍 Аудит"
+    AnnouncementType.LISTING -> "🏦 Большие торги"
+    AnnouncementType.NEW_SEASON -> "🎪 Новый сезон"
+    AnnouncementType.COLLAB -> "🤝 Союз"
+    AnnouncementType.AUDIT -> "🔍 Досмотр старейшин"
     AnnouncementType.BAD_RUMOR -> "📉 Слухи о проблемах"
-    AnnouncementType.VIP_COLLAB -> "⭐ VIP-коллаб"
-    AnnouncementType.CRIMINAL_CASE -> "⚖️ Уголовное дело"
-    AnnouncementType.HACK -> "💀 Взлом"
+    AnnouncementType.VIP_COLLAB -> "⭐ Именитый покровитель"
+    AnnouncementType.CRIMINAL_CASE -> "⚖️ Сыск воеводы"
+    AnnouncementType.HACK -> "💀 Лихие люди в казне"
 }
 
 // Чип лежит на карточном фоне — «золото» берём из LocalAccentOnCard,

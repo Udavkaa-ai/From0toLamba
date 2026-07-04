@@ -76,7 +76,7 @@ fun PersonaAvatar(
     ) {
         AsyncImage(
             model = personaAssetUri(archetype, kind = "avatars"),
-            contentDescription = archetype.name,
+            contentDescription = com.s0dolamby.game.presentation.common.i18n.Strings.t("persona.${archetype.name}"),
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .fillMaxSize()

@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.sp
 import com.s0dolamby.game.domain.model.DailyUpdate
 import com.s0dolamby.game.domain.model.PayoutStatus
 import com.s0dolamby.game.domain.model.computedSource
+import com.s0dolamby.game.presentation.common.format.humanizeRedFlag
 import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.Error
 import com.s0dolamby.game.presentation.common.theme.FairyGold
@@ -354,7 +355,7 @@ private fun SwipeableUpdateCard(
                 update.redFlags.take(2).forEach { flag ->
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         Icon(Icons.Default.Warning, null, tint = Warning, modifier = Modifier.size(14.dp))
-                        Text(flag.cleanRedFlag(), color = Warning, fontSize = 11.sp)
+                        Text(flag.humanizeRedFlag(), color = Warning, fontSize = 11.sp)
                     }
                 }
             }
@@ -454,7 +455,3 @@ private fun DayWaxSeal(day: Int) {
     }
 }
 
-private fun String.cleanRedFlag(): String =
-    replace('_', ' ')
-        .replace(Regex("([a-z])([A-Z])"), "$1 $2")
-        .lowercase()

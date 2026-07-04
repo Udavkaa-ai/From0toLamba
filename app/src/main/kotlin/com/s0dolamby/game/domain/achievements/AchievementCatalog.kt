@@ -74,7 +74,7 @@ object AchievementCatalog {
             id = "ventures.unicorn",
             category = AchievementCategory.VENTURES,
             title = "Поймал единорога",
-            description = "Закрыл UNICORN-дело в плюс",
+            description = "Закрыл дело-Жар-птицу в плюс",
             emoji = "🦄"
         ) { _, p -> p.any { it.isClosed && it.fate == ProjectFate.UNICORN && it.currentValueRubles > it.investedAmountRubles } })
 
@@ -228,7 +228,7 @@ object AchievementCatalog {
             id = "bestiary.all_fates",
             category = AchievementCategory.BESTIARY,
             title = "Все 5 судеб",
-            description = "Закрыл дело каждой судьбы (INSTANT_SCAM, SLOW_DRAIN, HONEST_FAIL, SURVIVOR, UNICORN)",
+            description = "Закрыл дело каждой из пяти судеб — от мгновенного скама до Жар-птицы",
             emoji = "🎰"
         ) { _, p ->
             val seenFates = p.filter { it.isClosed && it.investedAmountRubles > 0 }

@@ -40,6 +40,7 @@ import com.s0dolamby.game.domain.repository.ProjectRepository
 import com.s0dolamby.game.domain.repository.UpdateRepository
 import com.s0dolamby.game.presentation.common.components.CoinConfettiOverlay
 import com.s0dolamby.game.presentation.common.components.FairyCard
+import com.s0dolamby.game.presentation.common.format.humanizeRedFlag
 import com.s0dolamby.game.presentation.common.components.ProjectBannerImage
 import kotlinx.coroutines.delay
 import com.s0dolamby.game.presentation.common.i18n.Strings
@@ -620,7 +621,7 @@ private fun UpdateHistoryItem(update: DailyUpdate) {
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Warning, null, tint = Warning, modifier = Modifier.size(12.dp))
-                        Text(flag, style = MaterialTheme.typography.labelSmall, color = Warning)
+                        Text(flag.humanizeRedFlag(), style = MaterialTheme.typography.labelSmall, color = Warning)
                     }
                 }
             }
