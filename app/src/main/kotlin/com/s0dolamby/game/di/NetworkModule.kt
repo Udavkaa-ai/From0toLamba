@@ -2,7 +2,6 @@ package com.s0dolamby.game.di
 
 import com.google.gson.Gson
 import com.s0dolamby.game.data.ai.OpenRouterApiService
-import com.s0dolamby.game.domain.repository.GameConfig
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -37,7 +36,9 @@ object NetworkModule {
     @Singleton
     fun provideRetrofit(client: OkHttpClient, gson: Gson): Retrofit =
         Retrofit.Builder()
-            .baseUrl(GameConfig.OPENROUTER_BASE_URL)
+            // AI и фидбек идут через наш Railway-прокси — ключ OpenRouter
+            // хранится на сервере, в APK его больше нет.
+            .baseUrl(com.s0dolamby.game.BuildConfig.MOBILE_PROXY_URL)
             .client(client)
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()

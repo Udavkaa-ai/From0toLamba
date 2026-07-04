@@ -12,7 +12,6 @@ object GameConfig {
     const val NEW_PROJECTS_PER_DAY_MIN = 1
     const val NEW_PROJECTS_PER_DAY_MAX = 3
 
-    const val OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1/"
     val TEXT_MODEL = DEFAULT_TEXT_MODEL
     const val MAX_TOKENS_AMA = 512
     const val MAX_TOKENS_UPDATE = 650

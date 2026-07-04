@@ -5,16 +5,37 @@ import retrofit2.http.Body
 import retrofit2.http.Header
 import retrofit2.http.POST
 
+/**
+ * Клиент нашего Railway-прокси (tg/server, /api/mobile/*): тело запроса
+ * и ответа повторяют формат OpenRouter chat/completions, но ключ
+ * OpenRouter живёт на сервере — в APK только лёгкий X-App-Key допуска.
+ */
 interface OpenRouterApiService {
 
-    @POST("chat/completions")
+    @POST("api/mobile/chat")
     suspend fun chatCompletion(
-        @Header("Authorization") auth: String,
-        @Header("HTTP-Referer") referer: String = "https://github.com/s0dolamby",
-        @Header("X-Title") title: String = "S0doLamby Game",
+        @Header("X-App-Key") appKey: String,
         @Body request: ChatRequest
     ): ChatResponse
+
+    @POST("api/mobile/feedback")
+    suspend fun sendFeedback(
+        @Header("X-App-Key") appKey: String,
+        @Body request: FeedbackRequest
+    )
 }
+
+/** Заметка тестера — падает в Postgres на Railway. */
+data class FeedbackRequest(
+    val nickname: String?,
+    /** BUG | SUGGESTION | QUESTION */
+    val type: String,
+    /** Экран, с которого отправлено (route). */
+    val page: String?,
+    val message: String,
+    val appVersion: String?,
+    val platform: String = "android"
+)
 
 data class ChatRequest(
     val model: String,

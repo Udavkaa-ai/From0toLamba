@@ -33,7 +33,7 @@ class AmaSessionManager @Inject constructor(
         AppLogger.i("AmaSessionManager", "sendMessage q=$questionCount project=${project.claimedName}")
         val response = runCatching {
             api.chatCompletion(
-                auth = "Bearer ${BuildConfig.OPENROUTER_API_KEY}",
+                appKey = BuildConfig.MOBILE_APP_KEY,
                 request = ChatRequest(
                     model = model,
                     messages = messages,

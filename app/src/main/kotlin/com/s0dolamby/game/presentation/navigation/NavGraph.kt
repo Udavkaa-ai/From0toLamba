@@ -360,6 +360,17 @@ fun NavGraph() {
             }
         }
 
+        // Язычок «🐞 Тестерам» на правом краю — на каждом экране, кроме
+        // онбординга. Тап открывает попап (баг/предложение/вопрос),
+        // заметка уходит в Postgres с привязкой к странице/версии/автору.
+        // Тестовая фича — на релизе можно спрятать за флагом.
+        if (currentRoute != null && currentRoute != Screen.Onboarding.route) {
+            com.s0dolamby.game.presentation.feedback.FeedbackReporter(
+                page = currentRoute,
+                modifier = Modifier.align(Alignment.CenterEnd)
+            )
+        }
+
         // Жалованная грамота — всплывает поверх всего на любом экране,
         // когда use-case разблокировал подвиг.
         AchievementUnlockedOverlay()

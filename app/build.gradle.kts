@@ -25,10 +25,21 @@ android {
         versionCode = 1
         versionName = "0.1.0"
 
+        // AI ходит через наш Railway-прокси: ключ OpenRouter живёт на
+        // сервере и в APK не попадает. MOBILE_APP_KEY — лёгкий допуск к
+        // прокси (можно ротировать), задаётся в local.properties.
         buildConfigField(
             "String",
-            "OPENROUTER_API_KEY",
-            "\"${localProperties.getProperty("OPENROUTER_API_KEY", "")}\""
+            "MOBILE_PROXY_URL",
+            "\"${localProperties.getProperty(
+                "MOBILE_PROXY_URL",
+                "https://from0tolamba-production.up.railway.app/"
+            )}\""
+        )
+        buildConfigField(
+            "String",
+            "MOBILE_APP_KEY",
+            "\"${localProperties.getProperty("MOBILE_APP_KEY", "")}\""
         )
     }
 

@@ -8,6 +8,7 @@ import { gameRoutes } from './api/routes/game'
 import { projectRoutes } from './api/routes/projects'
 import { amaRoutes } from './api/routes/ama'
 import { investRoutes } from './api/routes/invest'
+import { mobileRoutes } from './api/routes/mobile'
 import { createWebhookHandler, getBot } from './bot/bot'
 import { startDailyScheduler } from './scheduler/dailyJob'
 import { prisma } from './db/prisma'
@@ -28,7 +29,7 @@ async function main() {
       'https://web.telegram.org',
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'X-Telegram-Init-Data'],
+    allowedHeaders: ['Content-Type', 'X-Telegram-Init-Data', 'X-App-Key'],
   })
 
   // API routes
@@ -36,6 +37,7 @@ async function main() {
   await app.register(projectRoutes)
   await app.register(amaRoutes)
   await app.register(investRoutes)
+  await app.register(mobileRoutes)   // Android: AI-прокси + фидбек тестеров
 
   // Telegram webhook
   const webhookSecret = process.env.TELEGRAM_BOT_TOKEN?.split(':')[0]
