@@ -1,7 +1,5 @@
 package com.s0dolamby.game.data.ai
 
-import com.s0dolamby.game.domain.model.AmaMessage
-import com.s0dolamby.game.domain.model.AnnouncementType
 import com.s0dolamby.game.domain.model.DeveloperPersona
 import com.s0dolamby.game.domain.model.PersonaArchetype
 import com.s0dolamby.game.domain.model.Project
@@ -150,116 +148,11 @@ $fateBehavior
         """.trimIndent()
     }
 
-    /** Промт для первого приветственного сообщения дельца (как в TG). */
-    fun buildAmaFirstMessagePrompt(developerName: String, projectName: String): String =
-        "Поприветствуй потенциального вкладчика как $developerName, делец и хозяин дела «$projectName». " +
-            "Расскажи кратко о деле и предложи задавать вопросы. 2–3 предложения, живой современный русский язык."
-
-    fun buildDeveloperNamePrompt(archetypeName: String): String = """
-Придумай одно короткое имя или прозвище для персонажа русской народной сказки или средневековой Руси — предпринимателя в кабаке.
-Этот персонаж вдохновлён сказочным архетипом: $archetypeName
-Имя должно звучать как реальный русский человек той эпохи, но с характером — может быть с прозвищем.
-Варианты форматов: «Имя Прозвище», «Имя сын такого-то», «Прозвище», «Имя из [города]», «дед Имя».
-Примеры духа (не копируй!): «Фёдор Хитрован», «дед Прохор», «Митька Золотые Руки», «Савва из Ярославля», «Лукьян Говорун».
-Верни ТОЛЬКО имя без кавычек, без звёздочек, без объяснений.
-    """.trimIndent()
-
-    fun buildDailyUpdatePrompt(
-        project: Project,
-        daysUntilCollapse: Int?,
-        event: AnnouncementType? = null
-    ): String {
-        // Derive a semantic tone — never expose raw daysUntilCollapse to the AI
-        // «критично» only after the project has been active ≥ 3 days to avoid
-        // immediate red flags on day-1 for short-lived scam projects
-        val isScamFate = project.fate == ProjectFate.INSTANT_SCAM || project.fate == ProjectFate.SLOW_DRAIN
-        val tone = when {
-            event != null -> null  // event overrides tone
-            daysUntilCollapse == null -> "спокойно — дело стабильно, без ограничений по сроку"
-            !isScamFate && daysUntilCollapse <= 5 ->
-                "дело штатно завершает работу через $daysUntilCollapse дн. — хозяин объявляет о плановом закрытии и возврате всех средств вкладчикам"
-            daysUntilCollapse >= 5 || project.daysSinceJoined < 3 ->
-                "спокойно — дело работает, никаких тревожных сигналов"
-            daysUntilCollapse in 3..4 ->
-                "лёгкое напряжение — кое-что идёт не по плану, но хозяин держит лицо"
-            else ->
-                "тревожно — явные признаки проблем: задержки, неразбериха, уклончивые ответы хозяина"
-        }
-
-        return """
-Ты генерируешь ежедневное сообщение о деле «${project.claimedName}».
-День с начала: ${project.daysSinceJoined}
-Судьба дела: ${project.fate}
-${if (tone != null) "Общий тон: $tone" else ""}
-
-${if (event != null) """
-СОБЫТИЕ СЕГОДНЯ: ${event.promptDescription}
-Это событие — главная тема сообщения.
-Поле announcement в metrics = "${event.name.lowercase()}"
-""".trimIndent() else ""}
-
-ИСТОЧНИК — выбери один из: объявление_хозяина, слухи_среди_участников, официальное_уведомление, предупреждение, сводка_дня, анонимный_источник, деловое_уведомление, аналитика
-${if (event != null) "Для этого события используй: ${event.preferredSource}" else "Подбирай органично: предупреждение/анонимный_источник — при проблемах; официальное_уведомление — при анонсах; объявление_хозяина/сводка_дня — обычные дни."}
-
-ЯЗЫК: ТОЛЬКО русский язык — ни одного иностранного слова, транслита или англицизма. Современный живой русский. Иногда образный оборот или поговорка — в меру.
-СУММЫ: Только в грошах (г). Никаких TON, крипты, блокчейна, биткоинов, "коинов" любого рода.
-ФОРМАТ body: 3–4 полных законченных предложения от лица источника (не обрывай на середине).
-ПОЛЕ redFlags: массив коротких фраз на РУССКОМ языке (например: "Выплаты задержаны", "Хозяин не отвечает", "Участники сообщают о потерях"). Никакого английского.
-Генерируй ТОЛЬКО валидный JSON без markdown-обёрток.
-
-Верни JSON ровно в этом формате:
-{"title":"заголовок до 8 слов","body":"3-4 законченных предложения.","metrics":{"userCountDelta":0,"payoutStatus":"normal","announcement":null},"redFlags":[]}
-        """.trimIndent()
-    }
-
-    private val AnnouncementType.promptDescription: String get() = when (this) {
-        AnnouncementType.LISTING -> "Дело объявляет о большом торге на ярмарке! Слава растёт, вкладчики ликуют, доходы взлетают."
-        AnnouncementType.VIP_COLLAB -> "Дело заключило союз с именитым боярином или купеческой гильдией. Огромный приток новых участников."
-        AnnouncementType.BAD_RUMOR -> "По кабакам и торговым рядам поползли дурные слухи о деле: неизвестные говорят об обмане. Хозяин всё отрицает."
-        AnnouncementType.CRIMINAL_CASE -> "Стражники воеводы открыли дело о мошенничестве против хозяина. Все выплаты заморожены. Вкладчики в панике."
-        AnnouncementType.HACK -> "В казну дела пробрались лихие люди. Часть вкладов похищена. Хозяин приостановил все выплаты и ищет злодеев."
-        else -> name
-    }
-
-    private val AnnouncementType.preferredSource: String get() = when (this) {
-        AnnouncementType.LISTING -> "деловое_уведомление или официальное_уведомление"
-        AnnouncementType.VIP_COLLAB -> "официальное_уведомление или объявление_хозяина"
-        AnnouncementType.BAD_RUMOR -> "слухи_среди_участников или анонимный_источник"
-        AnnouncementType.CRIMINAL_CASE -> "предупреждение или сводка_дня"
-        AnnouncementType.HACK -> "анонимный_источник или предупреждение"
-        else -> "объявление_хозяина"
-    }
-
-    // Старые buildBannerConceptPrompt / buildFinalImagePrompt удалены —
-    // обложки теперь только из сток-ассетов.
-
-    fun buildPostMortemPrompt(project: Project, chatHistory: List<AmaMessage>): String {
-        val history = chatHistory.joinToString("\n") { "${it.role}: ${it.content}" }
-        return """
-Ты — мудрый старец, разбирающий итоги сделки в кабаке.
-
-Дело: ${project.claimedName}
-Тип: ${project.type}
-Судьба: ${project.fate}
-Архетип хозяина: ${project.personaArchetype}
-Вложено: ${project.investedAmountRubles.toInt()} г
-Итоговая сумма: ${project.currentValueRubles.toInt()} г
-
-История беседы в кабаке:
-$history
-
-Архетип хозяина — персонаж русской народной сказки:
-BURATINO (наивный лжец с Поля Чудес, верит своим выдумкам),
-BOYARIN (пышно-официальный боярин, ссылается на государевых мужей без имён),
-KOLOBOK (хвастун-оптимист, от всех вопросов укатывается с улыбкой),
-KOSCHEI (холодный и бессмертно-уверенный, говорит цифрами),
-ZOLUSHKA (давит на жалость и мечты, дедлайны «до полуночи»),
-BABA_YAGA (отвечает загадками, технически подкована),
-IVAN_DURAK (честен про прошлые провалы, третий раз может взлететь).
-
-Напиши разбор: какие были красные флаги, что выдало мошенника (или честность), как проявился сказочный архетип в поведении, чему учит этот случай.
-Будь конкретным, 3–5 предложений. Тон: дружелюбный наставник-старец.
-ЯЗЫК: ТОЛЬКО русский — ни одного иностранного слова или транслита.
-        """.trimIndent()
-    }
+    // Остальные промпты удалены за ненадобностью — вся генерация, кроме
+    // живых ответов в чате, переведена на локальные банки:
+    //   приветствие дельца  → data/registry/GreetingBank
+    //   имена дельцов       → data/registry/DeveloperNameBank
+    //   ежедневные вести    → data/registry/NewsTemplateBank
+    //   разбор старца       → data/registry/PostMortemScribe
+    //   обложки дел         → сток-ассеты (assets/banners/)
 }

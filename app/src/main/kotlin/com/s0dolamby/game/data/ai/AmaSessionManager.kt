@@ -2,6 +2,7 @@ package com.s0dolamby.game.data.ai
 
 import com.s0dolamby.game.BuildConfig
 import com.s0dolamby.game.data.logging.AppLogger
+import com.s0dolamby.game.data.registry.GreetingBank
 import com.s0dolamby.game.domain.model.AmaMessage
 import com.s0dolamby.game.domain.model.DeveloperPersona
 import com.s0dolamby.game.domain.model.MessageRole
@@ -51,45 +52,27 @@ class AmaSessionManager @Inject constructor(
     }
 
     /**
-     * Первое приветственное сообщение дельца (как в TG: AI генерит приветствие
-     * в характере персоны). При ошибке сети — статичный fallback, чтобы беседа
-     * всегда начиналась с реплики хозяина.
+     * Первое приветственное сообщение дельца — из локального GreetingBank,
+     * без сетевого вызова. Раньше приветствие писал LLM при каждом первом
+     * открытии чата (даже если игрок не задавал вопросов) — токены уходили
+     * «за спиной» игрока на формульную реплику. Живой AI остаётся только
+     * в ответах на вопросы ([sendMessage]).
      */
-    suspend fun generateFirstMessage(
+    fun generateFirstMessage(
         project: Project,
         persona: DeveloperPersona,
         sessionId: String
-    ): AmaMessage {
-        val content = runCatching {
-            val model = settingsRepository.getSettings().textModel
-            val systemPrompt = promptBuilder.buildAmaSystemPrompt(project, persona, questionCount = 1)
-            val response = api.chatCompletion(
-                auth = "Bearer ${BuildConfig.OPENROUTER_API_KEY}",
-                request = ChatRequest(
-                    model = model,
-                    messages = listOf(
-                        ChatMessage("system", systemPrompt),
-                        ChatMessage("user", promptBuilder.buildAmaFirstMessagePrompt(
-                            project.developerName, project.claimedName
-                        ))
-                    ),
-                    maxTokens = GameConfig.MAX_TOKENS_AMA,
-                    temperature = 0.85f
-                )
-            )
-            response.choices.first().message.content.trim().stripMarkdown()
-        }.onFailure {
-            AppLogger.e("AmaSessionManager", "First message gen failed", it)
-        }.getOrDefault(
-            "Здравствуй! Я ${project.developerName}, хозяин дела «${project.claimedName}». Задавай вопросы!"
+    ): AmaMessage = AmaMessage(
+        id = UUID.randomUUID().toString(),
+        sessionId = sessionId,
+        role = MessageRole.ASSISTANT,
+        content = GreetingBank.greeting(
+            archetype = project.personaArchetype,
+            developerName = project.developerName,
+            projectName = project.claimedName,
+            seed = project.id
         )
-        return AmaMessage(
-            id = UUID.randomUUID().toString(),
-            sessionId = sessionId,
-            role = MessageRole.ASSISTANT,
-            content = content
-        )
-    }
+    )
 
     private fun String.stripMarkdown(): String = this
         .replace(Regex("\\*\\*(.+?)\\*\\*"), "$1")
