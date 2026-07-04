@@ -78,7 +78,8 @@ import com.s0dolamby.game.presentation.common.theme.LocalAccentOnCard
 @HiltViewModel
 class StatsViewModel @Inject constructor(
     gameStateRepository: GameStateRepository,
-    projectRepository: com.s0dolamby.game.domain.repository.ProjectRepository
+    projectRepository: com.s0dolamby.game.domain.repository.ProjectRepository,
+    scienceUnlockStore: com.s0dolamby.game.data.science.ScienceUnlockStore
 ) : ViewModel() {
     val gameState = gameStateRepository.observeGameState()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
@@ -86,6 +87,9 @@ class StatsViewModel @Inject constructor(
     /** Снимок закрытых дел — для зала славы (лучшая сделка / худшая потеря). */
     val closedProjects = projectRepository.getClosedProjects()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /** Открытые карты «Науки старца» — для чипа-прогресса. */
+    val scienceUnlocked = scienceUnlockStore.unlockedIds
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -93,10 +97,12 @@ class StatsViewModel @Inject constructor(
 fun StatsScreen(
     onBack: () -> Unit,
     onRegistryClick: () -> Unit = {},
+    onScienceClick: () -> Unit = {},
     viewModel: StatsViewModel = hiltViewModel()
 ) {
     val state by viewModel.gameState.collectAsState()
     val closed by viewModel.closedProjects.collectAsState()
+    val scienceUnlocked by viewModel.scienceUnlocked.collectAsState()
 
     ScreenBackground(AppBg.STATS) {
     Scaffold(
@@ -134,6 +140,12 @@ fun StatsScreen(
         ) {
             item { RankCard(state = state) }
             item { ChuykaCard(state = state) }
+            item {
+                ScienceEntryCard(
+                    unlockedCount = scienceUnlocked.size,
+                    onClick = onScienceClick
+                )
+            }
             item { OrnamentDivider() }
             item { BalanceChartCard(state = state) }
             item { FinancialStats(state = state) }
@@ -434,6 +446,39 @@ private val rankTiers = listOf(
     RankTier("SHARK",        "🦈", "rank.boyarin",  "stats.rank.req.SHARK"),
     RankTier("LAMBO_SENSEI", "👑", "rank.knyaz",    "stats.rank.req.LAMBO_SENSEI"),
 )
+
+// ─── «Наука старца» — вход в коллекцию приёмов ───────────────────────────
+
+@Composable
+private fun ScienceEntryCard(unlockedCount: Int, onClick: () -> Unit) {
+    FairyCard(modifier = Modifier.fillMaxWidth().clickable { onClick() }) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            WobblyEmoji("🧙", fontSize = 26.sp, amplitudeDeg = 5f, periodMs = 2600)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    Strings.t("science.entry.title"),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = LocalAccentOnCard.current
+                )
+                Text(
+                    Strings.t(
+                        "science.entry.sub",
+                        unlockedCount,
+                        com.s0dolamby.game.domain.science.ScienceCatalog.ALL.size
+                    ),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = LocalContentColorMuted.current
+                )
+            }
+            Text("›", color = LocalAccentOnCard.current, fontSize = 20.sp)
+        }
+    }
+}
 
 // ─── Чуйка («Верю — не верю») ────────────────────────────────────────────
 

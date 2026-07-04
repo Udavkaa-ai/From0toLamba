@@ -311,6 +311,19 @@ object Strings {
         "ach.chuyka.streak5.title" to "Нюх как у волка",
         "ach.chuyka.streak5.desc" to "Пять верных прогнозов судьбы подряд",
 
+        // «Наука старца» — коллекция приёмов мошенников
+        "science.title" to "📜 Наука старца",
+        "science.progress" to "Усвоено приёмов: %d из %d",
+        "science.subtitle" to "Каждый закрытый на своих грошах урок старец записывает в свиток: как приём звучит в сказке — и как выглядит в жизни. Собери все — и разводы будешь узнавать не только на ярмарке.",
+        "science.section.tale" to "Как звучит в сказке",
+        "science.section.reality" to "Как выглядит в жизни",
+        "science.section.advice" to "Наука старца",
+        "science.locked.title" to "Наука ещё не усвоена",
+        "science.unlocked.banner" to "СТАРЕЦ ЗАПИСАЛ В СВИТОК",
+        "science.unlocked.tapHint" to "Тапни, чтобы продолжить · свиток — в Успехах",
+        "science.entry.title" to "Наука старца",
+        "science.entry.sub" to "Приёмы мошенников: усвоено %d из %d",
+
         // Финал мини-игры (общая плашка MinigameShell.ResultOverlay)
         "minigame.result.perfect.title" to "Идеально!",
         "minigame.result.win.title" to "Хорошо",
@@ -1023,6 +1036,19 @@ object Strings {
         "ach.chuyka.first.desc" to "Predict a venture's fate correctly in Believe or Not",
         "ach.chuyka.streak5.title" to "Nose of a wolf",
         "ach.chuyka.streak5.desc" to "Five correct fate predictions in a row",
+
+        // Elder's Science — scam technique collection
+        "science.title" to "📜 Elder's Science",
+        "science.progress" to "Techniques learned: %d of %d",
+        "science.subtitle" to "Every lesson paid for with your own coins the elder writes into a scroll: how the trick sounds in a fairy tale — and what it looks like in real life. Collect them all and you'll spot swindles far beyond the fair.",
+        "science.section.tale" to "How it sounds in the tale",
+        "science.section.reality" to "What it looks like in life",
+        "science.section.advice" to "The elder's advice",
+        "science.locked.title" to "Not learned yet",
+        "science.unlocked.banner" to "THE ELDER WRITES IT DOWN",
+        "science.unlocked.tapHint" to "Tap to continue · the scroll lives in Feats",
+        "science.entry.title" to "Elder's Science",
+        "science.entry.sub" to "Scam techniques: %d of %d learned",
 
         // Minigame result overlay (shared MinigameShell)
         "minigame.result.perfect.title" to "Perfect!",

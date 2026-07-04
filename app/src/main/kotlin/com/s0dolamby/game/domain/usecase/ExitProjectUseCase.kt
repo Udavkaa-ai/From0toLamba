@@ -10,7 +10,8 @@ class ExitProjectUseCase @Inject constructor(
     private val projectRepository: ProjectRepository,
     private val achievementUnlockStore: AchievementUnlockStore,
     private val generatePostMortemUseCase: GeneratePostMortemUseCase,
-    private val resolveVerdictsUseCase: ResolveVerdictsUseCase
+    private val resolveVerdictsUseCase: ResolveVerdictsUseCase,
+    private val scienceUnlockStore: com.s0dolamby.game.data.science.ScienceUnlockStore
 ) {
     suspend operator fun invoke(projectId: String): Result<Double> = runCatching {
         val project = projectRepository.getProjectById(projectId)
@@ -35,6 +36,8 @@ class ExitProjectUseCase @Inject constructor(
         // итог виден в разборе старца, очки чуйки начислены до пересчёта
         // подвигов ниже.
         resolveVerdictsUseCase()
+        // «Наука старца»: закрытое своими руками дело тоже учит
+        scienceUnlockStore.unlockFor(project)
         achievementUnlockStore.push(gameStateRepository.recomputeAchievements())
 
         // Старец пишет разбор сделки в фоне — ошибка не валит выход из дела.

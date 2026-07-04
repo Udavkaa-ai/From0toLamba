@@ -69,6 +69,7 @@ sealed class Screen(val route: String) {
     object News : Screen("news")
     object Stats : Screen("stats")
     object PersonaRegistry : Screen("registry")
+    object Science : Screen("science")
     object Settings : Screen("settings")
     object GoldenKey : Screen("minigame/golden-key")
     object KoscheiMemory : Screen("minigame/koschei-memory")
@@ -243,11 +244,17 @@ fun NavGraph() {
         composable(Screen.Stats.route) {
             StatsScreen(
                 onBack = { navController.popBackStack() },
-                onRegistryClick = { navController.navigate(Screen.PersonaRegistry.route) }
+                onRegistryClick = { navController.navigate(Screen.PersonaRegistry.route) },
+                onScienceClick = { navController.navigate(Screen.Science.route) }
             )
         }
         composable(Screen.PersonaRegistry.route) {
             PersonaRegistryScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.Science.route) {
+            com.s0dolamby.game.presentation.science.ScienceScreen(
+                onBack = { navController.popBackStack() }
+            )
         }
         composable(Screen.Settings.route) {
             SettingsScreen(
@@ -356,6 +363,9 @@ fun NavGraph() {
         // Жалованная грамота — всплывает поверх всего на любом экране,
         // когда use-case разблокировал подвиг.
         AchievementUnlockedOverlay()
+
+        // «Наука старца» — свиток с приёмом мошенников после закрытия дела.
+        com.s0dolamby.game.presentation.science.ScienceUnlockedOverlay()
 
         // Плашка «🌅 Утро дня N» при переходе дня — глобально.
         if (currentDay > 0) DayBreakOverlay(currentDay)

@@ -30,6 +30,7 @@ class SettingsViewModel @Inject constructor(
     private val musicEngine: MusicEngine,
     private val minigameUnlockStore: com.s0dolamby.game.data.minigame.MinigameUnlockStore,
     private val achievementUnlockStore: com.s0dolamby.game.data.achievements.AchievementUnlockStore,
+    private val scienceUnlockStore: com.s0dolamby.game.data.science.ScienceUnlockStore,
     private val dayNewsStore: com.s0dolamby.game.data.news.DayNewsStore,
     private val db: AppDatabase
 ) : ViewModel() {
@@ -99,6 +100,7 @@ class SettingsViewModel @Inject constructor(
             // иначе старые unlock'и/вести/поздравления доживают до ребута.
             minigameUnlockStore.clearAll()
             achievementUnlockStore.clearAll()
+            scienceUnlockStore.clearAll()
             dayNewsStore.clear()
             gameStateRepository.initializeGameState()
             _uiState.value = _uiState.value.copy(resetDone = true)

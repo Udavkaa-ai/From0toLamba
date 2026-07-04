@@ -27,7 +27,8 @@ class AdvanceDayUseCase @Inject constructor(
     private val generateProjectUseCase: GenerateProjectUseCase,
     private val generateDailyUpdatesUseCase: GenerateDailyUpdatesUseCase,
     private val resolveVerdictsUseCase: ResolveVerdictsUseCase,
-    private val achievementUnlockStore: AchievementUnlockStore
+    private val achievementUnlockStore: AchievementUnlockStore,
+    private val scienceUnlockStore: com.s0dolamby.game.data.science.ScienceUnlockStore
 ) {
     // Каждый игровой день засчитывается как 10 реальных — держит прогресс интересным
     private val YIELD_MULTIPLIER = 10.0
@@ -99,6 +100,8 @@ class AdvanceDayUseCase @Inject constructor(
                             project.personaArchetype,
                             profitable = returned > project.investedAmountRubles
                         )
+                        // «Наука старца»: пережитый крах — усвоенный приём
+                        scienceUnlockStore.unlockFor(project)
                     }
                 }
 
@@ -128,6 +131,7 @@ class AdvanceDayUseCase @Inject constructor(
                         project.personaArchetype,
                         profitable = returned > project.investedAmountRubles
                     )
+                    scienceUnlockStore.unlockFor(project)
                 }
 
                 // Обычный день — начисляем доход внутри проекта, возможно случайное событие
@@ -242,6 +246,7 @@ class AdvanceDayUseCase @Inject constructor(
                             updatedProject.personaArchetype,
                             profitable = returned > updatedProject.investedAmountRubles
                         )
+                        scienceUnlockStore.unlockFor(updatedProject)
                         AppLogger.i("AdvanceDayUseCase", "Abandoned: ${updatedProject.claimedName}, returned=$returned")
                     }
                 }

@@ -75,5 +75,9 @@ data class GameStateEntity(
     @androidx.room.ColumnInfo(defaultValue = "0")
     val chuykaStreak: Int = 0,
     @androidx.room.ColumnInfo(defaultValue = "0")
-    val chuykaBestStreak: Int = 0
+    val chuykaBestStreak: Int = 0,
+
+    // «Наука старца» — ID открытых карт приёмов (JSON-массив строк).
+    @androidx.room.ColumnInfo(defaultValue = "[]")
+    val scienceCardsJson: String = "[]"
 )

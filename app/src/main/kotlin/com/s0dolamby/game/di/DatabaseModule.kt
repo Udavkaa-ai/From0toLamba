@@ -71,6 +71,13 @@ private val MIGRATION_21_22 = object : Migration(21, 22) {
     }
 }
 
+/** Аддитивная миграция v22 → v23: «Наука старца» — открытые карты приёмов. */
+private val MIGRATION_22_23 = object : Migration(22, 23) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `game_state` ADD COLUMN `scienceCardsJson` TEXT NOT NULL DEFAULT '[]'")
+    }
+}
+
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
@@ -79,7 +86,10 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
         Room.databaseBuilder(context, AppDatabase::class.java, "game_database")
-            .addMigrations(MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22)
+            .addMigrations(
+                MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20,
+                MIGRATION_20_21, MIGRATION_21_22, MIGRATION_22_23
+            )
             .fallbackToDestructiveMigration()
             .build()
 
