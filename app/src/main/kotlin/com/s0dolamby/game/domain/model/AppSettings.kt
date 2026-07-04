@@ -20,17 +20,16 @@ data class AppSettings(
 data class ModelOption(val label: String, val modelId: String)
 
 /**
- * Дефолтная модель — реальный существующий ID на OpenRouter. Раньше стоял
- * несуществующий `deepseek/deepseek-v4-flash`, из-за чего чат падал.
- * DeepSeek V3 (0324) — проверенный, дешёвый ($0.20/$0.80 за 1М токенов),
- * хорошо держит русский и характер персонажа. Тот же, что в TG-проде.
+ * Дефолтная модель — тот же ID, что в продакшен-сервере TG-версии
+ * (DEFAULT_MODEL = 'deepseek/deepseek-v4-flash'). Быстрый и дешёвый,
+ * проверен в TG-проде.
  */
-const val DEFAULT_TEXT_MODEL = "deepseek/deepseek-chat-v3-0324"
+const val DEFAULT_TEXT_MODEL = "deepseek/deepseek-v4-flash"
 
-// Список для будущего селектора (сейчас скрыт в настройках). Только
-// реальные ID OpenRouter. DeepSeek V3.2 — ещё дешевле по выводу ($0.34/1М).
+// Список для будущего селектора (сейчас скрыт в настройках).
 val TEXT_MODEL_OPTIONS = listOf(
-    ModelOption("DeepSeek V3 (рекомендуется)", DEFAULT_TEXT_MODEL),
-    ModelOption("DeepSeek V3.2 (дешевле)", "deepseek/deepseek-v3.2"),
-    ModelOption("Gemini Flash Lite", "google/gemini-3.1-flash-lite-preview")
+    ModelOption("DeepSeek v4 Flash (рекомендуется)", DEFAULT_TEXT_MODEL),
+    ModelOption("DeepSeek Chat v3", "deepseek/deepseek-chat-v3-0324"),
+    ModelOption("Gemini Flash Lite", "google/gemini-2.5-flash-lite-preview-09-2025"),
+    ModelOption("Qwen Flash", "qwen/qwen3.5-flash-02-23")
 )
