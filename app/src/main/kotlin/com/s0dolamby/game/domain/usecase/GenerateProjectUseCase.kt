@@ -24,13 +24,18 @@ class GenerateProjectUseCase @Inject constructor(
         isOnboarding: Boolean = false,
         rng: Random = Random.Default
     ): Result<Project> = runCatching {
-        val template = if (isOnboarding) {
-            projectRegistry.getOnboardingTemplate()
+        // Сначала архетип РАВНОВЕРОЯТНО из всех семи, потом совместимый
+        // с ним шаблон — иначе частые в compatiblePersonas дельцы (Боярин,
+        // Буратино) вытесняют редких (Яга, Золушка).
+        val template: com.s0dolamby.game.data.registry.ProjectRegistry.ProjectTemplate
+        val archetype: PersonaArchetype
+        if (isOnboarding) {
+            template = projectRegistry.getOnboardingTemplate()
+            archetype = personaRegistry.getCompatibleArchetype(template.compatiblePersonas, rng)
         } else {
-            projectRegistry.getRandomTemplate(rng)
+            archetype = PersonaArchetype.values().random(rng)
+            template = projectRegistry.getRandomTemplateFor(archetype.name.lowercase(), rng)
         }
-
-        val archetype = personaRegistry.getCompatibleArchetype(template.compatiblePersonas, rng)
         val persona = personaRegistry.getPersona(archetype)
 
         val fate = if (isOnboarding) ProjectFate.HONEST_FAIL else selectFate(template.fateWeights, rng)

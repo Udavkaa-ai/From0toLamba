@@ -272,7 +272,7 @@ private fun WeeklyFairCard(ui: TodayUiState) {
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             com.s0dolamby.game.presentation.common.components.WobblyEmoji(
-                "🏪", fontSize = 22.sp, amplitudeDeg = 5f, periodMs = 2600
+                "🎪", fontSize = 22.sp, amplitudeDeg = 5f, periodMs = 2600
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -339,12 +339,15 @@ private fun WeeklyFairCard(ui: TodayUiState) {
             ui.weekChuykaCorrect, ui.weekChuykaTotal,
             rankName
         )
+        // Кнопка лежит на карточном фоне (пергамент в тёплой теме) —
+        // цвета из карточных локалей, не фиксированное золото.
+        val shareAccent = LocalAccentOnCard.current
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(10.dp))
-                .background(FairyGold.copy(alpha = 0.16f))
-                .border(1.dp, FairyGold.copy(alpha = 0.55f), RoundedCornerShape(10.dp))
+                .background(shareAccent.copy(alpha = 0.14f))
+                .border(1.dp, shareAccent.copy(alpha = 0.6f), RoundedCornerShape(10.dp))
                 .clickable {
                     val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
                         type = "text/plain"
@@ -355,7 +358,7 @@ private fun WeeklyFairCard(ui: TodayUiState) {
         ) {
             Text(
                 Strings.t("today.week.shareBtn"),
-                color = FairyGold,
+                color = shareAccent,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,

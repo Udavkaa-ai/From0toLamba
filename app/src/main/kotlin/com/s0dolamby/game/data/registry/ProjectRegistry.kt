@@ -19,6 +19,18 @@ class ProjectRegistry @Inject constructor(
     fun getRandomTemplate(rng: Random = Random.Default): ProjectTemplate =
         templates.filter { it.templateId != "onboarding" }.random(rng)
 
+    /**
+     * Шаблон, совместимый с данным дельцом. Выбор «сначала архетип —
+     * потом шаблон» выравнивает встречаемость персонажей: раньше архетип
+     * тянулся из compatiblePersonas шаблона, и Боярин/Буратино (по 3
+     * вхождения из 5 шаблонов) появлялись заметно чаще Яги и Золушки.
+     */
+    fun getRandomTemplateFor(personaId: String, rng: Random = Random.Default): ProjectTemplate =
+        templates
+            .filter { it.templateId != "onboarding" && personaId in it.compatiblePersonas }
+            .randomOrNull(rng)
+            ?: getRandomTemplate(rng)
+
     fun getOnboardingTemplate(): ProjectTemplate =
         templates.firstOrNull { it.type == ProjectType.HONEST_TRADE }
             ?: templates.first()

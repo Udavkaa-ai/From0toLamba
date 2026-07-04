@@ -59,6 +59,30 @@ object AppLogger {
         "Лог пуст"
     }
 
+    /**
+     * Последний НЕпоказанный краш для диагностического снэкбара. После
+     * чтения ставит маркер «показано» — иначе один и тот же старый краш
+     * всплывает при каждом открытии Казны, пока не вытеснится из лога
+     * (лог переживает и сброс игры, и обновление приложения).
+     */
+    fun consumeLastCrash(): String? {
+        if (!::logFile.isInitialized || !logFile.exists()) return null
+        val text = runCatching { logFile.readText() }.getOrDefault("")
+        val fresh = text.substringAfterLast("CrashDiag: shown")
+        val crash = fresh.substringAfterLast("CRASH/UncaughtException:", "").trim()
+        if (crash.isEmpty()) return null
+        i("CrashDiag", "shown")
+        return crash
+    }
+
+    /** Полная очистка лога — при «Начать заново». */
+    fun clear() {
+        if (::logFile.isInitialized) {
+            runCatching { logFile.writeText("") }
+            i("AppLogger", "=== Log cleared (game reset) ===")
+        }
+    }
+
     fun share(context: Context) {
         try {
             val uri = FileProvider.getUriForFile(

@@ -102,6 +102,8 @@ class SettingsViewModel @Inject constructor(
             achievementUnlockStore.clearAll()
             scienceUnlockStore.clearAll()
             dayNewsStore.clear()
+            // Лог тоже с чистого листа — иначе Казна покажет краш прошлой жизни
+            com.s0dolamby.game.data.logging.AppLogger.clear()
             gameStateRepository.initializeGameState()
             _uiState.value = _uiState.value.copy(resetDone = true)
         }

@@ -65,15 +65,15 @@ fun PortfolioScreen(
     // Sheet state hoisted outside LazyColumn to avoid ModalBottomSheet-in-LazyColumn crash
     var activeSheet by remember { mutableStateOf<ActiveSheet?>(null) }
 
-    // Show last crash from log on screen open (diagnostic only).
+    // Диагностика: последний НЕпоказанный краш из лога — один раз, а не
+    // при каждом открытии Казны (лог переживает сброс игры).
     val crashPrefix = Strings.t("portfolio.snack.crash", "")
     LaunchedEffect(Unit) {
-        val log = AppLogger.readLog()
-        val lastCrash = log.substringAfterLast("CRASH/UncaughtException:", "").trim()
-        if (lastCrash.isNotEmpty()) {
+        val lastCrash = AppLogger.consumeLastCrash()
+        if (lastCrash != null) {
             snackbarHostState.showSnackbar(
                 crashPrefix + lastCrash.take(120),
-                duration = SnackbarDuration.Indefinite
+                duration = SnackbarDuration.Long
             )
         }
     }

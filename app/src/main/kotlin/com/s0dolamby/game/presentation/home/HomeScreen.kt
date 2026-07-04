@@ -797,6 +797,10 @@ private fun AdvanceDayButton(isLoading: Boolean, onClick: () -> Unit) {
         }
     }
 
+    // Кнопка живёт в теме: тёмный фиолет + золото ночью, пергамент +
+    // бронза на тёплой ярмарке (раньше была фиксированно тёмной и в
+    // светлой теме выглядела чужой).
+    val palette = com.s0dolamby.game.presentation.common.theme.LocalAppPalette.current
     Button(
         onClick = onClick,
         enabled = !isLoading,
@@ -807,8 +811,8 @@ private fun AdvanceDayButton(isLoading: Boolean, onClick: () -> Unit) {
         colors = ButtonDefaults.buttonColors(
             containerColor = Color.Transparent,
             disabledContainerColor = Color.Transparent,
-            contentColor = FairyGold,
-            disabledContentColor = FairyGold.copy(alpha = 0.5f)
+            contentColor = palette.accentOnCard,
+            disabledContentColor = palette.accentOnCard.copy(alpha = 0.5f)
         ),
         contentPadding = PaddingValues(0.dp)
     ) {
@@ -817,11 +821,11 @@ private fun AdvanceDayButton(isLoading: Boolean, onClick: () -> Unit) {
                 .fillMaxSize()
                 .background(
                     Brush.linearGradient(
-                        listOf(EnchantedPurple, NightBlue)
+                        listOf(palette.cardTop, palette.cardBottom)
                     ),
                     shape = RoundedCornerShape(12.dp)
                 )
-                .border(1.dp, FairyGold.copy(alpha = 0.4f), RoundedCornerShape(12.dp)),
+                .border(1.dp, palette.cardBorderBright.copy(alpha = 0.7f), RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center
         ) {
             if (isLoading) {
@@ -835,9 +839,7 @@ private fun AdvanceDayButton(isLoading: Boolean, onClick: () -> Unit) {
                     Text(
                         Strings.t("loading.$idx"),
                         fontSize = 13.sp,
-                        // Кнопка всегда на фиксированном тёмном градиенте —
-                        // фиксированное золото, а не карточная локаль.
-                        color = FairyGold.copy(alpha = 0.75f)
+                        color = palette.accentOnCard.copy(alpha = 0.8f)
                     )
                 }
             } else {
