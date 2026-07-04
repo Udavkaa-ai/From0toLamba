@@ -56,9 +56,15 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
         release {
-            isMinifyEnabled = false
+            // Минификация + вырезание неиспользуемых ресурсов для Play.
+            // Keep-правила для Gson/Room/Retrofit — в proguard-rules.pro.
+            // ВАЖНО: перед публикацией собрать release локально и прогнать
+            // смоук-тест — CI собирает только debug.
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             manifestPlaceholders["appLabel"] = "@string/app_name"
+            // signingConfig задаётся при публикации: ключ НЕ хранится в репо.
         }
     }
 
