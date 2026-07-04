@@ -1,6 +1,10 @@
 # Отдельный сервис для Android-версии. Собирается независимо от TG-сервера.
 FROM node:20-alpine
 
+# Prisma на Alpine (musl) требует OpenSSL — без него schema-engine падает
+# с «Could not parse schema engine response». Как в корневом Dockerfile.
+RUN apk add --no-cache openssl libc6-compat
+
 WORKDIR /app
 
 # Сначала манифесты и схема — кэшируем npm install
