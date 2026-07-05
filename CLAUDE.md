@@ -1,263 +1,143 @@
-# CLAUDE.md — «Из грязи в князи»
-> Симулятор купца-инвестора в сказочной Руси. Telegram Mini App + (изначально) Android-приложение.
+# CLAUDE.md
 
----
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Состояние проекта
+> Язык проекта — русский: UI, комментарии, доменные термины, коммиты. Пиши в том же стиле.
 
-**Активная версия:** Telegram Mini App (`tg/`)
-**Android:** код в `app/`, разработка заморожена — всё усилие на TG-версию
-**Ветка разработки:** `claude/telegram-game-migration-FDnlX`
+## Что это
 
----
+«Из грязи в князи» — симулятор купца-инвестора в сказочной Руси. Игрок вкладывает
+гроши (₽, отображать `"%.0f г"`) в «дела» (аналоги крипто-проектов), большинство —
+обман. Ядро — **беседа с AI-хозяином дела**: делец знает судьбу дела заранее, но
+скрывает; игрок задаёт вопросы и решает, вкладывать ли.
 
-## Суть игры
+В репозитории три приложения:
 
-Мобильная игра — симулятор инвестора в сказочной Руси. Игрок вкладывает рубли (₽) в «дела» (аналоги крипто-проектов), большинство из которых обман. Ключевая механика — **AMA-сессия**: чат с AI-хозяином дела (до 10 вопросов). AI знает судьбу дела заранее, но скрывает. Игрок задаёт вопросы и решает, вкладывать ли.
+| Путь | Что | Статус |
+|---|---|---|
+| `app/` | **Android-приложение (Kotlin/Compose)** | Активная разработка, цель — Google Play |
+| `tg/` | Telegram Mini App (React `client/` + Fastify `server/`) | Прежняя версия, деплой на Railway, в разработке не трогаем |
+| `mobile-backend/` | Отдельный Fastify-сервис для Android | AI-прокси к OpenRouter + сбор фидбека тестеров |
 
-- **Стартовый баланс:** 0 ₽ → онбординг-бонус ~50 ₽
-- **Валюта:** рубли (₽), отображать `"%.0f ₽"`
-- **Архетип хозяина** скрыт до PostMortem
+Разработка Android идёт на фиче-ветке (`claude/android-port-*`). TG-сервер и его БД с
+живыми игроками (6000+ записей) **не трогать** — Android изолирован через `mobile-backend`
+со своей Postgres.
 
----
+## Команды
 
-## Архитектура Telegram Mini App (`tg/`)
+```bash
+# Android (из корня, есть ./gradlew)
+./gradlew assembleDebug          # собрать debug APK → app/build/outputs/apk/debug/
+./gradlew lintDebug              # ЛИНТ. abortOnError=true — падает от любой ошибки, не только warning
+./gradlew test                   # unit-тесты (app/src/test)
+./gradlew test --tests "com.s0dolamby.game.domain.ranks.RankServiceTest"   # один тест-класс
 
-```
-tg/
-├── client/          # React + TypeScript + Vite + MUI
-│   └── src/
-│       ├── api/client.ts          # Все HTTP-запросы к серверу
-│       ├── stores/gameStore.ts    # Zustand-стор (gameState, проекты)
-│       ├── pages/                 # HomePage, InboxPage, AmaPage, PortfolioPage, StatsPage
-│       ├── components/            # FairyCard, ScreenBackground, SparklesOverlay, BottomNav, RankUpOverlay
-│       └── theme/colors.ts        # FairyGold, EnchantedPurple, NightBlue
-└── server/          # Fastify + TypeScript + Prisma + PostgreSQL
-    └── src/
-        ├── index.ts               # Точка входа, регистрация плагинов и роутов
-        ├── api/routes/
-        │   ├── game.ts            # /api/game, /advance-day, /settings, /reset
-        │   ├── projects.ts        # /api/projects/inbox, /portfolio, /updates, /skip
-        │   ├── ama.ts             # /api/ama/:id/start|message|evaluate-intuition
-        │   └── invest.ts          # /api/invest/:id (invest/add/withdraw/exit)
-        ├── game/
-        │   ├── types.ts           # Все энамы + FATE_CONFIG + WITHDRAWAL_RULES + ProjectPublicDTO
-        │   ├── GenerateProjectService.ts  # AI-генерация нового дела
-        │   ├── AmaSessionService.ts       # Чат с хозяином
-        │   ├── AdvanceDayService.ts       # Ежедневный цикл + история
-        │   ├── InvestService.ts           # Вложить/довложить/вывести/выйти
-        │   ├── projectUtils.ts            # toPublicDTO (убирает скрытые поля)
-        │   └── rankService.ts             # computeRank()
-        ├── ai/openRouterClient.ts  # Запросы к OpenRouter (DeepSeek)
-        ├── bot/bot.ts              # Grammy Telegram bot
-        ├── scheduler/dailyJob.ts   # node-cron — advance-day в 21:00 MSK
-        ├── middleware/telegramAuth.ts  # Верификация X-Telegram-Init-Data
-        ├── db/prisma.ts            # PrismaClient singleton
-        └── data/personas.json      # Архетипы персонажей
-    └── prisma/schema.prisma        # Полная схема БД
+# mobile-backend
+cd mobile-backend && npm install && npm run dev    # локально; заполнить .env из .env.example
+npx tsc --noEmit                                    # быстрая проверка типов без запуска
 ```
 
----
+Локального Android SDK в среде обычно нет — **проверка идёт через CI** (GitHub Actions
+`Build Debug APK`: сначала джоб Lint Check `lintDebug`, затем Build `assembleDebug` + `test`).
+После пуша дождись зелёного прогона; `lintDebug` — самый частый источник падений.
 
-## API Reference
+## Архитектура Android
 
-Все запросы требуют заголовок `X-Telegram-Init-Data` (Telegram.WebApp.initData).
+Трёхслойка, пакет `com.s0dolamby.game`, DI через Hilt:
 
-### Game
-| Метод | Путь | Описание |
-|---|---|---|
-| GET | `/api/game` | Получить gameState + все проекты пользователя |
-| POST | `/api/game/advance-day` | Прокрутить день вперёд |
-| POST | `/api/game/clear-rank-up` | Очистить pendingRankUp после показа поздравления |
-| POST | `/api/game/complete-onboarding` | Завершить онбординг (начисляет бонус ~50 ₽) |
-| GET | `/api/game/settings` | Получить настройки (preferredModel) |
-| POST | `/api/game/settings` | Обновить настройки |
-| POST | `/api/game/reset` | Сбросить весь прогресс |
+```
+domain/model  ←  domain/repository (интерфейсы)  ←  domain/usecase
+                          ↑                                ↑
+                  data/repository (impl)            presentation/*ViewModel
+                          ↑
+                data/db (Room) + data/registry + data/ai
+```
 
-### Projects
-| Метод | Путь | Описание |
-|---|---|---|
-| GET | `/api/projects/inbox` | Входящие предложения |
-| GET | `/api/projects/portfolio` | Активные + закрытые дела |
-| GET | `/api/projects/:id/updates` | Ежедневные вести по делу |
-| POST | `/api/projects/:id/skip` | Миновать (удалить из inbox) |
+Правило изменений (подробная карта — `CODEMAP.md`):
+- меняешь `domain/model` → правь `data/db/entity/*Entity.kt` + маппер `toEntity`/`toDomain` + Repository (интерфейс и impl)
+- меняешь Repository → правь impl + DI-модуль + все use-case, что его инжектируют
+- меняешь use-case → правь ViewModel, который его вызывает
 
-### AMA
-| Метод | Путь | Описание |
-|---|---|---|
-| POST | `/api/ama/:projectId/start` | Начать сессию беседы |
-| GET | `/api/ama/:projectId` | Получить историю сессии |
-| POST | `/api/ama/:projectId/message` | Отправить вопрос, получить ответ AI |
-| POST | `/api/ama/:projectId/evaluate-intuition` | Оценить Чуйку (один раз) |
+### Room и миграции (критично)
+- Единая БД `data/db/AppDatabase.kt`, версия растёт при каждом изменении схемы (сейчас **v25**).
+- **Все миграции строго аддитивные** — только `ALTER TABLE ... ADD COLUMN` с DEFAULT.
+  Прописываются в `di/DatabaseModule.kt` (`MIGRATION_N_N+1`) и добавляются в `.addMigrations(...)`.
+  При добавлении поля: model → entity (+`@ColumnInfo(defaultValue)`) → маппер → миграция →
+  bump версии в `AppDatabase`. `fallbackToDestructiveMigration()` включён, но полагаться на него
+  нельзя — пиши миграцию.
+- In-memory синглтоны (`*UnlockStore`, `DayNewsStore`) переживают чистку БД — при «Сбросе
+  прогресса» их надо чистить явно (`clearAll()` в `SettingsViewModel.resetGame`), плюс
+  `db.clearAllTables()` вызывать **на Dispatchers.IO** (иначе краш на главном потоке).
 
-### Invest
-| Метод | Путь | Описание |
-|---|---|---|
-| POST | `/api/invest/:projectId` | Первое вложение |
-| POST | `/api/invest/:projectId/add` | Довложить (max 5000 ₽, не при заблокированном выводе) |
-| POST | `/api/invest/:projectId/withdraw` | Частичный вывод |
-| POST | `/api/invest/:projectId/exit` | Выйти из дела полностью |
+### Скрытые поля Project
+`fate`, `personaArchetype`, `daysUntilCollapse`, `realDailyYieldRubles` — судьба дела.
+Раскрываются постепенно: тип/посул — за мини-игру, всё остальное — только в PostMortem после
+закрытия. Не показывай их в UI до закрытия.
 
----
+### Контент: банки вместо AI
+AI (нейросеть) вызывается **только** для ответов дельца на вопросы игрока в чате
+(`data/ai/AmaSessionManager.sendMessage`). Всё остальное — детерминированные локальные банки,
+работают офлайн:
+- `data/registry/GreetingBank` — приветствие дельца
+- `data/registry/DeveloperNameBank` — имена дельцов
+- `data/registry/NewsTemplateBank` — ежедневные вести
+- `data/registry/PostMortemScribe` — «разбор старца» (конструктор из блоков)
+- `data/registry/ProjectRegistry`/`PersonaRegistry` — шаблоны дел и персон из `assets/registry/*.json`
+- `domain/science/ScienceCatalog` — «Наука старца» (карты приёмов)
 
-## База данных (Prisma + PostgreSQL)
+Добавляешь новую «сгенерированную» строку — не тяни AI, пиши банк.
 
-Схема: `tg/server/prisma/schema.prisma`
+### Основной игровой цикл
+`domain/usecase/AdvanceDayUseCase` — сердце: прокручивает активные дела (доход/крах/события),
+генерирует новые грамоты, разрешает недельную «Ярмарку», начисляет чуйку, обновляет чин/подвиги.
+Экономика: `итоговый возврат = dailyYield × YIELD_MULTIPLIER(10) × дней жизни`; диапазоны судеб
+в `domain/config/FateConfig` заданы так, чтобы UNICORN ≤ ~500%, честные исходы 20–150%.
 
-**Таблицы:** `User`, `GameState`, `Project`, `AmaSession`, `AmaMessage`, `DailyUpdate`, `PostMortem`, `Transaction`, `AdRevenue`
+### Генерация и сиды
+«Ярмарка недели» (`domain/week/WeeklyFair`) даёт общий сид: `GenerateProjectUseCase` принимает
+`rng: Random` (по умолчанию `Random.Default`, для недели — `Random(WeeklyFair.seed(...))`).
+Архетип выбирается **равновероятно из всех семи**, потом совместимый шаблон (иначе частые в
+`compatiblePersonas` дельцы вытесняют редких). Сезонные модификаторы — `WeekModifier`.
 
-**КРИТИЧНО — скрытые поля `Project`:**
-`fate`, `personaArchetype`, `daysUntilCollapse`, `realDailyYieldRubles`, `lieTopics`, `truthTopics`, `npcTruthParams` — **НИКОГДА** не отдавать клиенту напрямую. Использовать `toPublicDTO()` из `projectUtils.ts`.
+### UI-конвенции
+- **i18n**: не Android-ресурсы, а in-memory `Strings.t(key, vararg)`
+  (`presentation/common/i18n/Strings.kt`), словари RU + EN-fallback. Добавляешь строку — в обе
+  карты. `Strings.t` — `@Composable`, вне композиции (LaunchedEffect и т.п.) не вызывать — хойстить.
+- **Две темы** (тёмная ночь / тёплая ярмарка) концептуально разные. Цвета — из `LocalAppPalette`
+  через `FairyCard`/`ProvideOnCardColors`. Правило: поверхности-карточки (пергамент в WARM)
+  используют карточные локали (`LocalContentColor`, `LocalAccentOnCard`); фиксированно-тёмные
+  поверхности — фиксированные `Color.White`/`FairyGold`. Material `colorScheme` всегда тёмная в
+  обеих темах. TextField на карточках — `fairyOnCardTextFieldColors()`.
+- **Без внешних спрайтов** (лицензии) — вся графика рисуется Canvas'ом или эмодзи.
+- Навигация — единый `presentation/navigation/NavGraph.kt`; глобальные оверлеи (вести дня,
+  подвиги, «Наука старца», день-переход) висят в корневом Box поверх NavHost.
 
-**Поля истории для графиков:** `valueHistory`, `userCountHistory`, `apyHistory` — массивы последних 30 дней, обновляются в `AdvanceDayService`.
+## Тестовая инфраструктура фидбека (временная)
 
----
+Язычок «🐞 Тестерам» (`presentation/feedback/`) на каждом экране: попап баг/идея/вопрос +
+скриншот момента (PixelCopy), при открытии ставит на паузу таймерные мини-игры
+(`FeedbackPauseBus` + `pausableDelay`). Уходит в `mobile-backend` → Postgres, смотрится на
+`<домен>/admin/feedback?key=...`. **Перед релизом весь этот функционал удаляется** (пакет
+`feedback/`, вызовы в NavGraph, строки `feedback.*`, сервис mobile-backend) + вайп прогресса.
 
-## Доменные типы (`tg/server/src/game/types.ts`)
+## Ключевые доменные типы (`domain/model/`)
 
-```typescript
+```
 ProjectType:      CARD_GAME | TREASURE_HUNT | POTION_BREW | GUILD_SCHEME | HONEST_TRADE
 ProjectFate:      INSTANT_SCAM(30%) | SLOW_DRAIN(25%) | HONEST_FAIL(15%) | SURVIVOR(20%) | UNICORN(10%)
 PersonaArchetype: BURATINO | BOYARIN | KOLOBOK | KOSCHEI | ZOLUSHKA | BABA_YAGA | IVAN_DURAK
-LieTopic:         PATRON_COUNT | DAILY_PROFIT | PAYOUT_DATE | GUILD_SIZE | ELDER_BLESSING | NOBLE_BACKING | WITHDRAWAL_LIMITS
-InvestorRank:     NEWBIE → AMBASSADOR → ANALYST → SHARK → LAMBO_SENSEI
+InvestorRank:     NEWBIE(0) → AMBASSADOR(5) → ANALYST(20) → SHARK(50) → LAMBO_SENSEI(100)  # по числу взятых дел
+PlayerVerdict:    HONEST | SCAM  # «Верю — не верю», сверяется при закрытии → рейтинг чуйки
 ```
 
-Правила вывода (`WITHDRAWAL_RULES`):
-- `POTION_BREW`, `GUILD_SCHEME`: max 25% от вложенного
-- `CARD_GAME`, `TREASURE_HUNT`: любая сумма, −25% комиссия
-- `HONEST_TRADE`: без ограничений и без комиссии
-
----
+Правила вывода (`WITHDRAWAL_RULES`): POTION_BREW/GUILD_SCHEME — max 25% за раз;
+CARD_GAME/TREASURE_HUNT — любая сумма, −25% комиссия; HONEST_TRADE — без ограничений.
+Экономика: старт 0 ₽ → онбординг-бонус ~50 ₽; мин. вклад 5 ₽; макс. 5000 ₽/дело; макс.
+5 активных дел (+доп. слоты за 1000 ₽).
 
 ## AI-интеграция
 
-- **Провайдер:** OpenRouter (`https://openrouter.ai/api/v1/`)
-- **Модели:** `deepseek/deepseek-chat-v3-0324` (по умолчанию) и `google/gemini-3.1-flash-lite-preview` (меняется в настройках через `preferredModel`)
-- **Клиент:** `tg/server/src/ai/openRouterClient.ts`
-- **Функции:** `generateAmaResponse`, `generateProjectName`, `generateDailyUpdate`, `generatePostMortem`
-
-**Язык ответов AI:** современный живой русский. Без нарочитого старорусского. Народные присказки — изредка. Все суммы в рублях. Без слов «блокчейн», «крипто», «TON».
-
----
-
-## Деплой
-
-**Хостинг: Railway** (`https://railway.app`)
-- Сервис: `From0toLamba` — деплой из GitHub `udavkaa-ai/from0tolamba`, Dockerfile в корне
-- БД: PostgreSQL-сервис на Railway, `DATABASE_URL` прокинут через `${{Postgres.DATABASE_URL}}`
-- Домен: `https://from0tolamba-production.up.railway.app`
-- Бот: `@vknyazi_bot`
-
-При деплое Railway сам собирает Docker-образ. При старте контейнера автоматически:
-1. `prisma db push --accept-data-loss` — синхронизирует схему БД
-2. `tsx src/index.ts` — запускает сервер
-
-- `NODE_ENV=production`: webhook Telegram + cron на 21:00 MSK
-- `NODE_ENV=development`: long polling бота
-
----
-
-## Переменные окружения (Railway → Variables)
-
-```
-DATABASE_URL         ${{Postgres.DATABASE_URL}}   ← ссылка на Railway Postgres
-TELEGRAM_BOT_TOKEN   123456:ABC...
-MINI_APP_URL         https://from0tolamba-production.up.railway.app
-OPENROUTER_API_KEY   sk-or-...
-NODE_ENV             production
-```
-
----
-
-## Локальная разработка
-
-```bash
-# Сервер
-cd tg/server && npm install && cp .env.example .env
-# (заполнить .env)
-npm run dev    # tsx watch src/index.ts
-
-# Клиент
-cd tg/client && npm install
-npm run dev    # Vite :5173 → proxy /api → :3000
-
-# Сборка клиента для production
-npm run build  # outDir = ../server/public
-```
-
----
-
-## Экономика игры
-
-| Параметр | Значение |
-|---|---|
-| Стартовый баланс | 0 ₽ |
-| Онбординг-бонус | ~50 ₽ |
-| Мин. вложение | 5 ₽ |
-| Макс. вложение | 5 000 ₽ на дело |
-| Активных дел | max 5 |
-| Доходность SURVIVOR | 0.3–1.5% в день |
-| Доходность UNICORN | 2–10% в день |
-| Потеря INSTANT_SCAM | 80–100% |
-| Потеря SLOW_DRAIN | 30–70% |
-
-`state.balance` — только свободные рубли. Доход копится в `project.currentValueRubles` до вывода/выхода.
-`computeRank()` использует: `totalWealth = balance + Σ activeProjects.currentValueRubles`, `intuitionScore`, `currentDay`.
-
----
-
-## Страницы клиента
-
-| Страница | Файл | Назначение |
-|---|---|---|
-| Главная | `HomePage.tsx` | Баланс, активные дела (с новостями и «Довложить»), «Следующий день» |
-| Входящие | `InboxPage.tsx` | Новые предложения из inbox |
-| Беседа | `AmaPage.tsx` | AMA-чат с хозяином + полоска Чуйки |
-| Казна | `PortfolioPage.tsx` | Активные дела: графики (Recharts), вести, довложить/вывести/выйти |
-| Успехи | `StatsPage.tsx` | Статистика, ранг, история баланса |
-
----
-
-## Ключевые правила
-
-- Скрытые поля проекта — никогда в клиент до закрытия. Только `toPublicDTO()`
-- AI вызывается только через `openRouterClient.ts`, не из роутов напрямую
-- `updateRankIfNeeded()` — только в `AdvanceDayService`, не при инвестировании
-- При закрытии дела — генерировать `PostMortem` с раскрытием архетипа
-- Тёмная тема — основная. Язык UI — русский
-
----
-
-## UI-словарь
-
-| Обычное слово | В UI |
-|---|---|
-| инвестировать | вложить |
-| ранг инвестора | купеческий чин |
-| выйти из проекта | покинуть дело |
-| заявленный APY | посул (APY) |
-| управление инвестицией | распорядиться вложением |
-
----
-
-## Известные TODO
-
-| Задача | Где |
-|---|---|
-| PostMortem AI-генерация после выхода | `InvestService.ts` → вызвать `generatePostMortem` |
-| Баннеры дел (изображения) | `GenerateProjectService.ts` → Pollinations / FLUX |
-| Push-уведомления через бота | `bot/bot.ts` |
-| Экран «Летопись» (PersonaRegistry) | новая страница клиента |
-| Экран «Вести с ярмарки» (News) | новая страница клиента |
-| Admin-панель с AdRevenue | отдельный роут/сервис |
-
----
-
-## Цвета темы
-
-```typescript
-FairyGold       = #FFB800  // золото — акценты, заголовки
-EnchantedPurple = #2A1960  // тёмно-фиолетовый — верх карточек
-NightBlue       = #0D1735  // тёмно-синий — низ карточек, фон
-```
+Android ходит через `mobile-backend` (не напрямую в OpenRouter): `BuildConfig.MOBILE_PROXY_URL`
++ заголовок `X-App-Key` = `BuildConfig.MOBILE_APP_KEY` (оба из `local.properties` / GitHub Secrets,
+в код не коммитить). Серверный `OPENROUTER_API_KEY` живёт только на `mobile-backend`, в APK его нет.
+Язык ответов AI: современный живой русский, суммы в грошах, без слов «блокчейн»/«крипто»/«TON».
