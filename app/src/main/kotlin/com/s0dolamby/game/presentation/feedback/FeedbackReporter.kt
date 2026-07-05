@@ -132,6 +132,12 @@ fun FeedbackReporter(
         Text(Strings.t("feedback.tab"), color = FairyGold, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
     }
 
+    // Пока попап открыт — мини-игры на время замирают
+    androidx.compose.runtime.DisposableEffect(open) {
+        FeedbackPauseBus.paused.value = open
+        onDispose { FeedbackPauseBus.paused.value = false }
+    }
+
     if (open) {
         val sendState by viewModel.state.collectAsState()
         val errorReason by viewModel.errorReason.collectAsState()

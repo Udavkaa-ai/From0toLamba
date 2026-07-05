@@ -1,5 +1,6 @@
 package com.s0dolamby.game.presentation.minigame.koschei
 
+import com.s0dolamby.game.presentation.feedback.pausableDelay
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -80,7 +81,7 @@ fun KoscheiMemoryScreen(
 
     LaunchedEffect(seed) {
         while (secondsLeft > 0 && stage == MinigameStage.PLAY) {
-            delay(1000)
+            pausableDelay(1000)
             secondsLeft -= 1
         }
         if (stage == MinigameStage.PLAY && secondsLeft == 0) {

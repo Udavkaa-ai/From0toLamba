@@ -1,5 +1,6 @@
 package com.s0dolamby.game.presentation.minigame.boyarin
 
+import com.s0dolamby.game.presentation.feedback.pausableDelay
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -144,13 +145,13 @@ fun BoyarinCharterScreen(
         when (stage) {
             MinigameStage.MEMORIZE -> {
                 while (memorizeLeft > 0 && stage == MinigameStage.MEMORIZE) {
-                    delay(1000); memorizeLeft -= 1
+                    pausableDelay(1000); memorizeLeft -= 1
                 }
                 if (stage == MinigameStage.MEMORIZE) stage = MinigameStage.PLAY
             }
             MinigameStage.PLAY -> {
                 while (secondsLeft > 0 && stage == MinigameStage.PLAY) {
-                    delay(1000); secondsLeft -= 1
+                    pausableDelay(1000); secondsLeft -= 1
                 }
                 if (stage == MinigameStage.PLAY) stage = MinigameStage.RESULT
             }

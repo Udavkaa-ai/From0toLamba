@@ -1,5 +1,6 @@
 package com.s0dolamby.game.presentation.minigame.zolushka
 
+import com.s0dolamby.game.presentation.feedback.pausableDelay
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -103,7 +104,7 @@ fun ZolushkaCoinsScreen(
     LaunchedEffect(seed, phase, round) {
         if (phase == Phase.INPUT) {
             while (secondsLeft > 0 && phase == Phase.INPUT) {
-                delay(1000); secondsLeft -= 1
+                pausableDelay(1000); secondsLeft -= 1
             }
             if (phase == Phase.INPUT && stage == MinigameStage.PLAY) {
                 stage = MinigameStage.RESULT

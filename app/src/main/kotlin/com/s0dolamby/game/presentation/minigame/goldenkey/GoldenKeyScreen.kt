@@ -1,5 +1,6 @@
 package com.s0dolamby.game.presentation.minigame.goldenkey
 
+import com.s0dolamby.game.presentation.feedback.pausableDelay
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -298,12 +299,12 @@ fun GoldenKeyScreen(
     LaunchedEffect(seed, stage) {
         if (stage == MinigameStage.MEMORIZE) {
             while (memorizeLeft > 0 && stage == MinigameStage.MEMORIZE) {
-                delay(1000); memorizeLeft -= 1
+                pausableDelay(1000); memorizeLeft -= 1
             }
             if (stage == MinigameStage.MEMORIZE) stage = MinigameStage.PLAY
         } else if (stage == MinigameStage.PLAY) {
             while (chooseLeft > 0 && stage == MinigameStage.PLAY) {
-                delay(1000); chooseLeft -= 1
+                pausableDelay(1000); chooseLeft -= 1
             }
             if (stage == MinigameStage.PLAY) {
                 timedOut = true

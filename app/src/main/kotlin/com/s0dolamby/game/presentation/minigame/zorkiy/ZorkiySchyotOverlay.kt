@@ -137,13 +137,22 @@ fun ZorkiySchyotOverlay(
         phase = Phase.DONE
     }
 
-    // ЕДИНЫЙ таймер на всю игру: 5 секунд на все десять чисел.
-    // Жизнь жестока — победа тут редкая и оттого сладкая.
+    // ЕДИНЫЙ таймер на всю игру. Ручной отсчёт (а не animateTo), чтобы
+    // замирал на паузе фидбека: пока открыт попап, время не идёт.
     LaunchedEffect(phase) {
         if (phase == Phase.PLAY) {
             timer.snapTo(1f)
-            timer.animateTo(0f, tween(TOTAL_SECONDS * 1000, easing = LinearEasing))
-            // Дошли до нуля без прерывания — время вышло
+            val total = TOTAL_SECONDS * 1000L
+            var elapsed = 0L
+            val stepMs = 50L
+            while (elapsed < total && phase == Phase.PLAY) {
+                kotlinx.coroutines.delay(stepMs)
+                if (!com.s0dolamby.game.presentation.feedback.FeedbackPauseBus.paused.value) {
+                    elapsed += stepMs
+                    timer.snapTo(1f - elapsed.toFloat() / total)
+                }
+            }
+            // Время вышло (не прервано тапом по последнему числу)
             if (phase == Phase.PLAY) finish(timedOut = true)
         }
     }
