@@ -55,6 +55,9 @@ const feedbackSchema = z.object({
   message: z.string().min(1).max(2000),
   appVersion: z.string().max(40).nullish(),
   platform: z.string().max(20).default('android'),
+  device: z.string().max(80).nullish(),
+  androidSdk: z.number().int().nullish(),
+  screen: z.string().max(40).nullish(),
   // base64 JPEG скриншота, до ~3 МБ на всякий случай
   screenshot: z.string().max(3_000_000).nullish(),
 })
@@ -122,6 +125,9 @@ async function main() {
         message: f.message,
         appVersion: f.appVersion ?? null,
         platform: f.platform,
+        device: f.device ?? null,
+        androidSdk: f.androidSdk ?? null,
+        screen: f.screen ?? null,
         screenshot: f.screenshot ?? null,
       },
     })
@@ -145,10 +151,20 @@ async function main() {
 
     if (q.format === 'csv') {
       const esc = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`
-      const header = 'createdAt,type,nickname,page,appVersion,message'
+      const header = 'createdAt,type,nickname,page,appVersion,device,androidSdk,screen,message'
       const body = rows
         .map((r) =>
-          [r.createdAt.toISOString(), r.type, r.nickname, r.page, r.appVersion, r.message]
+          [
+            r.createdAt.toISOString(),
+            r.type,
+            r.nickname,
+            r.page,
+            r.appVersion,
+            r.device,
+            r.androidSdk,
+            r.screen,
+            r.message,
+          ]
             .map(esc)
             .join(','),
         )
@@ -198,6 +214,15 @@ function renderPage(rows: any[], activeType: string | undefined, key: string): s
         r.page || '—',
       )} · v${esc(r.appVersion || '?')} · ${new Date(r.createdAt).toLocaleString('ru-RU')}</span>
       </div>
+      ${
+        r.device || r.screen || r.androidSdk
+          ? `<div style="color:#6b6580;font-size:11px;margin-bottom:6px">📱 ${esc(
+              r.device || '?',
+            )}${r.androidSdk ? ` · Android API ${esc(r.androidSdk)}` : ''}${
+              r.screen ? ` · ${esc(r.screen)}` : ''
+            }</div>`
+          : ''
+      }
       <div style="display:flex;gap:12px;align-items:flex-start">
         ${shot(r)}
         <div style="color:#eee;font-size:15px;line-height:1.4;white-space:pre-wrap;flex:1">${esc(r.message)}</div>

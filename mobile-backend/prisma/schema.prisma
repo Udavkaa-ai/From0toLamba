@@ -20,6 +20,9 @@ model Feedback {
   message    String
   appVersion String?
   platform   String   @default("android")
+  device     String?  // производитель + модель, напр. «Samsung SM-G991B»
+  androidSdk Int?     // уровень API Android (Build.VERSION.SDK_INT)
+  screen     String?  // разрешение экрана, напр. «1080×2340 @2.75x»
   screenshot String?  // JPEG в base64 (без data-url), null — без картинки
   createdAt  DateTime @default(now())
 

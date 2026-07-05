@@ -66,10 +66,10 @@ class FeedbackViewModel @Inject constructor(
     private val _errorReason = MutableStateFlow<String?>(null)
     val errorReason = _errorReason.asStateFlow()
 
-    fun send(type: FeedbackType, message: String, page: String?, screenshotBase64: String?) {
+    fun send(type: FeedbackType, message: String, page: String?, screen: String?, screenshotBase64: String?) {
         viewModelScope.launch {
             _state.value = FeedbackSendState.SENDING
-            val result = sendFeedbackUseCase(type, message, page, screenshotBase64)
+            val result = sendFeedbackUseCase(type, message, page, screen, screenshotBase64)
             if (result.isSuccess) {
                 _state.value = FeedbackSendState.OK
             } else {
@@ -104,6 +104,13 @@ fun FeedbackReporter(
     // на нём видно ровно то, о чём пишет тестер.
     var shot by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
     val activity = androidx.activity.compose.LocalActivity.current
+
+    // Разрешение экрана: «1080×2340 @2.75x» — чтобы отличать баги вёрстки
+    // на мелких/крупных экранах. Считаем один раз из displayMetrics.
+    val screenInfo = run {
+        val m = androidx.compose.ui.platform.LocalContext.current.resources.displayMetrics
+        "${m.widthPixels}×${m.heightPixels} @${m.density}x"
+    }
 
     // Компактный «язычок» — слева, ниже топ-бара (там кнопок нет).
     // Скруглены правые углы: язычок «выезжает» из левого края.
@@ -147,7 +154,7 @@ fun FeedbackReporter(
             errorReason = errorReason,
             onSend = { type, msg, attachShot ->
                 val b64 = if (attachShot) shot?.toBase64Jpeg() else null
-                viewModel.send(type, msg, page, b64)
+                viewModel.send(type, msg, page, screenInfo, b64)
             },
             onClose = {
                 open = false

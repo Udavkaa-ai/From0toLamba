@@ -39,6 +39,12 @@ data class FeedbackRequest(
     val message: String,
     val appVersion: String?,
     val platform: String = "android",
+    /** Устройство: «Samsung SM-G991B» (производитель + модель). */
+    val device: String? = null,
+    /** Версия Android как уровень API (Build.VERSION.SDK_INT), напр. 34. */
+    val androidSdk: Int? = null,
+    /** Экран: «1080×2340 @2.75x» (пиксели + плотность). */
+    val screen: String? = null,
     /** Скриншот момента: JPEG в base64 (без data-url). null — без картинки. */
     val screenshot: String? = null
 )

@@ -14,6 +14,21 @@ if (localPropertiesFile.exists()) {
     localProperties.load(localPropertiesFile.inputStream())
 }
 
+// Короткий git-хэш текущего коммита — чтобы у каждой тестовой сборки была
+// прослеживаемая версия и баг можно было привязать к конкретному билду.
+// Если git недоступен (архив без .git) — молча остаёмся без суффикса.
+val gitShortSha: String = try {
+    val process = ProcessBuilder("git", "rev-parse", "--short", "HEAD")
+        .directory(rootProject.projectDir)
+        .redirectErrorStream(true)
+        .start()
+    val out = process.inputStream.bufferedReader().readText().trim()
+    process.waitFor()
+    if (process.exitValue() == 0 && out.isNotEmpty()) out else ""
+} catch (_: Exception) {
+    ""
+}
+
 android {
     namespace = "com.s0dolamby.game"
     compileSdk = 35
@@ -64,7 +79,9 @@ android {
             // без суффикса Android не даёт обновить (конфликт подписей).
             // С суффиксом debug-сборка ставится рядом как отдельное приложение.
             applicationIdSuffix = ".debug"
-            versionNameSuffix = "-debug"
+            // К версии добавляем git-хэш билда: «0.1.0-debug+a1b2c3d».
+            // Так тестер видит на экране «О игре»/в фидбеке точный коммит.
+            versionNameSuffix = "-debug" + (if (gitShortSha.isNotEmpty()) "+$gitShortSha" else "")
             resValue("string", "app_name_override", "Из грязи в князи (debug)")
             manifestPlaceholders["appLabel"] = "@string/app_name_override"
             signingConfig = signingConfigs.getByName("debug")

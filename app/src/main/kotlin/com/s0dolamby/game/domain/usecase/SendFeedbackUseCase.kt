@@ -1,5 +1,6 @@
 package com.s0dolamby.game.domain.usecase
 
+import android.os.Build
 import com.s0dolamby.game.BuildConfig
 import com.s0dolamby.game.data.ai.FeedbackRequest
 import com.s0dolamby.game.data.ai.OpenRouterApiService
@@ -23,6 +24,8 @@ class SendFeedbackUseCase @Inject constructor(
         type: FeedbackType,
         message: String,
         page: String?,
+        /** Экран: «1080×2340 @2.75x». Собирается на UI-слое (нужен Configuration). */
+        screen: String? = null,
         screenshotBase64: String? = null
     ): Result<Unit> = runCatching {
         val text = message.trim()
@@ -36,6 +39,9 @@ class SendFeedbackUseCase @Inject constructor(
                 page = page,
                 message = text.take(2000),
                 appVersion = BuildConfig.VERSION_NAME,
+                device = "${Build.MANUFACTURER} ${Build.MODEL}".trim(),
+                androidSdk = Build.VERSION.SDK_INT,
+                screen = screen,
                 screenshot = screenshotBase64
             )
         )
