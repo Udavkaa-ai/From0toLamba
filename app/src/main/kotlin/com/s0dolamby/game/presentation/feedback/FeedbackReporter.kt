@@ -114,10 +114,18 @@ fun FeedbackReporter(
             .background(Color(0xE01A0E2E))
             .border(1.dp, FairyGold.copy(alpha = 0.45f), RoundedCornerShape(topEnd = 12.dp, bottomEnd = 12.dp))
             .clickable {
-                // Снимаем экран ДО показа попапа (иначе на скрине будет сам попап)
+                // Снимаем экран и открываем попап ТОЛЬКО в колбэке захвата —
+                // иначе PixelCopy успевает снять уже сам попап поверх игры.
+                // Для мини-игр на время это и даёт «заморозку» момента.
                 shot = null
-                activity?.let { captureWindow(it) { bmp -> shot = bmp } }
-                open = true
+                if (activity != null) {
+                    captureWindow(activity) { bmp ->
+                        shot = bmp
+                        open = true
+                    }
+                } else {
+                    open = true
+                }
             }
             .padding(horizontal = 12.dp, vertical = 7.dp)
     ) {
