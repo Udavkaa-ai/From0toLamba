@@ -31,7 +31,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -104,7 +103,7 @@ fun FeedbackReporter(
     // Кадр экрана, снятый в момент тапа по язычку (до открытия попапа) —
     // на нём видно ровно то, о чём пишет тестер.
     var shot by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
-    val activity = LocalContext.current as? android.app.Activity
+    val activity = androidx.activity.compose.LocalActivity.current
 
     // Компактный «язычок» — слева, ниже топ-бара (там кнопок нет).
     // Скруглены правые углы: язычок «выезжает» из левого края.
