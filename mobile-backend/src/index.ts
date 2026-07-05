@@ -55,6 +55,8 @@ const feedbackSchema = z.object({
   message: z.string().min(1).max(2000),
   appVersion: z.string().max(40).nullish(),
   platform: z.string().max(20).default('android'),
+  // base64 JPEG скриншота, до ~3 МБ на всякий случай
+  screenshot: z.string().max(3_000_000).nullish(),
 })
 
 function checkKey(got: unknown): boolean {
@@ -64,7 +66,8 @@ function checkKey(got: unknown): boolean {
 }
 
 async function main() {
-  const app = Fastify({ logger: { level: 'info' } })
+  // bodyLimit поднят: заметка со скриншотом (base64 JPEG) больше дефолтного 1 МБ
+  const app = Fastify({ logger: { level: 'info' }, bodyLimit: 8 * 1024 * 1024 })
 
   await app.register(cors, {
     origin: true,
@@ -119,6 +122,7 @@ async function main() {
         message: f.message,
         appVersion: f.appVersion ?? null,
         platform: f.platform,
+        screenshot: f.screenshot ?? null,
       },
     })
     return { ok: true }
@@ -178,6 +182,12 @@ function renderPage(rows: any[], activeType: string | undefined, key: string): s
       active ? 'background:#ffb800;color:#1a0a00' : 'background:#241a3a;color:#ffb800'
     }">${txt}</a>`
   }
+  const shot = (r: any) =>
+    r.screenshot
+      ? `<a href="data:image/jpeg;base64,${r.screenshot}" target="_blank" style="flex-shrink:0">
+           <img src="data:image/jpeg;base64,${r.screenshot}" style="width:64px;height:auto;border-radius:8px;border:1px solid #3a2a5a" />
+         </a>`
+      : ''
   const items = rows
     .map(
       (r) => `
@@ -188,7 +198,10 @@ function renderPage(rows: any[], activeType: string | undefined, key: string): s
         r.page || '—',
       )} · v${esc(r.appVersion || '?')} · ${new Date(r.createdAt).toLocaleString('ru-RU')}</span>
       </div>
-      <div style="color:#eee;font-size:15px;line-height:1.4;white-space:pre-wrap">${esc(r.message)}</div>
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        ${shot(r)}
+        <div style="color:#eee;font-size:15px;line-height:1.4;white-space:pre-wrap;flex:1">${esc(r.message)}</div>
+      </div>
     </div>`,
     )
     .join('')

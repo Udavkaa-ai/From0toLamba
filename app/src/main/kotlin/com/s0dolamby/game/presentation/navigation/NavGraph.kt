@@ -367,7 +367,10 @@ fun NavGraph() {
         if (currentRoute != null && currentRoute != Screen.Onboarding.route) {
             com.s0dolamby.game.presentation.feedback.FeedbackReporter(
                 page = currentRoute,
-                modifier = Modifier.align(Alignment.CenterEnd)
+                // Слева, ниже топ-бара — там нет игровых кнопок
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(top = 110.dp)
             )
         }
 

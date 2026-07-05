@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -29,6 +30,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -64,10 +67,10 @@ class FeedbackViewModel @Inject constructor(
     private val _errorReason = MutableStateFlow<String?>(null)
     val errorReason = _errorReason.asStateFlow()
 
-    fun send(type: FeedbackType, message: String, page: String?) {
+    fun send(type: FeedbackType, message: String, page: String?, screenshotBase64: String?) {
         viewModelScope.launch {
             _state.value = FeedbackSendState.SENDING
-            val result = sendFeedbackUseCase(type, message, page)
+            val result = sendFeedbackUseCase(type, message, page, screenshotBase64)
             if (result.isSuccess) {
                 _state.value = FeedbackSendState.OK
             } else {
@@ -98,14 +101,24 @@ fun FeedbackReporter(
     viewModel: FeedbackViewModel = hiltViewModel()
 ) {
     var open by remember { mutableStateOf(false) }
+    // Кадр экрана, снятый в момент тапа по язычку (до открытия попапа) —
+    // на нём видно ровно то, о чём пишет тестер.
+    var shot by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
+    val activity = LocalContext.current as? android.app.Activity
 
-    // Компактный «язычок» в углу
+    // Компактный «язычок» — слева, ниже топ-бара (там кнопок нет).
+    // Скруглены правые углы: язычок «выезжает» из левого края.
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp))
+            .clip(RoundedCornerShape(topEnd = 12.dp, bottomEnd = 12.dp))
             .background(Color(0xE01A0E2E))
-            .border(1.dp, FairyGold.copy(alpha = 0.45f), RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp))
-            .clickable { open = true }
+            .border(1.dp, FairyGold.copy(alpha = 0.45f), RoundedCornerShape(topEnd = 12.dp, bottomEnd = 12.dp))
+            .clickable {
+                // Снимаем экран ДО показа попапа (иначе на скрине будет сам попап)
+                shot = null
+                activity?.let { captureWindow(it) { bmp -> shot = bmp } }
+                open = true
+            }
             .padding(horizontal = 12.dp, vertical = 7.dp)
     ) {
         Text(Strings.t("feedback.tab"), color = FairyGold, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
@@ -116,11 +129,16 @@ fun FeedbackReporter(
         val errorReason by viewModel.errorReason.collectAsState()
         FeedbackDialog(
             page = page,
+            screenshot = shot,
             sendState = sendState,
             errorReason = errorReason,
-            onSend = { type, msg -> viewModel.send(type, msg, page) },
+            onSend = { type, msg, attachShot ->
+                val b64 = if (attachShot) shot?.toBase64Jpeg() else null
+                viewModel.send(type, msg, page, b64)
+            },
             onClose = {
                 open = false
+                shot = null
                 viewModel.reset()
             }
         )
@@ -130,13 +148,15 @@ fun FeedbackReporter(
 @Composable
 private fun FeedbackDialog(
     page: String?,
+    screenshot: android.graphics.Bitmap?,
     sendState: FeedbackSendState,
     errorReason: String?,
-    onSend: (FeedbackType, String) -> Unit,
+    onSend: (FeedbackType, String, Boolean) -> Unit,
     onClose: () -> Unit
 ) {
     var type by remember { mutableStateOf(FeedbackType.BUG) }
     var text by remember { mutableStateOf("") }
+    var attachShot by remember { mutableStateOf(true) }
 
     Box(
         modifier = Modifier
@@ -201,10 +221,50 @@ private fun FeedbackDialog(
                     placeholder = { Text(Strings.t("feedback.placeholder")) },
                     colors = fairyOnCardTextFieldColors()
                 )
+
+                // Скриншот момента: миниатюра + галочка «приложить»
+                if (screenshot != null) {
+                    Spacer(Modifier.height(10.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { attachShot = !attachShot }
+                    ) {
+                        androidx.compose.foundation.Image(
+                            bitmap = screenshot.asImageBitmap(),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(width = 44.dp, height = 78.dp)
+                                .clip(RoundedCornerShape(6.dp))
+                                .then(
+                                    if (attachShot) Modifier.border(
+                                        2.dp, LocalAccentOnCard.current, RoundedCornerShape(6.dp)
+                                    ) else Modifier
+                                ),
+                            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                            alpha = if (attachShot) 1f else 0.4f
+                        )
+                        Text(
+                            Strings.t(if (attachShot) "feedback.shot.on" else "feedback.shot.off"),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (attachShot) LocalAccentOnCard.current else LocalContentColorMuted.current,
+                            modifier = Modifier.weight(1f)
+                        )
+                        androidx.compose.material3.Checkbox(
+                            checked = attachShot,
+                            onCheckedChange = { attachShot = it },
+                            colors = androidx.compose.material3.CheckboxDefaults.colors(
+                                checkedColor = LocalAccentOnCard.current
+                            )
+                        )
+                    }
+                }
                 Spacer(Modifier.height(10.dp))
 
                 Button(
-                    onClick = { onSend(type, text) },
+                    onClick = { onSend(type, text, attachShot && screenshot != null) },
                     enabled = text.trim().length >= 3 && sendState != FeedbackSendState.SENDING,
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(

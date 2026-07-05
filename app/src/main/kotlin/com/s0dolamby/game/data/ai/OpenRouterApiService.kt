@@ -38,7 +38,9 @@ data class FeedbackRequest(
     val page: String?,
     val message: String,
     val appVersion: String?,
-    val platform: String = "android"
+    val platform: String = "android",
+    /** Скриншот момента: JPEG в base64 (без data-url). null — без картинки. */
+    val screenshot: String? = null
 )
 
 data class ChatRequest(

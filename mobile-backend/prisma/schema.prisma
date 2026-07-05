@@ -20,6 +20,7 @@ model Feedback {
   message    String
   appVersion String?
   platform   String   @default("android")
+  screenshot String?  // JPEG в base64 (без data-url), null — без картинки
   createdAt  DateTime @default(now())
 
   @@index([type])

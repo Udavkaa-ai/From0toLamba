@@ -357,6 +357,8 @@ object Strings {
         "feedback.sending" to "Отправляется…",
         "feedback.ok" to "✓ Спасибо! Улетело.",
         "feedback.err" to "✗ Не отправилось — проверь интернет.",
+        "feedback.shot.on" to "📸 Скриншот приложен",
+        "feedback.shot.off" to "Скриншот не приложен",
         "today.week.shareText" to "🏪 Ярмарка недели %d в «Из грязи в князи»\n💰 Казна за неделю: %s\n🔮 Чуйка: %d из %d\n🏆 Чин: %s\n\nГрамоты недели у всех одинаковые — а итог у каждого свой. Сможешь лучше?",
 
         // Финал мини-игры (общая плашка MinigameShell.ResultOverlay)
@@ -1122,6 +1124,8 @@ object Strings {
         "feedback.sending" to "Sending…",
         "feedback.ok" to "✓ Thanks! Sent.",
         "feedback.err" to "✗ Couldn't send — check your connection.",
+        "feedback.shot.on" to "📸 Screenshot attached",
+        "feedback.shot.off" to "Screenshot not attached",
         "today.week.shareText" to "🏪 Week %d fair in \"Rags to Riches\"\n💰 Treasury this week: %s\n🔮 Gut feeling: %d of %d\n🏆 Rank: %s\n\nEveryone gets the same charters — the outcome is yours alone. Can you do better?",
 
         // Minigame result overlay (shared MinigameShell)

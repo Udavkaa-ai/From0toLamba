@@ -22,7 +22,8 @@ class SendFeedbackUseCase @Inject constructor(
     suspend operator fun invoke(
         type: FeedbackType,
         message: String,
-        page: String?
+        page: String?,
+        screenshotBase64: String? = null
     ): Result<Unit> = runCatching {
         val text = message.trim()
         require(text.length >= 3) { "Слишком коротко — напиши хоть пару слов" }
@@ -34,9 +35,10 @@ class SendFeedbackUseCase @Inject constructor(
                 type = type.name,
                 page = page,
                 message = text.take(2000),
-                appVersion = BuildConfig.VERSION_NAME
+                appVersion = BuildConfig.VERSION_NAME,
+                screenshot = screenshotBase64
             )
         )
-        AppLogger.i("Feedback", "sent type=$type page=$page ok=${ack.ok}")
+        AppLogger.i("Feedback", "sent type=$type page=$page shot=${screenshotBase64 != null} ok=${ack.ok}")
     }.onFailure { AppLogger.e("Feedback", "send failed", it) }
 }
