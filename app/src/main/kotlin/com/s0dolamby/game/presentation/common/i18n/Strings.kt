@@ -324,6 +324,22 @@ object Strings {
         "science.entry.title" to "Наука старца",
         "science.entry.sub" to "Приёмы мошенников: усвоено %d из %d",
 
+        // Тренировочный зал — обучающие мини-игры
+        "training.title" to "Тренировочный зал",
+        "training.subtitle" to "Испытания дельцов без ставок. Выбери любое, прочитай правила и потренируйся — на прогресс не влияет.",
+        "training.entry.title" to "Тренировочный зал",
+        "training.entry.sub" to "Разобраться в мини-играх дельцов без риска",
+        "training.goal" to "Цель: %s",
+        "training.timeLimit" to "⏳ на всё — %d сек",
+        "training.start" to "Начать испытание",
+
+        // Обязательное прозвище
+        "nick.require.title" to "Как звать тебя, купец?",
+        "nick.require.body" to "Без прозвища на ярмарку не пускают. Придумай имя — под ним тебя запомнят дельцы и соперники.",
+        "nick.require.placeholder" to "Твоё прозвище",
+        "nick.require.hint" to "От 2 до 20 знаков. Потом можно сменить в настройках.",
+        "nick.require.save" to "Так и запишем",
+
         // «Ярмарка недели» — соревновательное окно
         "today.week.title" to "Ярмарка недели %d",
         "today.week.daysLeft" to "до закрытия рядов: %d дн. · грамоты недели у всех купцов одинаковые",
@@ -1090,6 +1106,22 @@ object Strings {
         "science.unlocked.tapHint" to "Tap to continue · the scroll lives in Feats",
         "science.entry.title" to "Elder's Science",
         "science.entry.sub" to "Scam techniques: %d of %d learned",
+
+        // Training hall — practice minigames
+        "training.title" to "Training Hall",
+        "training.subtitle" to "Dealers' trials with no stakes. Pick any one, read the rules and practise — it won't affect your progress.",
+        "training.entry.title" to "Training Hall",
+        "training.entry.sub" to "Learn the dealers' minigames risk-free",
+        "training.goal" to "Goal: %s",
+        "training.timeLimit" to "⏳ total time — %d sec",
+        "training.start" to "Start the trial",
+
+        // Mandatory nickname
+        "nick.require.title" to "What's your name, merchant?",
+        "nick.require.body" to "No entry to the fair without a name. Pick one — dealers and rivals will know you by it.",
+        "nick.require.placeholder" to "Your nickname",
+        "nick.require.hint" to "2 to 20 characters. You can change it later in settings.",
+        "nick.require.save" to "So be it",
 
         // Weekly Fair — competitive window
         "today.week.title" to "Fair of week %d",

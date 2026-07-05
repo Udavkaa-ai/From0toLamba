@@ -81,6 +81,11 @@ sealed class Screen(val route: String) {
     object Leaderboard : Screen("leaderboard")
     object Today : Screen("today")
     object Relationships : Screen("relationships")
+    /** Тренировочный зал — список мини-игр с объяснением механики. */
+    object Training : Screen("training")
+    object TrainingGame : Screen("training/{archetype}") {
+        fun createRoute(archetype: String) = "training/$archetype"
+    }
 }
 
 @HiltViewModel
@@ -139,7 +144,8 @@ fun NavGraph() {
         Screen.ZolushkaCoins.route,
         Screen.BabaYagaCauldron.route,
         Screen.BoyarinCharter.route,
-        Screen.IvanDurakMap.route
+        Screen.IvanDurakMap.route,
+        Screen.TrainingGame.route
     )
     val showGlobalFab = currentRoute != null && currentRoute !in hideFabRoutes
 
@@ -245,7 +251,8 @@ fun NavGraph() {
             StatsScreen(
                 onBack = { navController.popBackStack() },
                 onRegistryClick = { navController.navigate(Screen.PersonaRegistry.route) },
-                onScienceClick = { navController.navigate(Screen.Science.route) }
+                onScienceClick = { navController.navigate(Screen.Science.route) },
+                onTrainingClick = { navController.navigate(Screen.Training.route) }
             )
         }
         composable(Screen.PersonaRegistry.route) {
@@ -333,6 +340,26 @@ fun NavGraph() {
         }
         composable(Screen.Relationships.route) {
             RelationshipsScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.Training.route) {
+            com.s0dolamby.game.presentation.training.TrainingHallScreen(
+                onBack = { navController.popBackStack() },
+                onPlay = { archetype ->
+                    navController.navigate(Screen.TrainingGame.createRoute(archetype.name))
+                }
+            )
+        }
+        composable(
+            route = Screen.TrainingGame.route,
+            arguments = listOf(navArgument("archetype") { type = NavType.StringType })
+        ) { entry ->
+            val archetypeStr = entry.arguments?.getString("archetype").orEmpty()
+            val archetype = runCatching { PersonaArchetype.valueOf(archetypeStr) }
+                .getOrElse { PersonaArchetype.KOLOBOK }
+            com.s0dolamby.game.presentation.training.TrainingMinigameScreen(
+                archetype = archetype,
+                onBack = { navController.popBackStack() }
+            )
         }
     } // NavHost end
 
@@ -513,6 +540,11 @@ fun NavGraph() {
         // Ярмарочная сцена на время advance-day через глобальную кнопку
         // (на главной свой оверлей — HomeScreen). Маскирует генерацию дел.
         DayTransitionOverlay(visible = dayAdvancing)
+
+        // Обязательное прозвище — поверх всего. Появляется, когда онбординг
+        // пройден, а ник не задан (старые игроки без ника + новички). Пока
+        // ник не введён, экран заблокирован.
+        com.s0dolamby.game.presentation.onboarding.RequireNicknameOverlay()
     } // outer Box end
 }
 
@@ -533,6 +565,8 @@ private fun friendlyPageName(route: String?): String = when (route) {
     Screen.Settings.route -> "Настройки"
     Screen.Relationships.route -> "Отношения с дельцами"
     Screen.Leaderboard.route -> "Ярмарка недели"
+    Screen.Training.route -> "Тренировочный зал"
+    Screen.TrainingGame.route -> "Тренировка мини-игры"
     Screen.Ama.route -> "Беседа с дельцом"
     Screen.ProjectDetail.route -> "Дело (детали)"
     Screen.MinigameGate.route -> "Вход в дело (мини-игра)"

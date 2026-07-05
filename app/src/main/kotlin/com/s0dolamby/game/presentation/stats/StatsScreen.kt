@@ -98,6 +98,7 @@ fun StatsScreen(
     onBack: () -> Unit,
     onRegistryClick: () -> Unit = {},
     onScienceClick: () -> Unit = {},
+    onTrainingClick: () -> Unit = {},
     viewModel: StatsViewModel = hiltViewModel()
 ) {
     val state by viewModel.gameState.collectAsState()
@@ -146,6 +147,7 @@ fun StatsScreen(
                     onClick = onScienceClick
                 )
             }
+            item { TrainingEntryCard(onClick = onTrainingClick) }
             item { OrnamentDivider() }
             item { BalanceChartCard(state = state) }
             item { FinancialStats(state = state) }
@@ -471,6 +473,35 @@ private fun ScienceEntryCard(unlockedCount: Int, onClick: () -> Unit) {
                         unlockedCount,
                         com.s0dolamby.game.domain.science.ScienceCatalog.ALL.size
                     ),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = LocalContentColorMuted.current
+                )
+            }
+            Text("›", color = LocalAccentOnCard.current, fontSize = 20.sp)
+        }
+    }
+}
+
+// ─── «Тренировочный зал» — вход в обучающие мини-игры ────────────────────
+
+@Composable
+private fun TrainingEntryCard(onClick: () -> Unit) {
+    FairyCard(modifier = Modifier.fillMaxWidth().clickable { onClick() }) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            WobblyEmoji("🎯", fontSize = 26.sp, amplitudeDeg = 5f, periodMs = 2400)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    Strings.t("training.entry.title"),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = LocalAccentOnCard.current
+                )
+                Text(
+                    Strings.t("training.entry.sub"),
                     style = MaterialTheme.typography.labelSmall,
                     color = LocalContentColorMuted.current
                 )
