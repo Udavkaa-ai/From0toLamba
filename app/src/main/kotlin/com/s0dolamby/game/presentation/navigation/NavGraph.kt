@@ -366,7 +366,9 @@ fun NavGraph() {
         // Тестовая фича — на релизе можно спрятать за флагом.
         if (currentRoute != null && currentRoute != Screen.Onboarding.route) {
             com.s0dolamby.game.presentation.feedback.FeedbackReporter(
-                page = currentRoute,
+                // Человекочитаемое имя экрана вместо сырого роут-шаблона
+                // с плейсхолдерами (minigame-gate/{archetype}/{projectId})
+                page = friendlyPageName(currentRoute),
                 // Слева, ниже топ-бара — там нет игровых кнопок
                 modifier = Modifier
                     .align(Alignment.TopStart)
@@ -512,4 +514,34 @@ fun NavGraph() {
         // (на главной свой оверлей — HomeScreen). Маскирует генерацию дел.
         DayTransitionOverlay(visible = dayAdvancing)
     } // outer Box end
+}
+
+/**
+ * Роут → человекочитаемое имя экрана для заметок тестеров. Compose
+ * отдаёт шаблон навигации с плейсхолдерами ({archetype}/{projectId}) —
+ * в фидбеке они бесполезны, показываем осмысленное название.
+ */
+private fun friendlyPageName(route: String?): String = when (route) {
+    Screen.Home.route -> "Главная"
+    Screen.Inbox.route -> "Входящие грамоты"
+    Screen.Portfolio.route -> "Казна"
+    Screen.Stats.route -> "Успехи"
+    Screen.Today.route -> "Сегодня"
+    Screen.News.route -> "Вести с ярмарки"
+    Screen.PersonaRegistry.route -> "Летопись"
+    Screen.Science.route -> "Наука старца"
+    Screen.Settings.route -> "Настройки"
+    Screen.Relationships.route -> "Отношения с дельцами"
+    Screen.Leaderboard.route -> "Ярмарка недели"
+    Screen.Ama.route -> "Беседа с дельцом"
+    Screen.ProjectDetail.route -> "Дело (детали)"
+    Screen.MinigameGate.route -> "Вход в дело (мини-игра)"
+    Screen.GoldenKey.route -> "Мини-игра: Золотой ключик"
+    Screen.KoscheiMemory.route -> "Мини-игра: Цепь Кощея"
+    Screen.KolobokNora.route -> "Мини-игра: Нора Колобка"
+    Screen.ZolushkaCoins.route -> "Мини-игра: Зёрна Золушки"
+    Screen.BabaYagaCauldron.route -> "Мини-игра: Котёл Яги"
+    Screen.BoyarinCharter.route -> "Мини-игра: Печати Боярина"
+    Screen.IvanDurakMap.route -> "Мини-игра: Карта Ивана"
+    else -> route ?: "—"
 }
