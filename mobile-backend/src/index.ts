@@ -73,6 +73,21 @@ const standingSchema = z.object({
   platform: z.string().max(20).default('android'),
 })
 
+const chatPostSchema = z.object({
+  playerId: z.string().min(8).max(64),
+  nickname: z.string().min(1).max(40),
+  text: z.string().min(1).max(500),
+  replyToId: z.number().int().positive().nullish(),
+})
+
+const chatActionSchema = z.object({
+  playerId: z.string().min(8).max(64),
+  messageId: z.number().int().positive(),
+})
+
+// При скольких жалобах сообщение автоматически прячется до разбора.
+const REPORT_HIDE_THRESHOLD = 3
+
 function checkKey(got: unknown): boolean {
   const expected = process.env.MOBILE_APP_KEY
   if (!expected) return true // ключ не задан — открыто (удобно для локалки)
@@ -204,6 +219,105 @@ async function main() {
     }
   })
 
+  // ── Общий игровой чат ──────────────────────────────────────────────
+  // Отправить сообщение.
+  app.post('/api/mobile/chat-room', async (request, reply) => {
+    if (!checkKey(request.headers['x-app-key'])) {
+      return reply.status(401).send({ error: 'Invalid app key' })
+    }
+    const parsed = chatPostSchema.safeParse(request.body)
+    if (!parsed.success) {
+      return reply.status(400).send({ error: 'Bad request', details: parsed.error.issues })
+    }
+    const m = parsed.data
+    const created = await prisma.chatMessage.create({
+      data: {
+        playerId: m.playerId,
+        nickname: m.nickname,
+        text: m.text.trim(),
+        replyToId: m.replyToId ?? null,
+      },
+    })
+    return { ok: true, id: created.id }
+  })
+
+  // Лента: свежие сообщения (не удалённые/не скрытые). afterId — только новее.
+  app.get('/api/mobile/chat-room', async (request, reply) => {
+    if (!checkKey(request.headers['x-app-key'])) {
+      return reply.status(401).send({ error: 'Invalid app key' })
+    }
+    const q = request.query as { limit?: string; afterId?: string }
+    const limit = Math.min(Math.max(Number(q.limit) || 100, 1), 200)
+    const afterId = Number(q.afterId) || 0
+    const rows = await prisma.chatMessage.findMany({
+      where: {
+        deleted: false,
+        hidden: false,
+        ...(afterId > 0 ? { id: { gt: afterId } } : {}),
+      },
+      orderBy: { id: 'desc' },
+      take: limit,
+    })
+    // Подтягиваем превью цитируемых сообщений одним запросом.
+    const replyIds = Array.from(
+      new Set(rows.map((r) => r.replyToId).filter((x): x is number => !!x)),
+    )
+    const replies = replyIds.length
+      ? await prisma.chatMessage.findMany({ where: { id: { in: replyIds } } })
+      : []
+    const replyMap = new Map(replies.map((r) => [r.id, r]))
+    const messages = rows
+      .slice()
+      .reverse()
+      .map((r) => {
+        const rep = r.replyToId ? replyMap.get(r.replyToId) : null
+        return {
+          id: r.id,
+          playerId: r.playerId,
+          nickname: r.nickname,
+          text: r.text,
+          createdAt: r.createdAt.toISOString(),
+          replyToId: r.replyToId,
+          replyToNick: rep && !rep.deleted ? rep.nickname : null,
+          replyToText: rep && !rep.deleted ? rep.text.slice(0, 120) : null,
+        }
+      })
+    return { messages }
+  })
+
+  // Удалить своё сообщение (только автор).
+  app.post('/api/mobile/chat-room/delete', async (request, reply) => {
+    if (!checkKey(request.headers['x-app-key'])) {
+      return reply.status(401).send({ error: 'Invalid app key' })
+    }
+    const parsed = chatActionSchema.safeParse(request.body)
+    if (!parsed.success) return reply.status(400).send({ error: 'Bad request' })
+    const { playerId, messageId } = parsed.data
+    const msg = await prisma.chatMessage.findUnique({ where: { id: messageId } })
+    if (!msg || msg.playerId !== playerId) {
+      return reply.status(403).send({ error: 'Not your message' })
+    }
+    await prisma.chatMessage.update({ where: { id: messageId }, data: { deleted: true } })
+    return { ok: true }
+  })
+
+  // Пожаловаться на сообщение. Порог жалоб → авто-скрытие до разбора.
+  app.post('/api/mobile/chat-room/report', async (request, reply) => {
+    if (!checkKey(request.headers['x-app-key'])) {
+      return reply.status(401).send({ error: 'Invalid app key' })
+    }
+    const parsed = chatActionSchema.safeParse(request.body)
+    if (!parsed.success) return reply.status(400).send({ error: 'Bad request' })
+    const updated = await prisma.chatMessage.update({
+      where: { id: parsed.data.messageId },
+      data: { reportCount: { increment: 1 } },
+    })
+    if (updated.reportCount >= REPORT_HIDE_THRESHOLD && !updated.hidden) {
+      await prisma.chatMessage.update({ where: { id: updated.id }, data: { hidden: true } })
+    }
+    return { ok: true }
+  })
+
   // Веб-выгрузка. ?key=... (тот же MOBILE_APP_KEY), ?type=BUG, ?format=csv
   app.get('/admin/feedback', async (request, reply) => {
     const q = request.query as { key?: string; type?: string; format?: string }
@@ -286,6 +400,20 @@ async function main() {
     }
 
     return reply.type('text/html; charset=utf-8').send(renderMerchants(rows, q.key ?? ''))
+  })
+
+  // Модерация чата: лента (включая скрытые/зажалованные) + действия
+  // скрыть/показать/удалить через ?hide= / ?show= / ?del= .
+  app.get('/admin/chat', async (request, reply) => {
+    const q = request.query as { key?: string; hide?: string; show?: string; del?: string }
+    if (!checkKey(q.key)) {
+      return reply.status(401).type('text/plain').send('Invalid key')
+    }
+    if (q.hide) await prisma.chatMessage.update({ where: { id: Number(q.hide) }, data: { hidden: true } }).catch(() => {})
+    if (q.show) await prisma.chatMessage.update({ where: { id: Number(q.show) }, data: { hidden: false, reportCount: 0 } }).catch(() => {})
+    if (q.del) await prisma.chatMessage.update({ where: { id: Number(q.del) }, data: { deleted: true } }).catch(() => {})
+    const rows = await prisma.chatMessage.findMany({ orderBy: { createdAt: 'desc' }, take: 500 })
+    return reply.type('text/html; charset=utf-8').send(renderChat(rows, q.key ?? ''))
   })
 
   const port = Number(process.env.PORT ?? 3000)
@@ -420,6 +548,51 @@ function renderMerchants(rows: any[], key: string): string {
     )}&format=csv" style="padding:6px 12px;border-radius:8px;text-decoration:none;background:#241a3a;color:#4caf50;margin-left:auto">⬇ CSV</a>
   </div>
   ${items || '<p style="color:#8c86a0">Пока никто не играл.</p>'}
+</div></body></html>`
+}
+
+function renderChat(rows: any[], key: string): string {
+  const esc = (v: any) =>
+    String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const k = encodeURIComponent(key)
+  const reported = rows.filter((r) => r.reportCount > 0 && !r.deleted).length
+  const items = rows
+    .map((r) => {
+      const dim = r.deleted || r.hidden
+      const badges =
+        (r.hidden ? '<span style="color:#e0a353;font-size:11px">скрыто</span> ' : '') +
+        (r.deleted ? '<span style="color:#e05353;font-size:11px">удалено</span> ' : '') +
+        (r.reportCount > 0 ? `<span style="color:#e05353;font-size:11px">⚑ ${r.reportCount}</span>` : '')
+      const actions = r.deleted
+        ? ''
+        : `${r.hidden
+              ? `<a href="/admin/chat?key=${k}&show=${r.id}" style="color:#4caf50;font-size:12px;margin-right:10px">показать</a>`
+              : `<a href="/admin/chat?key=${k}&hide=${r.id}" style="color:#e0a353;font-size:12px;margin-right:10px">скрыть</a>`
+           }<a href="/admin/chat?key=${k}&del=${r.id}" style="color:#e05353;font-size:12px">удалить</a>`
+      return `
+      <div style="background:#1c142e;border:1px solid ${r.reportCount > 0 && !r.deleted ? '#e0535355' : '#3a2a5a'};border-radius:12px;padding:10px 14px;margin-bottom:8px;opacity:${dim ? 0.5 : 1}">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
+          <span style="color:#ffb800;font-size:14px;font-weight:600">${esc(r.nickname)}</span>
+          <span style="color:#6b6580;font-size:11px">${new Date(r.createdAt).toLocaleString('ru-RU')} · #${r.id} ${badges}</span>
+        </div>
+        <div style="color:#eee;font-size:15px;line-height:1.4;white-space:pre-wrap;margin:4px 0 6px">${esc(r.text)}</div>
+        <div>${actions}</div>
+      </div>`
+    })
+    .join('')
+  return `<!doctype html><html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Модерация чата</title></head>
+<body style="margin:0;background:#0d0a18;color:#eee;font-family:system-ui,sans-serif">
+<div style="max-width:820px;margin:0 auto;padding:20px 16px 60px">
+  <h1 style="color:#ffb800;font-size:22px">🗨️ Чат — модерация <span style="color:#8c86a0;font-size:15px;font-weight:400">(${rows.length}${
+    reported ? `, ⚑ ${reported}` : ''
+  })</span></h1>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 20px">
+    <a href="/admin/merchants?key=${k}" style="padding:6px 12px;border-radius:8px;text-decoration:none;background:#241a3a;color:#ffb800">🏆 Купцы</a>
+    <a href="/admin/feedback?key=${k}" style="padding:6px 12px;border-radius:8px;text-decoration:none;background:#241a3a;color:#ffb800">🐞 Заметки</a>
+  </div>
+  ${items || '<p style="color:#8c86a0">Сообщений пока нет.</p>'}
 </div></body></html>`
 }
 

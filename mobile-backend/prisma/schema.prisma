@@ -29,6 +29,24 @@ model Merchant {
   @@index([updatedAt])
 }
 
+// Общий игровой чат. Постоянный, для всех игроков. Модерация: жалобы
+// копят reportCount, при пороге сообщение авто-скрывается; владелец
+// разбирает на /admin/chat?key=... (скрыть/показать/удалить).
+model ChatMessage {
+  id          Int      @id @default(autoincrement())
+  playerId    String   // стабильный id автора (тот же, что в рейтинге)
+  nickname    String
+  text        String
+  replyToId   Int?     // ответ на другое сообщение
+  deleted     Boolean  @default(false) // мягкое удаление автором/модератором
+  hidden      Boolean  @default(false) // скрыто модерацией/автоскрытием
+  reportCount Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([hidden])
+}
+
 // Заметки тестеров Android-версии.
 // Выгрузка: страница /admin/feedback?key=... или SQL.
 model Feedback {
