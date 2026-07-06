@@ -9,6 +9,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -71,6 +74,9 @@ fun MinigameShell(
     onClose: () -> Unit = onBack,
     /** Зовётся один раз, когда игра впервые переходит в стадию RESULT. */
     onComplete: ((MinigameOutcome) -> Unit)? = null,
+    /** Разбор игры на экране результата: доска с пометками ошибок. Показывается
+     *  в сворачиваемой панели внутри карточки результата; null — без разбора. */
+    review: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val style = ArchetypePalette[archetype]
@@ -203,7 +209,8 @@ fun MinigameShell(
                     style = style,
                     outcome = it,
                     onAgain = onAgain,
-                    onClose = onClose
+                    onClose = onClose,
+                    review = review
                 )
             }
         }
@@ -294,7 +301,8 @@ private fun ResultOverlay(
     style: ArchetypeStyle,
     outcome: MinigameOutcome,
     onAgain: () -> Unit,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    review: (@Composable () -> Unit)? = null
 ) {
     // Sparkle-анимация при идеальной игре
     val infinite = rememberInfiniteTransition(label = "result")
@@ -325,8 +333,11 @@ private fun ResultOverlay(
                 )
             }
         }
+        val maxCardHeight = (LocalConfiguration.current.screenHeightDp * 0.9f).dp
         Column(
             modifier = Modifier
+                .widthIn(max = 360.dp)
+                .heightIn(max = maxCardHeight)
                 .clip(RoundedCornerShape(24.dp))
                 .background(
                     Brush.verticalGradient(
@@ -337,6 +348,7 @@ private fun ResultOverlay(
                     )
                 )
                 .border(1.dp, style.primary.copy(alpha = 0.5f), RoundedCornerShape(24.dp))
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp, vertical = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -395,6 +407,12 @@ private fun ResultOverlay(
                     fontSize = 11.sp,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
+            }
+            // Сворачиваемый разбор игры (доска с пометками ошибок) — если игра
+            // его предоставила. По умолчанию свёрнут, места почти не занимает.
+            review?.let {
+                Spacer(Modifier.height(16.dp))
+                MinigameReviewPanel { it() }
             }
             Spacer(Modifier.height(20.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {

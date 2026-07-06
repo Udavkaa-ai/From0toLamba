@@ -28,6 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.s0dolamby.game.domain.model.PersonaArchetype
 import com.s0dolamby.game.presentation.common.i18n.Strings
+import com.s0dolamby.game.presentation.common.theme.Error
+import com.s0dolamby.game.presentation.common.theme.Success
 import com.s0dolamby.game.presentation.minigame.common.ArchetypePalette
 import com.s0dolamby.game.presentation.minigame.common.MinigameOutcome
 import com.s0dolamby.game.presentation.minigame.common.MinigameShell
@@ -156,7 +158,8 @@ fun KoscheiMemoryScreen(
         onBack = onBack,
         onAgain = { restart() },
         onClose = onBack,
-        onComplete = onComplete
+        onComplete = onComplete,
+        review = { KoscheiReviewGrid(cards) }
     ) {
         if (stage == MinigameStage.PLAY) {
             ScoreLine(pairsFound, attempts)
@@ -166,7 +169,7 @@ fun KoscheiMemoryScreen(
             ChainHint()
         }
         if (stage == MinigameStage.RESULT) {
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(16.dp))
             Text(
                 "Собрано пар: $pairsFound из $PAIR_COUNT",
                 color = Color.White, fontSize = 14.sp
@@ -243,6 +246,42 @@ private fun CardGrid(cards: List<Card>, onTap: (Int) -> Unit, modifier: Modifier
                         Box(modifier = Modifier.width(cardW)) {
                             CardView(card = card, onClick = { onTap(idx) })
                         }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** Разбор: все карты открыты, зелёная рамка — собрал, красная — не успел. */
+@Composable
+private fun KoscheiReviewGrid(cards: List<Card>) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        modifier = Modifier.padding(bottom = 8.dp)
+    ) {
+        Text("🟢 собрал", color = Success, fontSize = 11.sp)
+        Text("🔴 не успел", color = Error, fontSize = 11.sp)
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        for (row in 0 until GRID_ROWS) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                for (col in 0 until GRID_COLS) {
+                    val card = cards[row * GRID_COLS + col]
+                    val ok = card.isMatched
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .aspectRatio(1.25f)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(card.kind.color.copy(alpha = 0.22f))
+                            .border(2.dp, if (ok) Success else Error, RoundedCornerShape(8.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(card.kind.label, color = Color.White, fontSize = 11.sp)
                     }
                 }
             }

@@ -333,6 +333,9 @@ object Strings {
         "training.timeLimit" to "⏳ на всё — %d сек",
         "training.start" to "Начать испытание",
 
+        // Разбор мини-игры (сворачиваемый на экране результата)
+        "minigame.review.title" to "Разбор игры — где ошибся",
+
         // Общий игровой чат
         "chat.title" to "Чат купцов",
         "chat.loading" to "Загружаем беседу…",
@@ -1181,6 +1184,9 @@ object Strings {
         "training.goal" to "Goal: %s",
         "training.timeLimit" to "⏳ total time — %d sec",
         "training.start" to "Start the trial",
+
+        // Minigame review (collapsible on the result screen)
+        "minigame.review.title" to "Game review — your mistakes",
 
         // Game chat
         "chat.title" to "Merchants' chat",
