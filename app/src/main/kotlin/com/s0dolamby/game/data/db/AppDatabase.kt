@@ -40,7 +40,8 @@ import com.s0dolamby.game.data.db.entity.*
     // v25: notificationsEnabled в settings (тумблер напоминаний).
     // v26: playerId в settings (стабильный id для купеческого рейтинга).
     // v27: tourShown в settings (показан ли входной тур по интерфейсу).
-    version = 27,
+    // v28: firstDealTourShown в settings (мини-тур при открытии первого дела).
+    version = 28,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

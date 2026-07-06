@@ -29,5 +29,8 @@ data class SettingsEntity(
     val playerId: String = "",
     // Показан ли входной тур по интерфейсу.
     @androidx.room.ColumnInfo(defaultValue = "0")
-    val tourShown: Boolean = false
+    val tourShown: Boolean = false,
+    // Показан ли мини-тур при открытии первого дела.
+    @androidx.room.ColumnInfo(defaultValue = "0")
+    val firstDealTourShown: Boolean = false
 )

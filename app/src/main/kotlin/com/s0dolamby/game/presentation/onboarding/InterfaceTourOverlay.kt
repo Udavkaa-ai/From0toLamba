@@ -90,6 +90,7 @@ fun InterfaceTourOverlay(viewModel: InterfaceTourViewModel = hiltViewModel()) {
         TourStep("💰", Strings.t("tour.portfolio.title"), Strings.t("tour.portfolio.body"), AppTab.PORTFOLIO),
         TourStep("📊", Strings.t("tour.stats.title"), Strings.t("tour.stats.body"), AppTab.STATS),
         TourStep("🔥", Strings.t("tour.today.title"), Strings.t("tour.today.body"), AppTab.TODAY),
+        TourStep("⚙️", Strings.t("tour.settings.title"), Strings.t("tour.settings.body"), AppTab.HOME),
         TourStep("🌅", Strings.t("tour.outro.title"), Strings.t("tour.outro.body"), null)
     )
 

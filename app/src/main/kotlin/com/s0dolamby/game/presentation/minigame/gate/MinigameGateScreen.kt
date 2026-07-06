@@ -49,13 +49,34 @@ import javax.inject.Inject
 @HiltViewModel
 class MinigameGateViewModel @Inject constructor(
     private val store: MinigameUnlockStore,
-    private val gameStateRepository: GameStateRepository
+    private val gameStateRepository: GameStateRepository,
+    private val settingsRepository: com.s0dolamby.game.domain.repository.SettingsRepository
 ) : ViewModel() {
 
     val archetypeTokens: StateFlow<Map<PersonaArchetype, Int>> =
         gameStateRepository.observeGameState()
             .map { it.archetypeTokens }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
+    /** null — грузим флаг; true — показать мини-тур первого дела; false — уже видели. */
+    private val _firstDealTourPending = MutableStateFlow<Boolean?>(null)
+    val firstDealTourPending: StateFlow<Boolean?> = _firstDealTourPending.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            _firstDealTourPending.value = !settingsRepository.getSettings().firstDealTourShown
+        }
+    }
+
+    fun markFirstDealTourShown() {
+        _firstDealTourPending.value = false
+        viewModelScope.launch {
+            val s = settingsRepository.getSettings()
+            if (!s.firstDealTourShown) {
+                settingsRepository.updateSettings(s.copy(firstDealTourShown = true))
+            }
+        }
+    }
 
     /** Уже сохранённый результат мини-игры этого дела (если игра прошла раньше). */
     fun storedOutcome(projectId: String): MinigameOutcome? = store.outcomeFor(projectId)
@@ -104,6 +125,18 @@ fun MinigameGateScreen(
     onGoToChat: () -> Unit = {},
     viewModel: MinigameGateViewModel = hiltViewModel()
 ) {
+    // Мини-тур первого дела — показываем ПЕРЕД гейтом, чтобы таймер мини-игры
+    // не бежал под ним. Пока флаг грузится (null) — ничего не рисуем.
+    val firstDealTour by viewModel.firstDealTourPending.collectAsState()
+    when (firstDealTour) {
+        null -> return
+        true -> {
+            FirstDealMiniTour(onDone = viewModel::markFirstDealTourShown)
+            return
+        }
+        else -> Unit
+    }
+
     val tokens by viewModel.archetypeTokens.collectAsState()
     val tokenCount = tokens[archetype] ?: 0
     val previousOutcome = viewModel.storedOutcome(projectId)

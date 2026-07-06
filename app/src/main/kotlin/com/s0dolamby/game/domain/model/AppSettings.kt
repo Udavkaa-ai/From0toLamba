@@ -18,7 +18,9 @@ data class AppSettings(
     /** Стабильный id купца для облачного рейтинга (UUID). Пусто = ещё не выдан. */
     val playerId: String = "",
     /** Показан ли входной тур по интерфейсу (спотлайт по вкладкам). */
-    val tourShown: Boolean = false
+    val tourShown: Boolean = false,
+    /** Показан ли мини-тур при открытии первого дела (беседа/враньё/после игры). */
+    val firstDealTourShown: Boolean = false
 )
 
 data class ModelOption(val label: String, val modelId: String)

@@ -57,9 +57,12 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.updateSettings(updated) }
     }
 
-    /** Сбросить флаг тура — при следующем показе Главной тур запустится снова. */
+    /**
+     * Сбросить флаги туров: входной тур запустится снова на Главной, а
+     * мини-тур — при следующем открытии дела.
+     */
     fun replayTour() {
-        val updated = _uiState.value.settings.copy(tourShown = false)
+        val updated = _uiState.value.settings.copy(tourShown = false, firstDealTourShown = false)
         _uiState.value = _uiState.value.copy(settings = updated)
         viewModelScope.launch { settingsRepository.updateSettings(updated) }
     }

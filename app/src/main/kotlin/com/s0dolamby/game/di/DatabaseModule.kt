@@ -109,6 +109,13 @@ private val MIGRATION_26_27 = object : Migration(26, 27) {
     }
 }
 
+/** Аддитивная миграция v27 → v28: флаг показа мини-тура первого дела. */
+private val MIGRATION_27_28 = object : Migration(27, 28) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `settings` ADD COLUMN `firstDealTourShown` INTEGER NOT NULL DEFAULT 0")
+    }
+}
+
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
@@ -120,7 +127,7 @@ object DatabaseModule {
             .addMigrations(
                 MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20,
                 MIGRATION_20_21, MIGRATION_21_22, MIGRATION_22_23, MIGRATION_23_24,
-                MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27
+                MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27, MIGRATION_27_28
             )
             .fallbackToDestructiveMigration()
             .build()

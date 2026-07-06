@@ -357,8 +357,22 @@ object Strings {
         "tour.stats.body" to "Чин и подвиги, «Наука старца» (приёмы мошенников) и «Тренировочный зал» — где можно отработать любую мини-игру без риска.",
         "tour.today.title" to "Сегодня",
         "tour.today.body" to "Ежедневная награда, серия заходов и «Купеческий рейтинг» — таблица всех купцов.",
+        "tour.settings.title" to "Настройки",
+        "tour.settings.body" to "Шестерёнка ⚙️ вверху справа на «Главной». Там: имя купца, язык и тема, звук, музыка и напоминания, ЧАВО, повтор этого тура — и сброс прогресса, если захочешь начать с чистого листа.",
         "tour.outro.title" to "И ещё две кнопки",
         "tour.outro.body" to "Внизу справа — 🌅 «Следующий день»: прокручивает время (доход, крах, вести). Слева сверху — 🐞 «Тестерам»: шли баги и идеи прямо с любого экрана.",
+
+        // Мини-тур первого дела
+        "firstdeal.header" to "ТВОЁ ПЕРВОЕ ДЕЛО",
+        "firstdeal.done" to "Приступить",
+        "firstdeal.game.title" to "Испытание дельца",
+        "firstdeal.game.body" to "Каждый делец сперва проверит тебя мини-игрой. Победа приоткрывает дело — раскрывается его тип (честное или обман), а идеальная игра ещё и покажет посул. Провалишь — второго шанса нет, вкладываться придётся вслепую.",
+        "firstdeal.chat.title" to "Беседа в кабаке",
+        "firstdeal.chat.body" to "После игры дельца можно расспросить — до 10 вопросов. Он знает судьбу своего дела, но виляет и приукрашивает. Каждый заданный вопрос добавляет +1% к твоему первому вложению (до +10%).",
+        "firstdeal.lies.title" to "Как палить враньё",
+        "firstdeal.lies.body" to "Лови противоречия: сулит «гарантию» и золотые горы, путается в цифрах, давит срочностью — почти наверняка обман. Разбор приёмов мошенников копится в «Науке старца» (вкладка «Успехи»).",
+        "firstdeal.after.title" to "Что дальше",
+        "firstdeal.after.body" to "Реши для себя «Верю — не верю» и действуй: вложить сразу, пойти в беседу (и поднять доход вопросами) или пропустить дело. За верную догадку растёт твоя Чуйка.",
 
         // Купеческий рейтинг (облачный)
         "leaderboard.title" to "Купеческий рейтинг",
@@ -1174,8 +1188,22 @@ object Strings {
         "tour.stats.body" to "Rank and feats, the Elder's Science (scam techniques) and the Training Hall — practise any minigame risk-free.",
         "tour.today.title" to "Today",
         "tour.today.body" to "Daily reward, your login streak and the Merchant Ranking — a table of all players.",
+        "tour.settings.title" to "Settings",
+        "tour.settings.body" to "The ⚙️ gear at the top-right of Home. There you'll find: your name, language and theme, sound, music and reminders, the FAQ, replaying this tour — and resetting progress for a fresh start.",
         "tour.outro.title" to "Two more buttons",
         "tour.outro.body" to "Bottom-right — 🌅 \"Next day\": advances time (income, crashes, news). Top-left — 🐞 \"Testers\": send bugs and ideas from any screen.",
+
+        // First-deal mini-tour
+        "firstdeal.header" to "YOUR FIRST DEAL",
+        "firstdeal.done" to "Get started",
+        "firstdeal.game.title" to "The dealer's trial",
+        "firstdeal.game.body" to "Every dealer first tests you with a minigame. A win reveals the deal's type (honest or a scam); a flawless run also shows the promised yield. Fail and there's no second try — you'll invest blind.",
+        "firstdeal.chat.title" to "A tavern chat",
+        "firstdeal.chat.body" to "After the game you can question the dealer — up to 10 questions. He knows his deal's fate but dodges and embellishes. Each question adds +1% to your first investment (up to +10%).",
+        "firstdeal.lies.title" to "Spotting lies",
+        "firstdeal.lies.body" to "Catch the contradictions: promises of \"guarantees\" and riches, muddled numbers, pressure to hurry — almost surely a scam. Scam techniques are collected in the Elder's Science (Achievements tab).",
+        "firstdeal.after.title" to "What's next",
+        "firstdeal.after.body" to "Make your call — trust or scam — and act: invest now, go chat (and raise your yield with questions), or skip the deal. A correct guess grows your Gut rating.",
 
         // Merchant leaderboard (cloud)
         "leaderboard.title" to "Merchant Ranking",
