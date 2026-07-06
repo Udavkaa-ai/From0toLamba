@@ -22,6 +22,8 @@ import com.s0dolamby.game.domain.today.TodayRewards
 import com.s0dolamby.game.R
 import com.s0dolamby.game.presentation.common.components.CoinShowerOverlay
 import com.s0dolamby.game.presentation.common.components.FairyCard
+import com.s0dolamby.game.presentation.onboarding.TourTarget
+import com.s0dolamby.game.presentation.onboarding.tourAnchor
 import com.s0dolamby.game.presentation.common.components.OrnamentDivider
 import com.s0dolamby.game.presentation.common.components.AppBg
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
@@ -113,7 +115,7 @@ fun TodayScreen(
 
                 // Карточка стрика
                 item {
-                    FairyCard(modifier = Modifier.fillMaxWidth()) {
+                    FairyCard(modifier = Modifier.fillMaxWidth().tourAnchor(TourTarget.TODAY_MAIN)) {
                         Column(
                             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,

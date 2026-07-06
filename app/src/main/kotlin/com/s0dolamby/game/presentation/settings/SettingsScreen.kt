@@ -10,6 +10,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.s0dolamby.game.presentation.onboarding.TourTarget
+import com.s0dolamby.game.presentation.onboarding.tourAnchor
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -126,7 +128,7 @@ fun SettingsScreen(
                 // обложки теперь всегда из бандл-стока (assets/banners/).
 
                 // ── Язык и тема ────────────────────────────────────────
-                FairyCard(modifier = Modifier.fillMaxWidth()) {
+                FairyCard(modifier = Modifier.fillMaxWidth().tourAnchor(TourTarget.SETTINGS_PREFS)) {
                     Text(
                         Strings.t("settings.langTheme.title"),
                         style = MaterialTheme.typography.titleMedium,
@@ -325,7 +327,7 @@ fun SettingsScreen(
                 OrnamentDivider()
 
                 // ── Сброс игры ─────────────────────────────────────────
-                FairyCard(modifier = Modifier.fillMaxWidth()) {
+                FairyCard(modifier = Modifier.fillMaxWidth().tourAnchor(TourTarget.SETTINGS_RESET)) {
                     Text(
                         Strings.t("settings.danger.title"),
                         style = MaterialTheme.typography.titleMedium,

@@ -38,6 +38,8 @@ import com.s0dolamby.game.presentation.minigame.koschei.KoscheiMemoryScreen
 import com.s0dolamby.game.presentation.minigame.zolushka.ZolushkaCoinsScreen
 import com.s0dolamby.game.presentation.news.NewsScreen
 import com.s0dolamby.game.presentation.onboarding.OnboardingScreen
+import com.s0dolamby.game.presentation.onboarding.TourTarget
+import com.s0dolamby.game.presentation.onboarding.tourAnchor
 import com.s0dolamby.game.presentation.portfolio.PortfolioScreen
 import com.s0dolamby.game.presentation.portfolio.ProjectDetailScreen
 import com.s0dolamby.game.presentation.registry.PersonaRegistryScreen
@@ -406,6 +408,7 @@ fun NavGraph() {
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(top = 110.dp)
+                    .tourAnchor(TourTarget.FEEDBACK)
             )
         }
 
@@ -553,9 +556,17 @@ fun NavGraph() {
         com.s0dolamby.game.presentation.onboarding.RequireNicknameOverlay()
 
         // Входной тур по интерфейсу — один раз после онбординга и ввода имени.
-        // Показывается только когда ник уже задан, так что с гейтом ника не
-        // пересекается. Повторно запускается из настроек.
-        com.s0dolamby.game.presentation.onboarding.InterfaceTourOverlay()
+        // Сам открывает нужный экран на каждом шаге и подсвечивает блок.
+        // Повторно запускается из настроек.
+        com.s0dolamby.game.presentation.onboarding.InterfaceTourOverlay(
+            onNavigate = { route ->
+                navController.navigate(route) {
+                    popUpTo(Screen.Home.route) { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            }
+        )
     } // outer Box end
 }
 

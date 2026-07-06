@@ -58,6 +58,8 @@ import com.s0dolamby.game.presentation.common.components.ProvideOnCardColors
 import com.s0dolamby.game.presentation.common.components.AppBg
 import com.s0dolamby.game.presentation.common.components.ScreenBackground
 import com.s0dolamby.game.presentation.common.components.WobblyEmoji
+import com.s0dolamby.game.presentation.onboarding.TourTarget
+import com.s0dolamby.game.presentation.onboarding.tourAnchor
 import com.s0dolamby.game.presentation.common.format.formatGroshes
 import com.s0dolamby.game.presentation.common.format.formatGroshesSigned
 import com.s0dolamby.game.presentation.common.i18n.Strings
@@ -139,7 +141,11 @@ fun StatsScreen(
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 90.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item { RankCard(state = state) }
+            item {
+                Box(Modifier.tourAnchor(TourTarget.STATS_MAIN)) {
+                    RankCard(state = state)
+                }
+            }
             item { ChuykaCard(state = state) }
             item {
                 ScienceEntryCard(

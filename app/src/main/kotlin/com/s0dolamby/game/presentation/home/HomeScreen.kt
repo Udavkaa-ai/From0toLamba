@@ -17,6 +17,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import com.s0dolamby.game.presentation.onboarding.TourTarget
+import com.s0dolamby.game.presentation.onboarding.tourAnchor
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
@@ -133,13 +135,15 @@ fun HomeScreen(
                 }
 
                 item {
-                    BalanceCard(
-                        balance = gameState?.balance ?: 0.0,
-                        invested = gameState?.totalInvested ?: 0.0,
-                        returned = gameState?.totalReturned ?: 0.0,
-                        roi = roi(gameState),
-                        dealsTaken = dealsTaken
-                    )
+                    Box(Modifier.tourAnchor(TourTarget.HOME_MAIN)) {
+                        BalanceCard(
+                            balance = gameState?.balance ?: 0.0,
+                            invested = gameState?.totalInvested ?: 0.0,
+                            returned = gameState?.totalReturned ?: 0.0,
+                            roi = roi(gameState),
+                            dealsTaken = dealsTaken
+                        )
+                    }
                 }
 
                 // Плитка «Отношения с дельцами» — 7 архетипов, тап → отдельный экран.
@@ -214,10 +218,12 @@ fun HomeScreen(
                 // прячется на маршруте Home, чтобы не дублировать UI.
                 item {
                     Spacer(Modifier.height(4.dp))
-                    AdvanceDayButton(
-                        isLoading = isLoading,
-                        onClick = viewModel::advanceDay
-                    )
+                    Box(Modifier.tourAnchor(TourTarget.NEXT_DAY)) {
+                        AdvanceDayButton(
+                            isLoading = isLoading,
+                            onClick = viewModel::advanceDay
+                        )
+                    }
                 }
 
             }
