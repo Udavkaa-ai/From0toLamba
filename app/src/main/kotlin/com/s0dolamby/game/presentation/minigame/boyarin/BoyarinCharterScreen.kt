@@ -29,6 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.s0dolamby.game.domain.model.PersonaArchetype
 import com.s0dolamby.game.presentation.common.i18n.Strings
+import com.s0dolamby.game.presentation.common.theme.Error
+import com.s0dolamby.game.presentation.common.theme.Success
 import com.s0dolamby.game.presentation.minigame.common.ArchetypePalette
 import com.s0dolamby.game.presentation.minigame.common.MinigameOutcome
 import com.s0dolamby.game.presentation.minigame.common.MinigameShell
@@ -208,7 +210,8 @@ fun BoyarinCharterScreen(
         onBack = onBack,
         onAgain = { restart() },
         onClose = onBack,
-        onComplete = onComplete
+        onComplete = onComplete,
+        review = { BoyarinReviewGrid(cells, etalon) }
     ) {
         if (stage == MinigameStage.MEMORIZE) {
             // Фаза запоминания — эталон крупно, потом исчезает
@@ -346,6 +349,68 @@ private fun SealCellView(cell: SealCell, wrongFlash: Boolean, onClick: () -> Uni
                 fontSize = 38.sp,
                 fontWeight = FontWeight.Bold
             )
+        }
+    }
+}
+
+/** Разбор: все печати; зелёная рамка — нашёл подделку, красная с «!» — пропустил. */
+@Composable
+private fun BoyarinReviewGrid(cells: List<SealCell>, etalon: Seal) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        modifier = Modifier.padding(bottom = 8.dp)
+    ) {
+        Text("🟢 нашёл", color = Success, fontSize = 11.sp)
+        Text("🔴 пропустил", color = Error, fontSize = 11.sp)
+    }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(bottom = 8.dp)
+    ) {
+        Text("Эталон: ", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(Color(0xFF2A1840))
+                .border(2.dp, ArchetypePalette[PersonaArchetype.BOYARIN].primary, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Canvas(modifier = Modifier.fillMaxSize().padding(6.dp)) {
+                drawSeal(etalon, Offset(size.width / 2f, size.height / 2f), size.minDimension / 2f * 0.9f)
+            }
+        }
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        cells.chunked(GRID_COLS).forEach { rowCells ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                rowCells.forEach { cell ->
+                    val border = when {
+                        cell.isForged && cell.found -> Success
+                        cell.isForged -> Error
+                        else -> Color.White.copy(alpha = 0.1f)
+                    }
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .aspectRatio(1f)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFF1A0F30))
+                            .border(2.dp, border, RoundedCornerShape(8.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Canvas(modifier = Modifier.fillMaxSize().padding(5.dp)) {
+                            drawSeal(cell.seal, Offset(size.width / 2f, size.height / 2f), size.minDimension / 2f * 0.9f)
+                        }
+                        if (cell.isForged && !cell.found) {
+                            Text("!", color = Error, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -29,6 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.s0dolamby.game.domain.model.PersonaArchetype
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
+import com.s0dolamby.game.presentation.common.theme.Error
+import com.s0dolamby.game.presentation.common.theme.Success
 import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.common.theme.NightBlue
@@ -345,7 +347,8 @@ fun GoldenKeyScreen(
         onBack = onBack,
         onAgain = { restart() },
         onClose = onBack,
-        onComplete = onComplete
+        onComplete = onComplete,
+        review = { GoldenKeyReview(correct, built) }
     ) {
         when (stage) {
             MinigameStage.MEMORIZE -> MemorizeStage(
@@ -357,8 +360,32 @@ fun GoldenKeyScreen(
                 onChange = { built = it },
                 onCast = { stage = MinigameStage.RESULT }
             )
-            MinigameStage.RESULT -> ResultPreview(correct, built)
+            // Итог показываем в сворачиваемом «Разборе» карточки результата.
+            MinigameStage.RESULT -> {}
         }
+    }
+}
+
+/** Разбор: эталон рядом с собранным ключом + по каждой детали ✓/✗. */
+@Composable
+private fun GoldenKeyReview(correct: GoldenKey, built: GoldenKey) {
+    ResultPreview(correct, built)
+    Spacer(Modifier.height(10.dp))
+    KeyAttrRow("Головка", correct.bowlShape == built.bowlShape)
+    KeyAttrRow("Цвет", correct.color == built.color)
+    KeyAttrRow("Зубцы", correct.teethCount == built.teethCount)
+    KeyAttrRow("Стержень", correct.stemPattern == built.stemPattern)
+    KeyAttrRow("Кисточка", correct.hasTassel == built.hasTassel)
+}
+
+@Composable
+private fun KeyAttrRow(name: String, ok: Boolean) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(name, color = Color.White.copy(alpha = 0.85f), fontSize = 12.sp)
+        Text(if (ok) "✓" else "✗", color = if (ok) Success else Error, fontSize = 14.sp, fontWeight = FontWeight.Bold)
     }
 }
 
