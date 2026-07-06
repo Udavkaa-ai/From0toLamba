@@ -65,6 +65,9 @@ fun ChatScreen(
                 .padding(padding)
                 .fillMaxSize()
                 .background(NightBlue)
+                // Поднимаем контент над клавиатурой — иначе поле ввода прячется
+                // за ней (adjustResize + edge-to-edge требуют imePadding вручную).
+                .imePadding()
         ) {
             when {
                 state.loading && state.messages.isEmpty() ->
