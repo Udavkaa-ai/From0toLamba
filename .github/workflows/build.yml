@@ -72,6 +72,7 @@ jobs:
           # оставит рекламу выключенной (ADS_ENABLED=false) с демо-блоком.
           ADS_ENABLED: ${{ secrets.ADS_ENABLED }}
           YANDEX_REWARDED_UNIT_ID: ${{ secrets.YANDEX_REWARDED_UNIT_ID }}
+          YANDEX_BANNER_UNIT_ID: ${{ secrets.YANDEX_BANNER_UNIT_ID }}
         run: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" >> local.properties
           # tr -d: убираем случайные \r\n/пробелы из скопированного секрета.
@@ -88,6 +89,10 @@ jobs:
           if [ -n "$YANDEX_REWARDED_UNIT_ID" ]; then
             CLEAN_UNIT=$(printf '%s' "$YANDEX_REWARDED_UNIT_ID" | tr -d '[:space:]')
             printf 'YANDEX_REWARDED_UNIT_ID=%s\n' "$CLEAN_UNIT" >> local.properties
+          fi
+          if [ -n "$YANDEX_BANNER_UNIT_ID" ]; then
+            CLEAN_BANNER=$(printf '%s' "$YANDEX_BANNER_UNIT_ID" | tr -d '[:space:]')
+            printf 'YANDEX_BANNER_UNIT_ID=%s\n' "$CLEAN_BANNER" >> local.properties
           fi
           if [ -z "$CLEAN_KEY" ]; then
             echo "::warning::MOBILE_APP_KEY секрет пуст — AI и фидбек получат 401 от прокси. Добавь секрет в Settings → Secrets → Actions."

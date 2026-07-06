@@ -149,6 +149,11 @@ fun InboxScreen(
                     )
                 }
             }
+            // Баннер в самом низу списка грамот. При выключенной рекламе
+            // (ADS_ENABLED=false) элемент пустой и места не занимает.
+            item {
+                com.s0dolamby.game.presentation.ads.YandexBannerAd()
+            }
         }
     }
     // Шит вложения прямо из грамот — в чат заходить не обязательно

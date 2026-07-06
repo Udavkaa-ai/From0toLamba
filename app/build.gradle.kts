@@ -75,6 +75,11 @@ android {
             "YANDEX_REWARDED_UNIT_ID",
             "\"${localProperties.getProperty("YANDEX_REWARDED_UNIT_ID", "demo-rewarded-yandex")}\""
         )
+        buildConfigField(
+            "String",
+            "YANDEX_BANNER_UNIT_ID",
+            "\"${localProperties.getProperty("YANDEX_BANNER_UNIT_ID", "demo-banner-yandex")}\""
+        )
     }
 
     signingConfigs {
