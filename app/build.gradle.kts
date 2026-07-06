@@ -59,6 +59,22 @@ android {
             "MOBILE_APP_KEY",
             "\"${localProperties.getProperty("MOBILE_APP_KEY", "")}\""
         )
+
+        // Реклама (Yandex Mobile Ads / РСЯ). По умолчанию ВЫКЛ — SDK лежит в
+        // APK, но не инициализируется и рекламу не показывает. Включается
+        // секретом/local.properties (ADS_ENABLED=true) вместе с реальным
+        // YANDEX_REWARDED_UNIT_ID. Дефолтный блок — демо-блок Яндекса для
+        // тестов (всегда отдаёт тестовую рекламу).
+        buildConfigField(
+            "Boolean",
+            "ADS_ENABLED",
+            localProperties.getProperty("ADS_ENABLED", "false")
+        )
+        buildConfigField(
+            "String",
+            "YANDEX_REWARDED_UNIT_ID",
+            "\"${localProperties.getProperty("YANDEX_REWARDED_UNIT_ID", "demo-rewarded-yandex")}\""
+        )
     }
 
     signingConfigs {
@@ -129,6 +145,9 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
+
+    // Реклама — Yandex Mobile Ads (РСЯ/YAN). Инициализация под флагом ADS_ENABLED.
+    implementation("com.yandex.android:mobileads:8.2.0")
 
     // Compose
     implementation(platform(libs.androidx.compose.bom))

@@ -42,8 +42,21 @@ class InboxViewModel @Inject constructor(
     private val investUseCase: InvestUseCase,
     private val amaRepository: AmaRepository,
     private val soundEngine: SoundEngine,
+    private val adManager: com.s0dolamby.game.data.ads.AdManager,
     gameStateRepository: GameStateRepository
 ) : ViewModel() {
+
+    /** Реклама включена сборкой? Экран решает, показывать ли «за рекламу». */
+    val adsEnabled: Boolean get() = adManager.enabled
+
+    /**
+     * Показать rewarded-рекламу и, если досмотрел (или рекламы нет), пустить
+     * дальше. [onProceed] не наказывает игрока: при выключенной/недоступной
+     * рекламе он всё равно проходит в беседу.
+     */
+    fun watchRewardedThen(activity: android.app.Activity, onProceed: () -> Unit) {
+        adManager.showRewarded(activity, onReward = onProceed, onUnavailable = onProceed)
+    }
 
     val inboxProjects: StateFlow<List<Project>> = projectRepository.getInboxProjects()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())

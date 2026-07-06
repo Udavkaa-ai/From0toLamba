@@ -55,6 +55,7 @@ fun InboxScreen(
     val unlocks by viewModel.unlockOutcomes.collectAsState()
     val investState by viewModel.investState.collectAsState()
     val freeBalance by viewModel.freeBalance.collectAsState()
+    val activity = androidx.activity.compose.LocalActivity.current
     var adPromptForProjectId by remember { mutableStateOf<String?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -182,7 +183,9 @@ fun InboxScreen(
         }
     }
 
-    // Заглушка «реклама» — пока без реальных rewarded-ads. Согласие = переход в Ama.
+    // «Беседа за рекламу»: при включённой рекламе (ADS_ENABLED) показываем
+    // rewarded-ролик Яндекса и пускаем в Ama по награде; при выключенной —
+    // просто пропускаем (как раньше). Игрока реклама не блокирует.
     adPromptForProjectId?.let { pid ->
         AlertDialog(
             onDismissRequest = { adPromptForProjectId = null },
@@ -191,7 +194,12 @@ fun InboxScreen(
             confirmButton = {
                 TextButton(onClick = {
                     adPromptForProjectId = null
-                    onChatAfterAd(pid)
+                    val proceed = { onChatAfterAd(pid) }
+                    if (activity != null) {
+                        viewModel.watchRewardedThen(activity, proceed)
+                    } else {
+                        proceed()
+                    }
                     // Дефолтный AlertDialog — тёмный Material-surface в обеих
                     // темах: фиксированное золото, не карточная локаль.
                 }) { Text(Strings.t("inbox.ad.confirm"), color = FairyGold) }

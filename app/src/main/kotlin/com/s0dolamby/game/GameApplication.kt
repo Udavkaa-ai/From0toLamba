@@ -20,6 +20,9 @@ class GameApplication : Application(), Configuration.Provider {
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
 
+    @Inject
+    lateinit var adManager: com.s0dolamby.game.data.ads.AdManager
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory)
@@ -31,6 +34,8 @@ class GameApplication : Application(), Configuration.Provider {
         installCrashHandler()
         createNotificationChannels()
         configureCoil()
+        // Реклама (Yandex Ads). При выключенном флаге ADS_ENABLED — no-op.
+        adManager.init()
         // Ежедневное напоминание «серия догорает» (~18:00 местного).
         // Сам воркер молчит, если игрок уже заходил или напоминания
         // выключены в настройках.
