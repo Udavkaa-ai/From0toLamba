@@ -37,7 +37,60 @@ interface OpenRouterApiService {
         @Header("X-App-Key") appKey: String,
         @retrofit2.http.Query("limit") limit: Int
     ): LeaderboardResponse
+
+    /** Общий игровой чат: отправить сообщение. */
+    @POST("api/mobile/chat-room")
+    suspend fun postChatMessage(
+        @Header("X-App-Key") appKey: String,
+        @Body request: GameChatPostRequest
+    ): GameChatPostAck
+
+    /** Лента чата (afterId=0 — последние). */
+    @retrofit2.http.GET("api/mobile/chat-room")
+    suspend fun fetchChatMessages(
+        @Header("X-App-Key") appKey: String,
+        @retrofit2.http.Query("afterId") afterId: Int,
+        @retrofit2.http.Query("limit") limit: Int
+    ): GameChatResponse
+
+    /** Удалить своё сообщение. */
+    @POST("api/mobile/chat-room/delete")
+    suspend fun deleteChatMessage(
+        @Header("X-App-Key") appKey: String,
+        @Body request: GameChatActionRequest
+    ): FeedbackAck
+
+    /** Пожаловаться на сообщение. */
+    @POST("api/mobile/chat-room/report")
+    suspend fun reportChatMessage(
+        @Header("X-App-Key") appKey: String,
+        @Body request: GameChatActionRequest
+    ): FeedbackAck
 }
+
+data class GameChatPostRequest(
+    val playerId: String,
+    val nickname: String,
+    val text: String,
+    val replyToId: Int? = null
+)
+
+data class GameChatPostAck(val ok: Boolean = false, val id: Int = 0)
+
+data class GameChatActionRequest(val playerId: String, val messageId: Int)
+
+data class GameChatResponse(val messages: List<GameChatMessageDto> = emptyList())
+
+data class GameChatMessageDto(
+    val id: Int = 0,
+    val playerId: String = "",
+    val nickname: String = "",
+    val text: String = "",
+    val createdAt: String = "",
+    val replyToId: Int? = null,
+    val replyToNick: String? = null,
+    val replyToText: String? = null
+)
 
 /** Строка, отправляемая в купеческий рейтинг. */
 data class StandingRequest(

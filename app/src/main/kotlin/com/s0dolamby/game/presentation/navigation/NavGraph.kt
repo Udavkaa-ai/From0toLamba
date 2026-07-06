@@ -1,9 +1,14 @@
 package com.s0dolamby.game.presentation.navigation
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.*
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
@@ -83,6 +88,8 @@ sealed class Screen(val route: String) {
     object Leaderboard : Screen("leaderboard")
     object Today : Screen("today")
     object Relationships : Screen("relationships")
+    /** Общий игровой чат. */
+    object Chat : Screen("chat")
     /** Тренировочный зал — список мини-игр с объяснением механики. */
     object Training : Screen("training")
     object TrainingGame : Screen("training/{archetype}") {
@@ -343,6 +350,11 @@ fun NavGraph() {
         composable(Screen.Relationships.route) {
             RelationshipsScreen(onBack = { navController.popBackStack() })
         }
+        composable(Screen.Chat.route) {
+            com.s0dolamby.game.presentation.chat.ChatScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
         composable(Screen.Training.route) {
             com.s0dolamby.game.presentation.training.TrainingHallScreen(
                 onBack = { navController.popBackStack() },
@@ -386,6 +398,25 @@ fun NavGraph() {
                     onStatsClick = { navToTab(Screen.Stats.route) },
                     onTodayClick = { navToTab(Screen.Today.route) }
                 )
+            }
+
+            // Плавающая кнопка чата — слева внизу, над нижней навигацией.
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(start = 12.dp, bottom = 74.dp)
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(androidx.compose.ui.graphics.Color(0xF01A0E2E))
+                    .border(
+                        1.dp,
+                        com.s0dolamby.game.presentation.common.theme.FairyGold.copy(alpha = 0.5f),
+                        CircleShape
+                    )
+                    .clickable { navController.navigate(Screen.Chat.route) },
+                contentAlignment = Alignment.Center
+            ) {
+                androidx.compose.material3.Text("💬", fontSize = 22.sp)
             }
         }
 
@@ -581,6 +612,7 @@ private fun friendlyPageName(route: String?): String = when (route) {
     Screen.Settings.route -> "Настройки"
     Screen.Relationships.route -> "Отношения с дельцами"
     Screen.Leaderboard.route -> "Купеческий рейтинг"
+    Screen.Chat.route -> "Чат"
     Screen.Training.route -> "Тренировочный зал"
     Screen.TrainingGame.route -> "Тренировка мини-игры"
     Screen.Ama.route -> "Беседа с дельцом"

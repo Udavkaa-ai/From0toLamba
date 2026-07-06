@@ -333,6 +333,18 @@ object Strings {
         "training.timeLimit" to "⏳ на всё — %d сек",
         "training.start" to "Начать испытание",
 
+        // Общий игровой чат
+        "chat.title" to "Чат купцов",
+        "chat.loading" to "Загружаем беседу…",
+        "chat.error" to "Чат недоступен. Проверь связь.",
+        "chat.empty" to "Пока тихо. Будь первым!",
+        "chat.placeholder" to "Написать в чат…",
+        "chat.send" to "Отправить",
+        "chat.replyTo" to "Ответ %s",
+        "chat.action.reply" to "Ответить",
+        "chat.action.delete" to "Удалить",
+        "chat.action.report" to "Пожаловаться",
+
         // Обязательное прозвище
         "nick.require.title" to "Как звать тебя, купец?",
         "nick.require.body" to "Без прозвища на ярмарку не пускают. Придумай имя — под ним тебя запомнят дельцы и соперники.",
@@ -1169,6 +1181,18 @@ object Strings {
         "training.goal" to "Goal: %s",
         "training.timeLimit" to "⏳ total time — %d sec",
         "training.start" to "Start the trial",
+
+        // Game chat
+        "chat.title" to "Merchants' chat",
+        "chat.loading" to "Loading the chat…",
+        "chat.error" to "Chat unavailable. Check your connection.",
+        "chat.empty" to "Quiet so far. Be the first!",
+        "chat.placeholder" to "Write to the chat…",
+        "chat.send" to "Send",
+        "chat.replyTo" to "Reply to %s",
+        "chat.action.reply" to "Reply",
+        "chat.action.delete" to "Delete",
+        "chat.action.report" to "Report",
 
         // Mandatory nickname
         "nick.require.title" to "What's your name, merchant?",

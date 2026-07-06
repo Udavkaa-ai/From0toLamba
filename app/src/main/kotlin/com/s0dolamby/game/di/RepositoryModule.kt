@@ -29,4 +29,7 @@ abstract class RepositoryModule {
 
     @Binds @Singleton
     abstract fun bindLeaderboardRepository(impl: LeaderboardRepositoryImpl): LeaderboardRepository
+
+    @Binds @Singleton
+    abstract fun bindChatRepository(impl: ChatRepositoryImpl): ChatRepository
 }
