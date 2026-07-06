@@ -93,6 +93,17 @@ fun HomeScreen(
     val dealsTaken by viewModel.dealsTakenCount.collectAsState()
     val nickname by viewModel.nickname.collectAsState()
 
+    // Когда тур подсвечивает «Следующий день» (кнопка внизу списка) —
+    // прокручиваем список к ней, чтобы спотлайт попал в видимую область.
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    val tourTarget by com.s0dolamby.game.presentation.onboarding.TourAnchors.activeTarget
+    LaunchedEffect(tourTarget) {
+        if (tourTarget == com.s0dolamby.game.presentation.onboarding.TourTarget.NEXT_DAY) {
+            val last = (listState.layoutInfo.totalItemsCount - 1).coerceAtLeast(0)
+            listState.animateScrollToItem(last)
+        }
+    }
+
     // Единый темозависимый фон (HOME_01 / HOME_01_LIGHT + оверлей из палитры)
     // — как у всех остальных экранов, никаких локальных градиентов.
     com.s0dolamby.game.presentation.common.components.ScreenBackground(
@@ -103,6 +114,7 @@ fun HomeScreen(
             containerColor = Color.Transparent
         ) { padding ->
             LazyColumn(
+                state = listState,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),

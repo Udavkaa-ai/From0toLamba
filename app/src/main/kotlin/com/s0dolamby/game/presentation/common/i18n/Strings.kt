@@ -365,8 +365,8 @@ object Strings {
         "tour.settings.body" to "Здесь язык и тема, звук, музыка и напоминания. Надоела музыка или щелчки — выключи прямо тут.",
         "tour.reset.title" to "Сброс прогресса",
         "tour.reset.body" to "Если захочешь начать игру с чистого листа — вот эта кнопка обнулит всё. Тут же можно перезапустить и сам тур.",
-        "tour.outro.title" to "Вот и вся изба!",
-        "tour.outro.body" to "Теперь ты знаешь, что где. В добрый путь, купец — и не дай дельцам себя обмануть!",
+        "tour.outro.title" to "Готово!",
+        "tour.outro.body" to "Теперь ты знаешь, где что находится. Удачи, купец — и будь начеку с дельцами!",
 
         // Мини-тур первого дела
         "firstdeal.header" to "ТВОЁ ПЕРВОЕ ДЕЛО",
@@ -374,8 +374,8 @@ object Strings {
         "firstdeal.game.title" to "Испытание дельца",
         "firstdeal.game.body" to "Каждый делец сперва проверит тебя мини-игрой. Победа приоткрывает дело — раскрывается его тип (честное или обман), а идеальная игра ещё и покажет посул. Провалишь — второго шанса нет, вкладываться придётся вслепую.",
         "firstdeal.chat.title" to "Беседа в кабаке",
-        "firstdeal.chat.body" to "После игры дельца можно расспросить — до 10 вопросов. Он знает судьбу своего дела, но виляет и приукрашивает. Каждый заданный вопрос добавляет +1% к твоему первому вложению (до +10%).",
-        "firstdeal.lies.title" to "Как палить враньё",
+        "firstdeal.chat.body" to "После игры дельца можно расспросить — до 10 вопросов. Он знает судьбу своего дела, но недоговаривает и приукрашивает. Каждый заданный вопрос добавляет +1% к твоему первому вложению (до +10%).",
+        "firstdeal.lies.title" to "Как распознать обман",
         "firstdeal.lies.body" to "Лови противоречия: сулит «гарантию» и золотые горы, путается в цифрах, давит срочностью — почти наверняка обман. Разбор приёмов мошенников копится в «Науке старца» (вкладка «Успехи»).",
         "firstdeal.after.title" to "Что дальше",
         "firstdeal.after.body" to "Реши для себя «Верю — не верю» и действуй: вложить сразу, пойти в беседу (и поднять доход вопросами) или пропустить дело. За верную догадку растёт твоя Чуйка.",
@@ -1202,8 +1202,8 @@ object Strings {
         "tour.settings.body" to "Here: language and theme, sound, music and reminders. Tired of the music or clicks — turn them off right here.",
         "tour.reset.title" to "Reset progress",
         "tour.reset.body" to "Want a clean start? This button wipes everything. You can also replay this tour from here.",
-        "tour.outro.title" to "That's the whole hut!",
-        "tour.outro.body" to "Now you know where everything is. Good luck, merchant — and don't let the dealers fool you!",
+        "tour.outro.title" to "All set!",
+        "tour.outro.body" to "Now you know where everything is. Good luck, merchant — and stay sharp with the dealers!",
 
         // First-deal mini-tour
         "firstdeal.header" to "YOUR FIRST DEAL",

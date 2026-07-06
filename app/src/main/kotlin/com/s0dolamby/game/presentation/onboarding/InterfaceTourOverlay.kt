@@ -118,6 +118,11 @@ fun InterfaceTourOverlay(
     // Открываем экран текущего шага (эффект срабатывает при смене route).
     LaunchedEffect(current.route) { onNavigate(current.route) }
 
+    // Сообщаем экранам, какой блок сейчас подсвечиваем — чтобы они могли
+    // подкрутить список к нему (напр. кнопка «Следующий день» внизу Главной).
+    LaunchedEffect(step) { TourAnchors.activeTarget.value = current.target }
+    DisposableEffect(Unit) { onDispose { TourAnchors.activeTarget.value = null } }
+
     val finish = {
         onNavigate("home")
         viewModel.markShown()

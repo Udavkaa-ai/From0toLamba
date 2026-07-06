@@ -1,6 +1,7 @@
 package com.s0dolamby.game.presentation.onboarding
 
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.boundsInRoot
@@ -31,6 +32,13 @@ enum class TourTarget {
  */
 object TourAnchors {
     val bounds = mutableStateMapOf<TourTarget, Rect>()
+
+    /**
+     * Блок, который тур подсвечивает прямо сейчас. Экраны могут на это
+     * реагировать — например, прокрутить свой список так, чтобы нужный
+     * элемент оказался на виду (кнопка «Следующий день» внизу Главной).
+     */
+    val activeTarget = mutableStateOf<TourTarget?>(null)
 }
 
 /** Пометить композуемый элемент якорем тура — он сообщит свои координаты. */
