@@ -161,7 +161,7 @@ fun KoscheiMemoryScreen(
         if (stage == MinigameStage.PLAY) {
             ScoreLine(pairsFound, attempts)
             Spacer(Modifier.height(14.dp))
-            CardGrid(cards = cards, onTap = ::handleTap)
+            CardGrid(cards = cards, onTap = ::handleTap, modifier = Modifier.weight(1f))
             Spacer(Modifier.height(10.dp))
             ChainHint()
         }
@@ -220,20 +220,29 @@ private fun ChainHint() {
 }
 
 @Composable
-private fun CardGrid(cards: List<Card>, onTap: (Int) -> Unit) {
-    // Карты растягиваются на всю ширину экрана (weight) — фиксированные
-    // 96×116 тестировщикам были мелковаты
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        for (row in 0 until GRID_ROWS) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                for (col in 0 until GRID_COLS) {
-                    val idx = row * GRID_COLS + col
-                    val card = cards[idx]
-                    Box(modifier = Modifier.weight(1f)) {
-                        CardView(card = card, onClick = { onTap(idx) })
+private fun CardGrid(cards: List<Card>, onTap: (Int) -> Unit, modifier: Modifier = Modifier) {
+    // Раньше карты растягивались только по ширине (weight) и фиксированный
+    // аспект 96/116 → на тесных экранах 4 ряда не влезали и наезжали друг на
+    // друга. Теперь считаем размер карты так, чтобы сетка целиком помещалась
+    // и по ширине, И по высоте выделенного места.
+    val gap = 8.dp
+    BoxWithConstraints(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        val cellByWidth = (maxWidth - gap * (GRID_COLS - 1)) / GRID_COLS
+        // ширина карты, при которой её высота (w * 116/96) уложится по высоте
+        val cellByHeight = (maxHeight - gap * (GRID_ROWS - 1)) / GRID_ROWS * (96f / 116f)
+        val cardW = minOf(cellByWidth, cellByHeight)
+        Column(
+            verticalArrangement = Arrangement.spacedBy(gap),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            for (row in 0 until GRID_ROWS) {
+                Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
+                    for (col in 0 until GRID_COLS) {
+                        val idx = row * GRID_COLS + col
+                        val card = cards[idx]
+                        Box(modifier = Modifier.width(cardW)) {
+                            CardView(card = card, onClick = { onTap(idx) })
+                        }
                     }
                 }
             }

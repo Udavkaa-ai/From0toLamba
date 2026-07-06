@@ -627,9 +627,11 @@ private fun ActiveProjectCardCompact(
                     model = url,
                     contentDescription = null,
                     contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                    // Родной аспект баннера 1408×768 — раньше фикс-высота 96dp
+                    // обрезала картинку (головы дельцов «срезались»).
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(96.dp)
+                        .aspectRatio(1408f / 768f)
                 )
             }
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
