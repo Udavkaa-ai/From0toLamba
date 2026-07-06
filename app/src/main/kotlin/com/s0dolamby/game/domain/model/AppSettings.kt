@@ -16,7 +16,9 @@ data class AppSettings(
     /** Напоминания: серия догорает, ярмарка ждёт. */
     val notificationsEnabled: Boolean = true,
     /** Стабильный id купца для облачного рейтинга (UUID). Пусто = ещё не выдан. */
-    val playerId: String = ""
+    val playerId: String = "",
+    /** Показан ли входной тур по интерфейсу (спотлайт по вкладкам). */
+    val tourShown: Boolean = false
 )
 
 data class ModelOption(val label: String, val modelId: String)

@@ -57,6 +57,13 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.updateSettings(updated) }
     }
 
+    /** Сбросить флаг тура — при следующем показе Главной тур запустится снова. */
+    fun replayTour() {
+        val updated = _uiState.value.settings.copy(tourShown = false)
+        _uiState.value = _uiState.value.copy(settings = updated)
+        viewModelScope.launch { settingsRepository.updateSettings(updated) }
+    }
+
     fun setThemeMode(mode: com.s0dolamby.game.domain.model.ThemeMode) {
         val updated = _uiState.value.settings.copy(themeMode = mode)
         _uiState.value = _uiState.value.copy(settings = updated)

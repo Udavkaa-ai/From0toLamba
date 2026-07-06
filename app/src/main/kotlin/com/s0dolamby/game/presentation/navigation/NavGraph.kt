@@ -551,6 +551,11 @@ fun NavGraph() {
         // пройден, а ник не задан (старые игроки без ника + новички). Пока
         // ник не введён, экран заблокирован.
         com.s0dolamby.game.presentation.onboarding.RequireNicknameOverlay()
+
+        // Входной тур по интерфейсу — один раз после онбординга и ввода имени.
+        // Показывается только когда ник уже задан, так что с гейтом ника не
+        // пересекается. Повторно запускается из настроек.
+        com.s0dolamby.game.presentation.onboarding.InterfaceTourOverlay()
     } // outer Box end
 }
 

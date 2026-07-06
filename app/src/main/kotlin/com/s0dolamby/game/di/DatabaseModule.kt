@@ -102,6 +102,13 @@ private val MIGRATION_25_26 = object : Migration(25, 26) {
     }
 }
 
+/** Аддитивная миграция v26 → v27: флаг показа входного тура по интерфейсу. */
+private val MIGRATION_26_27 = object : Migration(26, 27) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `settings` ADD COLUMN `tourShown` INTEGER NOT NULL DEFAULT 0")
+    }
+}
+
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
@@ -113,7 +120,7 @@ object DatabaseModule {
             .addMigrations(
                 MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20,
                 MIGRATION_20_21, MIGRATION_21_22, MIGRATION_22_23, MIGRATION_23_24,
-                MIGRATION_24_25, MIGRATION_25_26
+                MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27
             )
             .fallbackToDestructiveMigration()
             .build()

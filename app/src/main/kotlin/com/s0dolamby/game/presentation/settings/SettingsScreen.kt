@@ -311,6 +311,15 @@ fun SettingsScreen(
                     ) {
                         Text(Strings.t("settings.about.faq"), fontWeight = FontWeight.SemiBold)
                     }
+                    Spacer(Modifier.height(8.dp))
+                    // Заново показать входной тур по интерфейсу (сбрасывает флаг
+                    // и возвращает на предыдущий экран, где тур и всплывёт).
+                    OutlinedButton(
+                        onClick = { viewModel.replayTour(); onBack() },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(Strings.t("settings.tour.replay"), color = LocalAccentOnCard.current)
+                    }
                 }
 
                 OrnamentDivider()

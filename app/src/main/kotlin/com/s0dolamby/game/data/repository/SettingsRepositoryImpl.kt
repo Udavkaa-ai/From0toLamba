@@ -24,7 +24,8 @@ class SettingsRepositoryImpl @Inject constructor(
                 soundEnabled = settings.soundEnabled,
                 musicEnabled = settings.musicEnabled,
                 notificationsEnabled = settings.notificationsEnabled,
-                playerId = settings.playerId
+                playerId = settings.playerId,
+                tourShown = settings.tourShown
             )
         )
     }
@@ -47,6 +48,7 @@ class SettingsRepositoryImpl @Inject constructor(
             soundEnabled = soundEnabled,
             musicEnabled = musicEnabled,
             notificationsEnabled = notificationsEnabled,
-            playerId = playerId
+            playerId = playerId,
+            tourShown = tourShown
         )
 }

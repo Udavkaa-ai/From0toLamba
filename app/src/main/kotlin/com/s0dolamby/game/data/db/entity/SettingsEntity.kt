@@ -26,5 +26,8 @@ data class SettingsEntity(
     val notificationsEnabled: Boolean = true,
     // Стабильный id купца для облачного рейтинга (UUID). Пусто = ещё не выдан.
     @androidx.room.ColumnInfo(defaultValue = "''")
-    val playerId: String = ""
+    val playerId: String = "",
+    // Показан ли входной тур по интерфейсу.
+    @androidx.room.ColumnInfo(defaultValue = "0")
+    val tourShown: Boolean = false
 )

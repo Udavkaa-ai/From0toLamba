@@ -39,7 +39,8 @@ import com.s0dolamby.game.data.db.entity.*
     // v24: «Ярмарка недели» — weekKey/weekAdvances + снапшоты чуйки недели.
     // v25: notificationsEnabled в settings (тумблер напоминаний).
     // v26: playerId в settings (стабильный id для купеческого рейтинга).
-    version = 26,
+    // v27: tourShown в settings (показан ли входной тур по интерфейсу).
+    version = 27,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
