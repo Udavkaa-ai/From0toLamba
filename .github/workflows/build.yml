@@ -68,6 +68,10 @@ jobs:
           # если секрета нет, build.gradle подставит прод-домен Railway.
           MOBILE_APP_KEY: ${{ secrets.MOBILE_APP_KEY }}
           MOBILE_PROXY_URL: ${{ secrets.MOBILE_PROXY_URL }}
+          # Реклама (Yandex). Оба секрета необязательны: без них build.gradle
+          # оставит рекламу выключенной (ADS_ENABLED=false) с демо-блоком.
+          ADS_ENABLED: ${{ secrets.ADS_ENABLED }}
+          YANDEX_REWARDED_UNIT_ID: ${{ secrets.YANDEX_REWARDED_UNIT_ID }}
         run: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" >> local.properties
           # tr -d: убираем случайные \r\n/пробелы из скопированного секрета.
@@ -76,6 +80,14 @@ jobs:
           if [ -n "$MOBILE_PROXY_URL" ]; then
             CLEAN_URL=$(printf '%s' "$MOBILE_PROXY_URL" | tr -d '[:space:]')
             printf 'MOBILE_PROXY_URL=%s\n' "$CLEAN_URL" >> local.properties
+          fi
+          if [ -n "$ADS_ENABLED" ]; then
+            CLEAN_ADS=$(printf '%s' "$ADS_ENABLED" | tr -d '[:space:]')
+            printf 'ADS_ENABLED=%s\n' "$CLEAN_ADS" >> local.properties
+          fi
+          if [ -n "$YANDEX_REWARDED_UNIT_ID" ]; then
+            CLEAN_UNIT=$(printf '%s' "$YANDEX_REWARDED_UNIT_ID" | tr -d '[:space:]')
+            printf 'YANDEX_REWARDED_UNIT_ID=%s\n' "$CLEAN_UNIT" >> local.properties
           fi
           if [ -z "$CLEAN_KEY" ]; then
             echo "::warning::MOBILE_APP_KEY секрет пуст — AI и фидбек получат 401 от прокси. Добавь секрет в Settings → Secrets → Actions."

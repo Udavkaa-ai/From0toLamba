@@ -5,10 +5,11 @@ import android.content.Context
 import com.s0dolamby.game.BuildConfig
 import com.s0dolamby.game.data.logging.AppLogger
 import com.yandex.mobile.ads.common.AdError
-import com.yandex.mobile.ads.common.AdRequestConfiguration
+import com.yandex.mobile.ads.common.AdRequest
 import com.yandex.mobile.ads.common.AdRequestError
 import com.yandex.mobile.ads.common.ImpressionData
-import com.yandex.mobile.ads.common.MobileAds
+import com.yandex.mobile.ads.common.InitializationListener
+import com.yandex.mobile.ads.common.YandexAds
 import com.yandex.mobile.ads.rewarded.Reward
 import com.yandex.mobile.ads.rewarded.RewardedAd
 import com.yandex.mobile.ads.rewarded.RewardedAdEventListener
@@ -27,6 +28,10 @@ import javax.inject.Singleton
  *
  * Сейчас используется только вознаграждаемая (rewarded) реклама: игрок сам
  * решает посмотреть ролик за выгоду (вход в беседу без мини-игры и т.п.).
+ *
+ * API проверен по classes.jar Yandex Mobile Ads 8.2.0:
+ * точка входа — YandexAds.initialize; загрузка — RewardedAdLoader.loadAd(
+ * AdRequest, RewardedAdLoadListener); показ — RewardedAd.show(Activity).
  */
 @Singleton
 class AdManager @Inject constructor(
@@ -44,32 +49,34 @@ class AdManager @Inject constructor(
         if (!enabled || initialized) return
         initialized = true
         runCatching {
-            MobileAds.initialize(context) { AppLogger.i(TAG, "Yandex Ads SDK готов") }
-            loader = RewardedAdLoader(context).apply {
-                setAdLoadListener(object : RewardedAdLoadListener {
-                    override fun onAdLoaded(rewarded: RewardedAd) {
-                        rewardedAd = rewarded
-                        loading = false
-                    }
-
-                    override fun onAdFailedToLoad(error: AdRequestError) {
-                        rewardedAd = null
-                        loading = false
-                        AppLogger.i(TAG, "rewarded не загрузился: ${error.description}")
-                    }
-                })
-            }
+            YandexAds.initialize(context, object : InitializationListener {
+                override fun onInitializationCompleted() {
+                    AppLogger.i(TAG, "Yandex Ads SDK готов")
+                }
+            })
+            loader = RewardedAdLoader(context)
             preload()
         }.onFailure { AppLogger.e(TAG, "init рекламы упал", it) }
     }
 
     private fun preload() {
         if (!enabled || loading || rewardedAd != null) return
+        val currentLoader = loader ?: return
         loading = true
         runCatching {
-            loader?.loadAd(
-                AdRequestConfiguration.Builder(BuildConfig.YANDEX_REWARDED_UNIT_ID).build()
-            )
+            val request = AdRequest.Builder(BuildConfig.YANDEX_REWARDED_UNIT_ID).build()
+            currentLoader.loadAd(request, object : RewardedAdLoadListener {
+                override fun onAdLoaded(rewarded: RewardedAd) {
+                    rewardedAd = rewarded
+                    loading = false
+                }
+
+                override fun onAdFailedToLoad(error: AdRequestError) {
+                    rewardedAd = null
+                    loading = false
+                    AppLogger.i(TAG, "rewarded не загрузился: ${error.description}")
+                }
+            })
         }.onFailure {
             loading = false
             AppLogger.e(TAG, "loadAd упал", it)
