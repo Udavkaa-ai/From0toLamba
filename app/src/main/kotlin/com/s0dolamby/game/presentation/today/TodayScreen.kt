@@ -38,7 +38,10 @@ private val MILESTONES = TodayRewards.MILESTONES.toList().sortedBy { it.first }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
+fun TodayScreen(
+    onLeaderboardClick: () -> Unit = {},
+    viewModel: TodayViewModel = hiltViewModel()
+) {
     val ui by viewModel.uiState.collectAsState()
     val streak = ui.loginStreak
     val canClaim = ui.canClaim
@@ -205,16 +208,16 @@ fun TodayScreen(viewModel: TodayViewModel = hiltViewModel()) {
                     }
                 }
 
-                // Купеческий рейтинг — заглушка
+                // Купеческий рейтинг — облачная таблица всех купцов
                 item {
-                    FairyCard(modifier = Modifier.fillMaxWidth()) {
+                    FairyCard(modifier = Modifier.fillMaxWidth().clickable { onLeaderboardClick() }) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(Strings.t("today.leaderboard"), color = LocalAccentOnCard.current, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                            Text(Strings.t("today.soon"), color = LocalContentColorMuted.current, fontSize = 11.sp)
+                            Text("🏆 ›", color = LocalAccentOnCard.current, fontSize = 15.sp)
                         }
                         Spacer(Modifier.height(8.dp))
                         Text(

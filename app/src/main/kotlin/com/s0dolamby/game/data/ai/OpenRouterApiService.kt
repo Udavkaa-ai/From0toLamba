@@ -23,7 +23,48 @@ interface OpenRouterApiService {
         @Header("X-App-Key") appKey: String,
         @Body request: FeedbackRequest
     ): FeedbackAck
+
+    /** Отправить своё текущее положение в купеческий рейтинг (upsert по playerId). */
+    @POST("api/mobile/leaderboard")
+    suspend fun submitStanding(
+        @Header("X-App-Key") appKey: String,
+        @Body request: StandingRequest
+    ): FeedbackAck
+
+    /** Топ купцов + общее число игроков. */
+    @retrofit2.http.GET("api/mobile/leaderboard")
+    suspend fun fetchLeaderboard(
+        @Header("X-App-Key") appKey: String,
+        @retrofit2.http.Query("limit") limit: Int
+    ): LeaderboardResponse
 }
+
+/** Строка, отправляемая в купеческий рейтинг. */
+data class StandingRequest(
+    val playerId: String,
+    val nickname: String,
+    val wealth: Double,
+    val rankTitle: String?,
+    val day: Int,
+    val loginStreak: Int,
+    val appVersion: String?,
+    val platform: String = "android"
+)
+
+/** Ответ рейтинга: общее число купцов + верхушка. */
+data class LeaderboardResponse(
+    val total: Int = 0,
+    val entries: List<LeaderboardEntryDto> = emptyList()
+)
+
+data class LeaderboardEntryDto(
+    val position: Int = 0,
+    val playerId: String = "",
+    val nickname: String = "",
+    val wealth: Double = 0.0,
+    val rankTitle: String? = null,
+    val day: Int = 0
+)
 
 /** Ответ сервера на фидбек. Конкретный класс (а не Unit), чтобы Gson
  *  парсил его тем же путём, что и ответ чата — Unit-конверсия капризна. */

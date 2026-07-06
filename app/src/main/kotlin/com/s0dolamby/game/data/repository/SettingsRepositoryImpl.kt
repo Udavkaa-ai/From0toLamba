@@ -23,7 +23,8 @@ class SettingsRepositoryImpl @Inject constructor(
                 language = settings.language,
                 soundEnabled = settings.soundEnabled,
                 musicEnabled = settings.musicEnabled,
-                notificationsEnabled = settings.notificationsEnabled
+                notificationsEnabled = settings.notificationsEnabled,
+                playerId = settings.playerId
             )
         )
     }
@@ -45,6 +46,7 @@ class SettingsRepositoryImpl @Inject constructor(
             language = language.ifBlank { "ru" },
             soundEnabled = soundEnabled,
             musicEnabled = musicEnabled,
-            notificationsEnabled = notificationsEnabled
+            notificationsEnabled = notificationsEnabled,
+            playerId = playerId
         )
 }

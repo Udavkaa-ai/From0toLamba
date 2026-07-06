@@ -95,6 +95,13 @@ private val MIGRATION_24_25 = object : Migration(24, 25) {
     }
 }
 
+/** Аддитивная миграция v25 → v26: стабильный playerId для купеческого рейтинга. */
+private val MIGRATION_25_26 = object : Migration(25, 26) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `settings` ADD COLUMN `playerId` TEXT NOT NULL DEFAULT ''")
+    }
+}
+
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
@@ -106,7 +113,7 @@ object DatabaseModule {
             .addMigrations(
                 MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20,
                 MIGRATION_20_21, MIGRATION_21_22, MIGRATION_22_23, MIGRATION_23_24,
-                MIGRATION_24_25
+                MIGRATION_24_25, MIGRATION_25_26
             )
             .fallbackToDestructiveMigration()
             .build()

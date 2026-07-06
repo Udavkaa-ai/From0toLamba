@@ -10,7 +10,26 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Единственная таблица этого сервиса — заметки тестеров Android-версии.
+// Купеческий рейтинг: одна запись на игрока (playerId — стабильный UUID
+// с устройства). Обновляется upsert-ом при заходе/смене дня. Заодно по
+// updatedAt видно, сколько тестеров реально играет и когда заходили.
+model Merchant {
+  playerId    String   @id
+  nickname    String
+  wealth      Float    @default(0)
+  rankTitle   String?  // чин: Скоморох / Купец / … / Князь
+  day         Int      @default(0)
+  loginStreak Int      @default(0)
+  appVersion  String?
+  platform    String   @default("android")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([wealth])
+  @@index([updatedAt])
+}
+
+// Заметки тестеров Android-версии.
 // Выгрузка: страница /admin/feedback?key=... или SQL.
 model Feedback {
   id         Int      @id @default(autoincrement())

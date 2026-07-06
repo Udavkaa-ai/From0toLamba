@@ -90,7 +90,8 @@ sealed class Screen(val route: String) {
 
 @HiltViewModel
 class NavViewModel @Inject constructor(
-    private val gameStateRepository: GameStateRepository
+    private val gameStateRepository: GameStateRepository,
+    private val leaderboardRepository: com.s0dolamby.game.domain.repository.LeaderboardRepository
 ) : ViewModel() {
 
     private val _isOnboardingComplete = MutableStateFlow<Boolean?>(null)
@@ -111,6 +112,9 @@ class NavViewModel @Inject constructor(
             gameStateRepository.initializeGameState()
             val state = gameStateRepository.getGameState()
             _isOnboardingComplete.value = state.isOnboardingComplete
+            // Отметимся в купеческом рейтинге при запуске — так по «был онлайн»
+            // видно, кто из тестеров реально играет. Офлайн — тихо пропустим.
+            leaderboardRepository.submitStanding()
         }
     }
 }
@@ -336,7 +340,9 @@ fun NavGraph() {
             LeaderboardScreen(onBack = { navController.popBackStack() })
         }
         composable(Screen.Today.route) {
-            TodayScreen()
+            TodayScreen(
+                onLeaderboardClick = { navController.navigate(Screen.Leaderboard.route) }
+            )
         }
         composable(Screen.Relationships.route) {
             RelationshipsScreen(onBack = { navController.popBackStack() })
@@ -564,7 +570,7 @@ private fun friendlyPageName(route: String?): String = when (route) {
     Screen.Science.route -> "Наука старца"
     Screen.Settings.route -> "Настройки"
     Screen.Relationships.route -> "Отношения с дельцами"
-    Screen.Leaderboard.route -> "Ярмарка недели"
+    Screen.Leaderboard.route -> "Купеческий рейтинг"
     Screen.Training.route -> "Тренировочный зал"
     Screen.TrainingGame.route -> "Тренировка мини-игры"
     Screen.Ama.route -> "Беседа с дельцом"

@@ -25,6 +25,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.s0dolamby.game.domain.repository.GameStateRepository
+import com.s0dolamby.game.domain.repository.LeaderboardRepository
 import com.s0dolamby.game.domain.repository.SettingsRepository
 import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
@@ -42,6 +43,7 @@ import javax.inject.Inject
 @HiltViewModel
 class RequireNicknameViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
+    private val leaderboardRepository: LeaderboardRepository,
     gameStateRepository: GameStateRepository
 ) : ViewModel() {
 
@@ -63,6 +65,8 @@ class RequireNicknameViewModel @Inject constructor(
         viewModelScope.launch {
             val current = settingsRepository.getSettings()
             settingsRepository.updateSettings(current.copy(nickname = clean))
+            // Сразу заявляемся в купеческий рейтинг с новым именем.
+            leaderboardRepository.submitStanding()
         }
     }
 }

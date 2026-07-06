@@ -23,5 +23,8 @@ data class SettingsEntity(
     val musicEnabled: Boolean = true,
     // Напоминания (стрик догорает и т.п.): true = слать.
     @androidx.room.ColumnInfo(defaultValue = "1")
-    val notificationsEnabled: Boolean = true
+    val notificationsEnabled: Boolean = true,
+    // Стабильный id купца для облачного рейтинга (UUID). Пусто = ещё не выдан.
+    @androidx.room.ColumnInfo(defaultValue = "''")
+    val playerId: String = ""
 )

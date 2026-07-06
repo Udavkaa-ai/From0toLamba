@@ -14,7 +14,9 @@ data class AppSettings(
     /** Фоновая музыка (сказочная тема по кругу). */
     val musicEnabled: Boolean = true,
     /** Напоминания: серия догорает, ярмарка ждёт. */
-    val notificationsEnabled: Boolean = true
+    val notificationsEnabled: Boolean = true,
+    /** Стабильный id купца для облачного рейтинга (UUID). Пусто = ещё не выдан. */
+    val playerId: String = ""
 )
 
 data class ModelOption(val label: String, val modelId: String)

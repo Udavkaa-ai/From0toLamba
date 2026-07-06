@@ -71,7 +71,7 @@ object Strings {
         "today.ladder" to "Лестница серии",
         "today.leaderboard" to "👑 Купеческий рейтинг",
         "today.soon" to "скоро",
-        "today.leaderboard.hint" to "Здесь появятся вкладки «Злато» и «Связи» с топом купцов по общему состоянию и сумме отношений.",
+        "today.leaderboard.hint" to "Таблица всех купцов по состоянию — сравни себя с другими игроками. Тапни, чтобы открыть.",
         "today.nextMilestone" to "До следующей вешки (день %d, +%d г) — %d дн.",
         "today.snack.claimError" to "Не удалось забрать награду",
         "today.snack.claimSuccess" to "🎁 +%d г — награда дня",
@@ -339,6 +339,19 @@ object Strings {
         "nick.require.placeholder" to "Твоё прозвище",
         "nick.require.hint" to "От 2 до 20 знаков. Потом можно сменить в настройках.",
         "nick.require.save" to "Так и запишем",
+
+        // Купеческий рейтинг (облачный)
+        "leaderboard.title" to "Купеческий рейтинг",
+        "leaderboard.refresh" to "Обновить",
+        "leaderboard.loading" to "Собираем купцов…",
+        "leaderboard.empty" to "Пока в рейтинге пусто — будь первым!",
+        "leaderboard.error" to "Не удалось загрузить рейтинг",
+        "leaderboard.retry" to "Ещё разок",
+        "leaderboard.total" to "Всего купцов: %d",
+        "leaderboard.myPosition" to "Ты на %d месте",
+        "leaderboard.notRanked" to "Тебя ещё нет в списке — сыграй ещё немного",
+        "leaderboard.you" to "%s (ты)",
+        "leaderboard.rankDay" to "%s · день %d",
 
         // «Ярмарка недели» — соревновательное окно
         "today.week.title" to "Ярмарка недели %d",
@@ -856,7 +869,7 @@ object Strings {
         "today.ladder" to "Streak ladder",
         "today.leaderboard" to "👑 Merchant ranking",
         "today.soon" to "soon",
-        "today.leaderboard.hint" to "Tabs «Gold» and «Bonds» will appear here — top merchants by total wealth and total bond strength.",
+        "today.leaderboard.hint" to "A table of all merchants by wealth — see how you compare to other players. Tap to open.",
         "today.nextMilestone" to "Next milestone (day %d, +%d c) — %d d.",
         "today.snack.claimError" to "Couldn't claim the reward",
         "today.snack.claimSuccess" to "🎁 +%d c — daily reward",
@@ -1122,6 +1135,19 @@ object Strings {
         "nick.require.placeholder" to "Your nickname",
         "nick.require.hint" to "2 to 20 characters. You can change it later in settings.",
         "nick.require.save" to "So be it",
+
+        // Merchant leaderboard (cloud)
+        "leaderboard.title" to "Merchant Ranking",
+        "leaderboard.refresh" to "Refresh",
+        "leaderboard.loading" to "Gathering merchants…",
+        "leaderboard.empty" to "The ranking is empty — be the first!",
+        "leaderboard.error" to "Couldn't load the ranking",
+        "leaderboard.retry" to "Try again",
+        "leaderboard.total" to "Merchants total: %d",
+        "leaderboard.myPosition" to "You're #%d",
+        "leaderboard.notRanked" to "You're not listed yet — play a bit more",
+        "leaderboard.you" to "%s (you)",
+        "leaderboard.rankDay" to "%s · day %d",
 
         // Weekly Fair — competitive window
         "today.week.title" to "Fair of week %d",
