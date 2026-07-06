@@ -181,8 +181,10 @@ private fun StandingRow(entry: LeaderboardStanding) {
     val medal = when (entry.position) {
         1 -> "🥇"; 2 -> "🥈"; 3 -> "🥉"; else -> entry.position.toString()
     }
-    val bg = if (entry.isMe) FairyGold.copy(alpha = 0.16f) else Color.White.copy(alpha = 0.04f)
-    val borderColor = if (entry.isMe) FairyGold.copy(alpha = 0.6f) else Color.White.copy(alpha = 0.08f)
+    // Плотные тёмные плашки: раньше строки были почти прозрачные и терялись
+    // на фоне-картинке (жалоба тестеров «тяжело читать»).
+    val bg = if (entry.isMe) Color(0xFF3A2A0E) else Color(0xF01A1030)
+    val borderColor = if (entry.isMe) FairyGold.copy(alpha = 0.7f) else Color.White.copy(alpha = 0.12f)
     Row(
         modifier = Modifier
             .fillMaxWidth()

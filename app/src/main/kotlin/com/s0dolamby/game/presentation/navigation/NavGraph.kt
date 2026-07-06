@@ -134,26 +134,20 @@ fun NavGraph() {
         true -> Screen.Home.route
     }
 
-    // Куда сейчас залетели — нужно чтобы прятать глобальную «Следующий день»
-    // на экранах, где она мешает (AMA-чат, мини-игры, gate, онбординг).
     val currentEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentEntry?.destination?.route
-    val hideFabRoutes = setOf(
-        Screen.Onboarding.route,
-        // На главной у HomeScreen своя кнопка (нужна для DayNewsOverlay)
-        Screen.Home.route,
-        Screen.Ama.route,
-        Screen.MinigameGate.route,
-        Screen.GoldenKey.route,
-        Screen.KoscheiMemory.route,
-        Screen.KolobokNora.route,
-        Screen.ZolushkaCoins.route,
-        Screen.BabaYagaCauldron.route,
-        Screen.BoyarinCharter.route,
-        Screen.IvanDurakMap.route,
-        Screen.TrainingGame.route
+    // Глобальную «Следующий день» показываем ТОЛЬКО там, где прокрутить день —
+    // естественное действие и кнопка не накрывает контент: вкладки «Грамоты»,
+    // «Успехи», «Сегодня». На Главной своя кнопка в списке; в Казне (кнопки
+    // «Вывести/Довложить»), на под-экранах (Тренировочный зал, рейтинг, наука,
+    // летопись, детали дела, настройки) и в мини-играх FAB мешал — там его нет.
+    // (жалобы тестеров: «внизу мешает кнопка следующий день»)
+    val showFabRoutes = setOf(
+        Screen.Inbox.route,
+        Screen.Stats.route,
+        Screen.Today.route
     )
-    val showGlobalFab = currentRoute != null && currentRoute !in hideFabRoutes
+    val showGlobalFab = currentRoute in showFabRoutes
 
     // Какая вкладка сейчас активна (для подсветки BottomNav) — null значит
     // что мы на «не-табовом» экране (стек поверх) и BottomNav не показываем.

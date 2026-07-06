@@ -107,6 +107,10 @@ class SettingsViewModel @Inject constructor(
 
     fun resetGame() {
         viewModelScope.launch {
+            // Стабильный id купца сохраняем ДО чистки: иначе в облачном рейтинге
+            // после сброса появится дубль (старая запись + новая под новым id).
+            // Один игрок — одна строка.
+            val keepPlayerId = settingsRepository.getSettings().playerId
             // clearAllTables НЕЛЬЗЯ звать на главном потоке — Room кидает
             // IllegalStateException и приложение падает (баг «сброс крашит»).
             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
@@ -121,6 +125,12 @@ class SettingsViewModel @Inject constructor(
             // Лог тоже с чистого листа — иначе Казна покажет краш прошлой жизни
             com.s0dolamby.game.data.logging.AppLogger.clear()
             gameStateRepository.initializeGameState()
+            // Возвращаем прежний playerId в чистые настройки.
+            if (keepPlayerId.isNotBlank()) {
+                settingsRepository.updateSettings(
+                    settingsRepository.getSettings().copy(playerId = keepPlayerId)
+                )
+            }
             _uiState.value = _uiState.value.copy(resetDone = true)
         }
     }
