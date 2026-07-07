@@ -282,6 +282,9 @@ object Strings {
         "gate.chat.hint" to "каждый вопрос — +1% сверху к вложению (до +10%)",
         "gate.btn.investNow" to "Вложить гроши",
         "gate.btn.playAgain" to "Сыграть ещё раз",
+        "gate.reveal.title" to "Что удалось разглядеть",
+        "gate.reveal.type" to "Тип дела",
+        "gate.reveal.apy" to "Посул (обещанная доходность)",
         // Сокращённые имена дельцов для жетонов (родительный падеж).
         "gate.shortName.BURATINO" to "Буратино",
         "gate.shortName.BOYARIN" to "Боярина",
@@ -1134,6 +1137,9 @@ object Strings {
         "gate.chat.hint" to "each question adds +1% on top (up to +10%)",
         "gate.btn.investNow" to "Invest coins",
         "gate.btn.playAgain" to "Play again",
+        "gate.reveal.title" to "What you made out",
+        "gate.reveal.type" to "Deal type",
+        "gate.reveal.apy" to "Promised yield",
         // Token short names (kept as transliterated nouns; cases collapse in EN).
         "gate.shortName.BURATINO" to "Buratino",
         "gate.shortName.BOYARIN" to "Boyarin",

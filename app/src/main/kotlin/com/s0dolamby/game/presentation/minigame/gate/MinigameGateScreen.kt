@@ -58,6 +58,13 @@ class MinigameGateViewModel @Inject constructor(
             .map { it.archetypeTokens }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
+    /** Дело по id — чтобы на экране результата показать раскрытые параметры
+     *  (тип за победу, посул за идеал) без захода в беседу. */
+    fun projectFlow(projectId: String): StateFlow<com.s0dolamby.game.domain.model.Project?> =
+        gameStateRepository.observeGameState()
+            .map { st -> (st.pendingInbox + st.activeProjects).firstOrNull { it.id == projectId } }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
     /** null — грузим флаг; true — показать мини-тур первого дела; false — уже видели. */
     private val _firstDealTourPending = MutableStateFlow<Boolean?>(null)
     val firstDealTourPending: StateFlow<Boolean?> = _firstDealTourPending.asStateFlow()
@@ -198,9 +205,12 @@ fun MinigameGateScreen(
         }
 
         GatePhase.FINISHED -> finished?.let { outcome ->
+            val projectFlow = remember(projectId) { viewModel.projectFlow(projectId) }
+            val project by projectFlow.collectAsState()
             GateResultScreen(
                 outcome = outcome,
                 archetype = archetype,
+                project = project,
                 onBack = onBack,
                 onContinueToInvest = onContinueToInvest,
                 onGoToChat = onGoToChat
@@ -273,6 +283,7 @@ private fun IntroChoiceScreen(
 private fun GateResultScreen(
     outcome: MinigameOutcome,
     archetype: PersonaArchetype,
+    project: com.s0dolamby.game.domain.model.Project?,
     onBack: () -> Unit,
     onContinueToInvest: () -> Unit,
     onGoToChat: () -> Unit
@@ -320,6 +331,12 @@ private fun GateResultScreen(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.widthIn(max = 260.dp)
             )
+            // Раскрытые параметры дела прямо здесь: победа открывает тип,
+            // идеал — ещё и посул. В беседу за этим идти не обязательно.
+            if (outcome.isWin && project != null) {
+                Spacer(Modifier.height(16.dp))
+                GateRevealedParams(project = project, perfect = outcome.isPerfect)
+            }
             Spacer(Modifier.height(22.dp))
             // Ретрая после провала НЕТ — делец второго испытания не даёт.
             // Вложиться можно всегда (после провала — вслепую), а беседа
@@ -358,6 +375,54 @@ private fun GateResultScreen(
                 Text(Strings.t("btn.back"), color = Color.White.copy(alpha = 0.7f))
             }
         }
+    }
+}
+
+/** Раскрытые параметры дела на экране результата (с плавным появлением). */
+@Composable
+private fun GateRevealedParams(
+    project: com.s0dolamby.game.domain.model.Project,
+    perfect: Boolean
+) {
+    var show by remember { mutableStateOf(false) }
+    androidx.compose.runtime.LaunchedEffect(Unit) { show = true }
+    androidx.compose.animation.AnimatedVisibility(
+        visible = show,
+        enter = androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(500)) +
+            androidx.compose.animation.expandVertically(androidx.compose.animation.core.tween(400))
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(FairyGold.copy(alpha = 0.08f))
+                .border(1.dp, FairyGold.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                .padding(12.dp)
+        ) {
+            Text(
+                Strings.t("gate.reveal.title"),
+                color = FairyGold,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(Modifier.height(6.dp))
+            GateRevealRow(Strings.t("gate.reveal.type"), project.type.displayName)
+            if (perfect) {
+                Spacer(Modifier.height(4.dp))
+                GateRevealRow(Strings.t("gate.reveal.apy"), "${project.claimedAPY.toInt()}%")
+            }
+        }
+    }
+}
+
+@Composable
+private fun GateRevealRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, color = Color.White.copy(alpha = 0.65f), fontSize = 12.sp)
+        Text(value, color = FairyGold, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 
