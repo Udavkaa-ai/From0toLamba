@@ -46,6 +46,7 @@ import com.s0dolamby.game.domain.model.Project
 import com.s0dolamby.game.domain.model.ProjectFate
 import com.s0dolamby.game.domain.model.ProjectType
 import com.s0dolamby.game.domain.repository.GameConfig
+import com.s0dolamby.game.domain.model.PlayerVerdict
 import com.s0dolamby.game.presentation.common.theme.Success
 import com.s0dolamby.game.presentation.common.theme.Warning
 import com.s0dolamby.game.presentation.common.theme.Error as ErrorColor
@@ -358,9 +359,22 @@ fun AmaScreen(
             }
         }
     ) { padding ->
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+        // Закреплённая «Верю — не верю» вверху беседы: пока выбираешь — карточка
+        // с кнопками; после ставки схлопывается в тонкую полоску, не отвлекает
+        // от чата. Условие показа — как раньше (после первого вопроса/вложения).
+        val vp = uiState.project
+        if (vp != null && !vp.isClosed &&
+            (vp.playerVerdict != null || questionCount > 0 || vp.investedAmountRubles > 0)
+        ) {
+            PinnedVerdict(
+                verdict = vp.playerVerdict,
+                onBet = { viewModel.recordVerdict(it) }
+            )
+        }
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxSize().padding(padding),
+            modifier = Modifier.weight(1f).fillMaxWidth(),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -385,21 +399,7 @@ fun AmaScreen(
             items(messages) { msg ->
                 MessageBubble(message = msg)
             }
-            // «Верю — не верю»: после первого вопроса (или при вложенных
-            // грошах) можно поставить на судьбу дела — ставка кормит чуйку
-            val verdictProject = uiState.project
-            if (verdictProject != null && !verdictProject.isClosed &&
-                (verdictProject.playerVerdict != null || questionCount > 0 ||
-                    verdictProject.investedAmountRubles > 0)
-            ) {
-                item {
-                    com.s0dolamby.game.presentation.common.components.VerdictCard(
-                        verdict = verdictProject.playerVerdict,
-                        canBet = true,
-                        onBet = { viewModel.recordVerdict(it) }
-                    )
-                }
-            }
+            // «Верю — не верю» переехала в закреплённую полоску над лентой.
             // Делец «печатает»: покачивающийся аватар + мигающие точки
             if (uiState.isSending) {
                 item { TypingBubble(archetype = uiState.project?.personaArchetype) }
@@ -413,6 +413,7 @@ fun AmaScreen(
                 }
             }
             item { Spacer(Modifier.height(160.dp)) }
+        }
         }
     }
 
@@ -643,6 +644,50 @@ private fun TypingBubble(archetype: PersonaArchetype?) {
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Закреплённая «Верю — не верю» над лентой беседы. Пока ставка не сделана —
+ * полноценная карточка с кнопками; после ставки — тонкая полоска с выбором,
+ * чтобы не отвлекала от чата.
+ */
+@Composable
+private fun PinnedVerdict(verdict: PlayerVerdict?, onBet: (PlayerVerdict) -> Unit) {
+    if (verdict != null) {
+        val (emoji, labelKey, color) =
+            if (verdict == PlayerVerdict.HONEST) Triple("🤝", "verdict.locked.honest", Success)
+            else Triple("🕵️", "verdict.locked.scam", ErrorColor)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFF160D30))
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text("🔮", fontSize = 15.sp)
+            Text(
+                Strings.t("verdict.title"),
+                color = Color.White.copy(alpha = 0.7f),
+                fontSize = 12.sp
+            )
+            Text("·", color = Color.White.copy(alpha = 0.4f), fontSize = 12.sp)
+            Text(
+                "$emoji ${Strings.t(labelKey)}",
+                color = color,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+    } else {
+        Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+            com.s0dolamby.game.presentation.common.components.VerdictCard(
+                verdict = null,
+                canBet = true,
+                onBet = onBet
+            )
         }
     }
 }
