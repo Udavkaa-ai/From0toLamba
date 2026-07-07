@@ -69,6 +69,16 @@ class InboxViewModel @Inject constructor(
         .map { it.balance }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
+    /** Чин — задаёт потолок суммарного вложения в одно дело. */
+    val investorRank: StateFlow<com.s0dolamby.game.domain.model.InvestorRank> =
+        gameStateRepository.observeGameState()
+            .map { it.investorRank }
+            .stateIn(
+                viewModelScope,
+                SharingStarted.WhileSubscribed(5000),
+                com.s0dolamby.game.domain.model.InvestorRank.NEWBIE
+            )
+
     private val _investState = MutableStateFlow(InboxInvestState())
     val investState: StateFlow<InboxInvestState> = _investState.asStateFlow()
 

@@ -42,6 +42,9 @@ data class AmaUiState(
     val showInvestSheet: Boolean = false,
     val investedAmount: Double? = null,
     val freeBalance: Double = 0.0,
+    /** Чин — задаёт потолок суммарного вложения в одно дело. */
+    val investorRank: com.s0dolamby.game.domain.model.InvestorRank =
+        com.s0dolamby.game.domain.model.InvestorRank.NEWBIE,
     /** Мини-игра этого дела уже сыграна (неважно, с каким исходом) — вложение доступно. */
     val minigamePlayed: Boolean = false,
     /** Победа (≤1 ошибки) — раскрыт тип дела. */
@@ -79,7 +82,7 @@ class AmaViewModel @Inject constructor(
         loadSession()
         viewModelScope.launch {
             gameStateRepository.observeGameState().collect { state ->
-                _uiState.update { it.copy(freeBalance = state.balance) }
+                _uiState.update { it.copy(freeBalance = state.balance, investorRank = state.investorRank) }
             }
         }
         // Подписка на unlock-стор: кнопка инвеста мгновенно превращается из

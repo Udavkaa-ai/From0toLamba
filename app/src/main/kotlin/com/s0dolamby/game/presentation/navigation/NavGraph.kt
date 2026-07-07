@@ -526,9 +526,14 @@ fun NavGraph() {
         // Шит довложения с бонусом за меткий глаз
         reactionInvest?.let { (update, bonus) ->
             val freeBalance by dayFabViewModel.freeBalance.collectAsState()
+            val rank by dayFabViewModel.investorRank.collectAsState()
+            val cap = com.s0dolamby.game.domain.ranks.RankService.maxInvestmentPerDeal(rank)
+            val invested = activeProjects.firstOrNull { it.id == update.projectId }
+                ?.investedAmountRubles ?: 0.0
             com.s0dolamby.game.presentation.common.components.InvestSheet(
                 freeBalance = freeBalance,
                 bonusText = Strings.t("sechenie.investLine", bonus, update.projectName),
+                maxInvestment = minOf(freeBalance, (cap - invested).coerceAtLeast(0.0)),
                 onDismiss = { reactionInvest = null },
                 onInvest = { amount ->
                     dayFabViewModel.investWithReactionBonus(update.projectId, amount, bonus)

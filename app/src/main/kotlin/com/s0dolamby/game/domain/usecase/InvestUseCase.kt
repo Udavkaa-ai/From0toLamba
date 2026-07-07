@@ -66,15 +66,22 @@ class InvestUseCase @Inject constructor(
         require(amountRubles >= GameConfig.MIN_INVESTMENT_RUBLES) {
             "Минимальный вклад ${GameConfig.MIN_INVESTMENT_RUBLES.toInt()} г"
         }
-        require(amountRubles <= GameConfig.MAX_INVESTMENT_RUBLES) {
-            "Максимальный вклад ${GameConfig.MAX_INVESTMENT_RUBLES.toInt()} г"
-        }
 
         val state = gameStateRepository.getGameState()
         require(state.balance >= amountRubles) { "Недостаточно грошей в кошеле" }
 
         val project = projectRepository.getProjectById(projectId)
             ?: error("Дело не найдено")
+
+        // Потолок СУММАРНОГО вложения в дело по чину (100/1000/5000/10000).
+        // Проверяется по «уже вложено + новая сумма» — иначе можно было
+        // докладывать в одно дело без предела.
+        val cap = com.s0dolamby.game.domain.ranks.RankService.maxInvestmentPerDeal(state.investorRank)
+        require(project.investedAmountRubles + amountRubles <= cap) {
+            val left = (cap - project.investedAmountRubles).coerceAtLeast(0.0)
+            "В одно дело можно вложить до ${cap.toInt()} г (чин: ${state.investorRank.displayName}). " +
+                "Осталось ${left.toInt()} г"
+        }
 
         // Порт TG InvestService: при заполненных 5 слотах можно вложиться
         // сверх лимита, купив дополнительный слот за 1000 г (max +5).

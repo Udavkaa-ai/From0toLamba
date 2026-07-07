@@ -57,6 +57,7 @@ fun InboxScreen(
     val unlocks by viewModel.unlockOutcomes.collectAsState()
     val investState by viewModel.investState.collectAsState()
     val freeBalance by viewModel.freeBalance.collectAsState()
+    val investorRank by viewModel.investorRank.collectAsState()
     val activity = androidx.activity.compose.LocalActivity.current
     var adPromptForProjectId by remember { mutableStateOf<String?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -161,9 +162,13 @@ fun InboxScreen(
     }
     // Шит вложения прямо из грамот — в чат заходить не обязательно
     if (investState.sheetProjectId != null) {
+        val cap = com.s0dolamby.game.domain.ranks.RankService.maxInvestmentPerDeal(investorRank)
+        val invested = projects.firstOrNull { it.id == investState.sheetProjectId }
+            ?.investedAmountRubles ?: 0.0
         com.s0dolamby.game.presentation.common.components.InvestSheet(
             freeBalance = freeBalance,
             ugovorPercent = investState.ugovorPercent,
+            maxInvestment = minOf(freeBalance, (cap - invested).coerceAtLeast(0.0)),
             onDismiss = viewModel::closeInvestSheet,
             onInvest = { amount -> viewModel.invest(amount) }
         )

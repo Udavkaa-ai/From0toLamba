@@ -34,4 +34,21 @@ object RankService {
         takenDeals < 100 -> 100 - takenDeals
         else             -> null
     }
+
+    /** Тиеры суммарного вложения в одно дело (г). */
+    val INVESTMENT_TIERS: List<Double> = listOf(100.0, 1000.0, 5000.0, 10000.0)
+
+    /**
+     * Потолок СУММАРНОГО вложения в одно дело по чину: чем выше чин, тем
+     * больше можно доверить одному делу. Раньше потолок был только на разовую
+     * транзакцию (5000), а докладывать можно было без предела — теперь предел
+     * на всё дело.
+     */
+    fun maxInvestmentPerDeal(rank: InvestorRank): Double = when (rank) {
+        InvestorRank.NEWBIE -> 100.0
+        InvestorRank.AMBASSADOR -> 1000.0
+        InvestorRank.ANALYST -> 5000.0
+        InvestorRank.SHARK -> 10000.0
+        InvestorRank.LAMBO_SENSEI -> 10000.0
+    }
 }

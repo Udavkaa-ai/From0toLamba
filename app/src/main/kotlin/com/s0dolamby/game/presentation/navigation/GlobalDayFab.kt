@@ -70,6 +70,16 @@ class GlobalDayFabViewModel @Inject constructor(
         .map { it.balance }
         .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000), 0.0)
 
+    /** Чин — задаёт потолок суммарного вложения в одно дело. */
+    val investorRank: StateFlow<com.s0dolamby.game.domain.model.InvestorRank> =
+        gameStateRepository.observeGameState()
+            .map { it.investorRank }
+            .stateIn(
+                viewModelScope,
+                kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000),
+                com.s0dolamby.game.domain.model.InvestorRank.NEWBIE
+            )
+
     /** Результат довложения по реакции — для снэкбара/ошибки в UI. */
     private val _reactionInvestResult = MutableStateFlow<String?>(null)
     val reactionInvestResult: StateFlow<String?> = _reactionInvestResult.asStateFlow()

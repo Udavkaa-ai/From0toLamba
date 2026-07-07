@@ -51,11 +51,15 @@ fun InvestSheet(
     ugovorPercent: Int = 0,
     /** Своя бонус-строка (например реакция «Сечением») — заменяет уговор. */
     bonusText: String? = null,
+    /** Сколько ещё можно вложить в это дело (потолок по чину минус уже вложенное,
+     *  ограничено кошелём). null — не показывать лимит (валидация всё равно в use-case). */
+    maxInvestment: Double? = null,
     onDismiss: () -> Unit,
     onInvest: (Double) -> Unit
 ) {
     var amountText by remember { mutableStateOf("") }
     val amount = amountText.toDoubleOrNull()
+    val overCap = amount != null && maxInvestment != null && amount > maxInvestment
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val palette = LocalAppPalette.current
@@ -98,9 +102,41 @@ fun InvestSheet(
                 onValueChange = { amountText = it.filter { c -> c.isDigit() || c == '.' } },
                 label = { Text(Strings.t("ama.invest.amount")) },
                 suffix = { Text("г", color = LocalContentColor.current) },
+                isError = overCap,
                 modifier = Modifier.fillMaxWidth(),
                 colors = fairyOnCardTextFieldColors()
             )
+            // Потолок вложения в дело по чину: остаток + быстрые тиеры
+            if (maxInvestment != null) {
+                Text(
+                    if (maxInvestment <= 0.0) Strings.t("invest.cap.reached")
+                    else Strings.t("invest.cap.left", "%.0f г".format(maxInvestment)),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (overCap) ErrorColor else LocalContentColorMuted.current,
+                    fontWeight = if (overCap) FontWeight.SemiBold else FontWeight.Normal
+                )
+                val tiers = com.s0dolamby.game.domain.ranks.RankService.INVESTMENT_TIERS
+                    .filter { it <= maxInvestment }
+                if (tiers.isNotEmpty()) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        tiers.forEach { tier ->
+                            Surface(
+                                onClick = { amountText = tier.toInt().toString() },
+                                color = LocalAccentOnCard.current.copy(alpha = 0.12f),
+                                shape = MaterialTheme.shapes.small
+                            ) {
+                                Text(
+                                    "%.0f".format(tier),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = LocalAccentOnCard.current,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
             // Бонус-строка: своя (реакция «Сечением») либо «уговор» за беседу
             when {
                 bonusText != null -> Text(
@@ -128,7 +164,7 @@ fun InvestSheet(
             )
             Button(
                 onClick = { amount?.let { onInvest(it) } },
-                enabled = amount != null && amount >= 5.0,
+                enabled = amount != null && amount >= 5.0 && !overCap,
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = FairyGold,

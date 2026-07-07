@@ -419,10 +419,14 @@ fun AmaScreen(
 
     // Invest bottom sheet (общий с грамотами) — с бонусом «уговора» за вопросы
     if (uiState.showInvestSheet) {
+        val cap = com.s0dolamby.game.domain.ranks.RankService
+            .maxInvestmentPerDeal(uiState.investorRank)
+        val invested = uiState.project?.investedAmountRubles ?: 0.0
         com.s0dolamby.game.presentation.common.components.InvestSheet(
             freeBalance = uiState.freeBalance,
             ugovorPercent = com.s0dolamby.game.domain.usecase.InvestUseCase
                 .ugovorPercent(uiState.session?.questionCount ?: 0),
+            maxInvestment = minOf(uiState.freeBalance, (cap - invested).coerceAtLeast(0.0)),
             onDismiss = viewModel::hideInvestSheet,
             onInvest = { amount -> viewModel.invest(amount) }
         )
