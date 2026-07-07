@@ -59,6 +59,16 @@ class MinigameGateViewModel @Inject constructor(
             .map { it.archetypeTokens }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
+    /** Чин игрока — задаёт сложность подделок в грамоте Боярина. */
+    val investorRank: StateFlow<com.s0dolamby.game.domain.model.InvestorRank> =
+        gameStateRepository.observeGameState()
+            .map { it.investorRank }
+            .stateIn(
+                viewModelScope,
+                SharingStarted.WhileSubscribed(5000),
+                com.s0dolamby.game.domain.model.InvestorRank.NEWBIE
+            )
+
     /** Дело по id — чтобы на экране результата показать раскрытые параметры
      *  (тип за победу, посул за идеал) без захода в беседу. */
     fun projectFlow(projectId: String): StateFlow<com.s0dolamby.game.domain.model.Project?> =
@@ -147,6 +157,7 @@ fun MinigameGateScreen(
 
     val tokens by viewModel.archetypeTokens.collectAsState()
     val tokenCount = tokens[archetype] ?: 0
+    val playerRank by viewModel.investorRank.collectAsState()
     val previousOutcome = viewModel.storedOutcome(projectId)
 
     // Если игра уже была сыграна — С ЛЮБЫМ исходом — сразу к экрану
@@ -192,7 +203,7 @@ fun MinigameGateScreen(
             PersonaArchetype.BURATINO ->
                 GoldenKeyScreen(onBack = onBack, onComplete = handleOutcome)
             PersonaArchetype.BOYARIN ->
-                BoyarinCharterScreen(onBack = onBack, onComplete = handleOutcome)
+                BoyarinCharterScreen(onBack = onBack, onComplete = handleOutcome, rank = playerRank)
             PersonaArchetype.KOSCHEI ->
                 KoscheiMemoryScreen(onBack = onBack, onComplete = handleOutcome)
             PersonaArchetype.KOLOBOK ->

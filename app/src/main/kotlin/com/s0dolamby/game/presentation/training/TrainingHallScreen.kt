@@ -167,7 +167,11 @@ fun TrainingMinigameScreen(
             val backToIntro = { phase = TrainPhase.INTRO }
             when (archetype) {
                 PersonaArchetype.BURATINO -> GoldenKeyScreen(onBack = backToIntro)
-                PersonaArchetype.BOYARIN -> BoyarinCharterScreen(onBack = backToIntro)
+                // Тренировка показывает все виды отличий сразу (как у высокого чина)
+                PersonaArchetype.BOYARIN -> BoyarinCharterScreen(
+                    onBack = backToIntro,
+                    rank = com.s0dolamby.game.domain.model.InvestorRank.ANALYST
+                )
                 PersonaArchetype.KOSCHEI -> KoscheiMemoryScreen(onBack = backToIntro)
                 PersonaArchetype.KOLOBOK -> KolobokNoraScreen(onBack = backToIntro)
                 PersonaArchetype.ZOLUSHKA -> ZolushkaCoinsScreen(onBack = backToIntro)
