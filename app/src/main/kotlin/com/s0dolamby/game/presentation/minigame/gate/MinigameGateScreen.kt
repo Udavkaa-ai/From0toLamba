@@ -29,6 +29,7 @@ import androidx.lifecycle.viewModelScope
 import com.s0dolamby.game.data.minigame.MinigameUnlockStore
 import com.s0dolamby.game.domain.model.PersonaArchetype
 import com.s0dolamby.game.domain.repository.GameStateRepository
+import com.s0dolamby.game.presentation.portfolio.displayName
 import com.s0dolamby.game.presentation.common.i18n.Strings
 import com.s0dolamby.game.presentation.common.theme.EnchantedPurple
 import com.s0dolamby.game.presentation.common.theme.FairyGold
