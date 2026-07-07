@@ -2,6 +2,7 @@ package com.s0dolamby.game.domain.usecase
 
 import com.s0dolamby.game.data.achievements.AchievementUnlockStore
 import com.s0dolamby.game.data.logging.AppLogger
+import com.s0dolamby.game.domain.config.FateConfig
 import com.s0dolamby.game.domain.events.EventKind
 import com.s0dolamby.game.domain.events.MafiaOffers
 import com.s0dolamby.game.domain.events.RandomEvents
@@ -97,13 +98,14 @@ class AdvanceDayUseCase @Inject constructor(
                         ))
                         AppLogger.i("AdvanceDayUseCase", "Project ${project.id} recovered for $recoveryDays more days")
                     } else {
-                        // Дело рухнуло — возвращаем часть текущей стоимости в свободный баланс
-                        val lossPercent = when (project.fate) {
-                            ProjectFate.INSTANT_SCAM -> Random.nextDouble(0.80, 1.0)
-                            ProjectFate.SLOW_DRAIN -> Random.nextDouble(0.30, 0.70)
-                            else -> 0.0
-                        }
-                        val returned = project.currentValueRubles * (1 - lossPercent)
+                        // Дело рухнуло — возвращаем часть ВЛОЖЕННОГО (не раздутой
+                        // «текущей стоимости»): накопленный доход был приманкой, крах
+                        // его обнуляет. База invested → нетто совпадает с обещанием ЧАВО
+                        // (скам −80..100%, слив −30..70%), а не уходит в плюс на удачном
+                        // ролле. Диапазон потерь — из FateConfig, единого источника.
+                        val loss = FateConfig[project.fate].lossRange
+                        val lossPercent = Random.nextDouble(loss.start, loss.endInclusive)
+                        val returned = project.investedAmountRubles * (1 - lossPercent)
                         balanceDelta += returned
                         gameStateRepository.recordReturn(returned)
                         projectRepository.closeProject(project.id, buildClosureReason(project.fate), returned)
@@ -124,17 +126,23 @@ class AdvanceDayUseCase @Inject constructor(
                     val isProfitable = project.currentValueRubles > project.investedAmountRubles
                     val mafiaForced = isProfitable && project.mafiaOfferIssued &&
                         (project.fate == ProjectFate.SURVIVOR || project.fate == ProjectFate.UNICORN)
-                    val lossPercent = when {
-                        mafiaForced -> 1 - MafiaOffers.FORCED_CLOSURE_RETURN_PERCENT
-                        project.fate == ProjectFate.HONEST_FAIL -> Random.nextDouble(0.10, 0.40)
-                        else -> 0.0
-                    }
                     val closureReason = if (mafiaForced) {
                         MafiaOffers.pick(project.id).closure
                     } else {
                         buildClosureReason(project.fate)
                     }
-                    val returned = project.currentValueRubles * (1 - lossPercent)
+                    // SURVIVOR/UNICORN — честный рост, забираешь всё нажитое (или 50%
+                    // при мафия-выкупе). HONEST_FAIL — «провал»: потеря 10–40% от
+                    // ВЛОЖЕННОГО (обещание ЧАВО), база invested, а не раздутая
+                    // currentValue — иначе провал уходил в плюс на удачном ролле.
+                    val returned = when {
+                        mafiaForced -> project.currentValueRubles * MafiaOffers.FORCED_CLOSURE_RETURN_PERCENT
+                        project.fate == ProjectFate.HONEST_FAIL -> {
+                            val loss = FateConfig[ProjectFate.HONEST_FAIL].lossRange
+                            project.investedAmountRubles * (1 - Random.nextDouble(loss.start, loss.endInclusive))
+                        }
+                        else -> project.currentValueRubles
+                    }
                     balanceDelta += returned
                     gameStateRepository.recordReturn(returned)
                     projectRepository.closeProject(project.id, closureReason, returned)
