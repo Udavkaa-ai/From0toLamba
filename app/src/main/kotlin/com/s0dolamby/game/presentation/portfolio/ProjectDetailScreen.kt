@@ -706,7 +706,7 @@ val ProjectFate.displayName: String get() = when (this) {
     ProjectFate.SLOW_DRAIN -> "Медленный слив"
     ProjectFate.HONEST_FAIL -> "Честный провал"
     ProjectFate.SURVIVOR -> "Выживший"
-    ProjectFate.UNICORN -> "Единорог"
+    ProjectFate.UNICORN -> "Жар-птица"
 }
 
 val ProjectFate.color: androidx.compose.ui.graphics.Color @Composable get() = when (this) {

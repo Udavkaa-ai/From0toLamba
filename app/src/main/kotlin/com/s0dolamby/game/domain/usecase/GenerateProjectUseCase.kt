@@ -3,6 +3,7 @@ package com.s0dolamby.game.domain.usecase
 import com.s0dolamby.game.data.registry.DeveloperNameBank
 import com.s0dolamby.game.data.registry.PersonaRegistry
 import com.s0dolamby.game.data.registry.ProjectRegistry
+import com.s0dolamby.game.domain.config.FateConfig
 import com.s0dolamby.game.domain.model.*
 import com.s0dolamby.game.domain.repository.ProjectRepository
 import java.util.UUID
@@ -109,19 +110,19 @@ class GenerateProjectUseCase @Inject constructor(
         return ProjectFate.SLOW_DRAIN
     }
 
-    private fun calcDaysUntilCollapse(fate: ProjectFate, rng: Random): Int = when (fate) {
-        ProjectFate.INSTANT_SCAM -> rng.nextInt(1, 4)
-        ProjectFate.SLOW_DRAIN -> rng.nextInt(7, 22)
-        ProjectFate.HONEST_FAIL -> rng.nextInt(14, 30)
-        ProjectFate.SURVIVOR -> rng.nextInt(20, 31)
-        ProjectFate.UNICORN -> rng.nextInt(20, 31)
+    // Срок жизни и дневная доходность берутся из FateConfig — единого
+    // источника баланса (потолок Единорога ≤~495%). Раньше здесь были свои
+    // завышенные диапазоны (Единорог до 0.10/день → тысячи процентов), из-за
+    // чего даже честный провал уходил в плюс.
+    private fun calcDaysUntilCollapse(fate: ProjectFate, rng: Random): Int {
+        val days = FateConfig[fate].daysRange
+        return rng.nextInt(days.first, days.last + 1)
     }
 
-    private fun calcRealYield(fate: ProjectFate, rng: Random): Double = when (fate) {
-        ProjectFate.INSTANT_SCAM -> 0.0
-        ProjectFate.SLOW_DRAIN -> rng.nextDouble(0.001, 0.005)
-        ProjectFate.HONEST_FAIL -> rng.nextDouble(0.002, 0.008)
-        ProjectFate.SURVIVOR -> rng.nextDouble(0.003, 0.015)
-        ProjectFate.UNICORN -> rng.nextDouble(0.02, 0.10)
+    private fun calcRealYield(fate: ProjectFate, rng: Random): Double {
+        // INSTANT_SCAM без реального роста — деньги исчезают крахом.
+        if (fate == ProjectFate.INSTANT_SCAM) return 0.0
+        val y = FateConfig[fate].dailyYieldRange
+        return rng.nextDouble(y.start, y.endInclusive)
     }
 }

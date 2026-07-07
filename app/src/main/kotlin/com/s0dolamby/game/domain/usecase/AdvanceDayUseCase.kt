@@ -33,8 +33,10 @@ class AdvanceDayUseCase @Inject constructor(
     // Каждый игровой день засчитывается как 10 реальных — держит прогресс интересным
     private val YIELD_MULTIPLIER = 10.0
 
-    /** Бонус к дневной доходности за уровень связи с архетипом (+1%/уровень, макс +10%). */
-    private val TIE_BONUS_PER_LEVEL = 0.01
+    /** Бонус к дневной доходности за уровень связи с архетипом (+1%/уровень, макс +10%).
+     *  Значение умножается на YIELD_MULTIPLIER(10), поэтому 0.001×10 = +1%/день за
+     *  уровень (макс +10%). Раньше было 0.01 → +100%/день на макс-связи (10× лишку). */
+    private val TIE_BONUS_PER_LEVEL = 0.001
 
     suspend operator fun invoke(): Result<List<DailyUpdate>> = runCatching {
         val state = gameStateRepository.getGameState()
