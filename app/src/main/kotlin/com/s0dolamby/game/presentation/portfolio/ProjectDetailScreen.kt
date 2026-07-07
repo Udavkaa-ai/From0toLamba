@@ -410,7 +410,10 @@ private fun ProjectInfoCard(project: Project) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                // weight(1f) — иначе длинное имя дельца забирало всю ширину и
+                // выдавливало бейдж типа в тонкую колонку (буквы переносились
+                // вертикально). Теперь имя переносится, а бейдж на своём месте.
+                Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                     Text(project.claimedName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     Text(Strings.t("detail.info.byOwner", project.developerName), style = MaterialTheme.typography.bodyMedium,
                         color = LocalContentColorMuted.current)
@@ -426,6 +429,8 @@ private fun ProjectInfoCard(project: Project) {
                         project.type.displayName,
                         style = MaterialTheme.typography.labelSmall,
                         color = Color.White,
+                        maxLines = 1,
+                        softWrap = false,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
