@@ -50,8 +50,15 @@ private val ANIMALS = listOf(NoraGuest.HARE, NoraGuest.WOLF, NoraGuest.BEAR, Nor
 @Composable
 fun KolobokNoraScreen(
     onBack: () -> Unit,
-    onComplete: ((MinigameOutcome) -> Unit)? = null
+    onComplete: ((MinigameOutcome) -> Unit)? = null,
+    rank: com.s0dolamby.game.domain.model.InvestorRank =
+        com.s0dolamby.game.domain.model.InvestorRank.NEWBIE
 ) {
+    // Чем выше чин, тем короче окно реакции (850→530мс).
+    val reactionWindow = remember(rank) {
+        (REACTION_WINDOW_MS - com.s0dolamby.game.presentation.minigame.common.MinigameDifficulty.tier(rank) * 80L)
+            .coerceAtLeast(500L)
+    }
     var seed by remember { mutableStateOf(System.currentTimeMillis()) }
     var attemptKey by remember(seed) { mutableStateOf(0) }
     var attemptIdx by remember(seed) { mutableStateOf(0) }
@@ -77,7 +84,7 @@ fun KolobokNoraScreen(
         val nora = Random.nextInt(NORA_COUNT)
         activeGuest = guest
         activeNora = nora
-        delay(REACTION_WINDOW_MS)
+        delay(reactionWindow)
         if (!resolved) {
             // Окно реакции истекло без тапа
             resolved = true

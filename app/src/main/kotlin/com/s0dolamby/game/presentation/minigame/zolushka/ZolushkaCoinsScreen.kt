@@ -58,8 +58,15 @@ private enum class Phase { SHOWCASE, INPUT }
 @Composable
 fun ZolushkaCoinsScreen(
     onBack: () -> Unit,
-    onComplete: ((MinigameOutcome) -> Unit)? = null
+    onComplete: ((MinigameOutcome) -> Unit)? = null,
+    rank: com.s0dolamby.game.domain.model.InvestorRank =
+        com.s0dolamby.game.domain.model.InvestorRank.NEWBIE
 ) {
+    // Чем выше чин, тем меньше времени повторить последовательность (14→10с).
+    val inputSeconds = remember(rank) {
+        (INPUT_SECONDS - com.s0dolamby.game.presentation.minigame.common.MinigameDifficulty.tier(rank))
+            .coerceAtLeast(10)
+    }
     var seed by remember { mutableStateOf(System.currentTimeMillis()) }
     // Одна мастер-последовательность на всю игру; раунды показывают
     // растущий префикс: 3 → 5 → 7 зёрен. Начало всегда одно и то же —
@@ -96,7 +103,7 @@ fun ZolushkaCoinsScreen(
             }
             phase = Phase.INPUT
             stage = MinigameStage.PLAY
-            secondsLeft = INPUT_SECONDS
+            secondsLeft = inputSeconds
             playerInput = emptyList()
         }
     }

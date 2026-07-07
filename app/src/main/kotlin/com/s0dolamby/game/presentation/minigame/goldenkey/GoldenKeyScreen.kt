@@ -285,8 +285,14 @@ internal fun mismatchCount(built: GoldenKey, correct: GoldenKey): Int {
 @Composable
 fun GoldenKeyScreen(
     onBack: () -> Unit,
-    onComplete: ((MinigameOutcome) -> Unit)? = null
+    onComplete: ((MinigameOutcome) -> Unit)? = null,
+    rank: com.s0dolamby.game.domain.model.InvestorRank =
+        com.s0dolamby.game.domain.model.InvestorRank.NEWBIE
 ) {
+    // Чем выше чин, тем меньше времени запомнить ключ (8→4с) и собрать (30→18с).
+    val t = com.s0dolamby.game.presentation.minigame.common.MinigameDifficulty.tier(rank)
+    val memorizeSeconds = remember(rank) { (MEMORIZE_SECONDS - t).coerceAtLeast(4) }
+    val chooseSeconds = remember(rank) { (CHOOSE_SECONDS - t * 3).coerceAtLeast(18) }
     var seed by remember { mutableStateOf(System.currentTimeMillis().toString()) }
     val correct = remember(seed) { randomKey(SeedRng(seed)) }
 
@@ -294,8 +300,8 @@ fun GoldenKeyScreen(
     // Стартовая заготовка конструктора — случайная, чтобы нельзя было
     // просто нажать «Отлить», ничего не вспоминая.
     var built by remember(seed) { mutableStateOf(randomKey(SeedRng("$seed-blank"))) }
-    var memorizeLeft by remember(seed) { mutableStateOf(MEMORIZE_SECONDS) }
-    var chooseLeft by remember(seed) { mutableStateOf(CHOOSE_SECONDS) }
+    var memorizeLeft by remember(seed) { mutableStateOf(memorizeSeconds) }
+    var chooseLeft by remember(seed) { mutableStateOf(chooseSeconds) }
     var timedOut by remember(seed) { mutableStateOf(false) }
 
     LaunchedEffect(seed, stage) {
@@ -332,8 +338,8 @@ fun GoldenKeyScreen(
 
     fun restart() {
         seed = System.currentTimeMillis().toString()
-        memorizeLeft = MEMORIZE_SECONDS
-        chooseLeft = CHOOSE_SECONDS
+        memorizeLeft = memorizeSeconds
+        chooseLeft = chooseSeconds
         timedOut = false
         stage = MinigameStage.MEMORIZE
     }

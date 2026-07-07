@@ -165,18 +165,17 @@ fun TrainingMinigameScreen(
         )
         TrainPhase.PLAYING -> {
             val backToIntro = { phase = TrainPhase.INTRO }
+            // Тренировка идёт на «среднем» чине — все виды сложности сразу,
+            // но не самое жёсткое время (Мудрец).
+            val practiceRank = com.s0dolamby.game.domain.model.InvestorRank.ANALYST
             when (archetype) {
-                PersonaArchetype.BURATINO -> GoldenKeyScreen(onBack = backToIntro)
-                // Тренировка показывает все виды отличий сразу (как у высокого чина)
-                PersonaArchetype.BOYARIN -> BoyarinCharterScreen(
-                    onBack = backToIntro,
-                    rank = com.s0dolamby.game.domain.model.InvestorRank.ANALYST
-                )
-                PersonaArchetype.KOSCHEI -> KoscheiMemoryScreen(onBack = backToIntro)
-                PersonaArchetype.KOLOBOK -> KolobokNoraScreen(onBack = backToIntro)
-                PersonaArchetype.ZOLUSHKA -> ZolushkaCoinsScreen(onBack = backToIntro)
-                PersonaArchetype.BABA_YAGA -> BabaYagaCauldronScreen(onBack = backToIntro)
-                PersonaArchetype.IVAN_DURAK -> IvanDurakMapScreen(onBack = backToIntro)
+                PersonaArchetype.BURATINO -> GoldenKeyScreen(onBack = backToIntro, rank = practiceRank)
+                PersonaArchetype.BOYARIN -> BoyarinCharterScreen(onBack = backToIntro, rank = practiceRank)
+                PersonaArchetype.KOSCHEI -> KoscheiMemoryScreen(onBack = backToIntro, rank = practiceRank)
+                PersonaArchetype.KOLOBOK -> KolobokNoraScreen(onBack = backToIntro, rank = practiceRank)
+                PersonaArchetype.ZOLUSHKA -> ZolushkaCoinsScreen(onBack = backToIntro, rank = practiceRank)
+                PersonaArchetype.BABA_YAGA -> BabaYagaCauldronScreen(onBack = backToIntro, rank = practiceRank)
+                PersonaArchetype.IVAN_DURAK -> IvanDurakMapScreen(onBack = backToIntro, rank = practiceRank)
             }
         }
     }

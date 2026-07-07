@@ -69,8 +69,15 @@ private const val TIME_BUDGET_S = 25
 @Composable
 fun KoscheiMemoryScreen(
     onBack: () -> Unit,
-    onComplete: ((MinigameOutcome) -> Unit)? = null
+    onComplete: ((MinigameOutcome) -> Unit)? = null,
+    rank: com.s0dolamby.game.domain.model.InvestorRank =
+        com.s0dolamby.game.domain.model.InvestorRank.NEWBIE
 ) {
+    // Чем выше чин, тем меньше времени на те же 6 пар (25с → 17с).
+    val timeBudget = remember(rank) {
+        (TIME_BUDGET_S - com.s0dolamby.game.presentation.minigame.common.MinigameDifficulty.tier(rank) * 2)
+            .coerceAtLeast(15)
+    }
     var seed by remember { mutableStateOf(System.currentTimeMillis()) }
     val cards = remember(seed) { mutableStateListOf<Card>().apply { addAll(buildDeck(seed)) } }
     var firstFlippedIdx by remember(seed) { mutableStateOf<Int?>(null) }
@@ -79,7 +86,7 @@ fun KoscheiMemoryScreen(
     var attempts by remember(seed) { mutableStateOf(0) }
     var pairsFound by remember(seed) { mutableStateOf(0) }
     var stage by remember(seed) { mutableStateOf(MinigameStage.PLAY) }
-    var secondsLeft by remember(seed) { mutableStateOf(TIME_BUDGET_S) }
+    var secondsLeft by remember(seed) { mutableStateOf(timeBudget) }
 
     LaunchedEffect(seed) {
         while (secondsLeft > 0 && stage == MinigameStage.PLAY) {
@@ -146,7 +153,7 @@ fun KoscheiMemoryScreen(
         attempts = 0
         pairsFound = 0
         stage = MinigameStage.PLAY
-        secondsLeft = TIME_BUDGET_S
+        secondsLeft = timeBudget
     }
 
     MinigameShell(

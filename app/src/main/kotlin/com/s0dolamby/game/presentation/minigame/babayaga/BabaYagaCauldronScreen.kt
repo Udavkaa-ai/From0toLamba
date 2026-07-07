@@ -56,10 +56,16 @@ private enum class Phase { SHOWCASE, INPUT }
 @Composable
 fun BabaYagaCauldronScreen(
     onBack: () -> Unit,
-    onComplete: ((MinigameOutcome) -> Unit)? = null
+    onComplete: ((MinigameOutcome) -> Unit)? = null,
+    rank: com.s0dolamby.game.domain.model.InvestorRank =
+        com.s0dolamby.game.domain.model.InvestorRank.NEWBIE
 ) {
+    // Чем выше чин, тем длиннее рецепт (4→7) и меньше времени на ввод (14→10с).
+    val t = com.s0dolamby.game.presentation.minigame.common.MinigameDifficulty.tier(rank)
+    val recipeLength = remember(rank) { RECIPE_LENGTH + t.coerceAtMost(3) }
+    val inputSeconds = remember(rank) { (INPUT_SECONDS - t).coerceAtLeast(10) }
     var seed by remember { mutableStateOf(System.currentTimeMillis()) }
-    var sequence by remember(seed) { mutableStateOf(generateRecipe(seed)) }
+    var sequence by remember(seed) { mutableStateOf(generateRecipe(seed, recipeLength)) }
     // Раскладка полки: после КАЖДОГО выбора ингредиенты пересаживаются —
     // запоминать надо сами ингредиенты, а не их места на полке.
     var shelfOrder by remember(seed) { mutableStateOf(ALL_INGREDIENTS) }
@@ -99,7 +105,7 @@ fun BabaYagaCauldronScreen(
             }
             phase = Phase.INPUT
             stage = MinigameStage.PLAY
-            secondsLeft = INPUT_SECONDS
+            secondsLeft = inputSeconds
             playerInput = emptyList()
             // К началу ввода полка уже перемешана — позиции из показа не помогут
             shelfOrder = shelfOrder.shuffled()
@@ -146,7 +152,7 @@ fun BabaYagaCauldronScreen(
 
     fun restart() {
         seed = System.currentTimeMillis()
-        sequence = generateRecipe(seed)
+        sequence = generateRecipe(seed, recipeLength)
         shelfOrder = ALL_INGREDIENTS
         phase = Phase.SHOWCASE
         playerInput = emptyList()
@@ -663,9 +669,9 @@ private fun SeqProgress(
     }
 }
 
-private fun generateRecipe(seed: Long): List<Ingredient> {
+private fun generateRecipe(seed: Long, length: Int = RECIPE_LENGTH): List<Ingredient> {
     val rng = Random(seed)
-    return List(RECIPE_LENGTH) { ALL_INGREDIENTS[rng.nextInt(ALL_INGREDIENTS.size)] }
+    return List(length) { ALL_INGREDIENTS[rng.nextInt(ALL_INGREDIENTS.size)] }
 }
 
 private const val RECIPE_LENGTH = 4

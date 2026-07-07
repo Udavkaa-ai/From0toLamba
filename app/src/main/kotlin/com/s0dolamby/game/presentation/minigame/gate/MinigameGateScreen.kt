@@ -201,19 +201,19 @@ fun MinigameGateScreen(
 
         GatePhase.PLAYING -> when (archetype) {
             PersonaArchetype.BURATINO ->
-                GoldenKeyScreen(onBack = onBack, onComplete = handleOutcome)
+                GoldenKeyScreen(onBack = onBack, onComplete = handleOutcome, rank = playerRank)
             PersonaArchetype.BOYARIN ->
                 BoyarinCharterScreen(onBack = onBack, onComplete = handleOutcome, rank = playerRank)
             PersonaArchetype.KOSCHEI ->
-                KoscheiMemoryScreen(onBack = onBack, onComplete = handleOutcome)
+                KoscheiMemoryScreen(onBack = onBack, onComplete = handleOutcome, rank = playerRank)
             PersonaArchetype.KOLOBOK ->
-                KolobokNoraScreen(onBack = onBack, onComplete = handleOutcome)
+                KolobokNoraScreen(onBack = onBack, onComplete = handleOutcome, rank = playerRank)
             PersonaArchetype.ZOLUSHKA ->
-                ZolushkaCoinsScreen(onBack = onBack, onComplete = handleOutcome)
+                ZolushkaCoinsScreen(onBack = onBack, onComplete = handleOutcome, rank = playerRank)
             PersonaArchetype.BABA_YAGA ->
-                BabaYagaCauldronScreen(onBack = onBack, onComplete = handleOutcome)
+                BabaYagaCauldronScreen(onBack = onBack, onComplete = handleOutcome, rank = playerRank)
             PersonaArchetype.IVAN_DURAK ->
-                IvanDurakMapScreen(onBack = onBack, onComplete = handleOutcome)
+                IvanDurakMapScreen(onBack = onBack, onComplete = handleOutcome, rank = playerRank)
         }
 
         GatePhase.FINISHED -> finished?.let { outcome ->

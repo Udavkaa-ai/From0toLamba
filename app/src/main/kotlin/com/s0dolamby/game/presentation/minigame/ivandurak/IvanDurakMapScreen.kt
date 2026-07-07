@@ -53,8 +53,15 @@ private fun dealHand(seed: Long): List<PlayCard> {
 @Composable
 fun IvanDurakMapScreen(
     onBack: () -> Unit,
-    onComplete: ((MinigameOutcome) -> Unit)? = null
+    onComplete: ((MinigameOutcome) -> Unit)? = null,
+    rank: com.s0dolamby.game.domain.model.InvestorRank =
+        com.s0dolamby.game.domain.model.InvestorRank.NEWBIE
 ) {
+    // Чем выше чин, тем короче окно на выбор карты (1400→800мс).
+    val reactionWindow = remember(rank) {
+        (REACTION_WINDOW_MS - com.s0dolamby.game.presentation.minigame.common.MinigameDifficulty.tier(rank) * 150L)
+            .coerceAtLeast(800L)
+    }
     var seed by remember { mutableStateOf(System.currentTimeMillis()) }
     val hand = remember(seed) { dealHand(seed) }
 
@@ -78,7 +85,7 @@ fun IvanDurakMapScreen(
         shownCard = null
         delay(Random.nextLong(PAUSE_MIN_MS, PAUSE_MAX_MS + 1))
         shownCard = hand.random(Random(seed + roundKey * 13L))
-        delay(REACTION_WINDOW_MS)
+        delay(reactionWindow)
         if (!resolved) {
             // Не успел выбрать карту
             resolved = true
