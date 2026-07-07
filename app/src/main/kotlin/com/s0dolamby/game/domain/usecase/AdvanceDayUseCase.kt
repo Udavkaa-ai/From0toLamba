@@ -34,10 +34,16 @@ class AdvanceDayUseCase @Inject constructor(
     // Каждый игровой день засчитывается как 10 реальных — держит прогресс интересным
     private val YIELD_MULTIPLIER = 10.0
 
-    /** Бонус к дневной доходности за уровень связи с архетипом (+1%/уровень, макс +10%).
-     *  Значение умножается на YIELD_MULTIPLIER(10), поэтому 0.001×10 = +1%/день за
-     *  уровень (макс +10%). Раньше было 0.01 → +100%/день на макс-связи (10× лишку). */
-    private val TIE_BONUS_PER_LEVEL = 0.001
+    /** Жёсткий потолок итоговой доходности честного дела: возврат ≤ вложенного ×6
+     *  (то есть +500%). Гарантирует обещанный игрокам потолок даже с бонусом связи. */
+    private val MAX_TOTAL_RETURN_MULT = 6.0
+
+    /** Бонус связи с архетипом — небольшой перк лояльности, а НЕ множитель дохода.
+     *  Прибавка КОПИТСЯ по дням и умножается на YIELD_MULTIPLIER(10), поэтому
+     *  значение крошечное: 0.00005×10×10ур ≈ +0.5%/день на макс-связи → ~+10% к
+     *  ИТОГУ за ~20-дневное дело. Раньше 0.01 (→ +100%/день!) раздувало доходность
+     *  в тысячи процентов; 0.001 всё ещё давало +10%/день (сотни % за срок). */
+    private val TIE_BONUS_PER_LEVEL = 0.00005
 
     suspend operator fun invoke(): Result<List<DailyUpdate>> = runCatching {
         val state = gameStateRepository.getGameState()
@@ -141,7 +147,12 @@ class AdvanceDayUseCase @Inject constructor(
                             val loss = FateConfig[ProjectFate.HONEST_FAIL].lossRange
                             project.investedAmountRubles * (1 - Random.nextDouble(loss.start, loss.endInclusive))
                         }
-                        else -> project.currentValueRubles
+                        // SURVIVOR/UNICORN — забираешь всё нажитое, но не выше потолка
+                        // +500% (вложено ×6): жёсткая гарантия обещанного максимума.
+                        else -> minOf(
+                            project.currentValueRubles,
+                            project.investedAmountRubles * MAX_TOTAL_RETURN_MULT
+                        )
                     }
                     balanceDelta += returned
                     gameStateRepository.recordReturn(returned)
