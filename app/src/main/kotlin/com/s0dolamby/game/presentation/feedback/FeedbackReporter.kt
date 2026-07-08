@@ -100,10 +100,22 @@ fun FeedbackReporter(
     viewModel: FeedbackViewModel = hiltViewModel()
 ) {
     var open by remember { mutableStateOf(false) }
+    // Язычок по умолчанию только «выглядывает» (🐞), чтобы не занимать место.
+    // Первый тап разворачивает подпись, второй — открывает попап. Если не
+    // тапнуть повторно — через пару секунд снова сворачивается.
+    var expanded by remember { mutableStateOf(false) }
     // Кадр экрана, снятый в момент тапа по язычку (до открытия попапа) —
     // на нём видно ровно то, о чём пишет тестер.
     var shot by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
     val activity = androidx.activity.compose.LocalActivity.current
+
+    // Авто-сворачивание развёрнутого язычка, если по нему не тапнули повторно
+    androidx.compose.runtime.LaunchedEffect(expanded, open) {
+        if (expanded && !open) {
+            kotlinx.coroutines.delay(2600)
+            expanded = false
+        }
+    }
 
     // Разрешение экрана: «1080×2340 @2.75x» — чтобы отличать баги вёрстки
     // на мелких/крупных экранах. Считаем один раз из displayMetrics.
@@ -114,14 +126,20 @@ fun FeedbackReporter(
 
     // Компактный «язычок» — слева, ниже топ-бара (там кнопок нет).
     // Скруглены правые углы: язычок «выезжает» из левого края.
-    Box(
+    val shape = RoundedCornerShape(topEnd = 12.dp, bottomEnd = 12.dp)
+    Row(
         modifier = modifier
-            .clip(RoundedCornerShape(topEnd = 12.dp, bottomEnd = 12.dp))
+            .clip(shape)
             .background(Color(0xE01A0E2E))
-            .border(1.dp, FairyGold.copy(alpha = 0.45f), RoundedCornerShape(topEnd = 12.dp, bottomEnd = 12.dp))
+            .border(1.dp, FairyGold.copy(alpha = 0.45f), shape)
             .clickable {
-                // Снимаем экран и открываем попап ТОЛЬКО в колбэке захвата —
-                // иначе PixelCopy успевает снять уже сам попап поверх игры.
+                if (!expanded) {
+                    // Первый тап — только разворачиваем подпись.
+                    expanded = true
+                    return@clickable
+                }
+                // Второй тап по развёрнутому — снимаем экран и открываем попап
+                // ТОЛЬКО в колбэке захвата, иначе PixelCopy снимет сам попап.
                 // Для мини-игр на время это и даёт «заморозку» момента.
                 shot = null
                 if (activity != null) {
@@ -133,9 +151,16 @@ fun FeedbackReporter(
                     open = true
                 }
             }
-            .padding(horizontal = 12.dp, vertical = 7.dp)
+            .padding(horizontal = 9.dp, vertical = 7.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(Strings.t("feedback.tab"), color = FairyGold, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+        Text("🐞", fontSize = 13.sp)
+        androidx.compose.animation.AnimatedVisibility(visible = expanded) {
+            Text(
+                "  " + Strings.t("feedback.tab.label"),
+                color = FairyGold, fontSize = 12.sp, fontWeight = FontWeight.SemiBold
+            )
+        }
     }
 
     // Пока попап открыт — мини-игры на время замирают
@@ -158,6 +183,7 @@ fun FeedbackReporter(
             },
             onClose = {
                 open = false
+                expanded = false
                 shot = null
                 viewModel.reset()
             }
