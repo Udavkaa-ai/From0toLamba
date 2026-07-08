@@ -96,15 +96,21 @@ fun generateReferenceSeal(seed: String): Seal = Seal(
 
 enum class MutTarget { SHAPE, RINGS, EMBLEM_SAME, COLOR_HUE, DOTS, SIZE }
 
-/** Чем выше чин, тем больше видов отличий встречается в грамоте.
- *  Скоморох — только форма (просто); Купец добавляет размер и точки;
- *  выше — оттенок, кольца, схожая эмблема (тонкие отличия). */
+/** Пул отличий по чину — от ГРУБЫХ (видно с одного взгляда) к ТОНКИМ
+ *  (надо всматриваться и помнить эталон). Форма и размер — самые заметные,
+ *  их отдаём только Скомороху; всем выше — точки/эмблема/кольца/оттенок,
+ *  которые не выцепить «на глаз» без внимания.
+ *   - Скоморох: форма (круг↔шестигранник) — мгновенно, для обучения.
+ *   - Купец: число точек и силуэт эмблемы — надо приглядеться.
+ *   - Мудрец: + кольца.
+ *   - Боярин: кольца, оттенок, схожая эмблема — тонко.
+ *   - Князь: оттенок и кольца — почти незаметно. */
 val RANK_MUT_POOLS: Map<InvestorRank, List<MutTarget>> = mapOf(
     InvestorRank.NEWBIE to listOf(MutTarget.SHAPE),
-    InvestorRank.AMBASSADOR to listOf(MutTarget.SHAPE, MutTarget.SIZE, MutTarget.DOTS),
-    InvestorRank.ANALYST to MutTarget.values().toList(),
-    InvestorRank.SHARK to MutTarget.values().toList(),
-    InvestorRank.LAMBO_SENSEI to MutTarget.values().toList()
+    InvestorRank.AMBASSADOR to listOf(MutTarget.DOTS, MutTarget.EMBLEM_SAME),
+    InvestorRank.ANALYST to listOf(MutTarget.DOTS, MutTarget.EMBLEM_SAME, MutTarget.RINGS),
+    InvestorRank.SHARK to listOf(MutTarget.RINGS, MutTarget.COLOR_HUE, MutTarget.EMBLEM_SAME),
+    InvestorRank.LAMBO_SENSEI to listOf(MutTarget.COLOR_HUE, MutTarget.RINGS)
 )
 
 /** Визуально схожие формы — соседние геометрии. ВАЖНО: пара всегда отличается
