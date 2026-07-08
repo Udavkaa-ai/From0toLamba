@@ -291,6 +291,8 @@ class AdvanceDayUseCase @Inject constructor(
         val totalActiveValue = projectRepository.getActiveProjectsTotalValue()
         gameStateRepository.appendInvestedSnapshot(totalActiveValue)
         gameStateRepository.advanceDay()
+        // Отметка времени листания — от неё считается кулдаун выходного.
+        gameStateRepository.setLastAdvancedAt(System.currentTimeMillis())
         gameStateRepository.updateRankIfNeeded()
         achievementUnlockStore.push(gameStateRepository.recomputeAchievements())
 

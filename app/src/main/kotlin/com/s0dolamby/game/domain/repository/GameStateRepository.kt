@@ -8,6 +8,8 @@ interface GameStateRepository {
     suspend fun getGameState(): GameState
     suspend fun updateBalance(newBalance: Double)
     suspend fun advanceDay()
+    /** Записать время последнего листания дня (для кулдауна выходного). */
+    suspend fun setLastAdvancedAt(timestampMs: Long)
     suspend fun recordInvestment(amountRubles: Double)
     suspend fun recordReturn(amountRubles: Double)
     suspend fun recordScamDetected()

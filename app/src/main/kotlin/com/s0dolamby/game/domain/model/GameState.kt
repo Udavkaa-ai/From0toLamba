@@ -33,6 +33,9 @@ data class GameState(
     val pendingRankUp: InvestorRank? = null,
     /** Ежедневный стрик (растёт +1 каждый день, когда юзер заходит). */
     val loginStreak: Int = 0,
+    /** Время последнего листания дня (epoch ms) — от него считается кулдаун
+     *  выходного (воскресенье → новая неделя): 3 часа реального времени либо реклама. */
+    val lastAdvancedAt: Long? = null,
     /** YYYY-MM-DD MSK — день когда стрик обновлялся в последний раз. */
     val lastSeenDay: String? = null,
     /** YYYY-MM-DD MSK — день последней забранной ежедневной награды. */

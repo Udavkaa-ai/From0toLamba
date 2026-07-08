@@ -72,6 +72,7 @@ class GameStateRepositoryImpl @Inject constructor(
                     runCatching { InvestorRank.valueOf(it) }.getOrNull()
                 },
                 loginStreak = state.loginStreak,
+                lastAdvancedAt = state.lastAdvancedAt,
                 lastSeenDay = state.lastSeenDay,
                 lastDailyClaim = state.lastDailyClaim,
                 tieLevels = parseArchetypeMap(state.tieLevelsJson),
@@ -108,6 +109,7 @@ class GameStateRepositoryImpl @Inject constructor(
             balanceHistory = parseBalanceHistory(state.balanceHistory),
             investedHistory = parseDoubleHistory(state.investedHistory),
             loginStreak = state.loginStreak,
+            lastAdvancedAt = state.lastAdvancedAt,
             lastSeenDay = state.lastSeenDay,
             lastDailyClaim = state.lastDailyClaim,
             tieLevels = parseArchetypeMap(state.tieLevelsJson),
@@ -227,6 +229,9 @@ class GameStateRepositoryImpl @Inject constructor(
         playerDao.updateBalance(newBalance)
 
     override suspend fun advanceDay() = playerDao.advanceDay()
+
+    override suspend fun setLastAdvancedAt(timestampMs: Long) =
+        playerDao.setLastAdvancedAt(timestampMs)
 
     override suspend fun recordInvestment(amountRubles: Double) {
         val state = playerDao.getGameState() ?: return

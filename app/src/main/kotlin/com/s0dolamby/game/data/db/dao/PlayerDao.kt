@@ -24,6 +24,9 @@ interface PlayerDao {
     @Query("UPDATE game_state SET currentDay = currentDay + 1, dayStreak = dayStreak + 1 WHERE id = 1")
     suspend fun advanceDay()
 
+    @Query("UPDATE game_state SET lastAdvancedAt = :ts WHERE id = 1")
+    suspend fun setLastAdvancedAt(ts: Long)
+
     @Query("UPDATE game_state SET isOnboardingComplete = 1 WHERE id = 1")
     suspend fun completeOnboarding()
 

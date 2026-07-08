@@ -52,8 +52,9 @@ class GlobalDayFabViewModel @Inject constructor(
     private val dayNewsStore: com.s0dolamby.game.data.news.DayNewsStore,
     private val investUseCase: com.s0dolamby.game.domain.usecase.InvestUseCase,
     private val reactToBadNewsUseCase: com.s0dolamby.game.domain.usecase.ReactToBadNewsUseCase,
+    private val adManager: com.s0dolamby.game.data.ads.AdManager,
     projectRepository: com.s0dolamby.game.domain.repository.ProjectRepository,
-    gameStateRepository: com.s0dolamby.game.domain.repository.GameStateRepository
+    private val gameStateRepository: com.s0dolamby.game.domain.repository.GameStateRepository
 ) : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -83,6 +84,11 @@ class GlobalDayFabViewModel @Inject constructor(
         .map { it.pendingInbox.size }
         .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000), 0)
 
+    /** Время последнего листания — база кулдауна выходного (воскресенье → новая неделя). */
+    val lastAdvancedAt: StateFlow<Long?> = gameStateRepository.observeGameState()
+        .map { it.lastAdvancedAt }
+        .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000), null)
+
     /** Чин — задаёт потолок суммарного вложения в одно дело. */
     val investorRank: StateFlow<com.s0dolamby.game.domain.model.InvestorRank> =
         gameStateRepository.observeGameState()
@@ -97,9 +103,17 @@ class GlobalDayFabViewModel @Inject constructor(
     private val _reactionInvestResult = MutableStateFlow<String?>(null)
     val reactionInvestResult: StateFlow<String?> = _reactionInvestResult.asStateFlow()
 
-    fun advanceDay() {
+    fun advanceDay(skipViaAd: Boolean = false) {
         if (_isLoading.value) return
         viewModelScope.launch {
+            val s = gameStateRepository.getGameState()
+            // Выходной (воскресенье): переход в новую неделю разделён кулдауном
+            // 3ч или рекламой. Внутри недели листается свободно.
+            if (com.s0dolamby.game.domain.week.GameWeek.isRestDay(s.currentDay) && !skipViaAd) {
+                val gateUntil = (s.lastAdvancedAt ?: 0L) +
+                    com.s0dolamby.game.domain.week.GameWeek.WEEK_GATE_MS
+                if (System.currentTimeMillis() < gateUntil) return@launch
+            }
             _isLoading.value = true
             soundEngine.play(SoundName.DAY)
             advanceDayUseCase().onSuccess { updates ->
@@ -107,6 +121,16 @@ class GlobalDayFabViewModel @Inject constructor(
             }
             _isLoading.value = false
         }
+    }
+
+    /** Пропустить выходной по рекламе. Если рекламы нет — пускаем всё равно
+     *  (тестерам не блокируем прогресс). */
+    fun advanceViaAd(activity: android.app.Activity) {
+        adManager.showRewarded(
+            activity,
+            onReward = { advanceDay(skipViaAd = true) },
+            onUnavailable = { advanceDay(skipViaAd = true) }
+        )
     }
 
     fun dismissNews(update: com.s0dolamby.game.domain.model.DailyUpdate) {
@@ -177,6 +201,8 @@ fun GlobalDayFab(
     val isLoading by viewModel.isLoading.collectAsState()
     val currentDay by viewModel.currentDay.collectAsState()
     val pendingInbox by viewModel.pendingInboxCount.collectAsState()
+    val lastAdvancedAt by viewModel.lastAdvancedAt.collectAsState()
+    val activity = androidx.activity.compose.LocalActivity.current
     val palette = LocalAppPalette.current
     val themeMode = LocalThemeMode.current
     val gradient = when (themeMode) {
@@ -198,9 +224,23 @@ fun GlobalDayFab(
     var confirmAdvance by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
     val newWeek = com.s0dolamby.game.domain.week.GameWeek.crossesIntoNewWeek(currentDay)
 
-    // Свернуть, если по развёрнутой кнопке не тапнули повторно
-    androidx.compose.runtime.LaunchedEffect(expanded, isLoading) {
-        if (expanded && !isLoading) {
+    // Кулдаун выходного: воскресенье → новая неделя открывается через 3ч или рекламу.
+    val gateUntil = (lastAdvancedAt ?: 0L) + com.s0dolamby.game.domain.week.GameWeek.WEEK_GATE_MS
+    var now by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(System.currentTimeMillis()) }
+    androidx.compose.runtime.LaunchedEffect(newWeek, gateUntil) {
+        while (newWeek && System.currentTimeMillis() < gateUntil) {
+            now = System.currentTimeMillis()
+            kotlinx.coroutines.delay(1000)
+        }
+        now = System.currentTimeMillis()
+    }
+    val gated = newWeek && now < gateUntil
+    val remainMs = (gateUntil - now).coerceAtLeast(0L)
+
+    // Свернуть, если по развёрнутой кнопке не тапнули повторно (кроме гейта —
+    // там висит таймер обратного отсчёта).
+    androidx.compose.runtime.LaunchedEffect(expanded, isLoading, gated) {
+        if (expanded && !isLoading && !gated) {
             kotlinx.coroutines.delay(3000)
             expanded = false
         }
@@ -216,7 +256,8 @@ fun GlobalDayFab(
         when {
             isLoading -> Unit
             !expanded -> expanded = true
-            pendingInbox > 0 -> confirmAdvance = true   // предупредим о грамотах
+            gated -> activity?.let { viewModel.advanceViaAd(it) }  // рекламой — сразу в новую неделю
+            pendingInbox > 0 -> confirmAdvance = true               // предупредим о грамотах
             else -> doAdvance()
         }
     }
@@ -243,8 +284,7 @@ fun GlobalDayFab(
             Text(
                 when {
                     isLoading -> "⏳"
-                    expanded && newWeek -> "🌅"
-                    expanded -> "🌅"
+                    gated -> "⏳"
                     else -> "🔄"
                 },
                 fontSize = 16.sp
@@ -253,6 +293,7 @@ fun GlobalDayFab(
                 Text(
                     when {
                         isLoading -> "  Течёт время..."
+                        gated -> "  Новая неделя · ${formatCountdown(remainMs)} · 📺 пропустить"
                         newWeek -> "  Новая неделя"
                         else -> "  Следующий день"
                     },
@@ -287,4 +328,13 @@ fun GlobalDayFab(
             }
         )
     }
+}
+
+/** Остаток кулдауна в виде «Ч:ММ:СС». */
+private fun formatCountdown(ms: Long): String {
+    val total = ms / 1000
+    val h = total / 3600
+    val m = (total % 3600) / 60
+    val s = total % 60
+    return "%d:%02d:%02d".format(h, m, s)
 }
