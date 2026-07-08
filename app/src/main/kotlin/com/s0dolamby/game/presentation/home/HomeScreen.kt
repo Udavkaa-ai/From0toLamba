@@ -93,16 +93,9 @@ fun HomeScreen(
     val dealsTaken by viewModel.dealsTakenCount.collectAsState()
     val nickname by viewModel.nickname.collectAsState()
 
-    // Когда тур подсвечивает «Следующий день» (кнопка внизу списка) —
-    // прокручиваем список к ней, чтобы спотлайт попал в видимую область.
+    // «Следующий день» теперь — плавающая FAB поверх экрана (NavGraph),
+    // подсвечивается туром прямо там, прокручивать список к ней не нужно.
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
-    val tourTarget by com.s0dolamby.game.presentation.onboarding.TourAnchors.activeTarget
-    LaunchedEffect(tourTarget) {
-        if (tourTarget == com.s0dolamby.game.presentation.onboarding.TourTarget.NEXT_DAY) {
-            val last = (listState.layoutInfo.totalItemsCount - 1).coerceAtLeast(0)
-            listState.animateScrollToItem(last)
-        }
-    }
 
     // Единый темозависимый фон (HOME_01 / HOME_01_LIGHT + оверлей из палитры)
     // — как у всех остальных экранов, никаких локальных градиентов.
@@ -224,19 +217,10 @@ fun HomeScreen(
                     item { EmptyHomeCard(onInboxClick = onInboxClick) }
                 }
 
-                // На главной кнопка остаётся обычной (внутри LazyColumn) —
-                // вести после advance-day уходят в глобальный DayNewsStore
-                // и рисуются колодой на уровне NavGraph. Глобальная FAB
-                // прячется на маршруте Home, чтобы не дублировать UI.
-                item {
-                    Spacer(Modifier.height(4.dp))
-                    Box(Modifier.tourAnchor(TourTarget.NEXT_DAY)) {
-                        AdvanceDayButton(
-                            isLoading = isLoading,
-                            onClick = viewModel::advanceDay
-                        )
-                    }
-                }
+                // Кнопка «Следующий день» — единая круглая плавающая FAB
+                // (рисуется в NavGraph поверх всех экранов, включая главную).
+                // Отдельная кнопка в списке больше не нужна.
+                item { Spacer(Modifier.height(4.dp)) }
 
             }
         }
@@ -289,6 +273,17 @@ private fun HomeHeader(
                 // Текст лежит на фоне экрана (тёмный в обеих темах) —
                 // фиксированный светлый, а не карточная локаль.
                 color = Color.White.copy(alpha = 0.75f)
+            )
+            Spacer(Modifier.height(2.dp))
+            // День недели: воскресенье — выходной (переход недели за ожидание/рекламу).
+            val week = com.s0dolamby.game.domain.week.GameWeek
+            Text(
+                buildString {
+                    append("🗓 Неделя ${week.weekNumber(day)} · ${week.dayName(day)}")
+                    if (week.isRestDay(day)) append(" (выходной)")
+                },
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
             )
         }
         IconButton(

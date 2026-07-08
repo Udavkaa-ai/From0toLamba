@@ -150,6 +150,7 @@ fun NavGraph() {
     // летопись, детали дела, настройки) и в мини-играх FAB мешал — там его нет.
     // (жалобы тестеров: «внизу мешает кнопка следующий день»)
     val showFabRoutes = setOf(
+        Screen.Home.route,
         Screen.Inbox.route,
         Screen.Stats.route,
         Screen.Today.route
