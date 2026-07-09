@@ -26,6 +26,10 @@ sealed class BadNewsEffect {
     object Unlocked : BadNewsEffect()
     /** Весть о заморозке вывода, неудача: условие вести просто действует. */
     object LockStays : BadNewsEffect()
+    /** Мафио-предложение отбито: угроза снята, дело цело и работает дальше. */
+    object MafiaDeflected : BadNewsEffect()
+    /** Мафио-предложение не отбито: дело под замком, при закрытии вернут лишь половину. */
+    object MafiaLocked : BadNewsEffect()
 }
 
 /**
@@ -45,13 +49,28 @@ class ReactToBadNewsUseCase @Inject constructor(
     suspend operator fun invoke(
         projectId: String,
         eventDeltaRubles: Double,
-        outcome: BadNewsOutcome
+        outcome: BadNewsOutcome,
+        /** true — это «предложение, от которого нельзя отказаться» (мафия). */
+        isMafia: Boolean = false
     ): Result<BadNewsEffect> = runCatching {
         val project = projectRepository.getProjectById(projectId)
             ?: error("Дело не найдено")
         if (!project.isActive) error("Дело уже закрыто")
 
-        if (project.isWithdrawalLocked) {
+        if (isMafia && project.mafiaOfferIssued) {
+            // «Отбиться» от мафии: чистая победа снимает угрозу (дело работает
+            // дальше, при закрытии — полная стоимость), промах/провал — дело под
+            // замком и закроется с потерей половины.
+            if (outcome == BadNewsOutcome.WIN) {
+                projectRepository.updateProject(project.copy(mafiaOfferIssued = false))
+                AppLogger.i("BadNews", "mafia deflected on ${project.claimedName}")
+                BadNewsEffect.MafiaDeflected
+            } else {
+                projectRepository.updateProject(project.copy(isWithdrawalLocked = true))
+                AppLogger.i("BadNews", "mafia locked ${project.claimedName}")
+                BadNewsEffect.MafiaLocked
+            }
+        } else if (project.isWithdrawalLocked) {
             // Реакция на весть о заморозке вывода
             if (outcome == BadNewsOutcome.WIN) {
                 projectRepository.updateProject(project.copy(isWithdrawalLocked = false))

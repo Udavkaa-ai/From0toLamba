@@ -156,8 +156,9 @@ class GlobalDayFabViewModel @Inject constructor(
         update: com.s0dolamby.game.domain.model.DailyUpdate,
         outcome: com.s0dolamby.game.domain.usecase.BadNewsOutcome
     ) {
+        val isMafia = update.title == com.s0dolamby.game.domain.events.MafiaOffers.NEWS_TITLE
         viewModelScope.launch {
-            reactToBadNewsUseCase(update.projectId, update.eventDeltaRubles, outcome)
+            reactToBadNewsUseCase(update.projectId, update.eventDeltaRubles, outcome, isMafia)
                 .onSuccess { effect ->
                     when (effect) {
                         is com.s0dolamby.game.domain.usecase.BadNewsEffect.Recovered -> {
@@ -175,6 +176,14 @@ class GlobalDayFabViewModel @Inject constructor(
                         com.s0dolamby.game.domain.usecase.BadNewsEffect.LockStays -> {
                             soundEngine.play(SoundName.LOSE)
                             _reactionInvestResult.value = "lockstay"
+                        }
+                        com.s0dolamby.game.domain.usecase.BadNewsEffect.MafiaDeflected -> {
+                            soundEngine.play(SoundName.WIN)
+                            _reactionInvestResult.value = "mafiaSafe"
+                        }
+                        com.s0dolamby.game.domain.usecase.BadNewsEffect.MafiaLocked -> {
+                            soundEngine.play(SoundName.LOSE)
+                            _reactionInvestResult.value = "mafiaLocked"
                         }
                     }
                 }

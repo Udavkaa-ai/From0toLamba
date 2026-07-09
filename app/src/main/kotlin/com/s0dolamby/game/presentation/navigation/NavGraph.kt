@@ -509,9 +509,11 @@ fun NavGraph() {
         zorkiyFor?.let { update ->
             val isLockNews = activeProjects
                 .firstOrNull { it.id == update.projectId }?.isWithdrawalLocked == true
+            val isMafia = update.title == com.s0dolamby.game.domain.events.MafiaOffers.NEWS_TITLE
             com.s0dolamby.game.presentation.minigame.zorkiy.ZorkiySchyotOverlay(
                 projectName = update.projectName,
                 isLockNews = isLockNews,
+                isMafia = isMafia,
                 onOutcome = { outcome ->
                     dayFabViewModel.markReacted(update.id)
                     dayFabViewModel.applyBadNewsOutcome(update, outcome)
@@ -558,7 +560,8 @@ fun NavGraph() {
                         .background(androidx.compose.ui.graphics.Color(0xF01A0F3F))
                         .padding(horizontal = 18.dp, vertical = 12.dp)
                 ) {
-                    val good = res.startsWith("ok:") || res.startsWith("win:") || res == "unlocked"
+                    val good = res.startsWith("ok:") || res.startsWith("win:") ||
+                        res == "unlocked" || res == "mafiaSafe"
                     androidx.compose.material3.Text(
                         when {
                             res.startsWith("ok:") ->
@@ -568,6 +571,8 @@ fun NavGraph() {
                             res == "freeze" -> Strings.t("zorkiy.snack.freeze")
                             res == "unlocked" -> Strings.t("zorkiy.snack.unlocked")
                             res == "lockstay" -> Strings.t("zorkiy.snack.lockstay")
+                            res == "mafiaSafe" -> Strings.t("zorkiy.snack.mafiaSafe")
+                            res == "mafiaLocked" -> Strings.t("zorkiy.snack.mafiaLocked")
                             else -> res.removePrefix("err:").ifBlank { Strings.t("ama.err.unknown") }
                         },
                         color = if (good) com.s0dolamby.game.presentation.common.theme.Success

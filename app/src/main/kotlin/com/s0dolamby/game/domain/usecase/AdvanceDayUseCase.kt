@@ -172,14 +172,23 @@ class AdvanceDayUseCase @Inject constructor(
                     // Заморозка после проигрыша в «Зорком счёте» обнуляет день.
                     val frozen = project.yieldFreezeDays > 0
                     val tieBonus = tieBonusFor(state, project)
-                    val dailyYield = if (frozen) 0.0 else project.investedAmountRubles *
+                    val rawYield = if (frozen) 0.0 else project.investedAmountRubles *
                         (project.realDailyYieldRubles + tieBonus) * YIELD_MULTIPLIER
-                    // Доход прирастает в currentValueRubles, не в свободном балансе
-                    val (newHistory, newApyHistory) = updateHistories(project, dailyYield)
+                    // Потолок «текущей стоимости» — тот же +500%, что и при выплате:
+                    // график/стоимость не должны показывать больше обещанного максимума
+                    // (старые пере-раздутые дела сами подтянутся к потолку). dailyYield
+                    // может стать 0 у достигшего потолка (или отрицательным у старого дела).
+                    val cappedValue = (project.currentValueRubles + rawYield)
+                        .coerceAtMost(project.investedAmountRubles * MAX_TOTAL_RETURN_MULT)
+                    val dailyYield = cappedValue - project.currentValueRubles
+                    // Доход прирастает в currentValueRubles, не в свободном балансе.
+                    // В график отдаём неотрицательный доход — чтобы разовая усадка
+                    // старого пере-раздутого дела к потолку не рисовала провал.
+                    val (newHistory, newApyHistory) = updateHistories(project, dailyYield.coerceAtLeast(0.0))
                     var updatedProject = project.copy(
                         daysSinceJoined = project.daysSinceJoined + 1,
                         daysUntilCollapse = newDaysUntilCollapse,
-                        currentValueRubles = project.currentValueRubles + dailyYield,
+                        currentValueRubles = cappedValue,
                         yieldFreezeDays = (project.yieldFreezeDays - 1).coerceAtLeast(0),
                         currentUserCount = newHistory.lastOrNull() ?: project.currentUserCount,
                         userCountHistory = newHistory,
@@ -205,7 +214,7 @@ class AdvanceDayUseCase @Inject constructor(
                             projectId = updatedProject.id,
                             projectName = updatedProject.claimedName,
                             day = updatedProject.daysSinceJoined,
-                            title = "Предложение, от которого нельзя отказаться",
+                            title = MafiaOffers.NEWS_TITLE,
                             body = MafiaOffers.renderWarning(offer, updatedProject.claimedName),
                             userCountDelta = 0,
                             payoutStatus = PayoutStatus.NORMAL,

@@ -112,6 +112,9 @@ fun ZorkiySchyotOverlay(
     projectName: String,
     /** Весть о заморозке вывода: победа без ошибок открывает окно вывода. */
     isLockNews: Boolean = false,
+    /** «Предложение, от которого нельзя отказаться»: победа без ошибок отбивает
+     *  угрозу, любая ошибка — дело под замком и −50% при закрытии. */
+    isMafia: Boolean = false,
     onOutcome: (BadNewsOutcome) -> Unit,
     onRetreat: () -> Unit
 ) {
@@ -127,7 +130,7 @@ fun ZorkiySchyotOverlay(
         val found = next - 1
         // У вести о заморозке вывода планка выше: WIN только без единой
         // ошибки — «в последний момент» прощает лишь безупречных.
-        val winErrorCap = if (isLockNews) 0 else 1
+        val winErrorCap = if (isLockNews || isMafia) 0 else 1
         outcome = when {
             !timedOut && errors <= winErrorCap -> BadNewsOutcome.WIN
             !timedOut -> BadNewsOutcome.LOSE
@@ -223,7 +226,13 @@ fun ZorkiySchyotOverlay(
                     )
                     Spacer(Modifier.height(10.dp))
                     Text(
-                        Strings.t(if (isLockNews) "zorkiy.stakes.lock" else "zorkiy.stakes"),
+                        Strings.t(
+                            when {
+                                isMafia -> "zorkiy.stakes.mafia"
+                                isLockNews -> "zorkiy.stakes.lock"
+                                else -> "zorkiy.stakes"
+                            }
+                        ),
                         color = ErrorColor.copy(alpha = 0.9f),
                         fontSize = 12.sp, lineHeight = 18.sp,
                         textAlign = TextAlign.Center
@@ -330,6 +339,10 @@ fun ZorkiySchyotOverlay(
                 Phase.DONE -> {
                     val o = outcome ?: BadNewsOutcome.FAIL
                     val (emoji, titleKey, bodyKey, color) = when {
+                        isMafia && o == BadNewsOutcome.WIN ->
+                            Quad("🛡️", "zorkiy.mafiaSafe.title", "zorkiy.mafiaSafe.body", Success)
+                        isMafia ->
+                            Quad("🔒", "zorkiy.mafiaLocked.title", "zorkiy.mafiaLocked.body", ErrorColor)
                         isLockNews && o == BadNewsOutcome.WIN ->
                             Quad("🗝️", "zorkiy.unlock.title", "zorkiy.unlock.body", Success)
                         isLockNews ->
