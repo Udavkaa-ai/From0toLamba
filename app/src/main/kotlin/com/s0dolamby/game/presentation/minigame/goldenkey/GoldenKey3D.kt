@@ -120,13 +120,15 @@ private fun buildKeyMesh(key: GoldenKey): List<Face> {
     val shaftBot = -0.78f
     faces += cylinder(shaftR, shaftTop, shaftBot, 12, 6, key.stemPattern == StemPattern.STRIPED, l, d)
 
-    // Узор «точки» — заклёпки-кубики по стержню
+    // Узор «точки» — заклёпки-кубики по стержню (спереди/сзади/по бокам)
     if (key.stemPattern == StemPattern.DOTTED) {
         var yy = shaftTop - 0.12f
         while (yy > shaftBot + 0.35f) {
-            faces += box(0f, yy, shaftR, 0.05f, 0.05f, 0.05f, l, d)
-            faces += box(0f, yy, -shaftR, 0.05f, 0.05f, 0.05f, l, d)
-            yy -= 0.18f
+            faces += box(0f, yy, shaftR, 0.055f, 0.055f, 0.05f, l, d)
+            faces += box(0f, yy, -shaftR, 0.055f, 0.055f, 0.05f, l, d)
+            faces += box(shaftR, yy, 0f, 0.05f, 0.055f, 0.055f, l, d)
+            faces += box(-shaftR, yy, 0f, 0.05f, 0.055f, 0.055f, l, d)
+            yy -= 0.20f
         }
     }
 
@@ -141,11 +143,13 @@ private fun buildKeyMesh(key: GoldenKey): List<Face> {
         ty += toothH + gap
     }
 
-    // Кисточка — шнур + бобышка снизу ушка
+    // Кисточка — яркий красный шнур + кисть, СБОКУ-СПЕРЕДИ от стержня, иначе
+    // пряталась внутри стержня и в разборе «кисточка» не совпадала.
     if (key.hasTassel) {
-        val tCol = mix(d, Color.Black, 0.15f)
-        faces += box(0f, bowCy - 0.30f, 0f, 0.015f, 0.10f, 0.015f, tCol, mix(tCol, Color.Black, 0.4f))
-        faces += box(0f, bowCy - 0.44f, 0f, 0.06f, 0.07f, 0.06f, tCol, mix(tCol, Color.Black, 0.4f))
+        val red = Color(0xFFD5443F); val redDark = Color(0xFF6E1616)
+        val tx = -0.20f; val tz = 0.16f
+        faces += box(tx, bowCy - 0.22f, tz, 0.022f, 0.12f, 0.022f, red, redDark)  // шнур
+        faces += box(tx, bowCy - 0.40f, tz, 0.075f, 0.10f, 0.05f, red, redDark)   // кисть
     }
     return faces
 }
