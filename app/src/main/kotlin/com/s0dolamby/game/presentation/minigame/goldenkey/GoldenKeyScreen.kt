@@ -406,25 +406,40 @@ private fun MemorizeStage(key: GoldenKey, onReady: () -> Unit) {
         ),
         label = "pulse"
     )
+    // Лёгкое покачивание «как ключ на верёвочке» (тот же 2D-ключ, что и в
+    // разборе/конструкторе — чтобы запоминание сверялось один-в-один).
+    val etalonSwingPhase by infinite.animateFloat(
+        initialValue = 0f, targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(3600, easing = LinearEasing)),
+        label = "etalonSwing"
+    )
+    val swingY = (kotlin.math.sin(etalonSwingPhase * 2 * Math.PI) * 38f).toFloat()
+    val swingZ = (kotlin.math.sin(etalonSwingPhase * 4 * Math.PI) * 6f).toFloat()
     Text(
         Strings.t("minigame.goldenKey.memorize"),
         color = Color.White.copy(alpha = 0.85f), fontSize = 14.sp
     )
     Spacer(Modifier.height(16.dp))
-    Box(modifier = Modifier.size(240.dp).scale(pulse), contentAlignment = Alignment.Center) {
-        // сверкающий ореол сзади
-        Canvas(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.size(220.dp), contentAlignment = Alignment.Center) {
+        Canvas(modifier = Modifier
+            .fillMaxSize()
+            .scale(pulse)
+            .graphicsLayer {
+                rotationY = swingY
+                rotationZ = swingZ
+                cameraDistance = 12f * density
+            }
+        ) {
             drawSparkleHalo(
                 center = Offset(this.size.width / 2f, this.size.height / 2f),
-                radius = this.size.minDimension * 0.46f,
+                radius = this.size.minDimension * 0.45f,
                 count = 5,
                 sparkleSize = 6f,
                 color = FairyGold,
                 intensity = 0.35f
             )
+            drawKey(key, sizePx = this.size.minDimension * 0.78f)
         }
-        // настоящий 3D-ключ, собранный из геометрии по параметрам эталона
-        RotatingKey3D(key, modifier = Modifier.fillMaxSize())
     }
     Spacer(Modifier.height(16.dp))
     Text(
