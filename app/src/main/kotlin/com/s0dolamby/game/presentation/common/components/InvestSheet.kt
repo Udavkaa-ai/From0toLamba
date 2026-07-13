@@ -193,37 +193,16 @@ fun ExtraSlotDialog(
 ) {
     val slotCost = InvestUseCase.EXTRA_SLOT_COST_RUBLES
     val canAfford = freeBalance >= pendingAmount + slotCost
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        icon = { Text("🗃️", fontSize = 40.sp) },
-        title = {
-            Text(
-                Strings.t("extraSlot.title"),
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(Strings.t("extraSlot.body"))
-                if (!canAfford) {
-                    Text(Strings.t("extraSlot.noBalance"), color = ErrorColor)
-                }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = onConfirm,
-                enabled = canAfford,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = FairyGold,
-                    contentColor = Color(0xFF1A0A00)
-                )
-            ) { Text(Strings.t("extraSlot.buy"), fontWeight = FontWeight.SemiBold) }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(Strings.t("btn.cancel")) }
-        }
+    val body = Strings.t("extraSlot.body") +
+        if (!canAfford) "\n\n⚠️ " + Strings.t("extraSlot.noBalance") else ""
+    FairyPromptDialog(
+        emoji = "🗃️",
+        title = Strings.t("extraSlot.title"),
+        body = body,
+        primaryText = Strings.t("extraSlot.buy"),
+        onPrimary = onConfirm,
+        primaryEnabled = canAfford,
+        secondaryText = Strings.t("btn.cancel"),
+        onSecondary = onDismiss
     )
 }

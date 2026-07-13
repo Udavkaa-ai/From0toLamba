@@ -43,7 +43,8 @@ fun FairyPromptDialog(
     onPrimary: () -> Unit,
     secondaryText: String,
     onSecondary: () -> Unit,
-    onDismissRequest: () -> Unit = onSecondary
+    onDismissRequest: () -> Unit = onSecondary,
+    primaryEnabled: Boolean = true
 ) {
     val palette = LocalAppPalette.current
     Dialog(onDismissRequest = onDismissRequest) {
@@ -75,17 +76,21 @@ fun FairyPromptDialog(
                 )
                 Spacer(Modifier.height(18.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    // Первичная — золотая
+                    // Первичная — золотая (тускнеет и не кликается, если выключена)
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .clip(RoundedCornerShape(14.dp))
-                            .background(FairyGold)
-                            .clickable { onPrimary() }
+                            .background(if (primaryEnabled) FairyGold else FairyGold.copy(alpha = 0.35f))
+                            .then(if (primaryEnabled) Modifier.clickable { onPrimary() } else Modifier)
                             .padding(vertical = 12.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(primaryText, color = Color(0xFF1A0A00), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text(
+                            primaryText,
+                            color = Color(0xFF1A0A00).copy(alpha = if (primaryEnabled) 1f else 0.5f),
+                            fontWeight = FontWeight.Bold, fontSize = 14.sp
+                        )
                     }
                     // Вторичная — обводка
                     Box(

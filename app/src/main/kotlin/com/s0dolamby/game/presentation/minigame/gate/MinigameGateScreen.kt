@@ -236,24 +236,20 @@ fun MinigameGateScreen(
     }
 
     // Предупреждение при выходе с середины игры: попытка сгорит.
+    // Первичная (золотая) — безопасное «Остаться»; выход — вторичной обводкой.
     if (exitConfirm) {
-        androidx.compose.material3.AlertDialog(
-            onDismissRequest = { exitConfirm = false },
-            icon = { androidx.compose.material3.Text("🚪", fontSize = 34.sp) },
-            title = { androidx.compose.material3.Text(Strings.t("minigame.exit.title")) },
-            text = { androidx.compose.material3.Text(Strings.t("minigame.exit.body")) },
-            confirmButton = {
-                androidx.compose.material3.TextButton(onClick = {
-                    exitConfirm = false
-                    // Уход = сожжённая попытка: пишем проигрыш, второй игры не будет.
-                    viewModel.record(projectId, MinigameOutcome(errorCount = 99, timeoutReached = true))
-                    onBack()
-                }) { androidx.compose.material3.Text(Strings.t("minigame.exit.confirm")) }
-            },
-            dismissButton = {
-                androidx.compose.material3.TextButton(onClick = { exitConfirm = false }) {
-                    androidx.compose.material3.Text(Strings.t("minigame.exit.cancel"))
-                }
+        com.s0dolamby.game.presentation.common.components.FairyPromptDialog(
+            emoji = "🚪",
+            title = Strings.t("minigame.exit.title"),
+            body = Strings.t("minigame.exit.body"),
+            primaryText = Strings.t("minigame.exit.cancel"),
+            onPrimary = { exitConfirm = false },
+            secondaryText = Strings.t("minigame.exit.confirm"),
+            onSecondary = {
+                exitConfirm = false
+                // Уход = сожжённая попытка: пишем проигрыш, второй игры не будет.
+                viewModel.record(projectId, MinigameOutcome(errorCount = 99, timeoutReached = true))
+                onBack()
             }
         )
     }

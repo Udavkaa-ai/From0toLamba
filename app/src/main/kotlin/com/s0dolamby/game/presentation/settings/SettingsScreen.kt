@@ -355,21 +355,17 @@ fun SettingsScreen(
     }
 
     if (showResetDialog) {
-        AlertDialog(
-            onDismissRequest = { showResetDialog = false },
-            title = { Text(Strings.t("settings.reset.confirmTitle")) },
-            text = { Text(Strings.t("settings.reset.confirmText")) },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showResetDialog = false
-                        viewModel.resetGame()
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Error)
-                ) { Text(Strings.t("settings.reset.confirmYes")) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showResetDialog = false }) { Text(Strings.t("btn.cancel")) }
+        // Первичная (золотая) — безопасная «Отмена»; сброс — вторичной обводкой.
+        com.s0dolamby.game.presentation.common.components.FairyPromptDialog(
+            emoji = "⚠️",
+            title = Strings.t("settings.reset.confirmTitle"),
+            body = Strings.t("settings.reset.confirmText"),
+            primaryText = Strings.t("btn.cancel"),
+            onPrimary = { showResetDialog = false },
+            secondaryText = Strings.t("settings.reset.confirmYes"),
+            onSecondary = {
+                showResetDialog = false
+                viewModel.resetGame()
             }
         )
     }
