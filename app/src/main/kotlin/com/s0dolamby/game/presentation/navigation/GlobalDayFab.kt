@@ -32,6 +32,7 @@ import com.s0dolamby.game.data.sound.SoundEngine
 import com.s0dolamby.game.data.sound.SoundName
 import com.s0dolamby.game.domain.usecase.AdvanceDayUseCase
 import com.s0dolamby.game.presentation.common.theme.LocalAppPalette
+import com.s0dolamby.game.presentation.common.theme.LocalAccentOnCard
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.onboarding.tourAnchor
 import com.s0dolamby.game.domain.model.ThemeMode
@@ -212,22 +213,10 @@ fun GlobalDayFab(
     val pendingInbox by viewModel.pendingInboxCount.collectAsState()
     val lastAdvancedAt by viewModel.lastAdvancedAt.collectAsState()
     val activity = androidx.activity.compose.LocalActivity.current
-    val palette = LocalAppPalette.current
-    val themeMode = LocalThemeMode.current
-    val gradient = when (themeMode) {
-        ThemeMode.WARM_FAIRY -> Brush.linearGradient(
-            listOf(Color(0xFFFFD660), Color(0xFFFFB800), Color(0xFFB07400))
-        )
-        ThemeMode.DARK_FAIRY -> Brush.linearGradient(listOf(palette.enchantedPurple, palette.nightBlue))
-    }
-    val borderColor = when (themeMode) {
-        ThemeMode.WARM_FAIRY -> Color(0xCC784C24)
-        ThemeMode.DARK_FAIRY -> FairyGold.copy(alpha = 0.5f)
-    }
-    val textColor = when (themeMode) {
-        ThemeMode.WARM_FAIRY -> Color(0xFF3A2010)
-        ThemeMode.DARK_FAIRY -> FairyGold
-    }
+    val fabTheme = rememberDayFabTheme()
+    val gradient = fabTheme.gradient
+    val borderColor = fabTheme.border
+    val textColor = fabTheme.onColor
 
     var expanded by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
     var confirmAdvance by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
@@ -315,28 +304,108 @@ fun GlobalDayFab(
     }
 
     if (confirmAdvance) {
-        androidx.compose.material3.AlertDialog(
-            onDismissRequest = { confirmAdvance = false },
-            icon = { Text("📜", fontSize = 34.sp) },
-            title = { Text("Ещё есть грамоты") },
-            text = {
-                Text(
-                    "Не рассмотрено грамот: $pendingInbox. С новым днём они истекут. " +
-                        "Всё равно листать?"
-                )
-            },
-            confirmButton = {
-                androidx.compose.material3.TextButton(onClick = { doAdvance() }) {
-                    Text(if (newWeek) "Новая неделя" else "Листать день")
-                }
-            },
-            dismissButton = {
-                androidx.compose.material3.TextButton(onClick = { confirmAdvance = false }) {
-                    Text("Ещё гляну")
-                }
-            }
+        UnreviewedDealsDialog(
+            pendingInbox = pendingInbox,
+            newWeek = newWeek,
+            onStay = { confirmAdvance = false },
+            onAdvance = { doAdvance() }
         )
     }
+}
+
+/** Плашка «Ещё есть грамоты» — стилизована под тему (свиток, золотая рамка,
+ *  тёплый/тёмный фон-пергамент), как в TG-версии. */
+@Composable
+private fun UnreviewedDealsDialog(
+    pendingInbox: Int,
+    newWeek: Boolean,
+    onStay: () -> Unit,
+    onAdvance: () -> Unit
+) {
+    val palette = LocalAppPalette.current
+    androidx.compose.ui.window.Dialog(onDismissRequest = onStay) {
+        com.s0dolamby.game.presentation.common.components.ProvideOnCardColors {
+            Column(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(22.dp))
+                    .background(Brush.verticalGradient(listOf(palette.cardTop, palette.cardBottom)))
+                    .border(1.5.dp, palette.cardBorderBright.copy(alpha = 0.8f), RoundedCornerShape(22.dp))
+                    .padding(horizontal = 24.dp, vertical = 22.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("📜", fontSize = 40.sp)
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    "Ещё есть грамоты",
+                    color = androidx.compose.material3.LocalContentColor.current,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "Не рассмотрено грамот: $pendingInbox. С новым днём они истекут — пропустишь шанс вложиться.",
+                    color = androidx.compose.material3.LocalContentColor.current.copy(alpha = 0.75f),
+                    fontSize = 13.sp,
+                    lineHeight = 19.sp,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+                Spacer(Modifier.height(18.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    // Первичная безопасная — остаться (золотая), как в TG
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(FairyGold)
+                            .clickable { onStay() }
+                            .padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Ещё гляну", color = Color(0xFF1A0A00), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    }
+                    // Вторичная — всё равно листать (обводка)
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(14.dp))
+                            .border(1.5.dp, FairyGold.copy(alpha = 0.7f), RoundedCornerShape(14.dp))
+                            .clickable { onAdvance() }
+                            .padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            if (newWeek) "Новая неделя" else "Листать день",
+                            color = LocalAccentOnCard.current, fontWeight = FontWeight.SemiBold, fontSize = 14.sp
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** Палитра круглых кнопок (день/чат) — под тему, чтобы кнопки были парой. */
+class DayFabTheme(val gradient: Brush, val border: Color, val onColor: Color)
+
+@Composable
+fun rememberDayFabTheme(): DayFabTheme {
+    val palette = LocalAppPalette.current
+    val themeMode = LocalThemeMode.current
+    val gradient = when (themeMode) {
+        ThemeMode.WARM_FAIRY -> Brush.linearGradient(
+            listOf(Color(0xFFFFD660), Color(0xFFFFB800), Color(0xFFB07400))
+        )
+        ThemeMode.DARK_FAIRY -> Brush.linearGradient(listOf(palette.enchantedPurple, palette.nightBlue))
+    }
+    val border = when (themeMode) {
+        ThemeMode.WARM_FAIRY -> Color(0xCC784C24)
+        ThemeMode.DARK_FAIRY -> FairyGold.copy(alpha = 0.5f)
+    }
+    val onColor = when (themeMode) {
+        ThemeMode.WARM_FAIRY -> Color(0xFF3A2010)
+        ThemeMode.DARK_FAIRY -> FairyGold
+    }
+    return DayFabTheme(gradient, border, onColor)
 }
 
 /** Остаток кулдауна в виде «Ч:ММ:СС». */

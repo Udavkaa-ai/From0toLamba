@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.*
 import androidx.compose.ui.draw.clip
@@ -402,19 +403,18 @@ fun NavGraph() {
                 )
             }
 
-            // Плавающая кнопка чата — слева внизу, над нижней навигацией.
+            // Плавающая кнопка чата — слева внизу, В ПАРУ и на одной высоте с FAB
+            // «Следующий день» (та же тема-градиент/рамка, тот же нижний отступ).
+            val chatTheme = rememberDayFabTheme()
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(start = 12.dp, bottom = 74.dp)
-                    .size(48.dp)
+                    .padding(start = 16.dp, bottom = 96.dp)
+                    .size(50.dp)
+                    .shadow(12.dp, CircleShape)
                     .clip(CircleShape)
-                    .background(androidx.compose.ui.graphics.Color(0xF01A0E2E))
-                    .border(
-                        1.dp,
-                        com.s0dolamby.game.presentation.common.theme.FairyGold.copy(alpha = 0.5f),
-                        CircleShape
-                    )
+                    .background(chatTheme.gradient)
+                    .border(1.5.dp, chatTheme.border, CircleShape)
                     .clickable { navController.navigate(Screen.Chat.route) },
                 contentAlignment = Alignment.Center
             ) {
