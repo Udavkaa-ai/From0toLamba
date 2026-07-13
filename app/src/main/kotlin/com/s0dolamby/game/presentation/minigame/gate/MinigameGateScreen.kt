@@ -174,6 +174,11 @@ fun MinigameGateScreen(
         mutableStateOf<MinigameOutcome?>(previousOutcome)
     }
 
+    // Выход из испытания на середине сжигает попытку (второй игры делец не
+    // даёт) — поэтому спрашиваем подтверждение вместо тихого выхода.
+    var exitConfirm by remember(projectId) { mutableStateOf(false) }
+    val onExitAttempt = { exitConfirm = true }
+
     val handleOutcome: (MinigameOutcome) -> Unit = remember(projectId) {
         { outcome ->
             if (finished == null) {
@@ -201,19 +206,19 @@ fun MinigameGateScreen(
 
         GatePhase.PLAYING -> when (archetype) {
             PersonaArchetype.BURATINO ->
-                GoldenKeyScreen(onBack = onBack, onComplete = handleOutcome, rank = playerRank)
+                GoldenKeyScreen(onBack = onExitAttempt, onComplete = handleOutcome, rank = playerRank)
             PersonaArchetype.BOYARIN ->
-                BoyarinCharterScreen(onBack = onBack, onComplete = handleOutcome, rank = playerRank)
+                BoyarinCharterScreen(onBack = onExitAttempt, onComplete = handleOutcome, rank = playerRank)
             PersonaArchetype.KOSCHEI ->
-                KoscheiMemoryScreen(onBack = onBack, onComplete = handleOutcome, rank = playerRank)
+                KoscheiMemoryScreen(onBack = onExitAttempt, onComplete = handleOutcome, rank = playerRank)
             PersonaArchetype.KOLOBOK ->
-                KolobokNoraScreen(onBack = onBack, onComplete = handleOutcome, rank = playerRank)
+                KolobokNoraScreen(onBack = onExitAttempt, onComplete = handleOutcome, rank = playerRank)
             PersonaArchetype.ZOLUSHKA ->
-                ZolushkaCoinsScreen(onBack = onBack, onComplete = handleOutcome, rank = playerRank)
+                ZolushkaCoinsScreen(onBack = onExitAttempt, onComplete = handleOutcome, rank = playerRank)
             PersonaArchetype.BABA_YAGA ->
-                BabaYagaCauldronScreen(onBack = onBack, onComplete = handleOutcome, rank = playerRank)
+                BabaYagaCauldronScreen(onBack = onExitAttempt, onComplete = handleOutcome, rank = playerRank)
             PersonaArchetype.IVAN_DURAK ->
-                IvanDurakMapScreen(onBack = onBack, onComplete = handleOutcome, rank = playerRank)
+                IvanDurakMapScreen(onBack = onExitAttempt, onComplete = handleOutcome, rank = playerRank)
         }
 
         GatePhase.FINISHED -> finished?.let { outcome ->
@@ -228,6 +233,29 @@ fun MinigameGateScreen(
                 onGoToChat = onGoToChat
             )
         }
+    }
+
+    // Предупреждение при выходе с середины игры: попытка сгорит.
+    if (exitConfirm) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { exitConfirm = false },
+            icon = { androidx.compose.material3.Text("🚪", fontSize = 34.sp) },
+            title = { androidx.compose.material3.Text(Strings.t("minigame.exit.title")) },
+            text = { androidx.compose.material3.Text(Strings.t("minigame.exit.body")) },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    exitConfirm = false
+                    // Уход = сожжённая попытка: пишем проигрыш, второй игры не будет.
+                    viewModel.record(projectId, MinigameOutcome(errorCount = 99, timeoutReached = true))
+                    onBack()
+                }) { androidx.compose.material3.Text(Strings.t("minigame.exit.confirm")) }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = { exitConfirm = false }) {
+                    androidx.compose.material3.Text(Strings.t("minigame.exit.cancel"))
+                }
+            }
+        )
     }
 }
 

@@ -268,6 +268,10 @@ object Strings {
 
         // Шлюз мини-игры (MinigameGateScreen)
         "gate.intro.title" to "🤝  Знакомый делец",
+        "minigame.exit.title" to "Выйти из испытания?",
+        "minigame.exit.body" to "Второго испытания делец не даёт — попытка сгорит, и дело останется нераскрытым. Точно выйти?",
+        "minigame.exit.confirm" to "Выйти, попытка сгорит",
+        "minigame.exit.cancel" to "Остаться",
         "gate.intro.body" to "У тебя есть жетон %s — %d шт. Можно сыграть в его мини-игру или заплатить 1 жетон, чтобы дельца уважить и сразу подойти к делу.",
         "gate.intro.payToken" to "🪙  Заплатить 1 жетон %s",
         "gate.intro.playGame" to "🎲  Сыграть в мини-игру",
@@ -1133,6 +1137,10 @@ object Strings {
 
         // Minigame gate
         "gate.intro.title" to "🤝  Familiar merchant",
+        "minigame.exit.title" to "Leave the trial?",
+        "minigame.exit.body" to "The merchant won't offer a second trial — your attempt is spent and the deal stays unrevealed. Leave anyway?",
+        "minigame.exit.confirm" to "Leave, forfeit the attempt",
+        "minigame.exit.cancel" to "Stay",
         "gate.intro.body" to "You hold %s tokens — %d of them. You can play the merchant's mini-game or spend 1 token to honor him and go straight to the venture.",
         "gate.intro.payToken" to "🪙  Spend 1 %s token",
         "gate.intro.playGame" to "🎲  Play the mini-game",

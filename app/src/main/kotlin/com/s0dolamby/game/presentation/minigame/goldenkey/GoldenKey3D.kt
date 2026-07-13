@@ -120,26 +120,33 @@ private fun buildKeyMesh(key: GoldenKey): List<Face> {
     val shaftBot = -0.78f
     faces += cylinder(shaftR, shaftTop, shaftBot, 12, 6, key.stemPattern == StemPattern.STRIPED, l, d)
 
-    // Узор «точки» — заклёпки-кубики по стержню (спереди/сзади/по бокам)
+    // Узор «точки» — небольшие заклёпки ТОЛЬКО спереди/сзади (не по бокам,
+    // иначе стержень превращался в «ёршик»).
     if (key.stemPattern == StemPattern.DOTTED) {
-        var yy = shaftTop - 0.12f
-        while (yy > shaftBot + 0.35f) {
-            faces += box(0f, yy, shaftR, 0.055f, 0.055f, 0.05f, l, d)
-            faces += box(0f, yy, -shaftR, 0.055f, 0.055f, 0.05f, l, d)
-            faces += box(shaftR, yy, 0f, 0.05f, 0.055f, 0.055f, l, d)
-            faces += box(-shaftR, yy, 0f, 0.05f, 0.055f, 0.055f, l, d)
-            yy -= 0.20f
+        var yy = shaftTop - 0.14f
+        while (yy > shaftBot + 0.30f) {
+            faces += box(0f, yy, shaftR - 0.005f, 0.038f, 0.038f, 0.035f, l, d)
+            faces += box(0f, yy, -shaftR + 0.005f, 0.038f, 0.038f, 0.035f, l, d)
+            yy -= 0.22f
         }
     }
 
-    // Зубцы (бородка) — брусья на +X у нижнего конца
-    val toothH = 0.12f
-    val gap = 0.06f
-    val baseX = shaftR
-    var ty = shaftBot + 0.10f
-    repeat(key.teethCount) { i ->
-        val len = 0.16f + (i % 2) * 0.06f   // лёгкая нерегулярность зубцов
-        faces += box(baseX + len / 2f, ty, 0f, len / 2f, toothH / 2f, 0.06f, l, d)
+    // Бородка — ПЛОСКАЯ лопасть у нижнего конца (тонкая по Z) со ступенчатым
+    // профилем зубцов на +X. Так читается как ключ, а не «ёршик».
+    val flagThick = 0.03f
+    val toothH = 0.085f
+    val gap = 0.045f
+    val baseX = shaftR - 0.015f
+    val n = key.teethCount.coerceAtLeast(1)
+    val bitBottom = shaftBot + 0.10f
+    val bitHeight = n * toothH + (n - 1) * gap
+    // спинка лопасти соединяет зубцы в одно перо
+    faces += box(baseX + 0.035f, bitBottom + bitHeight / 2f - toothH / 2f, 0f,
+        0.035f, bitHeight / 2f, flagThick, l, d)
+    var ty = bitBottom
+    for (i in 0 until n) {
+        val len = 0.10f + (i % 3) * 0.06f
+        faces += box(baseX + 0.07f + len / 2f, ty, 0f, len / 2f, toothH * 0.34f, flagThick, l, d)
         ty += toothH + gap
     }
 
