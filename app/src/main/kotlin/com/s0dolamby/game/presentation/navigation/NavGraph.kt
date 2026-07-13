@@ -152,6 +152,7 @@ fun NavGraph() {
     val showFabRoutes = setOf(
         Screen.Home.route,
         Screen.Inbox.route,
+        Screen.Portfolio.route,
         Screen.Stats.route,
         Screen.Today.route
     )

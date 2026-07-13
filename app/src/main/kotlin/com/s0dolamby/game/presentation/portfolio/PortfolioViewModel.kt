@@ -44,8 +44,12 @@ class PortfolioViewModel @Inject constructor(
     val activeProjects: StateFlow<List<Project>> = projectRepository.getActiveProjects()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    // reversed() — свежие закрытия сверху (БД отдаёт в порядке создания, из-за
+    // чего только что завершённое дело падало вниз списка).
     val closedProjects: StateFlow<List<Project>> = projectRepository.getClosedProjects()
-        .map { list -> list.filter { it.closureReason != "Предложение не принято" } }
+        .map { list ->
+            list.filter { it.closureReason != "Предложение не принято" }.reversed()
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _actionResult = MutableStateFlow<PortfolioActionResult?>(null)
