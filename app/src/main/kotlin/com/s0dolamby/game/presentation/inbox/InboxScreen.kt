@@ -200,26 +200,18 @@ fun InboxScreen(
     // rewarded-ролик Яндекса и пускаем в Ama по награде; при выключенной —
     // просто пропускаем (как раньше). Игрока реклама не блокирует.
     adPromptForProjectId?.let { pid ->
-        AlertDialog(
-            onDismissRequest = { adPromptForProjectId = null },
-            title = { Text(Strings.t("inbox.ad.title")) },
-            text = { Text(Strings.t("inbox.ad.body")) },
-            confirmButton = {
-                TextButton(onClick = {
-                    adPromptForProjectId = null
-                    val proceed = { onChatAfterAd(pid) }
-                    if (activity != null) {
-                        viewModel.watchRewardedThen(activity, proceed)
-                    } else {
-                        proceed()
-                    }
-                    // Дефолтный AlertDialog — тёмный Material-surface в обеих
-                    // темах: фиксированное золото, не карточная локаль.
-                }) { Text(Strings.t("inbox.ad.confirm"), color = FairyGold) }
+        com.s0dolamby.game.presentation.common.components.FairyPromptDialog(
+            emoji = "📺",
+            title = Strings.t("inbox.ad.title"),
+            body = Strings.t("inbox.ad.body"),
+            primaryText = Strings.t("inbox.ad.confirm"),
+            onPrimary = {
+                adPromptForProjectId = null
+                val proceed = { onChatAfterAd(pid) }
+                if (activity != null) viewModel.watchRewardedThen(activity, proceed) else proceed()
             },
-            dismissButton = {
-                TextButton(onClick = { adPromptForProjectId = null }) { Text(Strings.t("btn.cancel")) }
-            }
+            secondaryText = Strings.t("btn.cancel"),
+            onSecondary = { adPromptForProjectId = null }
         )
     }
     } // ScreenBackground

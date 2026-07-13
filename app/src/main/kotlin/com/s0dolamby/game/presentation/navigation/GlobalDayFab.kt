@@ -32,7 +32,6 @@ import com.s0dolamby.game.data.sound.SoundEngine
 import com.s0dolamby.game.data.sound.SoundName
 import com.s0dolamby.game.domain.usecase.AdvanceDayUseCase
 import com.s0dolamby.game.presentation.common.theme.LocalAppPalette
-import com.s0dolamby.game.presentation.common.theme.LocalAccentOnCard
 import com.s0dolamby.game.presentation.common.theme.FairyGold
 import com.s0dolamby.game.presentation.onboarding.tourAnchor
 import com.s0dolamby.game.domain.model.ThemeMode
@@ -313,8 +312,7 @@ fun GlobalDayFab(
     }
 }
 
-/** Плашка «Ещё есть грамоты» — стилизована под тему (свиток, золотая рамка,
- *  тёплый/тёмный фон-пергамент), как в TG-версии. */
+/** Плашка «Ещё есть грамоты» — общий стиль FairyPromptDialog (как в TG). */
 @Composable
 private fun UnreviewedDealsDialog(
     pendingInbox: Int,
@@ -322,66 +320,16 @@ private fun UnreviewedDealsDialog(
     onStay: () -> Unit,
     onAdvance: () -> Unit
 ) {
-    val palette = LocalAppPalette.current
-    androidx.compose.ui.window.Dialog(onDismissRequest = onStay) {
-        com.s0dolamby.game.presentation.common.components.ProvideOnCardColors {
-            Column(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(22.dp))
-                    .background(Brush.verticalGradient(listOf(palette.cardTop, palette.cardBottom)))
-                    .border(1.5.dp, palette.cardBorderBright.copy(alpha = 0.8f), RoundedCornerShape(22.dp))
-                    .padding(horizontal = 24.dp, vertical = 22.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text("📜", fontSize = 40.sp)
-                Spacer(Modifier.height(10.dp))
-                Text(
-                    "Ещё есть грамоты",
-                    color = androidx.compose.material3.LocalContentColor.current,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    "Не рассмотрено грамот: $pendingInbox. С новым днём они истекут — пропустишь шанс вложиться.",
-                    color = androidx.compose.material3.LocalContentColor.current.copy(alpha = 0.75f),
-                    fontSize = 13.sp,
-                    lineHeight = 19.sp,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                )
-                Spacer(Modifier.height(18.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    // Первичная безопасная — остаться (золотая), как в TG
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(FairyGold)
-                            .clickable { onStay() }
-                            .padding(vertical = 12.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("Ещё гляну", color = Color(0xFF1A0A00), fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                    }
-                    // Вторичная — всё равно листать (обводка)
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(14.dp))
-                            .border(1.5.dp, FairyGold.copy(alpha = 0.7f), RoundedCornerShape(14.dp))
-                            .clickable { onAdvance() }
-                            .padding(vertical = 12.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            if (newWeek) "Новая неделя" else "Листать день",
-                            color = LocalAccentOnCard.current, fontWeight = FontWeight.SemiBold, fontSize = 14.sp
-                        )
-                    }
-                }
-            }
-        }
-    }
+    com.s0dolamby.game.presentation.common.components.FairyPromptDialog(
+        emoji = "📜",
+        title = "Ещё есть грамоты",
+        body = "Не рассмотрено грамот: $pendingInbox. С новым днём они истекут — пропустишь шанс вложиться.",
+        primaryText = "Ещё гляну",
+        onPrimary = onStay,
+        secondaryText = if (newWeek) "Новая неделя" else "Листать день",
+        onSecondary = onAdvance,
+        onDismissRequest = onStay
+    )
 }
 
 /** Палитра круглых кнопок (день/чат) — под тему, чтобы кнопки были парой. */
